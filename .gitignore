@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+
+# Generated output
+.expo/
+target/
+build/
+dist/
+web-build/
+coverage/
+*.tsbuildinfo
+
+# Editor settings
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Local environment
+.env
+.env.*
+!.env.example
+
+# Private keys and signing files
+*.pem
+*.key
+*.p8
+*.p12
+*.jks
+*.mobileprovision
+
+# Operating system
+.DS_Store
+Thumbs.db
