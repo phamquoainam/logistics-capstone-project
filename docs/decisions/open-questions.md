@@ -29,7 +29,7 @@
 | DEC-23 | BLOCKING | Offline mutation allowlist, conflict resolution UX, queue/media retention | 015 | Android airplane mode/crash tests |
 | DEC-24 | BLOCKING | RQ1–RQ4 fixed datasets, load machine, comparable mode and metric export | 016 | experiment design approved before runs |
 | DEC-25 | PROPOSED | REST `/api/v1`, JSON envelope, error taxonomy, `Idempotency-Key` name | all | OpenAPI review and ADR |
-| DEC-26 | PROPOSED | Flyway unified migration version stream, schema order + Postgres version | 001+ | DB clean+upgrade test |
+| DEC-26 | ACCEPTED (D1-03, 2026-10-13) | PostgreSQL 18.6 pinned digest; one DB/nine schemas; global V1/V2 stream; platform history; owner/migrator/runtime; local/test migrations and shared job | 001+ | Explicit user approval; ADR-0002; real PostgreSQL cold-start/upgrade/rerun/permissions PASS; P0 contracts outside demo remain pending |
 | DEC-27 | PROPOSED | RabbitMQ event envelope/versioning, outbox retry backoff and DLQ tooling | 001,012 | fault-injection and schema review |
 | DEC-28 | PROPOSED | `workflow` owner for multi-module orchestration; single transaction manager | 005,009 | integration test + Modulith verification |
 

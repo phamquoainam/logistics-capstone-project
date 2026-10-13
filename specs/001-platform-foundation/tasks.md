@@ -1,6 +1,6 @@
 # Implementation Tasks 001: Nền tảng repository, deploy và kiến trúc
 
-**Tình trạng hiện tại:** Chưa triển khai. **Rule:** Không tick DONE trước khi có code+test+evidence.  
+**Tình trạng hiện tại:** PARTIAL — D1-03 PostgreSQL/Demo-001 DB milestone được duyệt và kiểm chứng ([evidence](../../docs/implementation/d1-03-postgresql-evidence.md)); các task/AC đầy đủ dưới đây chưa DONE. **Rule:** Không tick DONE trước khi có code+test+evidence.
 **Ordering:** T-001-01 → T-001-02…; các phần web/mobile có thể song song sau khi contract+API ổn định, không merge thiếu tests.
 
 - [ ] **T-001-01 — Review**  

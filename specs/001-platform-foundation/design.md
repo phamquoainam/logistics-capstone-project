@@ -1,6 +1,8 @@
 # Technical Design 001: Nền tảng repository, deploy và kiến trúc
 
 **State:** DESIGN_PROPOSED — không mô tả API/migration đã implement.  
+
+**D1-03 DB milestone accepted/implemented 2026-10-13:** DEC-26 approved explicitly; PostgreSQL 18.6 isolated dev container/5433, nine ownership schemas, V1/V2 global stream, platform history, owner/migrator/runtime roles and local/test migrations/shared job implemented. Demo-001 real PostgreSQL tests/migration/permissions/restart/browser checks PASS; H2 remains intact. This subsection records only the approved DB slice; remaining proposed contracts/feature AC are unchanged. [ADR](../../docs/architecture/decisions/ADR-0002-database-ownership.md), [evidence](../../docs/implementation/d1-03-postgresql-evidence.md). D1-03/full foundation still PARTIAL.
 **Source:** `spec.md`, `docs/architecture/*`, [REPORT] Chương 3–4.
 
 ## 1. Bounded context / code location

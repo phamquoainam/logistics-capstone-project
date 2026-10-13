@@ -1,5 +1,7 @@
 # Demo 001 — Evidence, 2026-10-13
 
+**Subsequent D1-03 integration:** Demo-001 was merged into develop at 08c0c34. Approved PostgreSQL foundation now passes real PostgreSQL regression/migration/roles/restart/browser verification while H2 remains operational. See [D1-03 evidence](d1-03-postgresql-evidence.md); sections below preserve the initial H2-only execution history, not current PostgreSQL readiness. Full feature/Day 1 closure remains pending.
+
 Branch `docs/sdd-baseline-and-runbooks`. No commit/push. Existing Wrapper/day-plan/local-runbook changes were preserved. User explicitly authorized a demo vertical slice and H2 file fallback; original P0 spec/AC are unchanged.
 
 ## Verified result

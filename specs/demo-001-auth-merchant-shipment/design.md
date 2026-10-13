@@ -1,5 +1,9 @@
 # Demo 001 — Technical design and temporary decisions
 
+## Accepted PostgreSQL extension — D1-03, 2026-10-13
+
+User approved DEC-26 and integration after Demo-001 merge 08c0c34. The H2 implementation below is preserved as its historical fallback design. PostgreSQL target uses `demo,postgres`, isolated Docker 18.6/5433/elogistics_dev, approved five demo tables and unchanged APIs/invariants. Global PostgreSQL V1 schemas/V2 tables live in `db/migration`; history `platform.flyway_schema_history`; H2 `db/demo-migration/V1` remains immutable. NOLOGIN owner, migrator SET ROLE owner and one runtime DataSource with DML only. Events/receipts also reject runtime UPDATE/DELETE. Six additional domain schemas contain no speculative tables. Local/test separate migration credentials; shared job/runtime separation. No H2 data conversion or new business feature. [ADR](../../docs/architecture/decisions/ADR-0002-database-ownership.md), [evidence](../../docs/implementation/d1-03-postgresql-evidence.md), [runbook](../../docs/runbooks/postgresql-foundation.md).
+
 ## Authorization and readiness
 The user explicitly authorized demo endpoints/DTOs/tables, signed short-lived tokens, web scaffolding and an isolated H2 fallback. No P0 acceptance changes. PostgreSQL native is running but no connection credentials are configured; do not guess credentials or touch existing clusters. Use H2 file storage on D for this demo; keep PostgreSQL 18 as the foundation proposal.
 

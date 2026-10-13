@@ -1,5 +1,7 @@
 # Local Development Runbook — repository hiện hữu
 
+**Cập nhật sau Demo-001 / D1-03 (2026-10-13):** PostgreSQL 18.6 dev riêng trên Docker/5433 đã chạy thật; Flyway V1/V2, chín ownership schemas, owner/migrator/runtime và Demo-001 regression PASS. H2 fallback/migration/dữ liệu giữ nguyên. Hướng dẫn hiện hành: [PostgreSQL foundation](postgresql-foundation.md), [Demo local](demo-local.md), [evidence](../implementation/d1-03-postgresql-evidence.md). Các mục baseline bên dưới là lịch sử audit, không phản ánh persistence/POM hiện tại. D1-02/D1-03 và feature 001 chưa DONE.
+
 **Baseline ngày 13/10/2026:** có backend Spring Boot và Expo starter; web độc lập, database/migration và hạ tầng chưa triển khai. Runbook ưu tiên Windows 11 + PowerShell, phân biệt lệnh được repository hỗ trợ với lệnh đã chạy. Chưa có bằng chứng hệ thống end-to-end khởi chạy. Xem [kế hoạch và gap](../implementation/day-1-plan.md).
 
 **Sau toolchain spike T-001-01 / D1-02:** Wrapper Windows/online và offline backend verify PASS, contextLoads chạy thật; versions giữ nguyên theo phê duyệt người dùng. Xem [L.4](#l4-toolchain-spike-t-001-01--d1-02). L.1–L.2 lưu lịch sử audit trước sửa, không mô tả trạng thái hiện tại.
