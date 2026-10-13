@@ -1,4 +1,4 @@
-package com.elogistic.backend.merchant.internal.application;
+package com.elogistic.backend.merchant.internal.infrastructure;
 import java.util.UUID;
 import org.springframework.boot.*;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

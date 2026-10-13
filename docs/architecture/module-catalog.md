@@ -45,6 +45,17 @@
 | notification | Public event của order, warehouse, finance, dispatch, routing; API identity phục vụ xác định người nhận. |
 | Application coordinator | API của các module cần thiết cho luồng đang điều phối; không được truy cập implementation nội bộ. |
 
+### D1-04: trusted actor contract (ACCEPTED, 2026-10-13)
+
+Ngoài các collaborator nghiệp vụ trên, `order` (package thực tế `orders`) được
+phụ thuộc **duy nhất** `identity.api.AuthenticatedActor` tại `internal.web` và
+`internal.application`: bốn thuộc tính `id`, `enabled`, `role`, `merchantId`.
+Principal do backend xác thực và tra cứu account hiện hành trong security context;
+không bind actor từ request. Orders domain không phụ thuộc Identity. Không cho phép
+Orders dùng `AccountView`, API Identity khác, repository hoặc `identity.internal`.
+Đây là dependency authentication/authorization có phạm vi hẹp được người dùng
+phê duyệt, không mở rộng collaborator nghiệp vụ. [ADR-0004](decisions/ADR-0004-architecture-verification.md).
+
 ## 4. Các quan hệ upstream/downstream cần hợp đồng rõ
 
 | Quan hệ | Contract | Không được làm |

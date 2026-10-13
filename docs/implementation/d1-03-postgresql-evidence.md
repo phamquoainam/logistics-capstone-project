@@ -1,5 +1,22 @@
 # D1-03 — PostgreSQL execution evidence
 
+## Reconciliation after D1-04 — 2026-10-14
+
+D1-03 was merged by PR #3 into develop `ccafeb4`; merge is not an acceptance gate.
+The historical evidence below proves the approved local PostgreSQL milestone and
+local build/test/migration deliverables. Current D1-04 regression also passes:
+48 PostgreSQL tests without failure/error/skip, H2 40 executed/pass plus eight
+PG-only skips, web typecheck/build/three browser tests PASS. Architecture local
+verification is now PASS; it is no longer an unimplemented dependency.
+
+Keep **D1-03 overall PARTIAL** under the existing Day 1 dependency/closure scope:
+D1-02 is not closed, independent clean-machine reproduction is still unverified.
+Those conditions are not silently waived by merging or local DB/architecture PASS.
+CI/full feature 001 gates remain separate and unverified; no AC change. Proposed
+D1-04 local DONE and next independent CI slice are documented in
+[D1-04 evidence](d1-04-architecture-evidence.md). Historical “next D1-04” notes
+below refer to the earlier D1-03 execution, not current next-task advice.
+
 2026-10-13 (+07), explicit user approval of DEC-26 and Phases A–E. Baseline clean develop HEAD `08c0c3424ce30c5f3c74c3af6a80d92a04e8a1ef`; new branch `feature/d1-03-postgresql-foundation`. No commit/push/PR/merge. [Runbook](../runbooks/postgresql-foundation.md), [ADR](../architecture/decisions/ADR-0002-database-ownership.md).
 
 ## Environment/configuration

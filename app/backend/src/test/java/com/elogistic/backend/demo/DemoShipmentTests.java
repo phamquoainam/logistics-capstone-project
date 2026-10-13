@@ -7,6 +7,18 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 class DemoShipmentTests extends DemoTestSupport {
+ @Test void actorMerchantOwnershipIsRecheckedFromDatabase() throws Exception {
+  String a=login("demo.merchant.a"),b=login("demo.merchant.b");
+  String ownId=JsonPath.read(create(a,UUID.randomUUID().toString(),input("ACTOR-A-"+UUID.randomUUID())),"$.id");
+  String otherId=JsonPath.read(create(b,UUID.randomUUID().toString(),input("ACTOR-B-"+UUID.randomUUID())),"$.id");
+  UUID original=jdbc.queryForObject("SELECT merchant_id FROM identity.demo_account WHERE username='demo.merchant.a'",UUID.class);
+  try {
+   jdbc.update("UPDATE identity.demo_account SET merchant_id=? WHERE username='demo.merchant.a'",UUID.fromString("00000000-0000-0000-0000-00000000000b"));
+   String list=mvc.perform(get("/api/demo/v1/shipments").header("Authorization","Bearer "+a)).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+   assertFalse(list.contains(ownId));assertTrue(list.contains(otherId));
+   mvc.perform(get("/api/demo/v1/shipments/"+ownId).header("Authorization","Bearer "+a)).andExpect(status().isNotFound());
+  }finally{jdbc.update("UPDATE identity.demo_account SET merchant_id=? WHERE username='demo.merchant.a'",original);}
+ }
  String input(String reference){return "{\"reference\":\""+reference+"\",\"pickupAddress\":\"Demo pickup\",\"recipientName\":\"Synthetic recipient\",\"recipientPhone\":\"0000000000\",\"deliveryStreet\":\"Demo street\",\"deliveryWard\":\"Demo ward\",\"deliveryProvince\":\"Demo province\",\"parcelDescription\":\"Demo parcel\",\"weightKg\":1.25}";}
  String create(String token,String key,String body) throws Exception {return mvc.perform(post("/api/demo/v1/shipments").header("Authorization","Bearer "+token).header("Idempotency-Key",key).contentType("application/json").content(body)).andExpect(status().isCreated()).andExpect(jsonPath("$.status").value("DRAFT")).andReturn().getResponse().getContentAsString();}
  @Test void ownDraftAndCrossMerchantIsolation() throws Exception {

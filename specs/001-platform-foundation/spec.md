@@ -3,6 +3,12 @@
 **Status:** DRAFT_SPEC / PARTIAL — approved D1-03 PostgreSQL/Demo-001 database milestone verified; full feature gates remain open ([evidence](../../docs/implementation/d1-03-postgresql-evidence.md)).
 **Owners / Bounded Context:** `platform, workflow; all module skeletons`  
 **Actors:** Developer, CI  
+
+**D1-04 local evidence (2026-10-14):** real module boundaries/direction/cycles,
+negative fixture effectiveness and unchanged Demo-001 regressions PASS.
+[Evidence](../../docs/implementation/d1-04-architecture-evidence.md).
+REQ-001-03/AC-001-03 remain PARTIAL because actual CI execution is unverified;
+full feature/acceptance criteria below are unchanged.
 **Priority:** P0 nền tảng  
 **Source:** [REPORT] Chương 2 BR/FR/NFR; Chương 3 Use Case/State Machine; Chương 4 §4.2–4.3.1. API/UI cụ thể: [PROPOSED].
 

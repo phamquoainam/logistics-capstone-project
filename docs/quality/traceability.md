@@ -39,6 +39,9 @@ Environment/commands/artifacts: [demo evidence](../implementation/demo-001-evide
 
 ## D1-03 PostgreSQL milestone — 2026-10-13
 
+Historical D1-03 records below retain their execution scope. Latest architecture
+and closure assessment: [D1-04 evidence](../implementation/d1-04-architecture-evidence.md).
+
 Demo-001 baseline was merged in 08c0c34 before this work. DEC-26 approved for this scope; current branch changes uncommitted. Original AC remain intact. [Execution evidence](../implementation/d1-03-postgresql-evidence.md).
 
 | Trace / test ID | Executable evidence | Status / scope |
@@ -52,4 +55,28 @@ Demo-001 baseline was merged in 08c0c34 before this work. DEC-26 approved for th
 | DEMO-05; AC-001-02 restart subset; TEST-001-E2E-PG-01 | smoke-demo.py create/verify --database postgres + container/backend restart + direct SQL | PASS named-volume persistence, same shipment/timestamp/event/receipt |
 | DEMO-04; TEST-001-E2E-PG-02 | Web typecheck/build + three Edge Playwright tests before/after restart | PASS actual PostgreSQL APIs/render/negative/retry |
 | Existing H2 demo compatibility | 14 original tests; original H2 runtime/proof at 8082 | PASS unchanged applied V1 and original persistent shipment |
-| REQ-001-03; AC-001-03; CI; clean-machine AC-001-05 | No execution in this slice | UNVERIFIED; D1-03 PARTIAL, feature 001 not DONE |
+| REQ-001-03; AC-001-03; CI; clean-machine AC-001-05 | No execution in the D1-03 slice; local architecture subsequently verified in D1-04 below | CI/reproduction UNVERIFIED; D1-03 PARTIAL, feature 001 not DONE |
+
+## D1-04 — Architecture verification, 2026-10-13/14
+
+Clean merged baseline `ccafeb4c339ffdfeb23181c245440b61176c2c31`; branch
+`feature/d1-04-architecture-verification`, uncommitted changes. User-approved
+minimal trusted actor and ArchUnit integration: [ADR-0004](../architecture/decisions/ADR-0004-architecture-verification.md).
+[Actual scopes, commands, fixtures and reports](../implementation/d1-04-architecture-evidence.md).
+Original REQ/AC and unchecked full-feature tasks are unchanged.
+
+| Trace / test ID | Executable test/evidence | Status / limit |
+|---|---|---|
+| REQ-001-03; AC-001-03 local subset; TEST-001-ARCH-01 | productionScopeIsRealAndExcludesNegativeFixtures, packagesMatchApprovedModuleStructure, modulesOnlyUsePublicApis | PASS 37 real classes/four packages; six missing business modules N/A, not verified |
+| REQ-001-03; EC-001-03; TEST-001-ARCH-02 | financeCannotUseOrderInternalRepository: same MODULE_BOUNDARIES evaluate + check throws AssertionError | PASS forbidden finance→Orders repository detected, exact dependency in failure report; no violation in production |
+| DDD ownership; TEST-001-ARCH-03 | publicApisDoNotLeakInternals, modulesFollowApprovedDependencyDirection + API/direction fixtures | PASS approved collaborators only; no Orders AccountView/broad Identity API or domain actor dependence |
+| Modular monolith; TEST-001-ARCH-04 | moduleGraphHasNoCycles + moduleCycleIsDetected | PASS real graph acyclic; isolated finance/pricing cycle detected |
+| Selective Clean Architecture; TEST-001-ARCH-05 | domain/application/web/infrastructure direction tests + matching negative fixtures; controllersDoNotOwnTransactions | PASS nonempty actual layer scopes and wrong-direction/controller-transaction detection |
+| Trusted principal; BR-01; TEST-001-SEC-01 | actorMerchantOwnershipIsRecheckedFromDatabase; existing live-role/tampered/expired/disabled/forged-owner tests | PASS H2 and real PG; existing token uses DB-derived merchant scope, old owner refused |
+| REQ-001-05; AC-001-04 demo subset; TEST-001-SEC-02 | credentialsAndBearerTokenDoNotAppearInApplicationLogs; signingConfigurationFailsFastWhenMissingOrWeak; bounded Git-visible/artifact audit | PASS tested credentials/log/config/artifact scope; not a full history/provider/P0 security audit |
+| D1-03/Demo-001 regression; TEST-001-REG-01 | Final Maven H2 and PostgreSQL verify, browser/typecheck/build | PASS H2 40 executed/eight PG-only skip; PG 48/no skip; three Edge tests; unchanged V1/V2/Compose/business semantics |
+| REQ-001-03/AC-001-03 CI requirement; AC-001-01/05 | No executable GitHub workflow or independent clean-runner execution | UNVERIFIED; local tests do not close CI/reproducibility/full feature 001 |
+
+D1-04 local verification satisfies the approved execution checklist; **propose DONE**.
+D1-03 DB milestone is complete locally; overall D1-03 stays PARTIAL due to documented
+environment/reproducibility prerequisites. No implicit DEFERRED or AC reduction.

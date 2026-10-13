@@ -575,3 +575,61 @@ Các finding không chặn starter render trong window này; **root cause và t�
 **D1-03 tiếp theo:** phần chuẩn bị độc lập vẫn là review DEC-26 + Docker/Compose/PostgreSQL/Flyway/test-DB readiness (migration stream/location/execution, ownership/accounts, isolated DB). Backend verify đã có PASS; migration chưa triển khai/chạy. D1-03 tổng thể vẫn phụ thuộc D1-02 và DB decisions; không tự cài Docker/Flyway hoặc chạy migration trên dữ liệu hiện hữu. Sau review/approval mới đề xuất diff hạ tầng tối thiểu.
 
 **Cleanup:** Ctrl+C dừng riêng Metro do phiên khởi chạy, xác nhận port 8081 không còn listen. Emulator/ADB/client có sẵn được giữ; reverse `host-15 tcp:8081 tcp:8081` có từ đầu phiên vẫn nguyên, không tạo/xóa mapping. Bằng chứng kết nối PASS áp dụng lúc Metro đang chạy; không tuyên bố kết nối còn hoạt động sau cleanup. Không xóa cache/log/app data hoặc temporary evidence.
+
+## L.8. D1-04 architecture verification — 2026-10-13/14
+
+Current branch `feature/d1-04-architecture-verification`, baseline merged develop
+`ccafeb4`. [Mapping/evidence](../implementation/d1-04-architecture-evidence.md),
+[approved decision](../architecture/decisions/ADR-0004-architecture-verification.md).
+Earlier L.4–L.7 “architecture not implemented/web absent” statements are historical.
+
+From `app/backend`, use the existing project-local Maven cache:
+
+```powershell
+$architectureRoot = (Resolve-Path ../..).Path
+$architectureCache = Join-Path $architectureRoot '.demo/maven-repository'
+.\mvnw.cmd -B -ntp "-Dmaven.repo.local=$architectureCache" -Ddebug=false -Dtrace=false clean verify
+.\mvnw.cmd -o -B -ntp "-Dmaven.repo.local=$architectureCache" '-Dtest=ArchitectureTests,ArchitectureNegativeFixtureTests' test
+.\mvnw.cmd -o -B -ntp "-Dmaven.repo.local=$architectureCache" -Ddebug=false -Dtrace=false verify
+```
+
+Online clean verify resolves the clean plugin if absent; offline failure due to
+uncached plugin is a cache/resolution issue. No cache deletion/global settings or
+security bypass. Core ArchUnit 1.5.1 is test scope, plain Jupiter uses existing
+Surefire. Full local tests need no new JUnit engine or Spring Modulith.
+Final H2 verification: 48 discovered, 40 executed/pass, eight PG-only skips.
+
+PostgreSQL regression from repository root, with the existing D1-03 container
+healthy (do not reset/recreate/prune volume):
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File app/backend/verify-postgres.ps1 -Offline
+```
+
+Script provisions fresh isolated test/upgrade databases, never dev/native DB;
+retains them. Final PG: 48 PASS, zero fail/error/skip. Architecture: 11 production
+and 12 fixture tests; 37 production classes, exact four implemented package groups,
+nonempty layer/controller scopes. Eleven fixture violations detected plus one
+allowed actor dependency. Fixtures are excluded from production importer/artifact;
+no suppression. Missing six business modules are not boundary-verified.
+
+Trusted actor has only id/enabled/role/merchantId. Existing security context validates
+signed token and current account status/DB-derived role/merchant. Orders receives
+AuthenticatedActor via AuthenticationPrincipal and cannot use AccountView/other
+Identity APIs or internals. Domain remains Identity-independent. Tests verify
+live merchant ownership, forged-owner rejection, existing RBAC and unchanged JSON.
+
+Security evidence: captured demo application output excludes credentials/bearer;
+active demo TokenService fails missing/weak config and starts with valid config.
+Bounded secret audit checks Git-visible files/artifact against generated private
+values and selected key/token patterns; no full-history/provider security claim.
+
+Browser regression used `run-postgres-demo.ps1 -RuntimeOnly`, existing Vite script,
+then `npm.cmd run test:e2e` in `app/frontend/web`: three installed Edge tests PASS;
+web typecheck/build PASS. Runtime-only does not migrate/reseed dev data. Browser
+fixtures add synthetic demo drafts; existing data/receipts are preserved.
+
+D1-04 local verification: propose DONE; D1-03 local DB milestone PASS/overall PARTIAL;
+D1-02/native/lint/pin/log disposition, independent reproduction, CI/OpenAPI/full
+foundation still open. No AC change or implicit deferral. Next independent slice:
+D1-05 executable CI architecture gate with actual clean-runner evidence.
