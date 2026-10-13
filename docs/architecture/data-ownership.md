@@ -25,14 +25,16 @@
 - Tiền: biểu diễn chính xác và contract JSON an toàn; không `float`/`double` hoặc `Number` dễ mất chính xác.
 - UTC thời điểm, timezone hiển thị cấu hình; tracking/ledger/movement được bảo quản lịch sử.
 
-## [PROPOSED] Flyway baseline
-1. Nơi đặt: `apps/backend/src/main/resources/db/migration/` với một chuỗi version duy nhất `V1__...sql`, `V2__...sql`, `V3__...sql`…; hoặc `db/migration/<module>` với **một owner kiểm soát thứ tự**, không để 9 nhóm tự chọn V1 va chạm.
-2. V1 tạo schemas và extensions được duyệt; V2+ tạo identity/merchant; các migration tiếp theo theo phụ thuộc của vertical slice. Định danh version bất biến khi đã dùng chung.
+## Flyway baseline — D1-03 details accepted 2026-10-13
+1. Nơi đặt đã duyệt: `app/backend/src/main/resources/db/migration/`, một chuỗi version duy nhất `V1__...sql`, `V2__...sql`, `V3__...sql`…; không để 9 nhóm tự chọn V1 va chạm. H2 demo giữ location độc lập `db/demo-migration`.
+2. V1 tạo chín ownership schemas; V2 tạo năm bảng Demo-001 được duyệt. Bootstrap tạo database/roles/schema `platform` cho history `platform.flyway_schema_history`. Không extensions hoặc domain tables ngoài spec được duyệt. Định danh/checksum bất biến sau khi áp dụng.
 3. Không sửa migration đã chạy trên môi trường chia sẻ: viết migration mới, có backfill/compatibility nếu cần.
 4. CI chạy migrate trên Postgres thật (Testcontainers), kiểm tra migrate từ DB trống, upgrade từ snapshot thử nghiệm và rollback app về build trước nếu tương thích.
 5. Hibernate chỉ `validate`; cấm `create`/`update` schema.
 6. Test DB constraint: money >= 0, reserved <= allocatable, unique active assignment (partial index), duplicate operation, FK ownership; quy tắc liên dòng cần transaction + code và integration tests.
 7. Log owner/reviewer trong PR migration; dữ liệu mẫu tách riêng với production DDL, không gắn dữ liệu nhạy cảm.
+
+PostgreSQL dev 18.6, Docker volume mới, port 5433 và role separation đã được duyệt trong DEC-26 / [ADR-0002](decisions/ADR-0002-database-ownership.md). Local/test Flyway dùng migrator, SET ROLE owner; runtime chỉ DML. Shared deploy chạy migration job trước rồi tắt migration trong runtime. Mapping P0 tables/UUID/extensions và tests nghiệp vụ chưa triển khai không tự trở thành ACCEPTED/PASS. Xem [runbook](../runbooks/postgresql-foundation.md).
 
 ## Các bất biến xuyên bảng
 - Ledger transaction: ít nhất hai posting, cùng currency, tổng Nợ = tổng Có; cập nhật balance và postings cùng transaction; refund/adjustment thêm bút toán tham chiếu.

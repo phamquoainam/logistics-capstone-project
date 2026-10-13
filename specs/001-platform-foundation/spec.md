@@ -1,6 +1,6 @@
 # Feature 001: Nền tảng repository, deploy và kiến trúc
 
-**Status:** DRAFT_SPEC / NOT_IMPLEMENTED  
+**Status:** DRAFT_SPEC / PARTIAL — approved D1-03 PostgreSQL/Demo-001 database milestone verified; full feature gates remain open ([evidence](../../docs/implementation/d1-03-postgresql-evidence.md)).
 **Owners / Bounded Context:** `platform, workflow; all module skeletons`  
 **Actors:** Developer, CI  
 **Priority:** P0 nền tảng  

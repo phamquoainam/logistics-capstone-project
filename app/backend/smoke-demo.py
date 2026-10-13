@@ -8,8 +8,6 @@ from urllib.error import HTTPError
 
 root = Path(__file__).resolve().parents[2]
 settings = json.loads((root / '.demo/settings.json').read_text(encoding='utf-8-sig'))
-proof_path = root / '.demo/evidence/persistence-proof.json'
-base = 'http://127.0.0.1:8080/api/demo/v1'
 
 def call(path, token=None, body=None, key=None, expected=200):
     headers = {'Content-Type': 'application/json'}
@@ -29,7 +27,13 @@ def login(username, password):
 
 parser = argparse.ArgumentParser()
 parser.add_argument('mode', choices=['create', 'verify'])
-mode = parser.parse_args().mode
+parser.add_argument('--database', choices=['h2', 'postgres'], default='h2', help='Evidence namespace; database engine is verified separately by integration tests.')
+parser.add_argument('--base-url', default='http://127.0.0.1:8080', help='Local backend origin for the smoke test.')
+args = parser.parse_args()
+mode = args.mode
+base = args.base_url.rstrip('/') + '/api/demo/v1'
+proof_path = root / '.demo/evidence' / ('postgres-persistence-proof.json' if args.database == 'postgres' else 'persistence-proof.json')
+proof_path.parent.mkdir(parents=True, exist_ok=True)
 assert call('/health')['status'] == 'UP'
 a = login('demo.merchant.a', settings['merchantAPassword'])
 b = login('demo.merchant.b', settings['merchantBPassword'])
@@ -55,4 +59,4 @@ assert detail['shipment']['createdAt'] == proof['createdAt']
 assert len(detail['events']) == 1
 call('/shipments/' + proof['id'], b, expected=404)
 assert all(row['id'] != proof['id'] for row in call('/shipments', b))
-print(json.dumps({'mode': mode, 'status': 'PASS', 'shipmentId': proof['id'], 'reference': proof['reference'], 'events': len(detail['events']), 'database': 'isolated H2 file'}, indent=2))
+print(json.dumps({'mode': mode, 'status': 'PASS', 'shipmentId': proof['id'], 'reference': proof['reference'], 'events': len(detail['events']), 'evidenceNamespace': args.database}, indent=2))

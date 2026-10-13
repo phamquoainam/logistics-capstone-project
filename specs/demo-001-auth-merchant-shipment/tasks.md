@@ -6,4 +6,4 @@
 - [x] DEMO-T04: Checkpoint 3 — web typecheck/build PASS; 3 Edge browser tests PASS; H2 file persistence, immutable creation event and operation receipt survived restart.
 - [x] DEMO-T05: Commands/results, walkthrough and P0 limitations recorded in docs/runbooks/demo-local.md and docs/implementation/demo-001-evidence.md; demo trace appended without changing original AC.
 
-Do not mark any original feature AC DONE. Tests run on isolated demo H2; PostgreSQL tests remain UNVERIFIED.
+Do not mark any original feature AC DONE. The initial Demo-001 tests above ran on isolated H2. Subsequent D1-03 PostgreSQL integration is verified separately: 22 backend tests (21 DB tests plus original contextLoads), three browser tests, migration/role/persistence checks PASS; H2 regression preserved. [Evidence](../../docs/implementation/d1-03-postgresql-evidence.md). D1-03 remains PARTIAL for its original outstanding gates.

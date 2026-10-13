@@ -2,6 +2,8 @@
 
 Scope: [demo spec](../../specs/demo-001-auth-merchant-shipment/spec.md), [contract/design](../../specs/demo-001-auth-merchant-shipment/design.md), [evidence](../implementation/demo-001-evidence.md). This is not P0 or D1-03 closure.
 
+**PostgreSQL integration 2026-10-13:** [PostgreSQL runbook](postgresql-foundation.md) adds the approved Docker/5433 backend target. Use `run-postgres-demo.ps1` for PostgreSQL; the commands below remain the preserved H2 fallback. Both targets passed runtime/regression checks; [D1-03 evidence](../implementation/d1-03-postgresql-evidence.md). Original H2 credentials/data/migration are not converted or replaced.
+
 ## Run
 Use two terminals. Stop the demo Java process before rebuilding its JAR on Windows; a running JAR can block Spring Boot repackage. Do not stop the native PostgreSQL service.
 
