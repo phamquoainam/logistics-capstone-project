@@ -1,5 +1,6 @@
 package com.elogistic.backend.orders.internal.infrastructure;
 import com.elogistic.backend.orders.internal.domain.*;
+import com.elogistic.backend.orders.internal.application.port.ShipmentStore;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.*;
@@ -7,12 +8,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.*;
 import org.springframework.stereotype.Repository;
 @Repository @Profile("demo")
-public class ShipmentRepository {
+public class ShipmentRepository implements ShipmentStore {
  private final JdbcTemplate jdbc;
  private static final RowMapper<ShipmentView> VIEW=(r,n)->new ShipmentView(r.getObject("id",UUID.class),r.getObject("merchant_id",UUID.class),r.getString("reference"),r.getString("pickup_address"),r.getString("recipient_name"),r.getString("recipient_phone"),r.getString("delivery_street"),r.getString("delivery_ward"),r.getString("delivery_province"),r.getString("parcel_description"),r.getBigDecimal("weight_kg"),r.getString("status"),r.getObject("created_by",UUID.class),r.getTimestamp("created_at").toInstant(),r.getTimestamp("updated_at").toInstant());
- public record Receipt(String hash,UUID shipmentId) {}
- public record Summary(UUID id,UUID merchantId,String reference,String status,Instant createdAt) {}
- public record Overview(long total,long draft,long cancelled) {}
  public ShipmentRepository(JdbcTemplate jdbc){this.jdbc=jdbc;}
  public List<ShipmentView> list(UUID merchant){return jdbc.query("SELECT * FROM orders.demo_shipment WHERE merchant_id=? ORDER BY created_at DESC LIMIT 200",VIEW,merchant);}
  public Optional<ShipmentView> find(UUID merchant,UUID id,boolean lock){return jdbc.query("SELECT * FROM orders.demo_shipment WHERE merchant_id=? AND id=?"+(lock?" FOR UPDATE":""),VIEW,merchant,id).stream().findFirst();}

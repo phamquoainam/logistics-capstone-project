@@ -3,6 +3,14 @@
 **Tình trạng hiện tại:** PARTIAL — D1-03 PostgreSQL/Demo-001 DB milestone được duyệt và kiểm chứng ([evidence](../../docs/implementation/d1-03-postgresql-evidence.md)); các task/AC đầy đủ dưới đây chưa DONE. **Rule:** Không tick DONE trước khi có code+test+evidence.
 **Ordering:** T-001-01 → T-001-02…; các phần web/mobile có thể song song sau khi contract+API ổn định, không merge thiếu tests.
 
+**D1-04 verified task slice (2026-10-14):** local architecture coverage and negative
+fixtures PASS; minimal trusted actor and adapter-direction repair approved.
+PostgreSQL verify 48 PASS; H2 40 PASS/eight PG-only skip; web regression PASS.
+[Evidence](../../docs/implementation/d1-04-architecture-evidence.md) and
+[traceability](../../docs/quality/traceability.md). This completes only the approved
+local verification slice of T-001-01/05/09/10. Full tasks below remain unchecked:
+CI, contracts, independent reproduction and native/toolchain gates are still open.
+
 - [ ] **T-001-01 — Review**  
   - Thực hiện: Đọc source trace FR/BR/NFR và xác nhận [BLOCKING] Khóa phiên bản Spring/Modulith/Node/Expo, auth approach, provider storage/map; phụ thuộc nền tảng nào chưa chốt cần spike và ADR..  
   - Phụ thuộc: Không.  

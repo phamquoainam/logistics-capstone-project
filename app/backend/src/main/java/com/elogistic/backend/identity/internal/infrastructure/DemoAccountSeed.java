@@ -1,5 +1,4 @@
-package com.elogistic.backend.identity.internal.application;
-import com.elogistic.backend.identity.internal.infrastructure.AccountRepository;
+package com.elogistic.backend.identity.internal.infrastructure;
 import java.util.UUID;
 import org.springframework.boot.*;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
