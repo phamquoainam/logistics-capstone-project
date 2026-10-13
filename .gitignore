@@ -8,6 +8,7 @@ build/
 dist/
 web-build/
 coverage/
+.demo/
 *.tsbuildinfo
 
 # Editor settings
