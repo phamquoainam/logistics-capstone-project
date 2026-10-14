@@ -1,5 +1,11 @@
 # Implementation Tasks 001: Nền tảng repository, deploy và kiến trúc
 
+**D1-05-B execution, 2026-10-14:** safety review, commit 9194451 and ordinary
+feature push PASS; PR creation BLOCKED by API connection failure. No hosted runs
+yet; remote/check-enforcement boxes below remain unchecked. Develop protected
+but required CI checks NOT CONFIGURED. No merge/settings change; D1-05 and full
+feature PARTIAL. [Publication/fallback](../../docs/implementation/d1-05-ci-evidence.md#d1-05-b--publication-and-acceptance-review).
+
 **D1-05 independent CI task slice (2026-10-14):** user confirms reviewer-approved
 D1-04 merged; develop baseline 2c609c4 verified. This implements only CI quality /
 trace portions of T-001-09/10 and REQ-001-03, not all tasks below.

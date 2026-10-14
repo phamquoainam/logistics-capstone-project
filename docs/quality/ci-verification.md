@@ -1,5 +1,11 @@
 # Backend CI verification
 
+**D1-05-B publication (2026-10-14):** implementation commit 9194451 pushed on
+feature/d1-05-ci-verification. Actual hosted CI still UNVERIFIED pending PR creation
+(API POST connection blocker). Read-only audit confirms develop protection but
+no required status checks/effective ruleset. Keep D1-05 PARTIAL; no settings changed.
+[Publication and manual PR fallback](../implementation/d1-05-ci-evidence.md#d1-05-b--publication-and-acceptance-review).
+
 Workflow: [Backend verification](../../.github/workflows/backend-verification.yml).
 Scope: D1-05, approved after the D1-04 merge. No deployment or business changes.
 Status: **READY FOR REMOTE VERIFICATION**; local execution and remote Actions are

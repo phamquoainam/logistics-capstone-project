@@ -1,5 +1,10 @@
 # Technical Design 001: Nền tảng repository, deploy và kiến trúc
 
+**D1-05-B update, 2026-10-14:** CI implementation 9194451 published after review.
+No design/code changes; remote execution blocked pending PR creation, actual CI
+UNVERIFIED. Existing develop protection has no required status checks or effective
+ruleset. No settings/AC change. [Evidence](../../docs/implementation/d1-05-ci-evidence.md#d1-05-b--publication-and-acceptance-review).
+
 **D1-05 implemented CI slice (2026-10-14):** approved task scope adds Linux
 GitHub Actions PR→develop/push develop with separate architecture/default-H2/PG18
 jobs, isolated Maven settings/cache, exact Surefire discovery checks and sanitized

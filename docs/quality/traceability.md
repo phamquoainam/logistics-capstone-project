@@ -1,5 +1,12 @@
 # Traceability Matrix (living document)
 
+**D1-05-B latest (2026-10-14):** CI implementation 9194451 published; safety review
+and ordinary feature push PASS. PR creation BLOCKED by API connection failures;
+actual hosted tests/counts/artifacts UNVERIFIED. Develop protection audit PASS for
+PR/admin/force-push/deletion policy, but required CI checks NOT CONFIGURED, with no
+effective ruleset. REQ-001-03/AC-001-03 and D1-05 stay PARTIAL; no settings change,
+merge, full feature closure or AC reduction. [Publication evidence](../implementation/d1-05-ci-evidence.md#d1-05-b--publication-and-acceptance-review).
+
 **Nguồn:** [REPORT] Chương 3 §3.7. Tạo ma trận trong triển khai, trạng thái ban đầu tất cả `NOT_IMPLEMENTED`.
 
 | Level | Mapping bắt buộc |

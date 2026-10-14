@@ -1,5 +1,13 @@
 # Day 1 — Existing Codebase Assessment, Baseline Verification & SDD Implementation Plan
 
+**D1-05-B hiện hành (2026-10-14):** safety review đúng 14 file PASS, commit
+`9194451` đã push trên `feature/d1-05-ci-verification`. Tạo PR qua API bị lỗi kết
+nối; fallback link đã cung cấp, actual Actions UNVERIFIED. Develop đã protected/
+require PR/chặn force-push và deletion/apply admins, nhưng **chưa required ba CI
+checks**. D1-05 vẫn PARTIAL; không merge hoặc sửa settings. [Publication/audit
+evidence](d1-05-ci-evidence.md#d1-05-b--publication-and-acceptance-review).
+Các trạng thái no-publish của D1-05 ban đầu bên dưới là lịch sử trước authorization.
+
 **Hiện hành D1-05 (2026-10-14):** baseline sạch `develop/2c609c4` khớp remote,
 đã merge D1-03 và D1-04; reviewer đã chấp thuận D1-04 theo xác nhận người dùng.
 Nhánh `feature/d1-05-ci-verification`, HEAD không đổi, chưa commit/push/PR.

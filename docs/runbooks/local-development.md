@@ -1,5 +1,11 @@
 # Local Development Runbook — repository hiện hữu
 
+**D1-05-B hiện hành (2026-10-14):** commit 9194451 đã push feature branch theo
+authorization mới; actual CI chưa chạy vì API tạo PR lỗi kết nối. [Manual PR link,
+protection audit và completion steps](../implementation/d1-05-ci-evidence.md#d1-05-b--publication-and-acceptance-review).
+Develop require PR nhưng chưa required ba CI checks; không tự sửa settings/merge.
+Các câu cấm publish của D1-05 ban đầu dưới đây giữ lịch sử trước authorization.
+
 **D1-05 hiện hành (2026-10-14):** D1-03/04 đã merge tại develop/2c609c4.
 CI workflow và local Linux verification đã sẵn sàng; actual GitHub Actions chưa
 chạy vì task không cho commit/push/PR. [CI guide](../quality/ci-verification.md),

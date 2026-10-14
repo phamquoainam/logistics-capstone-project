@@ -1,5 +1,14 @@
 # D1-05 — CI Architecture Gate & Clean Runner Verification
 
+**D1-05-B update (2026-10-14): PUBLISHED / PARTIAL.** User authorized reviewed
+commit/push/PR creation; implementation commit `91944517eea4ff4254421c8b0aa753f5c70cba03`
+is pushed to `origin/feature/d1-05-ci-verification`. PR creation is currently
+BLOCKED by connection failures on authenticated API POST; actual Actions remains
+UNVERIFIED until a PR exists. Read-only GitHub API works. Develop protection is
+verified, but none of the three CI checks is required. No merge/settings change.
+The original D1-05 no-publish statements below retain their historical scope.
+See the D1-05-B execution section at the end for publication and acceptance gaps.
+
 **2026-10-14 — PARTIAL / READY FOR REMOTE VERIFICATION.** Configuration and local
 clean Linux execution PASS. Actual GitHub Actions and required-check enforcement
 are UNVERIFIED: user explicitly forbids commit/push/PR/merge in this task.
@@ -158,3 +167,64 @@ Testcontainers implementation. No implicit DEFERRED or changed acceptance criter
 authorization, create PR → develop and verify the three real GitHub runs/artifacts
 plus develop required checks; record tested SHA and run URL before proposing DONE.
 No business feature or D1-06 implementation starts as a substitute for this gate.
+
+## D1-05-B — Publication and acceptance review
+
+User explicitly authorized safety review, commit, ordinary feature push and PR
+creation; prohibited merge/reset/force push/data deletion/settings changes.
+
+| Phase / actual operation | Result / evidence |
+|---|---|
+| Git baseline and inventory | PASS branch feature/d1-05-ci-verification, initial HEAD 2c609c4, exact 14 candidate files matching original report; remote develop unchanged |
+| Diff/staging safety | PASS git diff --check and staged diff; only explicit 14 paths added; private `.demo`, env/state, logs, target and generated artifacts excluded |
+| Credentials/artifact review | PASS candidates contain none of known temporary PG passwords or selected GitHub/AWS/private-key patterns; sanitized artifact hashes still match original evidence |
+| Report guard rerun | PASS `python -B -m unittest discover -s scripts/ci -p 'test_*.py' -v`, 14 tests. No source/test/build change required |
+| Commit | PASS `git commit -m "ci: add backend architecture and PostgreSQL verification"`; SHA `91944517eea4ff4254421c8b0aa753f5c70cba03`, 14 files, 942 insertions/5 deletions |
+| Push | PASS `git push --set-upstream origin feature/d1-05-ci-verification`; upstream SHA equals local implementation HEAD; no force push |
+| Create/reuse PR | BLOCKED: two Python API POST attempts and a PowerShell HTTP POST failed connection; subsequent GET found no matching open PR. No duplicate/merge attempted |
+| Access fallback | Existing Git credential authenticates repo read/push and protection reads without token output/persistence. gh absent; browser inventory empty and IAB reports unavailable. No new tool/token/account installed or created |
+| Actual GitHub Actions | UNVERIFIED: branch push alone is not a trigger for this workflow; no PR exists yet and branch-runs API returned zero runs. No remote URL or remote test count asserted |
+
+GitHub repository is public, authenticated permission metadata includes admin/
+push/read. API reads confirm Actions enabled with allowed_actions=all. POST
+failure is reported as a network/environment blocker, not an unproven permission
+denial. Authentication remains only in memory; helper files in ignored `.demo`
+contain no GitHub token. Windows core.autocrlf=true normalizes staged Bash to LF;
+Unix wrapper invocation still uses Bash.
+
+### Required-check audit (read only)
+
+GET `/repos/phamquoainam/logistics-capstone-project/branches/develop/protection`
+returned HTTP 200; GET `/rules/branches/develop` returned `[]`.
+
+| Protection setting | Actual result |
+|---|---|
+| Develop protected | YES |
+| Require PR | Configured; required_approving_review_count=0, no code-owner/last-push approval requirement |
+| Apply to admins | enforce_admins.enabled=true |
+| Required status checks | NOT CONFIGURED: no required_status_checks object in classic protection; no effective ruleset adds checks |
+| Conversation resolution | Required |
+| Force pushes / deletion | Both disabled |
+| Three new CI checks required | NO: Architecture gate; Backend default / H2; Backend PostgreSQL 18 |
+| Actual PR cannot merge while any new mandatory check is pending/red | UNVERIFIED for a PR; configuration does not enforce these checks because they are not required |
+
+Maintainer must first create the PR and allow these check names to appear. Then
+open repository Settings → Branches → edit the existing develop protection.
+Keep required PR/admin/force-push/deletion/conversation policy. Enable
+`Require status checks to pass before merging`, select exactly `Architecture gate`,
+`Backend default / H2`, `Backend PostgreSQL 18` from GitHub Actions, and save.
+No setting was changed by Codex. [Official UI instructions](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule).
+
+### Manual PR fallback and closure
+
+Create at [develop ← D1-05 compare](https://github.com/phamquoainam/logistics-capstone-project/compare/develop...feature/d1-05-ci-verification?expand=1).
+Title: `ci: verify backend architecture and PostgreSQL on clean runners`.
+Prepared description is in ignored `.demo/d1-05-b/pr-body.md` and covers scope,
+architecture, H2/PG, report/privacy guard, local evidence and pending remote gates.
+After creation, provide the PR URL; read-only API can inspect the three runs and
+download sanitized artifacts. Do not merge before acceptance/protection review.
+
+D1-05 stays PARTIAL: publication PASS, actual hosted execution UNVERIFIED and
+required checks NOT CONFIGURED. REQ-001-03/AC-001-03 remain PARTIAL. The highest
+priority next task is **create the PR into develop so actual CI can execute**,
+then continue remote verification. Other Day 1/feature gates retain their status.

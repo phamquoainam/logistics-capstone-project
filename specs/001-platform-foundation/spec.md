@@ -1,5 +1,10 @@
 # Feature 001: Nền tảng repository, deploy và kiến trúc
 
+**D1-05-B publication, 2026-10-14:** implementation 9194451 pushed, no merge.
+PR POST connection failure blocks hosted verification; actual CI UNVERIFIED,
+develop required checks NOT CONFIGURED. REQ-001-03/AC-001-03 remain PARTIAL,
+original AC unchanged. [Publication evidence](../../docs/implementation/d1-05-ci-evidence.md#d1-05-b--publication-and-acceptance-review).
+
 **D1-05 evidence update (2026-10-14):** D1-04 approved local scope accepted and
 merged in develop/2c609c4. Executable backend CI and local fresh Linux tests PASS:
 architecture 23, H2 40/eight PG-only skip, fresh PostgreSQL 48/no skip.
