@@ -1,5 +1,21 @@
 # Implementation Tasks 001: Nền tảng repository, deploy và kiến trúc
 
+**D1-05 independent CI task slice (2026-10-14):** user confirms reviewer-approved
+D1-04 merged; develop baseline 2c609c4 verified. This implements only CI quality /
+trace portions of T-001-09/10 and REQ-001-03, not all tasks below.
+[Commands/results](../../docs/implementation/d1-05-ci-evidence.md).
+
+- [x] Workflow PR→develop/push develop, least privilege/full-SHA Actions.
+- [x] Local fresh Linux architecture 23/no skips, negative fixture detection,
+  default/H2 40/eight named PG-only skips and fresh PG18 48/no skips.
+- [x] Discovery fail-closed/privacy guards (14 tests), YAML/Bash lint, evidence/trace.
+- [ ] Actual hosted Actions run URL/tested SHA and three checks/artifacts PASS.
+- [ ] Develop required checks configured and enforcement verified by maintainer.
+
+**D1-05 PARTIAL / READY FOR REMOTE VERIFICATION.** No commit/push/PR or settings
+change authorized in this execution. Original full feature tasks/AC remain open;
+no Testcontainers, native/mobile or full cold-start claim from these Linux tests.
+
 **Tình trạng hiện tại:** PARTIAL — D1-03 PostgreSQL/Demo-001 DB milestone được duyệt và kiểm chứng ([evidence](../../docs/implementation/d1-03-postgresql-evidence.md)); các task/AC đầy đủ dưới đây chưa DONE. **Rule:** Không tick DONE trước khi có code+test+evidence.
 **Ordering:** T-001-01 → T-001-02…; các phần web/mobile có thể song song sau khi contract+API ổn định, không merge thiếu tests.
 

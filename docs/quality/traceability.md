@@ -80,3 +80,30 @@ Original REQ/AC and unchecked full-feature tasks are unchanged.
 D1-04 local verification satisfies the approved execution checklist; **propose DONE**.
 D1-03 DB milestone is complete locally; overall D1-03 stays PARTIAL due to documented
 environment/reproducibility prerequisites. No implicit DEFERRED or AC reduction.
+
+## D1-05 — CI gate, 2026-10-14
+
+Latest baseline `develop/2c609c42863505d0e28400eaa26f36c72b062769`, clean and
+remote-matched; D1-03/04 merged. User confirms D1-04 reviewer closure; approved
+local D1-04 task is DONE, with earlier execution scope preserved above.
+Current branch `feature/d1-05-ci-verification`, HEAD unchanged, no publish.
+[Evidence/commands/hashes](../implementation/d1-05-ci-evidence.md),
+[workflow](../../.github/workflows/backend-verification.yml),
+[operations](ci-verification.md). Original feature REQ/AC are unchanged.
+
+| Trace / test ID | Evidence | Current status / limit |
+|---|---|---|
+| REQ-001-03, EC-001-03; TEST-001-CI-ARCH-01 | Clean Linux Wrapper architecture verify: 11 production/scope + 12 isolated fixture tests | PASS local 23/no skips; 37 classes/four implemented groups; missing six business modules N/A |
+| AC-001-03; TEST-001-CI-NEG-01 | Same production MODULE_BOUNDARIES detects Finance→Orders repository; fixture asserts detail/throw; cycle/direction controls execute | PASS detection locally; actual remote red-PR/enforcement UNVERIFIED |
+| REQ-001-03; TEST-001-CI-DISC-01 | 14 report-guard tests plus actual Surefire reports | PASS missing/zero/skipped/duplicate/malformed/count mismatch/nonzero Maven/conflicting PG failure+skip fail closed; known parameter-name alias covered |
+| REQ-001-01 / EC-001-04 backend subset; TEST-001-CI-REG-01 | Uncached Linux Wrapper default/H2 clean verify | PASS 48 discovered/40 executed/eight named PG-only conditional skips; not full PostgreSQL or web/mobile verification |
+| REQ-001-02 / AC-001-02 subset; TEST-001-CI-PG-01 | Fresh pinned PG18 tmpfs container, isolated DB/upgrade DB/roles; existing V1/V2 suite | PASS local 48/zero skip; ownership/permission, migration validate/rerun/upgrade, rollback/concurrency. Restart/persistence remain original D1-03 evidence |
+| REQ-001-05, EC-001-05 / AC-001-04 evidence subset; TEST-001-CI-SEC-01 | Public artifact allowlist, synthetic secret stripping test, generated PG password log/artifact audit | PASS bounded tested outputs; no real repo credentials or raw diagnostic upload, no full-history/provider audit claim |
+| REQ-001-03 / AC-001-03 actual CI; TEST-001-CI-REMOTE-01 | Workflow PR→develop/push develop, actionlint/ShellCheck and SHA provenance | Configuration PASS / READY FOR REMOTE VERIFICATION; no Actions run URL/tested remote SHA, required-check settings UNVERIFIED |
+| AC-001-01/05 full cold-start/reproducibility | Local fresh Linux backend only | PARTIAL; full web/mobile/Redis/RabbitMQ/health and independent developer onboarding not verified |
+
+D1-03 local DB milestone remains PASS, overall task PARTIAL for D1-02/full
+onboarding prerequisites. D1-04 approved local task DONE; D1-05 overall PARTIAL
+until real hosted runner execution and required-check enforcement. A successful
+fixture test proves detection, not that a deliberately violating remote PR has
+been blocked. No production violation, acceptance change or implicit deferral.

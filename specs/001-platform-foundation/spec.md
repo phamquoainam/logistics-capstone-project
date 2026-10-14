@@ -1,5 +1,13 @@
 # Feature 001: Nền tảng repository, deploy và kiến trúc
 
+**D1-05 evidence update (2026-10-14):** D1-04 approved local scope accepted and
+merged in develop/2c609c4. Executable backend CI and local fresh Linux tests PASS:
+architecture 23, H2 40/eight PG-only skip, fresh PostgreSQL 48/no skip.
+**PARTIAL / READY FOR REMOTE VERIFICATION**: REQ-001-03 actual GitHub CI and
+required checks remain unverified. Full original REQ/AC below are unchanged;
+six unimplemented modules are not counted as verified. [Evidence](../../docs/implementation/d1-05-ci-evidence.md),
+[traceability](../../docs/quality/traceability.md#d1-05--ci-gate-2026-10-14).
+
 **Status:** DRAFT_SPEC / PARTIAL — approved D1-03 PostgreSQL/Demo-001 database milestone verified; full feature gates remain open ([evidence](../../docs/implementation/d1-03-postgresql-evidence.md)).
 **Owners / Bounded Context:** `platform, workflow; all module skeletons`  
 **Actors:** Developer, CI  

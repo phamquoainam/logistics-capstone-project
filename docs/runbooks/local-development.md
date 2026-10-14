@@ -1,5 +1,11 @@
 # Local Development Runbook — repository hiện hữu
 
+**D1-05 hiện hành (2026-10-14):** D1-03/04 đã merge tại develop/2c609c4.
+CI workflow và local Linux verification đã sẵn sàng; actual GitHub Actions chưa
+chạy vì task không cho commit/push/PR. [CI guide](../quality/ci-verification.md),
+[D1-05 evidence](../implementation/d1-05-ci-evidence.md), mục L.9 bên dưới.
+Các câu “chưa có CI/architecture” ở audit cũ là lịch sử, không phải hiện trạng.
+
 **Cập nhật sau Demo-001 / D1-03 (2026-10-13):** PostgreSQL 18.6 dev riêng trên Docker/5433 đã chạy thật; Flyway V1/V2, chín ownership schemas, owner/migrator/runtime và Demo-001 regression PASS. H2 fallback/migration/dữ liệu giữ nguyên. Hướng dẫn hiện hành: [PostgreSQL foundation](postgresql-foundation.md), [Demo local](demo-local.md), [evidence](../implementation/d1-03-postgresql-evidence.md). Các mục baseline bên dưới là lịch sử audit, không phản ánh persistence/POM hiện tại. D1-02/D1-03 và feature 001 chưa DONE.
 
 **Baseline ngày 13/10/2026:** có backend Spring Boot và Expo starter; web độc lập, database/migration và hạ tầng chưa triển khai. Runbook ưu tiên Windows 11 + PowerShell, phân biệt lệnh được repository hỗ trợ với lệnh đã chạy. Chưa có bằng chứng hệ thống end-to-end khởi chạy. Xem [kế hoạch và gap](../implementation/day-1-plan.md).
@@ -633,3 +639,54 @@ D1-04 local verification: propose DONE; D1-03 local DB milestone PASS/overall PA
 D1-02/native/lint/pin/log disposition, independent reproduction, CI/OpenAPI/full
 foundation still open. No AC change or implicit deferral. Next independent slice:
 D1-05 executable CI architecture gate with actual clean-runner evidence.
+
+## L.9. D1-05 — Linux CI gate và remote verification
+
+Branch `feature/d1-05-ci-verification`, merged baseline `2c609c4`. D1-04 local
+scope đã được reviewer duyệt/merge; D1-03/D1-02 và toàn feature vẫn PARTIAL.
+[Commands, counts, failed-attempt remediation và artifact hashes](../implementation/d1-05-ci-evidence.md).
+
+Workflow `Backend verification` chạy PR→develop/push develop; ba job độc lập
+`Architecture gate`, `Backend default / H2`, `Backend PostgreSQL 18`.
+Linux fresh Maven home: architecture 23 PASS; H2 40 PASS/tám PG-only skip;
+PostgreSQL mới 48 PASS/không skip. Report guard 14 tests và actionlint/ShellCheck
+PASS. Đây là local Linux simulation, **không phải actual GitHub Actions PASS**.
+
+Lệnh CI chạy trong runner/container Linux riêng từ repository root:
+
+```bash
+python3 -B -m unittest discover -s scripts/ci -p 'test_*.py' -v
+bash scripts/ci/run-backend.sh architecture
+# Các mode dùng runner/temp directory riêng, không chia sẻ Maven home:
+bash scripts/ci/run-backend.sh h2
+python3 -B scripts/ci/prepare-postgres.py start --directory "$RUNNER_TEMP/d1-05-postgres"
+bash scripts/ci/run-backend.sh postgres
+python3 -B scripts/ci/prepare-postgres.py cleanup --directory "$RUNNER_TEMP/d1-05-postgres"
+```
+
+Chỉ chạy provisioning CI trên runner test riêng có port 5433 trống; không chạy
+host mode này trên máy dev đang có PostgreSQL development/5433. Local Windows
+simulation dùng `--network-container` trỏ tới **container runner mới có CI label**,
+PG chạy trong loopback riêng của runner, không bind host port. Mỗi PG test attempt
+phải tạo DB mới: rerun toàn suite trên fixture cũ gây failure, không reset DB để
+che lỗi. Helper cleanup chỉ xóa đúng container tạm có name/ownership label đã
+ghi; không xóa volume, dev data, H2, native PostgreSQL hoặc Maven cache máy dev.
+
+Maven Wrapper Unix gọi qua Bash; chưa dùng Windows PowerShell/cmd scripts trên
+Linux. Không copy `.demo`, `.m2`, target, private settings/env hay volumes vào
+runner. Java21/Boot4.1.1/Maven3.10.0/FlywayV1V2 không đổi. CI settings tối thiểu
+và repository mới được truyền explicit; thiếu reports/test hoặc Maven failure
+đều làm job FAIL. Không có skipTests, suppression hay continue-on-error.
+
+Artifacts chỉ `summary.json` và `tests.xml` đã lọc theo inventory test được duyệt;
+không properties/system output/failure bodies. Raw Maven/Surefire output có thể
+chứa token khi MockMvc test thất bại: không upload hoặc paste lên GitHub.
+Local evidence giữ tại `.demo/d1-05/evidence/`; provisioning env/state private
+trong `.demo/d1-05/postgres-private*`, không commit.
+
+**Closure:** D1-05 PARTIAL / READY FOR REMOTE VERIFICATION. Bước ưu tiên kế tiếp:
+sau khi được phép publish, push reviewed feature branch, PR base develop,
+xác minh ba Actions runs/artifacts và ghi run URL/tested SHA. Maintainer cấu hình
+ba required checks trên develop; workflow YAML tự nó chưa chặn merge.
+[Remote procedure và troubleshooting](../quality/ci-verification.md).
+Không tự triển khai D1-06 hoặc thay đổi full feature AC để bỏ qua gate này.

@@ -1,6 +1,19 @@
 # Day 1 — Existing Codebase Assessment, Baseline Verification & SDD Implementation Plan
 
-**Hiện hành sau D1-04 (2026-10-14):** baseline sạch `develop/ccafeb4` đã merge D1-03;
+**Hiện hành D1-05 (2026-10-14):** baseline sạch `develop/2c609c4` khớp remote,
+đã merge D1-03 và D1-04; reviewer đã chấp thuận D1-04 theo xác nhận người dùng.
+Nhánh `feature/d1-05-ci-verification`, HEAD không đổi, chưa commit/push/PR.
+Workflow `Backend verification` có ba job architecture/H2/PostgreSQL, PR→develop
+và push develop. Local Linux từ Maven cache trống: architecture 23/23 PASS,
+H2 40 PASS/tám PG-only skip, PostgreSQL mới 48/48 PASS; report guard 14 tests PASS,
+actionlint/ShellCheck/artifact audit PASS. **D1-05 PARTIAL — READY FOR REMOTE
+VERIFICATION**: actual GitHub Actions và required checks chưa được xác minh.
+D1-04 DONE chỉ cho scope local đã duyệt; D1-03 local DB PASS nhưng task tổng thể
+vẫn PARTIAL do D1-02 và full independent onboarding. Không sửa AC hoặc tính sáu
+module chưa có code là đã verify. [D1-05 evidence](d1-05-ci-evidence.md),
+[CI operations](../quality/ci-verification.md). Các mốc dưới đây giữ lịch sử.
+
+**Lịch sử sau D1-04 (2026-10-14):** baseline sạch `develop/ccafeb4` đã merge D1-03;
 đang ở `feature/d1-04-architecture-verification`, HEAD không đổi, chưa commit/push.
 ArchUnit core 1.5.1/Jupiter có 23 architecture tests PASS trên 37 production classes,
 negative fixtures phát hiện vi phạm thật; minimal trusted actor được duyệt, adapter
@@ -108,7 +121,7 @@ Mức độ phản ánh ảnh hưởng tới phát triển/nghiệm thu, không 
 
 ## D. Ưu tiên Day 1 và checklist thực thi
 
-Checklist assessment này không thay checklist feature. Task đầu tiên chưa tick là **D1-02**; task đầu tiên của feature 001 vẫn **T-001-01 — Review**, chưa đạt điều kiện hoàn thành.
+Checklist assessment này không thay checklist feature. D1-02 vẫn là task tổng thể đầu tiên chưa tick; người dùng đã duyệt triển khai độc lập **D1-05 CI verification** sau D1-03/04 merge. Task đầu tiên của feature 001 vẫn **T-001-01 — Review**, chưa đạt toàn bộ điều kiện hoàn thành.
 
 - [x] **D1-01 — An toàn repository và kiểm kê baseline** — ưu tiên Critical; phụ thuộc: không. File: `AGENTS.md`, manifests, source/config, docs/specs. Gate: ghi branch/HEAD/dirty state, executable/placeholder mà không hủy thay đổi. Bằng chứng: `git status --short`, `git branch --show-current`, `git rev-parse HEAD`, `git ls-files`, `rg --files --hidden --no-ignore` với loại trừ dependency/build/Git; bảng B đã lập. Chỉ audit hoàn thành, không phải foundation.
 
@@ -116,9 +129,9 @@ Checklist assessment này không thay checklist feature. Task đầu tiên chưa
 
 - [ ] **D1-03 — Xác minh build/test/migration** — ưu tiên High; phụ thuộc D1-02, quyết định DB cho migration. File: POM, backend `src/test`, `src/main/resources/db/migration`, `infra/`. **PARTIAL (2026-10-13, sau Demo-001)**: DEC-26 đã duyệt; PostgreSQL 18.6 dev riêng, global Flyway V1/V2, role isolation, cold-start/upgrade/validate/rerun/restart persistence và Demo-001 regression PASS. Final PG Maven verify 22 tests không fail/error/skip; H2 14 PASS/tám PG-only skip; web typecheck/build và ba browser tests PASS. D1-02 vẫn PARTIAL, clean-machine reproduction/CI chưa đủ; local architecture PASS tại D1-04; không đóng toàn feature. [Evidence](d1-03-postgresql-evidence.md).
 
-- [ ] **D1-04 — Review kiến trúc/bảo mật** — ưu tiên Critical; phụ thuộc D1-01, automated gate cần D1-03. File: packages backend, test `architecture/`, `.env.example`. Gate: mapping nine domains review, test bắt internal import/cycle, auth/object scope và secrets/log checks có evidence. **Local verification PASS; đề xuất DONE (2026-10-14)**: 37 production classes thuộc identity/merchant/orders/platform; sáu business modules chưa implement không tính PASS. 23 architecture tests, 11 negative violations được phát hiện/one positive fixture; adapter direction và minimal trusted actor đã sửa/chốt tại ADR-0004. Auth/object scope, log/fail-fast tests, bounded secret/artifact audit và H2/PG/browser regressions PASS. [Evidence](d1-04-architecture-evidence.md). CI/full security/provider/clean-machine gates vẫn mở; checkbox chờ reviewer closure, không miễn AC.
+- [x] **D1-04 — Review kiến trúc/bảo mật** — **DONE cho scope local đã duyệt**: reviewer chấp thuận và merge vào develop/2c609c4 theo xác nhận người dùng, đã kiểm chứng ancestry/source. Mapping nine domains, 37 production classes thuộc identity/merchant/orders/platform; sáu business modules chưa implement không tính PASS. 23 architecture tests, 11 negative violations/one positive fixture; adapter direction và minimal trusted actor theo ADR-0004. Auth/object scope, log/fail-fast/bounded secret audit và H2/PG/browser regressions PASS. [Evidence gốc](d1-04-architecture-evidence.md), [merge/CI reconciliation](d1-05-ci-evidence.md). CI/full security/provider/native và full feature AC vẫn là gates riêng, không miễn hoặc hạ tiêu chí.
 
-- [ ] **D1-05 — Bổ sung foundation theo gap duyệt** — ưu tiên High; phụ thuộc D1-02/03/04 và T-001-01; có thể tách spike độc lập để tháo blocker. File: backend hiện có, migration/config, `infra/compose/`, web/mobile và tests liên quan; chỉ lập diff cụ thể sau review. Gate: thay đổi nhỏ bảo vệ REQ-001/AC liên quan với test/runtime evidence, không tái sinh project/chín nghiệp vụ stub. Ban đầu `[PROPOSED]/BLOCKED`: DEC-01/02/26 và contract review. Redis/RabbitMQ chỉ thêm khi cần cache/async; vẫn cần đủ hạ tầng trước nghiệm thu toàn feature 001/P0.
+- [ ] **D1-05 — CI Architecture Gate & Clean Runner Verification** — ưu tiên High; scope độc lập được người dùng duyệt sau D1-03/04 merge. File: `.github/workflows/backend-verification.yml`, `scripts/ci/`, evidence/runbook/quality/spec metadata. **PARTIAL / READY FOR REMOTE VERIFICATION**: Linux uncached Wrapper architecture 23 PASS, H2 40 PASS/eight PG skips, PG18 mới 48 PASS, guard 14 PASS, actionlint/ShellCheck/privacy audit PASS. PR→develop/push develop, ba check names rõ, không suppress/skip failure. Còn actual hosted-run URL/tested SHA, artifacts và required-check enforcement trước khi DONE. Không commit/push/PR/merge ở task này; không deploy hoặc thêm business/module/broker/cache. [Evidence](d1-05-ci-evidence.md), [completion procedure](../quality/ci-verification.md#remote-completion-procedure).
 
 - [ ] **D1-06 — Chọn slice và kiểm tra DoR** — ưu tiên High; phụ thuộc foundation cần thiết VERIFIED, D1-04/05. File: `specs/001-platform-foundation/{spec,design,tasks}.md`, sau đó `specs/002-identity-access/{spec,design,tasks}.md`. Gate: reviewer chốt blocker/contract/fixture, public dependency rõ. Ban đầu `BLOCKED`; Identity chưa implement nên là business slice ứng viên đầu tiên sau foundation, không phải triển khai lại auth đã có.
 
