@@ -1,5 +1,35 @@
 # Implementation Tasks 001: Nền tảng repository, deploy và kiến trúc
 
+**D1-05-B latest (2026-10-14):** Java setup repair 6b8f97a pushed to existing
+PR #5; actual hosted run 38506000079 completed/success, downloaded artifacts
+verified: architecture 23/no skip, H2 40/eight PG-only skips, PG18 48/no skip;
+guard 14 per job and output privacy checks PASS. The hosted-run box below is now
+complete; required-check enforcement remains open. D1-05/full feature PARTIAL;
+no AC edits, settings change or merge. [Evidence](../../docs/implementation/d1-05-ci-evidence.md#d1-05-b--java-setup-fix-and-actual-hosted-verification).
+
+**D1-05-B execution, 2026-10-14:** safety review, commit 9194451 and ordinary
+feature push PASS; PR creation BLOCKED by API connection failure. No hosted runs
+yet; remote/check-enforcement boxes below remain unchecked. Develop protected
+but required CI checks NOT CONFIGURED. No merge/settings change; D1-05 and full
+feature PARTIAL. [Publication/fallback](../../docs/implementation/d1-05-ci-evidence.md#d1-05-b--publication-and-acceptance-review).
+
+**D1-05 independent CI task slice (2026-10-14):** user confirms reviewer-approved
+D1-04 merged; develop baseline 2c609c4 verified. This implements only CI quality /
+trace portions of T-001-09/10 and REQ-001-03, not all tasks below.
+[Commands/results](../../docs/implementation/d1-05-ci-evidence.md).
+
+- [x] Workflow PR→develop/push develop, least privilege/full-SHA Actions.
+- [x] Local fresh Linux architecture 23/no skips, negative fixture detection,
+  default/H2 40/eight named PG-only skips and fresh PG18 48/no skips.
+- [x] Discovery fail-closed/privacy guards (14 tests), YAML/Bash lint, evidence/trace.
+- [x] Actual hosted Actions run URL/tested SHA and three checks/artifacts PASS:
+  PR #5/source 6b8f97a/run 38506000079, exact named report inventory verified.
+- [ ] Develop required checks configured and enforcement verified by maintainer.
+
+**D1-05 PARTIAL / READY FOR REMOTE VERIFICATION.** No commit/push/PR or settings
+change authorized in this execution. Original full feature tasks/AC remain open;
+no Testcontainers, native/mobile or full cold-start claim from these Linux tests.
+
 **Tình trạng hiện tại:** PARTIAL — D1-03 PostgreSQL/Demo-001 DB milestone được duyệt và kiểm chứng ([evidence](../../docs/implementation/d1-03-postgresql-evidence.md)); các task/AC đầy đủ dưới đây chưa DONE. **Rule:** Không tick DONE trước khi có code+test+evidence.
 **Ordering:** T-001-01 → T-001-02…; các phần web/mobile có thể song song sau khi contract+API ổn định, không merge thiếu tests.
 

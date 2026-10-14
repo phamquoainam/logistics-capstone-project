@@ -1,5 +1,27 @@
 # Technical Design 001: Nền tảng repository, deploy và kiến trúc
 
+**D1-05 Java setup repair (2026-10-14):** user-approved major selector `21` with
+Temurin replaces the mismatching `21.0.10+7` build selector; exact resolved JDK
+logged by `java -version` (hosted run: 21.0.12.1+1). No architecture/business/POM/
+test/migration change, full-SHA Actions preserved. PR #5/source 6b8f97a has actual
+three-job verification/artifact PASS; required checks are still NOT CONFIGURED,
+so D1-05/full foundation PARTIAL. [Evidence](../../docs/implementation/d1-05-ci-evidence.md#d1-05-b--java-setup-fix-and-actual-hosted-verification).
+
+**D1-05-B update, 2026-10-14:** CI implementation 9194451 published after review.
+No design/code changes; remote execution blocked pending PR creation, actual CI
+UNVERIFIED. Existing develop protection has no required status checks or effective
+ruleset. No settings/AC change. [Evidence](../../docs/implementation/d1-05-ci-evidence.md#d1-05-b--publication-and-acceptance-review).
+
+**D1-05 implemented CI slice (2026-10-14):** approved task scope adds Linux
+GitHub Actions PR→develop/push develop with separate architecture/default-H2/PG18
+jobs, isolated Maven settings/cache, exact Surefire discovery checks and sanitized
+artifacts. PostgreSQL image and role/schema policy match D1-03; fresh tmpfs test
+container/database/upgrade database are provisioned per job without dev volumes.
+Existing V1/V2, POM, production architecture and HTTP contracts are unchanged.
+Local Linux execution PASS; actual GitHub Actions/required checks UNVERIFIED,
+full feature still PARTIAL. [CI guide](../../docs/quality/ci-verification.md),
+[evidence](../../docs/implementation/d1-05-ci-evidence.md).
+
 **State:** DESIGN_PROPOSED — không mô tả API/migration đã implement.  
 
 **D1-03 DB milestone accepted/implemented 2026-10-13:** DEC-26 approved explicitly; PostgreSQL 18.6 isolated dev container/5433, nine ownership schemas, V1/V2 global stream, platform history, owner/migrator/runtime roles and local/test migrations/shared job implemented. Demo-001 real PostgreSQL tests/migration/permissions/restart/browser checks PASS; H2 remains intact. This subsection records only the approved DB slice; remaining proposed contracts/feature AC are unchanged. [ADR](../../docs/architecture/decisions/ADR-0002-database-ownership.md), [evidence](../../docs/implementation/d1-03-postgresql-evidence.md). D1-03/full foundation still PARTIAL.

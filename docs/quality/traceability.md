@@ -1,5 +1,31 @@
 # Traceability Matrix (living document)
 
+**D1-05-B actual CI evidence (2026-10-14):** PR #5, fix 6b8f97a,
+[run 38506000079](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/38506000079)
+PASS on real hosted Ubuntu runner. Earlier UNVERIFIED records retain historical
+scope. No original REQ/AC edits. [Detailed remote evidence](../implementation/d1-05-ci-evidence.md#d1-05-b--java-setup-fix-and-actual-hosted-verification).
+
+| Trace / test ID | Actual hosted result | Remaining limit |
+|---|---|---|
+| REQ-001-03; TEST-001-CI-REMOTE-01 / ARCH-01 | Java setup and architecture 23/23 PASS; full named XML inventory verified | Six absent business modules N/A |
+| EC/AC-001-03; TEST-001-CI-NEG-01 | 12 fixtures executed/no skip; 11 violations detected + positive actor control | No deliberately red production PR; required checks/enforcement not configured |
+| TEST-001-CI-DISC-01 / REG-01 | Guard 14 per job; H2 40 PASS/eight named conditional PG skips | H2 is not PG substitution; PG job runs separately |
+| REQ-001-02 subset; TEST-001-CI-PG-01 | New isolated PG18, existing V1/V2, permission/upgrade/rerun/rollback/concurrency: 48 PASS/no skip | Historical dev persistence evidence unchanged; not Testcontainers implementation |
+| REQ-001-05 subset; TEST-001-CI-SEC-01 | Three uploaded ZIP digests, exact JSON/JUnit allowlists and bounded log token/password masking audit PASS | No full-history/provider audit claim |
+| D1-05 mandatory acceptance: required checks | Classic protection missing required_status_checks, effective rules=[] | NOT CONFIGURED; D1-05 PARTIAL, no settings change/merge |
+
+Actual hosted execution is now verified; remaining highest-priority task is
+maintainer-required checks configuration/read-only enforcement review. D1-02,
+D1-03 full onboarding and all Feature 001 cold-start/contracts/native gates remain
+open as documented; no acceptance reduction or implicit deferral.
+
+**D1-05-B latest (2026-10-14):** CI implementation 9194451 published; safety review
+and ordinary feature push PASS. PR creation BLOCKED by API connection failures;
+actual hosted tests/counts/artifacts UNVERIFIED. Develop protection audit PASS for
+PR/admin/force-push/deletion policy, but required CI checks NOT CONFIGURED, with no
+effective ruleset. REQ-001-03/AC-001-03 and D1-05 stay PARTIAL; no settings change,
+merge, full feature closure or AC reduction. [Publication evidence](../implementation/d1-05-ci-evidence.md#d1-05-b--publication-and-acceptance-review).
+
 **Nguồn:** [REPORT] Chương 3 §3.7. Tạo ma trận trong triển khai, trạng thái ban đầu tất cả `NOT_IMPLEMENTED`.
 
 | Level | Mapping bắt buộc |
@@ -80,3 +106,30 @@ Original REQ/AC and unchecked full-feature tasks are unchanged.
 D1-04 local verification satisfies the approved execution checklist; **propose DONE**.
 D1-03 DB milestone is complete locally; overall D1-03 stays PARTIAL due to documented
 environment/reproducibility prerequisites. No implicit DEFERRED or AC reduction.
+
+## D1-05 — CI gate, 2026-10-14
+
+Latest baseline `develop/2c609c42863505d0e28400eaa26f36c72b062769`, clean and
+remote-matched; D1-03/04 merged. User confirms D1-04 reviewer closure; approved
+local D1-04 task is DONE, with earlier execution scope preserved above.
+Current branch `feature/d1-05-ci-verification`, HEAD unchanged, no publish.
+[Evidence/commands/hashes](../implementation/d1-05-ci-evidence.md),
+[workflow](../../.github/workflows/backend-verification.yml),
+[operations](ci-verification.md). Original feature REQ/AC are unchanged.
+
+| Trace / test ID | Evidence | Current status / limit |
+|---|---|---|
+| REQ-001-03, EC-001-03; TEST-001-CI-ARCH-01 | Clean Linux Wrapper architecture verify: 11 production/scope + 12 isolated fixture tests | PASS local 23/no skips; 37 classes/four implemented groups; missing six business modules N/A |
+| AC-001-03; TEST-001-CI-NEG-01 | Same production MODULE_BOUNDARIES detects Finance→Orders repository; fixture asserts detail/throw; cycle/direction controls execute | PASS detection locally; actual remote red-PR/enforcement UNVERIFIED |
+| REQ-001-03; TEST-001-CI-DISC-01 | 14 report-guard tests plus actual Surefire reports | PASS missing/zero/skipped/duplicate/malformed/count mismatch/nonzero Maven/conflicting PG failure+skip fail closed; known parameter-name alias covered |
+| REQ-001-01 / EC-001-04 backend subset; TEST-001-CI-REG-01 | Uncached Linux Wrapper default/H2 clean verify | PASS 48 discovered/40 executed/eight named PG-only conditional skips; not full PostgreSQL or web/mobile verification |
+| REQ-001-02 / AC-001-02 subset; TEST-001-CI-PG-01 | Fresh pinned PG18 tmpfs container, isolated DB/upgrade DB/roles; existing V1/V2 suite | PASS local 48/zero skip; ownership/permission, migration validate/rerun/upgrade, rollback/concurrency. Restart/persistence remain original D1-03 evidence |
+| REQ-001-05, EC-001-05 / AC-001-04 evidence subset; TEST-001-CI-SEC-01 | Public artifact allowlist, synthetic secret stripping test, generated PG password log/artifact audit | PASS bounded tested outputs; no real repo credentials or raw diagnostic upload, no full-history/provider audit claim |
+| REQ-001-03 / AC-001-03 actual CI; TEST-001-CI-REMOTE-01 | Workflow PR→develop/push develop, actionlint/ShellCheck and SHA provenance | Configuration PASS / READY FOR REMOTE VERIFICATION; no Actions run URL/tested remote SHA, required-check settings UNVERIFIED |
+| AC-001-01/05 full cold-start/reproducibility | Local fresh Linux backend only | PARTIAL; full web/mobile/Redis/RabbitMQ/health and independent developer onboarding not verified |
+
+D1-03 local DB milestone remains PASS, overall task PARTIAL for D1-02/full
+onboarding prerequisites. D1-04 approved local task DONE; D1-05 overall PARTIAL
+until real hosted runner execution and required-check enforcement. A successful
+fixture test proves detection, not that a deliberately violating remote PR has
+been blocked. No production violation, acceptance change or implicit deferral.
