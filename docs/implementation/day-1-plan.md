@@ -1,5 +1,15 @@
 # Day 1 — Existing Codebase Assessment, Baseline Verification & SDD Implementation Plan
 
+**D1-05 Java repair hiện hành (2026-10-14):** fix `6b8f97a` trên PR #5 đã có
+[actual GitHub run PASS](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/38506000079).
+Java setup/version log, architecture 23 PASS, default/H2 40 PASS/tám PG skip,
+PostgreSQL mới 48 PASS, guard 14 mỗi job, artifacts/counts/privacy đều kiểm chứng.
+JDK runner thực tế Temurin 21.0.12.1+1, giữ major 21/Boot4.1.1/Maven3.10.0;
+không đổi business code/migrations/tests. **D1-05 PARTIAL chỉ còn mandatory gate
+required checks/enforcement trên develop**: classic protection chưa có checks,
+effective ruleset rỗng. Không tự cấu hình hoặc merge. [Evidence](d1-05-ci-evidence.md#d1-05-b--java-setup-fix-and-actual-hosted-verification).
+Các mốc “PR blocked/CI UNVERIFIED” dưới đây giữ lịch sử trước run đã PASS.
+
 **D1-05-B hiện hành (2026-10-14):** safety review đúng 14 file PASS, commit
 `9194451` đã push trên `feature/d1-05-ci-verification`. Tạo PR qua API bị lỗi kết
 nối; fallback link đã cung cấp, actual Actions UNVERIFIED. Develop đã protected/
@@ -139,7 +149,7 @@ Checklist assessment này không thay checklist feature. D1-02 vẫn là task t�
 
 - [x] **D1-04 — Review kiến trúc/bảo mật** — **DONE cho scope local đã duyệt**: reviewer chấp thuận và merge vào develop/2c609c4 theo xác nhận người dùng, đã kiểm chứng ancestry/source. Mapping nine domains, 37 production classes thuộc identity/merchant/orders/platform; sáu business modules chưa implement không tính PASS. 23 architecture tests, 11 negative violations/one positive fixture; adapter direction và minimal trusted actor theo ADR-0004. Auth/object scope, log/fail-fast/bounded secret audit và H2/PG/browser regressions PASS. [Evidence gốc](d1-04-architecture-evidence.md), [merge/CI reconciliation](d1-05-ci-evidence.md). CI/full security/provider/native và full feature AC vẫn là gates riêng, không miễn hoặc hạ tiêu chí.
 
-- [ ] **D1-05 — CI Architecture Gate & Clean Runner Verification** — ưu tiên High; scope độc lập được người dùng duyệt sau D1-03/04 merge. File: `.github/workflows/backend-verification.yml`, `scripts/ci/`, evidence/runbook/quality/spec metadata. **PARTIAL / READY FOR REMOTE VERIFICATION**: Linux uncached Wrapper architecture 23 PASS, H2 40 PASS/eight PG skips, PG18 mới 48 PASS, guard 14 PASS, actionlint/ShellCheck/privacy audit PASS. PR→develop/push develop, ba check names rõ, không suppress/skip failure. Còn actual hosted-run URL/tested SHA, artifacts và required-check enforcement trước khi DONE. Không commit/push/PR/merge ở task này; không deploy hoặc thêm business/module/broker/cache. [Evidence](d1-05-ci-evidence.md), [completion procedure](../quality/ci-verification.md#remote-completion-procedure).
+- [ ] **D1-05 — CI Architecture Gate & Clean Runner Verification** — **PARTIAL / HOSTED CI PASS**: Java selector repair 6b8f97a, PR #5/run 38506000079, source SHA và artifacts đã kiểm chứng. Exact remote counts: architecture 23/23, H2 40/tám PG-only skip, PG18 48/48; guard 14 mỗi job, full-SHA Actions và failure assertions giữ nguyên. Local actionlint/ShellCheck/architecture và bounded remote privacy audit PASS. Còn **ba required checks trên develop chưa được cấu hình và kiểm chứng enforcement**; không tự sửa settings/merge, không deploy/business expansion. [Evidence](d1-05-ci-evidence.md#d1-05-b--java-setup-fix-and-actual-hosted-verification), [completion procedure](../quality/ci-verification.md#remote-completion-procedure).
 
 - [ ] **D1-06 — Chọn slice và kiểm tra DoR** — ưu tiên High; phụ thuộc foundation cần thiết VERIFIED, D1-04/05. File: `specs/001-platform-foundation/{spec,design,tasks}.md`, sau đó `specs/002-identity-access/{spec,design,tasks}.md`. Gate: reviewer chốt blocker/contract/fixture, public dependency rõ. Ban đầu `BLOCKED`; Identity chưa implement nên là business slice ứng viên đầu tiên sau foundation, không phải triển khai lại auth đã có.
 

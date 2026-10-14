@@ -1,5 +1,12 @@
 # Technical Design 001: Nền tảng repository, deploy và kiến trúc
 
+**D1-05 Java setup repair (2026-10-14):** user-approved major selector `21` with
+Temurin replaces the mismatching `21.0.10+7` build selector; exact resolved JDK
+logged by `java -version` (hosted run: 21.0.12.1+1). No architecture/business/POM/
+test/migration change, full-SHA Actions preserved. PR #5/source 6b8f97a has actual
+three-job verification/artifact PASS; required checks are still NOT CONFIGURED,
+so D1-05/full foundation PARTIAL. [Evidence](../../docs/implementation/d1-05-ci-evidence.md#d1-05-b--java-setup-fix-and-actual-hosted-verification).
+
 **D1-05-B update, 2026-10-14:** CI implementation 9194451 published after review.
 No design/code changes; remote execution blocked pending PR creation, actual CI
 UNVERIFIED. Existing develop protection has no required status checks or effective

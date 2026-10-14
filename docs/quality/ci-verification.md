@@ -1,15 +1,16 @@
 # Backend CI verification
 
-**D1-05-B publication (2026-10-14):** implementation commit 9194451 pushed on
-feature/d1-05-ci-verification. Actual hosted CI still UNVERIFIED pending PR creation
-(API POST connection blocker). Read-only audit confirms develop protection but
-no required status checks/effective ruleset. Keep D1-05 PARTIAL; no settings changed.
-[Publication and manual PR fallback](../implementation/d1-05-ci-evidence.md#d1-05-b--publication-and-acceptance-review).
+**D1-05-B actual CI verified (2026-10-14):** Java selector fix 6b8f97a on PR #5,
+[run 38506000079 PASS](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/38506000079).
+Architecture 23/23, H2 40/eight named PG skips, PostgreSQL 48/48; all reports/upload
+and bounded artifact/log privacy audits PASS. Resolved Temurin 21.0.12.1+1 remains
+major 21. Develop still has no required status checks/effective ruleset, so D1-05
+overall PARTIAL. No merge/settings change. [Remote evidence](../implementation/d1-05-ci-evidence.md#d1-05-b--java-setup-fix-and-actual-hosted-verification).
 
 Workflow: [Backend verification](../../.github/workflows/backend-verification.yml).
 Scope: D1-05, approved after the D1-04 merge. No deployment or business changes.
-Status: **READY FOR REMOTE VERIFICATION**; local execution and remote Actions are
-separate gates. [Execution evidence](../implementation/d1-05-ci-evidence.md).
+Status: **HOSTED EXECUTION PASS / REQUIRED CHECKS NOT CONFIGURED**; D1-05 remains
+PARTIAL. [Execution evidence](../implementation/d1-05-ci-evidence.md).
 
 ## Triggers and required checks
 

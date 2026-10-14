@@ -1,5 +1,12 @@
 # Implementation Tasks 001: Nền tảng repository, deploy và kiến trúc
 
+**D1-05-B latest (2026-10-14):** Java setup repair 6b8f97a pushed to existing
+PR #5; actual hosted run 38506000079 completed/success, downloaded artifacts
+verified: architecture 23/no skip, H2 40/eight PG-only skips, PG18 48/no skip;
+guard 14 per job and output privacy checks PASS. The hosted-run box below is now
+complete; required-check enforcement remains open. D1-05/full feature PARTIAL;
+no AC edits, settings change or merge. [Evidence](../../docs/implementation/d1-05-ci-evidence.md#d1-05-b--java-setup-fix-and-actual-hosted-verification).
+
 **D1-05-B execution, 2026-10-14:** safety review, commit 9194451 and ordinary
 feature push PASS; PR creation BLOCKED by API connection failure. No hosted runs
 yet; remote/check-enforcement boxes below remain unchecked. Develop protected
@@ -15,7 +22,8 @@ trace portions of T-001-09/10 and REQ-001-03, not all tasks below.
 - [x] Local fresh Linux architecture 23/no skips, negative fixture detection,
   default/H2 40/eight named PG-only skips and fresh PG18 48/no skips.
 - [x] Discovery fail-closed/privacy guards (14 tests), YAML/Bash lint, evidence/trace.
-- [ ] Actual hosted Actions run URL/tested SHA and three checks/artifacts PASS.
+- [x] Actual hosted Actions run URL/tested SHA and three checks/artifacts PASS:
+  PR #5/source 6b8f97a/run 38506000079, exact named report inventory verified.
 - [ ] Develop required checks configured and enforcement verified by maintainer.
 
 **D1-05 PARTIAL / READY FOR REMOTE VERIFICATION.** No commit/push/PR or settings

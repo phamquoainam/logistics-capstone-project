@@ -1,5 +1,13 @@
 # Local Development Runbook — repository hiện hữu
 
+**D1-05 Java repair verified (2026-10-14):** PR #5/fix 6b8f97a có actual GitHub
+run 38506000079 PASS: architecture 23, H2 40/tám PG-only skip, PostgreSQL 48/no
+skip; artifacts/digest/counts/privacy đã kiểm tra. Setup Java dùng Temurin major
+`21`, ghi `java -version`; runner thực tế 21.0.12.1+1, local validation 21.0.10+7.
+Các SHAs/Boot/Maven/test criteria/PG setup không đổi. Develop chưa required ba
+checks, nên D1-05 PARTIAL. [Exact results và UI next step](../implementation/d1-05-ci-evidence.md#d1-05-b--java-setup-fix-and-actual-hosted-verification).
+Các mốc PR/CI bị chặn dưới đây giữ lịch sử; không tự merge hoặc sửa settings.
+
 **D1-05-B hiện hành (2026-10-14):** commit 9194451 đã push feature branch theo
 authorization mới; actual CI chưa chạy vì API tạo PR lỗi kết nối. [Manual PR link,
 protection audit và completion steps](../implementation/d1-05-ci-evidence.md#d1-05-b--publication-and-acceptance-review).

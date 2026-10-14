@@ -1,5 +1,12 @@
 # Feature 001: Nền tảng repository, deploy và kiến trúc
 
+**D1-05-B actual hosted verification (2026-10-14):** Java selector repair 6b8f97a,
+PR #5/run 38506000079 PASS: architecture 23, H2 40/eight named PG skips, PG18 48/no
+skip, artifacts/privacy verified. REQ-001-03 actual CI execution is verified;
+AC-001-03/D1-05 required-check enforcement remains PARTIAL because develop has
+no required CI checks. Full feature/AC unchanged; six absent modules N/A.
+[Remote evidence](../../docs/implementation/d1-05-ci-evidence.md#d1-05-b--java-setup-fix-and-actual-hosted-verification).
+
 **D1-05-B publication, 2026-10-14:** implementation 9194451 pushed, no merge.
 PR POST connection failure blocks hosted verification; actual CI UNVERIFIED,
 develop required checks NOT CONFIGURED. REQ-001-03/AC-001-03 remain PARTIAL,

@@ -1,6 +1,16 @@
 # D1-05 — CI Architecture Gate & Clean Runner Verification
 
-**Java setup repair in progress (2026-10-14):** user created [PR #5](https://github.com/phamquoainam/logistics-capstone-project/pull/5).
+**Java setup repair VERIFIED (2026-10-14):** [PR #5](https://github.com/phamquoainam/logistics-capstone-project/pull/5)
+is open/unmerged. Fix commit `6b8f97a4d087b16519ea0b9e3f54f2b5dde1d98b` is pushed;
+[actual successful run 38506000079](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/38506000079)
+has all three jobs PASS. Downloaded/digest-verified artifacts show architecture
+23/23, H2 40 PASS/eight PG-only skips, PostgreSQL 48/48; no failures/errors.
+Actual JDK is Temurin **21.0.12.1+1**, major 21; local validation uses 21.0.10+7.
+Required checks are still NOT CONFIGURED; D1-05 overall stays PARTIAL. Detailed
+remote results/privacy/protection audit are recorded at the end. Earlier pending
+PR/UNVERIFIED/no-publish descriptions retain historical execution scope.
+
+**Initial failure and repair:** user created [PR #5](https://github.com/phamquoainam/logistics-capstone-project/pull/5).
 Actual [run 38504179171 / attempt 2](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/38504179171/attempts/2)
 on head `8cf56c67740ca6be4daa094cd687663e68513b4d` failed all three jobs at Setup
 Java 21. API steps/annotations confirm `No matching version found for SemVer
@@ -8,7 +18,8 @@ Java 21. API steps/annotations confirm `No matching version found for SemVer
 The local tree already had the user-aligned selector `"21"`; it was preserved.
 The shared matrix setup now uses Temurin major 21 and logs `java -version`, with
 all Action SHAs, test criteria, report paths and PostgreSQL setup unchanged.
-Actual repaired-run results are pending; D1-05 remains PARTIAL. Prior PR-creation
+Repaired-run results are verified in the latest section below; D1-05 remains
+PARTIAL only for its remaining mandatory required-check gate. Prior PR-creation
 blocker records below are historical, not the present state.
 
 The resolver filters returned Temurin packages by the version selector and throws
@@ -253,3 +264,102 @@ D1-05 stays PARTIAL: publication PASS, actual hosted execution UNVERIFIED and
 required checks NOT CONFIGURED. REQ-001-03/AC-001-03 remain PARTIAL. The highest
 priority next task is **create the PR into develop so actual CI can execute**,
 then continue remote verification. Other Day 1/feature gates retain their status.
+
+## D1-05-B — Java setup fix and actual hosted verification
+
+### Safety, root cause and minimal change
+
+Initial branch feature/d1-05-ci-verification, HEAD/upstream
+`8cf56c67740ca6be4daa094cd687663e68513b4d`. One existing uncommitted change:
+workflow selector already `"21"`; it was within user-approved scope and preserved.
+No unrelated changes. Committed workflow originally requested `21.0.10+7` at
+`.github/workflows/backend-verification.yml:41`, shared by all three matrix jobs.
+No version-file/environment override was configured. Annotations from all three
+jobs on failed run 38504179171/attempt 2 list available `21.0.10+7.0.LTS` and
+reject `21.0.10+7`. The pinned resolver's compareBuild equality explains this
+metadata mismatch. It is a setup resolution error, not source/JUnit/DB failure.
+
+Minimal fix: retain `distribution: temurin`, select major `"21"`, and add
+`Record resolved Java version` → `java -version`. Preserve all full-SHA Actions,
+signature verification, test selection/criteria, Maven/Boot/dependencies,
+PostgreSQL image/roles/migrations/setup and artifact handling. No SSL bypass,
+suppression, skipTests or continue-on-error. `if-no-files-found: error` remains:
+it reported a secondary failure in the old run, and reports/upload work in the
+successful run without changing paths or disabling guards.
+
+Local commands: separate `docker exec elogistics-ci-javafix-20261014 actionlint
+.github/workflows/backend-verification.yml` and `shellcheck scripts/ci/run-backend.sh`
+each exit 0; report guard 14 PASS; `bash scripts/ci/run-backend.sh architecture`
+on fresh Linux Maven home/repository gives 23 executed/pass, zero skipped.
+`git diff --check` and exact three-file safety/credential review PASS. No backend
+source changed; remote runs supply full H2/PG regression. Commit
+`fix(ci): resolve Java 21 setup on GitHub runners` → **6b8f97a**, ordinary push
+to the existing feature branch; no reset/force push/merge.
+
+### Actual run and test counts
+
+Run **38506000079, attempt 1**, event pull_request, source head
+`6b8f97a4d087b16519ea0b9e3f54f2b5dde1d98b`, overall completed/success.
+API job steps and privately downloaded run logs verify Java setup/version,
+guard, Maven verify and upload success in every job. Runtime logs record
+Temurin 21.0.12.1+1 in all three jobs, Maven Wrapper 3.10.0 and fresh Maven home.
+Boot 4.1.1 remains the unchanged project parent; no project technology major changed.
+
+| Exact check / job URL | Conclusion | Discovered | Executed/pass | Skipped |
+|---|---|---:|---:|---:|
+| [Architecture gate](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/38506000079/job/115663537217) | PASS | 23 | 23 | 0 |
+| [Backend default / H2](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/38506000079/job/115663537229) | PASS | 48 | 40 | 8 named PG-only |
+| [Backend PostgreSQL 18](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/38506000079/job/115663536810) | PASS | 48 | 48 | 0 |
+
+All reports have zero failures/errors. Downloaded XML verifies each required
+method, not just summary totals: 11 architecture production/scope tests and 12
+isolated fixture methods execute without skips; eleven forbidden-dependency/
+cycle/layer violations detected plus one allowed actor control. Six absent business
+modules remain N/A. Guard unit suite executes 14 tests per job; current code
+retains nonzero-Maven propagation and all failure assertions. No deliberately
+violating production PR or merge-blocking experiment was authorized/performed.
+
+PG preparation and cleanup steps both PASS. Logs confirm new disposable PG18,
+two isolated test databases with owner/migrator/runtime roles, then removal of
+only the recorded owned CI container. Same existing V1/V2 executed via Flyway,
+with real PG permissions/rollback/concurrency/upgrade/rerun tests. CI loopback
+belongs to a separate hosted VM; no local Docker Desktop/native/dev DB dependency.
+
+### Artifact and log audit
+
+All three upload steps PASS. Artifacts belong to run 38506000079/head 6b8f97a,
+not expired at verification, ZIP SHA-256 matches the API digest. Each ZIP has
+**exactly summary.json and tests.xml**. Independent parsing requires allowlisted
+fields/classes/methods/statuses, matching counts and exact H2 conditional skips;
+rejects properties/system output/failure bodies/unexpected files or strings.
+
+| Artifact | ID | Verified ZIP SHA-256 |
+|---|---:|---|
+| backend-architecture-1 | 11868045856 | 729dba8b70286c73702a3c855a9b65b9dcdac0bf0951e4e74372d1cdaae0de47 |
+| backend-h2-1 | 11867669191 | 5347f86e9975cbb5d36b3c82252f33468463e3bbbe4ee1ce0ed75f1e77c41938 |
+| backend-postgres-1 | 11867439701 | f3830b1b244efee813e609ac5b2de4427e4e1b0c4e5aabcc11c969b9fb58c435 |
+
+Private run logs show generated PG passwords masked as `***`, credential log
+audit PASS, and no selected unmasked GitHub/JWT token patterns. Public artifacts
+contain no credentials/environment/raw diagnostics by their strict allowlist.
+This is a bounded audit of this run's outputs, not a full repository-history audit.
+Network timeouts during read/download were retried without changing security or
+CI criteria. Raw log ZIP/artifacts/audit helpers stay in ignored
+`.demo/d1-05-javafix/`; no token or private file staged/published.
+
+### Required checks and closure
+
+Latest successful read of classic develop protection returns no
+required_status_checks object. Effective `/rules/branches/develop` is `[]`.
+Existing PR requirement, admin enforcement, conversation resolution and disabled
+force pushes/deletions remain intact. The three exact CI checks above are **not
+required**. PR #5 is open/unmerged; its successful run does not prove blocking of
+a pending/red mandatory check when no such check is configured. No repository
+setting or PR merge was performed.
+
+**Java setup repair / actual hosted CI: PASS. D1-05 overall: PARTIAL.** Remaining
+task is maintainer configuration of these three required checks on develop and
+read-only verification of enforcement. Other D1-02/D1-03/full feature 001 gates
+are unchanged, with no AC reduction or implicit deferral. Documentation-only
+publication after this evidence does not change the tested workflow/backend;
+the PR's latest checks remain authoritative for its current head.
