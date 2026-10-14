@@ -1,5 +1,30 @@
 # D1-05 — CI Architecture Gate & Clean Runner Verification
 
+**Java setup repair in progress (2026-10-14):** user created [PR #5](https://github.com/phamquoainam/logistics-capstone-project/pull/5).
+Actual [run 38504179171 / attempt 2](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/38504179171/attempts/2)
+on head `8cf56c67740ca6be4daa094cd687663e68513b4d` failed all three jobs at Setup
+Java 21. API steps/annotations confirm `No matching version found for SemVer
+'21.0.10+7'`; tests/provisioning were skipped and missing artifacts are secondary.
+The local tree already had the user-aligned selector `"21"`; it was preserved.
+The shared matrix setup now uses Temurin major 21 and logs `java -version`, with
+all Action SHAs, test criteria, report paths and PostgreSQL setup unchanged.
+Actual repaired-run results are pending; D1-05 remains PARTIAL. Prior PR-creation
+blocker records below are historical, not the present state.
+
+The resolver filters returned Temurin packages by the version selector and throws
+when none match. This does not prove that the +7 JDK is absent globally or that
+all build-metadata syntax is unsupported: local validation uses that very JDK.
+[Pinned official resolver implementation](https://github.com/actions/setup-java/blob/dd06d9cba3e5552c54d9f8ea23572deb30010f7c/src/distributions/temurin/installer.ts).
+The actual annotation catalog includes **21.0.10+7.0.LTS**, whereas the requested
+selector is **21.0.10+7**. The pinned action's `isVersionSatisfies` compares build
+metadata exactly when the selector contains build digits, so these strings do not
+match. [Exact-build matcher](https://github.com/actions/setup-java/blob/dd06d9cba3e5552c54d9f8ea23572deb30010f7c/src/util.ts#L261-L279).
+Local repair checks PASS: actionlint/YAML and ShellCheck independently exit 0;
+report guard 14 tests PASS; Linux fresh-cache architecture clean verify 23/23 PASS,
+zero failures/errors/skips. All annotations agree on setup failure; upload failures
+remain secondary. No local full H2/PG rerun is needed for this selector/log-only
+change; both will execute on the new remote run before any PASS claim.
+
 **D1-05-B update (2026-10-14): PUBLISHED / PARTIAL.** User authorized reviewed
 commit/push/PR creation; implementation commit `91944517eea4ff4254421c8b0aa753f5c70cba03`
 is pushed to `origin/feature/d1-05-ci-verification`. PR creation is currently

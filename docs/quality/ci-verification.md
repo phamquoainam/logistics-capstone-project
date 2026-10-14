@@ -22,8 +22,11 @@ not persist credentials, concurrent superseded runs are canceled.
 
 Actions use full commit SHAs for checkout v7.0.1, setup-java v6.0.0 and
 upload-artifact v7.0.2, checked against official release tags. Review SHA updates
-explicitly; do not replace them with floating tags. Java is Temurin 21.0.10+7,
-matching the verified Java 21 baseline; Boot 4.1.1/Maven 3.10.0 remain unchanged.
+explicitly; do not replace them with floating tags. Java uses Temurin major `21`
+as explicitly approved for the setup-java repair. The earlier `21.0.10+7` selector
+failed resolution in the real runner. `Record resolved Java version` logs the
+selected patch/build using `java -version`; the verify script still rejects any
+major other than 21. Boot 4.1.1/Maven 3.10.0 remain unchanged.
 Sources: [GitHub supply-chain guidance](https://docs.github.com/en/actions/reference/security/secure-use),
 [checkout releases](https://github.com/actions/checkout/releases),
 [setup-java v6](https://github.com/actions/setup-java/releases/tag/v6.0.0),
