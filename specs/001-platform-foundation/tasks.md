@@ -1,45 +1,44 @@
 # Implementation Tasks 001: Nền tảng repository, deploy và kiến trúc
 
-**D1-05-B latest (2026-10-14):** Java setup repair 6b8f97a pushed to existing
-PR #5; actual hosted run 38506000079 completed/success, downloaded artifacts
-verified: architecture 23/no skip, H2 40/eight PG-only skips, PG18 48/no skip;
-guard 14 per job and output privacy checks PASS. The hosted-run box below is now
-complete; required-check enforcement remains open. D1-05/full feature PARTIAL;
-no AC edits, settings change or merge. [Evidence](../../docs/implementation/d1-05-ci-evidence.md#d1-05-b--java-setup-fix-and-actual-hosted-verification).
+**Official closure — 2026-10-14:** D1-05 **DONE** for the approved backend CI task.
+[PR #5](https://github.com/phamquoainam/logistics-capstone-project/pull/5) merged as
+`f50c8972a3a4d0a9c877d6e7e99d2a918cd866fd`; actual develop push
+[run 38512345091](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/38512345091)
+PASS: architecture 23/no skip, H2 40/eight named PG-only skips, PG18 48/no skip;
+guard 14 per job, sanitized artifacts/digests and required-check enforcement verified.
+Active ruleset 25049940 targets develop with all three GitHub Actions checks,
+strict up-to-date policy and no bypass actors.
+[D1-05 evidence](../../docs/implementation/d1-05-ci-evidence.md#post-merge-verification-and-official-closure--2026-10-14).
 
-**D1-05-B execution, 2026-10-14:** safety review, commit 9194451 and ordinary
-feature push PASS; PR creation BLOCKED by API connection failure. No hosted runs
-yet; remote/check-enforcement boxes below remain unchecked. Develop protected
-but required CI checks NOT CONFIGURED. No merge/settings change; D1-05 and full
-feature PARTIAL. [Publication/fallback](../../docs/implementation/d1-05-ci-evidence.md#d1-05-b--publication-and-acceptance-review).
+D1-03 **DONE for approved PostgreSQL Phases A–E**, not full Feature 001.
+D1-02/native/lint/pin/log disposition, full onboarding and remaining contracts/
+quality tasks remain open. REQ-001-03 is verified for implemented code; AC-001-03
+fixture detection is PASS, but no deliberately red production workflow experiment
+is claimed. Six absent business modules remain NOT YET IMPLEMENTED/N/A.
+Original REQ/AC and full-feature task criteria remain unchanged; Feature 001/Day 1
+remain PARTIAL. Earlier execution states remain in historical evidence documents.
 
-**D1-05 independent CI task slice (2026-10-14):** user confirms reviewer-approved
-D1-04 merged; develop baseline 2c609c4 verified. This implements only CI quality /
-trace portions of T-001-09/10 and REQ-001-03, not all tasks below.
-[Commands/results](../../docs/implementation/d1-05-ci-evidence.md).
+## Completed independent Day 1 task scopes
 
-- [x] Workflow PR→develop/push develop, least privilege/full-SHA Actions.
-- [x] Local fresh Linux architecture 23/no skips, negative fixture detection,
-  default/H2 40/eight named PG-only skips and fresh PG18 48/no skips.
-- [x] Discovery fail-closed/privacy guards (14 tests), YAML/Bash lint, evidence/trace.
-- [x] Actual hosted Actions run URL/tested SHA and three checks/artifacts PASS:
-  PR #5/source 6b8f97a/run 38506000079, exact named report inventory verified.
-- [ ] Develop required checks configured and enforcement verified by maintainer.
+- [x] D1-03 approved PostgreSQL Phases A–E: infrastructure, V1/V2/roles,
+  migration lifecycle/persistence, H2/PostgreSQL/web regression and documentation.
+- [x] D1-04 approved local architecture: 37 production classes, 23 tests,
+  11 negative violations/one positive control; six absent modules N/A.
+- [x] D1-05 PR→develop/push develop workflow; least privilege/full-SHA Actions.
+- [x] D1-05 clean Linux architecture, H2 regression and isolated PG18 verify.
+- [x] D1-05 exact discovery/privacy guard: 14 tests per hosted job.
+- [x] D1-05 actual PR HEAD run 38508902499 / 8a25dd5 and post-merge push
+  run 38512345091 / f50c897: three jobs/artifacts/exact counts PASS.
+- [x] D1-05 effective required checks: Active ruleset 25049940/develop,
+  three contexts/source GitHub Actions, strict policy/no bypass actors.
+- [x] D1-05 accepted PR #5 merged; evidence/traceability reconciled locally.
 
-**D1-05 PARTIAL / READY FOR REMOTE VERIFICATION.** No commit/push/PR or settings
-change authorized in this execution. Original full feature tasks/AC remain open;
-no Testcontainers, native/mobile or full cold-start claim from these Linux tests.
+## Original full-feature tasks — remain open
 
-**Tình trạng hiện tại:** PARTIAL — D1-03 PostgreSQL/Demo-001 DB milestone được duyệt và kiểm chứng ([evidence](../../docs/implementation/d1-03-postgresql-evidence.md)); các task/AC đầy đủ dưới đây chưa DONE. **Rule:** Không tick DONE trước khi có code+test+evidence.
-**Ordering:** T-001-01 → T-001-02…; các phần web/mobile có thể song song sau khi contract+API ổn định, không merge thiếu tests.
-
-**D1-04 verified task slice (2026-10-14):** local architecture coverage and negative
-fixtures PASS; minimal trusted actor and adapter-direction repair approved.
-PostgreSQL verify 48 PASS; H2 40 PASS/eight PG-only skip; web regression PASS.
-[Evidence](../../docs/implementation/d1-04-architecture-evidence.md) and
-[traceability](../../docs/quality/traceability.md). This completes only the approved
-local verification slice of T-001-01/05/09/10. Full tasks below remain unchecked:
-CI, contracts, independent reproduction and native/toolchain gates are still open.
+These broader tasks are not completed wholesale by independent D1-03/04/05
+closure. Contract/health/helpers/native/Testcontainers/full onboarding and
+remaining REQ/AC require their own evidence. Original task/AC criteria below
+remain unchanged.
 
 - [ ] **T-001-01 — Review**  
   - Thực hiện: Đọc source trace FR/BR/NFR và xác nhận [BLOCKING] Khóa phiên bản Spring/Modulith/Node/Expo, auth approach, provider storage/map; phụ thuộc nền tảng nào chưa chốt cần spike và ADR..  

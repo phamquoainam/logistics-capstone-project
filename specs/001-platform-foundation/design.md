@@ -1,30 +1,31 @@
 # Technical Design 001: Nền tảng repository, deploy và kiến trúc
 
-**D1-05 Java setup repair (2026-10-14):** user-approved major selector `21` with
-Temurin replaces the mismatching `21.0.10+7` build selector; exact resolved JDK
-logged by `java -version` (hosted run: 21.0.12.1+1). No architecture/business/POM/
-test/migration change, full-SHA Actions preserved. PR #5/source 6b8f97a has actual
-three-job verification/artifact PASS; required checks are still NOT CONFIGURED,
-so D1-05/full foundation PARTIAL. [Evidence](../../docs/implementation/d1-05-ci-evidence.md#d1-05-b--java-setup-fix-and-actual-hosted-verification).
+**Official closure — 2026-10-14:** D1-05 **DONE** for the approved backend CI task.
+[PR #5](https://github.com/phamquoainam/logistics-capstone-project/pull/5) merged as
+`f50c8972a3a4d0a9c877d6e7e99d2a918cd866fd`; actual develop push
+[run 38512345091](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/38512345091)
+PASS: architecture 23/no skip, H2 40/eight named PG-only skips, PG18 48/no skip;
+guard 14 per job, sanitized artifacts/digests and required-check enforcement verified.
+Active ruleset 25049940 targets develop with all three GitHub Actions checks,
+strict up-to-date policy and no bypass actors.
+[D1-05 evidence](../../docs/implementation/d1-05-ci-evidence.md#post-merge-verification-and-official-closure--2026-10-14).
 
-**D1-05-B update, 2026-10-14:** CI implementation 9194451 published after review.
-No design/code changes; remote execution blocked pending PR creation, actual CI
-UNVERIFIED. Existing develop protection has no required status checks or effective
-ruleset. No settings/AC change. [Evidence](../../docs/implementation/d1-05-ci-evidence.md#d1-05-b--publication-and-acceptance-review).
+D1-03 **DONE for approved PostgreSQL Phases A–E**, not full Feature 001.
+D1-02/native/lint/pin/log disposition, full onboarding and remaining contracts/
+quality tasks remain open. REQ-001-03 is verified for implemented code; AC-001-03
+fixture detection is PASS, but no deliberately red production workflow experiment
+is claimed. Six absent business modules remain NOT YET IMPLEMENTED/N/A.
+Original REQ/AC and full-feature task criteria remain unchanged; Feature 001/Day 1
+remain PARTIAL. Earlier execution states remain in historical evidence documents.
 
-**D1-05 implemented CI slice (2026-10-14):** approved task scope adds Linux
-GitHub Actions PR→develop/push develop with separate architecture/default-H2/PG18
-jobs, isolated Maven settings/cache, exact Surefire discovery checks and sanitized
-artifacts. PostgreSQL image and role/schema policy match D1-03; fresh tmpfs test
-container/database/upgrade database are provisioned per job without dev volumes.
-Existing V1/V2, POM, production architecture and HTTP contracts are unchanged.
-Local Linux execution PASS; actual GitHub Actions/required checks UNVERIFIED,
-full feature still PARTIAL. [CI guide](../../docs/quality/ci-verification.md),
-[evidence](../../docs/implementation/d1-05-ci-evidence.md).
+Approved Temurin major `21` logs resolved hosted 21.0.12.1+1; Boot 4.1.1/
+Maven Wrapper 3.10.0 and full-SHA Actions remain unchanged. This closure changes
+no architecture/API/database design; isolated tmpfs PG roles and exact test
+report inventory remain implemented as documented in the CI guide.
 
 **State:** DESIGN_PROPOSED — không mô tả API/migration đã implement.  
 
-**D1-03 DB milestone accepted/implemented 2026-10-13:** DEC-26 approved explicitly; PostgreSQL 18.6 isolated dev container/5433, nine ownership schemas, V1/V2 global stream, platform history, owner/migrator/runtime roles and local/test migrations/shared job implemented. Demo-001 real PostgreSQL tests/migration/permissions/restart/browser checks PASS; H2 remains intact. This subsection records only the approved DB slice; remaining proposed contracts/feature AC are unchanged. [ADR](../../docs/architecture/decisions/ADR-0002-database-ownership.md), [evidence](../../docs/implementation/d1-03-postgresql-evidence.md). D1-03/full foundation still PARTIAL.
+**D1-03 DB milestone accepted/implemented 2026-10-13:** DEC-26 approved explicitly; PostgreSQL 18.6 isolated dev container/5433, nine ownership schemas, V1/V2 global stream, platform history, owner/migrator/runtime roles and local/test migrations/shared job implemented. Demo-001 real PostgreSQL tests/migration/permissions/restart/browser checks PASS; H2 remains intact. This subsection records only the approved DB slice; remaining proposed contracts/feature AC are unchanged. [ADR](../../docs/architecture/decisions/ADR-0002-database-ownership.md), [evidence](../../docs/implementation/d1-03-postgresql-evidence.md). D1-03 approved task DONE; full foundation remains PARTIAL.
 **Source:** `spec.md`, `docs/architecture/*`, [REPORT] Chương 3–4.
 
 **D1-04 approved local architecture slice, 2026-10-14:** ArchUnit core 1.5.1

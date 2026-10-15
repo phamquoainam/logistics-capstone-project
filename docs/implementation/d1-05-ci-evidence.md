@@ -1,14 +1,17 @@
 # D1-05 — CI Architecture Gate & Clean Runner Verification
 
-**Java setup repair VERIFIED (2026-10-14):** [PR #5](https://github.com/phamquoainam/logistics-capstone-project/pull/5)
-is open/unmerged. Fix commit `6b8f97a4d087b16519ea0b9e3f54f2b5dde1d98b` is pushed;
-[actual successful run 38506000079](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/38506000079)
-has all three jobs PASS. Downloaded/digest-verified artifacts show architecture
-23/23, H2 40 PASS/eight PG-only skips, PostgreSQL 48/48; no failures/errors.
-Actual JDK is Temurin **21.0.12.1+1**, major 21; local validation uses 21.0.10+7.
-Required checks are still NOT CONFIGURED; D1-05 overall stays PARTIAL. Detailed
-remote results/privacy/protection audit are recorded at the end. Earlier pending
-PR/UNVERIFIED/no-publish descriptions retain historical execution scope.
+**Official closure — 2026-10-14: D1-05 DONE for the approved backend CI task.**
+User completed review and merged [PR #5](https://github.com/phamquoainam/logistics-capstone-project/pull/5).
+Merge commit `f50c8972a3a4d0a9c877d6e7e99d2a918cd866fd` and the actual
+[develop push run 38512345091](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/38512345091)
+are verified: architecture 23 PASS, H2 40 PASS/eight PG-only skips, PG18 48 PASS/no
+skip; three sanitized artifacts and effective required checks PASS. Full Feature
+001/Day 1 remain PARTIAL. See [post-merge verification](#post-merge-verification-and-official-closure--2026-10-14)
+for commands, exact counts, digests, enforcement, limitations and task reconciliation.
+
+**Historical execution record:** all earlier open/unmerged, NOT CONFIGURED,
+PARTIAL, UNVERIFIED and no-publish statements below describe their dated execution
+phase. They are superseded for current status by the post-merge section.
 
 **Initial failure and repair:** user created [PR #5](https://github.com/phamquoainam/logistics-capstone-project/pull/5).
 Actual [run 38504179171 / attempt 2](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/38504179171/attempts/2)
@@ -18,8 +21,8 @@ Java 21. API steps/annotations confirm `No matching version found for SemVer
 The local tree already had the user-aligned selector `"21"`; it was preserved.
 The shared matrix setup now uses Temurin major 21 and logs `java -version`, with
 all Action SHAs, test criteria, report paths and PostgreSQL setup unchanged.
-Repaired-run results are verified in the latest section below; D1-05 remains
-PARTIAL only for its remaining mandatory required-check gate. Prior PR-creation
+At that repair checkpoint D1-05 remained PARTIAL only for its mandatory
+required-check gate, subsequently completed in the post-merge section. Prior PR-creation
 blocker records below are historical, not the present state.
 
 The resolver filters returned Temurin packages by the version selector and throws
@@ -363,3 +366,124 @@ read-only verification of enforcement. Other D1-02/D1-03/full feature 001 gates
 are unchanged, with no AC reduction or implicit deferral. Documentation-only
 publication after this evidence does not change the tested workflow/backend;
 the PR's latest checks remain authoritative for its current head.
+
+## Post-merge verification and official closure — 2026-10-14
+
+### Git, acceptance and integration
+
+User completed review and merged PR #5. Authenticated read-only REST
+`GET /repos/phamquoainam/logistics-capstone-project/pulls/5` returns
+`state=closed`, `merged=true`, `merged_at=2026-10-14T04:37:23Z`
+(11:37:23 Asia/Saigon), actual merge commit
+`f50c8972a3a4d0a9c877d6e7e99d2a918cd866fd`. PR source HEAD was
+`8a25dd5f041441b69205aad801879c20b8c19657`; merge parents are develop
+`2c609c4` and source `8a25dd5`. User merge is not attributed to Codex.
+
+Actual commands: `git status --short`, `git branch --show-current`,
+`git rev-parse HEAD`, `git rev-parse origin/develop`, `git log -5 --oneline`,
+`git show --no-patch --format=fuller HEAD`. Initial local branch develop,
+working tree clean; local HEAD/origin/develop/live API branch SHA all equal
+f50c897. No pull/reset/stash was needed. Local and authenticated remote branch
+absence verified before `git switch -c feature/d1-05-post-merge-closure`.
+Feature branch starts at the same SHA; this documentation update is uncommitted
+and unpublished. No new commit/push/PR/merge/settings operation performed.
+
+### Actual post-merge hosted execution
+
+`GET /actions/runs?branch=develop&event=push&per_page=5` identifies
+[run 38512345091](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/38512345091),
+attempt 1, event `push`, created `2026-10-14T04:37:25Z`, completed/success,
+head exactly f50c897. `/jobs`, `/artifacts` and merge SHA `/check-runs` were read.
+All checks use GitHub Actions app ID 15368, matching the required-check source.
+
+| Exact check / job | Result | Discovered | Executed/pass | Skips | Fail/error |
+|---|---|---:|---:|---:|---:|
+| [Architecture gate](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/38512345091/job/115683451175) | PASS | 23 | 23 | 0 | 0 |
+| [Backend default / H2](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/38512345091/job/115683451521) | PASS | 48 | 40 | 8 | 0 |
+| [Backend PostgreSQL 18](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/38512345091/job/115683450993) | PASS | 48 | 48 | 0 | 0 |
+
+All jobs have successful Java setup/version logging, report guard, clean Maven
+verify/discovery and upload steps. PostgreSQL provision/cleanup also succeed;
+these two conditional steps are correctly skipped in the other jobs, distinct
+from test skips. Root-level combined job logs confirm Temurin 21.0.12.1+1,
+Java21/Maven Wrapper3.10.0 with fresh Maven home, `Ran 14 tests` per job and
+temporary database credential log audit PASS. Boot4.1.1/Wrapper3.10.0 remain
+unchanged. No local Maven rerun is claimed for this documentation-only closure.
+
+The exact eight H2 skips are all PostgresFoundationTests methods:
+actualPostgresAndSeparateMigrationPrincipal, nineSchemasAndTablesBelongToOwner,
+runtimeCannotDdlAssumeOwnerOrReadHistory, eventsAndReceiptsCannotBeChangedByRuntime,
+validateAndRerunPreserveDataAndChecksums, versionOneToTwoUpgradePreservesExistingTechnicalData,
+failedForeignKeyRollsBackWholeTransaction, concurrentCancelHasOneEventAndReceipt.
+Each runs/pass in the PostgreSQL job. Architecture/negative fixtures never skip.
+
+### Artifact, failure-policy and isolation audit
+
+Downloaded ZIPs were inspected in memory, without saving raw logs or credentials.
+Each contains only summary.json/tests.xml. SHA256 matches API metadata; JSON keys,
+JUnit attributes/case names/statuses/counters match the approved inventory in
+scripts/ci/verify-reports.py, with no duplicate/missing/unknown tests, report
+properties, system output or failure bodies. All 12 fixture methods pass per mode:
+11 negative detections plus minimal-trusted-actor positive control.
+
+| Artifact | ID | Verified ZIP SHA256 |
+|---|---|---|
+| backend-architecture-1 | 11870186972 | 670c8825a26867e640d55a6c1f0ae0b61ad14bf67fac0523a9219610536f72f5 |
+| backend-h2-1 | 11870830903 | fb0128c8fac6278e93580cb25cbea81e5da29537e9423712b63b7872ceb8a53e |
+| backend-postgres-1 | 11870012251 | 810b82c7a77a7079681c25c1bff030688c543fdc82ec5498303da8ccc3239af6 |
+
+Artifacts expire 2026-10-21; persistent trace is the named inventory/counts/digests
+and run URLs recorded here, not a promise of permanent GitHub artifact retention.
+Selected GitHub token/JWT patterns were not detected in the combined job logs;
+runtime credential audit and allowlisted artifacts PASS. This is a bounded audit,
+not proof of all possible secret patterns or full repository-history safety.
+
+PostgreSQL logs confirm a disposable PostgreSQL18 instance with two isolated test
+databases, separate owner/migrator/runtime roles and owned cleanup. Existing
+helper uses pinned PG18.6 image, tmpfs data and no developer/named data volume;
+Flyway runs existing V1/V2 against temporary test/upgrade DBs. No developer DB,
+native PostgreSQL or development volume is used/reset in hosted execution.
+
+Production architecture violation -> ArchRule.check throws -> Surefire/Maven
+nonzero -> script preserves failure -> job FAIL. Fixtures assert the actual
+dependency details and thrown assertion using those same production rules;
+guard tests also cover nonzero Maven with otherwise green reports. Uploads do
+not hide failed earlier steps. No intentional production violation, suppression,
+test bypass or deliberately red production workflow experiment was introduced.
+
+### Effective required checks
+
+Read-only `/rulesets/25049940` and `/rules/branches/develop` verify
+[Protect develop - Backend CI](https://github.com/phamquoainam/logistics-capstone-project/rules/25049940):
+Active, exact include refs/heads/develop, no exclusions/bypass actors,
+current_user_can_bypass=never. Effective rules require all three exact checks
+above, integration_id15368, strict_required_status_checks_policy=true,
+do_not_enforce_on_create=false. PR/conversation resolution are required;
+approval count zero; force pushes and deletion denied. Maintainer configured
+these settings, not Codex. Enforcement is verified from the effective active
+configuration; a deliberate pending/red-check blocked-merge experiment was
+not performed and is not claimed.
+
+### DoD and status reconciliation
+
+| Scope / requirement | Status | Evidence / open limit |
+|---|---|---|
+| D1-05 approved CI task | DONE | Workflow and local lint/guard proof retained; actual PR HEAD run38508902499 plus merge push38512345091; three jobs/counts/artifacts; active required checks; reviewed merge; documentation/traceability updated |
+| REQ-001-03; EC-001-03 | PASS within implemented scope | Nonempty production rules and same-rule negative detection execute on hosted CI; six absent modules N/A |
+| AC-001-03 | PARTIAL at literal full-AC scope | Detection/throw and valid code PASS proven; no deliberately red-then-fixed workflow experiment. Not substituted silently or marked full-AC DONE by task closure |
+| D1-03 approved PostgreSQL Phases A–E | DONE | Original task-specific infrastructure/integration/regression/migration/documentation gates already PASS; hosted backend adds clean-runner proof; see reconciled D1-03 evidence |
+| D1-02 | PARTIAL | Backend/Node/Expo/starter gates PASS; pin/tooling/native/log findings still open |
+| D1-06 | PARTIAL / not READY | D1-04/05 prerequisites complete; next slice contracts/blockers/fixtures not yet selected/reviewed |
+| D1-07 | BLOCKED by D1-06 | No approved next-slice test/gate inventory; existing Demo-001 tests do not prove future feature acceptance |
+| D1-08 | PARTIAL at final Day1 closure scope | Completed-task checkpoint evidence reconciled; final review of remaining Day1 gates/full REQ/AC not complete. Current local docs are uncommitted, not a new acceptance blocker for D1-03/05 |
+| Full Feature001 / Day1 | PARTIAL | AC-001-01/05 full infrastructure/native/health/contracts/other-developer runbook and broader tasks unchanged; no implicit DEFERRED |
+
+D1-05 independent task DoD does not require all full-feature AC or mobile/provider
+tasks to complete. The literal AC-001-03 experiment is retained as an open full-AC
+verification, consistent with the approved fixture-based D1-04/05 task scope.
+No acceptance text was edited. This documentation branch has no hosted run of
+its own; all PASS claims above name the actual already-tested merge SHA.
+
+**One next task:** D1-02 Closure decision gate: approve Node/npm pin mechanism,
+lint/test tooling scope and native build target, then execute the staged closure
+plan in day-1-plan.md. No new business feature is implemented here.

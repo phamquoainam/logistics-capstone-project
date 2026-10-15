@@ -656,15 +656,15 @@ D1-05 executable CI architecture gate with actual clean-runner evidence.
 
 ## L.9. D1-05 — Linux CI gate và remote verification
 
-Branch `feature/d1-05-ci-verification`, merged baseline `2c609c4`. D1-04 local
-scope đã được reviewer duyệt/merge; D1-03/D1-02 và toàn feature vẫn PARTIAL.
-[Commands, counts, failed-attempt remediation và artifact hashes](../implementation/d1-05-ci-evidence.md).
-
-Workflow `Backend verification` chạy PR→develop/push develop; ba job độc lập
-`Architecture gate`, `Backend default / H2`, `Backend PostgreSQL 18`.
-Linux fresh Maven home: architecture 23 PASS; H2 40 PASS/tám PG-only skip;
-PostgreSQL mới 48 PASS/không skip. Report guard 14 tests và actionlint/ShellCheck
-PASS. Đây là local Linux simulation, **không phải actual GitHub Actions PASS**.
+**Official closure, 2026-10-14:** D1-05 DONE. User merged PR #5 into
+`develop/f50c897`; actual [push run 38512345091](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/38512345091)
+PASS: Architecture gate 23/no skip, Backend default / H2 40/eight PG-only skips,
+Backend PostgreSQL 18 48/no skip; guard 14 per job. Sanitized artifacts/digests
+and effective required checks verified read-only. Active ruleset25049940/develop,
+three GitHub Actions contexts, strict policy/no bypass actors.
+[D1-05 evidence](../implementation/d1-05-ci-evidence.md#post-merge-verification-and-official-closure--2026-10-14).
+D1-03 approved PostgreSQL task DONE; D1-02/full foundation still PARTIAL.
+Earlier L.4–L.8 states and initial local simulation results retain history.
 
 Lệnh CI chạy trong runner/container Linux riêng từ repository root:
 
@@ -698,9 +698,10 @@ chứa token khi MockMvc test thất bại: không upload hoặc paste lên GitH
 Local evidence giữ tại `.demo/d1-05/evidence/`; provisioning env/state private
 trong `.demo/d1-05/postgres-private*`, không commit.
 
-**Closure:** D1-05 PARTIAL / READY FOR REMOTE VERIFICATION. Bước ưu tiên kế tiếp:
-sau khi được phép publish, push reviewed feature branch, PR base develop,
-xác minh ba Actions runs/artifacts và ghi run URL/tested SHA. Maintainer cấu hình
-ba required checks trên develop; workflow YAML tự nó chưa chặn merge.
-[Remote procedure và troubleshooting](../quality/ci-verification.md).
+**Closure:** D1-05 DONE for approved backend CI, actual PR/develop verification
+and required-check enforcement. Documentation-only closure branch starts from
+clean develop/f50c897; no new commit/push/PR/merge authorized.
+Next: D1-02 Closure decision gate for pin/tooling/native strategy; mobile/native/
+lint/log/onboarding requirements remain open, not DEFERRED.
+[Closure plan](../implementation/day-1-plan.md#i-d1-02-closure-plan-sau-d1-05--proposed).
 Không tự triển khai D1-06 hoặc thay đổi full feature AC để bỏ qua gate này.
