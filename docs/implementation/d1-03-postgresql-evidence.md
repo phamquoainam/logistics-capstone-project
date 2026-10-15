@@ -1,6 +1,6 @@
 # D1-03 — PostgreSQL execution evidence
 
-## Reconciliation after D1-04 — 2026-10-14
+## Official task reconciliation after D1-05 — 2026-10-14
 
 D1-03 was merged by PR #3 into develop `ccafeb4`; merge is not an acceptance gate.
 The historical evidence below proves the approved local PostgreSQL milestone and
@@ -9,13 +9,28 @@ local build/test/migration deliverables. Current D1-04 regression also passes:
 PG-only skips, web typecheck/build/three browser tests PASS. Architecture local
 verification is now PASS; it is no longer an unimplemented dependency.
 
-Keep **D1-03 overall PARTIAL** under the existing Day 1 dependency/closure scope:
-D1-02 is not closed, independent clean-machine reproduction is still unverified.
-Those conditions are not silently waived by merging or local DB/architecture PASS.
-CI/full feature 001 gates remain separate and unverified; no AC change. Proposed
-D1-04 local DONE and next independent CI slice are documented in
-[D1-04 evidence](d1-04-architecture-evidence.md). Historical “next D1-04” notes
-below refer to the earlier D1-03 execution, not current next-task advice.
+**D1-03 DONE for the approved PostgreSQL Foundation Integration After Demo-001
+task (Phases A–E).** The original user-approved task requires isolated infrastructure,
+JDBC/Flyway integration, Demo-001 regression, database verification and documentation.
+It does not require closing mobile tooling/native builds, completing another
+developer's full onboarding or deploying to a shared remote environment.
+
+Those task-specific gates have recorded PASS evidence below: connectivity/health,
+V1/V2 cold-start/validate/rerun/upgrade, ownership/runtime no-DDL, constraints,
+transactions/concurrency/idempotency, named-volume restart persistence, unchanged
+H2 compatibility, Maven verify and real PostgreSQL-backed web smoke/build.
+DEC-26/ADR, runbooks and traceability are implemented. Fresh hosted backend
+execution is additionally PASS on merge `f50c897` / develop push
+[run 38512345091](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/38512345091):
+PG18 48/no skip, H2 40/eight named PG skips, architecture 23/no skip.
+
+Earlier PARTIAL assessments mixed prerequisite ordering with task deliverables.
+D1-02's backend prerequisite is verified; its remaining mobile/pin/lint/log gates
+stay open under D1-02. Full onboarding/cold-start/native/contract/Testcontainers
+requirements remain under Feature 001, including AC-001-01/05 and T-001-09/10.
+No gate is waived or implicitly DEFERRED; no original REQ/AC is changed.
+Production/shared deployment remains UNVERIFIED, outside this local implementation
+task's acceptance. All earlier counts and next-task statements below are historical.
 
 2026-10-13 (+07), explicit user approval of DEC-26 and Phases A–E. Baseline clean develop HEAD `08c0c3424ce30c5f3c74c3af6a80d92a04e8a1ef`; new branch `feature/d1-03-postgresql-foundation`. No commit/push/PR/merge. [Runbook](../runbooks/postgresql-foundation.md), [ADR](../architecture/decisions/ADR-0002-database-ownership.md).
 
@@ -71,9 +86,13 @@ Resolved: duplicate PostgreSQL POM declarations removed before successful builds
 
 ## Closure
 
-Approved PostgreSQL/Demo-001 DB milestone verified. **D1-03 remains PARTIAL**: unfinished D1-02 dependency and independent clean-machine reproduction remain; architecture/CI/full feature gates are unverified. No AC reduction, Redis/RabbitMQ implementation, production migration or H2 conversion.
+Approved PostgreSQL/Demo-001 task: **DONE**, based on the Phases A–E evidence and
+scope reconciliation above. Architecture and actual backend CI are now PASS;
+full onboarding and unfinished D1-02/Feature 001 gates remain open in their own
+scope. No AC reduction, Redis/RabbitMQ implementation, production deployment or
+H2 conversion is claimed.
 
-Highest-priority independent next task: **D1-04 automated module-boundary verification**, with a negative fixture proving forbidden cross-module internal dependency fails. Complete environment/reproducibility gates before full Day 1/feature 001 closure.
+Historical next task at initial implementation: **D1-04 automated module-boundary verification**. D1-04/05 have since completed; current next task is D1-02 Closure decision/verification in Day 1 Plan. Full environment/reproducibility gates remain necessary before Day 1/Feature 001 closure.
 
 ## Changed files
 

@@ -1,24 +1,22 @@
 # Feature 001: Nền tảng repository, deploy và kiến trúc
 
-**D1-05-B actual hosted verification (2026-10-14):** Java selector repair 6b8f97a,
-PR #5/run 38506000079 PASS: architecture 23, H2 40/eight named PG skips, PG18 48/no
-skip, artifacts/privacy verified. REQ-001-03 actual CI execution is verified;
-AC-001-03/D1-05 required-check enforcement remains PARTIAL because develop has
-no required CI checks. Full feature/AC unchanged; six absent modules N/A.
-[Remote evidence](../../docs/implementation/d1-05-ci-evidence.md#d1-05-b--java-setup-fix-and-actual-hosted-verification).
+**Official closure — 2026-10-14:** D1-05 **DONE** for the approved backend CI task.
+[PR #5](https://github.com/phamquoainam/logistics-capstone-project/pull/5) merged as
+`f50c8972a3a4d0a9c877d6e7e99d2a918cd866fd`; actual develop push
+[run 38512345091](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/38512345091)
+PASS: architecture 23/no skip, H2 40/eight named PG-only skips, PG18 48/no skip;
+guard 14 per job, sanitized artifacts/digests and required-check enforcement verified.
+Active ruleset 25049940 targets develop with all three GitHub Actions checks,
+strict up-to-date policy and no bypass actors.
+[D1-05 evidence](../../docs/implementation/d1-05-ci-evidence.md#post-merge-verification-and-official-closure--2026-10-14).
 
-**D1-05-B publication, 2026-10-14:** implementation 9194451 pushed, no merge.
-PR POST connection failure blocks hosted verification; actual CI UNVERIFIED,
-develop required checks NOT CONFIGURED. REQ-001-03/AC-001-03 remain PARTIAL,
-original AC unchanged. [Publication evidence](../../docs/implementation/d1-05-ci-evidence.md#d1-05-b--publication-and-acceptance-review).
-
-**D1-05 evidence update (2026-10-14):** D1-04 approved local scope accepted and
-merged in develop/2c609c4. Executable backend CI and local fresh Linux tests PASS:
-architecture 23, H2 40/eight PG-only skip, fresh PostgreSQL 48/no skip.
-**PARTIAL / READY FOR REMOTE VERIFICATION**: REQ-001-03 actual GitHub CI and
-required checks remain unverified. Full original REQ/AC below are unchanged;
-six unimplemented modules are not counted as verified. [Evidence](../../docs/implementation/d1-05-ci-evidence.md),
-[traceability](../../docs/quality/traceability.md#d1-05--ci-gate-2026-10-14).
+D1-03 **DONE for approved PostgreSQL Phases A–E**, not full Feature 001.
+D1-02/native/lint/pin/log disposition, full onboarding and remaining contracts/
+quality tasks remain open. REQ-001-03 is verified for implemented code; AC-001-03
+fixture detection is PASS, but no deliberately red production workflow experiment
+is claimed. Six absent business modules remain NOT YET IMPLEMENTED/N/A.
+Original REQ/AC and full-feature task criteria remain unchanged; Feature 001/Day 1
+remain PARTIAL. Earlier execution states remain in historical evidence documents.
 
 **Status:** DRAFT_SPEC / PARTIAL — approved D1-03 PostgreSQL/Demo-001 database milestone verified; full feature gates remain open ([evidence](../../docs/implementation/d1-03-postgresql-evidence.md)).
 **Owners / Bounded Context:** `platform, workflow; all module skeletons`  
@@ -27,8 +25,8 @@ six unimplemented modules are not counted as verified. [Evidence](../../docs/imp
 **D1-04 local evidence (2026-10-14):** real module boundaries/direction/cycles,
 negative fixture effectiveness and unchanged Demo-001 regressions PASS.
 [Evidence](../../docs/implementation/d1-04-architecture-evidence.md).
-REQ-001-03/AC-001-03 remain PARTIAL because actual CI execution is unverified;
-full feature/acceptance criteria below are unchanged.
+Historical local D1-04 results now have actual PR/develop CI and required-check
+enforcement in D1-05. Full feature/acceptance criteria below are unchanged.
 **Priority:** P0 nền tảng  
 **Source:** [REPORT] Chương 2 BR/FR/NFR; Chương 3 Use Case/State Machine; Chương 4 §4.2–4.3.1. API/UI cụ thể: [PROPOSED].
 

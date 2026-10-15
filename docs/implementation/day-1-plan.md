@@ -1,49 +1,20 @@
 # Day 1 — Existing Codebase Assessment, Baseline Verification & SDD Implementation Plan
 
-**D1-05 Java repair hiện hành (2026-10-14):** fix `6b8f97a` trên PR #5 đã có
-[actual GitHub run PASS](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/38506000079).
-Java setup/version log, architecture 23 PASS, default/H2 40 PASS/tám PG skip,
-PostgreSQL mới 48 PASS, guard 14 mỗi job, artifacts/counts/privacy đều kiểm chứng.
-JDK runner thực tế Temurin 21.0.12.1+1, giữ major 21/Boot4.1.1/Maven3.10.0;
-không đổi business code/migrations/tests. **D1-05 PARTIAL chỉ còn mandatory gate
-required checks/enforcement trên develop**: classic protection chưa có checks,
-effective ruleset rỗng. Không tự cấu hình hoặc merge. [Evidence](d1-05-ci-evidence.md#d1-05-b--java-setup-fix-and-actual-hosted-verification).
-Các mốc “PR blocked/CI UNVERIFIED” dưới đây giữ lịch sử trước run đã PASS.
+**Hiện hành sau merge D1-05 — 2026-10-14:** D1-05 **DONE** cho scope backend CI đã duyệt.
+PR #5 merge vào `develop/f50c8972a3a4d0a9c877d6e7e99d2a918cd866fd`;
+[push run 38512345091](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/38512345091)
+PASS: architecture 23/no skip, H2 40/tám PG-only skip, PG18 48/no skip;
+guard 14 mỗi job, artifacts/digests và required checks enforced PASS.
+[D1-05 evidence](d1-05-ci-evidence.md#post-merge-verification-and-official-closure--2026-10-14).
+D1-03 **DONE cho PostgreSQL Phases A–E đã duyệt**; mobile tooling và full onboarding
+thuộc D1-02/Feature 001, không giữ task PostgreSQL PARTIAL vì các gate khác.
+[D1-03 reconciliation](d1-03-postgresql-evidence.md). D1-02, D1-06–08 và toàn
+Feature 001/Day 1 còn mở; không giảm AC hoặc ngầm DEFERRED.
+Nhánh tài liệu `feature/d1-05-post-merge-closure` tạo từ develop sạch; chưa commit/
+push/PR/merge thay đổi mới. Checklist D/evidence hiện hành thay trạng thái audit
+cũ bên dưới; các mốc cũ được giữ làm lịch sử.
 
-**D1-05-B hiện hành (2026-10-14):** safety review đúng 14 file PASS, commit
-`9194451` đã push trên `feature/d1-05-ci-verification`. Tạo PR qua API bị lỗi kết
-nối; fallback link đã cung cấp, actual Actions UNVERIFIED. Develop đã protected/
-require PR/chặn force-push và deletion/apply admins, nhưng **chưa required ba CI
-checks**. D1-05 vẫn PARTIAL; không merge hoặc sửa settings. [Publication/audit
-evidence](d1-05-ci-evidence.md#d1-05-b--publication-and-acceptance-review).
-Các trạng thái no-publish của D1-05 ban đầu bên dưới là lịch sử trước authorization.
-
-**Hiện hành D1-05 (2026-10-14):** baseline sạch `develop/2c609c4` khớp remote,
-đã merge D1-03 và D1-04; reviewer đã chấp thuận D1-04 theo xác nhận người dùng.
-Nhánh `feature/d1-05-ci-verification`, HEAD không đổi, chưa commit/push/PR.
-Workflow `Backend verification` có ba job architecture/H2/PostgreSQL, PR→develop
-và push develop. Local Linux từ Maven cache trống: architecture 23/23 PASS,
-H2 40 PASS/tám PG-only skip, PostgreSQL mới 48/48 PASS; report guard 14 tests PASS,
-actionlint/ShellCheck/artifact audit PASS. **D1-05 PARTIAL — READY FOR REMOTE
-VERIFICATION**: actual GitHub Actions và required checks chưa được xác minh.
-D1-04 DONE chỉ cho scope local đã duyệt; D1-03 local DB PASS nhưng task tổng thể
-vẫn PARTIAL do D1-02 và full independent onboarding. Không sửa AC hoặc tính sáu
-module chưa có code là đã verify. [D1-05 evidence](d1-05-ci-evidence.md),
-[CI operations](../quality/ci-verification.md). Các mốc dưới đây giữ lịch sử.
-
-**Lịch sử sau D1-04 (2026-10-14):** baseline sạch `develop/ccafeb4` đã merge D1-03;
-đang ở `feature/d1-04-architecture-verification`, HEAD không đổi, chưa commit/push.
-ArchUnit core 1.5.1/Jupiter có 23 architecture tests PASS trên 37 production classes,
-negative fixtures phát hiện vi phạm thật; minimal trusted actor được duyệt, adapter
-direction đã sửa nhỏ. PG verify 48 PASS, H2 40 PASS/tám PG-only skip, web ba browser
-tests/typecheck/build PASS. **D1-04 đề xuất DONE cho scope verification local đã duyệt**;
-chưa tick reviewer closure. D1-03 local DB milestone PASS nhưng task tổng thể vẫn
-PARTIAL vì D1-02/clean-machine gate; feature 001/CI không DONE.
-[Mapping/evidence và reconciliation](d1-04-architecture-evidence.md),
-[ADR-0004](../architecture/decisions/ADR-0004-architecture-verification.md).
-Các mốc audit/placeholder bên dưới là lịch sử, không thay trạng thái mới này.
-
-**Hiện tại sau Demo-001 / D1-03 (2026-10-13):** baseline develop/08c0c34; branch `feature/d1-03-postgresql-foundation`. DEC-26 đã được duyệt; PostgreSQL/Flyway DB milestone PASS, H2 giữ nguyên; D1-03 vẫn PARTIAL. [Evidence](d1-03-postgresql-evidence.md), [runbook](../runbooks/postgresql-foundation.md). Các bảng baseline/gap dưới đây lưu lịch sử trước Demo-001; trạng thái DB hiện hành theo evidence mới, không dùng placeholder cũ để kết luận chưa có Flyway/dependencies.
+**Lịch sử sau Demo-001 / D1-03 (2026-10-13):** baseline develop/08c0c34; branch `feature/d1-03-postgresql-foundation`. DEC-26 đã được duyệt; PostgreSQL/Flyway DB milestone PASS, H2 giữ nguyên; assessment khi đó D1-03 PARTIAL. [Evidence và reconciliation hiện hành](d1-03-postgresql-evidence.md), [runbook](../runbooks/postgresql-foundation.md). Các bảng baseline/gap dưới đây lưu lịch sử trước Demo-001; không dùng placeholder cũ để kết luận chưa có Flyway/dependencies.
 
 **Cập nhật spike ngày 13/10/2026:** branch `docs/sdd-baseline-and-runbooks`, HEAD `495813dbd318142f30855451546d313190f11656`, working tree sạch trước khi sửa. Wrapper Windows đã sửa null-array; Maven 3.10.0/Java 21.0.10 chạy `verify` online và offline PASS, Surefire xác nhận `contextLoads` chạy thật. Chỉ backend toolchain slice đạt gate; foundation chưa DONE. Kết quả chi tiết nằm tại [runbook, mục L.4](../runbooks/local-development.md#l4-toolchain-spike-t-001-01--d1-02).
 
@@ -139,23 +110,23 @@ Mức độ phản ánh ảnh hưởng tới phát triển/nghiệm thu, không 
 
 ## D. Ưu tiên Day 1 và checklist thực thi
 
-Checklist assessment này không thay checklist feature. D1-02 vẫn là task tổng thể đầu tiên chưa tick; người dùng đã duyệt triển khai độc lập **D1-05 CI verification** sau D1-03/04 merge. Task đầu tiên của feature 001 vẫn **T-001-01 — Review**, chưa đạt toàn bộ điều kiện hoàn thành.
+Checklist assessment này không thay checklist feature. D1-02 là task tổng thể đầu tiên chưa tick; D1-03/04/05 đã DONE theo scope được duyệt và có evidence. Full feature 001 vẫn bắt đầu ở T-001-01 — Review, chưa đạt toàn bộ điều kiện hoàn thành.
 
 - [x] **D1-01 — An toàn repository và kiểm kê baseline** — ưu tiên Critical; phụ thuộc: không. File: `AGENTS.md`, manifests, source/config, docs/specs. Gate: ghi branch/HEAD/dirty state, executable/placeholder mà không hủy thay đổi. Bằng chứng: `git status --short`, `git branch --show-current`, `git rev-parse HEAD`, `git ls-files`, `rg --files --hidden --no-ignore` với loại trừ dependency/build/Git; bảng B đã lập. Chỉ audit hoàn thành, không phải foundation.
 
 - [ ] **D1-02 — Xác minh môi trường/toolchain** — ưu tiên High; phụ thuộc D1-01. **PARTIAL**: backend spike PASS tại L.4; Node/npm/lock/typecheck/SDK/Metro/bundle PASS tại L.5–L.7. AVD boot, Expo Go 57.0.9 provenance/signature, starter render và client-to-Metro PASS tại L.7. Log review PARTIAL với non-fatal init findings và emulator UWB-service crash; chưa root cause. Native development build UNVERIFIED; mobile lint/test BLOCKED; web Demo-001 typecheck/build/browser PASS, web lint chưa có. ArchUnit-only D1-04 được duyệt/verify PASS; DEC-02 accepted stack/Node/npm pin chưa chốt; tách milestone chưa duyệt, không có DEFERRED. Không tick DONE hoặc tự miễn gate; closure matrix/điều kiện trong L.7.
 
-- [ ] **D1-03 — Xác minh build/test/migration** — ưu tiên High; phụ thuộc D1-02, quyết định DB cho migration. File: POM, backend `src/test`, `src/main/resources/db/migration`, `infra/`. **PARTIAL (2026-10-13, sau Demo-001)**: DEC-26 đã duyệt; PostgreSQL 18.6 dev riêng, global Flyway V1/V2, role isolation, cold-start/upgrade/validate/rerun/restart persistence và Demo-001 regression PASS. Final PG Maven verify 22 tests không fail/error/skip; H2 14 PASS/tám PG-only skip; web typecheck/build và ba browser tests PASS. D1-02 vẫn PARTIAL, clean-machine reproduction/CI chưa đủ; local architecture PASS tại D1-04; không đóng toàn feature. [Evidence](d1-03-postgresql-evidence.md).
+- [x] **D1-03 — Xác minh build/test/migration** — **DONE cho PostgreSQL Phases A–E được duyệt**: DEC-26, infrastructure/profile/JDBC/Flyway V1/V2, ownership/no-DDL, cold-start/validate/rerun/upgrade/restart persistence, concurrency/idempotency/rollback và PostgreSQL-backed Demo-001 web/H2 regression PASS. Hosted develop/f50c897 verify PG18 48/no skip, H2 40/tám PG-only skip, architecture 23 PASS. Backend toolchain prerequisite đã PASS; mobile/pin/lint và full onboarding thuộc D1-02/Feature 001. [Scope/evidence](d1-03-postgresql-evidence.md). Không sửa AC hoặc miễn Testcontainers/full cold-start.
 
 - [x] **D1-04 — Review kiến trúc/bảo mật** — **DONE cho scope local đã duyệt**: reviewer chấp thuận và merge vào develop/2c609c4 theo xác nhận người dùng, đã kiểm chứng ancestry/source. Mapping nine domains, 37 production classes thuộc identity/merchant/orders/platform; sáu business modules chưa implement không tính PASS. 23 architecture tests, 11 negative violations/one positive fixture; adapter direction và minimal trusted actor theo ADR-0004. Auth/object scope, log/fail-fast/bounded secret audit và H2/PG/browser regressions PASS. [Evidence gốc](d1-04-architecture-evidence.md), [merge/CI reconciliation](d1-05-ci-evidence.md). CI/full security/provider/native và full feature AC vẫn là gates riêng, không miễn hoặc hạ tiêu chí.
 
-- [ ] **D1-05 — CI Architecture Gate & Clean Runner Verification** — **PARTIAL / HOSTED CI PASS**: Java selector repair 6b8f97a, PR #5/run 38506000079, source SHA và artifacts đã kiểm chứng. Exact remote counts: architecture 23/23, H2 40/tám PG-only skip, PG18 48/48; guard 14 mỗi job, full-SHA Actions và failure assertions giữ nguyên. Local actionlint/ShellCheck/architecture và bounded remote privacy audit PASS. Còn **ba required checks trên develop chưa được cấu hình và kiểm chứng enforcement**; không tự sửa settings/merge, không deploy/business expansion. [Evidence](d1-05-ci-evidence.md#d1-05-b--java-setup-fix-and-actual-hosted-verification), [completion procedure](../quality/ci-verification.md#remote-completion-procedure).
+- [x] **D1-05 — CI Architecture Gate & Clean Runner Verification** — **DONE**: người dùng review/merge PR #5; merge f50c897, actual push develop run 38512345091/attempt 1 PASS. Architecture 23/23; H2 40 PASS/tám named PG-only skips; PG18 48/48, zero skips; guard 14 mỗi job. Artifacts digests/named inventory/privacy PASS. Ruleset 25049940 Active, target develop, ba required GitHub Actions checks/strict policy/no bypass, effective rules verified. [Official closure](d1-05-ci-evidence.md#post-merge-verification-and-official-closure--2026-10-14). Không tuyên bố deliberate-red workflow experiment hoặc sáu absent modules đã kiểm chứng; original Feature 001 AC còn nguyên.
 
-- [ ] **D1-06 — Chọn slice và kiểm tra DoR** — ưu tiên High; phụ thuộc foundation cần thiết VERIFIED, D1-04/05. File: `specs/001-platform-foundation/{spec,design,tasks}.md`, sau đó `specs/002-identity-access/{spec,design,tasks}.md`. Gate: reviewer chốt blocker/contract/fixture, public dependency rõ. Ban đầu `BLOCKED`; Identity chưa implement nên là business slice ứng viên đầu tiên sau foundation, không phải triển khai lại auth đã có.
+- [ ] **D1-06 — Chọn slice và kiểm tra DoR** — **PARTIAL / chưa READY**: D1-04/05 dependencies đã đạt. Review code hiện có, chọn đúng gap chưa hoàn thiện, chốt BLOCKING trong scope, approved public contracts/owner/fixtures/gates. Demo-001 đã có Identity/auth/merchant/DRAFT; không khởi tạo lại hoặc suy ra full feature 002 DONE. Chỉ BLOCKED nếu có dependency thực sự chưa duyệt của slice được chọn; không bắt toàn D1-02 đóng cho mọi phần độc lập.
 
-- [ ] **D1-07 — Test-first và gate slice** — ưu tiên High; phụ thuộc D1-06. File: test/source owner được chọn, contract đã review, UI phù hợp. Gate: happy/negative/auth/replay/concurrency/failure tests cần thiết PASS trên môi trường công bố; build/migration/architecture/API đạt. Ban đầu `NOT_IMPLEMENTED` cho business slice; typecheck starter không thay gate này.
+- [ ] **D1-07 — Test-first và gate slice** — **BLOCKED bởi D1-06 chưa chọn/duyệt slice**: thiếu test inventory/execution của slice được chọn, happy/negative/auth/replay/concurrency/failure theo requirement, API/E2E/build/migration/architecture. Demo-001 regressions PASS không tự hoàn thành gate của feature mới. Không triển khai business code trong closure tài liệu này.
 
-- [ ] **D1-08 — Chốt kết quả/evidence/blocker** — ưu tiên Medium; phụ thuộc task đã thực hiện. File: hai tài liệu này; phiên triển khai sau còn feature tasks, traceability/ADR nếu design change. Gate: command/result/commit/environment cho từng gate, task chưa đạt vẫn mở, dependency/next task rõ. Ban đầu `PARTIAL`: audit/metadata đã ghi, runtime baseline chưa đạt. Không sửa traceability/ADR/specs trong phiên giới hạn hai file.
+- [ ] **D1-08 — Chốt kết quả/evidence/blocker** — **PARTIAL**: evidence/traceability cho D1-03/04/05 đã ghi; task mở có scope/next action rõ. Còn nghiệm thu D1-02, D1-06/07, full REQ/AC/test-ID và runbook reproduction trước final Day 1 review. Thay đổi closure hiện tại chỉ local, chưa commit/publish; không tick toàn Day 1 DONE.
 
 ## E. Chiến lược triển khai feature
 
@@ -206,6 +177,22 @@ Baseline và spike cung cấp version/path/evidence, gap, task/dependency/gate v
 
 Backend toolchain spike của **T-001-01 / D1-02** đã thực hiện; bằng chứng REQ/AC nằm tại runbook L.4. Không sửa feature tasks, ADR hoặc [traceability](../quality/traceability.md) vì ngoài ba file được phép. T-001-01 và feature 001 chưa DONE.
 
-**Nhiệm vụ kế tiếp để đóng D1-02:** Android starter smoke qua Expo Go SDK 57 đã được duyệt và PASS; owner/reviewer chốt proposals trong L.7 về ArchUnit-only, Node/npm pin, lint/test/web và native-build milestone; review init/emulator findings. Gate còn thiếu phải đạt hoặc split được duyệt chính thức. Không thay native development-build feasibility/feature 001 AC bằng starter render; chưa tick DONE.
+**Nhiệm vụ kế tiếp để đóng D1-02:** Expo Go SDK 57 smoke và ArchUnit-only đã được duyệt/kiểm chứng, không yêu cầu duyệt lại. Chốt DEC-02 Node/npm pin, lint/test tooling và native build target theo kế hoạch I; review init/emulator findings. Gate còn thiếu phải đạt hoặc split được duyệt chính thức. Không thay native development-build feasibility/feature 001 AC bằng starter render; chưa tick DONE.
 
-**Bước đầu D1-03 có thể làm độc lập:** review/chốt DEC-26 (PostgreSQL version, Flyway stream/location/execution, accounts và isolated test DB), kiểm tra Docker/Compose readiness trước khi đề xuất diff hạ tầng. Phần backend verify của D1-03 đã PASS; migration chưa được chạy, D1-02 chưa DONE. Không tự chuyển business slice sang READY.
+**D1-03 hiện hành:** PostgreSQL Phases A–E DONE; build/DB/architecture/hosted CI PASS. Review DEC-26/chưa migration ở các mốc cũ là lịch sử. D1-02 và full onboarding/native/contract gates vẫn giữ trong đúng task; không tự chuyển business slice sang READY.
+
+## I. D1-02 Closure plan sau D1-05 — PROPOSED
+
+Không triển khai tooling hoặc cài SDK trong phiên closure tài liệu này.
+
+| Thứ tự | Gate / hành động | Hiện trạng | Điều kiện hoàn thành |
+|---|---|---|---|
+| 1 | Chốt DEC-02: Node 24.13.0/npm 11.6.2 đã chạy, pin mechanism, lint/test tooling scope và native build target | BLOCKED cho implementation: chưa duyệt dependencies/config/metadata | Owner duyệt đúng versions/phạm vi; Java21/Boot4.1.1/Maven3.10.0 và ArchUnit-only đã accepted, không yêu cầu duyệt lại |
+| 2 | Pin đã duyệt; clean npm install theo lock; lint/typecheck/build/test web và mobile với assertions phù hợp slice | Mobile lint/test BLOCKED; web lint thiếu; typecheck/web build/browser baseline PASS | Command/version/exit/report thật; không tạo lại skeleton, tests rỗng hoặc đổi versions để né compatibility |
+| 3 | Isolated Android development-build feasibility / APK starter smoke | UNVERIFIED; config/tooling cần duyệt | Kiểm tra Gradle/JDK/SDK, build/app ID/dev-client strategy; native build và render/Metro có logs; không tự prebuild source/tạo credentials |
+| 4 | Review Expo Go initialization/emulator UWB findings | PARTIAL; root cause UNVERIFIED | Reproduce/attribute, owner/disposition có evidence; không xóa findings bằng UI smoke PASS hoặc tự đổi hệ thống |
+| 5 | D1-02 closure review và reproducibility theo target công bố | PARTIAL | Mandatory gates đạt; split/DEFERRED chỉ khi duyệt cụ thể owner/task/gate. Full other-developer onboarding AC-001-05 vẫn là foundation gate riêng |
+
+**Ưu tiên duy nhất kế tiếp:** D1-02 Closure decision gate (hàng 1), để mở
+implementation tooling/native đang chặn tiến độ. Native business capabilities
+chưa liên quan không phải điều kiện cho starter build feasibility.

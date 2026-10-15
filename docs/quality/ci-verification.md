@@ -1,16 +1,15 @@
 # Backend CI verification
 
-**D1-05-B actual CI verified (2026-10-14):** Java selector fix 6b8f97a on PR #5,
-[run 38506000079 PASS](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/38506000079).
-Architecture 23/23, H2 40/eight named PG skips, PostgreSQL 48/48; all reports/upload
-and bounded artifact/log privacy audits PASS. Resolved Temurin 21.0.12.1+1 remains
-major 21. Develop still has no required status checks/effective ruleset, so D1-05
-overall PARTIAL. No merge/settings change. [Remote evidence](../implementation/d1-05-ci-evidence.md#d1-05-b--java-setup-fix-and-actual-hosted-verification).
+**D1-05 DONE — post-merge verified 2026-10-14.** PR #5 merged to develop/f50c897;
+[push run 38512345091](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/38512345091)
+PASS: architecture 23/no skip, H2 40/eight named PG skips, PG18 48/no skip,
+guard 14 each. Reports/digests, fresh Maven/JDK21 and isolated PG verified.
+Active ruleset25049940 targets develop: three required GitHub Actions contexts,
+strict policy/no bypass actors. [Official closure/evidence](../implementation/d1-05-ci-evidence.md#post-merge-verification-and-official-closure--2026-10-14).
 
 Workflow: [Backend verification](../../.github/workflows/backend-verification.yml).
-Scope: D1-05, approved after the D1-04 merge. No deployment or business changes.
-Status: **HOSTED EXECUTION PASS / REQUIRED CHECKS NOT CONFIGURED**; D1-05 remains
-PARTIAL. [Execution evidence](../implementation/d1-05-ci-evidence.md).
+Scope: approved backend CI task; no deployment/business changes. Full Feature001/
+Day1 remain open; no deliberately red production PR claim.
 
 ## Triggers and required checks
 
@@ -33,11 +32,12 @@ Sources: [GitHub supply-chain guidance](https://docs.github.com/en/actions/refer
 [setup-java v6](https://github.com/actions/setup-java/releases/tag/v6.0.0),
 [upload-artifact releases](https://github.com/actions/upload-artifact/releases).
 
-An executable workflow alone does not enforce merging. After a successful actual
-PR run, an authorized repository maintainer must configure a branch rule/ruleset
-for `develop` requiring all three checks. Select the exact check contexts shown
-by GitHub, with GitHub Actions as their source. Keep required review and existing
-protection policy. No repository setting was changed in D1-05.
+An executable workflow alone does not enforce merging. The maintainer has now
+configured `Protect develop - Backend CI` /25049940 on `refs/heads/develop`.
+Read-only API review verifies three contexts with GitHub Actions source/app15368,
+strict policy, no exclusions/bypass actors. Effective branch rules require PR/
+conversation resolution and deny force pushes/deletions; approval count is zero.
+Codex did not change repository settings.
 [Official required-status-check behavior](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches).
 
 ## Execution and discovery
@@ -138,6 +138,7 @@ run/attempt URL, tested SHA, runner/toolchain, counts/skips and result in D1-05
 evidence. Set and verify the `develop` required checks through an authorized
 maintainer. Do not merge while any mandatory job is red or absent.
 
-D1-05 remains PARTIAL until actual clean hosted execution and required-check
-enforcement are evidenced. Local Linux PASS does not complete AC-001-01/05 for
+D1-05 requires actual clean hosted execution and required-check enforcement;
+both are evidenced and the accepted PR is merged. Task scope is DONE. Hosted
+backend PASS does not complete AC-001-01/05 for
 web/mobile/full infrastructure or independent developer onboarding.
