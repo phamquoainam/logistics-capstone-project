@@ -1,5 +1,50 @@
 # Local Development Runbook — repository hiện hữu
 
+## D1-07 C-02 — generated package verification, 2026-10-15
+
+From packages/api-client with Node24.13.0/npm11.6.2:
+
+```powershell
+npm.cmd ci --no-audit --no-fund
+npm.cmd run verify:c02
+npm.cmd audit --json
+npm.cmd audit --omit=dev --json
+```
+
+PASS: strict contract gates, source/two-directory16-file determinism, package
+typecheck/build,41+44 tests/no skips. Full dev audit remains FAIL4 high findings;
+runtime0, supported checked-object generation avoids installed js-yaml loader.
+See [C-02 evidence](../implementation/d1-07-c02-sdk-evidence.md) and
+[package commands/policies](../../packages/api-client/README.md). npm audit is
+reported separately, never suppressed by verify:c02. After reviewed source/config
+changes only, npm.cmd run generate recreates generated source; verification itself
+does not overwrite it. C-03 actual HTTP and C-04/05 consumer adoption remain NOT
+RUN, no DB/native action required for these commands. Older C-01 notes below
+record its earlier minimal graph with audit0 and no generated SDK.
+
+## D1-07 C-01 — contract-only verification, 2026-10-15
+
+From repository root, with the pinned Node24.13.0/npm11.6.2:
+
+```powershell
+Set-Location packages/api-client
+npm.cmd ci --no-audit --no-fund
+npm.cmd run verify:c01
+npm.cmd audit --json
+npm.cmd audit --omit=dev --json
+```
+
+C-01 local result: Redocly2.64.0 errors/warnings/ignored0;11 exact source/OAS
+operations;41 tests PASS/no skips,37 negative fixtures; new reported graph audit0.
+See [C-01 evidence and limits](../implementation/d1-07-c01-contract-evidence.md)
+and [contract notes](../../contracts/openapi/README.md). No backend/database,
+Docker, native or frontend change is needed for these commands. Validation
+scratch files are ignored under .demo/d1-07-c01; this is not SDK generation.
+Owner contract review remains before C-02. C-02–06, actual wire/build/consumer
+compatibility and determinism remain NOT RUN/UNVERIFIED; D1-07/Day1 PARTIAL.
+
+The following checkpoints retain their historical execution dates.
+
 **D1-02 latest execution — 2026-10-15:** local toolchain/native starter scope DONE;
 Pixel_7/API37 is the current emulator target. See [L.10](#l10-d1-02-toolchain-and-pixel-7-native-execution--2026-10-15)
 and [execution evidence](../implementation/d1-02-toolchain-evidence.md) for commands,

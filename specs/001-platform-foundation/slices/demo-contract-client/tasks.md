@@ -1,8 +1,12 @@
 # Tasks 001-CONTRACT — D1-07 handoff
 
-**Status:** slice READY_FOR_IMPLEMENTATION; DEC-29 ACCEPTED on2026-10-15 by the
+**Status:** slice IN_PROGRESS / PARTIAL; DEC-29 ACCEPTED on2026-10-15 by the
 explicit user approval message recorded in the assessment. D1-06 documentation/
-DoR DONE; implementation tasks C-01..06 NOT STARTED and tests NOT RUN.
+DoR DONE; C-01 final technical acceptance DONE; C-02 deterministic SDK local
+DONE under the user's conditional authorization. C-03–06 NOT STARTED; actual
+wire/consumer/browser gates NOT RUN / UNVERIFIED. Dev advisories remain OPEN.
+[C-02 commands/counts/findings](../../../../docs/implementation/d1-07-c02-sdk-evidence.md).
+[C-01 commands/counts/findings](../../../../docs/implementation/d1-07-c01-contract-evidence.md).
 [Spec](spec.md), [design and test inventory](design.md),
 [D1-06 assessment](../../../../docs/implementation/d1-06-slice-readiness.md).
 This is one slice in001, not completion of its original full-feature task list.
@@ -21,14 +25,18 @@ This is one slice in001, not completion of its original full-feature task list.
 - [x] DEC-29 formal owner approval recorded,2026-10-15, for the revised scope and exact pins; no inferred acceptance.
 - [x] Source-drift recheck PASS: HEAD3186f01 unchanged, saved11-operation source hashes match, executable/configuration paths unchanged; slice READY_FOR_IMPLEMENTATION.
 
-All mandatory DoR planning/approval gates PASS. This closes D1-06 only: the user
-explicitly requested no installation, SDK generation or D1-07 execution in this
-turn. D1-07 runtime/build/wire/regression gates remain mandatory and unexecuted.
+All mandatory DoR planning/approval gates PASS at D1-06. The later C-01/C-02 task
+authorized SDK implementation after C-01 final gates passed, now verified locally.
+D1-07 real wire/consumer/browser/backend regression gates remain mandatory and unexecuted.
 No need to approve the existing Git branch again. Publication is not performed.
 
-## Ordered implementation tasks (all tests NOT RUN)
+## Ordered implementation tasks (C-01/C-02 verified; C-03–06 NOT RUN)
 
-- [ ] **C-01 — Preconditions/contract freeze.** Verify current branch/tree/HEAD and
+- [x] **C-01 — Preconditions/contract freeze.** Local implementation and
+  TEST-001-CONTRACT-01 PASS at20072b6:11 operations,41 tests,37 negative fixtures,
+  zero skips; Redocly lint errors/warnings/ignored0. Final technical review PASS;
+  user's conditional authorization opens C-02 after that review. Original scope:
+  verify current branch/tree/HEAD and
   DEC-29 acceptance. Re-read exact controllers/records/security/errors and check
   drift since3186f01. Create OpenAPI source/examples for11 approved operations;
   no DTO invention. Test inventory/negative contract fixtures before or with code.
@@ -36,7 +44,12 @@ No need to approve the existing Git branch again. Publication is not performed.
   Establish the single schema source only after source/fixture review. Gate
   TEST-001-CONTRACT-01; stop/report contract/source conflicts. Positive wire
   fixtures must match current DTOs; legacy transport mocks are not contract truth.
-- [ ] **C-02 — Deterministic SDK.** Clean-install exact tooling, audit new graph
+- [x] **C-02 — Deterministic SDK.** Local DONE: clean install59 packages;
+  strict package typecheck/build PASS;44 SDK tests/no skips; all11 generated
+  operations; two-directory/source exact-byte16-file determinism PASS. Dev audit
+  FAIL4 high findings recorded OPEN with verified supported-path mitigation;
+  runtime audit0, no pin change or implicit risk acceptance. Original scope:
+  clean-install exact tooling, audit new graph
   and verify licenses/integrity/engines, generate types+SDK+bundled Fetch and build
   the private package. Tests02/03/04: real operation calls, drift failure and type
   assertions. No peer override/framework downgrade or generic manual HTTP stand-in.

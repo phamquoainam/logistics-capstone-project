@@ -1,11 +1,16 @@
 # Design 001-CONTRACT — preserve the approved Demo-001 wire behavior
 
-**Status:** ACCEPTED_FOR_DEC_29_SCOPE, 2026-10-15; slice READY_FOR_IMPLEMENTATION.
+**Status:** ACCEPTED_FOR_DEC_29_SCOPE, 2026-10-15; slice IN_PROGRESS / PARTIAL.
 Approval source: the user's explicit “DEC-29 — APPROVED | D1-06 Definition of
-Ready Closure” message. D1-06 documentation/DoR DONE. No dependency installed,
-code generated or D1-07 implementation started.
-**D1-07: NOT STARTED; all implementation tests NOT RUN.**
-Baseline3186f01; [spec](spec.md), [decision/gaps](../../../../docs/implementation/d1-06-slice-readiness.md).
+Ready Closure” message. D1-06 documentation/DoR DONE.
+**D1-07 C-01 final technical acceptance / C-02 local DONE:** TEST01 PASS41,
+SDK tests PASS44/no skips; deterministic16-file source matches two scratch runs.
+Dev audit4 high findings OPEN, runtime0, bounded YAML-loader avoidance verified.
+C-03–06 NOT STARTED; actual wire/consumer/browser gates UNVERIFIED.
+[C-02 configuration, findings and evidence](../../../../docs/implementation/d1-07-c02-sdk-evidence.md).
+[C-01 evidence](../../../../docs/implementation/d1-07-c01-contract-evidence.md).
+Execution baseline20072b6; original design baseline3186f01;
+[spec](spec.md), [decision/gaps](../../../../docs/implementation/d1-06-slice-readiness.md).
 
 ## Ownership and compatibility
 
@@ -161,7 +166,8 @@ web, no client-supplied actor and no role-based token trust. Existing generic
 
 ## Accepted client and tooling design
 
-DEC-29 approval is recorded; installation remains future D1-07 work. Approved pins
+DEC-29 approval is recorded; C-01 installed only the validator dependencies.
+Generator/TS installation and strict package build are now verified in C-02. Approved pins
 must be exact in the new private package/lock, with Node24.13.0/npm11.6.2 engines
 and strict engines:
 @hey-api/openapi-ts0.99.0, @redocly/cli2.64.0, TypeScript6.0.3; Ajv8.20.0 and
@@ -201,11 +207,20 @@ or Metro changes, network call, token persistence or UI added. This is portabili
 at type level only; bundling/device networking for a future shipper consumer is
 still UNVERIFIED. Do not claim mobile API integration based on typecheck alone.
 
-## Fixtures and verification matrix (planned; NOT RUN)
+## Fixtures and verification matrix (01/02 PASS; 03/04 package portions PASS)
+
+C-02 execution:85 total tests/no skips across C-01 and SDK; TEST03 consumer and
+TEST04 web-adapter portions, and TEST05–10 remain unexecuted. The source schema
+is unchanged; its pattern-only string allOf branches gain only redundant string
+types in generator parser configuration to prevent unknown request fields. Ajv
+equivalence/compiler fixtures verify the adaptation, no generated edits/casts.
+The supported generator receives the checked Redocly object with local refs to
+avoid the advised js-yaml path; advisories remain OPEN. Exact gate evidence is
+in the C-02 record above. These are execution notes, not a scope/pin/AC change.
 
 | Test ID | Fixture / assertion | Coverage |
 |---|---|---|
-| TEST-001-CONTRACT-01 | Validate OAS structure, local refs/unique operationIds/all11 method/path pairs and operation-level auth; synthetic invalid ref/security/header fixture must fail same checker | SC-01; REQ-001-04 subset |
+| TEST-001-CONTRACT-01 | Validate OAS structure, local refs/unique operationIds/all11 method/path pairs and operation-level auth; synthetic invalid ref/security/header fixture must fail same checker. Executed C-01:41 tests PASS/no skips,37 negative fixtures; details in C-01 evidence | SC-01; REQ-001-04 subset; PASS local |
 | TEST-001-CONTRACT-02 | Two-temp-dir generation + checked-in drift check; temporary stale/missing output detected without touching production | SC-02 reproducibility |
 | TEST-001-CONTRACT-03 | Generated SDK typecheck; compile-negative method/path/body/header cases isolated with explicit expected diagnostic assertions, not production suppressions | SC-02/05 |
 | TEST-001-CONTRACT-04 | Fetch spy: path/base prefix, method/body serialization, per-request Bearer, required idempotency headers, no token on anonymous login/health;401/409/network/nonJSON errors retain ApiError behavior | SC-03/04/05 |

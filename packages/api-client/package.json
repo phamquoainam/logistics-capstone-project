@@ -1,0 +1,38 @@
+{
+  "name": "@elogistics/api-client",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "24.13.0",
+    "npm": "11.6.2"
+  },
+  "packageManager": "npm@11.6.2",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    "./client": { "types": "./dist/generated/client/index.d.ts", "import": "./dist/generated/client/index.js" }
+  },
+  "files": ["dist", "README.md"],
+  "sideEffects": false,
+  "scripts": {
+    "contract:lint": "node scripts/lint-contract.mjs",
+    "contract:inventory": "node scripts/check-contract.mjs",
+    "test": "node --test --test-concurrency=1 tests/contract.test.mjs",
+    "verify:c01": "npm run contract:lint && npm run contract:inventory && npm test",
+    "generate": "node scripts/generate.mjs",
+    "check:generated": "node scripts/check-generated.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "tsc -p tsconfig.json",
+    "test:sdk": "node --test --test-concurrency=1 tests/sdk.test.mjs",
+    "verify:c02": "npm run verify:c01 && npm run check:generated && npm run typecheck && npm run build && npm run test:sdk"
+  },
+  "devDependencies": {
+    "@hey-api/openapi-ts": "0.99.0",
+    "@redocly/cli": "2.64.0",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "typescript": "6.0.3"
+  }
+}

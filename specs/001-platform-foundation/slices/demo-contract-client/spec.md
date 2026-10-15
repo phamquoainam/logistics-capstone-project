@@ -1,8 +1,15 @@
 # Slice 001-CONTRACT — Demo-001 executable contract and generated client
 
-**Status:** READY_FOR_IMPLEMENTATION; DEC-29 ACCEPTED on2026-10-15 by the user's
+**Status:** IN_PROGRESS / PARTIAL; C-01 final technical acceptance DONE,
+C-02 local deterministic SDK DONE under the user's conditional authorization.
+DEC-29 ACCEPTED on2026-10-15 by the user's
 explicit “DEC-29 — APPROVED | D1-06 Definition of Ready Closure” message.
-D1-06 documentation/DoR DONE; D1-07 NOT STARTED and all implementation tests NOT RUN.
+D1-06 documentation/DoR DONE. TEST-001-CONTRACT-01 PASS:41 tests/no skips;
+C-02 adds44 passing SDK tests/no skips; C-03–06 NOT STARTED, their real wire/
+consumer/browser/backend gates UNVERIFIED. Dev graph audit4 high findings OPEN,
+runtime0; supported generation avoids the affected YAML loader without a pin change.
+[C-02 evidence](../../../../docs/implementation/d1-07-c02-sdk-evidence.md).
+[C-01 evidence](../../../../docs/implementation/d1-07-c01-contract-evidence.md).
 Parent Feature001 remains DRAFT_SPEC/PARTIAL. This subordinate slice does not
 replace or edit parent REQ/AC. [Assessment/decision](../../../../docs/implementation/d1-06-slice-readiness.md).
 Owners: platform contract tooling; identity/merchant/orders HTTP contract owners;
@@ -91,7 +98,7 @@ No token refresh endpoint or refresh-token mechanism exists in this slice.
 Contract authority, three drift controls, schema-valid versus deliberately invalid
 fixtures, exact-version metadata evidence and application-only rollback are
 defined in the revised design. Runtime/build/wire-conformance gates are NOT RUN;
-source/fixture review is not an assertion an unwritten OpenAPI already conforms.
+source/fixture review and C-01 static validation do not prove HTTP conformance.
 
 Preconditions: approved DEC-29, unchanged Demo-001/accepted boundaries and baseline
 toolchains, network permission to resolve approved dev tools, safe isolated test
@@ -99,5 +106,8 @@ credentials/database and available test ports. Credentials are generated into
 ignored storage/environment; never copy developer credentials into fixtures.
 No dependency on unapproved full002/003/005/native/provider policies is introduced.
 
-Implementation tests: NOT RUN. See [design](design.md) for wire inventory and
+Implementation tests: TEST-001-CONTRACT-01/02 PASS locally; TEST03 package and
+TEST04 generated-transport portions PASS. Consumer/adapter/wire portions and
+TEST05–10 remain NOT RUN. No full slice completion is implied.
+See [design](design.md) for wire inventory and
 fixtures; [tasks](tasks.md) for DoR/DoD and D1-07 implementation instructions.

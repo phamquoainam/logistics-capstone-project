@@ -1,5 +1,26 @@
 # Day 1 — Existing Codebase Assessment, Baseline Verification & SDD Implementation Plan
 
+**Current C-01 final acceptance / C-02 checkpoint — 2026-10-15:** same branch/
+HEAD20072b6, C-01 preserved and final technical review PASS. User's conditional
+authorization opened C-02; generated Fetch SDK16 files/11 operations, strict
+package build and NodeNext/Bundler declaration controls PASS. Clean install59
+packages; C-0141 + SDK44 tests PASS/no skips; two-directory/source bytes match.
+Dev audit FAIL4 high findings OPEN, runtime0; checked-object generation avoids
+affected js-yaml loader with actual trap test. [Evidence](d1-07-c02-sdk-evidence.md).
+C-01/C-02 local DONE; C-03–06 NOT STARTED; D1-07/full001/Day1 PARTIAL. No commit/
+push/PR or business/source/workflow/migration/consumer change. Prior audit0 and
+no-SDK notes below describe C-01's earlier graph/checkpoint only.
+
+**Current D1-07 / C-01 checkpoint — 2026-10-15:** PR#8 merged as20072b6;
+existing clean feature/d1-07-demo-contract-client reused at matching develop/
+origin/live remote HEAD. C-01 OpenAPI3.1 for11 existing operations and minimal
+Redocly2.64.0/Ajv8.20.0/formats3.0.1 tooling implemented. Clean install, lint,
+source inventory and41 tests PASS/no skips (37 negative fixtures); reported new
+graph audit0 advisories. [Evidence/findings](d1-07-c01-contract-evidence.md).
+C-01 local DONE, owner contract review pending before C-02. D1-07/slice PARTIAL;
+C-02–06 NOT STARTED. Full001/Day1 remain PARTIAL; no original REQ/AC changed.
+Earlier NOT STARTED/no-contract notes below are dated prior checkpoints.
+
 **D1-06 checkpoint — 2026-10-15:** PR #7 merged as
 `3186f01f363a378a5c89344fb828b24e282d8243`; develop/local/origin/live remote
 matched and were clean before creating `feature/d1-06-slice-readiness`.
@@ -152,7 +173,7 @@ Checklist assessment này không thay checklist feature. D1-01/02/03/04/05/06 DO
 
 - [x] **D1-06 — Chọn slice và kiểm tra DoR** — **DONE for assessment/selection/documented DoR,2026-10-15**: explicit user DEC-29 approval recorded; source-drift recheck PASS at3186f01. Exactly one slice READY_FOR_IMPLEMENTATION: existing11-operation Demo-001 OpenAPI + private generated Fetch SDK/web adoption, mobile compile-only. [Spec/design/tasks](../../specs/001-platform-foundation/slices/demo-contract-client/spec.md) contain accepted scope/pins, ownership/API/security, SC/AC mapping, fixtures, drift/determinism/rollback, tasks/file scope/DoD. No new source/dependencies/generated SDK or full001 DONE; D1-07 tests NOT RUN.
 
-- [ ] **D1-07 — Test-first và gate slice** — **READY TO START / NOT STARTED** after DEC-29 acceptance and D1-06 DoR closure: chosen001-CONTRACT has ten planned test groups and ordered C-01..06 tasks; [implementation prompt](../../specs/001-platform-foundation/slices/demo-contract-client/tasks.md#copyable-d1-07-implementation-prompt). No contract/generation/SDK/browser execution for the new slice yet; user explicitly excludes implementation from this closure turn. Existing demo PASS does not prove generated-client integration. Preserve backend/CI/architecture/V1/V2; no second slice bundled.
+- [ ] **D1-07 — Test-first và gate slice** — **PARTIAL / IN PROGRESS**: C-01 final acceptance DONE; C-02 deterministic generated SDK local DONE,41+44 tests PASS/no skips,11 operations/16 generated files. [C-02 evidence/advisories](d1-07-c02-sdk-evidence.md), [ordered tasks](../../specs/001-platform-foundation/slices/demo-contract-client/tasks.md). Dev audit4 high OPEN with supported-path mitigation; runtime0. C-03–06 NOT STARTED; no wire/consumer/browser PASS claim. Preserve backend/CI/architecture/V1/V2; no second slice bundled.
 
 - [ ] **D1-08 — Chốt kết quả/evidence/blocker** — **PARTIAL**: evidence/traceability và DoR closure cho D1-01..06 đã ghi theo scope. Còn D1-07 implementation, full REQ/AC/test-ID và runbook reproduction trước final Day1 review. D1-06 documentation mới chỉ local, chưa commit/publish; không tick toàn Day1 DONE.
 
@@ -230,8 +251,8 @@ PASS. No mandatory requirement for latest patch/zero dependency advisories was
 invented or removed. Full AC-001-01/05 onboarding and native feature/production
 security verification remain OPEN under Feature001.
 
-**Ưu tiên implementation tiếp theo: D1-07 — triển khai duy nhất slice001-CONTRACT
-theo DEC-29 ACCEPTED và DoR đã chốt**; chưa bắt đầu trong lượt closure này.
-Publication tài liệu D1-06 cần yêu cầu riêng trước commit/push/PR. Demo001 auth/
+**Ưu tiên tiếp theo: D1-07 / C-03 — Wire conformance**, sau review C-02 và khi
+được yêu cầu triển khai. C-01/C-02 local gates PASS; C-03–06 chưa bắt đầu.
+D1-06 đã merge qua PR#8; không publish thay đổi C-01/C-02 khi chưa có yêu cầu. Demo001 auth/
 merchant/DRAFT đã có code, không tạo lại skeleton. Theo dõi dependency/SDK advisory ở maintenance
 scope có review, không tự nâng/hạ baseline để đổi diagnostic sang xanh.

@@ -1,5 +1,22 @@
 # Implementation Tasks 001: Nền tảng repository, deploy và kiến trúc
 
+**Current C-01 final acceptance / C-02 checkpoint — 2026-10-15:** C-01 DONE;
+C-02 deterministic SDK local DONE at20072b6 under explicit conditional user
+authorization. Clean install59; strict package build;41+44 tests/no skips;
+11 operations/16 generated files with two-directory/source byte equality.
+Dev audit4 high OPEN, runtime0 and supported-path mitigation verified.
+[Evidence](../../docs/implementation/d1-07-c02-sdk-evidence.md).
+C-03–06 NOT STARTED; D1-07/full001/Day1 PARTIAL. Prior C-01 checkpoint below is
+historical; original full-feature task criteria remain unchanged.
+
+**Current D1-07 checkpoint — 2026-10-15:** C-01 local contract foundation DONE,
+TEST-001-CONTRACT-01 PASS41/no skips at20072b6,37 negative fixtures. OpenAPI
+owner review remains required before C-02 generation; C-02–06 NOT STARTED and
+their gates UNVERIFIED. D1-07/slice IN_PROGRESS/PARTIAL; full001/Day1 PARTIAL.
+[Evidence](../../docs/implementation/d1-07-c01-contract-evidence.md),
+[subordinate checklist](slices/demo-contract-client/tasks.md). Original full001
+task list and REQ/AC below are unchanged. Earlier checkpoints remain historical.
+
 **D1-06 — 2026-10-15:** selected one subordinate
 [Demo-001 contract/generated-client slice](slices/demo-contract-client/spec.md).
 [Design](slices/demo-contract-client/design.md) and

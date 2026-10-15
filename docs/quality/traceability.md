@@ -1,5 +1,36 @@
 # Traceability Matrix (living document)
 
+**Current C-01 acceptance / C-02 checkpoint — 2026-10-15 /20072b6.**
+[Evidence and advisory disposition](../implementation/d1-07-c02-sdk-evidence.md).
+C-01 final technical acceptance DONE; conditional user authorization satisfied;
+C-02 local DONE, C-03–06 NOT STARTED; D1-07/full001/Day1 PARTIAL.
+
+| Requirement/test subset | Actual execution | Status/limit |
+|---|---|---|
+| SC-01/02; REQ-001-04 subset; SC-AC-01; TEST01/02 | C-0141 pass;11 generated operations/16 files; two independent generations equal source bytes; stale/missing/extra controls fail | PASS local validation/generation/determinism |
+| SC-02/05; TEST03 package portion | Strict TS6 package build, NodeNext/Bundler self-consumer declarations; ten diagnostic-checked compile negatives | PASS package; actual mobile/web consumers UNVERIFIED until C-04/05 |
+| SC-03/04; TEST04 transport portion | Eleven actual SDK functions/injected Fetch, body/path/header/auth, raw status/error/network/retry-key controls; SDK44 pass/no skips total | PASS transport; real HTTP truth C-03, ApiError adapter/browser C-04 UNVERIFIED |
+| REQ-001-05 subset; dependency review | Dev graph59 locked entries; npm audit FAIL4 high via js-yaml; runtime0; actual loader-trap/local-ref mitigation verified | OPEN dev maintenance finding; no zero-vulnerability/risk-acceptance claim |
+| SC-AC-02–06; TEST05–10 | No real wire/consumer/browser/backend regression execution in this C-02 task | UNVERIFIED / NOT RUN; no full001 or Day1 closure |
+
+Older C-01 audit0/no-SDK notes below retain the earlier checkpoint scope.
+
+**Current D1-07 C-01 checkpoint — 2026-10-15 /20072b6.**
+[C-01 evidence](../implementation/d1-07-c01-contract-evidence.md): local contract
+foundation DONE; owner review pending before C-02. D1-07/slice IN_PROGRESS /
+PARTIAL; C-02–06 NOT STARTED. This supersedes earlier implementation NOT STARTED
+notes below without changing their historical evidence or original REQ/AC.
+
+| Requirement / test mapping | Actual evidence | Status / limit |
+|---|---|---|
+| SC-01; REQ-001-04 contract subset; NFR-M02; TEST-001-CONTRACT-01 |11 source/OAS operations, strict Redocly lint0 errors/warnings/ignored;41 tests pass,37 negatives detected,31 documented JSON examples validate | PASS local C-01; source/schema fixtures, not HTTP conformance |
+| SC-AC-01 validation portion | Clean lockfile install, approved validator pins, unique operationIds/local refs/auth/status/header/schema guards | PASS portion; generation/determinism portion UNVERIFIED, not full AC complete |
+| SC-02–05; TEST-001-CONTRACT-02–10 | SDK not generated; consumer files unchanged; no wire/browser/backend execution for this slice | UNVERIFIED / NOT RUN, C-02–06 |
+| REQ-001-05 security subset | Private dev-only tooling; npm audit new graph0; protected source/config diff empty | PASS bounded C-01; bundled-code audit limit and existing consumer advisories remain open |
+| Full Feature001 / Day1 | Other infrastructure/readiness/onboarding/quality obligations retained | PARTIAL; no acceptance criteria changed |
+
+The following D1-06 entry records its earlier documentation-only closure.
+
 **D1-06 official DoR closure — 2026-10-15, baseline develop3186f01 / PR#7 merged.**
 [Assessment and DoR](../implementation/d1-06-slice-readiness.md),
 [subordinate spec](../../specs/001-platform-foundation/slices/demo-contract-client/spec.md),
