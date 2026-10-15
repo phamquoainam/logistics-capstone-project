@@ -1,5 +1,17 @@
 # Implementation Tasks 001: Nền tảng repository, deploy và kiến trúc
 
+**D1-06 — 2026-10-15:** selected one subordinate
+[Demo-001 contract/generated-client slice](slices/demo-contract-client/spec.md).
+[Design](slices/demo-contract-client/design.md) and
+[ordered D1-07 tasks/DoR/DoD](slices/demo-contract-client/tasks.md) complete the
+planning artifact. Explicit user approval2026-10-15 settles DEC-29 ACCEPTED;
+source-drift/mandatory DoR checks PASS, slice READY_FOR_IMPLEMENTATION and
+D1-06 DONE for documented readiness. Baseline PR#7/develop3186f01 unchanged.
+Full001 tasks below remain open and unchanged; no parent REQ/AC or DoD replaced.
+Exact-version metadata, contract/drift/fixtures/determinism/rollback and all
+D1-07 verification gates retained. No dependency/code generation was run;
+D1-07 implementation/test tasks remain NOT STARTED/NOT RUN.
+
 **D1-02 local execution — 2026-10-15: DONE for approved toolchain/native starter feasibility.**
 Node24.13.0/npm11.6.2 pinned; both frontend clean installs/lint/typecheck/tests,
 web build/browser regression and Android export PASS. Debug APK build/install/

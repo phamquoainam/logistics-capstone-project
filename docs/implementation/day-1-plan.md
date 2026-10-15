@@ -1,5 +1,19 @@
 # Day 1 — Existing Codebase Assessment, Baseline Verification & SDD Implementation Plan
 
+**D1-06 checkpoint — 2026-10-15:** PR #7 merged as
+`3186f01f363a378a5c89344fb828b24e282d8243`; develop/local/origin/live remote
+matched and were clean before creating `feature/d1-06-slice-readiness`.
+Selected exactly one slice: Demo-001 OpenAPI + generated Fetch SDK consumed by
+the existing web journey; mobile compile-consumer only. [Gap matrix, candidates,
+DEC-29 and DoR](d1-06-slice-readiness.md). The user formally approved the
+refined DEC-29 scope/pins on2026-10-15; this supersedes the earlier review state.
+**DEC-29 ACCEPTED; slice READY_FOR_IMPLEMENTATION; D1-06 DONE for documented
+assessment/selection/DoR.** Source-drift and mandatory planning gates PASS.
+Implementation tests remain NOT RUN; D1-07 NOT STARTED. This closure turn does
+not install/generate/implement or commit/push/PR. Broad ADR-0003 remains PROPOSED.
+Full001/Day1 remain PARTIAL; no original requirement/AC or completed scope changed.
+The implementation/publication checkpoints below keep their historical dates.
+
 **D1-02 hiện hành — 2026-10-15: DONE cho scope local toolchain và Android native starter feasibility đã duyệt.**
 PR #6 merged `develop/2dcffd5`; user duyệt dùng lại nhánh sạch
 `feature/d1-02-toolchain-closure`. Node24.13.0/npm11.6.2 pin và clean installs;
@@ -124,7 +138,7 @@ Mức độ phản ánh ảnh hưởng tới phát triển/nghiệm thu, không 
 
 ## D. Ưu tiên Day 1 và checklist thực thi
 
-Checklist assessment này không thay checklist feature. D1-01/02/03/04/05 DONE theo scope có evidence; D1-06 là task tiếp theo chưa tick. Full Feature001 vẫn cần T-001-01 review/remaining contracts, infrastructure, independent onboarding và full quality gates; không tick full feature từ các milestone độc lập.
+Checklist assessment này không thay checklist feature. D1-01/02/03/04/05/06 DONE theo scope có evidence; D1-07 là task tiếp theo chưa tick. Full Feature001 vẫn cần remaining contracts implementation, infrastructure, independent onboarding và full quality gates; không tick full feature từ các milestone độc lập.
 
 - [x] **D1-01 — An toàn repository và kiểm kê baseline** — ưu tiên Critical; phụ thuộc: không. File: `AGENTS.md`, manifests, source/config, docs/specs. Gate: ghi branch/HEAD/dirty state, executable/placeholder mà không hủy thay đổi. Bằng chứng: `git status --short`, `git branch --show-current`, `git rev-parse HEAD`, `git ls-files`, `rg --files --hidden --no-ignore` với loại trừ dependency/build/Git; bảng B đã lập. Chỉ audit hoàn thành, không phải foundation.
 
@@ -136,11 +150,11 @@ Checklist assessment này không thay checklist feature. D1-01/02/03/04/05 DONE 
 
 - [x] **D1-05 — CI Architecture Gate & Clean Runner Verification** — **DONE**: người dùng review/merge PR #5; merge f50c897, actual push develop run 38512345091/attempt 1 PASS. Architecture 23/23; H2 40 PASS/tám named PG-only skips; PG18 48/48, zero skips; guard 14 mỗi job. Artifacts digests/named inventory/privacy PASS. Ruleset 25049940 Active, target develop, ba required GitHub Actions checks/strict policy/no bypass, effective rules verified. [Official closure](d1-05-ci-evidence.md#post-merge-verification-and-official-closure--2026-10-14). Không tuyên bố deliberate-red workflow experiment hoặc sáu absent modules đã kiểm chứng; original Feature 001 AC còn nguyên.
 
-- [ ] **D1-06 — Chọn slice và kiểm tra DoR** — **PARTIAL / chưa READY**: D1-04/05 dependencies đã đạt. Review code hiện có, chọn đúng gap chưa hoàn thiện, chốt BLOCKING trong scope, approved public contracts/owner/fixtures/gates. Demo-001 đã có Identity/auth/merchant/DRAFT; không khởi tạo lại hoặc suy ra full feature 002 DONE. Chỉ BLOCKED nếu có dependency thực sự chưa duyệt của slice được chọn; không bắt toàn D1-02 đóng cho mọi phần độc lập.
+- [x] **D1-06 — Chọn slice và kiểm tra DoR** — **DONE for assessment/selection/documented DoR,2026-10-15**: explicit user DEC-29 approval recorded; source-drift recheck PASS at3186f01. Exactly one slice READY_FOR_IMPLEMENTATION: existing11-operation Demo-001 OpenAPI + private generated Fetch SDK/web adoption, mobile compile-only. [Spec/design/tasks](../../specs/001-platform-foundation/slices/demo-contract-client/spec.md) contain accepted scope/pins, ownership/API/security, SC/AC mapping, fixtures, drift/determinism/rollback, tasks/file scope/DoD. No new source/dependencies/generated SDK or full001 DONE; D1-07 tests NOT RUN.
 
-- [ ] **D1-07 — Test-first và gate slice** — **BLOCKED bởi D1-06 chưa chọn/duyệt slice**: thiếu test inventory/execution của slice được chọn, happy/negative/auth/replay/concurrency/failure theo requirement, API/E2E/build/migration/architecture. Demo-001 regressions PASS không tự hoàn thành gate của feature mới. Không triển khai business code trong closure tài liệu này.
+- [ ] **D1-07 — Test-first và gate slice** — **READY TO START / NOT STARTED** after DEC-29 acceptance and D1-06 DoR closure: chosen001-CONTRACT has ten planned test groups and ordered C-01..06 tasks; [implementation prompt](../../specs/001-platform-foundation/slices/demo-contract-client/tasks.md#copyable-d1-07-implementation-prompt). No contract/generation/SDK/browser execution for the new slice yet; user explicitly excludes implementation from this closure turn. Existing demo PASS does not prove generated-client integration. Preserve backend/CI/architecture/V1/V2; no second slice bundled.
 
-- [ ] **D1-08 — Chốt kết quả/evidence/blocker** — **PARTIAL**: evidence/traceability cho D1-03/04/05 đã ghi; task mở có scope/next action rõ. D1-02 checkpoint đã có evidence; còn D1-06/07, full REQ/AC/test-ID và runbook reproduction trước final Day 1 review. Execution mới chỉ local, chưa commit/publish; không tick toàn Day 1 DONE.
+- [ ] **D1-08 — Chốt kết quả/evidence/blocker** — **PARTIAL**: evidence/traceability và DoR closure cho D1-01..06 đã ghi theo scope. Còn D1-07 implementation, full REQ/AC/test-ID và runbook reproduction trước final Day1 review. D1-06 documentation mới chỉ local, chưa commit/publish; không tick toàn Day1 DONE.
 
 ## E. Chiến lược triển khai feature
 
@@ -191,7 +205,7 @@ Baseline và spike cung cấp version/path/evidence, gap, task/dependency/gate v
 
 Backend toolchain spike của **T-001-01 / D1-02** đã thực hiện; bằng chứng REQ/AC nằm tại runbook L.4. Không sửa feature tasks, ADR hoặc [traceability](../quality/traceability.md) vì ngoài ba file được phép. T-001-01 và feature 001 chưa DONE.
 
-**D1-02 hiện hành:** local tooling/native starter feasibility DONE. Follow-up SDK patch/dependency advisories và upstream library/emulator findings được theo dõi riêng, không tự áp major/downgrade. Nhiệm vụ Day1 kế tiếp là D1-06 chọn gap theo code hiện có và review DoR; không triển khai lại auth/DRAFT Demo-001.
+**D1-02 hiện hành:** local tooling/native starter feasibility DONE. Follow-up SDK patch/dependency advisories và upstream library/emulator findings được theo dõi riêng, không tự áp major/downgrade. D1-06 đã chốt DoR theo DEC-29 ACCEPTED; implementation kế tiếp là D1-07 slice001-CONTRACT, chưa bắt đầu trong lượt closure. Không triển khai lại auth/DRAFT Demo-001.
 
 **D1-03 hiện hành:** PostgreSQL Phases A–E DONE; build/DB/architecture/hosted CI PASS. Review DEC-26/chưa migration ở các mốc cũ là lịch sử. D1-02 và full onboarding/native/contract gates vẫn giữ trong đúng task; không tự chuyển business slice sang READY.
 
@@ -216,7 +230,8 @@ PASS. No mandatory requirement for latest patch/zero dependency advisories was
 invented or removed. Full AC-001-01/05 onboarding and native feature/production
 security verification remain OPEN under Feature001.
 
-**Ưu tiên duy nhất tiếp theo: D1-06 — chọn đúng gap/slice và hoàn tất DoR**.
-Review contracts/public dependencies/fixtures/blockers; Demo001 auth/merchant/DRAFT
-đã có code, không tạo lại skeleton. Theo dõi dependency/SDK advisory ở maintenance
+**Ưu tiên implementation tiếp theo: D1-07 — triển khai duy nhất slice001-CONTRACT
+theo DEC-29 ACCEPTED và DoR đã chốt**; chưa bắt đầu trong lượt closure này.
+Publication tài liệu D1-06 cần yêu cầu riêng trước commit/push/PR. Demo001 auth/
+merchant/DRAFT đã có code, không tạo lại skeleton. Theo dõi dependency/SDK advisory ở maintenance
 scope có review, không tự nâng/hạ baseline để đổi diagnostic sang xanh.
