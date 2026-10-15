@@ -1,5 +1,14 @@
 # Implementation Tasks 001: Nền tảng repository, deploy và kiến trúc
 
+**D1-02 local execution — 2026-10-15: DONE for approved toolchain/native starter feasibility.**
+Node24.13.0/npm11.6.2 pinned; both frontend clean installs/lint/typecheck/tests,
+web build/browser regression and Android export PASS. Debug APK build/install/
+real starter render on Pixel_7/API37 and two cold launches/Metro/no fatal windows
+PASS; package com.elogistic.shipper.dev. Online SDK patch advisory remains FAIL
+and dependency/upstream nonfatal findings OPEN; no framework upgrade, skipped
+mandatory test or full Feature001 DONE claim.
+[Evidence](../../docs/implementation/d1-02-toolchain-evidence.md).
+
 **Official closure — 2026-10-14:** D1-05 **DONE** for the approved backend CI task.
 [PR #5](https://github.com/phamquoainam/logistics-capstone-project/pull/5) merged as
 `f50c8972a3a4d0a9c877d6e7e99d2a918cd866fd`; actual develop push
@@ -11,14 +20,19 @@ strict up-to-date policy and no bypass actors.
 [D1-05 evidence](../../docs/implementation/d1-05-ci-evidence.md#post-merge-verification-and-official-closure--2026-10-14).
 
 D1-03 **DONE for approved PostgreSQL Phases A–E**, not full Feature 001.
-D1-02/native/lint/pin/log disposition, full onboarding and remaining contracts/
-quality tasks remain open. REQ-001-03 is verified for implemented code; AC-001-03
+D1-02 local tooling/native starter scope is now DONE; full onboarding, native
+business features and remaining contracts/quality tasks remain open. REQ-001-03 is verified for implemented code; AC-001-03
 fixture detection is PASS, but no deliberately red production workflow experiment
 is claimed. Six absent business modules remain NOT YET IMPLEMENTED/N/A.
 Original REQ/AC and full-feature task criteria remain unchanged; Feature 001/Day 1
 remain PARTIAL. Earlier execution states remain in historical evidence documents.
 
 ## Completed independent Day 1 task scopes
+
+- [x] D1-02 exact Node/npm pin and clean frontend lockfile installs.
+- [x] D1-02 web/mobile lint/typecheck/tests and applicable builds, no dummy scripts.
+- [x] D1-02 Pixel7 native APK compile/install/separate package/render/Metro and bounded no-fatal observations.
+- [x] D1-02 Go/native/emulator findings disposition and scoped evidence/traceability.
 
 - [x] D1-03 approved PostgreSQL Phases A–E: infrastructure, V1/V2/roles,
   migration lifecycle/persistence, H2/PostgreSQL/web regression and documentation.

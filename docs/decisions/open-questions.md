@@ -1,5 +1,15 @@
 # Open Decisions / Assumptions Register
 
+**DEC-02 foundation execution — 2026-10-15:** user explicitly approved Phases B–F
+and reuse of feature/d1-02-toolchain-closure. ACCEPTED/IMPLEMENTED for this local
+scope: Node24.13.0/npm11.6.2 exact pin, existing Expo57.0.27/RN0.86.3 baseline,
+SDK-compatible lint/test tooling and Pixel7 native debug starter target with
+com.elogistic.shipper.dev. Gates PASS with [execution evidence](../implementation/d1-02-toolchain-evidence.md).
+Online latest-patch advisory remains FAIL/OPEN and upstream nonfatal findings/
+security maintenance remain open; no upgrade or zero-warning/security assertion.
+DEC-02 table stays BLOCKING for broader native scan/location/SQLite/business
+feature decisions in009/015, not for already verified local starter tooling.
+
 **Quy tắc:** mọi `[BLOCKING]` phải có owner và ADR/decision trước khi Codex triển khai feature liên quan. `PROPOSED` có thể dùng làm phương án để review nhưng không được gắn nhãn [REPORT]. `CONFIG` phải có default được phê duyệt trước demo.
 
 | ID | Mức | Quyết định còn mở | Feature | Cách chốt / evidence |

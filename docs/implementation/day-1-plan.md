@@ -1,6 +1,20 @@
 # Day 1 — Existing Codebase Assessment, Baseline Verification & SDD Implementation Plan
 
-**Hiện hành sau merge D1-05 — 2026-10-14:** D1-05 **DONE** cho scope backend CI đã duyệt.
+**D1-02 hiện hành — 2026-10-15: DONE cho scope local toolchain và Android native starter feasibility đã duyệt.**
+PR #6 merged `develop/2dcffd5`; user duyệt dùng lại nhánh sạch
+`feature/d1-02-toolchain-closure`. Node24.13.0/npm11.6.2 pin và clean installs;
+web lint/typecheck/build/5 API tests/3 browser regressions PASS; mobile
+lint/typecheck/Jest starter/Android bundle PASS. APK debug package riêng
+`com.elogistic.shipper.dev` build/install/render trên **Pixel_7/API37** PASS,
+hai cold launches, Metro và no-app-fatal/ANR/JS-fatal trong observation windows.
+SDK online patch advisory FAIL và dependency/upstream nonfatal findings vẫn
+OPEN, không ghi là đã fix; không đổi Expo/RN/Java/Boot/Maven/DB hoặc giảm AC.
+[D1-02 commands, hashes, findings và scope](d1-02-toolchain-evidence.md).
+D1-01/02/03/04/05 DONE theo scope; D1-06–08 và toàn Feature001/Day1 vẫn mở.
+Các trạng thái D1-02 PARTIAL/Pixel7Pro/chưa tooling phía dưới là lịch sử.
+Không commit/push/PR trong execution này; HEAD giữ nguyên2dcffd5.
+
+**Lịch sử closure sau merge D1-05 — 2026-10-14:** D1-05 **DONE** cho scope backend CI đã duyệt.
 PR #5 merge vào `develop/f50c8972a3a4d0a9c877d6e7e99d2a918cd866fd`;
 [push run 38512345091](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/38512345091)
 PASS: architecture 23/no skip, H2 40/tám PG-only skip, PG18 48/no skip;
@@ -110,11 +124,11 @@ Mức độ phản ánh ảnh hưởng tới phát triển/nghiệm thu, không 
 
 ## D. Ưu tiên Day 1 và checklist thực thi
 
-Checklist assessment này không thay checklist feature. D1-02 là task tổng thể đầu tiên chưa tick; D1-03/04/05 đã DONE theo scope được duyệt và có evidence. Full feature 001 vẫn bắt đầu ở T-001-01 — Review, chưa đạt toàn bộ điều kiện hoàn thành.
+Checklist assessment này không thay checklist feature. D1-01/02/03/04/05 DONE theo scope có evidence; D1-06 là task tiếp theo chưa tick. Full Feature001 vẫn cần T-001-01 review/remaining contracts, infrastructure, independent onboarding và full quality gates; không tick full feature từ các milestone độc lập.
 
 - [x] **D1-01 — An toàn repository và kiểm kê baseline** — ưu tiên Critical; phụ thuộc: không. File: `AGENTS.md`, manifests, source/config, docs/specs. Gate: ghi branch/HEAD/dirty state, executable/placeholder mà không hủy thay đổi. Bằng chứng: `git status --short`, `git branch --show-current`, `git rev-parse HEAD`, `git ls-files`, `rg --files --hidden --no-ignore` với loại trừ dependency/build/Git; bảng B đã lập. Chỉ audit hoàn thành, không phải foundation.
 
-- [ ] **D1-02 — Xác minh môi trường/toolchain** — ưu tiên High; phụ thuộc D1-01. **PARTIAL**: backend spike PASS tại L.4; Node/npm/lock/typecheck/SDK/Metro/bundle PASS tại L.5–L.7. AVD boot, Expo Go 57.0.9 provenance/signature, starter render và client-to-Metro PASS tại L.7. Log review PARTIAL với non-fatal init findings và emulator UWB-service crash; chưa root cause. Native development build UNVERIFIED; mobile lint/test BLOCKED; web Demo-001 typecheck/build/browser PASS, web lint chưa có. ArchUnit-only D1-04 được duyệt/verify PASS; DEC-02 accepted stack/Node/npm pin chưa chốt; tách milestone chưa duyệt, không có DEFERRED. Không tick DONE hoặc tự miễn gate; closure matrix/điều kiện trong L.7.
+- [x] **D1-02 — Xác minh môi trường/toolchain** — **DONE cho Phases B–F/local toolchain + Android native starter feasibility được duyệt**: exact Node24.13.0/npm11.6.2 pin/engine-strict; web/mobile clean installs, lint/typecheck/tests, web build và Android export PASS. Native APK build6m58s/install/signature/package riêng/render/Metro/no fatal trong hai cold launches Pixel_7/API37 PASS. Root causes/disposition của ::1 binding, Go init/headless/UIManager, native DevLauncher colorScheme/ReactHost soft exception và emulator UWB được ghi theo đúng process. Online latest-patch check FAIL advisory, audit/deprecation/upstream fixes OPEN; không nâng framework hoặc tuyên bố zero warnings/production security. [Evidence](d1-02-toolchain-evidence.md). Full other-developer onboarding/native business capabilities thuộc Feature001/task riêng, không được ngầm miễn.
 
 - [x] **D1-03 — Xác minh build/test/migration** — **DONE cho PostgreSQL Phases A–E được duyệt**: DEC-26, infrastructure/profile/JDBC/Flyway V1/V2, ownership/no-DDL, cold-start/validate/rerun/upgrade/restart persistence, concurrency/idempotency/rollback và PostgreSQL-backed Demo-001 web/H2 regression PASS. Hosted develop/f50c897 verify PG18 48/no skip, H2 40/tám PG-only skip, architecture 23 PASS. Backend toolchain prerequisite đã PASS; mobile/pin/lint và full onboarding thuộc D1-02/Feature 001. [Scope/evidence](d1-03-postgresql-evidence.md). Không sửa AC hoặc miễn Testcontainers/full cold-start.
 
@@ -126,7 +140,7 @@ Checklist assessment này không thay checklist feature. D1-02 là task tổng t
 
 - [ ] **D1-07 — Test-first và gate slice** — **BLOCKED bởi D1-06 chưa chọn/duyệt slice**: thiếu test inventory/execution của slice được chọn, happy/negative/auth/replay/concurrency/failure theo requirement, API/E2E/build/migration/architecture. Demo-001 regressions PASS không tự hoàn thành gate của feature mới. Không triển khai business code trong closure tài liệu này.
 
-- [ ] **D1-08 — Chốt kết quả/evidence/blocker** — **PARTIAL**: evidence/traceability cho D1-03/04/05 đã ghi; task mở có scope/next action rõ. Còn nghiệm thu D1-02, D1-06/07, full REQ/AC/test-ID và runbook reproduction trước final Day 1 review. Thay đổi closure hiện tại chỉ local, chưa commit/publish; không tick toàn Day 1 DONE.
+- [ ] **D1-08 — Chốt kết quả/evidence/blocker** — **PARTIAL**: evidence/traceability cho D1-03/04/05 đã ghi; task mở có scope/next action rõ. D1-02 checkpoint đã có evidence; còn D1-06/07, full REQ/AC/test-ID và runbook reproduction trước final Day 1 review. Execution mới chỉ local, chưa commit/publish; không tick toàn Day 1 DONE.
 
 ## E. Chiến lược triển khai feature
 
@@ -177,22 +191,32 @@ Baseline và spike cung cấp version/path/evidence, gap, task/dependency/gate v
 
 Backend toolchain spike của **T-001-01 / D1-02** đã thực hiện; bằng chứng REQ/AC nằm tại runbook L.4. Không sửa feature tasks, ADR hoặc [traceability](../quality/traceability.md) vì ngoài ba file được phép. T-001-01 và feature 001 chưa DONE.
 
-**Nhiệm vụ kế tiếp để đóng D1-02:** Expo Go SDK 57 smoke và ArchUnit-only đã được duyệt/kiểm chứng, không yêu cầu duyệt lại. Chốt DEC-02 Node/npm pin, lint/test tooling và native build target theo kế hoạch I; review init/emulator findings. Gate còn thiếu phải đạt hoặc split được duyệt chính thức. Không thay native development-build feasibility/feature 001 AC bằng starter render; chưa tick DONE.
+**D1-02 hiện hành:** local tooling/native starter feasibility DONE. Follow-up SDK patch/dependency advisories và upstream library/emulator findings được theo dõi riêng, không tự áp major/downgrade. Nhiệm vụ Day1 kế tiếp là D1-06 chọn gap theo code hiện có và review DoR; không triển khai lại auth/DRAFT Demo-001.
 
 **D1-03 hiện hành:** PostgreSQL Phases A–E DONE; build/DB/architecture/hosted CI PASS. Review DEC-26/chưa migration ở các mốc cũ là lịch sử. D1-02 và full onboarding/native/contract gates vẫn giữ trong đúng task; không tự chuyển business slice sang READY.
 
-## I. D1-02 Closure plan sau D1-05 — PROPOSED
+<a id="i-d1-02-closure-plan-sau-d1-05--proposed"></a>
+## I. D1-02 Closure execution — 2026-10-15
 
-Không triển khai tooling hoặc cài SDK trong phiên closure tài liệu này.
+Kế hoạch PROPOSED trước đây đã được user duyệt triển khai Phases B–F và có
+bằng chứng thực thi trong [D1-02 evidence](d1-02-toolchain-evidence.md).
 
-| Thứ tự | Gate / hành động | Hiện trạng | Điều kiện hoàn thành |
-|---|---|---|---|
-| 1 | Chốt DEC-02: Node 24.13.0/npm 11.6.2 đã chạy, pin mechanism, lint/test tooling scope và native build target | BLOCKED cho implementation: chưa duyệt dependencies/config/metadata | Owner duyệt đúng versions/phạm vi; Java21/Boot4.1.1/Maven3.10.0 và ArchUnit-only đã accepted, không yêu cầu duyệt lại |
-| 2 | Pin đã duyệt; clean npm install theo lock; lint/typecheck/build/test web và mobile với assertions phù hợp slice | Mobile lint/test BLOCKED; web lint thiếu; typecheck/web build/browser baseline PASS | Command/version/exit/report thật; không tạo lại skeleton, tests rỗng hoặc đổi versions để né compatibility |
-| 3 | Isolated Android development-build feasibility / APK starter smoke | UNVERIFIED; config/tooling cần duyệt | Kiểm tra Gradle/JDK/SDK, build/app ID/dev-client strategy; native build và render/Metro có logs; không tự prebuild source/tạo credentials |
-| 4 | Review Expo Go initialization/emulator UWB findings | PARTIAL; root cause UNVERIFIED | Reproduce/attribute, owner/disposition có evidence; không xóa findings bằng UI smoke PASS hoặc tự đổi hệ thống |
-| 5 | D1-02 closure review và reproducibility theo target công bố | PARTIAL | Mandatory gates đạt; split/DEFERRED chỉ khi duyệt cụ thể owner/task/gate. Full other-developer onboarding AC-001-05 vẫn là foundation gate riêng |
+| Phase | Mandatory execution gates | Assessment |
+|---|---|---|
+| B | Baseline-compatible exact Node/npm pins, engines/packageManager, effective strict engines | PASS |
+| C | Web/mobile lockfile clean install, real lint/typecheck/tests, web build and Android bundle | PASS:5 web API,3 browser,1 mobile lifecycle test |
+| D | Pixel7 AVD/SDK/JDK, native APK compile/signature/install/separate package/render/Metro/no app fatal during observations | PASS:304 Gradle tasks; two cold launches, distinct from Expo Go |
+| E | Findings attributed and impact/reproducibility recorded | PASS for starter disposition; upstream fixes/security review remain OPEN, not claimed fixed |
+| F | Evidence/traceability and scoped status reconciliation | DONE local; no commit/push/PR |
 
-**Ưu tiên duy nhất kế tiếp:** D1-02 Closure decision gate (hàng 1), để mở
-implementation tooling/native đang chặn tiến độ. Native business capabilities
-chưa liên quan không phải điều kiện cho starter build feasibility.
+Online Expo latest-patch diagnostic remains **FAIL advisory** against deliberately
+retained57.0.27/57.0.16, not a failed engine/peer/compile/runtime test. Offline
+validation explicitly warns about reliability and is not substituted for online
+PASS. No mandatory requirement for latest patch/zero dependency advisories was
+invented or removed. Full AC-001-01/05 onboarding and native feature/production
+security verification remain OPEN under Feature001.
+
+**Ưu tiên duy nhất tiếp theo: D1-06 — chọn đúng gap/slice và hoàn tất DoR**.
+Review contracts/public dependencies/fixtures/blockers; Demo001 auth/merchant/DRAFT
+đã có code, không tạo lại skeleton. Theo dõi dependency/SDK advisory ở maintenance
+scope có review, không tự nâng/hạ baseline để đổi diagnostic sang xanh.
