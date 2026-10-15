@@ -42,6 +42,7 @@ feature decisions in009/015, not for already verified local starter tooling.
 | DEC-26 | ACCEPTED (D1-03, 2026-10-13) | PostgreSQL 18.6 pinned digest; one DB/nine schemas; global V1/V2 stream; platform history; owner/migrator/runtime; local/test migrations and shared job | 001+ | Explicit user approval; ADR-0002; real PostgreSQL cold-start/upgrade/rerun/permissions PASS; P0 contracts outside demo remain pending |
 | DEC-27 | PROPOSED | RabbitMQ event envelope/versioning, outbox retry backoff and DLQ tooling | 001,012 | fault-injection and schema review |
 | DEC-28 | PROPOSED | `workflow` owner for multi-module orchestration; single transaction manager | 005,009 | integration test + Modulith verification |
+| DEC-29 | ACCEPTED — explicit user approval2026-10-15 | Existing11-operation /api/demo/v1 contract; preserve JSON/status/errors/JWT/RBAC/ownership/idempotency/V1/V2; OpenAPI3.1 + private generated Fetch SDK/web adoption, mobile compile-only. Approved pins: HeyAPI0.99.0, Redocly2.64.0, TS6.0.3, test-only Ajv8.20.0/formats3.0.1; no deprecated standalone Fetch package or consumer compiler upgrade | 001 independent slice | Approval source: “DEC-29 — APPROVED / D1-06 Definition of Ready Closure”; [decision/evidence/DoR](../implementation/d1-06-slice-readiness.md#decision-requiring-owner-confirmation). Source drift PASS; slice READY_FOR_IMPLEMENTATION, D1-06 DONE; D1-07 NOT STARTED/tests NOT RUN. Broader ADR-0003 remains PROPOSED |
 
 ## Chốt từng quyết định
 1. Mở issue ghi owner, problem, constraints, alternatives, tradeoffs, evidence, chosen/decisionDate.

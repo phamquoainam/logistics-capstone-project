@@ -1,5 +1,36 @@
 # Traceability Matrix (living document)
 
+**D1-06 official DoR closure — 2026-10-15, baseline develop3186f01 / PR#7 merged.**
+[Assessment and DoR](../implementation/d1-06-slice-readiness.md),
+[subordinate spec](../../specs/001-platform-foundation/slices/demo-contract-client/spec.md),
+[design/tests](../../specs/001-platform-foundation/slices/demo-contract-client/design.md),
+[D1-07 tasks](../../specs/001-platform-foundation/slices/demo-contract-client/tasks.md).
+**DEC-29 ACCEPTED** by explicit user approval, not metadata inference.
+**D1-06 DONE** for assessment/selection/DoR; chosen slice READY_FOR_IMPLEMENTATION.
+Source drift PASS: HEAD3186f01, eleven source-operation hashes/protected paths
+unchanged; accepted contract/tooling scope and all mandatory planning gates recorded.
+Consumer TS6 stays unchanged; test-only Ajv purpose, source/wire/drift/determinism
+and application-only rollback preserved. **D1-07 NOT STARTED**; all implementation
+test IDs below remain PLANNED/NOT RUN. Full Feature001/Day1 remain PARTIAL.
+
+| Source/requirement subset | Accepted slice / planned test mapping | Current evidence/status |
+|---|---|---|
+| REQ-001-04 contract/client; NFR-M02/O03 | SC-01/02; TEST-001-CONTRACT-01/02/03/05 | Source11-operation inventory and generator metadata reviewed; actual OpenAPI/generated client absent |
+| DEMO-01..04; FR-A01/A02/M01/M04/M05/AD01 subsets; NFR-U02 | SC-03; TEST-001-CONTRACT-04/05/08 | Existing web/API implementation confirmed; generated-client journey NOT RUN |
+| BR-01/02 demo subset; NFR-S01/S02/C02 | SC-04; TEST-001-CONTRACT-06/07/10 | Preserve existing RBAC/owner/replay/concurrency; new wire-conformance tests NOT RUN |
+| REQ-001-05; NFR-M01/S02; AC-001-04 subset | SC-05 / SC-AC-06; TEST-001-CONTRACT-09/10 | No new dependencies/source; documentation-only safety checks, not an installed-tool security claim |
+| AC-001-01/05; REQ-001-04 infrastructure; Testcontainers full tasks | GAP-C03/04/05/06/09 | OPEN full001 obligations, outside this independent slice; no implicit DEFERRED |
+| FR-S01..05 /009/010/015 | GAP-C02/07 | Mobile starter verified previously; business/native/API networking still NOT IMPLEMENTED/UNVERIFIED |
+
+Full Feature001/Day1 remain PARTIAL. D1-01..05 completed task scopes are retained;
+new gaps/status above distinguish literal full AC from those scopes. Prior D1-02
+and older evidence below are dated checkpoints, not new execution claims.
+
+| Closure evidence ID | Verified documentation gate | Status |
+|---|---|---|
+| DOC-001-D106-APPROVAL | Explicit user “DEC-29 — APPROVED / D1-06 Definition of Ready Closure”; scope/pins recorded in decision register/ADR/slice | PASS acceptance; no runtime compatibility claim |
+| DOC-001-D106-DOR | Required DoR categories, source drift, source-to-contract inventory, fixtures/tasks/gates/rollback and links/protected REQ/AC checks | PASS documentation; D1-06 DONE, unpublished |
+
 **D1-02 execution — 2026-10-15: DONE for approved local toolchain/native starter scope.**
 Baseline2dcffd5, uncommitted feature/d1-02-toolchain-closure.
 [Detailed commands/hashes/disposition](../implementation/d1-02-toolchain-evidence.md).
