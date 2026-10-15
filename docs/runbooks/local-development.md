@@ -1,5 +1,12 @@
 # Local Development Runbook — repository hiện hữu
 
+**D1-02 latest execution — 2026-10-15:** local toolchain/native starter scope DONE;
+Pixel_7/API37 is the current emulator target. See [L.10](#l10-d1-02-toolchain-and-pixel-7-native-execution--2026-10-15)
+and [execution evidence](../implementation/d1-02-toolchain-evidence.md) for commands,
+23 changed/new files, actual APK/runtime proof and open advisory diagnostics.
+Older no-tooling/Pixel7Pro/PARTIAL statuses retain their dated checkpoint scope.
+Full Feature001/Day1 are not DONE. No new commit/push/PR performed.
+
 **D1-05 Java repair verified (2026-10-14):** PR #5/fix 6b8f97a có actual GitHub
 run 38506000079 PASS: architecture 23, H2 40/tám PG-only skip, PostgreSQL 48/no
 skip; artifacts/digest/counts/privacy đã kiểm tra. Setup Java dùng Temurin major
@@ -705,3 +712,133 @@ Next: D1-02 Closure decision gate for pin/tooling/native strategy; mobile/native
 lint/log/onboarding requirements remain open, not DEFERRED.
 [Closure plan](../implementation/day-1-plan.md#i-d1-02-closure-plan-sau-d1-05--proposed).
 Không tự triển khai D1-06 hoặc thay đổi full feature AC để bỏ qua gate này.
+
+## L.10. D1-02 toolchain and Pixel 7 native execution — 2026-10-15
+
+**Current D1-02: DONE for approved local tooling/native starter feasibility.**
+Earlier L.4–L.9 pending tooling/Pixel7Pro statements retain their dated scope.
+Current target is **Pixel_7/API37**, emulator-5554, not Pixel7Pro.
+[Commands/results, APK/screenshot hashes and finding disposition](../implementation/d1-02-toolchain-evidence.md).
+Full Feature001/Day1 remain PARTIAL; native starter is not scan/GPS/offline,
+production release or other-developer onboarding acceptance.
+
+### Version pins and quality commands
+
+Use Node24.13.0/npm11.6.2. Root .nvmrc, exact engines/packageManager in both
+frontend manifests and project engine-strict .npmrc enforce the declared baseline
+for npm operations. No global settings/version changes were made. Existing Expo
+57.0.27/React19.2.3/RN0.86.3, Vite8.3.4, TS6.0.3, Java21/Boot4.1.1/Maven3.10.0
+and database foundation remain unchanged.
+
+`.nvmrc` declares a version; it does not automatically switch the active Node
+installation on Windows. If NVM for Windows is already installed and this Node
+version is available, explicitly run `nvm use 24.13.0`, then check `node --version`
+and `npm.cmd --version` in the shell used for the project. Otherwise select the
+approved existing installation. Stop on a version mismatch; do not assume
+`packageManager` installs npm or changes PATH. No version manager/global npm
+installation is part of these verification commands.
+
+From app/frontend/web, then separately app/frontend/shipper-mobile:
+
+```powershell
+node --version
+npm.cmd --version
+npm.cmd config get engine-strict
+npm.cmd ci --no-audit --no-fund
+npm.cmd run lint
+npm.cmd run typecheck
+npm.cmd test
+# Web only:
+npm.cmd run build
+# Mobile Android JS export only; this does not build an APK:
+npm.cmd run build:android:bundle
+```
+
+Web tests use existing Playwright as a browserless HTTP-client test runner:
+five meaningful cases, no developer credentials/backend requirement. Mobile uses
+SDK57 ESLint/Jest preset and RNTL14, one real starter mount/remount test. Native
+behavior is verified separately below, not by Jest's mocked native modules.
+Both clean install/lint/typecheck/test gates PASS. Web build PASS; existing three
+Edge browser regressions PASS against a separate new in-memory H2 backend.
+Run test:e2e only when the appropriate test backend/Vite and ignored credentials
+are prepared; do not run regression provisioning/reset against developer data.
+
+### Native development build versus Expo Go
+
+The project now includes SDK-compatible expo-dev-client57.0.20. app.json defines
+development-only package com.elogistic.shipper.dev and scheme elogistics-shipper-dev.
+Generated native folders remain ignored under the original .gitignore. No manual
+native edits, EAS login/credentials, release keys or AVD recreation are required.
+
+Actual Windows first-generation/build commands from shipper-mobile:
+
+```powershell
+adb devices -l
+emulator -list-avds
+adb -s emulator-5554 emu avd name
+# Only for a clone with no android directory; preserve existing native files.
+node node_modules/expo/bin/cli prebuild --platform android --no-install --no-clean --skip-dependency-update 'react,react-native'
+$toolchainRepoRoot = (Resolve-Path ../../..).Path
+$env:GRADLE_USER_HOME = Join-Path $toolchainRepoRoot '.demo/d1-02/gradle-home'
+$env:NODE_ENV = 'development'
+.\android\gradlew.bat -p android :app:assembleDebug --no-daemon --console=plain -PreactNativeArchitectures=x86_64 --max-workers=2
+```
+
+Installed SDK36/BuildTools36.0.0/NDK27.1/CMake3.22.1 and existing JDK21 were used.
+Generated Gradle9.3.1 build PASS in6m58s, 304 tasks. x86_64 targets Pixel7 emulator;
+this is not ARM/release/iOS coverage. Set NODE_ENV for subsequent direct Gradle
+calls; the first successful run warned when it was absent. No cache was deleted.
+Use quoted JVM properties or --max-workers: PowerShell splits unquoted dotted
+-D arguments. The initial invocation failure is retained in evidence.
+
+APK android/app/build/outputs/apk/debug/app-debug.apk:63,488,363 bytes,
+debug signature verified. Package was absent before `adb install`; install and
+MainActivity cold launch PASS. Existing installations/data were not replaced.
+`npm run android:dev -- --device emulator-5554` is the explicit Expo native-build
+target; start:go/start:dev separately choose the JavaScript development client.
+
+For this emulator, actual working Metro setup is:
+
+```powershell
+$env:REACT_NATIVE_PACKAGER_HOSTNAME = '10.0.2.2'
+npm.cmd run start:dev -- --lan --port 8081
+# In another shell after installation:
+adb -s emulator-5554 shell am start -W -a android.intent.action.VIEW -d 'elogistics-shipper-dev://expo-development-client/?url=http%3A%2F%2F10.0.2.2%3A8081' com.elogistic.shipper.dev
+# Separate Expo Go comparison, not the native APK target:
+npm.cmd run start:go -- --lan --port 8082
+adb -s emulator-5554 shell am start -W -a android.intent.action.VIEW -d exp://10.0.2.2:8082 host.exp.exponent
+```
+
+--localhost bound only ::1 on this host; 127.0.0.1/10.0.2.2 connections failed.
+LAN binding and process-only advertised hostname fixed manifest/asset routing.
+No firewall/global configuration change or adb-reverse replacement was made.
+Do not count HTTP200, APK installation or developer menu as starter render.
+Dismiss first-run dev-menu onboarding; UI hierarchy/screenshot must show starter
+text in com.elogistic.shipper.dev. Both native cold launches PASS with actual
+starter, Metro sockets and bounded no-app-fatal/ANR/JS-fatal evidence.
+
+### Findings and remaining advisory work
+
+Go57.0.9 starter comparison PASS on Pixel7 after routing fix. Its embedded-update
+fallback/headless-loader/UIManager/RecentTaskInfo/TaskDescription errors reproduce
+in the Go process. Native APK does not reproduce update/headless errors. It has
+a caught DevLauncher colorScheme reflection warning in both launches and one
+RN ReactHost focus-before-context soft exception on the first launch; second
+launch renders with no such soft exception. SDK/RN source identifies both paths;
+no app JS stack/fatal. UWB panic concerns Android vendor service /dev/uwb0 before
+app launch; do not attribute it to App.tsx or disable/wipe the emulator to hide it.
+System lastanr reports no ANR since boot; native exit-info only records intentional
+force-stop between cold launches.
+
+Online expo install --check still FAILS its latest-patch recommendation
+(57.0.29/Metro57.0.17 versus retained57.0.27/57.0.16). Offline check warns it is
+unreliable and does not supersede this result. Baseline engine/peer/compile/
+quality/runtime gates PASS; no approved requirement demanded automatic upgrades
+to the latest patch. npm graph audits/deprecations and upstream warning fixes
+remain OPEN maintenance/security review, not a clean audit or full native-feature
+readiness claim. Do not run audit-fix/force or framework downgrade to hide findings.
+
+Verification backend/Vite/Go Metro were stopped after use, preserving original
+databases, caches, emulator and existing adb reverse mapping. Native Metro8081
+remains running for inspection of the installed development app; observation
+results are bounded by recorded timestamps, not perpetual connectivity promises.

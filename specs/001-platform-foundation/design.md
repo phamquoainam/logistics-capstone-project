@@ -1,5 +1,14 @@
 # Technical Design 001: Nền tảng repository, deploy và kiến trúc
 
+**D1-02 local execution — 2026-10-15: DONE for approved toolchain/native starter feasibility.**
+Node24.13.0/npm11.6.2 pinned; both frontend clean installs/lint/typecheck/tests,
+web build/browser regression and Android export PASS. Debug APK build/install/
+real starter render on Pixel_7/API37 and two cold launches/Metro/no fatal windows
+PASS; package com.elogistic.shipper.dev. Online SDK patch advisory remains FAIL
+and dependency/upstream nonfatal findings OPEN; no framework upgrade, skipped
+mandatory test or full Feature001 DONE claim.
+[Evidence](../../docs/implementation/d1-02-toolchain-evidence.md).
+
 **Official closure — 2026-10-14:** D1-05 **DONE** for the approved backend CI task.
 [PR #5](https://github.com/phamquoainam/logistics-capstone-project/pull/5) merged as
 `f50c8972a3a4d0a9c877d6e7e99d2a918cd866fd`; actual develop push
@@ -11,8 +20,8 @@ strict up-to-date policy and no bypass actors.
 [D1-05 evidence](../../docs/implementation/d1-05-ci-evidence.md#post-merge-verification-and-official-closure--2026-10-14).
 
 D1-03 **DONE for approved PostgreSQL Phases A–E**, not full Feature 001.
-D1-02/native/lint/pin/log disposition, full onboarding and remaining contracts/
-quality tasks remain open. REQ-001-03 is verified for implemented code; AC-001-03
+D1-02 local tooling/native starter scope is now DONE; full onboarding, native
+business features and remaining contracts/quality tasks remain open. REQ-001-03 is verified for implemented code; AC-001-03
 fixture detection is PASS, but no deliberately red production workflow experiment
 is claimed. Six absent business modules remain NOT YET IMPLEMENTED/N/A.
 Original REQ/AC and full-feature task criteria remain unchanged; Feature 001/Day 1
@@ -22,6 +31,12 @@ Approved Temurin major `21` logs resolved hosted 21.0.12.1+1; Boot 4.1.1/
 Maven Wrapper 3.10.0 and full-SHA Actions remain unchanged. This closure changes
 no architecture/API/database design; isolated tmpfs PG roles and exact test
 report inventory remain implemented as documented in the CI guide.
+
+Development-only native configuration: app.json package com.elogistic.shipper.dev,
+scheme elogistics-shipper-dev; expo-dev-client57.0.20 through SDK57 CLI. CNG output
+is generated/ignored, not hand-maintained native architecture. Original Go
+commands retained with explicit start:go/start:dev/android:dev targets. No business
+API/RBAC/domain/database/architecture-rule design changes.
 
 **State:** DESIGN_PROPOSED — không mô tả API/migration đã implement.  
 

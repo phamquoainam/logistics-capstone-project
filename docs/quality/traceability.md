@@ -1,5 +1,24 @@
 # Traceability Matrix (living document)
 
+**D1-02 execution — 2026-10-15: DONE for approved local toolchain/native starter scope.**
+Baseline2dcffd5, uncommitted feature/d1-02-toolchain-closure.
+[Detailed commands/hashes/disposition](../implementation/d1-02-toolchain-evidence.md).
+
+| Trace/test ID | Executed evidence | Status/limit |
+|---|---|---|
+| REQ-001-01/05; TEST-001-D102-PIN-01 | Node24.13.0/npm11.6.2, .nvmrc/exact engines/packageManager, engine-strict=true, lockfile clean installs | PASS; no framework major/patch upgrade |
+| TEST-001-D102-WEB-01 | ESLint/typecheck/Vite build;5 API-client assertions and3 existing Edge regressions | PASS; isolated H2 in-memory backend, existing data untouched |
+| TEST-001-D102-MOBILE-01 | SDK57 ESLint/Jest/RNTL, strict types, starter mount/remount, Android Hermes export | PASS; no real native behavior claimed from mocks/bundle |
+| AC-001-01 native subset; TEST-001-D102-NATIVE-01 | Gradle304 tasks/APK SHA256/signature, install previously absent com.elogistic.shipper.dev on Pixel7/API37 | PASS debug/x86_64; not release/iOS/all-device coverage |
+| TEST-001-D102-RUNTIME-01 | Two native cold launches, real starter UI/screenshot, PID/socket/exit-info evidence, no fatal/ANR/JS-fatal in bounded windows | PASS; upstream nonfatal colorScheme/ReactHost warnings recorded |
+| TEST-001-D102-LOG-01 | Go and native PID comparison plus pre-launch UWB vendor-process evidence | PASS source/impact classification; upstream fixes/background readiness UNVERIFIED |
+| TEST-001-D102-SDK-ADVISORY-01 | Online expo install --check recommends57.0.29/Metro57.0.17; frozen baseline57.0.27/57.0.16 | FAIL advisory recorded, no --fix or offline substitution |
+| Dependency advisory review | npm audit graph22 baseline vs35 current omit-dev findings, zero critical; SDK/Jest deprecations | OPEN maintenance/security review; not APK reachability proof or a clean security audit |
+| Full Feature001/Day1 | Full other-developer onboarding/health/contracts/infrastructure/native business and remaining DoR/quality tasks | PARTIAL, original REQ/AC unchanged |
+
+D1-01/02/03/04/05 task scopes DONE; D1-06–08 remain open. Older task statuses
+below are historical checkpoints, not an assertion of current missing tooling.
+
 **Official post-merge closure — 2026-10-14:** D1-05 DONE for approved backend CI;
 D1-03 DONE for PostgreSQL Phases A–E. PR #5 merged as
 `f50c8972a3a4d0a9c877d6e7e99d2a918cd866fd`; develop push
