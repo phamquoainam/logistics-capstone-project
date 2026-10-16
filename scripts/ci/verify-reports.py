@@ -22,6 +22,12 @@ anonymousUnauthorizedAndWrongRoleForbidden accountStatusAndRoleRecheckedAfterIss
 tamperedTokenAndClientRoleInjectionRejected rateLimitFailedLogins signedExpiredTokenRejected'''.split(),
     BASE + 'demo.DemoSecurityEvidenceTests': '''credentialsAndBearerTokenDoNotAppearInApplicationLogs
 signingConfigurationFailsFastWhenMissingOrWeak'''.split(),
+    BASE + 'demo.FoundationHealthTests': '''healthyProbesUseConfiguredDatabaseAndHideDetails
+refusingTrafficIs503WhileLivenessStaysUp onlyExactAnonymousGetProbesAreAllowed
+exhaustedRealPoolReturns503WithinAcquisitionBudgetAndRecovers'''.split(),
+    BASE + 'demo.PostgresHealthSafetyTests': '''longRuntimeReadAndPhysicalReuseRemainSafeAfterSuccessfulProbe
+concurrentLongReadIsNotInterruptedByExhaustedPoolProbe terminatedPhysicalConnectionIsDiscardedAndReplacementIsSafe
+stalledSocketProbeIsBoundedEvictsAndRecoversWithoutTimeoutLeak'''.split(),
     BASE + 'demo.DemoShipmentTests': '''actorMerchantOwnershipIsRecheckedFromDatabase ownDraftAndCrossMerchantIsolation
 createReplayConflictAndReferenceUniqueness validationOwnerAndStatusInjectionRejected
 cancelGuardReplayAndImmutableEvents concurrentCreateHasOneEffect databaseConstraintAndAdminSummary'''.split(),
@@ -32,6 +38,7 @@ versionOneToTwoUpgradePreservesExistingTechnicalData failedForeignKeyRollsBackWh
 concurrentCancelHasOneEventAndReceipt'''.split(),
 }
 PG = BASE + 'demo.PostgresFoundationTests'
+PG_ONLY = {PG, BASE + 'demo.PostgresHealthSafetyTests'}
 SUREFIRE_NAMES = {
     (BASE + 'demo.DemoSecurityEvidenceTests',
      'credentialsAndBearerTokenDoNotAppearInApplicationLogs(CapturedOutput)'):
@@ -74,7 +81,7 @@ def verify(source, output, mode, maven_exit):
     for name, methods in expected.items():
         actual = seen.get(name, {})
         for method in methods:
-            wanted = 'skipped' if mode == 'h2' and name == PG else 'passed'
+            wanted = 'skipped' if mode == 'h2' and name in PG_ONLY else 'passed'
             if actual.get(method) != wanted:
                 problems.append(f'{name}.{method}: required {wanted}')
     if not rows:

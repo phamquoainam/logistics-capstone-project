@@ -1,5 +1,48 @@
 # Technical Design 001: Nền tảng repository, deploy và kiến trúc
 
+## Approved D1-08 Task A - health/readiness runtime, 2026-10-17
+
+The user's Task A explicitly approves Boot-managed Actuator4.1.1 and separate
+GET /actuator/health/liveness and /actuator/health/readiness. This bounded
+implementation does not accept other proposed API/envelope/event contracts.
+One backend artifact; no new module or health framework. The explicitly approved
+timeout-safety fix adds one small platform infrastructure Actuator contributor. Add the
+starter without an explicit version, managed by the existing Boot4.1.1 parent.
+
+Default/non-demo context opts management access out and probes off. The existing
+demo profile opts health read-only/probes on explicitly for H2 and demo,postgres:
+liveness group=livenessState, readiness group=readinessState,db. Membership
+validation stays enabled. Runtime migration failures still prevent startup;
+readiness is not a mechanism to bypass failed Flyway startup. One-shot migration
+is non-web. PostgreSQL-only deployment without demo is not a new supported target.
+
+Management web exposure includes health only; discovery off, JMX exposure excluded,
+details/components never. DemoSecurity permits anonymous GET of only the two exact
+probe paths; aggregate health, nested details and other management paths remain
+denied, including for ADMIN. JWT/business rules are unchanged. Use Boot defaults
+UP200 and DOWN/OUT_OF_SERVICE503; do not override their status mapping.
+
+Timeout-safety fix approved after review reproduced the rejected global3s setting:
+retain Hikari acquisition2000ms/validation1000ms and PG connectTimeout2s, remove
+global socketTimeout. DatabaseReadinessConfiguration in platform/internal/
+infrastructure contributes dbHealthIndicator using the existing runtime pool.
+JDBC isValid(1) in pinned pgJDBC42.7.13 scopes/restores its own network timeout;
+return UP only for a valid open connection with unchanged original timeout.
+Explicitly evict failed/unrestored connections; close on all paths; no exception
+details. Boot's conditional default db contributor backs off by bean name.
+No executor/future-based JDBC cancellation, shared health pool or manual global
+socket mutation. Runtime pool exhaustion remains DOWN. Long SQL is not assigned
+a new application deadline. Real H2/PG/default context and PG safety/recovery
+regressions verify behavior. This is no universal HTTP SLA or Flyway startup
+recovery claim. H2 has no PG driver properties; transaction/pool-size/startup and
+migration policy remain unchanged. Framework types are infrastructure dependencies,
+not imports into domain or another module's internal packages.
+
+Test IDs TEST-001-HEALTH-01..04 and exact runtime results are in
+[Task A evidence](../../docs/implementation/d1-08-health-readiness-evidence.md).
+Original REQ/AC and proposed sections below remain unchanged. Redis/RabbitMQ,
+Testcontainers, broader observability and full independent onboarding remain open.
+
 **D1-02 local execution — 2026-10-15: DONE for approved toolchain/native starter feasibility.**
 Node24.13.0/npm11.6.2 pinned; both frontend clean installs/lint/typecheck/tests,
 web build/browser regression and Android export PASS. Debug APK build/install/
