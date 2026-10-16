@@ -1,6 +1,22 @@
 # Traceability Matrix (living document)
 
-**Current C-05 mobile consumer — 2026-10-17 /6656753.**
+**Current C-06 final combined verification - 2026-10-17 /1f26854.**
+[Final evidence/commands/security/CI coverage](../implementation/d1-07-c06-final-evidence.md).
+C-05 committed; C-06 LOCAL_DONE, D1-07 PARTIAL / READY_FOR_PR, no publish.
+
+| Requirement/test subset | Fresh actual evidence | Status/limit |
+|---|---|---|
+| SC-01/02; TEST01/02; SC-AC-01 | Strict lint/source11/41 tests, actual two generations and independent16-file raw-byte/source comparison,44 SDK tests | PASS local; no schema/generated/pin changes |
+| SC-03/04; TEST04-08; SC-AC-02/03/04 | Web24 tests, real wire27/108 responses and browser7 twice on fresh PG; SQL ownership/replay/concurrency, loss/retry/session/error fixtures | PASS scoped; explicit intercepted branches distinguished from actual backend responses |
+| SC-05; TEST03/09; SC-AC-05 | All three lockfile clean installs; web/mobile quality, Jest1/compiler4/actual SDK Hermes23 modules/14 SDK +starter576/0 SDK | PASS local compile/bundle, no device/business network claim |
+| TEST10/SC-AC-06 local; BR-01/02/NFR-S01/S02/C02 subsets | Arch23 incl11 negative/1 positive; H2 40+8 named skips; real PG48+0; fail-closed guard14,15-value/30-safe-file bounded audit/cleanup | PASS local; not the literal CI red-then-fixed parent experiment |
+| Dependency findings | Web0/0; SDK4 high/0; mobile58 full/35 omit-dev,7 distinct root advisories across scopes | Audit FAIL/OPEN, impact/path/owner disposition recorded; no remediation/risk waiver |
+| D1-07 official DoD / remote integration | Existing three required backend checks not run on unpublished HEAD; no new frontend CI | PARTIAL / READY_FOR_PR; remote UNVERIFIED, merge NO-GO |
+| Full001/Day1 | Readiness/full infra/Testcontainers/independent onboarding/native business/security maintenance/D1-08 | PARTIAL; original REQ/AC unchanged |
+
+Older dated checkpoints below retain historical scope.
+
+**Historical C-05 mobile consumer — 2026-10-17 /6656753.**
 [Evidence/inventory](../implementation/d1-07-c05-mobile-evidence.md).
 C-04 reviewed/committed23 files; C-05 DONE local/uncommitted, no publish.
 
@@ -14,7 +30,7 @@ C-04 reviewed/committed23 files; C-05 DONE local/uncommitted, no publish.
 
 Prior dated checkpoint statements below are historical.
 
-**Current C-04 web adoption — 2026-10-16 /a2609f9.**
+**Historical C-04 web adoption — 2026-10-16 /a2609f9.**
 [Evidence/mapping/inventory](../implementation/d1-07-c04-web-evidence.md).
 C-03 checkpoint committed with approval; C-04 DONE local/uncommitted, no publish.
 
@@ -29,7 +45,7 @@ C-03 checkpoint committed with approval; C-04 DONE local/uncommitted, no publish
 
 Prior dated checkpoint statements below are historical.
 
-**Current C-03 actual HTTP/PostgreSQL checkpoint — 2026-10-15 /b385244.**
+**Historical C-03 actual HTTP/PostgreSQL checkpoint — 2026-10-15 /b385244.**
 [Evidence](../implementation/d1-07-c03-wire-evidence.md). C-01/C-02 checkpoint
 43 files committed under user authorization; C-03 changes uncommitted, no push.
 
@@ -45,7 +61,7 @@ Prior dated checkpoint statements below are historical.
 
 Older wire NOT RUN/no-commit statements below are prior dated checkpoints.
 
-**Current C-01 acceptance / C-02 checkpoint — 2026-10-15 /20072b6.**
+**Historical C-01 acceptance / C-02 checkpoint — 2026-10-15 /20072b6.**
 [Evidence and advisory disposition](../implementation/d1-07-c02-sdk-evidence.md).
 C-01 final technical acceptance DONE; conditional user authorization satisfied;
 C-02 local DONE, C-03–06 NOT STARTED; D1-07/full001/Day1 PARTIAL.

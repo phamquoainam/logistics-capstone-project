@@ -1,5 +1,13 @@
 # D1-07 / C-01 — OpenAPI Contract Foundation evidence
 
+**C-06 cross-reference - 2026-10-17 /1f26854:** this is the original dated
+checkpoint evidence, not a claim all gates below ran again at its original date.
+[C-06 final combined evidence](d1-07-c06-final-evidence.md) freshly verifies
+C-01-06 local gates, actual PG48/no skips and HTTP/browser repeatability;
+C-05 accepted/committed as1f26854. D1-07 PARTIAL / READY_FOR_PR; remote CI/integration
+UNVERIFIED. Current audits web0/0, SDK4-high/0, mobile58/35; prior snapshot59 is
+retained historically, not silently rewritten as remediation. C-06 uncommitted.
+
 **Later final acceptance checkpoint:** the user's C-01 Final Acceptance/C-02
 task authorizes continuation when final review passes. C-01 review and41 tests
 PASS; no source/schema/security mismatch found. C-02 subsequently implemented

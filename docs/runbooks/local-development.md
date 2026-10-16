@@ -1,5 +1,48 @@
 # Local Development Runbook — repository hiện hữu
 
+## D1-07 C-06 - combined local verification, 2026-10-17
+
+Retain Java21/Boot4.1.1/Maven3.10.0 and Node24.13.0/npm11.6.2 pins. Clean-install
+the SDK first and build it before consumer gates. From repository root:
+
+```powershell
+npm.cmd --prefix packages/api-client ci --no-audit --no-fund
+npm.cmd --prefix packages/api-client run verify:c02
+npm.cmd --prefix app/frontend/web ci --ignore-scripts --no-audit
+npm.cmd --prefix app/frontend/web run lint
+npm.cmd --prefix app/frontend/web run typecheck
+npm.cmd --prefix app/frontend/web test
+npm.cmd --prefix app/frontend/web run build
+npm.cmd --prefix app/frontend/shipper-mobile ci --ignore-scripts --no-audit
+npm.cmd --prefix app/frontend/shipper-mobile run lint
+npm.cmd --prefix app/frontend/shipper-mobile run typecheck
+npm.cmd --prefix app/frontend/shipper-mobile test
+node packages/api-client/scripts/check-mobile-consumer.mjs
+python -B -m unittest discover -s scripts/ci -p 'test_*.py' -v
+python -B packages/api-client/scripts/check-backend-baselines.py
+npm.cmd --prefix packages/api-client run test:wire
+npm.cmd --prefix packages/api-client run test:web
+```
+
+Use the published C-05 starter export command for the unchanged real entry too.
+Run Docker harnesses sequentially; their inventory checks include all existing
+containers/volumes. Backend helper reuses CI provisioning/report guards and the
+existing offline .demo/maven-repository; it requires Docker Engine, approved PG
+image locally and free127.0.0.1:5433. If busy, FAIL/BLOCKED: never stop/retarget
+existing services or change test URL guards. It creates two owned tmpfs test DBs,
+runs architecture/H2/postgres clean verify and removes only its captured ID.
+Wire/browser harnesses use random loopback ports. No -v/prune/cache delete/data
+reset/Flyway clean/repair. Canonical postgres@sha256 reference retains exactly
+the approved18.6-bookworm digest even when the local image loses its tag.
+
+Outputs/context/logs/raw reports stay ignored; share only sanitized allowlisted
+evidence. Fresh C-06: package85, web24, mobile1/compiler4/Hermes, arch23,
+H2 40+8 skips, PG48+0 and guard14 PASS; wire27/browser7 PASS twice. Audits remain
+FAIL/OPEN for SDK/mobile; inspect full and omit-dev separately, no force fix.
+[Final evidence](../implementation/d1-07-c06-final-evidence.md). This is cached local
+repeatability, not independent clean-machine onboarding. No APK rebuild or mobile
+business network execution; remote CI requires separately authorized publication.
+
 ## D1-07 C-05 — compile-only mobile SDK / real Hermes bundle, 2026-10-17
 
 Build SDK before the local mobile link is consumed. From repository root:

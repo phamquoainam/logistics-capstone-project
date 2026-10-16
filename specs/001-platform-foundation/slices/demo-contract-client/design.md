@@ -1,6 +1,15 @@
 # Design 001-CONTRACT — preserve the approved Demo-001 wire behavior
 
-**Current C-05 checkpoint — 2026-10-17 /6656753:** compile-only mobile consumer
+**Current C-06 verification - 2026-10-17 /1f26854:** C-01-06 local deliverables
+VERIFIED; C-06 LOCAL_DONE. D1-07 PARTIAL / READY_FOR_PR; remote CI/integration
+UNVERIFIED, full001/Day1 PARTIAL. No C-06 commit/push/PR. Fresh package85,
+web24/browser7 twice, mobile Jest1/compiler4/Hermes, architecture23,
+H2 40+8 named skips, actual PG48/no skips and privacy guard14 PASS.
+Mobile audit58 full/35 omit-dev and SDK dev4 high remain FAIL/OPEN; web0/0.
+[C-06 final evidence](../../../../docs/implementation/d1-07-c06-final-evidence.md).
+Earlier execution/checkpoint statements below are historical.
+
+**Historical C-05 checkpoint — 2026-10-17 /6656753:** compile-only mobile consumer
 DONE locally. Public SDK/Fetch factory types resolve in unchanged Expo Bundler/
 react-native compiler config; real compiler controls and actual SDK-entry Hermes
 bundle PASS. Starter UI/entry/config/native unchanged, separate export PASS.
@@ -9,7 +18,7 @@ TEST03/09 mobile portions PASS; SDK85 regression PASS. No device/network claim.
 Mobile audits59 full/35 omit-dev and SDK dev4 high remain FAIL/OPEN; C-06 combined
 gates NOT STARTED. Full001/Day1 PARTIAL. Prior execution notes are historical.
 
-**Current C-04 execution — 2026-10-16 /a2609f9:** local web adoption DONE;
+**Historical C-04 execution — 2026-10-16 /a2609f9:** local web adoption DONE;
 generated operation callbacks/types/public package exports, minimal ApiError
 adapter and per-request JWT. Existing UI/session/form/key behavior preserved.
 Web quality gates/24 adapter +7 real-browser tests, SDK85/wire27 and Maven40

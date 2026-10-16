@@ -1,6 +1,15 @@
 # Tasks 001-CONTRACT — D1-07 handoff
 
-**Current C-05 checkpoint — 2026-10-17 /6656753:** C-04 reviewed/committed;
+**Current C-06 verification - 2026-10-17 /1f26854:** C-01-06 local deliverables
+VERIFIED; C-06 LOCAL_DONE. D1-07 PARTIAL / READY_FOR_PR; remote CI/integration
+UNVERIFIED, full001/Day1 PARTIAL. No C-06 commit/push/PR. Fresh package85,
+web24/browser7 twice, mobile Jest1/compiler4/Hermes, architecture23,
+H2 40+8 named skips, actual PG48/no skips and privacy guard14 PASS.
+Mobile audit58 full/35 omit-dev and SDK dev4 high remain FAIL/OPEN; web0/0.
+[C-06 final evidence](../../../../docs/implementation/d1-07-c06-final-evidence.md).
+Earlier execution/checkpoint statements below are historical.
+
+**Historical C-05 checkpoint — 2026-10-17 /6656753:** C-04 reviewed/committed;
 C-05 DONE local. Mobile clean install/lint/typecheck/Jest1, actual Expo compiler
 and4 negative controls, SDK-entry Metro/Hermes23 modules/14 SDK, unchanged starter
 export576 modules/no SDK and SDK85 regression PASS.
@@ -9,14 +18,14 @@ Audits FAIL/OPEN: mobile59 full/35 omit-dev, SDK dev4 high/runtime0. C-06 NOT
 STARTED; D1-07/full001/Day1 PARTIAL. C-05 uncommitted/no publish.
 Previous checkpoint statements retain their historical scope.
 
-**Current C-04 execution — 2026-10-16 /a2609f9:** C-03 checkpoint committed;
+**Historical C-04 execution — 2026-10-16 /a2609f9:** C-03 checkpoint committed;
 C-04 local DONE. Web clean install/lint/typecheck/build,24 adapter/7 actual
 browser tests/no skips, contract/SDK85/wire27 and Maven40/eight expected PG-only
 skips PASS. [Evidence/inventory](../../../../docs/implementation/d1-07-c04-web-evidence.md).
 C-05/06 NOT STARTED; mobile/final gates UNVERIFIED, full001/Day1 PARTIAL.
 C-04 uncommitted/no publish. Older checkpoint notes are historical.
 
-**Status:** slice IN_PROGRESS / PARTIAL; DEC-29 ACCEPTED on2026-10-15 by the
+**Historical implementation status:** slice IN_PROGRESS / PARTIAL; DEC-29 ACCEPTED on2026-10-15 by the
 explicit user approval message recorded in the assessment. D1-06 documentation/
 DoR DONE; C-01 final technical acceptance DONE; C-02 deterministic SDK local
 DONE under the user's conditional authorization. C-03 actual HTTP/PG local DONE:
@@ -50,7 +59,7 @@ remain mandatory and unexecuted. Checkpoint b385244 committed only C-01/C-02
 with explicit later authorization; C-03 changes are uncommitted, nothing pushed.
 No need to approve the existing Git branch again. Remote publication is not performed.
 
-## Ordered implementation tasks (C-01–03 verified; C-04–06 NOT RUN)
+## Ordered implementation tasks (C-01-06 locally verified; remote integration pending)
 
 - [x] **C-01 — Preconditions/contract freeze.** Local implementation and
   TEST-001-CONTRACT-01 PASS at20072b6:11 operations,41 tests,37 negative fixtures,
@@ -103,7 +112,9 @@ No need to approve the existing Git branch again. Remote publication is not perf
   and compile-only client import/signature fixture to mobile; retain starter UI
   and native baseline. Tests03/09 and current mobile lint/typecheck/Jest. No actual
   mobile backend/device test claim. Dependency C-02.
-- [ ] **C-06 — Final regression/evidence.** Run package regeneration/validation/
+- [x] **C-06 — Final regression/evidence.** LOCAL_DONE2026-10-17: final combined
+  local gates PASS; remote required checks/publication remain pending for official
+  D1-07 closure. Original scope: run package regeneration/validation/
   test/build and both frontend lockfile install/quality gates. Run backend Maven
   verify, architecture/H2 and isolated PG regression when environment permits.
   Preserve guard criteria; report BLOCKED instead of omitting required execution.

@@ -1,6 +1,14 @@
 # Private generated Fetch SDK
 
-Current checkpoint: **C-01 accepted; C-02–05 local DONE; C-06 NOT STARTED**.
+C-06 freshly verifies contract/SDK85, web24/browser7 twice, mobile compiler4/
+Hermes/Jest1, architecture23/H2 40+8 skips/PG48+0 and guard14. Actual two generated
+outputs and source match raw16-file bytes. Local backend helper:
+`python -B scripts/check-backend-baselines.py` from this package. It reuses CI
+provisioning on an available test-only5433; never stop an existing service.
+[Final evidence/known risks](../../docs/implementation/d1-07-c06-final-evidence.md).
+No official integrated DONE/remote PASS or security-audit-clean claim.
+
+Current checkpoint: **C-01-06 local VERIFIED; D1-07 PARTIAL / READY_FOR_PR**.
 The private package exports all eleven generated operations/types at
 `@elogistics/api-client`, its default `client`, and Fetch factories/config/types
 at `@elogistics/api-client/client`. ESM JavaScript and declarations are built into
@@ -11,8 +19,8 @@ fixture/local dependency, without starter UI/network changes. Its actual Expo
 compiler/four negative controls and separate SDK-entry Metro/Hermes bundle PASS
 (23 modules/14 SDK); unchanged starter export PASS576 modules/zero SDK modules.
 [C-05 evidence](../../docs/implementation/d1-07-c05-mobile-evidence.md).
-Mobile audits remain FAIL/OPEN (full59/omit-dev35), SDK dev4 high still OPEN.
-C-06 combined/remote gates remain unexecuted; no device runtime claim.
+Mobile audits remain FAIL/OPEN (current58/omit-dev35; prior C-05 snapshot59), SDK dev4 high still OPEN.
+C-06 combined local gates PASS; remote checks/integration UNVERIFIED; no device runtime claim.
 [C-04 evidence](../../docs/implementation/d1-07-c04-web-evidence.md): web24 adapter
 and7 real-browser tests PASS, contract/SDK85 and wire27 PASS. No global token config.
 

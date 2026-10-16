@@ -1,6 +1,15 @@
 # Slice 001-CONTRACT — Demo-001 executable contract and generated client
 
-**Current C-05 checkpoint — 2026-10-17 /6656753:** C-04 reviewed/committed;
+**Current C-06 verification - 2026-10-17 /1f26854:** C-01-06 local deliverables
+VERIFIED; C-06 LOCAL_DONE. D1-07 PARTIAL / READY_FOR_PR; remote CI/integration
+UNVERIFIED, full001/Day1 PARTIAL. No C-06 commit/push/PR. Fresh package85,
+web24/browser7 twice, mobile Jest1/compiler4/Hermes, architecture23,
+H2 40+8 named skips, actual PG48/no skips and privacy guard14 PASS.
+Mobile audit58 full/35 omit-dev and SDK dev4 high remain FAIL/OPEN; web0/0.
+[C-06 final evidence](../../../../docs/implementation/d1-07-c06-final-evidence.md).
+Earlier execution/checkpoint statements below are historical.
+
+**Historical C-05 checkpoint — 2026-10-17 /6656753:** C-04 reviewed/committed;
 C-05 local compile/bundle DONE. Mobile public SDK fixture/local file dependency,
 clean install/lint/typecheck/Jest1, actual Expo compiler/four negative controls
 and SDK-entry Android Hermes bundle PASS (23 modules/14 SDK). Real starter export
@@ -10,7 +19,7 @@ Audits FAIL/OPEN: mobile59 full/35 omit-dev, SDK dev4 high/runtime0. C-06 NOT
 STARTED; SC-AC-06/final combined/remote portions UNVERIFIED. Full001/Day1 PARTIAL.
 Previous checkpoint notes below are historical, not current task status.
 
-**Current C-04 execution — 2026-10-16 /a2609f9:** C-03 reviewed/committed;
+**Historical C-04 execution — 2026-10-16 /a2609f9:** C-03 reviewed/committed;
 C-04 local DONE. Web consumes all11 generated operations via public exports,
 without handwritten wire DTOs. Clean install/lint/typecheck/build PASS,24 adapter
 and7 actual browser tests PASS/no skips. Contract/SDK85, real PG wire27 and
@@ -19,7 +28,7 @@ Maven40/eight expected PG-only skips PASS.
 C-05/mobile consumer and C-06 combined gates NOT STARTED; their portions of
 SC-AC-05/06 remain UNVERIFIED. Full001/Day1 PARTIAL. Prior notes are historical.
 
-**Status:** IN_PROGRESS / PARTIAL; C-01 final technical acceptance DONE,
+**Historical implementation status:** IN_PROGRESS / PARTIAL; C-01 final technical acceptance DONE,
 C-02 local deterministic SDK DONE under the user's conditional authorization;
 C-03 actual HTTP/PostgreSQL local DONE, two27-test runs/no skips,108 responses
 each,11 operations/no contract mismatches. C-04–06 NOT STARTED.

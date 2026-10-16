@@ -14,7 +14,8 @@ import uuid
 
 ROOT = Path(__file__).resolve().parents[3]
 PACKAGE = ROOT / 'packages/api-client'
-IMAGE = 'postgres:18.6-bookworm@sha256:afc7e2d441324c0388fa80c3d24f733b4194a4eb7f47dd8ee2b08eb1a24a647c'
+# Same approved18.6-bookworm bytes; digest-only also resolves a locally untagged image.
+IMAGE = 'postgres@sha256:afc7e2d441324c0388fa80c3d24f733b4194a4eb7f47dd8ee2b08eb1a24a647c'
 LABEL = 'com.elogistic.c03.run'
 BOOTSTRAP = 'elogistics_wire_bootstrap'
 DOCKER = shutil.which('docker') or str(Path(os.environ.get('LOCALAPPDATA', '')) / 'Programs/DockerDesktop/resources/bin/docker.exe')

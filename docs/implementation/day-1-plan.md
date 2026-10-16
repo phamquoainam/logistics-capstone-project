@@ -1,6 +1,15 @@
 # Day 1 — Existing Codebase Assessment, Baseline Verification & SDD Implementation Plan
 
-**Current C-05 checkpoint — 2026-10-17 /6656753:** C-04 reviewed/committed23
+**Current C-06 verification - 2026-10-17 /1f26854:** C-05 accepted/committed13
+files; C-06 LOCAL_DONE. Package85/web24/mobile1 +actual compiler4/Hermes,
+wire27/browser7 twice, architecture23/H2 40+8 named skips/PG48 no skips and guard14
+PASS. Actual16-file generations/source raw bytes match; owned cleanup/privacy PASS.
+[Final evidence/security/CI coverage](d1-07-c06-final-evidence.md).
+D1-07 PARTIAL / READY_FOR_PR, remote/integration UNVERIFIED. Mobile audit58/35,
+SDK dev4 high OPEN/runtime0, web0/0. C-06 uncommitted/unpublished;
+Feature001/Day1 PARTIAL. Previous checkpoint notes are historical.
+
+**Historical C-05 checkpoint — 2026-10-17 /6656753:** C-04 reviewed/committed23
 files after safety PASS, no push. C-05 compile-only mobile SDK consumer DONE:
 local dependency/public operations and types, no starter/native/business feature
 change. Clean install/lint/typecheck/Jest1, real compiler/4 negative controls,
@@ -10,7 +19,7 @@ regression PASS. Mobile audits59 full/35 omit-dev FAIL/OPEN, SDK dev4 high OPEN.
 STARTED; D1-07/full001/Day1 PARTIAL. C-05 uncommitted/unpublished.
 Previous checkpoint statements below retain their historical scope.
 
-**Current C-04 checkpoint — 2026-10-16 /a2609f9:** C-03 reviewed/committed
+**Historical C-04 checkpoint — 2026-10-16 /a2609f9:** C-03 reviewed/committed
 exact14 files after safety PASS, no push. C-04 existing web adoption DONE local:
 all11 generated operations/types via public exports/local package; unchanged
 UI/session/ownership/key behavior. Web clean install/lint/typecheck/build,
@@ -20,7 +29,7 @@ with8 expected PG-only skips PASS. Cleanup/privacy PASS, SDK dev4 high OPEN/web0
 and C-06 combined gates NOT STARTED; D1-07/full001/Day1 PARTIAL.
 C-04 uncommitted/unpublished. Previous checkpoint notes are historical.
 
-**Current C-03 checkpoint — 2026-10-15:** exact43-file C-01/C-02 checkpoint
+**Historical C-03 checkpoint — 2026-10-15:** exact43-file C-01/C-02 checkpoint
 committed locally as b385244 after safety review and85-test PASS, per explicit
 user authorization. No push/PR. C-03 actual HTTP/PG DONE: two final fresh owned
 PostgreSQL18.6 tmpfs/backend runs,27/27 tests/no skips each;108 HTTP responses
@@ -32,7 +41,7 @@ OPEN/runtime0. [Evidence and remaining limits](d1-07-c03-wire-evidence.md).
 C-03 changes remain uncommitted; C-04–06 NOT STARTED; full001/Day1 PARTIAL.
 Older NOT RUN/wire-unverified notes below retain their dated checkpoint scope.
 
-**Current C-01 final acceptance / C-02 checkpoint — 2026-10-15:** same branch/
+**Historical C-01 final acceptance / C-02 checkpoint — 2026-10-15:** same branch/
 HEAD20072b6, C-01 preserved and final technical review PASS. User's conditional
 authorization opened C-02; generated Fetch SDK16 files/11 operations, strict
 package build and NodeNext/Bundler declaration controls PASS. Clean install59
@@ -43,7 +52,7 @@ C-01/C-02 local DONE; C-03–06 NOT STARTED; D1-07/full001/Day1 PARTIAL. No comm
 push/PR or business/source/workflow/migration/consumer change. Prior audit0 and
 no-SDK notes below describe C-01's earlier graph/checkpoint only.
 
-**Current D1-07 / C-01 checkpoint — 2026-10-15:** PR#8 merged as20072b6;
+**Historical D1-07 / C-01 checkpoint — 2026-10-15:** PR#8 merged as20072b6;
 existing clean feature/d1-07-demo-contract-client reused at matching develop/
 origin/live remote HEAD. C-01 OpenAPI3.1 for11 existing operations and minimal
 Redocly2.64.0/Ajv8.20.0/formats3.0.1 tooling implemented. Clean install, lint,
@@ -205,9 +214,9 @@ Checklist assessment này không thay checklist feature. D1-01/02/03/04/05/06 DO
 
 - [x] **D1-06 — Chọn slice và kiểm tra DoR** — **DONE for assessment/selection/documented DoR,2026-10-15**: explicit user DEC-29 approval recorded; source-drift recheck PASS at3186f01. Exactly one slice READY_FOR_IMPLEMENTATION: existing11-operation Demo-001 OpenAPI + private generated Fetch SDK/web adoption, mobile compile-only. [Spec/design/tasks](../../specs/001-platform-foundation/slices/demo-contract-client/spec.md) contain accepted scope/pins, ownership/API/security, SC/AC mapping, fixtures, drift/determinism/rollback, tasks/file scope/DoD. No new source/dependencies/generated SDK or full001 DONE; D1-07 tests NOT RUN.
 
-- [ ] **D1-07 — Test-first và gate slice** — **PARTIAL / IN PROGRESS**: C-01/C-02 DONE scopes retained; C-03 actual HTTP/PG DONE,27 tests and108 responses per final run, two fresh runs/cleanup PASS. [C-03 evidence](d1-07-c03-wire-evidence.md), [ordered tasks](../../specs/001-platform-foundation/slices/demo-contract-client/tasks.md). Dev audit4 high OPEN/runtime0. C-04–06 NOT STARTED; no web/mobile adoption or final combined gate PASS claim. Backend/CI/architecture/V1/V2 unchanged.
+- [ ] **D1-07 — Test-first và gate slice** - **PARTIAL / READY_FOR_PR**: C-01-06 local deliverables verified; package85/web24/mobile1, wire27/browser7 twice, architecture23/H2 40+8 named skips/PG48+0/guard14 PASS. [C-06 evidence](d1-07-c06-final-evidence.md). Audits OPEN; actual remote required checks/integration pending. No publish or official integrated DONE claim.
 
-- [ ] **D1-08 — Chốt kết quả/evidence/blocker** — **PARTIAL**: evidence/traceability và DoR closure cho D1-01..06 đã ghi theo scope. Còn D1-07 implementation, full REQ/AC/test-ID và runbook reproduction trước final Day1 review. D1-06 documentation mới chỉ local, chưa commit/publish; không tick toàn Day1 DONE.
+- [ ] **D1-08 — Chốt kết quả/evidence/blocker** - **PARTIAL**: D1-01-06 scoped DONE; D1-07 local verification ready for publication/review. Remote PR/CI/integration, full001 REQ/AC, infrastructure/readiness/independent runbook reproduction and final Day1 review remain open.
 
 ## E. Chiến lược triển khai feature
 
@@ -283,8 +292,8 @@ PASS. No mandatory requirement for latest patch/zero dependency advisories was
 invented or removed. Full AC-001-01/05 onboarding and native feature/production
 security verification remain OPEN under Feature001.
 
-**Ưu tiên tiếp theo: D1-07 / C-06 — Final combined regression/evidence**, sau review
-C-05 và khi được yêu cầu. C-01–05 local scope DONE; C-06 chưa bắt đầu, security
-findings vẫn OPEN. Checkpoint C-04 đã commit6656753; không commit C-05/push/PR khi chưa có yêu cầu. Demo001 auth/
-merchant/DRAFT đã có code, không tạo lại skeleton. Theo dõi dependency/SDK advisory ở maintenance
-scope có review, không tự nâng/hạ baseline để đổi diagnostic sang xanh.
+**Next priority: D1-07 publication and remote verification**, only after separate
+user authorization. Review/commit the valid C-06 allowlist, normal push and one PR
+to develop, inspect three actual HEAD checks/artifacts/conflicts/effective rules.
+C-01-06 local verified; advisory findings OPEN. Do not merge or mark full001/Day1
+DONE. No additional feature slice or dependency upgrade started.

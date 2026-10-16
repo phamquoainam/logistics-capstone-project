@@ -1,5 +1,13 @@
 # D1-07 / C-05 — Mobile compiler and actual Metro/Hermes SDK consumer
 
+**C-06 cross-reference - 2026-10-17 /1f26854:** this is the original dated
+checkpoint evidence, not a claim all gates below ran again at its original date.
+[C-06 final combined evidence](d1-07-c06-final-evidence.md) freshly verifies
+C-01-06 local gates, actual PG48/no skips and HTTP/browser repeatability;
+C-05 accepted/committed as1f26854. D1-07 PARTIAL / READY_FOR_PR; remote CI/integration
+UNVERIFIED. Current audits web0/0, SDK4-high/0, mobile58/35; prior snapshot59 is
+retained historically, not silently rewritten as remediation. C-06 uncommitted.
+
 Execution2026-10-16–17 (Asia/Saigon). **C-05 DONE for the approved local compile/bundle scope**.
 C-01–04 remain DONE locally. C-06 NOT STARTED; D1-07/Feature001/Day1 PARTIAL.
 Mobile business UI/network/device integration is not implemented or claimed.
