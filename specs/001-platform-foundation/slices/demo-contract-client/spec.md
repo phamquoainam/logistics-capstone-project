@@ -1,12 +1,15 @@
 # Slice 001-CONTRACT — Demo-001 executable contract and generated client
 
 **Status:** IN_PROGRESS / PARTIAL; C-01 final technical acceptance DONE,
-C-02 local deterministic SDK DONE under the user's conditional authorization.
+C-02 local deterministic SDK DONE under the user's conditional authorization;
+C-03 actual HTTP/PostgreSQL local DONE, two27-test runs/no skips,108 responses
+each,11 operations/no contract mismatches. C-04–06 NOT STARTED.
+[C-03 evidence](../../../../docs/implementation/d1-07-c03-wire-evidence.md).
 DEC-29 ACCEPTED on2026-10-15 by the user's
 explicit “DEC-29 — APPROVED | D1-06 Definition of Ready Closure” message.
 D1-06 documentation/DoR DONE. TEST-001-CONTRACT-01 PASS:41 tests/no skips;
-C-02 adds44 passing SDK tests/no skips; C-03–06 NOT STARTED, their real wire/
-consumer/browser/backend gates UNVERIFIED. Dev graph audit4 high findings OPEN,
+C-02 adds44 passing SDK tests/no skips; real wire gates PASS at C-03,
+consumer/browser/final combined gates UNVERIFIED. Dev graph audit4 high findings OPEN,
 runtime0; supported generation avoids the affected YAML loader without a pin change.
 [C-02 evidence](../../../../docs/implementation/d1-07-c02-sdk-evidence.md).
 [C-01 evidence](../../../../docs/implementation/d1-07-c01-contract-evidence.md).
@@ -97,8 +100,9 @@ No token refresh endpoint or refresh-token mechanism exists in this slice.
 
 Contract authority, three drift controls, schema-valid versus deliberately invalid
 fixtures, exact-version metadata evidence and application-only rollback are
-defined in the revised design. Runtime/build/wire-conformance gates are NOT RUN;
-source/fixture review and C-01 static validation do not prove HTTP conformance.
+defined in the revised design. C-01/C-02 package gates and C-03 HTTP/PG gates now
+PASS; consumer/browser/final gates are NOT RUN. C-03 evidence proves its executed
+wire fixtures, while C-01 static checks alone do not prove HTTP conformance.
 
 Preconditions: approved DEC-29, unchanged Demo-001/accepted boundaries and baseline
 toolchains, network permission to resolve approved dev tools, safe isolated test
@@ -107,7 +111,8 @@ ignored storage/environment; never copy developer credentials into fixtures.
 No dependency on unapproved full002/003/005/native/provider policies is introduced.
 
 Implementation tests: TEST-001-CONTRACT-01/02 PASS locally; TEST03 package and
-TEST04 generated-transport portions PASS. Consumer/adapter/wire portions and
-TEST05–10 remain NOT RUN. No full slice completion is implied.
+TEST04 generated-transport portions PASS; TEST05/06/07 actual HTTP/PG PASS.
+Consumer/adapter portions and TEST08–10 remain NOT RUN for final slice completion.
+No full slice completion is implied.
 See [design](design.md) for wire inventory and
 fixtures; [tasks](tasks.md) for DoR/DoD and D1-07 implementation instructions.

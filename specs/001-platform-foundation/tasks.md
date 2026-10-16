@@ -1,5 +1,14 @@
 # Implementation Tasks 001: Nền tảng repository, deploy và kiến trúc
 
+**Current C-03 checkpoint — 2026-10-15 /b385244:** user-authorized C-01/C-02
+43-file checkpoint committed locally, no push/PR. C-03 actual HTTP/PG DONE:
+27/27 per final run, two fresh owned PG18.6 databases,108 responses each,
+all11 operations, no mismatches; SQL concurrency and cleanup/privacy PASS.
+[Evidence](../../docs/implementation/d1-07-c03-wire-evidence.md).
+C-01/C-02 regression85 PASS; Maven40 PASS/eight named PG-only skips. Dev audit
+4 high OPEN/runtime0. C-04–06 NOT STARTED; full001/Day1 PARTIAL. Original full
+task/REQ/AC criteria below unchanged. Earlier wire-unverified notes are historical.
+
 **Current C-01 final acceptance / C-02 checkpoint — 2026-10-15:** C-01 DONE;
 C-02 deterministic SDK local DONE at20072b6 under explicit conditional user
 authorization. Clean install59; strict package build;41+44 tests/no skips;

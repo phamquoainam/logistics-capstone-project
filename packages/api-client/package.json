@@ -26,6 +26,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "build": "tsc -p tsconfig.json",
     "test:sdk": "node --test --test-concurrency=1 tests/sdk.test.mjs",
+    "test:wire": "python scripts/wire-harness.py",
     "verify:c02": "npm run verify:c01 && npm run check:generated && npm run typecheck && npm run build && npm run test:sdk"
   },
   "devDependencies": {

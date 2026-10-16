@@ -1,5 +1,10 @@
 # Demo-001 OpenAPI contract
 
+**C-03 checkpoint:** actual HTTP conformance PASS for all11 operations against
+owned PostgreSQL/backend: two27-test runs,108 responses each, zero mismatches.
+[Wire evidence and limits](../../docs/implementation/d1-07-c03-wire-evidence.md).
+The contract itself is unchanged; C-04–06 remain unexecuted.
+
 [demo-001.yaml](demo-001.yaml) records exactly the eleven existing
 `/api/demo/v1` HTTP operations under accepted DEC-29. C-01 final technical
 acceptance PASS; the user's conditional authorization opened C-02, now verified
@@ -53,5 +58,5 @@ checks stay enabled, and any reported error, warning or ignored problem fails.
 
 See [C-01 evidence](../../docs/implementation/d1-07-c01-contract-evidence.md),
 [slice design](../../specs/001-platform-foundation/slices/demo-contract-client/design.md)
-and [tooling](../../packages/api-client/README.md). After C-01 owner review this
-file is the bounded demo schema source; SDK output is derived from it.
+and [tooling](../../packages/api-client/README.md). C-01 final technical review
+accepted this bounded demo schema source; SDK output is derived from it.

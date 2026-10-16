@@ -6,7 +6,10 @@ Ready Closure” message. D1-06 documentation/DoR DONE.
 **D1-07 C-01 final technical acceptance / C-02 local DONE:** TEST01 PASS41,
 SDK tests PASS44/no skips; deterministic16-file source matches two scratch runs.
 Dev audit4 high findings OPEN, runtime0, bounded YAML-loader avoidance verified.
-C-03–06 NOT STARTED; actual wire/consumer/browser gates UNVERIFIED.
+C-03 actual HTTP/PG local DONE: two27/27-test runs,108 responses each, all11
+operations and cleanup PASS/no mismatches. C-04–06 NOT STARTED;
+actual consumer/browser/final combined gates UNVERIFIED.
+[C-03 harness/HTTP/SQL evidence](../../../../docs/implementation/d1-07-c03-wire-evidence.md).
 [C-02 configuration, findings and evidence](../../../../docs/implementation/d1-07-c02-sdk-evidence.md).
 [C-01 evidence](../../../../docs/implementation/d1-07-c01-contract-evidence.md).
 Execution baseline20072b6; original design baseline3186f01;
@@ -207,10 +210,12 @@ or Metro changes, network call, token persistence or UI added. This is portabili
 at type level only; bundling/device networking for a future shipper consumer is
 still UNVERIFIED. Do not claim mobile API integration based on typecheck alone.
 
-## Fixtures and verification matrix (01/02 PASS; 03/04 package portions PASS)
+## Fixtures and verification matrix (01/02/05–07 PASS; 03/04 package portions PASS)
 
 C-02 execution:85 total tests/no skips across C-01 and SDK; TEST03 consumer and
-TEST04 web-adapter portions, and TEST05–10 remain unexecuted. The source schema
+TEST04 web-adapter portions, and TEST08–10 remain unexecuted. C-03 now executes
+TEST05/06/07 against real HTTP/PostgreSQL,27/27 twice; its scope/evidence above
+supersedes earlier NOT RUN wire fixture notes in the design history. The source schema
 is unchanged; its pattern-only string allOf branches gain only redundant string
 types in generator parser configuration to prevent unknown request fields. Ajv
 equivalence/compiler fixtures verify the adaptation, no generated edits/casts.
@@ -261,10 +266,10 @@ UP/local-demo, valid UUID IDs, nullable merchantId/reason, real login return key
 and separately labeled invalid fixtures. Actual success/error recordings remain
 in memory/private diagnostics, with generated tokens/passwords never committed.
 
-Source comparison and current test-source review are complete; newly planned
-wire fixtures remain NOT RUN. Serialization/coercion nuances (e.g. raw whitespace,
-decimal scale, null inclusion or framework decoding) must be verified against
-the isolated backend in D1-07. Canonical SDK requests use current web numeric
+Source comparison/test-source review are complete. C-03 now verifies the approved
+wire fixtures on isolated PostgreSQL/backend, including trim/null/decoding cases;
+this supersedes D1-06's planned NOT RUN state. It is not exhaustive framework
+coercion coverage. Canonical SDK requests use current web numeric
 weight values. Do not assert the backend rejects every other JSON representation
 unless a fixture proves it, and do not add client-side validation that rejects
 previously accepted input or changes the server's error behavior.

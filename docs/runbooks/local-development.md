@@ -1,5 +1,31 @@
 # Local Development Runbook — repository hiện hữu
 
+## D1-07 C-03 — real HTTP with owned PostgreSQL, 2026-10-15
+
+Prerequisites: Java21/current Maven-verified backend JAR; Node24.13.0/npm11.6.2,
+Python on PATH and running Docker Engine with approved PG18.6 digest available.
+Build backend with the existing Wrapper/cache invocation, then from packages/api-client:
+
+```powershell
+npm.cmd run verify:c02
+npm.cmd run test:wire
+```
+
+The harness creates a new labeled PostgreSQL tmpfs container/database/three-role
+setup, random loopback DB/backend ports and synthetic passwords, then runs the
+real JAR with demo,postgres. It never targets elogistics_dev or native/developer
+ports5432/5433, mounts existing data, or invokes Flyway clean/repair. All11 APIs
+are called with real HTTP. New process/owned-container cleanup runs in finally;
+container IDs/volume names before/after must match. No -v/prune/down is used.
+Credentials/context/raw backend log stay ignored under .demo/d1-07-c03/run-*;
+do not publish/copy them. Sanitized safe-wire-results/environment/cleanup JSON
+are separate. Missing tools/access are failures, never mocked fallback.
+
+Final two runs PASS27/27/no skips,108 HTTP responses each, zero mismatches;
+both cleanup and log privacy PASS. Read [C-03 evidence](../implementation/d1-07-c03-wire-evidence.md)
+for exact ports/digests, earlier failed attempts, canonical request limitations
+and per-operation coverage. Dev audit4 high remains OPEN; C-04–06 not executed.
+
 ## D1-07 C-02 — generated package verification, 2026-10-15
 
 From packages/api-client with Node24.13.0/npm11.6.2:

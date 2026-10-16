@@ -3,8 +3,10 @@
 **Status:** slice IN_PROGRESS / PARTIAL; DEC-29 ACCEPTED on2026-10-15 by the
 explicit user approval message recorded in the assessment. D1-06 documentation/
 DoR DONE; C-01 final technical acceptance DONE; C-02 deterministic SDK local
-DONE under the user's conditional authorization. C-03–06 NOT STARTED; actual
-wire/consumer/browser gates NOT RUN / UNVERIFIED. Dev advisories remain OPEN.
+DONE under the user's conditional authorization. C-03 actual HTTP/PG local DONE:
+two fresh runs27/27,108 responses each, all11 operations/no mismatches, cleanup
+PASS. C-04–06 NOT STARTED; consumer/browser gates NOT RUN / UNVERIFIED.
+Dev advisories remain OPEN. [C-03 evidence](../../../../docs/implementation/d1-07-c03-wire-evidence.md).
 [C-02 commands/counts/findings](../../../../docs/implementation/d1-07-c02-sdk-evidence.md).
 [C-01 commands/counts/findings](../../../../docs/implementation/d1-07-c01-contract-evidence.md).
 [Spec](spec.md), [design and test inventory](design.md),
@@ -27,10 +29,12 @@ This is one slice in001, not completion of its original full-feature task list.
 
 All mandatory DoR planning/approval gates PASS at D1-06. The later C-01/C-02 task
 authorized SDK implementation after C-01 final gates passed, now verified locally.
-D1-07 real wire/consumer/browser/backend regression gates remain mandatory and unexecuted.
-No need to approve the existing Git branch again. Publication is not performed.
+D1-07 real wire gates now PASS in C-03; consumer/browser/final combined gates
+remain mandatory and unexecuted. Checkpoint b385244 committed only C-01/C-02
+with explicit later authorization; C-03 changes are uncommitted, nothing pushed.
+No need to approve the existing Git branch again. Remote publication is not performed.
 
-## Ordered implementation tasks (C-01/C-02 verified; C-03–06 NOT RUN)
+## Ordered implementation tasks (C-01–03 verified; C-04–06 NOT RUN)
 
 - [x] **C-01 — Preconditions/contract freeze.** Local implementation and
   TEST-001-CONTRACT-01 PASS at20072b6:11 operations,41 tests,37 negative fixtures,
@@ -57,7 +61,14 @@ No need to approve the existing Git branch again. Publication is not performed.
   Tools are devDependencies of the new private package; retain both consumers'
   existing TypeScript declarations/locks. Ajv/formats are test-side only. No
   standalone client-fetch dependency, framework upgrade or automatic fallback.
-- [ ] **C-03 — Wire conformance.** Run actual isolated demo backend and validate
+- [x] **C-03 — Wire conformance.** DONE local: final two isolated PostgreSQL18.6
+  tmpfs/backend runs each27/27 tests,108 real HTTP responses (34 success/74
+  negative),11 successful operations, zero mismatches. Actual SQL confirms scoped
+  ownership and one-effect create/cancel concurrency. Cleanup/privacy PASS; no
+  developer resources targeted. Earlier environment/harness FAIL attempts remain
+  disclosed in evidence. C-01/C-02 regression85 PASS; Maven H2/architecture40 PASS,
+  eight named PG-only skips (separate from C-03 real PG tests). Original scope:
+  run actual isolated demo backend and validate
   all11 operations/safe errors against the OpenAPI with test-side Ajv; reuse
   existing auth/replay/concurrency fixtures. Tests05/06/07; distinguish actual
   SQL assertions from transport mocks. Dependency C-02. No developer DB writes.

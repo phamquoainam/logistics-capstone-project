@@ -1,5 +1,17 @@
 # Day 1 — Existing Codebase Assessment, Baseline Verification & SDD Implementation Plan
 
+**Current C-03 checkpoint — 2026-10-15:** exact43-file C-01/C-02 checkpoint
+committed locally as b385244 after safety review and85-test PASS, per explicit
+user authorization. No push/PR. C-03 actual HTTP/PG DONE: two final fresh owned
+PostgreSQL18.6 tmpfs/backend runs,27/27 tests/no skips each;108 HTTP responses
+each (34 success/74 negative), all11 operations, zero contract mismatches.
+SQL confirms scoped ownership/replay/concurrency; cleanup/privacy PASS for all
+attempts, including disclosed early environment/harness failures. Maven verify
+40 PASS/eight named PG-only skips; C-01/C-02 regression85 PASS. Dev audit4 high
+OPEN/runtime0. [Evidence and remaining limits](d1-07-c03-wire-evidence.md).
+C-03 changes remain uncommitted; C-04–06 NOT STARTED; full001/Day1 PARTIAL.
+Older NOT RUN/wire-unverified notes below retain their dated checkpoint scope.
+
 **Current C-01 final acceptance / C-02 checkpoint — 2026-10-15:** same branch/
 HEAD20072b6, C-01 preserved and final technical review PASS. User's conditional
 authorization opened C-02; generated Fetch SDK16 files/11 operations, strict
@@ -173,7 +185,7 @@ Checklist assessment này không thay checklist feature. D1-01/02/03/04/05/06 DO
 
 - [x] **D1-06 — Chọn slice và kiểm tra DoR** — **DONE for assessment/selection/documented DoR,2026-10-15**: explicit user DEC-29 approval recorded; source-drift recheck PASS at3186f01. Exactly one slice READY_FOR_IMPLEMENTATION: existing11-operation Demo-001 OpenAPI + private generated Fetch SDK/web adoption, mobile compile-only. [Spec/design/tasks](../../specs/001-platform-foundation/slices/demo-contract-client/spec.md) contain accepted scope/pins, ownership/API/security, SC/AC mapping, fixtures, drift/determinism/rollback, tasks/file scope/DoD. No new source/dependencies/generated SDK or full001 DONE; D1-07 tests NOT RUN.
 
-- [ ] **D1-07 — Test-first và gate slice** — **PARTIAL / IN PROGRESS**: C-01 final acceptance DONE; C-02 deterministic generated SDK local DONE,41+44 tests PASS/no skips,11 operations/16 generated files. [C-02 evidence/advisories](d1-07-c02-sdk-evidence.md), [ordered tasks](../../specs/001-platform-foundation/slices/demo-contract-client/tasks.md). Dev audit4 high OPEN with supported-path mitigation; runtime0. C-03–06 NOT STARTED; no wire/consumer/browser PASS claim. Preserve backend/CI/architecture/V1/V2; no second slice bundled.
+- [ ] **D1-07 — Test-first và gate slice** — **PARTIAL / IN PROGRESS**: C-01/C-02 DONE scopes retained; C-03 actual HTTP/PG DONE,27 tests and108 responses per final run, two fresh runs/cleanup PASS. [C-03 evidence](d1-07-c03-wire-evidence.md), [ordered tasks](../../specs/001-platform-foundation/slices/demo-contract-client/tasks.md). Dev audit4 high OPEN/runtime0. C-04–06 NOT STARTED; no web/mobile adoption or final combined gate PASS claim. Backend/CI/architecture/V1/V2 unchanged.
 
 - [ ] **D1-08 — Chốt kết quả/evidence/blocker** — **PARTIAL**: evidence/traceability và DoR closure cho D1-01..06 đã ghi theo scope. Còn D1-07 implementation, full REQ/AC/test-ID và runbook reproduction trước final Day1 review. D1-06 documentation mới chỉ local, chưa commit/publish; không tick toàn Day1 DONE.
 
@@ -251,8 +263,8 @@ PASS. No mandatory requirement for latest patch/zero dependency advisories was
 invented or removed. Full AC-001-01/05 onboarding and native feature/production
 security verification remain OPEN under Feature001.
 
-**Ưu tiên tiếp theo: D1-07 / C-03 — Wire conformance**, sau review C-02 và khi
-được yêu cầu triển khai. C-01/C-02 local gates PASS; C-03–06 chưa bắt đầu.
-D1-06 đã merge qua PR#8; không publish thay đổi C-01/C-02 khi chưa có yêu cầu. Demo001 auth/
+**Ưu tiên tiếp theo: D1-07 / C-04 — Existing web adoption**, sau review C-03 và khi
+được yêu cầu triển khai. C-01–03 local gates PASS; C-04–06 chưa bắt đầu.
+Checkpoint C-01/C-02 đã commit b385244; không push/publish hoặc commit C-03 khi chưa có yêu cầu. Demo001 auth/
 merchant/DRAFT đã có code, không tạo lại skeleton. Theo dõi dependency/SDK advisory ở maintenance
 scope có review, không tự nâng/hạ baseline để đổi diagnostic sang xanh.

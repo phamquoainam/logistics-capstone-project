@@ -1,5 +1,21 @@
 # Traceability Matrix (living document)
 
+**Current C-03 actual HTTP/PostgreSQL checkpoint — 2026-10-15 /b385244.**
+[Evidence](../implementation/d1-07-c03-wire-evidence.md). C-01/C-02 checkpoint
+43 files committed under user authorization; C-03 changes uncommitted, no push.
+
+| Requirement/test subset | Actual evidence | Status/limit |
+|---|---|---|
+| SC-01/04; REQ-001-04 contract subset; TEST-001-CONTRACT-05 |11 successful operations via real generated SDK/Fetch/backend/PG18.6, response/header/schema validation, required/nullability;27 tests per run | PASS two final runs; canonical input caveats retained |
+| SC-04; NFR-S01/S02; TEST-001-CONTRACT-06 | Missing/invalid/expired/tampered JWT, wrong issuer, untrusted role claim, live role/enabled/scope, RBAC/owner404, invalid inputs, login429 | PASS actual HTTP; no developer account/data modified |
+| BR-01/02; NFR-C02; TEST-001-CONTRACT-07 | Merchant-scoped keys/references; create/cancel replay/conflicts; two-way concurrent requests plus actual aggregate/per-resource SQL event/receipt assertions | PASS real PostgreSQL, not mocked DB invariants |
+| TEST05/06/07 repeatability/isolation | Two fresh final databases, each34 success/74 negative responses, zero mismatches; safe reports same SHA256; owned cleanup/privacy PASS all six attempts | PASS local; initial libuv and SQL-guard FAIL attempts retained, not hidden |
+| TEST01–04 regression / backend baseline | C-0141 + SDK44 PASS/no skips; Maven40 PASS incl23 architecture/eight named PG-only skips | PASS scoped; not a new48/48 PG backend-suite claim |
+| Security/advisories | Refreshed dev npm audit FAIL4 high/runtime0, no graph/pin change; bounded loader mitigation unchanged | OPEN maintenance finding, not remediation/risk acceptance |
+| Full SC-AC-02/04 UI/05/06 and TEST08–10 | Web/mobile adoption/browser/combined final gates still C-04–06 | UNVERIFIED / NOT RUN; D1-07/full001/Day1 PARTIAL |
+
+Older wire NOT RUN/no-commit statements below are prior dated checkpoints.
+
 **Current C-01 acceptance / C-02 checkpoint — 2026-10-15 /20072b6.**
 [Evidence and advisory disposition](../implementation/d1-07-c02-sdk-evidence.md).
 C-01 final technical acceptance DONE; conditional user authorization satisfied;
