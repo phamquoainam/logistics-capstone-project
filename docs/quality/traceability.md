@@ -1,5 +1,19 @@
 # Traceability Matrix (living document)
 
+**Current C-05 mobile consumer — 2026-10-17 /6656753.**
+[Evidence/inventory](../implementation/d1-07-c05-mobile-evidence.md).
+C-04 reviewed/committed23 files; C-05 DONE local/uncommitted, no publish.
+
+| Requirement/test subset | Actual evidence | Status/limit |
+|---|---|---|
+| SC-05; TEST-001-CONTRACT-03/09; SC-AC-05 mobile subset; REQ-001-05/NFR-M01 subset | Local SDK public exports, actual Expo Bundler/react-native compiler,9 type assertions/four negative controls, clean install/lint/typecheck/Jest1 | PASS compile-only, no mobile business requests |
+| SC-05 portability/import packaging | Actual SDK-entry Metro/Hermes23 modules/14 SDK, no Node-only tooling dependency; separate unchanged starter export576 modules/zero SDK | PASS bundle scope; not native execution/network/device integration |
+| SC-02 package regression |41 contract+44 SDK/no skips, exact pins/build/typecheck/two-directory16-file deterministic output | PASS local |
+| Dependency security review | Mobile before58 full/35 omit-dev, after59/35; additional Testing Library meta-finding via unchanged RN, same underlying advisory URLs; SDK4 high/runtime0 | Audits FAIL/OPEN, not remediation/risk acceptance; propagation difference root cause UNVERIFIED |
+| TEST09/10 combined, SC-AC-06, D1-07/full001/Day1 | C-06 not started; remote after new checkpoints NOT RUN | PARTIAL / UNVERIFIED; no original REQ/AC edits |
+
+Prior dated checkpoint statements below are historical.
+
 **Current C-04 web adoption — 2026-10-16 /a2609f9.**
 [Evidence/mapping/inventory](../implementation/d1-07-c04-web-evidence.md).
 C-03 checkpoint committed with approval; C-04 DONE local/uncommitted, no publish.

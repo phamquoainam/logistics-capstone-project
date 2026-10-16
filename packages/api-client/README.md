@@ -1,12 +1,18 @@
 # Private generated Fetch SDK
 
-Current checkpoint: **C-01 accepted; C-02–04 local DONE; C-05–06 NOT STARTED**.
+Current checkpoint: **C-01 accepted; C-02–05 local DONE; C-06 NOT STARTED**.
 The private package exports all eleven generated operations/types at
 `@elogistics/api-client`, its default `client`, and Fetch factories/config/types
 at `@elogistics/api-client/client`. ESM JavaScript and declarations are built into
 ignored dist; NodeNext and Bundler resolution are tested at package level.
 Web now consumes public generated operations/types through a minimal ApiError
-adapter/local file dependency; mobile remains unchanged until C-05.
+adapter/local file dependency. Mobile now has a compile-only public-export
+fixture/local dependency, without starter UI/network changes. Its actual Expo
+compiler/four negative controls and separate SDK-entry Metro/Hermes bundle PASS
+(23 modules/14 SDK); unchanged starter export PASS576 modules/zero SDK modules.
+[C-05 evidence](../../docs/implementation/d1-07-c05-mobile-evidence.md).
+Mobile audits remain FAIL/OPEN (full59/omit-dev35), SDK dev4 high still OPEN.
+C-06 combined/remote gates remain unexecuted; no device runtime claim.
 [C-04 evidence](../../docs/implementation/d1-07-c04-web-evidence.md): web24 adapter
 and7 real-browser tests PASS, contract/SDK85 and wire27 PASS. No global token config.
 
@@ -36,6 +42,8 @@ npm.cmd run verify:c02
 npm.cmd run test:wire
 # Real React web + Edge on owned PostgreSQL/backend; web npm ci required:
 npm.cmd run test:web
+# Mobile npm ci required first; actual Expo compiler + SDK-entry Metro/Hermes:
+node scripts/check-mobile-consumer.mjs
 npm.cmd audit --json
 npm.cmd audit --omit=dev --json
 ```

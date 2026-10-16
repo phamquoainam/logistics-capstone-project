@@ -1,5 +1,15 @@
 # Slice 001-CONTRACT — Demo-001 executable contract and generated client
 
+**Current C-05 checkpoint — 2026-10-17 /6656753:** C-04 reviewed/committed;
+C-05 local compile/bundle DONE. Mobile public SDK fixture/local file dependency,
+clean install/lint/typecheck/Jest1, actual Expo compiler/four negative controls
+and SDK-entry Android Hermes bundle PASS (23 modules/14 SDK). Real starter export
+PASS576 modules/zero SDK; no App/index/native/config or business network change.
+[C-05 evidence](../../../../docs/implementation/d1-07-c05-mobile-evidence.md).
+Audits FAIL/OPEN: mobile59 full/35 omit-dev, SDK dev4 high/runtime0. C-06 NOT
+STARTED; SC-AC-06/final combined/remote portions UNVERIFIED. Full001/Day1 PARTIAL.
+Previous checkpoint notes below are historical, not current task status.
+
 **Current C-04 execution — 2026-10-16 /a2609f9:** C-03 reviewed/committed;
 C-04 local DONE. Web consumes all11 generated operations via public exports,
 without handwritten wire DTOs. Clean install/lint/typecheck/build PASS,24 adapter

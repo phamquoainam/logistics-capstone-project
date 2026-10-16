@@ -1,5 +1,14 @@
 # Tasks 001-CONTRACT — D1-07 handoff
 
+**Current C-05 checkpoint — 2026-10-17 /6656753:** C-04 reviewed/committed;
+C-05 DONE local. Mobile clean install/lint/typecheck/Jest1, actual Expo compiler
+and4 negative controls, SDK-entry Metro/Hermes23 modules/14 SDK, unchanged starter
+export576 modules/no SDK and SDK85 regression PASS.
+[Evidence/inventory](../../../../docs/implementation/d1-07-c05-mobile-evidence.md).
+Audits FAIL/OPEN: mobile59 full/35 omit-dev, SDK dev4 high/runtime0. C-06 NOT
+STARTED; D1-07/full001/Day1 PARTIAL. C-05 uncommitted/no publish.
+Previous checkpoint statements retain their historical scope.
+
 **Current C-04 execution — 2026-10-16 /a2609f9:** C-03 checkpoint committed;
 C-04 local DONE. Web clean install/lint/typecheck/build,24 adapter/7 actual
 browser tests/no skips, contract/SDK85/wire27 and Maven40/eight expected PG-only
@@ -86,7 +95,11 @@ No need to approve the existing Git branch again. Remote publication is not perf
   calls with generated types/operation functions and minimal ApiError adapter;
   retain auth/session/UI/input/key semantics. Tests04/08 + web lint/typecheck/
   existing five unit and three browser regressions + build. Dependencies C-02/03.
-- [ ] **C-05 — Shared compiler consumer.** Add private package local dependency
+- [x] **C-05 — Shared compiler consumer.** DONE local2026-10-17; TEST03/09 mobile
+  portions PASS: public-export fixture, actual Expo typecheck,4 negative compiler
+  controls, real SDK-entry Metro/Hermes +unchanged starter export, lint/Jest1.
+  Dependency audit review completed with disclosed OPEN findings, not audit PASS.
+  No starter/native/device/business network change. Original scope: add private package local dependency
   and compile-only client import/signature fixture to mobile; retain starter UI
   and native baseline. Tests03/09 and current mobile lint/typecheck/Jest. No actual
   mobile backend/device test claim. Dependency C-02.

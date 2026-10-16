@@ -1,5 +1,44 @@
 # Local Development Runbook — repository hiện hữu
 
+## D1-07 C-05 — compile-only mobile SDK / real Hermes bundle, 2026-10-17
+
+Build SDK before the local mobile link is consumed. From repository root:
+
+```powershell
+npm.cmd --prefix packages/api-client run verify:c02
+Set-Location app/frontend/shipper-mobile
+npm.cmd ci --ignore-scripts --no-audit --cache ../../../.demo/npm-cache
+npm.cmd run lint
+npm.cmd run typecheck
+npm.cmd test
+Set-Location ../../../
+node packages/api-client/scripts/check-mobile-consumer.mjs
+```
+
+The final script uses actual mobile TypeScript/Expo config and four isolated
+negative compiler controls, then installed Expo export:embed on the value-import
+fixture type-tests/api-client.ts. It checks actual Hermes header, source-map SDK
+modules/public entry and exclusion of generator/validator/Node-only tooling.
+It writes a new .demo/d1-07-c05/sdk-<uuid> directory, no cache reset or API request.
+Factory requires caller configuration; it is never invoked by starter App/index.
+PASS is compile/bundle compatibility only, not mobile networking/device runtime.
+
+Separately verify the unchanged starter using installed Expo CLI:
+`expo export --platform android --output-dir <new ignored directory> --source-maps`.
+The executed result is576 modules/zero SDK modules; SDK fixture result is23/14.
+No App/index/tsconfig/Metro/app.json/native edit, prebuild or APK rebuild needed.
+
+For a new local dependency, use installed Expo install with cache in
+npm_config_cache; don't pass `--cache` and its value through Expo CLI extras.
+In this execution that produced a mistaken undefined dependency, corrected before
+final clean install. Final manifest/lock add only the approved file dependency.
+Offline install validation is unreliable and is not Expo Doctor/latest-patch PASS.
+
+Audit full and omit=dev separately; final mobile counts59/35, SDK4-high/0 remain
+disclosed. No audit fix/major downgrade. [C-05 evidence](../implementation/d1-07-c05-mobile-evidence.md)
+records before/after, current advisories and limits. HBC/maps/logs/reports stay
+ignored. C-06 combined/remote gates are not run or closed by this verification.
+
 ## D1-07 C-04 — web SDK consumer and isolated browser gate, 2026-10-16
 
 Build the private SDK before web install/build. Node24.13.0/npm11.6.2 remain

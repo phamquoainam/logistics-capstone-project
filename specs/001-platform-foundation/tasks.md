@@ -1,5 +1,13 @@
 # Implementation Tasks 001: Nền tảng repository, deploy và kiến trúc
 
+**Current C-05 checkpoint — 2026-10-17 /6656753:** C-04 checkpoint committed;
+C-05 local compile/bundle DONE. Mobile quality/Jest1 and actual Expo compiler/
+4 negative controls +SDK-entry Hermes23 modules/14 SDK PASS; starter export576/
+zero SDK and package85 regression PASS. No app/native/network feature change.
+[Evidence](../../docs/implementation/d1-07-c05-mobile-evidence.md).
+Mobile audit59 full/35 omit-dev and SDK dev4 high remain FAIL/OPEN. C-06 NOT
+STARTED; full001/Day1 PARTIAL; original task/REQ/AC unchanged. No C-05 commit/publish.
+
 **Current C-04 checkpoint — 2026-10-16 /a2609f9:** C-03 reviewed/committed
 under explicit authorization; C-04 local DONE. Generated SDK web integration,
 web quality gates/24 adapter/7 actual browser tests PASS/no skips; SDK85/wire27

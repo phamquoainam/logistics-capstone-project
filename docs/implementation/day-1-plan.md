@@ -1,5 +1,15 @@
 # Day 1 — Existing Codebase Assessment, Baseline Verification & SDD Implementation Plan
 
+**Current C-05 checkpoint — 2026-10-17 /6656753:** C-04 reviewed/committed23
+files after safety PASS, no push. C-05 compile-only mobile SDK consumer DONE:
+local dependency/public operations and types, no starter/native/business feature
+change. Clean install/lint/typecheck/Jest1, real compiler/4 negative controls,
+SDK-entry Hermes23 modules/14 SDK, unchanged starter Hermes576/zero SDK and SDK85
+regression PASS. Mobile audits59 full/35 omit-dev FAIL/OPEN, SDK dev4 high OPEN.
+[Evidence/inventory](d1-07-c05-mobile-evidence.md). C-06 combined/remote gates NOT
+STARTED; D1-07/full001/Day1 PARTIAL. C-05 uncommitted/unpublished.
+Previous checkpoint statements below retain their historical scope.
+
 **Current C-04 checkpoint — 2026-10-16 /a2609f9:** C-03 reviewed/committed
 exact14 files after safety PASS, no push. C-04 existing web adoption DONE local:
 all11 generated operations/types via public exports/local package; unchanged
@@ -273,8 +283,8 @@ PASS. No mandatory requirement for latest patch/zero dependency advisories was
 invented or removed. Full AC-001-01/05 onboarding and native feature/production
 security verification remain OPEN under Feature001.
 
-**Ưu tiên tiếp theo: D1-07 / C-05 — Mobile compile-only consumer**, sau review C-04
-và khi được yêu cầu triển khai. C-01–04 local gates PASS; C-05/06 chưa bắt đầu.
-Checkpoint C-03 đã commit a2609f9; không commit C-04/push/PR khi chưa có yêu cầu. Demo001 auth/
+**Ưu tiên tiếp theo: D1-07 / C-06 — Final combined regression/evidence**, sau review
+C-05 và khi được yêu cầu. C-01–05 local scope DONE; C-06 chưa bắt đầu, security
+findings vẫn OPEN. Checkpoint C-04 đã commit6656753; không commit C-05/push/PR khi chưa có yêu cầu. Demo001 auth/
 merchant/DRAFT đã có code, không tạo lại skeleton. Theo dõi dependency/SDK advisory ở maintenance
 scope có review, không tự nâng/hạ baseline để đổi diagnostic sang xanh.

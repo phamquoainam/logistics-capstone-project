@@ -1,5 +1,14 @@
 # Design 001-CONTRACT — preserve the approved Demo-001 wire behavior
 
+**Current C-05 checkpoint — 2026-10-17 /6656753:** compile-only mobile consumer
+DONE locally. Public SDK/Fetch factory types resolve in unchanged Expo Bundler/
+react-native compiler config; real compiler controls and actual SDK-entry Hermes
+bundle PASS. Starter UI/entry/config/native unchanged, separate export PASS.
+[C-05 evidence/graph/security](../../../../docs/implementation/d1-07-c05-mobile-evidence.md).
+TEST03/09 mobile portions PASS; SDK85 regression PASS. No device/network claim.
+Mobile audits59 full/35 omit-dev and SDK dev4 high remain FAIL/OPEN; C-06 combined
+gates NOT STARTED. Full001/Day1 PARTIAL. Prior execution notes are historical.
+
 **Current C-04 execution — 2026-10-16 /a2609f9:** local web adoption DONE;
 generated operation callbacks/types/public package exports, minimal ApiError
 adapter and per-request JWT. Existing UI/session/form/key behavior preserved.
