@@ -1,5 +1,60 @@
 # Local Development Runbook — repository hiện hữu
 
+## D1-08 Task A - PostgreSQL-aware probes
+
+Supported HTTP runtime profiles: demo (H2) and demo,postgres. Boot-managed
+Actuator is explicitly enabled by demo; no Kubernetes detection is needed.
+Start the existing runtime using its approved launcher/configuration, then:
+
+```powershell
+curl.exe -i http://127.0.0.1:8080/actuator/health/liveness
+curl.exe -i http://127.0.0.1:8080/actuator/health/readiness
+```
+
+Use the actual configured port. GET needs no token. A healthy response is exactly
+{"status":"UP"}; DOWN and OUT_OF_SERVICE map to503, without details/components.
+Only those exact GET routes are public: /actuator, aggregate health, db/nested
+health, env/beans/metrics and non-GET probe requests are denied. Demo001's existing
+/api/demo/v1/health stays constant UP/local-demo and is not dependency readiness.
+Default non-demo context does not opt into management/probes; migration job is
+non-web. A Flyway startup failure is distinct from runtime DB loss/recovery.
+
+Configured waits: Hikari acquisition2000ms/validation1000ms and PostgreSQL
+connectTimeout2s. There is no repository-imposed global socket read timeout.
+The platform dbHealthIndicator borrows from the runtime pool and uses JDBC
+isValid(1): pinned pgJDBC applies/restores a validation-only socket timeout.
+Invalid/unrestored connections are evicted, all borrows closed. No extra pool,
+probe executor or business query deadline. H2 uses its native JDBC validation.
+These are component timeouts, not a universal HTTP SLA. A readiness503
+must not trigger a DB reset/migration repair or make liveness depend on DB.
+
+From repository root after Wrapper builds the current backend JAR:
+
+```powershell
+python -B -m unittest discover -s scripts/ci -p 'test_*.py' -v
+python -B packages/api-client/scripts/check-backend-baselines.py
+python -B app/backend/verify-health.py
+npm.cmd --prefix packages/api-client run verify:c01
+npm.cmd --prefix packages/api-client run test:wire
+```
+
+Run Docker harnesses sequentially. Backend regression helper needs free5433;
+the health/HTTP harness uses random loopback ports and only a newly owned pinned
+PG18.6 tmpfs container. It pauses/unpauses its captured ID, never elogistics_dev
+or a developer container, and checks all prior containers/volumes on cleanup.
+Do not manually pause a developer database to reproduce this smoke test.
+Inherited PG/DEMO/SPRING configuration is cleared by the provisioning harness.
+Safe runtime evidence goes under ignored .demo/d1-08-health; reused wire
+provisioning keeps private contexts/logs in new ignored .demo/d1-07-c04/run-*.
+Share only sanitized evidence, never raw application/Surefire logs or contexts.
+
+Fresh results: architecture23; H2 44 PASS/12 named PG skips; PostgreSQL56/no
+skips; four PG safety tests validate long SQL/concurrency/reuse/eviction and
+pool-thread cleanup. Guards15; contract41; wire27/108 actual responses. Runtime PG unavailable
+returns503, liveness remains200, unpause recovers without backend restart.
+[Full Task A evidence/limitations](../implementation/d1-08-health-readiness-evidence.md).
+No Redis/RabbitMQ, Testcontainers, CI expansion or full Feature001 closure claim.
+
 ## D1-07 C-06 - combined local verification, 2026-10-17
 
 Retain Java21/Boot4.1.1/Maven3.10.0 and Node24.13.0/npm11.6.2 pins. Clean-install

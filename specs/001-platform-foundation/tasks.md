@@ -1,5 +1,24 @@
 # Implementation Tasks 001: Nền tảng repository, deploy và kiến trúc
 
+## D1-08 Task A - PostgreSQL-aware health/readiness
+
+**Local DONE2026-10-17**, baseline26afba7; no commit/push/remote verification.
+[Design](design.md), [policy/commands/evidence](../../docs/implementation/d1-08-health-readiness-evidence.md).
+Original full-feature tasks/REQ/AC below are preserved; they are not all completed.
+D1-07 post-merge documentation closure is separate from this task.
+
+- [x] Clean develop/PR9 merge verified; new feature/d1-08-health-readiness branch.
+- [x] Source-backed mapping, default/demo/H2/PostgreSQL/security/Flyway policies reviewed.
+- [x] Boot-managed Actuator; explicit probes, livenessState and readinessState+db.
+- [x] Status-only exact GET probes; deny aggregate/details/other endpoints and methods.
+- [x] Scoped JDBC-native validation; rejected global socketTimeout removed. Real PG long reads, concurrent probe/exhaustion, physical reuse, broken/stalled connection eviction and pool/thread cleanup PASS.
+- [x] Architecture23, H2 44+12 named PG-only skips, PG56/no skips, guards15 and contract/wire regressions recorded in current evidence.
+- [x] Exact required health-test inventory added to report guard; no CI job expansion or bypass.
+- [x] Owned cleanup/privacy evidence and traceability/runbook updated; parent feature remains PARTIAL.
+
+Task B is not started: approve Redis/RabbitMQ image pins/resource/security/status
+policy before adding services/checks. No cache/broker feature implementation here.
+
 **Current C-06 verification - 2026-10-17 /1f26854:** C-05 checkpoint committed;
 C-06 LOCAL_DONE, D1-07 PARTIAL / READY_FOR_PR. Package85/web24/mobile1,
 actual wire27/browser7 each twice, architecture23/H2 40+8 skips/PG48+0 and guard14

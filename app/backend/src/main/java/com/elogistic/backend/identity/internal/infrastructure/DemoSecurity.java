@@ -23,6 +23,7 @@ class DemoSecurity {
   http.csrf(csrf->csrf.disable()).sessionManagement(s->s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
    .authorizeHttpRequests(a->a.requestMatchers(HttpMethod.POST,"/api/demo/v1/auth/login").permitAll()
     .requestMatchers(HttpMethod.GET,"/api/demo/v1/health").permitAll()
+    .requestMatchers(HttpMethod.GET,"/actuator/health/liveness","/actuator/health/readiness").permitAll()
     .requestMatchers(HttpMethod.GET,"/api/demo/v1/auth/me").authenticated()
     .requestMatchers(HttpMethod.GET,"/api/demo/v1/admin/**").hasRole("ADMIN")
     .requestMatchers(HttpMethod.GET,"/api/demo/v1/merchant/me","/api/demo/v1/shipments","/api/demo/v1/shipments/*").hasRole("MERCHANT")

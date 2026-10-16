@@ -24,7 +24,7 @@ class ReportGuardTests(unittest.TestCase):
         for name, methods in reports.REQUIRED.items():
             if mode == 'architecture' and '.architecture.' not in name:
                 continue
-            skip = mode == 'h2' and name == reports.PG
+            skip = mode == 'h2' and name in reports.PG_ONLY
             suite = ET.Element('testsuite', name=name, tests=str(len(methods)), failures='0', errors='0',
                                skipped=str(len(methods) if skip else 0))
             for method in methods:
@@ -52,6 +52,15 @@ class ReportGuardTests(unittest.TestCase):
 
     def test_empty_reports_fail_even_when_maven_succeeds(self):
         self.assertFalse(self.check())
+
+    def test_missing_health_suite_fails_full_backend_modes(self):
+        for mode in ('h2', 'postgres'):
+            for suite in ('FoundationHealthTests', 'PostgresHealthSafetyTests'):
+                with self.subTest(mode=mode, suite=suite):
+                    self.fixture(mode)
+                    path = self.source / ('TEST-' + reports.BASE + 'demo.' + suite + '.xml')
+                    path.unlink()  # Only synthetic XML in this test's TemporaryDirectory.
+                    self.assertFalse(self.check(mode))
 
     def test_real_junit_injected_parameter_name_is_supported(self):
         self.fixture('h2')

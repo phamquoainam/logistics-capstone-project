@@ -1,5 +1,18 @@
 # Day 1 — Existing Codebase Assessment, Baseline Verification & SDD Implementation Plan
 
+**D1-08 Task A timeout safety fix - 2026-10-17: local DONE / READY_FOR_PR.**
+Removed the unsafe JDBC-wide socketTimeout3s. A small platform infrastructure
+Actuator dbHealthIndicator uses the real runtime Hikari pool and JDBC isValid(1),
+with native pgJDBC timeout restoration and explicit eviction of invalid or
+unrestored connections. Real PG long reads before/after probe, concurrency,
+physical reuse, broken/stalled connections, recovery and pool/thread cleanup PASS.
+Architecture23; H2 44 PASS/12 exact PG-only skips; PostgreSQL56/no skips;
+guards15, contract41 and actual HTTP/runtime gates recorded in
+[Task A evidence](d1-08-health-readiness-evidence.md).
+Remote verification pending authorized publication; no remote PASS inferred.
+Feature001/Day1 PARTIAL; Task B DESIGN/PENDING APPROVAL. D1-07 post-merge
+documentation closure remains separate; earlier dated checkpoints are historical.
+
 **Current C-06 verification - 2026-10-17 /1f26854:** C-05 accepted/committed13
 files; C-06 LOCAL_DONE. Package85/web24/mobile1 +actual compiler4/Hermes,
 wire27/browser7 twice, architecture23/H2 40+8 named skips/PG48 no skips and guard14

@@ -1,5 +1,27 @@
 # Traceability Matrix (living document)
 
+**D1-08 Task A - 2026-10-17 / baseline26afba7, local DONE.**
+[Exact policy, commands, runtime/cleanup/privacy evidence](../implementation/d1-08-health-readiness-evidence.md).
+
+| Requirement / new test ID | Actual evidence | Status / scope |
+|---|---|---|
+| REQ-001-04, AC-001-01 subset, NFR-O02; TEST-001-HEALTH-01 | FoundationHealthTests: real H2 and PostgreSQL DataSource, status-only UP, readiness OUT_OF_SERVICE503, real pool exhaustion DOWN503 and recovery; liveness stays200 | PASS local PostgreSQL-aware health subset; Redis/Rabbit/full cold-start still missing |
+| REQ-001-05, AC-001-04 subset; TEST-001-HEALTH-02 | Anonymous exact GET probes; other methods/management paths rejected, even ADMIN cannot access denied health details; strict response JSON and bounded secret audits | PASS tested exposure/privacy, not comprehensive security certification |
+| NFR-O02; TEST-001-HEALTH-03 | Real owned PG18.6/tmpfs paused/unpaused; HTTP200 ->503 ->200 on same backend, two outage observations with bounded JDBC/pool waits | PASS observed runtime failure/recovery; no Flyway startup-recovery or arbitrary-network SLA claim |
+| REQ-001-02/03 and DEC-29 regressions; TEST-001-HEALTH-04 | Arch23, H2 44+12 named PG-only skips, PG56/no skips; guards15, contract41, wire27/108 responses/11 operations | PASS local; V1/V2/OAS/generated SDK/business behavior unchanged; new remote CI UNVERIFIED |
+
+TEST-001-HEALTH-05 adds four mandatory real PostgreSQL safety tests under the
+actual demo,postgres profile: long reads before/after probe and same physical
+reuse, concurrent query/probe on a one-slot runtime test pool, terminated physical
+connection replacement, socket-stall timeout/recovery and zero leaked pool workers.
+No global socket read deadline remains; native isValid(1) restoration/eviction is
+verified. These four tests are explicitly PG-only skips in H2 and mandatory PASS
+in PostgreSQL mode; no arbitrary skip allowance was added. This addresses
+REQ-001-04/05, AC-001-04 subset and NFR-O02/M02; not an HTTP SLA.
+
+Task A does not close Feature001/Day1 or perform D1-07 post-merge documentation
+closure. Earlier dated D1-07 execution statements below remain historical snapshots.
+
 **Current C-06 final combined verification - 2026-10-17 /1f26854.**
 [Final evidence/commands/security/CI coverage](../implementation/d1-07-c06-final-evidence.md).
 C-05 committed; C-06 LOCAL_DONE, D1-07 PARTIAL / READY_FOR_PR, no publish.
