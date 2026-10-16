@@ -1,5 +1,195 @@
 # Local Development Runbook — repository hiện hữu
 
+## D1-07 C-06 - combined local verification, 2026-10-17
+
+Retain Java21/Boot4.1.1/Maven3.10.0 and Node24.13.0/npm11.6.2 pins. Clean-install
+the SDK first and build it before consumer gates. From repository root:
+
+```powershell
+npm.cmd --prefix packages/api-client ci --no-audit --no-fund
+npm.cmd --prefix packages/api-client run verify:c02
+npm.cmd --prefix app/frontend/web ci --ignore-scripts --no-audit
+npm.cmd --prefix app/frontend/web run lint
+npm.cmd --prefix app/frontend/web run typecheck
+npm.cmd --prefix app/frontend/web test
+npm.cmd --prefix app/frontend/web run build
+npm.cmd --prefix app/frontend/shipper-mobile ci --ignore-scripts --no-audit
+npm.cmd --prefix app/frontend/shipper-mobile run lint
+npm.cmd --prefix app/frontend/shipper-mobile run typecheck
+npm.cmd --prefix app/frontend/shipper-mobile test
+node packages/api-client/scripts/check-mobile-consumer.mjs
+python -B -m unittest discover -s scripts/ci -p 'test_*.py' -v
+python -B packages/api-client/scripts/check-backend-baselines.py
+npm.cmd --prefix packages/api-client run test:wire
+npm.cmd --prefix packages/api-client run test:web
+```
+
+Use the published C-05 starter export command for the unchanged real entry too.
+Run Docker harnesses sequentially; their inventory checks include all existing
+containers/volumes. Backend helper reuses CI provisioning/report guards and the
+existing offline .demo/maven-repository; it requires Docker Engine, approved PG
+image locally and free127.0.0.1:5433. If busy, FAIL/BLOCKED: never stop/retarget
+existing services or change test URL guards. It creates two owned tmpfs test DBs,
+runs architecture/H2/postgres clean verify and removes only its captured ID.
+Wire/browser harnesses use random loopback ports. No -v/prune/cache delete/data
+reset/Flyway clean/repair. Canonical postgres@sha256 reference retains exactly
+the approved18.6-bookworm digest even when the local image loses its tag.
+
+Outputs/context/logs/raw reports stay ignored; share only sanitized allowlisted
+evidence. Fresh C-06: package85, web24, mobile1/compiler4/Hermes, arch23,
+H2 40+8 skips, PG48+0 and guard14 PASS; wire27/browser7 PASS twice. Audits remain
+FAIL/OPEN for SDK/mobile; inspect full and omit-dev separately, no force fix.
+[Final evidence](../implementation/d1-07-c06-final-evidence.md). This is cached local
+repeatability, not independent clean-machine onboarding. No APK rebuild or mobile
+business network execution; remote CI requires separately authorized publication.
+
+## D1-07 C-05 — compile-only mobile SDK / real Hermes bundle, 2026-10-17
+
+Build SDK before the local mobile link is consumed. From repository root:
+
+```powershell
+npm.cmd --prefix packages/api-client run verify:c02
+Set-Location app/frontend/shipper-mobile
+npm.cmd ci --ignore-scripts --no-audit --cache ../../../.demo/npm-cache
+npm.cmd run lint
+npm.cmd run typecheck
+npm.cmd test
+Set-Location ../../../
+node packages/api-client/scripts/check-mobile-consumer.mjs
+```
+
+The final script uses actual mobile TypeScript/Expo config and four isolated
+negative compiler controls, then installed Expo export:embed on the value-import
+fixture type-tests/api-client.ts. It checks actual Hermes header, source-map SDK
+modules/public entry and exclusion of generator/validator/Node-only tooling.
+It writes a new .demo/d1-07-c05/sdk-<uuid> directory, no cache reset or API request.
+Factory requires caller configuration; it is never invoked by starter App/index.
+PASS is compile/bundle compatibility only, not mobile networking/device runtime.
+
+Separately verify the unchanged starter using installed Expo CLI:
+`expo export --platform android --output-dir <new ignored directory> --source-maps`.
+The executed result is576 modules/zero SDK modules; SDK fixture result is23/14.
+No App/index/tsconfig/Metro/app.json/native edit, prebuild or APK rebuild needed.
+
+For a new local dependency, use installed Expo install with cache in
+npm_config_cache; don't pass `--cache` and its value through Expo CLI extras.
+In this execution that produced a mistaken undefined dependency, corrected before
+final clean install. Final manifest/lock add only the approved file dependency.
+Offline install validation is unreliable and is not Expo Doctor/latest-patch PASS.
+
+Audit full and omit=dev separately; final mobile counts59/35, SDK4-high/0 remain
+disclosed. No audit fix/major downgrade. [C-05 evidence](../implementation/d1-07-c05-mobile-evidence.md)
+records before/after, current advisories and limits. HBC/maps/logs/reports stay
+ignored. C-06 combined/remote gates are not run or closed by this verification.
+
+## D1-07 C-04 — web SDK consumer and isolated browser gate, 2026-10-16
+
+Build the private SDK before web install/build. Node24.13.0/npm11.6.2 remain
+required; no version upgrade. From repository root:
+
+```powershell
+npm.cmd --prefix packages/api-client ci --no-audit --no-fund
+npm.cmd --prefix packages/api-client run verify:c02
+Set-Location app/frontend/web
+npm.cmd ci --ignore-scripts --no-audit --cache ../../../.demo/npm-cache
+npm.cmd run lint
+npm.cmd run typecheck
+npm.cmd test
+npm.cmd run build
+Set-Location ../../../
+npm.cmd --prefix packages/api-client run test:web
+```
+
+Browser gate also requires current Maven-verified backend JAR, running Docker,
+approved PG18.6 image already available, Python and installed Edge. It creates
+fresh owned PostgreSQL tmpfs/backend/Vite with random loopback ports/synthetic
+credentials, then seven browser tests (original three +four SDK cases). Only
+its own children/container are stopped; existing DB/volumes are never targeted.
+Normal Vite proxy/dev config is unchanged; vite.c04.config.ts is test-only.
+Private/safe reports and synthetic screenshots stay ignored under
+.demo/d1-07-c04/run-*; no traces/raw error values in isolated reporter output.
+All cleanup flags must PASS. Do not copy private context or credentials to Git.
+
+The original e2e settings fallback remains for existing manual regressions;
+new C-04 runtime tests refuse execution without the isolated harness. Use
+test:web for the complete seven-test suite, rather than targeting developer data.
+Final web24/browser7 PASS/no skips; package85/wire27 PASS.
+[C-04 evidence](../implementation/d1-07-c04-web-evidence.md) distinguishes actual
+HTTP/replay from explicit network/nonJSON503/poll403 branch fixtures.
+SDK dev audit4 high remains OPEN; web audit0 does not close that finding.
+C-05/mobile compile-consumer and final C-06 gates remain unexecuted.
+
+## D1-07 C-03 — real HTTP with owned PostgreSQL, 2026-10-15
+
+Prerequisites: Java21/current Maven-verified backend JAR; Node24.13.0/npm11.6.2,
+Python on PATH and running Docker Engine with approved PG18.6 digest available.
+Build backend with the existing Wrapper/cache invocation, then from packages/api-client:
+
+```powershell
+npm.cmd run verify:c02
+npm.cmd run test:wire
+```
+
+The harness creates a new labeled PostgreSQL tmpfs container/database/three-role
+setup, random loopback DB/backend ports and synthetic passwords, then runs the
+real JAR with demo,postgres. It never targets elogistics_dev or native/developer
+ports5432/5433, mounts existing data, or invokes Flyway clean/repair. All11 APIs
+are called with real HTTP. New process/owned-container cleanup runs in finally;
+container IDs/volume names before/after must match. No -v/prune/down is used.
+Credentials/context/raw backend log stay ignored under .demo/d1-07-c03/run-*;
+do not publish/copy them. Sanitized safe-wire-results/environment/cleanup JSON
+are separate. Missing tools/access are failures, never mocked fallback.
+
+Final two runs PASS27/27/no skips,108 HTTP responses each, zero mismatches;
+both cleanup and log privacy PASS. Read [C-03 evidence](../implementation/d1-07-c03-wire-evidence.md)
+for exact ports/digests, earlier failed attempts, canonical request limitations
+and per-operation coverage. Dev audit4 high remains OPEN; C-04–06 not executed.
+
+## D1-07 C-02 — generated package verification, 2026-10-15
+
+From packages/api-client with Node24.13.0/npm11.6.2:
+
+```powershell
+npm.cmd ci --no-audit --no-fund
+npm.cmd run verify:c02
+npm.cmd audit --json
+npm.cmd audit --omit=dev --json
+```
+
+PASS: strict contract gates, source/two-directory16-file determinism, package
+typecheck/build,41+44 tests/no skips. Full dev audit remains FAIL4 high findings;
+runtime0, supported checked-object generation avoids installed js-yaml loader.
+See [C-02 evidence](../implementation/d1-07-c02-sdk-evidence.md) and
+[package commands/policies](../../packages/api-client/README.md). npm audit is
+reported separately, never suppressed by verify:c02. After reviewed source/config
+changes only, npm.cmd run generate recreates generated source; verification itself
+does not overwrite it. C-03 actual HTTP and C-04/05 consumer adoption remain NOT
+RUN, no DB/native action required for these commands. Older C-01 notes below
+record its earlier minimal graph with audit0 and no generated SDK.
+
+## D1-07 C-01 — contract-only verification, 2026-10-15
+
+From repository root, with the pinned Node24.13.0/npm11.6.2:
+
+```powershell
+Set-Location packages/api-client
+npm.cmd ci --no-audit --no-fund
+npm.cmd run verify:c01
+npm.cmd audit --json
+npm.cmd audit --omit=dev --json
+```
+
+C-01 local result: Redocly2.64.0 errors/warnings/ignored0;11 exact source/OAS
+operations;41 tests PASS/no skips,37 negative fixtures; new reported graph audit0.
+See [C-01 evidence and limits](../implementation/d1-07-c01-contract-evidence.md)
+and [contract notes](../../contracts/openapi/README.md). No backend/database,
+Docker, native or frontend change is needed for these commands. Validation
+scratch files are ignored under .demo/d1-07-c01; this is not SDK generation.
+Owner contract review remains before C-02. C-02–06, actual wire/build/consumer
+compatibility and determinism remain NOT RUN/UNVERIFIED; D1-07/Day1 PARTIAL.
+
+The following checkpoints retain their historical execution dates.
+
 **D1-02 latest execution — 2026-10-15:** local toolchain/native starter scope DONE;
 Pixel_7/API37 is the current emulator target. See [L.10](#l10-d1-02-toolchain-and-pixel-7-native-execution--2026-10-15)
 and [execution evidence](../implementation/d1-02-toolchain-evidence.md) for commands,

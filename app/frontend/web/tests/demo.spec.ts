@@ -1,8 +1,6 @@
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
-const settings = JSON.parse(readFileSync(resolve(process.cwd(), '../../../.demo/settings.json'), 'utf8').replace(/^\uFEFF/, ''));
+import { settings, evidencePath } from './support/settings';
 async function login(page: Page, username: string, password: string) {
   await page.goto('/');
   await page.getByRole('textbox', { name: 'Tên đăng nhập' }).fill(username);
@@ -28,7 +26,7 @@ test('merchant creates, reads, cancels; another merchant cannot read it', async 
   await expect(page.getByRole('heading', { name: reference, exact: true })).toBeVisible();
   await expect(page.getByText('Đã tạo bản nháp', { exact: true })).toBeVisible();
   const shipmentHash = new URL(page.url()).hash;
-  await page.screenshot({ path: '../../../.demo/evidence/merchant-draft.png', fullPage: true });
+  await page.screenshot({ path: evidencePath('merchant-draft.png'), fullPage: true });
   const contextB = await browser.newContext(); const pageB = await contextB.newPage();
   await login(pageB, 'demo.merchant.b', settings.merchantBPassword);
   await expect(pageB.getByRole('heading', { name: 'Merchant B · Demo' })).toBeVisible();
@@ -52,7 +50,7 @@ test('invalid login retains input; admin sees overview and safe user roles', asy
   await page.getByLabel('Mật khẩu', { exact: true }).fill(settings.adminPassword);
   await page.getByRole('button', { name: 'Đăng nhập →' }).click();
   await expect(page.getByRole('heading', { name: 'Tổng quan quản trị' })).toBeVisible();
-  await page.screenshot({ path: '../../../.demo/evidence/admin-overview.png', fullPage: true });
+  await page.screenshot({ path: evidencePath('admin-overview.png'), fullPage: true });
   await page.getByRole('link', { name: 'Tài khoản & quyền', exact: false }).first().click();
   await expect(page.getByRole('heading', { name: 'Tài khoản & quyền' })).toBeVisible();
   await expect(page.getByText('demo.disabled', { exact: true })).toBeVisible();
@@ -62,6 +60,8 @@ test('invalid login retains input; admin sees overview and safe user roles', asy
   await expect(page.getByRole('heading', { name: 'Chào mừng trở lại' })).toBeVisible();
 });
 test('network failure retains draft form and retry uses same operation', async ({ page }) => {
+  const keys: (string | undefined)[] = [];
+  page.on('request', request => { if (request.method() === 'POST' && request.url().endsWith('/api/demo/v1/shipments')) keys.push(request.headers()['idempotency-key']); });
   await login(page, 'demo.merchant.a', settings.merchantAPassword);
   await page.getByRole('link', { name: '＋ Tạo vận đơn nháp' }).first().click();
   await page.getByLabel('Mã tham chiếu').fill(`RETRY-${Date.now()}`);
@@ -74,6 +74,14 @@ test('network failure retains draft form and retry uses same operation', async (
   await expect(page.getByRole('alert')).toContainText('Không thể kết nối backend');
   await expect(page.getByLabel('Tên người nhận')).toHaveValue('Demo');
   await page.unroute('**/api/demo/v1/shipments');
+  // Explicit proxy-failure fixture: preserve form/key for a non-JSON HTTP error too.
+  await page.route('**/api/demo/v1/shipments', route => route.request().method() === 'POST'
+    ? route.fulfill({ status: 503, contentType: 'text/html', body: '<h1>Synthetic upstream unavailable</h1>' }) : route.continue());
+  await page.getByRole('button', { name: 'Lưu vận đơn nháp →' }).click();
+  await expect(page.getByRole('alert')).toHaveText('Thao tác chưa hoàn tất. Kiểm tra backend và thử lại.');
+  await expect(page.getByLabel('Tên người nhận')).toHaveValue('Demo');
+  await page.unroute('**/api/demo/v1/shipments');
   await page.getByRole('button', { name: 'Lưu vận đơn nháp →' }).click();
   await expect(page.getByText('Đã tạo bản nháp', { exact: true })).toBeVisible();
+  expect(keys).toHaveLength(3); expect(keys[0]).toBeTruthy(); expect(new Set(keys).size).toBe(1);
 });

@@ -1,5 +1,97 @@
 # Traceability Matrix (living document)
 
+**Current C-06 final combined verification - 2026-10-17 /1f26854.**
+[Final evidence/commands/security/CI coverage](../implementation/d1-07-c06-final-evidence.md).
+C-05 committed; C-06 LOCAL_DONE, D1-07 PARTIAL / READY_FOR_PR, no publish.
+
+| Requirement/test subset | Fresh actual evidence | Status/limit |
+|---|---|---|
+| SC-01/02; TEST01/02; SC-AC-01 | Strict lint/source11/41 tests, actual two generations and independent16-file raw-byte/source comparison,44 SDK tests | PASS local; no schema/generated/pin changes |
+| SC-03/04; TEST04-08; SC-AC-02/03/04 | Web24 tests, real wire27/108 responses and browser7 twice on fresh PG; SQL ownership/replay/concurrency, loss/retry/session/error fixtures | PASS scoped; explicit intercepted branches distinguished from actual backend responses |
+| SC-05; TEST03/09; SC-AC-05 | All three lockfile clean installs; web/mobile quality, Jest1/compiler4/actual SDK Hermes23 modules/14 SDK +starter576/0 SDK | PASS local compile/bundle, no device/business network claim |
+| TEST10/SC-AC-06 local; BR-01/02/NFR-S01/S02/C02 subsets | Arch23 incl11 negative/1 positive; H2 40+8 named skips; real PG48+0; fail-closed guard14,15-value/30-safe-file bounded audit/cleanup | PASS local; not the literal CI red-then-fixed parent experiment |
+| Dependency findings | Web0/0; SDK4 high/0; mobile58 full/35 omit-dev,7 distinct root advisories across scopes | Audit FAIL/OPEN, impact/path/owner disposition recorded; no remediation/risk waiver |
+| D1-07 official DoD / remote integration | Existing three required backend checks not run on unpublished HEAD; no new frontend CI | PARTIAL / READY_FOR_PR; remote UNVERIFIED, merge NO-GO |
+| Full001/Day1 | Readiness/full infra/Testcontainers/independent onboarding/native business/security maintenance/D1-08 | PARTIAL; original REQ/AC unchanged |
+
+Older dated checkpoints below retain historical scope.
+
+**Historical C-05 mobile consumer — 2026-10-17 /6656753.**
+[Evidence/inventory](../implementation/d1-07-c05-mobile-evidence.md).
+C-04 reviewed/committed23 files; C-05 DONE local/uncommitted, no publish.
+
+| Requirement/test subset | Actual evidence | Status/limit |
+|---|---|---|
+| SC-05; TEST-001-CONTRACT-03/09; SC-AC-05 mobile subset; REQ-001-05/NFR-M01 subset | Local SDK public exports, actual Expo Bundler/react-native compiler,9 type assertions/four negative controls, clean install/lint/typecheck/Jest1 | PASS compile-only, no mobile business requests |
+| SC-05 portability/import packaging | Actual SDK-entry Metro/Hermes23 modules/14 SDK, no Node-only tooling dependency; separate unchanged starter export576 modules/zero SDK | PASS bundle scope; not native execution/network/device integration |
+| SC-02 package regression |41 contract+44 SDK/no skips, exact pins/build/typecheck/two-directory16-file deterministic output | PASS local |
+| Dependency security review | Mobile before58 full/35 omit-dev, after59/35; additional Testing Library meta-finding via unchanged RN, same underlying advisory URLs; SDK4 high/runtime0 | Audits FAIL/OPEN, not remediation/risk acceptance; propagation difference root cause UNVERIFIED |
+| TEST09/10 combined, SC-AC-06, D1-07/full001/Day1 | C-06 not started; remote after new checkpoints NOT RUN | PARTIAL / UNVERIFIED; no original REQ/AC edits |
+
+Prior dated checkpoint statements below are historical.
+
+**Historical C-04 web adoption — 2026-10-16 /a2609f9.**
+[Evidence/mapping/inventory](../implementation/d1-07-c04-web-evidence.md).
+C-03 checkpoint committed with approval; C-04 DONE local/uncommitted, no publish.
+
+| Requirement/test subset | Executed evidence | Status/limit |
+|---|---|---|
+| SC-03; TEST-001-CONTRACT-04/08; SC-AC-02 web; DEMO-01..04/NFR-U02 subsets |11 generated operations/public exports;24 adapter +7 actual browser tests including original5/3, merchant/admin journeys | PASS local, isolated PG/backend; no handwritten wire DTOs |
+| SC-04; SC-AC-03/04 web; BR-01/02/NFR-S01/S02/C02 subsets | Actual403/401 invalid/expired/missing/404 owner/409/429; committed create/cancel response loss/replay, retained input/key; explicit simulated nonJSON503/poll403 fixtures distinguished | PASS scoped; no new backend behavior or client authorization |
+| SC-05; TEST03/09 web compiler/package subset | Local file dependency, clean install176 packages, lint/typecheck/build, existing versions unchanged | PASS web; mobile consumer NOT RUN/C-05 |
+| TEST01/02/05/06/07 regressions; TEST10 H2/privacy subset |41+44 package tests,27 real PG wire tests/108 responses, Maven40 incl23 architecture/eight named PG-only skips, cleanup/privacy | PASS scoped; combined C-06 and48-test PG backend suite not newly claimed |
+| Dependency findings | Web full/runtime0; SDK dev4 high OPEN/runtime0, generator mitigation intact | No remediation/implicit risk acceptance; pins retained |
+| Full SC-AC-05/06, TEST09/10 combined, D1-07/full001/Day1 | C-05/06 not started; remote on C-04 NOT RUN | PARTIAL / UNVERIFIED; original REQ/AC unchanged |
+
+Prior dated checkpoint statements below are historical.
+
+**Historical C-03 actual HTTP/PostgreSQL checkpoint — 2026-10-15 /b385244.**
+[Evidence](../implementation/d1-07-c03-wire-evidence.md). C-01/C-02 checkpoint
+43 files committed under user authorization; C-03 changes uncommitted, no push.
+
+| Requirement/test subset | Actual evidence | Status/limit |
+|---|---|---|
+| SC-01/04; REQ-001-04 contract subset; TEST-001-CONTRACT-05 |11 successful operations via real generated SDK/Fetch/backend/PG18.6, response/header/schema validation, required/nullability;27 tests per run | PASS two final runs; canonical input caveats retained |
+| SC-04; NFR-S01/S02; TEST-001-CONTRACT-06 | Missing/invalid/expired/tampered JWT, wrong issuer, untrusted role claim, live role/enabled/scope, RBAC/owner404, invalid inputs, login429 | PASS actual HTTP; no developer account/data modified |
+| BR-01/02; NFR-C02; TEST-001-CONTRACT-07 | Merchant-scoped keys/references; create/cancel replay/conflicts; two-way concurrent requests plus actual aggregate/per-resource SQL event/receipt assertions | PASS real PostgreSQL, not mocked DB invariants |
+| TEST05/06/07 repeatability/isolation | Two fresh final databases, each34 success/74 negative responses, zero mismatches; safe reports same SHA256; owned cleanup/privacy PASS all six attempts | PASS local; initial libuv and SQL-guard FAIL attempts retained, not hidden |
+| TEST01–04 regression / backend baseline | C-0141 + SDK44 PASS/no skips; Maven40 PASS incl23 architecture/eight named PG-only skips | PASS scoped; not a new48/48 PG backend-suite claim |
+| Security/advisories | Refreshed dev npm audit FAIL4 high/runtime0, no graph/pin change; bounded loader mitigation unchanged | OPEN maintenance finding, not remediation/risk acceptance |
+| Full SC-AC-02/04 UI/05/06 and TEST08–10 | Web/mobile adoption/browser/combined final gates still C-04–06 | UNVERIFIED / NOT RUN; D1-07/full001/Day1 PARTIAL |
+
+Older wire NOT RUN/no-commit statements below are prior dated checkpoints.
+
+**Historical C-01 acceptance / C-02 checkpoint — 2026-10-15 /20072b6.**
+[Evidence and advisory disposition](../implementation/d1-07-c02-sdk-evidence.md).
+C-01 final technical acceptance DONE; conditional user authorization satisfied;
+C-02 local DONE, C-03–06 NOT STARTED; D1-07/full001/Day1 PARTIAL.
+
+| Requirement/test subset | Actual execution | Status/limit |
+|---|---|---|
+| SC-01/02; REQ-001-04 subset; SC-AC-01; TEST01/02 | C-0141 pass;11 generated operations/16 files; two independent generations equal source bytes; stale/missing/extra controls fail | PASS local validation/generation/determinism |
+| SC-02/05; TEST03 package portion | Strict TS6 package build, NodeNext/Bundler self-consumer declarations; ten diagnostic-checked compile negatives | PASS package; actual mobile/web consumers UNVERIFIED until C-04/05 |
+| SC-03/04; TEST04 transport portion | Eleven actual SDK functions/injected Fetch, body/path/header/auth, raw status/error/network/retry-key controls; SDK44 pass/no skips total | PASS transport; real HTTP truth C-03, ApiError adapter/browser C-04 UNVERIFIED |
+| REQ-001-05 subset; dependency review | Dev graph59 locked entries; npm audit FAIL4 high via js-yaml; runtime0; actual loader-trap/local-ref mitigation verified | OPEN dev maintenance finding; no zero-vulnerability/risk-acceptance claim |
+| SC-AC-02–06; TEST05–10 | No real wire/consumer/browser/backend regression execution in this C-02 task | UNVERIFIED / NOT RUN; no full001 or Day1 closure |
+
+Older C-01 audit0/no-SDK notes below retain the earlier checkpoint scope.
+
+**Current D1-07 C-01 checkpoint — 2026-10-15 /20072b6.**
+[C-01 evidence](../implementation/d1-07-c01-contract-evidence.md): local contract
+foundation DONE; owner review pending before C-02. D1-07/slice IN_PROGRESS /
+PARTIAL; C-02–06 NOT STARTED. This supersedes earlier implementation NOT STARTED
+notes below without changing their historical evidence or original REQ/AC.
+
+| Requirement / test mapping | Actual evidence | Status / limit |
+|---|---|---|
+| SC-01; REQ-001-04 contract subset; NFR-M02; TEST-001-CONTRACT-01 |11 source/OAS operations, strict Redocly lint0 errors/warnings/ignored;41 tests pass,37 negatives detected,31 documented JSON examples validate | PASS local C-01; source/schema fixtures, not HTTP conformance |
+| SC-AC-01 validation portion | Clean lockfile install, approved validator pins, unique operationIds/local refs/auth/status/header/schema guards | PASS portion; generation/determinism portion UNVERIFIED, not full AC complete |
+| SC-02–05; TEST-001-CONTRACT-02–10 | SDK not generated; consumer files unchanged; no wire/browser/backend execution for this slice | UNVERIFIED / NOT RUN, C-02–06 |
+| REQ-001-05 security subset | Private dev-only tooling; npm audit new graph0; protected source/config diff empty | PASS bounded C-01; bundled-code audit limit and existing consumer advisories remain open |
+| Full Feature001 / Day1 | Other infrastructure/readiness/onboarding/quality obligations retained | PARTIAL; no acceptance criteria changed |
+
+The following D1-06 entry records its earlier documentation-only closure.
+
 **D1-06 official DoR closure — 2026-10-15, baseline develop3186f01 / PR#7 merged.**
 [Assessment and DoR](../implementation/d1-06-slice-readiness.md),
 [subordinate spec](../../specs/001-platform-foundation/slices/demo-contract-client/spec.md),

@@ -1,11 +1,47 @@
 # Design 001-CONTRACT — preserve the approved Demo-001 wire behavior
 
-**Status:** ACCEPTED_FOR_DEC_29_SCOPE, 2026-10-15; slice READY_FOR_IMPLEMENTATION.
+**Current C-06 verification - 2026-10-17 /1f26854:** C-01-06 local deliverables
+VERIFIED; C-06 LOCAL_DONE. D1-07 PARTIAL / READY_FOR_PR; remote CI/integration
+UNVERIFIED, full001/Day1 PARTIAL. No C-06 commit/push/PR. Fresh package85,
+web24/browser7 twice, mobile Jest1/compiler4/Hermes, architecture23,
+H2 40+8 named skips, actual PG48/no skips and privacy guard14 PASS.
+Mobile audit58 full/35 omit-dev and SDK dev4 high remain FAIL/OPEN; web0/0.
+[C-06 final evidence](../../../../docs/implementation/d1-07-c06-final-evidence.md).
+Earlier execution/checkpoint statements below are historical.
+
+**Historical C-05 checkpoint — 2026-10-17 /6656753:** compile-only mobile consumer
+DONE locally. Public SDK/Fetch factory types resolve in unchanged Expo Bundler/
+react-native compiler config; real compiler controls and actual SDK-entry Hermes
+bundle PASS. Starter UI/entry/config/native unchanged, separate export PASS.
+[C-05 evidence/graph/security](../../../../docs/implementation/d1-07-c05-mobile-evidence.md).
+TEST03/09 mobile portions PASS; SDK85 regression PASS. No device/network claim.
+Mobile audits59 full/35 omit-dev and SDK dev4 high remain FAIL/OPEN; C-06 combined
+gates NOT STARTED. Full001/Day1 PARTIAL. Prior execution notes are historical.
+
+**Historical C-04 execution — 2026-10-16 /a2609f9:** local web adoption DONE;
+generated operation callbacks/types/public package exports, minimal ApiError
+adapter and per-request JWT. Existing UI/session/form/key behavior preserved.
+Web quality gates/24 adapter +7 real-browser tests, SDK85/wire27 and Maven40
+with8 expected PG-only skips PASS. No OAS/generated/backend change.
+[C-04 evidence/mapping](../../../../docs/implementation/d1-07-c04-web-evidence.md).
+TEST04/08 web portions PASS; TEST03/09 web subset PASS. C-05/06 not started,
+mobile/final TEST09/10 portions UNVERIFIED; full001/Day1 PARTIAL.
+Prior checkpoint notes retain their earlier execution scope.
+
+**Status:** ACCEPTED_FOR_DEC_29_SCOPE, 2026-10-15; slice IN_PROGRESS / PARTIAL.
 Approval source: the user's explicit “DEC-29 — APPROVED | D1-06 Definition of
-Ready Closure” message. D1-06 documentation/DoR DONE. No dependency installed,
-code generated or D1-07 implementation started.
-**D1-07: NOT STARTED; all implementation tests NOT RUN.**
-Baseline3186f01; [spec](spec.md), [decision/gaps](../../../../docs/implementation/d1-06-slice-readiness.md).
+Ready Closure” message. D1-06 documentation/DoR DONE.
+**D1-07 C-01 final technical acceptance / C-02 local DONE:** TEST01 PASS41,
+SDK tests PASS44/no skips; deterministic16-file source matches two scratch runs.
+Dev audit4 high findings OPEN, runtime0, bounded YAML-loader avoidance verified.
+C-03 actual HTTP/PG local DONE: two27/27-test runs,108 responses each, all11
+operations and cleanup PASS/no mismatches. C-04–06 NOT STARTED;
+actual consumer/browser/final combined gates UNVERIFIED.
+[C-03 harness/HTTP/SQL evidence](../../../../docs/implementation/d1-07-c03-wire-evidence.md).
+[C-02 configuration, findings and evidence](../../../../docs/implementation/d1-07-c02-sdk-evidence.md).
+[C-01 evidence](../../../../docs/implementation/d1-07-c01-contract-evidence.md).
+Execution baseline20072b6; original design baseline3186f01;
+[spec](spec.md), [decision/gaps](../../../../docs/implementation/d1-06-slice-readiness.md).
 
 ## Ownership and compatibility
 
@@ -161,7 +197,8 @@ web, no client-supplied actor and no role-based token trust. Existing generic
 
 ## Accepted client and tooling design
 
-DEC-29 approval is recorded; installation remains future D1-07 work. Approved pins
+DEC-29 approval is recorded; C-01 installed only the validator dependencies.
+Generator/TS installation and strict package build are now verified in C-02. Approved pins
 must be exact in the new private package/lock, with Node24.13.0/npm11.6.2 engines
 and strict engines:
 @hey-api/openapi-ts0.99.0, @redocly/cli2.64.0, TypeScript6.0.3; Ajv8.20.0 and
@@ -201,11 +238,22 @@ or Metro changes, network call, token persistence or UI added. This is portabili
 at type level only; bundling/device networking for a future shipper consumer is
 still UNVERIFIED. Do not claim mobile API integration based on typecheck alone.
 
-## Fixtures and verification matrix (planned; NOT RUN)
+## Fixtures and verification matrix (01/02/05–07 PASS; 03/04 package portions PASS)
+
+C-02 execution:85 total tests/no skips across C-01 and SDK; TEST03 consumer and
+TEST04 web-adapter portions, and TEST08–10 remain unexecuted. C-03 now executes
+TEST05/06/07 against real HTTP/PostgreSQL,27/27 twice; its scope/evidence above
+supersedes earlier NOT RUN wire fixture notes in the design history. The source schema
+is unchanged; its pattern-only string allOf branches gain only redundant string
+types in generator parser configuration to prevent unknown request fields. Ajv
+equivalence/compiler fixtures verify the adaptation, no generated edits/casts.
+The supported generator receives the checked Redocly object with local refs to
+avoid the advised js-yaml path; advisories remain OPEN. Exact gate evidence is
+in the C-02 record above. These are execution notes, not a scope/pin/AC change.
 
 | Test ID | Fixture / assertion | Coverage |
 |---|---|---|
-| TEST-001-CONTRACT-01 | Validate OAS structure, local refs/unique operationIds/all11 method/path pairs and operation-level auth; synthetic invalid ref/security/header fixture must fail same checker | SC-01; REQ-001-04 subset |
+| TEST-001-CONTRACT-01 | Validate OAS structure, local refs/unique operationIds/all11 method/path pairs and operation-level auth; synthetic invalid ref/security/header fixture must fail same checker. Executed C-01:41 tests PASS/no skips,37 negative fixtures; details in C-01 evidence | SC-01; REQ-001-04 subset; PASS local |
 | TEST-001-CONTRACT-02 | Two-temp-dir generation + checked-in drift check; temporary stale/missing output detected without touching production | SC-02 reproducibility |
 | TEST-001-CONTRACT-03 | Generated SDK typecheck; compile-negative method/path/body/header cases isolated with explicit expected diagnostic assertions, not production suppressions | SC-02/05 |
 | TEST-001-CONTRACT-04 | Fetch spy: path/base prefix, method/body serialization, per-request Bearer, required idempotency headers, no token on anonymous login/health;401/409/network/nonJSON errors retain ApiError behavior | SC-03/04/05 |
@@ -246,10 +294,10 @@ UP/local-demo, valid UUID IDs, nullable merchantId/reason, real login return key
 and separately labeled invalid fixtures. Actual success/error recordings remain
 in memory/private diagnostics, with generated tokens/passwords never committed.
 
-Source comparison and current test-source review are complete; newly planned
-wire fixtures remain NOT RUN. Serialization/coercion nuances (e.g. raw whitespace,
-decimal scale, null inclusion or framework decoding) must be verified against
-the isolated backend in D1-07. Canonical SDK requests use current web numeric
+Source comparison/test-source review are complete. C-03 now verifies the approved
+wire fixtures on isolated PostgreSQL/backend, including trim/null/decoding cases;
+this supersedes D1-06's planned NOT RUN state. It is not exhaustive framework
+coercion coverage. Canonical SDK requests use current web numeric
 weight values. Do not assert the backend rejects every other JSON representation
 unless a fixture proves it, and do not add client-side validation that rejects
 previously accepted input or changes the server's error behavior.

@@ -1,0 +1,1050 @@
+openapi: 3.1.0
+info:
+  title: E-Logistics Demo-001 HTTP contract
+  version: 1.0.0
+  description: 'DEC-29 accepted scope: exactly11 existing /api/demo/v1 operations. No envelope/API redesign. Canonical input schemas record Java normalization constraints; actual wire conformance is a separate C-03 gate. Examples are synthetic schema fixtures, not credentials or runtime captures.'
+jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
+servers:
+  - url: /api/demo/v1
+    description: Same-origin demo API base; append each relative path exactly once.
+security:
+  - bearerAuth: []
+tags:
+  - name: Identity
+    description: Current demo authentication and sanitized admin account reads.
+  - name: Merchant
+    description: Trusted organization profile read.
+  - name: Orders
+    description: Owner-scoped drafts and admin shipment summaries.
+  - name: Platform
+    description: Existing technical demo status only.
+paths:
+  /health:
+    get:
+      operationId: getDemoHealth
+      tags:
+        - Platform
+      summary: Read local demo status
+      description: Read local demo status. Constant UP/local-demo after startup; not dependency readiness.
+      security: []
+      x-roles:
+        - PUBLIC
+      responses:
+        '200':
+          description: Existing successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DemoHealth'
+        '401':
+          $ref: '#/components/responses/InvalidToken'
+        '500':
+          $ref: '#/components/responses/DatabaseError'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+  /auth/login:
+    post:
+      operationId: loginDemo
+      tags:
+        - Identity
+      summary: Log in with an enabled account
+      description: Log in with an enabled account. Signed HS256 JWT, issuer elogistics-demo, lifetime900 seconds; no refresh/logout API. Unknown input properties rejected.
+      security: []
+      x-roles:
+        - PUBLIC
+      responses:
+        '200':
+          description: Existing successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResult'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/LoginUnauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/DatabaseError'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginInput'
+  /auth/me:
+    get:
+      operationId: getDemoCurrentUser
+      tags:
+        - Identity
+      summary: Read the authenticated account
+      description: Read the authenticated account. Current account is fetched from DB on every protected request; enabled status, role and merchant scope are not trusted from client claims.
+      security:
+        - bearerAuth: []
+      x-roles:
+        - AUTHENTICATED
+      responses:
+        '200':
+          description: Existing successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountView'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/DatabaseError'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+  /merchant/me:
+    get:
+      operationId: getDemoCurrentMerchant
+      tags:
+        - Merchant
+      summary: Read the current merchant
+      description: Read the current merchant. Organization comes from the trusted current principal, with server-side lookup; ADMIN is not granted merchant access.
+      security:
+        - bearerAuth: []
+      x-roles:
+        - MERCHANT
+      responses:
+        '200':
+          description: Existing successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MerchantView'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/MerchantForbidden'
+        '500':
+          $ref: '#/components/responses/DatabaseError'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+  /shipments:
+    get:
+      operationId: listDemoShipments
+      tags:
+        - Orders
+      summary: List own shipments
+      description: List own shipments. Most recent200 ordered by createdAt descending; no query filters/cursors/pagination envelope implemented.
+      security:
+        - bearerAuth: []
+      x-roles:
+        - MERCHANT
+      responses:
+        '200':
+          description: Existing successful response.
+          content:
+            application/json:
+              schema:
+                type: array
+                maxItems: 200
+                items:
+                  $ref: '#/components/schemas/ShipmentView'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/MerchantForbidden'
+        '500':
+          $ref: '#/components/responses/DatabaseError'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+    post:
+      operationId: createDemoShipment
+      tags:
+        - Orders
+      summary: Create a DRAFT or replay its receipt
+      description: Create a DRAFT or replay its receipt. Creation/event/receipt commit atomically. Canonical hash uses trimmed strings and normalized decimal; duplicate merchant reference is409. Replay remains201 with Location and current representation.
+      security:
+        - bearerAuth: []
+      x-roles:
+        - MERCHANT
+      responses:
+        '201':
+          description: Existing successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShipmentView'
+          headers:
+            Location:
+              description: Relative /api/demo/v1/shipments/{id}, including replay.
+              required: true
+              schema:
+                type: string
+                format: uri-reference
+        '400':
+          $ref: '#/components/responses/InvalidMutation'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/MerchantForbidden'
+        '409':
+          $ref: '#/components/responses/CreateConflict'
+        '500':
+          $ref: '#/components/responses/DatabaseError'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DraftInput'
+      x-idempotency:
+        scope: merchant+create+key
+        replay: same normalized payload => current shipment representation; different payload =>409 IDEMPOTENCY_CONFLICT
+        successStatus: 201
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+  /shipments/{id}:
+    get:
+      operationId: getDemoShipment
+      tags:
+        - Orders
+      summary: Read own shipment and immutable events
+      description: Read own shipment and immutable events. Another merchant gets the same404 as a missing shipment; events ordered by occurredAt then id. Addresses remain UNVERIFIED_DRAFT_INPUT.
+      security:
+        - bearerAuth: []
+      x-roles:
+        - MERCHANT
+      responses:
+        '200':
+          description: Existing successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShipmentDetail'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/MerchantForbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/DatabaseError'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+      x-ownership: merchant-from-trusted-principal; cross-owner=404
+      parameters:
+        - $ref: '#/components/parameters/ShipmentId'
+  /shipments/{id}/cancel:
+    post:
+      operationId: cancelDemoShipment
+      tags:
+        - Orders
+      summary: Cancel own DRAFT or replay its receipt
+      description: Cancel own DRAFT or replay its receipt. Row lock and transaction protect one cancellation/event/receipt. Reason is validated before trim, then trimmed for hash. New-key cancellation of non-DRAFT conflicts; same receipt/payload replays200. No fee/stock effects.
+      security:
+        - bearerAuth: []
+      x-roles:
+        - MERCHANT
+      responses:
+        '200':
+          description: Existing successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShipmentView'
+        '400':
+          $ref: '#/components/responses/InvalidMutation'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/MerchantForbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/CancelConflict'
+        '500':
+          $ref: '#/components/responses/DatabaseError'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelInput'
+      x-ownership: merchant-from-trusted-principal; cross-owner=404
+      x-idempotency:
+        scope: merchant+cancel:shipmentId+key
+        replay: same normalized payload => current shipment representation; different payload =>409 IDEMPOTENCY_CONFLICT
+        successStatus: 200
+      parameters:
+        - $ref: '#/components/parameters/ShipmentId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+  /admin/users:
+    get:
+      operationId: listDemoUsers
+      tags:
+        - Identity
+      summary: List sanitized accounts
+      description: List sanitized accounts. Ordered by username; includes enabled state and nullable merchantId, never a password/hash. Does not grant Finance operations.
+      security:
+        - bearerAuth: []
+      x-roles:
+        - ADMIN
+      responses:
+        '200':
+          description: Existing successful response.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AccountView'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/DatabaseError'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+  /admin/overview:
+    get:
+      operationId: getDemoOverview
+      tags:
+        - Orders
+      summary: Read shipment counts
+      description: Read shipment counts. No merchant mutation or Finance privileges are implied.
+      security:
+        - bearerAuth: []
+      x-roles:
+        - ADMIN
+      responses:
+        '200':
+          description: Existing successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Overview'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/DatabaseError'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+  /admin/shipments:
+    get:
+      operationId: listDemoShipmentSummaries
+      tags:
+        - Orders
+      summary: List latest shipment summaries
+      description: List latest shipment summaries. Most recent200 across organizations, ordered by createdAt descending; excludes full recipient/contact/address fields.
+      security:
+        - bearerAuth: []
+      x-roles:
+        - ADMIN
+      responses:
+        '200':
+          description: Existing successful response.
+          content:
+            application/json:
+              schema:
+                type: array
+                maxItems: 200
+                items:
+                  $ref: '#/components/schemas/ShipmentSummary'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/DatabaseError'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: HS256 access token; issuer elogistics-demo,900 seconds; every request reloads current DB account status/role/merchant scope. No client-supplied identity authority.
+  parameters:
+    ShipmentId:
+      name: id
+      in: path
+      required: true
+      description: Shipment UUID; lookup always includes merchant from trusted principal.
+      schema:
+        type: string
+        format: uuid
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: Persisted merchant+operation key. Reuse on retry; never create a new key automatically after an unknown response.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 100
+        pattern: ^[A-Za-z0-9._:-]{1,100}$(?![\s\S])
+  responses:
+    InvalidRequest:
+      description: Invalid JSON, missing header, malformed path UUID or Bean Validation failure. No submitted secret or per-field error array.
+      x-error-codes:
+        - INVALID_REQUEST
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorBody'
+          examples:
+            INVALID_REQUEST:
+              value:
+                code: INVALID_REQUEST
+                message: Kiểm tra trường bắt buộc, định dạng và Idempotency-Key.
+    Unauthenticated:
+      description: Missing bearer credentials, or invalid/expired JWT/unavailable account. Public endpoints may also reject an explicitly supplied invalid token.
+      x-error-codes:
+        - UNAUTHENTICATED
+        - INVALID_TOKEN
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorBody'
+          examples:
+            UNAUTHENTICATED:
+              value:
+                code: UNAUTHENTICATED
+                message: Vui lòng đăng nhập lại.
+            INVALID_TOKEN:
+              value:
+                code: INVALID_TOKEN
+                message: Phiên đăng nhập không hợp lệ hoặc đã hết hạn.
+    LoginUnauthorized:
+      description: Wrong credentials/disabled user, or an explicitly supplied invalid bearer token.
+      x-error-codes:
+        - INVALID_CREDENTIALS
+        - INVALID_TOKEN
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorBody'
+          examples:
+            INVALID_CREDENTIALS:
+              value:
+                code: INVALID_CREDENTIALS
+                message: Thông tin đăng nhập không hợp lệ.
+            INVALID_TOKEN:
+              value:
+                code: INVALID_TOKEN
+                message: Phiên đăng nhập không hợp lệ hoặc đã hết hạn.
+    Forbidden:
+      description: Existing security filter rejects a role without access. Merchant lookup is not performed on this operation.
+      x-error-codes:
+        - FORBIDDEN
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorBody'
+          examples:
+            FORBIDDEN:
+              value:
+                code: FORBIDDEN
+                message: Bạn không có quyền thực hiện thao tác này.
+    NotFound:
+      description: Shipment absent or owned by another merchant; both use the same404.
+      x-error-codes:
+        - SHIPMENT_NOT_FOUND
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorBody'
+          examples:
+            SHIPMENT_NOT_FOUND:
+              value:
+                code: SHIPMENT_NOT_FOUND
+                message: Không tìm thấy vận đơn.
+    CreateConflict:
+      description: Same merchant reference with a new key, or same key with a different normalized payload.
+      x-error-codes:
+        - REFERENCE_EXISTS
+        - IDEMPOTENCY_CONFLICT
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorBody'
+          examples:
+            REFERENCE_EXISTS:
+              value:
+                code: REFERENCE_EXISTS
+                message: Mã tham chiếu đã tồn tại trong tổ chức.
+            IDEMPOTENCY_CONFLICT:
+              value:
+                code: IDEMPOTENCY_CONFLICT
+                message: Mã thao tác đã được dùng với nội dung khác.
+    CancelConflict:
+      description: Fresh cancellation of non-DRAFT, or reused key with different normalized reason.
+      x-error-codes:
+        - INVALID_TRANSITION
+        - IDEMPOTENCY_CONFLICT
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorBody'
+          examples:
+            INVALID_TRANSITION:
+              value:
+                code: INVALID_TRANSITION
+                message: Chỉ có thể hủy vận đơn DRAFT.
+            IDEMPOTENCY_CONFLICT:
+              value:
+                code: IDEMPOTENCY_CONFLICT
+                message: Mã thao tác đã được dùng với nội dung khác.
+    RateLimited:
+      description: 'Existing process-local failed-login guard: five failed attempts per remoteAddress:username within300 seconds, or2000 tracked entries. No Retry-After header promised.'
+      x-error-codes:
+        - LOGIN_RATE_LIMIT
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorBody'
+          examples:
+            LOGIN_RATE_LIMIT:
+              value:
+                code: LOGIN_RATE_LIMIT
+                message: Quá nhiều lần đăng nhập. Thử lại sau 5 phút.
+    DatabaseError:
+      description: Handled DataAccessException. Safe flat application error; do not expose SQL/configuration/credentials.
+      x-error-codes:
+        - DATABASE_ERROR
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorBody'
+          examples:
+            DATABASE_ERROR:
+              value:
+                code: DATABASE_ERROR
+                message: Thao tác chưa hoàn tất. Thử lại với cùng mã thao tác.
+    InvalidMutation:
+      description: Invalid JSON, missing header, malformed path UUID or Bean Validation failure. No submitted secret or per-field error array. Present Idempotency-Key violates the existing1..100 Java full-match pattern.
+      x-error-codes:
+        - INVALID_REQUEST
+        - INVALID_OPERATION_KEY
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorBody'
+          examples:
+            INVALID_REQUEST:
+              value:
+                code: INVALID_REQUEST
+                message: Kiểm tra trường bắt buộc, định dạng và Idempotency-Key.
+            INVALID_OPERATION_KEY:
+              value:
+                code: INVALID_OPERATION_KEY
+                message: Idempotency-Key không hợp lệ.
+    UnexpectedError:
+      description: Unstandardized framework/proxy/unhandled failure may have another JSON shape or a nonJSON body. Existing client fallback must preserve status and safe retry/input behavior; this is not a new backend response contract.
+    InvalidToken:
+      description: An explicitly supplied invalid/expired bearer token is rejected even on a public endpoint. Missing credentials do not fail this public endpoint.
+      x-error-codes:
+        - INVALID_TOKEN
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorBody'
+          examples:
+            INVALID_TOKEN:
+              value:
+                code: INVALID_TOKEN
+                message: Phiên đăng nhập không hợp lệ hoặc đã hết hạn.
+    MerchantForbidden:
+      description: Wrong role or unavailable organization; membership and enabled account are checked server-side.
+      x-error-codes:
+        - FORBIDDEN
+        - MERCHANT_UNAVAILABLE
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorBody'
+          examples:
+            FORBIDDEN:
+              value:
+                code: FORBIDDEN
+                message: Bạn không có quyền thực hiện thao tác này.
+            MERCHANT_UNAVAILABLE:
+              value:
+                code: MERCHANT_UNAVAILABLE
+                message: Tổ chức merchant chưa được cấp quyền.
+  schemas:
+    AccountView:
+      type: object
+      description: Sanitized account. Current DB account is reloaded on protected requests; role claims/client fields are not authority.
+      additionalProperties: false
+      required:
+        - id
+        - username
+        - displayName
+        - role
+        - enabled
+        - merchantId
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        displayName:
+          type: string
+        role:
+          type: string
+          enum:
+            - MERCHANT
+            - ADMIN
+            - DISPATCHER
+            - WAREHOUSE_OPERATOR
+            - SHIPPER
+            - FINANCE
+        enabled:
+          type: boolean
+        merchantId:
+          type:
+            - string
+            - 'null'
+          format: uuid
+      examples:
+        - id: 11111111-1111-4111-8111-111111111111
+          username: synthetic.merchant
+          displayName: Synthetic account
+          role: MERCHANT
+          enabled: true
+          merchantId: 22222222-2222-4222-8222-222222222222
+    LoginInput:
+      type: object
+      description: Both fields are Java @NotBlank. Password has @Size(max=72) characters; login also rejects UTF-8 byte length above72 as invalid credentials. No trim is applied by LoginRequest.
+      additionalProperties: false
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          minLength: 1
+          maxLength: 80
+          x-java-not-blank: true
+          allOf:
+            - pattern: '[^\u0009-\u000D\u001C-\u0020\u1680\u2000-\u2006\u2008-\u200A\u2028\u2029\u205F\u3000]'
+        password:
+          type: string
+          minLength: 1
+          maxLength: 72
+          writeOnly: true
+          x-java-not-blank: true
+          allOf:
+            - pattern: '[^\u0009-\u000D\u001C-\u0020\u1680\u2000-\u2006\u2008-\u200A\u2028\u2029\u205F\u3000]'
+      examples:
+        - username: synthetic.merchant
+          password: SYNTHETIC-FIXTURE-NOT-A-CREDENTIAL
+    LoginResult:
+      type: object
+      description: Schema example is synthetic and proves shape only, not successful authentication. Existing token lifetime is900 seconds, issuer elogistics-demo.
+      additionalProperties: false
+      required:
+        - accessToken
+        - expiresIn
+        - user
+      properties:
+        accessToken:
+          type: string
+          description: Runtime signed HS256 JWT. Never log or persist it in examples as a real credential.
+        expiresIn:
+          type: integer
+          const: 900
+        user:
+          $ref: '#/components/schemas/AccountView'
+      examples:
+        - accessToken: SYNTHETIC-SCHEMA-EXAMPLE-NOT-A-JWT
+          expiresIn: 900
+          user:
+            id: 11111111-1111-4111-8111-111111111111
+            username: synthetic.merchant
+            displayName: Synthetic account
+            role: MERCHANT
+            enabled: true
+            merchantId: 22222222-2222-4222-8222-222222222222
+    MerchantView:
+      type: object
+      description: Current organization from the trusted principal, never a client owner ID.
+      additionalProperties: false
+      required:
+        - id
+        - displayName
+        - reference
+      properties:
+        id:
+          type: string
+          format: uuid
+        displayName:
+          type: string
+        reference:
+          type: string
+      examples:
+        - id: 22222222-2222-4222-8222-222222222222
+          displayName: Synthetic merchant
+          reference: SYNTHETIC-MERCHANT
+    DraftInput:
+      type: object
+      description: 'Canonical normalized draft input: Java trims all strings before @NotBlank/@Size/@Pattern and normalizes decimal scale. Bounds/patterns describe those normalized values; raw padding/coercion must be checked against the server, not rejected by newly added client-side validation. No owner/status/role input is allowed.'
+      additionalProperties: false
+      required:
+        - reference
+        - pickupAddress
+        - recipientName
+        - recipientPhone
+        - deliveryStreet
+        - deliveryWard
+        - deliveryProvince
+        - parcelDescription
+        - weightKg
+      properties:
+        reference:
+          type: string
+          minLength: 1
+          maxLength: 80
+          x-java-not-blank: true
+          x-server-trim: true
+          pattern: ^(?:[A-Za-z0-9][A-Za-z0-9._/-]{0,79})$(?![\s\S])
+          allOf:
+            - pattern: '[^\u0009-\u000D\u001C-\u0020\u1680\u2000-\u2006\u2008-\u200A\u2028\u2029\u205F\u3000]'
+        pickupAddress:
+          type: string
+          minLength: 1
+          maxLength: 500
+          x-java-not-blank: true
+          x-server-trim: true
+          allOf:
+            - pattern: '[^\u0009-\u000D\u001C-\u0020\u1680\u2000-\u2006\u2008-\u200A\u2028\u2029\u205F\u3000]'
+        recipientName:
+          type: string
+          minLength: 1
+          maxLength: 160
+          x-java-not-blank: true
+          x-server-trim: true
+          allOf:
+            - pattern: '[^\u0009-\u000D\u001C-\u0020\u1680\u2000-\u2006\u2008-\u200A\u2028\u2029\u205F\u3000]'
+        recipientPhone:
+          type: string
+          minLength: 1
+          x-java-not-blank: true
+          x-server-trim: true
+          pattern: ^(?:[+0-9 ()-]{7,30})$(?![\s\S])
+          allOf:
+            - pattern: '[^\u0009-\u000D\u001C-\u0020\u1680\u2000-\u2006\u2008-\u200A\u2028\u2029\u205F\u3000]'
+        deliveryStreet:
+          type: string
+          minLength: 1
+          maxLength: 300
+          x-java-not-blank: true
+          x-server-trim: true
+          allOf:
+            - pattern: '[^\u0009-\u000D\u001C-\u0020\u1680\u2000-\u2006\u2008-\u200A\u2028\u2029\u205F\u3000]'
+        deliveryWard:
+          type: string
+          minLength: 1
+          maxLength: 160
+          x-java-not-blank: true
+          x-server-trim: true
+          allOf:
+            - pattern: '[^\u0009-\u000D\u001C-\u0020\u1680\u2000-\u2006\u2008-\u200A\u2028\u2029\u205F\u3000]'
+        deliveryProvince:
+          type: string
+          minLength: 1
+          maxLength: 160
+          x-java-not-blank: true
+          x-server-trim: true
+          allOf:
+            - pattern: '[^\u0009-\u000D\u001C-\u0020\u1680\u2000-\u2006\u2008-\u200A\u2028\u2029\u205F\u3000]'
+        parcelDescription:
+          type: string
+          minLength: 1
+          maxLength: 300
+          x-java-not-blank: true
+          x-server-trim: true
+          allOf:
+            - pattern: '[^\u0009-\u000D\u001C-\u0020\u1680\u2000-\u2006\u2008-\u200A\u2028\u2029\u205F\u3000]'
+        weightKg:
+          type: number
+          minimum: 0.001
+          maximum: 1000
+          multipleOf: 0.001
+          description: Canonical JSON number; Java BigDecimal strips trailing zeros before @Digits(integer=4,fraction=3). Framework coercion is not changed by this schema.
+      examples:
+        - reference: CONTRACT-001
+          pickupAddress: Synthetic pickup
+          recipientName: Synthetic recipient
+          recipientPhone: '0000000000'
+          deliveryStreet: Synthetic street
+          deliveryWard: Synthetic ward
+          deliveryProvince: Synthetic province
+          parcelDescription: Synthetic parcel
+          weightKg: 1.25
+    CancelInput:
+      type: object
+      description: Java validates @NotBlank/@Size(max=300) on the raw reason, then service trims it for hashing/event storage.
+      additionalProperties: false
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 300
+          x-java-not-blank: true
+          allOf:
+            - pattern: '[^\u0009-\u000D\u001C-\u0020\u1680\u2000-\u2006\u2008-\u200A\u2028\u2029\u205F\u3000]'
+      examples:
+        - reason: Synthetic cancel
+    ShipmentView:
+      type: object
+      description: Approved demo shipment representation. Creation replay returns its current representation (possibly CANCELLED), not a frozen original response.
+      additionalProperties: false
+      required:
+        - id
+        - merchantId
+        - reference
+        - pickupAddress
+        - recipientName
+        - recipientPhone
+        - deliveryStreet
+        - deliveryWard
+        - deliveryProvince
+        - parcelDescription
+        - weightKg
+        - status
+        - createdBy
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        merchantId:
+          type: string
+          format: uuid
+        reference:
+          type: string
+        pickupAddress:
+          type: string
+        recipientName:
+          type: string
+        recipientPhone:
+          type: string
+        deliveryStreet:
+          type: string
+        deliveryWard:
+          type: string
+        deliveryProvince:
+          type: string
+        parcelDescription:
+          type: string
+        weightKg:
+          type: number
+        status:
+          type: string
+          enum:
+            - DRAFT
+            - CANCELLED
+        createdBy:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      examples:
+        - id: 33333333-3333-4333-8333-333333333333
+          merchantId: 22222222-2222-4222-8222-222222222222
+          reference: CONTRACT-001
+          pickupAddress: Synthetic pickup
+          recipientName: Synthetic recipient
+          recipientPhone: '0000000000'
+          deliveryStreet: Synthetic street
+          deliveryWard: Synthetic ward
+          deliveryProvince: Synthetic province
+          parcelDescription: Synthetic parcel
+          weightKg: 1.25
+          status: DRAFT
+          createdBy: 11111111-1111-4111-8111-111111111111
+          createdAt: '2026-10-15T14:00:00Z'
+          updatedAt: '2026-10-15T14:00:00Z'
+    ShipmentEvent:
+      type: object
+      description: Append-only tracking event; creation reason is null.
+      additionalProperties: false
+      required:
+        - id
+        - eventType
+        - actorId
+        - reason
+        - occurredAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        eventType:
+          type: string
+          enum:
+            - DRAFT_CREATED
+            - DRAFT_CANCELLED
+        actorId:
+          type: string
+          format: uuid
+        reason:
+          type:
+            - string
+            - 'null'
+        occurredAt:
+          type: string
+          format: date-time
+      examples:
+        - id: 44444444-4444-4444-8444-444444444444
+          eventType: DRAFT_CREATED
+          actorId: 11111111-1111-4111-8111-111111111111
+          reason: null
+          occurredAt: '2026-10-15T14:00:00Z'
+    ShipmentDetail:
+      type: object
+      description: Owner-scoped draft detail; input addresses have not been verified.
+      additionalProperties: false
+      required:
+        - shipment
+        - events
+        - addressVerification
+      properties:
+        shipment:
+          $ref: '#/components/schemas/ShipmentView'
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShipmentEvent'
+        addressVerification:
+          type: string
+          const: UNVERIFIED_DRAFT_INPUT
+      examples:
+        - shipment:
+            id: 33333333-3333-4333-8333-333333333333
+            merchantId: 22222222-2222-4222-8222-222222222222
+            reference: CONTRACT-001
+            pickupAddress: Synthetic pickup
+            recipientName: Synthetic recipient
+            recipientPhone: '0000000000'
+            deliveryStreet: Synthetic street
+            deliveryWard: Synthetic ward
+            deliveryProvince: Synthetic province
+            parcelDescription: Synthetic parcel
+            weightKg: 1.25
+            status: DRAFT
+            createdBy: 11111111-1111-4111-8111-111111111111
+            createdAt: '2026-10-15T14:00:00Z'
+            updatedAt: '2026-10-15T14:00:00Z'
+          events:
+            - id: 44444444-4444-4444-8444-444444444444
+              eventType: DRAFT_CREATED
+              actorId: 11111111-1111-4111-8111-111111111111
+              reason: null
+              occurredAt: '2026-10-15T14:00:00Z'
+          addressVerification: UNVERIFIED_DRAFT_INPUT
+    ShipmentSummary:
+      type: object
+      description: Admin summary, not a full shipment/recipient/address response.
+      additionalProperties: false
+      required:
+        - id
+        - merchantId
+        - reference
+        - status
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        merchantId:
+          type: string
+          format: uuid
+        reference:
+          type: string
+        status:
+          type: string
+          enum:
+            - DRAFT
+            - CANCELLED
+        createdAt:
+          type: string
+          format: date-time
+      examples:
+        - id: 33333333-3333-4333-8333-333333333333
+          merchantId: 22222222-2222-4222-8222-222222222222
+          reference: CONTRACT-001
+          status: DRAFT
+          createdAt: '2026-10-15T14:00:00Z'
+    Overview:
+      type: object
+      description: Existing integer counts, not monetary values.
+      additionalProperties: false
+      required:
+        - total
+        - draft
+        - cancelled
+      properties:
+        total:
+          type: integer
+          format: int64
+        draft:
+          type: integer
+          format: int64
+        cancelled:
+          type: integer
+          format: int64
+      examples:
+        - total: 1
+          draft: 1
+          cancelled: 0
+    DemoHealth:
+      type: object
+      description: Existing constant response. Not DB/cache/broker readiness; no downstream probes or failover semantics are claimed.
+      additionalProperties: false
+      required:
+        - status
+        - scope
+      properties:
+        status:
+          type: string
+          const: UP
+        scope:
+          type: string
+          const: local-demo
+      examples:
+        - status: UP
+          scope: local-demo
+    ErrorBody:
+      type: object
+      description: Existing application/security error shape; no response envelope/details/requestId. Generic framework/proxy failures are not guaranteed to use this body.
+      additionalProperties: false
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      examples:
+        - code: FORBIDDEN
+          message: Bạn không có quyền thực hiện thao tác này.

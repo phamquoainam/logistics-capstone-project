@@ -1,8 +1,39 @@
 # Tasks 001-CONTRACT — D1-07 handoff
 
-**Status:** slice READY_FOR_IMPLEMENTATION; DEC-29 ACCEPTED on2026-10-15 by the
+**Current C-06 verification - 2026-10-17 /1f26854:** C-01-06 local deliverables
+VERIFIED; C-06 LOCAL_DONE. D1-07 PARTIAL / READY_FOR_PR; remote CI/integration
+UNVERIFIED, full001/Day1 PARTIAL. No C-06 commit/push/PR. Fresh package85,
+web24/browser7 twice, mobile Jest1/compiler4/Hermes, architecture23,
+H2 40+8 named skips, actual PG48/no skips and privacy guard14 PASS.
+Mobile audit58 full/35 omit-dev and SDK dev4 high remain FAIL/OPEN; web0/0.
+[C-06 final evidence](../../../../docs/implementation/d1-07-c06-final-evidence.md).
+Earlier execution/checkpoint statements below are historical.
+
+**Historical C-05 checkpoint — 2026-10-17 /6656753:** C-04 reviewed/committed;
+C-05 DONE local. Mobile clean install/lint/typecheck/Jest1, actual Expo compiler
+and4 negative controls, SDK-entry Metro/Hermes23 modules/14 SDK, unchanged starter
+export576 modules/no SDK and SDK85 regression PASS.
+[Evidence/inventory](../../../../docs/implementation/d1-07-c05-mobile-evidence.md).
+Audits FAIL/OPEN: mobile59 full/35 omit-dev, SDK dev4 high/runtime0. C-06 NOT
+STARTED; D1-07/full001/Day1 PARTIAL. C-05 uncommitted/no publish.
+Previous checkpoint statements retain their historical scope.
+
+**Historical C-04 execution — 2026-10-16 /a2609f9:** C-03 checkpoint committed;
+C-04 local DONE. Web clean install/lint/typecheck/build,24 adapter/7 actual
+browser tests/no skips, contract/SDK85/wire27 and Maven40/eight expected PG-only
+skips PASS. [Evidence/inventory](../../../../docs/implementation/d1-07-c04-web-evidence.md).
+C-05/06 NOT STARTED; mobile/final gates UNVERIFIED, full001/Day1 PARTIAL.
+C-04 uncommitted/no publish. Older checkpoint notes are historical.
+
+**Historical implementation status:** slice IN_PROGRESS / PARTIAL; DEC-29 ACCEPTED on2026-10-15 by the
 explicit user approval message recorded in the assessment. D1-06 documentation/
-DoR DONE; implementation tasks C-01..06 NOT STARTED and tests NOT RUN.
+DoR DONE; C-01 final technical acceptance DONE; C-02 deterministic SDK local
+DONE under the user's conditional authorization. C-03 actual HTTP/PG local DONE:
+two fresh runs27/27,108 responses each, all11 operations/no mismatches, cleanup
+PASS. C-04–06 NOT STARTED; consumer/browser gates NOT RUN / UNVERIFIED.
+Dev advisories remain OPEN. [C-03 evidence](../../../../docs/implementation/d1-07-c03-wire-evidence.md).
+[C-02 commands/counts/findings](../../../../docs/implementation/d1-07-c02-sdk-evidence.md).
+[C-01 commands/counts/findings](../../../../docs/implementation/d1-07-c01-contract-evidence.md).
 [Spec](spec.md), [design and test inventory](design.md),
 [D1-06 assessment](../../../../docs/implementation/d1-06-slice-readiness.md).
 This is one slice in001, not completion of its original full-feature task list.
@@ -21,14 +52,20 @@ This is one slice in001, not completion of its original full-feature task list.
 - [x] DEC-29 formal owner approval recorded,2026-10-15, for the revised scope and exact pins; no inferred acceptance.
 - [x] Source-drift recheck PASS: HEAD3186f01 unchanged, saved11-operation source hashes match, executable/configuration paths unchanged; slice READY_FOR_IMPLEMENTATION.
 
-All mandatory DoR planning/approval gates PASS. This closes D1-06 only: the user
-explicitly requested no installation, SDK generation or D1-07 execution in this
-turn. D1-07 runtime/build/wire/regression gates remain mandatory and unexecuted.
-No need to approve the existing Git branch again. Publication is not performed.
+All mandatory DoR planning/approval gates PASS at D1-06. The later C-01/C-02 task
+authorized SDK implementation after C-01 final gates passed, now verified locally.
+D1-07 real wire gates now PASS in C-03; consumer/browser/final combined gates
+remain mandatory and unexecuted. Checkpoint b385244 committed only C-01/C-02
+with explicit later authorization; C-03 changes are uncommitted, nothing pushed.
+No need to approve the existing Git branch again. Remote publication is not performed.
 
-## Ordered implementation tasks (all tests NOT RUN)
+## Ordered implementation tasks (C-01-06 locally verified; remote integration pending)
 
-- [ ] **C-01 — Preconditions/contract freeze.** Verify current branch/tree/HEAD and
+- [x] **C-01 — Preconditions/contract freeze.** Local implementation and
+  TEST-001-CONTRACT-01 PASS at20072b6:11 operations,41 tests,37 negative fixtures,
+  zero skips; Redocly lint errors/warnings/ignored0. Final technical review PASS;
+  user's conditional authorization opens C-02 after that review. Original scope:
+  verify current branch/tree/HEAD and
   DEC-29 acceptance. Re-read exact controllers/records/security/errors and check
   drift since3186f01. Create OpenAPI source/examples for11 approved operations;
   no DTO invention. Test inventory/negative contract fixtures before or with code.
@@ -36,7 +73,12 @@ No need to approve the existing Git branch again. Publication is not performed.
   Establish the single schema source only after source/fixture review. Gate
   TEST-001-CONTRACT-01; stop/report contract/source conflicts. Positive wire
   fixtures must match current DTOs; legacy transport mocks are not contract truth.
-- [ ] **C-02 — Deterministic SDK.** Clean-install exact tooling, audit new graph
+- [x] **C-02 — Deterministic SDK.** Local DONE: clean install59 packages;
+  strict package typecheck/build PASS;44 SDK tests/no skips; all11 generated
+  operations; two-directory/source exact-byte16-file determinism PASS. Dev audit
+  FAIL4 high findings recorded OPEN with verified supported-path mitigation;
+  runtime audit0, no pin change or implicit risk acceptance. Original scope:
+  clean-install exact tooling, audit new graph
   and verify licenses/integrity/engines, generate types+SDK+bundled Fetch and build
   the private package. Tests02/03/04: real operation calls, drift failure and type
   assertions. No peer override/framework downgrade or generic manual HTTP stand-in.
@@ -44,19 +86,35 @@ No need to approve the existing Git branch again. Publication is not performed.
   Tools are devDependencies of the new private package; retain both consumers'
   existing TypeScript declarations/locks. Ajv/formats are test-side only. No
   standalone client-fetch dependency, framework upgrade or automatic fallback.
-- [ ] **C-03 — Wire conformance.** Run actual isolated demo backend and validate
+- [x] **C-03 — Wire conformance.** DONE local: final two isolated PostgreSQL18.6
+  tmpfs/backend runs each27/27 tests,108 real HTTP responses (34 success/74
+  negative),11 successful operations, zero mismatches. Actual SQL confirms scoped
+  ownership and one-effect create/cancel concurrency. Cleanup/privacy PASS; no
+  developer resources targeted. Earlier environment/harness FAIL attempts remain
+  disclosed in evidence. C-01/C-02 regression85 PASS; Maven H2/architecture40 PASS,
+  eight named PG-only skips (separate from C-03 real PG tests). Original scope:
+  run actual isolated demo backend and validate
   all11 operations/safe errors against the OpenAPI with test-side Ajv; reuse
   existing auth/replay/concurrency fixtures. Tests05/06/07; distinguish actual
   SQL assertions from transport mocks. Dependency C-02. No developer DB writes.
-- [ ] **C-04 — Existing web adoption.** Replace handwritten wire types/generic
+- [x] **C-04 — Existing web adoption.** DONE local2026-10-16; TEST04/08 web
+  portions and required web gates PASS, including original5 API/3 browser tests
+  plus19 adapter/4 browser additions. Real backend/PG isolation, error/session/
+  form/key/replay and cleanup/privacy PASS. Original scope: replace handwritten wire types/generic
   calls with generated types/operation functions and minimal ApiError adapter;
   retain auth/session/UI/input/key semantics. Tests04/08 + web lint/typecheck/
   existing five unit and three browser regressions + build. Dependencies C-02/03.
-- [ ] **C-05 — Shared compiler consumer.** Add private package local dependency
+- [x] **C-05 — Shared compiler consumer.** DONE local2026-10-17; TEST03/09 mobile
+  portions PASS: public-export fixture, actual Expo typecheck,4 negative compiler
+  controls, real SDK-entry Metro/Hermes +unchanged starter export, lint/Jest1.
+  Dependency audit review completed with disclosed OPEN findings, not audit PASS.
+  No starter/native/device/business network change. Original scope: add private package local dependency
   and compile-only client import/signature fixture to mobile; retain starter UI
   and native baseline. Tests03/09 and current mobile lint/typecheck/Jest. No actual
   mobile backend/device test claim. Dependency C-02.
-- [ ] **C-06 — Final regression/evidence.** Run package regeneration/validation/
+- [x] **C-06 — Final regression/evidence.** LOCAL_DONE2026-10-17: final combined
+  local gates PASS; remote required checks/publication remain pending for official
+  D1-07 closure. Original scope: run package regeneration/validation/
   test/build and both frontend lockfile install/quality gates. Run backend Maven
   verify, architecture/H2 and isolated PG regression when environment permits.
   Preserve guard criteria; report BLOCKED instead of omitting required execution.
