@@ -59,9 +59,9 @@ def assert_fixture_sql(statement):
         raise RuntimeError('Only bounded fixture reads/account updates allowed')
 
 
-def run():
+def run(consumer=None):
     suffix = uuid.uuid4().hex[:12]
-    directory = ROOT / '.demo/d1-07-c03' / ('run-' + suffix)
+    directory = ROOT / ('.demo/d1-07-c04' if consumer else '.demo/d1-07-c03') / ('run-' + suffix)
     directory.mkdir(parents=True, exist_ok=False)
     directory.chmod(0o700)
     state = {'run': suffix, 'name': 'elogistics-c03-postgres-' + suffix, 'database': 'elogistics_wire_' + suffix}
@@ -153,8 +153,11 @@ GRANT CONNECT ON DATABASE {state['database']} TO {migrator}, {runtime};
         private_json(context_path, context)
         env.update(C03_CONTEXT=str(context_path), C03_PYTHON=sys.executable)
         print('Owned PostgreSQL18/tmpfs + real backend ready; V1/V2, five synthetic accounts, loopback random ports', flush=True)
-        result = subprocess.run(['node', '--test', '--test-concurrency=1', 'tests/wire.test.mjs'], cwd=PACKAGE, env=env,
-                                stdin=subprocess.DEVNULL, timeout=180)
+        if consumer:
+            result = consumer(context_path, env)
+        else:
+            result = subprocess.run(['node', '--test', '--test-concurrency=1', 'tests/wire.test.mjs'], cwd=PACKAGE, env=env,
+                                    stdin=subprocess.DEVNULL, timeout=180)
         result_code = result.returncode
         # Secret/token-bearing HTTP data is never saved; inspect application log in memory.
         log.flush()

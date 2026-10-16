@@ -1,5 +1,13 @@
 # Implementation Tasks 001: Nền tảng repository, deploy và kiến trúc
 
+**Current C-04 checkpoint — 2026-10-16 /a2609f9:** C-03 reviewed/committed
+under explicit authorization; C-04 local DONE. Generated SDK web integration,
+web quality gates/24 adapter/7 actual browser tests PASS/no skips; SDK85/wire27
+and Maven40/eight expected PG-only skips PASS.
+[Evidence](../../docs/implementation/d1-07-c04-web-evidence.md).
+C-05/06 NOT STARTED; full001/Day1 PARTIAL. No original task/REQ/AC criteria changed.
+C-04 uncommitted/no publish. Earlier dated checkpoint statements are historical.
+
 **Current C-03 checkpoint — 2026-10-15 /b385244:** user-authorized C-01/C-02
 43-file checkpoint committed locally, no push/PR. C-03 actual HTTP/PG DONE:
 27/27 per final run, two fresh owned PG18.6 databases,108 responses each,

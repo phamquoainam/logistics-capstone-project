@@ -1,5 +1,14 @@
 # Slice 001-CONTRACT — Demo-001 executable contract and generated client
 
+**Current C-04 execution — 2026-10-16 /a2609f9:** C-03 reviewed/committed;
+C-04 local DONE. Web consumes all11 generated operations via public exports,
+without handwritten wire DTOs. Clean install/lint/typecheck/build PASS,24 adapter
+and7 actual browser tests PASS/no skips. Contract/SDK85, real PG wire27 and
+Maven40/eight expected PG-only skips PASS.
+[C-04 evidence](../../../../docs/implementation/d1-07-c04-web-evidence.md).
+C-05/mobile consumer and C-06 combined gates NOT STARTED; their portions of
+SC-AC-05/06 remain UNVERIFIED. Full001/Day1 PARTIAL. Prior notes are historical.
+
 **Status:** IN_PROGRESS / PARTIAL; C-01 final technical acceptance DONE,
 C-02 local deterministic SDK DONE under the user's conditional authorization;
 C-03 actual HTTP/PostgreSQL local DONE, two27-test runs/no skips,108 responses

@@ -1,5 +1,42 @@
 # Local Development Runbook — repository hiện hữu
 
+## D1-07 C-04 — web SDK consumer and isolated browser gate, 2026-10-16
+
+Build the private SDK before web install/build. Node24.13.0/npm11.6.2 remain
+required; no version upgrade. From repository root:
+
+```powershell
+npm.cmd --prefix packages/api-client ci --no-audit --no-fund
+npm.cmd --prefix packages/api-client run verify:c02
+Set-Location app/frontend/web
+npm.cmd ci --ignore-scripts --no-audit --cache ../../../.demo/npm-cache
+npm.cmd run lint
+npm.cmd run typecheck
+npm.cmd test
+npm.cmd run build
+Set-Location ../../../
+npm.cmd --prefix packages/api-client run test:web
+```
+
+Browser gate also requires current Maven-verified backend JAR, running Docker,
+approved PG18.6 image already available, Python and installed Edge. It creates
+fresh owned PostgreSQL tmpfs/backend/Vite with random loopback ports/synthetic
+credentials, then seven browser tests (original three +four SDK cases). Only
+its own children/container are stopped; existing DB/volumes are never targeted.
+Normal Vite proxy/dev config is unchanged; vite.c04.config.ts is test-only.
+Private/safe reports and synthetic screenshots stay ignored under
+.demo/d1-07-c04/run-*; no traces/raw error values in isolated reporter output.
+All cleanup flags must PASS. Do not copy private context or credentials to Git.
+
+The original e2e settings fallback remains for existing manual regressions;
+new C-04 runtime tests refuse execution without the isolated harness. Use
+test:web for the complete seven-test suite, rather than targeting developer data.
+Final web24/browser7 PASS/no skips; package85/wire27 PASS.
+[C-04 evidence](../implementation/d1-07-c04-web-evidence.md) distinguishes actual
+HTTP/replay from explicit network/nonJSON503/poll403 branch fixtures.
+SDK dev audit4 high remains OPEN; web audit0 does not close that finding.
+C-05/mobile compile-consumer and final C-06 gates remain unexecuted.
+
 ## D1-07 C-03 — real HTTP with owned PostgreSQL, 2026-10-15
 
 Prerequisites: Java21/current Maven-verified backend JAR; Node24.13.0/npm11.6.2,

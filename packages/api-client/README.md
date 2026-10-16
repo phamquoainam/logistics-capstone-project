@@ -1,11 +1,14 @@
 # Private generated Fetch SDK
 
-Current checkpoint: **C-01 accepted; C-02/C-03 local DONE; C-04–06 NOT STARTED**.
+Current checkpoint: **C-01 accepted; C-02–04 local DONE; C-05–06 NOT STARTED**.
 The private package exports all eleven generated operations/types at
 `@elogistics/api-client`, its default `client`, and Fetch factories/config/types
 at `@elogistics/api-client/client`. ESM JavaScript and declarations are built into
 ignored dist; NodeNext and Bundler resolution are tested at package level.
-Web/mobile manifests/source/locks are unchanged; no consumer integration is claimed.
+Web now consumes public generated operations/types through a minimal ApiError
+adapter/local file dependency; mobile remains unchanged until C-05.
+[C-04 evidence](../../docs/implementation/d1-07-c04-web-evidence.md): web24 adapter
+and7 real-browser tests PASS, contract/SDK85 and wire27 PASS. No global token config.
 
 Exact devDependencies: HeyAPI0.99.0, TypeScript6.0.3, Redocly2.64.0,
 Ajv8.20.0, formats3.0.1. There are no runtime npm dependencies and no separately
@@ -31,6 +34,8 @@ npm.cmd run test:sdk
 npm.cmd run verify:c02
 # Real HTTP/PG test; requires current backend JAR, Docker and Python:
 npm.cmd run test:wire
+# Real React web + Edge on owned PostgreSQL/backend; web npm ci required:
+npm.cmd run test:web
 npm.cmd audit --json
 npm.cmd audit --omit=dev --json
 ```

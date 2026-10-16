@@ -1,5 +1,20 @@
 # Traceability Matrix (living document)
 
+**Current C-04 web adoption — 2026-10-16 /a2609f9.**
+[Evidence/mapping/inventory](../implementation/d1-07-c04-web-evidence.md).
+C-03 checkpoint committed with approval; C-04 DONE local/uncommitted, no publish.
+
+| Requirement/test subset | Executed evidence | Status/limit |
+|---|---|---|
+| SC-03; TEST-001-CONTRACT-04/08; SC-AC-02 web; DEMO-01..04/NFR-U02 subsets |11 generated operations/public exports;24 adapter +7 actual browser tests including original5/3, merchant/admin journeys | PASS local, isolated PG/backend; no handwritten wire DTOs |
+| SC-04; SC-AC-03/04 web; BR-01/02/NFR-S01/S02/C02 subsets | Actual403/401 invalid/expired/missing/404 owner/409/429; committed create/cancel response loss/replay, retained input/key; explicit simulated nonJSON503/poll403 fixtures distinguished | PASS scoped; no new backend behavior or client authorization |
+| SC-05; TEST03/09 web compiler/package subset | Local file dependency, clean install176 packages, lint/typecheck/build, existing versions unchanged | PASS web; mobile consumer NOT RUN/C-05 |
+| TEST01/02/05/06/07 regressions; TEST10 H2/privacy subset |41+44 package tests,27 real PG wire tests/108 responses, Maven40 incl23 architecture/eight named PG-only skips, cleanup/privacy | PASS scoped; combined C-06 and48-test PG backend suite not newly claimed |
+| Dependency findings | Web full/runtime0; SDK dev4 high OPEN/runtime0, generator mitigation intact | No remediation/implicit risk acceptance; pins retained |
+| Full SC-AC-05/06, TEST09/10 combined, D1-07/full001/Day1 | C-05/06 not started; remote on C-04 NOT RUN | PARTIAL / UNVERIFIED; original REQ/AC unchanged |
+
+Prior dated checkpoint statements below are historical.
+
 **Current C-03 actual HTTP/PostgreSQL checkpoint — 2026-10-15 /b385244.**
 [Evidence](../implementation/d1-07-c03-wire-evidence.md). C-01/C-02 checkpoint
 43 files committed under user authorization; C-03 changes uncommitted, no push.

@@ -1,5 +1,15 @@
 # Design 001-CONTRACT — preserve the approved Demo-001 wire behavior
 
+**Current C-04 execution — 2026-10-16 /a2609f9:** local web adoption DONE;
+generated operation callbacks/types/public package exports, minimal ApiError
+adapter and per-request JWT. Existing UI/session/form/key behavior preserved.
+Web quality gates/24 adapter +7 real-browser tests, SDK85/wire27 and Maven40
+with8 expected PG-only skips PASS. No OAS/generated/backend change.
+[C-04 evidence/mapping](../../../../docs/implementation/d1-07-c04-web-evidence.md).
+TEST04/08 web portions PASS; TEST03/09 web subset PASS. C-05/06 not started,
+mobile/final TEST09/10 portions UNVERIFIED; full001/Day1 PARTIAL.
+Prior checkpoint notes retain their earlier execution scope.
+
 **Status:** ACCEPTED_FOR_DEC_29_SCOPE, 2026-10-15; slice IN_PROGRESS / PARTIAL.
 Approval source: the user's explicit “DEC-29 — APPROVED | D1-06 Definition of
 Ready Closure” message. D1-06 documentation/DoR DONE.

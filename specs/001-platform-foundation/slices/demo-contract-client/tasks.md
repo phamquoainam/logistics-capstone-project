@@ -1,5 +1,12 @@
 # Tasks 001-CONTRACT — D1-07 handoff
 
+**Current C-04 execution — 2026-10-16 /a2609f9:** C-03 checkpoint committed;
+C-04 local DONE. Web clean install/lint/typecheck/build,24 adapter/7 actual
+browser tests/no skips, contract/SDK85/wire27 and Maven40/eight expected PG-only
+skips PASS. [Evidence/inventory](../../../../docs/implementation/d1-07-c04-web-evidence.md).
+C-05/06 NOT STARTED; mobile/final gates UNVERIFIED, full001/Day1 PARTIAL.
+C-04 uncommitted/no publish. Older checkpoint notes are historical.
+
 **Status:** slice IN_PROGRESS / PARTIAL; DEC-29 ACCEPTED on2026-10-15 by the
 explicit user approval message recorded in the assessment. D1-06 documentation/
 DoR DONE; C-01 final technical acceptance DONE; C-02 deterministic SDK local
@@ -72,7 +79,10 @@ No need to approve the existing Git branch again. Remote publication is not perf
   all11 operations/safe errors against the OpenAPI with test-side Ajv; reuse
   existing auth/replay/concurrency fixtures. Tests05/06/07; distinguish actual
   SQL assertions from transport mocks. Dependency C-02. No developer DB writes.
-- [ ] **C-04 — Existing web adoption.** Replace handwritten wire types/generic
+- [x] **C-04 — Existing web adoption.** DONE local2026-10-16; TEST04/08 web
+  portions and required web gates PASS, including original5 API/3 browser tests
+  plus19 adapter/4 browser additions. Real backend/PG isolation, error/session/
+  form/key/replay and cleanup/privacy PASS. Original scope: replace handwritten wire types/generic
   calls with generated types/operation functions and minimal ApiError adapter;
   retain auth/session/UI/input/key semantics. Tests04/08 + web lint/typecheck/
   existing five unit and three browser regressions + build. Dependencies C-02/03.

@@ -1,5 +1,15 @@
 # Day 1 — Existing Codebase Assessment, Baseline Verification & SDD Implementation Plan
 
+**Current C-04 checkpoint — 2026-10-16 /a2609f9:** C-03 reviewed/committed
+exact14 files after safety PASS, no push. C-04 existing web adoption DONE local:
+all11 generated operations/types via public exports/local package; unchanged
+UI/session/ownership/key behavior. Web clean install/lint/typecheck/build,
+24 adapter/7 actual browser tests/no skips, contract/SDK85/wire27 and Maven40
+with8 expected PG-only skips PASS. Cleanup/privacy PASS, SDK dev4 high OPEN/web0.
+[Evidence/inventory/limits](d1-07-c04-web-evidence.md). C-05/mobile compile-only
+and C-06 combined gates NOT STARTED; D1-07/full001/Day1 PARTIAL.
+C-04 uncommitted/unpublished. Previous checkpoint notes are historical.
+
 **Current C-03 checkpoint — 2026-10-15:** exact43-file C-01/C-02 checkpoint
 committed locally as b385244 after safety review and85-test PASS, per explicit
 user authorization. No push/PR. C-03 actual HTTP/PG DONE: two final fresh owned
@@ -263,8 +273,8 @@ PASS. No mandatory requirement for latest patch/zero dependency advisories was
 invented or removed. Full AC-001-01/05 onboarding and native feature/production
 security verification remain OPEN under Feature001.
 
-**Ưu tiên tiếp theo: D1-07 / C-04 — Existing web adoption**, sau review C-03 và khi
-được yêu cầu triển khai. C-01–03 local gates PASS; C-04–06 chưa bắt đầu.
-Checkpoint C-01/C-02 đã commit b385244; không push/publish hoặc commit C-03 khi chưa có yêu cầu. Demo001 auth/
+**Ưu tiên tiếp theo: D1-07 / C-05 — Mobile compile-only consumer**, sau review C-04
+và khi được yêu cầu triển khai. C-01–04 local gates PASS; C-05/06 chưa bắt đầu.
+Checkpoint C-03 đã commit a2609f9; không commit C-04/push/PR khi chưa có yêu cầu. Demo001 auth/
 merchant/DRAFT đã có code, không tạo lại skeleton. Theo dõi dependency/SDK advisory ở maintenance
 scope có review, không tự nâng/hạ baseline để đổi diagnostic sang xanh.
