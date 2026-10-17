@@ -1,8 +1,30 @@
 # Implementation Tasks 001: Nền tảng repository, deploy và kiến trúc
 
+## D1-08 Task B — approved foundation execution
+
+Status: LOCAL_DONE / READY_FOR_REVIEW for approved scope. Approval B-01..B-09 from user;
+baseline develop/f20c8c6, branch feature/d1-08-redis-rabbit-foundation.
+[Decision](../../docs/architecture/decisions/ADR-0005-foundation-dependencies.md),
+[evidence](../../docs/implementation/d1-08-foundation-evidence.md).
+
+- [x] Immutable official image/platform verification and Redis AGPLv3 notice.
+- [x] Additive Compose/ACL/hashed definitions/private bootstrap with collision guards.
+- [x] Profile-gated Boot clients, native Redis and proven-necessary active Rabbit probe.
+- [x] Real authentication/permissions and individual dependency failures/recovery.
+- [x] Redis ephemeral/Rabbit metadata restart+recreate on owned synthetic resources.
+- [x] Final strict5/5 JUnit, actual startup fail-fast, HTTP faults/persistence and cleanup/privacy checks.
+- [x] Arch23, H2 48+17 named skips, PG60+5 named skips, guard17, bootstrap7, OAS41/wire27 and Task A HTTP regressions PASS.
+- [x] Final evidence/traceability/runbook reconciliation; full feature/Day1 remain PARTIAL, no publication/integration claim.
+
+Earlier Task A and D1-07 entries below are dated snapshots. Task A was integrated
+by PR10/f20c8c6; actual develop push run38959330146 PASS23/44+12skips/56+0,
+guards15 per job. Full feature tasks/REQ/AC remain unchanged and not all DONE.
+
 ## D1-08 Task A - PostgreSQL-aware health/readiness
 
-**Local DONE2026-10-17**, baseline26afba7; no commit/push/remote verification.
+**Integrated DONE 2026-10-17** for approved Task A scope: PR10 merged f20c8c6;
+actual develop run38959330146 PASS. The linked local evidence retains its earlier
+baseline26afba7/pre-publication snapshot; current Task B status is recorded above.
 [Design](design.md), [policy/commands/evidence](../../docs/implementation/d1-08-health-readiness-evidence.md).
 Original full-feature tasks/REQ/AC below are preserved; they are not all completed.
 D1-07 post-merge documentation closure is separate from this task.
@@ -16,8 +38,8 @@ D1-07 post-merge documentation closure is separate from this task.
 - [x] Exact required health-test inventory added to report guard; no CI job expansion or bypass.
 - [x] Owned cleanup/privacy evidence and traceability/runbook updated; parent feature remains PARTIAL.
 
-Task B is not started: approve Redis/RabbitMQ image pins/resource/security/status
-policy before adding services/checks. No cache/broker feature implementation here.
+Task B's later B-01..B-09 approval and local completion supersede the earlier
+pending-approval state. No business cache/broker feature implementation is included.
 
 **Current C-06 verification - 2026-10-17 /1f26854:** C-05 checkpoint committed;
 C-06 LOCAL_DONE, D1-07 PARTIAL / READY_FOR_PR. Package85/web24/mobile1,

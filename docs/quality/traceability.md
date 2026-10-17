@@ -1,5 +1,21 @@
 # Traceability Matrix (living document)
 
+**D1-08 Task B — 2026-10-17, LOCAL_DONE / READY_FOR_REVIEW for approved scope.**
+[Approved ADR](../architecture/decisions/ADR-0005-foundation-dependencies.md),
+[exact results](../implementation/d1-08-foundation-evidence.md).
+
+| Requirement / test | Verification scope | Status |
+|---|---|---|
+| REQ-001-04, AC-001-01 subset, NFR-O02; TEST-001-FOUNDATION-01 | Pinned real Redis/Rabbit, real PostgreSQL, full readiness and independent liveness; each pause/stop/recovery same backend | PASS final runtime; detection12s/recovery30s targets met, not an SLA |
+| REQ-001-05, AC-001-04 subset; TEST-001-FOUNDATION-02 | Least privilege, incorrect credentials/vhost, restricted endpoints, actual missing config/profile startup fail-fast, Windows private ACL, bounded logs/reports | PASS; JUnit5/bootstrap7/report guard17; no full security certification |
+| EC-001-02, AC-001-01 subset; TEST-001-FOUNDATION-03 | Redis loses fixture key, Rabbit retains test-created metadata across restart/recreate; owned cleanup | PASS; baseline containers/volumes/networks preserved |
+| REQ-001-01/02/03/04; TEST-001-FOUNDATION-04 | Default/demo/demo,postgres isolation, unchanged V1/V2 and JDBC safety, real architecture/H2/PG/OAS/wire regressions | Arch23/H2 48+17skips/PG60+5skips/OAS41/wire27 PASS; exact5 foundation cases run separately; prior Node/libuv wire failure disclosed |
+
+Task A actual post-merge develop run38959330146/f20c8c6 PASS23/44+12skips/56,
+guards15 per job; previous local-only snapshots below retain their dated scope.
+No full-feature, independent onboarding, Testcontainers, deliberate red CI,
+business messaging or remote full-infrastructure coverage claim is made.
+
 **D1-08 Task A - 2026-10-17 / baseline26afba7, local DONE.**
 [Exact policy, commands, runtime/cleanup/privacy evidence](../implementation/d1-08-health-readiness-evidence.md).
 

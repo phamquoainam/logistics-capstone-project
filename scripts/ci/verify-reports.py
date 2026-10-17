@@ -6,6 +6,12 @@ import xml.etree.ElementTree as ET
 
 BASE = 'com.elogistic.backend.'
 REQUIRED = {
+    BASE + 'demo.FoundationProfileTests': ['existingDemoHasNoRedisOrRabbitClientsOrContributors'],
+    BASE + 'platform.internal.infrastructure.FoundationConfigurationTests': '''rejectsIncompleteProfileCombination
+rejectsEachMissingOrBlankCredentialWithoutExposingValues acceptsExplicitProfilesWithRequiredCredentials'''.split(),
+    BASE + 'demo.FoundationDependencyTests': '''cachedNativeRabbitProbeNeedsActiveCommunication
+authenticatedRedisRejectsWrongPasswordDefaultUserAndWrites authenticatedRabbitRejectsWrongCredentialsVhostAndResourceCreation
+activeProbeReleasesConnectionsAndLeavesApplicationPolicyUnchanged fullProfileProbesAreStatusOnlyAndManagementRemainsRestricted'''.split(),
     BASE + 'architecture.ArchitectureTests': '''productionScopeIsRealAndExcludesNegativeFixtures
 packagesMatchApprovedModuleStructure modulesOnlyUsePublicApis publicApisDoNotLeakInternals
 modulesFollowApprovedDependencyDirection domainIsIndependentOfOuterLayers applicationDependsInward
@@ -39,6 +45,7 @@ concurrentCancelHasOneEventAndReceipt'''.split(),
 }
 PG = BASE + 'demo.PostgresFoundationTests'
 PG_ONLY = {PG, BASE + 'demo.PostgresHealthSafetyTests'}
+FOUNDATION_ONLY = {BASE + 'demo.FoundationDependencyTests'}
 SUREFIRE_NAMES = {
     (BASE + 'demo.DemoSecurityEvidenceTests',
      'credentialsAndBearerTokenDoNotAppearInApplicationLogs(CapturedOutput)'):
@@ -49,7 +56,7 @@ SUREFIRE_NAMES = {
 def verify(source, output, mode, maven_exit):
     problems, seen, rows = [], {}, []
     expected = {k: v for k, v in REQUIRED.items()
-                if mode != 'architecture' or '.architecture.' in k}
+                if (k in FOUNDATION_ONLY if mode == 'foundation' else mode != 'architecture' or '.architecture.' in k)}
     for path in sorted(Path(source).glob('TEST-*.xml')):
         try:
             suite = ET.parse(path).getroot()
@@ -81,7 +88,7 @@ def verify(source, output, mode, maven_exit):
     for name, methods in expected.items():
         actual = seen.get(name, {})
         for method in methods:
-            wanted = 'skipped' if mode == 'h2' and name in PG_ONLY else 'passed'
+            wanted = 'skipped' if (mode == 'h2' and name in PG_ONLY) or (mode in ('h2', 'postgres') and name in FOUNDATION_ONLY) else 'passed'
             if actual.get(method) != wanted:
                 problems.append(f'{name}.{method}: required {wanted}')
     if not rows:
@@ -113,7 +120,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--source', required=True)
     parser.add_argument('--output', required=True)
-    parser.add_argument('--mode', choices=['architecture', 'h2', 'postgres'], required=True)
+    parser.add_argument('--mode', choices=['architecture', 'h2', 'postgres', 'foundation'], required=True)
     parser.add_argument('--maven-exit', type=int, required=True)
     args = parser.parse_args()
     raise SystemExit(0 if verify(args.source, args.output, args.mode, args.maven_exit) else 1)

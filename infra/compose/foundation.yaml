@@ -1,0 +1,53 @@
+name: elogistics-foundation
+services:
+  redis:
+    image: redis:8.4.7-trixie@sha256:43afe4a9a43080e64dfa29699eef903fc9d54991fe8b03d57237c05bed2a396c
+    platform: linux/amd64
+    labels:
+      com.elogistic.foundation.owner: ${FOUNDATION_RESOURCE_ID:?Use infra/foundation/manage.py}
+    ports:
+      - "127.0.0.1:6380:6379"
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    volumes:
+      - ../redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - ${FOUNDATION_PRIVATE_DIR:?Use infra/foundation/manage.py}/redis.acl:/run/redis.acl:ro
+    secrets: [redis_password]
+    tmpfs: [/data]
+    networks: [foundation]
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=$$(cat /run/secrets/redis_password) redis-cli --user foundation_probe --no-auth-warning ping | grep -qx PONG"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  rabbitmq:
+    image: rabbitmq:4.3.6@sha256:25736a5d515fe5dcf4c7eec2125b09a0e2043cc934ac0a7aca198c1058564620
+    platform: linux/amd64
+    hostname: foundation-rabbit
+    labels:
+      com.elogistic.foundation.owner: ${FOUNDATION_RESOURCE_ID:?Use infra/foundation/manage.py}
+    ports:
+      - "127.0.0.1:5673:5672"
+    volumes:
+      - rabbit_data:/var/lib/rabbitmq
+      - ../rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ${FOUNDATION_PRIVATE_DIR:?Use infra/foundation/manage.py}/definitions.json:/run/foundation-definitions.json:ro
+    networks: [foundation]
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping && rabbitmq-diagnostics -q check_running && rabbitmq-diagnostics -q check_port_connectivity"]
+      interval: 5s
+      timeout: 10s
+      retries: 20
+      start_period: 15s
+networks:
+  foundation:
+    driver: bridge
+    labels:
+      com.elogistic.foundation.owner: ${FOUNDATION_RESOURCE_ID}
+volumes:
+  rabbit_data:
+    name: ${FOUNDATION_RABBIT_VOLUME:-elogistics_d1_rabbitmq_dev_data}
+    labels:
+      com.elogistic.foundation.owner: ${FOUNDATION_RESOURCE_ID}
+secrets:
+  redis_password:
+    file: ${FOUNDATION_PRIVATE_DIR}/redis-password

@@ -1087,3 +1087,10 @@ Verification backend/Vite/Go Metro were stopped after use, preserving original
 databases, caches, emulator and existing adb reverse mapping. Native Metro8081
 remains running for inspection of the installed development app; observation
 results are bounded by recorded timestamps, not perpetual connectivity promises.
+## D1-08 Task B — explicit full dependency target
+
+Redis/Rabbit setup and safe isolated verification are documented in the
+[foundation runbook](redis-rabbit-foundation.md). Use demo,postgres,foundation
+only for the full target; existing demo/demo,postgres commands remain valid
+without Redis/Rabbit clients. [Approved decision](../architecture/decisions/ADR-0005-foundation-dependencies.md).
+No new business cache/queues, migration, API/SDK or CI-workflow changes.

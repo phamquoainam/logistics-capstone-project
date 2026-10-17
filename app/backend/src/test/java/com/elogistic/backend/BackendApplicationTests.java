@@ -14,6 +14,8 @@ class BackendApplicationTests {
 	@Test
 	void contextLoads() {
 		assertFalse(context.containsBean("dataSource"), "Demo database must not start outside the demo profile");
+		assertFalse(context.containsBean("redisConnectionFactory"));
+		assertFalse(context.containsBean("rabbitConnectionFactory"));
 	}
 
 }
