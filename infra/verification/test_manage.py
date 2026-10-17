@@ -43,6 +43,9 @@ class IsolationPolicyTests(unittest.TestCase):
         cfg['services']['redis']['tmpfs']=['/data']
         cfg['services']['redis']['command']=['redis-server','/usr/local/etc/redis/redis.conf']
         cfg['services']['rabbitmq']['hostname']='verification-rabbit'
+        cfg['services']['rabbitmq']['healthcheck']={'test':[
+            'CMD', 'gosu', 'rabbitmq', 'sh', '-eu', '-c',
+            'rabbitmq-diagnostics -q ping && rabbitmq-diagnostics -q check_running && rabbitmq-diagnostics -q check_port_connectivity']}
         for service,names in [('postgres',['pg_bootstrap','pg_migrator','pg_runtime']),('redis',['redis_password'])]:
             cfg['services'][service]['secrets']=[{'source':n,'target':'/run/secrets/'+n} for n in names]
         return cfg
@@ -50,6 +53,33 @@ class IsolationPolicyTests(unittest.TestCase):
     def validate(self, cfg): M.validate_effective(cfg,self.s,self.images,self.directory)
 
     def test_valid_config_has_three_random_loopback_ports(self): self.validate(self.config())
+
+    def test_rabbit_healthcheck_cannot_create_a_root_cookie(self):
+        for command in [
+            ['CMD-SHELL','rabbitmq-diagnostics -q ping'],
+            ['CMD','gosu','root','rabbitmq-diagnostics','-q','ping'],
+            ['CMD','gosu','rabbitmq','rabbitmq-diagnostics','-q','ping']]:
+            cfg=self.config();cfg['services']['rabbitmq']['healthcheck']['test']=command
+            with self.subTest(command=command),self.assertRaisesRegex(RuntimeError,'Rabbit health'):
+                self.validate(cfg)
+        cfg=self.config();cfg['services']['rabbitmq']['healthcheck']['disable']=True
+        with self.assertRaisesRegex(RuntimeError,'Rabbit health'):self.validate(cfg)
+
+    def test_rabbit_cookie_probe_rejects_root_owner_and_unsafe_modes(self):
+        session=type('ProbeSession',(),{})()
+        for output in ['999:999\n0:0:400\n','999:999\n999:999:644\n','0:0\n0:0:400\n']:
+            with patch.object(session,'docker',create=True,return_value=output),self.assertRaisesRegex(RuntimeError,'cookie'):
+                C.rabbit_cookie_metadata(session,'captured-id')
+
+    def test_rabbit_cookie_probe_uses_service_user_after_start_restart_and_recreate(self):
+        # Command/metadata regression only. Actual Docker lifecycle remains a separate gate.
+        session=type('ProbeSession',(),{})()
+        for phase,container in [('start','captured-id'),('restart','captured-id'),('recreate','new-captured-id')]:
+            with self.subTest(phase=phase),patch.object(session,'docker',create=True,return_value='999:999\n999:999:400\n') as docker:
+                C.rabbit_cookie_metadata(session,container)
+                args=docker.call_args.args
+                self.assertEqual(args[:7],('exec',container,'gosu','rabbitmq','sh','-eu','-c'))
+                self.assertNotIn('cat ',args[-1]);self.assertIn('test -r',args[-1])
 
     def test_developer_container_identity_rejected(self):
         cfg=self.config();cfg['services']['postgres']['container_name']='elogistics-d1-postgres18'

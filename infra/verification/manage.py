@@ -16,6 +16,8 @@ import uuid
 ROOT = Path(__file__).resolve().parents[2]
 LABEL = 'com.elogistic.verification.session'
 PORTS = {'postgres': 5432, 'redis': 6379, 'rabbitmq': 5672}
+RABBIT_HEALTH_TEST = ['CMD', 'gosu', 'rabbitmq', 'sh', '-eu', '-c',
+    'rabbitmq-diagnostics -q ping && rabbitmq-diagnostics -q check_running && rabbitmq-diagnostics -q check_port_connectivity']
 FORBIDDEN = ('elogistics_dev', 'elogistics-d1-postgres18', 'elogistics_d1_pg18_dev_data',
              'elogistics_d1_rabbitmq_dev_data', '.demo/postgres', '.demo/settings.json')
 PREFIXES = ('PG_', 'DEMO_', 'SPRING_', 'FOUNDATION_', 'VERIFY_', 'COMPOSE_', 'DOCKER_', 'VITE_')
@@ -133,6 +135,9 @@ def validate_effective(config, settings, images, directory):
         require(item.get('command') == ['redis-server', '/usr/local/etc/redis/redis.conf'] if service == 'redis' else not item.get('command'), 'Unexpected service command')
         require(item.get('hostname') == 'verification-rabbit' if service == 'rabbitmq' else not item.get('hostname'), 'Unexpected service hostname')
     require(config['services']['redis'].get('tmpfs') == ['/data'], 'Redis must be ephemeral')
+    health = config['services']['rabbitmq'].get('healthcheck', {})
+    require(health.get('test') == RABBIT_HEALTH_TEST and not health.get('disable'),
+            'Rabbit health CLI must run as rabbitmq with all three diagnostics')
     return config
 
 

@@ -129,6 +129,17 @@ def history(session):
     return sql(session, 'SELECT version||\':\'||checksum FROM platform.flyway_schema_history WHERE success ORDER BY installed_rank;')
 
 
+def rabbit_cookie_metadata(session, container):
+    """Readability/owner/mode only: never read or report the Erlang cookie payload."""
+    metadata = session.docker('exec', container, 'gosu', 'rabbitmq', 'sh', '-eu', '-c',
+        'test "$HOME" = /var/lib/rabbitmq; test -r "$HOME/.erlang.cookie"; '
+        'printf "%s:%s\\n" "$(id -u)" "$(id -g)"; stat -c "%u:%g:%a" "$HOME/.erlang.cookie"')
+    lines = metadata.splitlines()
+    require(len(lines) == 2 and bool(re.fullmatch(r'[1-9][0-9]*:[1-9][0-9]*', lines[0]))
+            and lines[1] in [lines[0] + ':400', lines[0] + ':600'],
+            'Rabbit cookie owner/mode must match the non-root service user')
+
+
 def check(session):
     session.dry_run(); info = session.status(); start = time.monotonic(); checks = []
     def passed(name): checks.append(dict(gate=name, status='PASS'))
@@ -144,8 +155,9 @@ def check(session):
     passed('redis-authenticated-PING/least-privilege')
     require('NOAUTH' in session.docker('exec', redis, 'redis-cli', '--raw', 'PING'), 'Redis default/anonymous access enabled')
     rabbit = info['containers']['rabbitmq']
-    permissions = session.docker('exec', rabbit, 'rabbitmqctl', '-q', 'list_user_permissions', 'foundation_probe')
-    users = session.docker('exec', rabbit, 'rabbitmqctl', '-q', 'list_users')
+    rabbit_cookie_metadata(session, rabbit)
+    permissions = session.docker('exec', rabbit, 'gosu', 'rabbitmq', 'rabbitmqctl', '-q', 'list_user_permissions', 'foundation_probe')
+    users = session.docker('exec', rabbit, 'gosu', 'rabbitmq', 'rabbitmqctl', '-q', 'list_users')
     require('/elogistics-foundation' in permissions and permissions.count('(?!)') == 3
             and re.search(r'^foundation_probe\s+\[\]$', users, re.M), 'Rabbit user/vhost permissions differ')
     passed('Redis-anonymous-denial/Rabbit-non-admin-and-vhost-permissions')

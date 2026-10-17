@@ -60,6 +60,30 @@ framework or a replacement for developer/CI infrastructure.
 
 ## Evidence and closure
 
+### Owner-authorized Windows remediation, 2026-10-18
+
+The verification-only health CLI and permission CLI must run through `gosu rabbitmq`,
+matching the official server identity. The unchanged official entrypoint retains
+its initial bootstrap; the server is not kept root. This avoids a competing root
+CLI cookie writer; effective-config policy enforces all three existing diagnostics.
+Cookie validation returns owner/mode/readability metadata only. The same persistent
+session volume remains the cookie store; no new secret model or permission widening.
+Observed root0400 cookie versus server999 explains EACCES; exact historical creator
+remains unproven. Authorized failed-session recovery has completed; one fresh
+session `a677c73052e94396b1cd8501127335c8` now proves actual cold-start/restart/
+recreate with server/cookie999:999/mode0400/readability, non-root CLI, authenticated
+AMQP and denied queue/vhost access, persistent cookie/volume/metadata, no EACCES.
+Controlled per-operation ownership/consumer/Engine/foreign checks and repeated
+cleanup PASS; all owned resources absent, foreign4/5/4 unchanged. Resource Saver
+was disabled manually by the owner; no automated host setting/restart change.
+This runtime evidence validates the existing correction, not a new design or an
+AC-001-01 waiver. Exact old cookie creator and Node/libuv cause remain open.
+
+The narrow SDK LF checkout policy preserves strict byte determinism without global
+Git changes. See [remediation evidence](../../implementation/ac-001-01-windows-remediation.md).
+This authorized implementation addendum does not change any feature acceptance
+criterion or turn AC-001-01/05 into PASS. Original decision/scope remain unchanged.
+
 [Implementation evidence](../../implementation/ac-001-01-isolated-bootstrap-evidence.md)
 and [runbook](../../runbooks/clean-clone-verification.md). Official AC-001-01 requires
 review/commit/publish/CI/owner merge, actual develop CI and an entirely new clean

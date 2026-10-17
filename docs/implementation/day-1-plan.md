@@ -1,5 +1,17 @@
 # Day 1 — Existing Codebase Assessment, Baseline Verification & SDD Implementation Plan
 
+**2026-10-18 — RabbitMQ remediation LOCAL_DONE / READY_FOR_REVIEW; AC-001-01 BLOCKED.**
+[Current report](ac-001-01-windows-remediation.md): authorized failed-session recovery
+completed; owner-disabled Resource Saver, stable Engine/bridge. One fresh owned
+session proved cold-start/non-root cookie999:999/0400, real AMQP auth/permission
+denials, restart/recreate metadata persistence, PG/Redis isolation and controlled/
+idempotent cleanup:7 runtime gates plus preflight PASS. Foreign4/5/4 unchanged;
+no owned resources remain. Safety43/bootstrap7/guards25/checkout2 PASS this turn.
+Earlier SDK41+44/web results retained; libuv cause OPEN/not reproduced, new APK
+acceptance BLOCKED. Overall Windows remediation PARTIAL; full NEW-clone acceptance,
+publication/hosted fixes CI and AC-001-05 outstanding. No commit/push/PR here;
+Feature001/D1-08/Day1 PARTIAL. Earlier entries are historical snapshots.
+
 **AC-001-01 isolated bootstrap — 2026-10-17: LOCAL_DONE / READY_FOR_REVIEW.**
 [Decision](../architecture/decisions/ADR-0007-isolated-verification-bootstrap.md),
 [local evidence](ac-001-01-isolated-bootstrap-evidence.md),
