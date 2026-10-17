@@ -1,0 +1,2 @@
+# The generator emits LF; strict byte comparison must survive Windows checkout.
+src/generated/**/*.ts text eol=lf

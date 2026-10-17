@@ -1,5 +1,21 @@
 # Implementation Tasks 001: Nền tảng repository, deploy và kiến trúc
 
+## AC-001-01 Windows blocker remediation — 2026-10-18
+
+[Current report](../../docs/implementation/ac-001-01-windows-remediation.md).
+
+- [x] Read-only actual Engine/retained ownership inspection; no Docker mutations.
+- [x] Minimal verification-only non-root Rabbit CLI and cookie metadata controls;43 unit tests PASS.
+- [x] Narrow SDK LF policy;2 checkout tests, strict16 generated files,41+44 SDK/contract tests and build PASS locally.
+- [x] Node investigation without changing baseline; native timeout assessed without another long build.
+- [x] Owner-authorized exact retained-resource recovery and foreign-inventory verification; completed, do not repeat.
+- [x] Corrected real Rabbit cold-start/restart/recreate/authentication/cookie/cleanup regression; fresh a677c73052e94396b1cd8501127335c8,7 runtime gates plus preflight PASS; foreign4/5/4 preserved, no owned resources remain.
+- [ ] Reviewed publication/integration and new full clean-clone acceptance, including new APK.
+
+Rabbit remediation LOCAL_DONE / READY_FOR_REVIEW; overall verdict PARTIAL;
+AC-001-01 BLOCKED. Libuv finding remains OPEN / NOT REPRODUCED;
+AC-001-05 not complete. Feature001/D1-08/Day1 PARTIAL. Original REQ/AC unchanged.
+
 ## AC-001-01 isolated bootstrap — approved implementation only
 
 [Decision](../../docs/architecture/decisions/ADR-0007-isolated-verification-bootstrap.md),

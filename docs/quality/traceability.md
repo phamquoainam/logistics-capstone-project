@@ -1,5 +1,19 @@
 # Traceability Matrix (living document)
 
+**2026-10-18 — AC-001-01 Windows blocker remediation (current status).**
+[Evidence](../implementation/ac-001-01-windows-remediation.md).
+
+| Trace / gate | Actual current evidence | Status |
+|---|---|---|
+| AC-001-01; isolated resource ownership | Approved failed-session recovery complete; fresh a677c73052e94396b1cd8501127335c8 cleanup/idempotence PASS, foreign4 containers/5 volumes/4 networks equal; stable bridge/Engine | PASS local recovery/lifecycle subset; no owned resources remain |
+| AC-001-01 SDK generation/build subset | Narrow LF policy, actual Git checkout2/2; strict16 outputs, C01 41 + SDK44 PASS | PASS local Windows; Linux/hosted fixes UNVERIFIED |
+| AC-001-01 Rabbit cookie safety subset | Fresh cold-start/restart/recreate: actual server999:999, cookie999:999/0400/readable; non-root diagnostics, no EACCES, real AMQP auth/denials and persistent metadata; safety43 PASS | LOCAL_DONE / READY_FOR_REVIEW; not full AC acceptance, exact old cookie creator unproven |
+| AC-001-01 runtime/native acceptance | Libuv not reproduced in40 probes/current SDK run; old new-APK timeout | OPEN; no Node root-cause fix/new APK claim |
+| AC-001-01 / AC-001-05 / parent tasks | Full new-clone and independent developer acceptance not complete | AC01 BLOCKED; AC05 not complete; Feature001/D1-08/Day1 PARTIAL |
+
+Original REQ/AC text and historical evidence are unchanged. Later local PASS does
+not erase the failed fresh-clone run. No fixes were published in this iteration.
+
 **AC-001-01 isolated-bootstrap implementation — 2026-10-17, local evidence only.**
 [Evidence](../implementation/ac-001-01-isolated-bootstrap-evidence.md),
 [runbook](../runbooks/clean-clone-verification.md).

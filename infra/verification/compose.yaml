@@ -53,7 +53,9 @@ services:
       - ${VERIFY_PRIVATE:?}/definitions.json:/run/foundation-definitions.json:ro
     networks: [session]
     healthcheck:
-      test: [CMD-SHELL, 'rabbitmq-diagnostics -q ping && rabbitmq-diagnostics -q check_running && rabbitmq-diagnostics -q check_port_connectivity']
+      # The official entrypoint drops the server to rabbitmq; health CLI must match.
+      # A root CLI can create a root-owned 0400 cookie before server initialization.
+      test: [CMD, gosu, rabbitmq, sh, -eu, -c, 'rabbitmq-diagnostics -q ping && rabbitmq-diagnostics -q check_running && rabbitmq-diagnostics -q check_port_connectivity']
       interval: 3s
       timeout: 10s
       retries: 60

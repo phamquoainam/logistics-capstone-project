@@ -123,6 +123,46 @@ installation. Metro/Hermes alone cannot substitute for an APK/device gate.
 
 ## Ownership cleanup and failure handling
 
+### Windows blockers — current safety checkpoint, 2026-10-18
+
+Read [the current remediation/recovery report](../implementation/ac-001-01-windows-remediation.md)
+before another runtime session. The original failed-session resources have now been
+removed by exact owner-authorized recovery; do not repeat that cleanup. Historical
+failed-clone evidence remains. Resource Saver was manually disabled/applied by the
+owner; do not automate global setting changes. The fresh lifecycle session is also
+cleaned. Engine reachability alone never authorizes removal or another stack:
+re-prove captured ownership/consumers/attachments and obtain task-specific approval.
+Never rewrite the baseline to hide bridge drift or use global cleanup/restart.
+
+Verification Rabbit health/permission commands run as OS user rabbitmq through
+gosu; official entrypoint bootstrap is unchanged. Cookie must remain session-private,
+owned by that non-root identity, mode400/600 and readable. Inspect metadata only,
+never print/copy cookie content. A root-owned cookie in a failed volume is a STOP,
+not permission to chmod/chown/delete it. Corrected runtime cold-start/restart/
+recreate/authentication/cleanup now PASS locally in session
+`a677c73052e94396b1cd8501127335c8`; cookie999:999/0400, actual server999, no EACCES.
+Its exact IDs and sanitized evidence are in the report. This does not complete
+AC-001-01 or authorize reuse of the cleaned session.
+
+For controlled lifecycle cleanup, check current Engine/bridge, exact owned IDs/
+labels/mounts, all running/stopped consumers and network references before EACH
+destructive operation, and compare foreign metadata after each. The runtime proof
+used explicit bounded stop then exact-ID rm without force/volume flags, followed
+by unused owned-volume and empty owned-network removal. Only after all absent was
+normal harness down repeated to prove idempotence. No source guard was weakened.
+
+After fixes are reviewed/published, a NEW Windows checkout gets generated SDK LF
+from package-local attributes even with autocrlf=true. Existing checkouts are not
+automatically rewritten. First prove no user edits; prefer the mandated new clone.
+Do not relax byte comparison or globally change Git. The isolated checkout-policy
+regression is `python -m unittest discover -s packages/api-client/tests -p test*.py`.
+
+If Node reports UV_HANDLE_CLOSING, preserve exact command/exit/hook stack and private
+logs. Current retries passed but cause is OPEN; no Node upgrade/stdin workaround
+is approved. A native timeout without a new APK is not native acceptance. Diagnose
+dependency resolution/task progress/resource pressure before any longer build;
+installed development-client rendering alone does not satisfy the new-APK gate.
+
 ```powershell
 python -B infra/verification/manage.py down --session $verifySession
 python -B infra/verification/manage.py down --session $verifySession
@@ -140,8 +180,9 @@ cold-start success. If ownership cannot be proved, STOP without removals and
 report exact IDs. Do not weaken ownership checks, rewrite baseline or remove
 foreign resources to satisfy a comparison.
 
-Docker Desktop default bridge identity drift is an existing OPEN operational
-finding. Any missing baseline resource blocks automatic cleanup before removals.
+Prior correlated idle stop/wake/default-bridge changes were traced to Resource
+Saver. The current proof retained bridge20f26ad4 throughout; this does not waive
+any future drift. Any missing baseline resource blocks cleanup before removals.
 Record the delta and request/review a precise recovery proof; do not run broad
 cleanup. A later successful session does not erase this earlier finding.
 
