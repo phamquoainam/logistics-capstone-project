@@ -1,0 +1,77 @@
+# Standalone verification stack: no inherited developer Compose identities.
+services:
+  postgres:
+    image: ${VERIFY_POSTGRES_IMAGE:?}
+    platform: linux/amd64
+    labels: {com.elogistic.verification.session: '${VERIFY_SESSION:?}'}
+    environment:
+      POSTGRES_USER: ${VERIFY_BOOTSTRAP:?}
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD_FILE: /run/secrets/pg_bootstrap
+      VERIFY_DATABASE: ${VERIFY_DATABASE:?}
+      VERIFY_OWNER: ${VERIFY_OWNER:?}
+      VERIFY_MIGRATOR: ${VERIFY_MIGRATOR:?}
+      VERIFY_RUNTIME: ${VERIFY_RUNTIME:?}
+    secrets: [pg_bootstrap, pg_migrator, pg_runtime]
+    ports: [{target: 5432, published: '0', host_ip: 127.0.0.1, protocol: tcp}]
+    volumes:
+      - pg_data:/var/lib/postgresql
+      - ./bootstrap.sh:/docker-entrypoint-initdb.d/10-verification.sh:ro
+      - ./bootstrap.sql:/opt/verification/bootstrap.sql:ro
+    networks: [session]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$$POSTGRES_USER" -d "$$VERIFY_DATABASE"']
+      interval: 2s
+      timeout: 3s
+      retries: 60
+  redis:
+    image: ${VERIFY_REDIS_IMAGE:?}
+    platform: linux/amd64
+    labels: {com.elogistic.verification.session: '${VERIFY_SESSION:?}'}
+    command: [redis-server, /usr/local/etc/redis/redis.conf]
+    ports: [{target: 6379, published: '0', host_ip: 127.0.0.1, protocol: tcp}]
+    volumes:
+      - ../redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - ${VERIFY_PRIVATE:?}/redis.acl:/run/redis.acl:ro
+    secrets: [redis_password]
+    tmpfs: [/data]
+    networks: [session]
+    healthcheck:
+      test: [CMD-SHELL, 'REDISCLI_AUTH=$$(cat /run/secrets/redis_password) redis-cli --user foundation_probe --no-auth-warning ping | grep -qx PONG']
+      interval: 2s
+      timeout: 3s
+      retries: 60
+  rabbitmq:
+    image: ${VERIFY_RABBITMQ_IMAGE:?}
+    platform: linux/amd64
+    hostname: verification-rabbit
+    labels: {com.elogistic.verification.session: '${VERIFY_SESSION:?}'}
+    ports: [{target: 5672, published: '0', host_ip: 127.0.0.1, protocol: tcp}]
+    volumes:
+      - rabbit_data:/var/lib/rabbitmq
+      - ../rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ${VERIFY_PRIVATE:?}/definitions.json:/run/foundation-definitions.json:ro
+    networks: [session]
+    healthcheck:
+      test: [CMD-SHELL, 'rabbitmq-diagnostics -q ping && rabbitmq-diagnostics -q check_running && rabbitmq-diagnostics -q check_port_connectivity']
+      interval: 3s
+      timeout: 10s
+      retries: 60
+      start_period: 15s
+volumes:
+  pg_data:
+    name: ${VERIFY_PG_VOLUME:?}
+    labels: {com.elogistic.verification.session: '${VERIFY_SESSION:?}'}
+  rabbit_data:
+    name: ${VERIFY_RABBIT_VOLUME:?}
+    labels: {com.elogistic.verification.session: '${VERIFY_SESSION:?}'}
+networks:
+  session:
+    name: ${VERIFY_NETWORK:?}
+    driver: bridge
+    labels: {com.elogistic.verification.session: '${VERIFY_SESSION:?}'}
+secrets:
+  pg_bootstrap: {file: '${VERIFY_PRIVATE:?}/pg-bootstrap'}
+  pg_migrator: {file: '${VERIFY_PRIVATE:?}/pg-migrator'}
+  pg_runtime: {file: '${VERIFY_PRIVATE:?}/pg-runtime'}
+  redis_password: {file: '${VERIFY_PRIVATE:?}/redis-password'}
