@@ -49,3 +49,13 @@ feature decisions in009/015, not for already verified local starter tooling.
 2. Nếu thay đổi kiến trúc, thêm ADR ở `docs/architecture/decisions/` rồi sửa affected design/spec/tests.
 3. Đánh dấu `ACCEPTED` hoặc `DEFERRED` có lý do; không xóa dòng còn mở. Nếu chưa chốt nhưng không ảnh hưởng code ngay, Codex chỉ scaffold phần độc lập.
 4. Không dùng số liệu demo hoặc source code đã viết để suy ngược thành quyết định đúng mà không đánh giá.
+## D1-08 Task B configuration approval — 2026-10-17
+
+User explicitly accepted B-01..B-09: exact Redis8.4.7-trixie/Rabbit4.3.6
+digests, Redis AGPLv3, explicit foundation profile, Boot-managed clients,
+least-privilege credentials/vhost, loopback ports, Redis ephemeral/Rabbit
+persistent data, authenticated active readiness and bounded timeout targets.
+[ADR-0005](../architecture/decisions/ADR-0005-foundation-dependencies.md)
+records the bounded decision; [execution evidence](../implementation/d1-08-foundation-evidence.md)
+separates measured gates from remaining full-feature work. No other open decision
+or business cache/messaging/provider choice is accepted by this approval.

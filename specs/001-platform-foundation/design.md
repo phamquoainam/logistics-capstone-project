@@ -1,5 +1,22 @@
 # Technical Design 001: Nền tảng repository, deploy và kiến trúc
 
+## Approved D1-08 Task B — full dependency foundation, 2026-10-17
+
+Explicit user approval B-01..B-09 is recorded in
+[ADR-0005](../../docs/architecture/decisions/ADR-0005-foundation-dependencies.md).
+Additive Redis/Rabbit Compose and demo,postgres,foundation target; livenessState
+independent, readinessState+db+redis+rabbit, authenticated probes and status-only
+security. Redis AGPLv3/ephemeral/ACL and Rabbit persistent/non-admin/vhost policy
+are accepted for local foundation, not business caching or messaging.
+
+Boot-managed clients are opt-in only. Real native Rabbit cached-UP characterization
+justifies the bounded health-only AMQP connection/channel RPC; application RPC
+policy and Task A JDBC validation remain untouched. Faults, recovery, persistence,
+profile isolation, timeout/privacy/resource tests are documented in
+[Task B evidence](../../docs/implementation/d1-08-foundation-evidence.md).
+No new database migration, domain contract or CI workflow is approved here.
+Full feature001/Day1 remain PARTIAL; original REQ/AC below are unchanged.
+
 ## Approved D1-08 Task A - health/readiness runtime, 2026-10-17
 
 The user's Task A explicitly approves Boot-managed Actuator4.1.1 and separate

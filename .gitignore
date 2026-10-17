@@ -10,6 +10,8 @@ web-build/
 coverage/
 .demo/
 *.tsbuildinfo
+__pycache__/
+*.py[cod]
 
 # Editor settings
 .vscode/

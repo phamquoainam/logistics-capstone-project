@@ -1,5 +1,23 @@
 # Day 1 — Existing Codebase Assessment, Baseline Verification & SDD Implementation Plan
 
+**D1-08 Task B — 2026-10-17: LOCAL_DONE / READY_FOR_REVIEW for approved scope.**
+User approved B-01..B-09, exact Redis/Rabbit pins, Redis AGPLv3 and explicit full
+profile; [decision](../architecture/decisions/ADR-0005-foundation-dependencies.md),
+[Task B evidence](d1-08-foundation-evidence.md). Existing profiles, Task A JDBC,
+V1/V2/11 API/OAS/SDK and CI workflow remain unchanged. Backend default profiles
+exclude Redis/Rabbit clients; explicit foundation requires all three dependencies.
+Original full001/Day1 acceptance remains PARTIAL. Earlier entries are historical.
+Real foundation5/5,16 runtime/config/fault/persistence gates, Arch23, H2 48+17
+named skips, PG60+5 named skips, guard17/bootstrap7/OAS41/wire27 and Task A HTTP
+regressions PASS; owned cleanup/privacy PASS. A Windows Node/libuv pre-discovery
+wire crash is disclosed; unchanged retry PASS, no toolchain fix claimed.
+Task B remote CI/publication/integration remain UNVERIFIED; no commit/push/PR.
+
+Task A integration DONE for approved scope: PR10 merged f20c8c6, actual develop
+[push run38959330146](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/38959330146)
+PASS architecture23, H2 44/12 named skips, PG56/0; guards15 per job. This is
+separate from Task B's new local results and its remote CI remains UNVERIFIED.
+
 **D1-08 Task A timeout safety fix - 2026-10-17: local DONE / READY_FOR_PR.**
 Removed the unsafe JDBC-wide socketTimeout3s. A small platform infrastructure
 Actuator dbHealthIndicator uses the real runtime Hikari pool and JDBC isValid(1),
