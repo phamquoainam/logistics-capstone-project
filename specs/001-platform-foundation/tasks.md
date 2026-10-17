@@ -1,5 +1,22 @@
 # Implementation Tasks 001: Nền tảng repository, deploy và kiến trúc
 
+## AC-001-01 isolated bootstrap — approved implementation only
+
+[Decision](../../docs/architecture/decisions/ADR-0007-isolated-verification-bootstrap.md),
+[evidence](../../docs/implementation/ac-001-01-isolated-bootstrap-evidence.md).
+
+- [x] Safe unique session/project/database/roles/volumes/network and effective Compose validation.
+- [x] No developer credentials/data/default changes; inherited connection/config redirects rejected.
+- [x] Synthetic private settings, collision/privacy/owned-cleanup negative controls.
+- [x] Final controlled authenticated startup/Flyway/permissions/full profile/Demo API/restart9 gates; Vite proxy/auth smoke; normal/idempotent cleanup.
+- [x] Local regressions: safety40/bootstrap7/guards25, Arch23/H2 48+17/PG73+5, Task B5/5+16 gates with disclosed adapters; no weakened tests.
+- [ ] Owner review of LOCAL_DONE / READY_FOR_REVIEW implementation and retained operational findings.
+- [ ] Authorized publication/required CI/owner merge/actual develop CI.
+- [ ] NEW clean-clone full acceptance sequence including SDK/web/mobile/native evidence.
+
+AC-001-01 remains UNVERIFIED; this implementation is not independent-developer
+AC-001-05 evidence. No original REQ/AC changes; Feature001/D1-08/Day1 PARTIAL.
+
 ## D1-08 Task D — isolated actual CI red-then-fixed experiment
 
 **DONE in approved experiment scope**, 2026-10-17; AC-001-03 PASS.

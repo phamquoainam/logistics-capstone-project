@@ -1,5 +1,13 @@
 # Local Development Runbook — repository hiện hữu
 
+## Approved isolated clean-clone bootstrap
+
+For AC-001-01 use the [session-owned verification runbook](clean-clone-verification.md),
+not the developer PostgreSQL/foundation settings or fixed identities. The additive
+implementation has controlled local evidence only; official acceptance requires
+publication/integration CI and a NEW clean clone. AC-001-05 and full Feature001/
+Day1 remain open. Existing developer commands and historical evidence below are unchanged.
+
 ## D1-08 Task C — Testcontainers PostgreSQL/Flyway
 
 Requires the approved Java21/Wrapper3.10.0/Docker Linux backend. Boot4.1.1 manages

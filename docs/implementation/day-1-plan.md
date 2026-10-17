@@ -1,5 +1,18 @@
 # Day 1 — Existing Codebase Assessment, Baseline Verification & SDD Implementation Plan
 
+**AC-001-01 isolated bootstrap — 2026-10-17: LOCAL_DONE / READY_FOR_REVIEW.**
+[Decision](../architecture/decisions/ADR-0007-isolated-verification-bootstrap.md),
+[local evidence](ac-001-01-isolated-bootstrap-evidence.md),
+[runbook](../runbooks/clean-clone-verification.md). Additive verification-only
+stack removes the developer-identity cold-clone blocker without changing developer
+defaults. Controlled final9 gates, Vite proxy/auth, normal/idempotent owned cleanup
+PASS; earlier default-bridge drift/manual recovery remains disclosed OPEN.
+Focused safety40/bootstrap7/guards25, architecture23, H2 48/17, PG73/5 incl Task A/C,
+Task B5/5+16 gates with disclosed image/cache adapters PASS. No existing developer
+source/configuration, migration, dependency or CI behavior changed.
+Official AC-001-01 UNVERIFIED until publish/review/merge/develop CI and NEW clone;
+AC-001-05 separate. No commit/push/PR here. D1-08/Feature001/Day1 remain PARTIAL.
+
 **D1-08 Task D — 2026-10-17: DONE for the approved isolated CI experiment; AC-001-03 PASS.**
 [Evidence](d1-08-ci-red-green-evidence.md): Draft PR #13, actual hosted RED
 39006911313 on 73dac74 (real Finance-to-Orders-internal dependency), followed by

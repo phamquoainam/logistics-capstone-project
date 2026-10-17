@@ -1,5 +1,20 @@
 # Traceability Matrix (living document)
 
+**AC-001-01 isolated-bootstrap implementation — 2026-10-17, local evidence only.**
+[Evidence](../implementation/ac-001-01-isolated-bootstrap-evidence.md),
+[runbook](../runbooks/clean-clone-verification.md).
+
+| Trace / test ID | Scope | Current result |
+|---|---|---|
+| REQ-001-05; TEST-001-CCB-01 | Isolation/collision/inherited environment/secret privacy/owned cleanup controls | 40 focused tests PASS; existing bootstrap7/guards25 PASS |
+| REQ-001-02/04; TEST-001-CCB-02 | Empty owned PG DB, V1/V2, schema/table ownership, runtime no-DDL/history, rerun/checksums | Final controlled local PASS |
+| REQ-001-04; TEST-001-CCB-03 | Authenticated Redis/active AMQP, least privilege, full readiness/liveness/Demo auth | Final controlled local PASS9-gate scenario |
+| AC-001-02 subset; TEST-001-CCB-04 | Owned PG restart/marker/history and live binding refresh/new backend | PASS local; not full cold-clone acceptance |
+| REQ-001-01/04; TEST-001-CCB-05 | Temporary Vite proxy targets owned backend on dynamic ports | HTTP/auth smoke PASS; browser UI/native UNVERIFIED |
+| REQ-001-05; TEST-001-CCB-06 | Final captured-resource cleanup/idempotence and foreign inventory equality | PASS final session; earlier bridge drift/manual recovery OPEN and preserved |
+| REQ-001-02/03/04; TEST-001-CCB-REG | Existing architecture/H2/PG/Task A/C and Task B tests | Arch23, H2 48/17, PG73/5 exact reports; Task B5/5+16 gates via disclosed same-byte image/cache adapters PASS |
+| AC-001-01/05 | Official cold-clone and independent developer reproduction | UNVERIFIED; must publish/integrate then use NEW clone; parent Feature001/Day1 PARTIAL |
+
 **D1-08 Task D —2026-10-17: scoped DONE / AC-001-03 PASS.**
 [Evidence](../implementation/d1-08-ci-red-green-evidence.md), Draft PR #13 (unmerged).
 

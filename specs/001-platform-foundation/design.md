@@ -1,5 +1,16 @@
 # Technical Design 001: Nền tảng repository, deploy và kiến trúc
 
+## Approved isolated verification bootstrap — 2026-10-17
+
+[ADR-0007](../../docs/architecture/decisions/ADR-0007-isolated-verification-bootstrap.md)
+records explicit owner approval for additive standalone Compose/CLI/bootstrap,
+unique session/database/roles/volumes/network, random loopback ports, controlled
+environment/config, immutable synthetic private settings and captured-ID cleanup.
+Approved images derive from existing sources; no developer defaults, production
+behavior, migrations, API/SDK or CI changes. [Implementation evidence](../../docs/implementation/ac-001-01-isolated-bootstrap-evidence.md)
+does not close AC-001-01: a new clone from the later reviewed/integrated baseline
+must complete all gates. Original REQ/AC below are unchanged; full001/Day1 PARTIAL.
+
 ## Approved D1-08 Task C — isolated PostgreSQL/Flyway Testcontainers
 
 [ADR-0006](../../docs/architecture/decisions/ADR-0006-testcontainers-verification.md)
