@@ -1,7 +1,7 @@
 # D1-08 Task D — controlled architecture CI red-then-fixed
 
-Execution: 2026-10-17, Asia/Saigon. Status: RED_VERIFIED / GREEN_PENDING.
-AC-001-03 remains PARTIAL until actual hosted GREEN is verified.
+Execution: 2026-10-17, Asia/Saigon. Status: DONE for the approved Task D experiment.
+AC-001-03: PASS, actual paired hosted RED and GREEN verified.
 Feature 001, D1-08 and Day 1 remain PARTIAL; original REQ/AC are unchanged.
 
 ## Authorization and baseline
@@ -50,12 +50,41 @@ error. PostgreSQL credential and owned Testcontainers cleanup audits passed.
 The corrective commit deletes the temporary fixture and restores the original
 negative-test method and CI reporter implementation exactly to baseline. It does
 not amend, remove or rewrite the RED commit. Only this new evidence file remains
-different from baseline. Hosted GREEN is pending at this checkpoint.
+different from baseline at the corrective checkpoint.
 
-Expected baseline: Architecture 23/0 skips, H2 48/17 skips, PostgreSQL 73/5 skips
-and 25 guard tests per job. Five Redis/RabbitMQ tests remain expected skips; full
-infrastructure CI is not claimed. A documentation checkpoint will record actual
-corrective SHA, GREEN run, exact inventory and artifact digests after verification.
+Corrective commit: `c52819fe839634ee755fb37d8633542ae01eb6f2`.
+[Hosted GREEN run 39007163856](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/39007163856),
+attempt 1, pull_request, SUCCESS. Synthetic checkout:
+`97b9b70ae502f6f336b047d0015380013f3868a3`.
+
+| Required job | PASS | FAIL/ERROR | SKIP | Guards | Artifact ID |
+|---|---:|---:|---:|---:|---|
+| Architecture gate | 23 | 0 | 0 | 25 PASS | 12091407845 |
+| Backend default / H2 | 48 | 0 | 17 | 25 PASS | 12091054519 |
+| Backend PostgreSQL 18 | 73 | 0 | 5 | 25 PASS | 12090469435 |
+
+Exact class/method/status inventory matched committed expected suites, with no
+missing/extra/duplicate tests. The corrected method passed. PostgreSQL includes
+7 real Testcontainers/Flyway tests, 6 policy tests, 4 Task A JDBC safety tests and
+8 existing PostgreSQL foundation tests. The 12 architecture fixtures comprise
+11 forbidden cases and 1 positive control. H2 skips 8 PG foundation + 4 PG safety
++ 5 Redis/RabbitMQ tests; PostgreSQL skips only those 5 Redis/RabbitMQ tests.
+Task C is excluded before H2 discovery, not counted as new skips.
+
+All uploads succeeded; PG prepare/cleanup, credential and owned cleanup audits
+passed. No runtime/config/network/compiler/parser failure was used to create RED.
+Five Redis/RabbitMQ tests remain local-only evidence, not hosted PASS.
+
+Local checks: focused Wrapper clean verify exited 1 with 22 PASS/1 intended FAIL
+before correction, then exited 0 with 23/23 PASS after correction; matching report
+guard rejected RED and accepted GREEN. Python guard suite 25/25, Bash syntax and
+git diff --check passed. Initial sandbox cache access failed before tests; rerun
+with permitted cache access produced the actual results above. No cache deleted.
+
+Byte comparisons and Git baseline diff confirm original test/reporter restored,
+temporary fixture absent, and no production/test/script/workflow/config/pin changes
+remain. Task D metadata/evidence updates are documentation only. RED history is
+retained; develop is unchanged and no experiment merge is authorized.
 
 ## Ruleset and privacy
 
@@ -88,3 +117,16 @@ vulnerability certification or full onboarding/config acceptance is claimed.
 Keep this PR Draft and unmerged. After separate approval, transfer only final
 Markdown evidence/Task D metadata from a clean develop branch into a documentation
 PR. Do not merge/cherry-pick experimental RED history into develop.
+
+## Artifact integrity manifest
+
+Archive SHA-256 values below were checked against GitHub artifact metadata.
+
+| Phase | Artifact | SHA-256 |
+|---|---|---|
+| RED | [backend-postgres-1](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/39006911313/artifacts/12091526140) | `4a53aa156873db3a31e2e9cd10a35eb5510623f78622ebfdc35f5b3dfe7cf7f9` |
+| RED | [backend-h2-1](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/39006911313/artifacts/12090884612) | `b10d41abd4e7f874b5112dd5db842bd443e43b04c1f819641da41ec59b39510f` |
+| RED | [backend-architecture-1](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/39006911313/artifacts/12090764716) | `fc9a5d89e1bac479e82c86d33098eb5030c27b0a6f1137294f4d113b0fb5587f` |
+| GREEN | [backend-architecture-1](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/39007163856/artifacts/12091407845) | `6b6b8ab1f6908072508f6f19b6aec2a7277ca26cea81276bda0875b3ce4c5b35` |
+| GREEN | [backend-h2-1](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/39007163856/artifacts/12091054519) | `6e628a41febecb5596f09d4e7a6aff54a5053d0f9ed86a088cc79fb37e0c2d03` |
+| GREEN | [backend-postgres-1](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/39007163856/artifacts/12090469435) | `3fff3a2d972936f854e88ef207210488bf26fcbb54bf00026c07bc1234f382d2` |
