@@ -1,5 +1,22 @@
 # Implementation Tasks 001: Nền tảng repository, deploy và kiến trúc
 
+## D1-08 Task C — independent Testcontainers PostgreSQL/Flyway
+
+**LOCAL_DONE / READY_FOR_REVIEW**,2026-10-17; [decision](../../docs/architecture/decisions/ADR-0006-testcontainers-verification.md),
+[evidence](../../docs/implementation/d1-08-testcontainers-evidence.md).
+
+- [x] Gate0 source/docs reconciliation and real canary with only approved PG/Ryuk identities.
+- [x] Real non-privileged Ryuk, socket/loopback/ownership/no-reuse/checks-on policy; no Alpine/fallback.
+- [x] Independent JUnit/JDBC suite7 tests: PG18, empty V1/V2, rerun/upgrade/checksums/data, ownership/permissions, restart persistence.
+- [x] Six meaningful policy tests;25 report/privacy/cleanup guards and real credential/cleanup audits.
+- [x] Controlled Maven profile in existing PostgreSQL CI script; no H2 discovery/skips for Task C, exact required reports fail closed.
+- [x] Local regression: Arch23, H2 48/17, PG73/5 incl4 Task A safety tests, OAS41/wire27 PASS;18-file evidence/runbook/traceability.
+- [ ] Publish and verify Task C on actual hosted PR/develop CI when authorized; currently UNVERIFIED.
+
+No commit/push/PR in this task. Task A/B and D1-07 scoped DONE per approved context;
+earlier checkpoints below are historical. D1-08, full T-001-09, Feature001 and Day1
+remain PARTIAL; no original REQ/AC or full-feature checklist criteria changed.
+
 ## D1-08 Task B — approved foundation execution
 
 Status: LOCAL_DONE / READY_FOR_REVIEW for approved scope. Approval B-01..B-09 from user;

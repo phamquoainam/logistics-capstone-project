@@ -1,5 +1,67 @@
 # Local Development Runbook — repository hiện hữu
 
+## D1-08 Task C — Testcontainers PostgreSQL/Flyway
+
+Requires the approved Java21/Wrapper3.10.0/Docker Linux backend. Boot4.1.1 manages
+Testcontainers2.0.5. [ADR/pins](../architecture/decisions/ADR-0006-testcontainers-verification.md),
+[verified commands/results](../implementation/d1-08-testcontainers-evidence.md).
+Do not point this suite at a developer DB or volume. No fixed5433 port and no
+Spring application context. Only PG/Ryuk pinned images are approved; Ryuk socket
+access remains high trust even in non-privileged mode.
+
+For each local run create a **new private directory** under ignored `.demo`.
+On Windows protect its DACL for the current owner/SYSTEM/Administrators; on POSIX
+use0700. Never reuse a directory containing task-c-secrets.txt/task-c-runtime.txt.
+Do not put credential evidence in tracked folders or public artifact directories.
+
+PowerShell from repository root (creates only a new private run directory):
+
+```powershell
+$taskCDocker = (Get-Command docker -ErrorAction SilentlyContinue).Source
+if (-not $taskCDocker) {
+    $taskCDocker = Join-Path $env:LOCALAPPDATA 'Programs\DockerDesktop\resources\bin\docker.exe'
+}
+$taskCRun = Join-Path (Get-Location) ('.demo/task-c-' + [guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Path $taskCRun -ErrorAction Stop | Out-Null
+$taskCAcl = Get-Acl -LiteralPath $taskCRun
+$taskCAcl.SetAccessRuleProtection($true, $false)
+foreach ($taskCSid in @([System.Security.Principal.WindowsIdentity]::GetCurrent().User.Value, 'S-1-5-18', 'S-1-5-32-544')) {
+    $taskCRule = [System.Security.AccessControl.FileSystemAccessRule]::new(
+        [System.Security.Principal.SecurityIdentifier]::new($taskCSid), 'FullControl',
+        'ContainerInherit,ObjectInherit', 'None', 'Allow')
+    $taskCAcl.AddAccessRule($taskCRule)
+}
+Set-Acl -LiteralPath $taskCRun -AclObject $taskCAcl
+$env:DOCKER_HOST = (& $taskCDocker context inspect --format '{{.Endpoints.docker.Host}}')
+$env:TESTCONTAINERS_HOST_OVERRIDE = '127.0.0.1'
+$env:TESTCONTAINERS_RYUK_DISABLED = 'false'
+$env:TESTCONTAINERS_RYUK_CONTAINER_PRIVILEGED = 'false'
+$env:TESTCONTAINERS_REUSE_ENABLE = 'false'
+$env:TESTCONTAINERS_CHECKS_DISABLE = 'false'
+$env:TASK_C_PRIVATE_DIRECTORY = $taskCRun
+Set-Location app/backend
+.\mvnw.cmd -Ptestcontainers-postgres '-Dtest=PostgresTestcontainersTests,TestcontainersRuntimePolicyTests' clean verify
+```
+
+Use only the existing local named-pipe/Unix endpoint; do not expose Docker TCP or
+change global Docker settings. Unknown helper, privileged/reuse/check-bypass,
+Docker/Ryuk unavailable or foreign ownership must fail. Do not disable checks,
+execute Alpine3.17 or change approved pins to fix a failure.
+
+Default `mvnw clean verify` excludes task-c before test discovery. Full PostgreSQL
+regression additionally needs the **existing owned CI harness** environment and
+`-Ddemo.test.database=postgres`; do not substitute native/developer credentials.
+`scripts/ci/run-backend.sh postgres` provisions private evidence settings and
+enables the profile within the existing CI job; it does not replace the old DB harness.
+
+The anonymous PG18 volume persists through restart and is removed on teardown.
+Fixture JDBC URLs re-read the owned container's live random port after restart.
+Wait for Ryuk exit; inspect only recorded owned IDs/volume. Never prune or remove
+unrelated resources. Private raw Maven/Surefire output is not an upload artifact;
+the CI guard publishes allowlisted summary/tests only and separately checks
+generated credential leaks and leftover owned resources. New hosted Task C
+execution is UNVERIFIED until an authorized PR run.
+
 ## D1-08 Task A - PostgreSQL-aware probes
 
 Supported HTTP runtime profiles: demo (H2) and demo,postgres. Boot-managed

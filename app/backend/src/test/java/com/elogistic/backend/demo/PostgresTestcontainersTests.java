@@ -1,0 +1,91 @@
+package com.elogistic.backend.demo;
+
+import com.elogistic.backend.testsupport.PostgresTestcontainersSupport;
+import com.elogistic.backend.testsupport.PostgresTestcontainersSupport.Database;
+import java.sql.*;
+import java.util.*;
+import org.flywaydb.core.Flyway;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.parallel.*;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.postgresql.PostgreSQLContainer;
+import static org.junit.jupiter.api.Assertions.*;
+
+@Tag("task-c")
+@Testcontainers
+@Execution(ExecutionMode.SAME_THREAD)
+class PostgresTestcontainersTests {
+    @Container static final PostgreSQLContainer POSTGRES=PostgresTestcontainersSupport.container();
+
+    @AfterAll static void verifyFinalPolicy() throws Exception { PostgresTestcontainersSupport.verifyRuntime(POSTGRES); }
+
+    @Test void actualPostgres18UsesPinnedIsolatedContainer() throws Exception {
+        PostgresTestcontainersSupport.verifyRuntime(POSTGRES);
+        try(Connection c=DriverManager.getConnection(PostgresTestcontainersSupport.currentUrl(POSTGRES,"postgres"),POSTGRES.getUsername(),POSTGRES.getPassword());Statement s=c.createStatement()) {
+            assertEquals("PostgreSQL",c.getMetaData().getDatabaseProductName());assertEquals(18,c.getMetaData().getDatabaseMajorVersion());
+            for(String setting:List.of("fsync","synchronous_commit")) try(ResultSet r=s.executeQuery("SHOW "+setting)) { assertTrue(r.next());assertEquals("on",r.getString(1)); }
+        }
+    }
+
+    @Test void coldStartAppliesV1AndV2() throws Exception {
+        Database db=PostgresTestcontainersSupport.database(POSTGRES);
+        Flyway flyway=db.flyway("latest");assertEquals(0,flyway.info().applied().length);
+        assertEquals(2,flyway.migrate().migrationsExecuted);assertTrue(flyway.validateWithResult().validationSuccessful);
+        assertEquals(List.of("1","2"),Arrays.stream(flyway.info().applied()).map(m->m.getVersion().toString()).toList());
+    }
+
+    private List<String> checksums(Flyway flyway) { return Arrays.stream(flyway.info().applied()).map(m->m.getVersion()+":"+m.getChecksum()).toList(); }
+    private void marker(Database db) throws SQLException {
+        try(Connection c=db.migrationConnection();Statement s=c.createStatement()) {
+            s.execute("SET ROLE "+db.owner());s.execute("CREATE TABLE platform.task_c_marker(id integer PRIMARY KEY,value text NOT NULL)");
+            s.execute("INSERT INTO platform.task_c_marker VALUES (1,'preserve-task-c')");
+        }
+    }
+    private void assertMarker(Database db) throws SQLException {
+        try(Connection c=db.migrationConnection();Statement s=c.createStatement()) {
+            s.execute("SET ROLE "+db.owner());try(ResultSet r=s.executeQuery("SELECT value FROM platform.task_c_marker WHERE id=1")) { assertTrue(r.next());assertEquals("preserve-task-c",r.getString(1)); }
+        }
+    }
+
+    @Test void validateAndRerunPreserveDataAndChecksums() throws Exception {
+        Database db=PostgresTestcontainersSupport.database(POSTGRES);Flyway flyway=db.flyway("latest");flyway.migrate();marker(db);
+        var before=checksums(flyway);flyway.validate();assertEquals(0,flyway.migrate().migrationsExecuted);
+        assertEquals(before,checksums(flyway));assertMarker(db);
+    }
+
+    @Test void upgradeV1ToV2PreservesExistingData() throws Exception {
+        Database db=PostgresTestcontainersSupport.database(POSTGRES);assertEquals(1,db.flyway("1").migrate().migrationsExecuted);marker(db);
+        Flyway latest=db.flyway("latest");assertEquals(1,latest.migrate().migrationsExecuted);latest.validate();
+        assertEquals(2,latest.info().applied().length);assertMarker(db);assertEquals(0,latest.migrate().migrationsExecuted);
+    }
+
+    @Test void schemasAndObjectsBelongToOwner() throws Exception {
+        Database db=PostgresTestcontainersSupport.database(POSTGRES);db.flyway("latest").migrate();
+        try(Connection c=db.migrationConnection();Statement s=c.createStatement()) {
+            try(ResultSet r=s.executeQuery("SELECT session_user,current_user")) { assertTrue(r.next());assertEquals(db.migrator(),r.getString(1));assertEquals(db.migrator(),r.getString(2)); }
+            s.execute("SET ROLE "+db.owner());
+            try(ResultSet r=s.executeQuery("SELECT current_user")) { assertTrue(r.next());assertEquals(db.owner(),r.getString(1)); }
+            try(ResultSet r=s.executeQuery("SELECT count(*) FROM pg_namespace WHERE nspowner=(SELECT oid FROM pg_roles WHERE rolname='"+db.owner()+"') AND nspname IN ('platform','identity','merchant','orders','pricing','warehouse','dispatch','finance','routing','notification')")) { assertTrue(r.next());assertEquals(10,r.getInt(1)); }
+            try(ResultSet r=s.executeQuery("SELECT count(*) FROM pg_tables WHERE tableowner='"+db.owner()+"' AND schemaname IN ('platform','identity','merchant','orders')")) { assertTrue(r.next());assertEquals(6,r.getInt(1)); }
+        }
+    }
+
+    @Test void runtimeCannotDdlAssumeOwnerOrReadHistory() throws Exception {
+        Database db=PostgresTestcontainersSupport.database(POSTGRES);db.flyway("latest").migrate();
+        for(String statement:List.of("CREATE SCHEMA forbidden_runtime","CREATE TABLE orders.forbidden_runtime(id integer)","CREATE TABLE public.forbidden_runtime(id integer)","ALTER TABLE orders.demo_shipment ADD COLUMN forbidden integer","DROP TABLE orders.demo_event","TRUNCATE orders.demo_shipment","SET ROLE "+db.owner(),"SELECT * FROM platform.flyway_schema_history")) {
+            try(Connection c=db.runtimeConnection();Statement s=c.createStatement()) { assertEquals(db.runtime(),c.getMetaData().getUserName());assertEquals("42501",assertThrows(SQLException.class,()->s.execute(statement)).getSQLState()); }
+        }
+        try(Connection c=db.runtimeConnection();Statement s=c.createStatement()) {
+            try(ResultSet r=s.executeQuery("SELECT rolcanlogin FROM pg_roles WHERE rolname='"+db.owner()+"'")) { assertTrue(r.next());assertFalse(r.getBoolean(1)); }
+            try(ResultSet r=s.executeQuery("SELECT bool_or(rolsuper OR rolcreatedb OR rolcreaterole) FROM pg_roles WHERE rolname IN ('"+db.runtime()+"','"+db.migrator()+"')")) { assertTrue(r.next());assertFalse(r.getBoolean(1)); }
+        }
+    }
+
+    @Test void restartPreservesCommittedDataAndHistory() throws Exception {
+        Database db=PostgresTestcontainersSupport.database(POSTGRES);Flyway flyway=db.flyway("latest");flyway.migrate();marker(db);var before=checksums(flyway);
+        String id=POSTGRES.getContainerId();PostgresTestcontainersSupport.restart(POSTGRES);
+        assertEquals(id,POSTGRES.getContainerId());assertMarker(db);assertEquals(before,checksums(db.flyway("latest")));
+        db.flyway("latest").validate();assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);
+    }
+}

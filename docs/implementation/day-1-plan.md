@@ -1,5 +1,18 @@
 # Day 1 — Existing Codebase Assessment, Baseline Verification & SDD Implementation Plan
 
+**D1-08 Task C —2026-10-17: LOCAL_DONE / READY_FOR_REVIEW for approved scope.**
+[ADR-0006](../architecture/decisions/ADR-0006-testcontainers-verification.md),
+[evidence/inventory](d1-08-testcontainers-evidence.md). Gate0 and real Windows
+Docker canary PASS under approved PostgreSQL/Ryuk pins, non-privileged Ryuk,
+socket-only helper, loopback random ports, checks on/no reuse/no Alpine.
+Standalone JUnit/JDBC/Flyway suite7 + policy6 PASS; final PG73+5 named skips,
+H2 unchanged48+17, architecture23, report/privacy/cleanup guards25, OpenAPI41,
+wire27/108 responses/11 operations PASS. Existing harness/V1/V2/business behavior
+and required checks unchanged. Task C remote CI UNVERIFIED; no publish authorized.
+Task A/B integrated DONE and D1-07 DONE per approved context; older headings below
+are snapshots. D1-08/Feature001/Day1 remain PARTIAL: full/independent onboarding,
+literal red CI, broader CI and security/config gates remain open.
+
 **D1-08 Task B — 2026-10-17: LOCAL_DONE / READY_FOR_REVIEW for approved scope.**
 User approved B-01..B-09, exact Redis/Rabbit pins, Redis AGPLv3 and explicit full
 profile; [decision](../architecture/decisions/ADR-0005-foundation-dependencies.md),
