@@ -36,6 +36,34 @@ case "$mode" in
 esac
 code=0
 if bash ./mvnw "${args[@]}" clean verify > "$private/maven.log" 2>&1; then code=0; else code=$?; fi
+# Temporary AC-001-03 reporter: only an exact, allowlisted ArchUnit witness.
+# Does not affect Maven exit status, report guards or artifact policy.
+if [[ "$code" != 0 ]]; then
+  python3 - "$code" <<'PY'
+import re, sys, xml.etree.ElementTree as ET
+from pathlib import Path
+suite = 'com.elogistic.backend.architecture.ArchitectureNegativeFixtureTests'
+source = 'com.elogistic.backend.finance.internal.application.ActualCiForbiddenDependency'
+target = 'com.elogistic.backend.orders.internal.infrastructure.ShipmentRepository'
+path = Path('target/surefire-reports') / ('TEST-' + suite + '.xml')
+pattern = (re.escape('Forbidden cross-module implementation dependency: ' + source + ' -> ' + target)
+           + r'; Field <' + re.escape(source) + r'\.forbidden> has type <' + re.escape(target)
+           + r'> in \(ActualCiForbiddenDependency\.java:\d+\)')
+try:
+    root = ET.parse(path).getroot()
+    for case in root.findall('testcase'):
+        if case.get('classname') != suite or case.get('name') != 'financeCannotUseOrderInternalRepository':
+            continue
+        failure = case.find('failure')
+        if failure is not None and failure.get('type') == 'java.lang.AssertionError':
+            for line in (failure.text or '').splitlines():
+                if re.fullmatch(pattern, line):
+                    print('AC-001-03 actual ArchUnit witness: ' + line)
+                    print('AC-001-03 Maven exit status: ' + str(int(sys.argv[1])))
+except (OSError, ET.ParseError):
+    print('AC-001-03 witness unavailable; no private diagnostics published')
+PY
+fi
 # MockMvc failure diagnostics can contain bearer tokens. Never stream or upload raw logs/XML.
 if ! python3 "$root/scripts/ci/verify-reports.py" --source target/surefire-reports \
   --output "$public" --mode "$mode" --maven-exit "$code"; then code=1; fi

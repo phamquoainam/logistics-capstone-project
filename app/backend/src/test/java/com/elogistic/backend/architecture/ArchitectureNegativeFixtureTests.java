@@ -28,8 +28,8 @@ class ArchitectureNegativeFixtureTests {
     }
 
     @Test void financeCannotUseOrderInternalRepository() {
-        detects(ArchitectureRules.MODULE_BOUNDARIES, "com.elogistic.backend.orders.internal.infrastructure.ShipmentRepository",
-            NegativeInternalDependency.class);
+        ArchitectureRules.MODULE_BOUNDARIES.check(
+            new ClassFileImporter().importClasses(ActualCiForbiddenDependency.class));
     }
     @Test void identityCannotCallMerchantEvenThroughPublicApi() {
         detects(ArchitectureRules.MODULE_DIRECTION, "Unapproved module direction", NegativeModuleDirection.class);
