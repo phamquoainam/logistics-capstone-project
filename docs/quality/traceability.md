@@ -1,5 +1,21 @@
 # Traceability Matrix (living document)
 
+**D1-08 Task C —2026-10-17: LOCAL_DONE / READY_FOR_REVIEW.**
+[Decision](../architecture/decisions/ADR-0006-testcontainers-verification.md),
+[exact method/command evidence](../implementation/d1-08-testcontainers-evidence.md).
+
+| Requirement / test | Verified scope | Status |
+|---|---|---|
+| REQ-001-02; TEST-001-TC-01/02/05/06 | Actual pinned PostgreSQL18, empty V1/V2, schema/object ownership, independent restricted roles | PASS local Testcontainers |
+| AC-001-02 subset; TEST-001-TC-03/04/07 | Validate/rerun checksums/data, V1->V2 marker, same-container restart with live random-port rediscovery | PASS local |
+| REQ-001-05 / AC-001-04 subset; TEST-001-TC-POLICY | Immutable allowlist, non-privileged Ryuk/socket/loopback, no reuse/check bypass, credentials and owned cleanup guards | PASS6 Java/25 Python tests plus actual Docker assertions/audits |
+| REQ-001-03 and Task A regression | Architecture23 incl12 fixture tests; PostgreSQL73 incl4 JDBC safety cases,5 named foundation skips; H2 unchanged48/17 | PASS local; exact report inventory |
+| REQ-001-04 contract regression | OAS41, actual wire27/108 responses/11 operations/no mismatch | PASS local |
+| Task C hosted CI / full T-001-09 / AC-001-01/03/04/05 | New profile configured in existing PG job; remote execution, full onboarding, literal red CI and broader security gates | UNVERIFIED/PARTIAL; no parent DONE claim |
+
+Task A/B and D1-07 scoped DONE are approved; older entries below retain historical
+states. Task C does not waive any original requirement, AC or remaining full-quality gate.
+
 **D1-08 Task B — 2026-10-17, LOCAL_DONE / READY_FOR_REVIEW for approved scope.**
 [Approved ADR](../architecture/decisions/ADR-0005-foundation-dependencies.md),
 [exact results](../implementation/d1-08-foundation-evidence.md).

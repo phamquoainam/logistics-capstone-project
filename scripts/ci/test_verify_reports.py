@@ -5,6 +5,7 @@ import io
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 import xml.etree.ElementTree as ET
 
 spec = importlib.util.spec_from_file_location('reports', Path(__file__).with_name('verify-reports.py'))
@@ -23,11 +24,7 @@ class ReportGuardTests(unittest.TestCase):
     def fixture(self, mode='architecture'):
         for old in self.source.glob('TEST-*.xml'):
             old.unlink()  # Only synthetic fixture reports in this TemporaryDirectory.
-        for name, methods in reports.REQUIRED.items():
-            if mode == 'foundation' and name not in reports.FOUNDATION_ONLY:
-                continue
-            if mode == 'architecture' and '.architecture.' not in name:
-                continue
+        for name, methods in reports.expected_suites(mode).items():
             skip = (mode == 'h2' and name in reports.PG_ONLY) or (mode in ('h2', 'postgres') and name in reports.FOUNDATION_ONLY)
             suite = ET.Element('testsuite', name=name, tests=str(len(methods)), failures='0', errors='0',
                                skipped=str(len(methods) if skip else 0))
@@ -74,6 +71,89 @@ class ReportGuardTests(unittest.TestCase):
 
     def test_empty_reports_fail_even_when_maven_succeeds(self):
         self.assertFalse(self.check())
+
+    def test_testcontainers_missing_suite_or_method_fails_postgres(self):
+        for name in reports.TESTCONTAINERS_ONLY:
+            with self.subTest(name=name):
+                self.fixture('postgres')
+                path = self.source / ('TEST-' + name + '.xml')
+                path.unlink()
+                self.assertFalse(self.check('postgres'))
+                self.fixture('postgres')
+                suite = ET.parse(path).getroot()
+                suite.remove(suite.find('testcase'))
+                suite.set('tests', str(len(suite.findall('testcase'))))
+                self.save(suite)
+                self.assertFalse(self.check('postgres'))
+
+    def test_testcontainers_skips_fail_postgres(self):
+        self.fixture('postgres')
+        name = reports.BASE + 'demo.PostgresTestcontainersTests'
+        suite = ET.parse(self.source / ('TEST-' + name + '.xml')).getroot()
+        ET.SubElement(suite.find('testcase'), 'skipped')
+        suite.set('skipped', '1')
+        self.save(suite)
+        self.assertFalse(self.check('postgres'))
+
+    def test_testcontainers_reports_are_not_accepted_in_h2(self):
+        self.fixture('postgres')
+        self.assertFalse(self.check('h2'))
+
+    def test_generated_credentials_are_checked_without_disclosure(self):
+        secret = 'synthetic_task_c_credential_'.ljust(43, 'x')
+        path = self.source / 'credentials-private.txt'
+        path.write_text(secret + '\n')
+        log = self.source / 'private-diagnostic.txt'
+        log.write_text('safe metadata')
+        self.assertTrue(reports.audit_task_c_credentials(path, [log]))
+        log.write_text('unsafe: ' + secret)
+        self.assertFalse(reports.audit_task_c_credentials(path, [log]))
+
+    def test_missing_empty_or_malformed_credential_evidence_fails_closed(self):
+        path = self.source / 'missing-private.txt'
+        log = self.source / 'diagnostic.txt'
+        log.write_text('safe')
+        self.assertFalse(reports.audit_task_c_credentials(path, [log]))
+        for content in ('', '\n', 'bad\n'):
+            path.write_text(content)
+            self.assertFalse(reports.audit_task_c_credentials(path, [log]))
+        path.write_text('x' * 43 + '\n')
+        self.assertFalse(reports.audit_task_c_credentials(path, []))
+        self.assertFalse(reports.audit_task_c_credentials(path, [path]))
+
+    def runtime_evidence(self):
+        path = self.source / 'runtime.txt'
+        path.write_text('anonymousVolume=' + 'c' * 64 + '\n'
+                        + 'image=approved id=' + 'a' * 64 + ' privileged=false ports=loopback\n'
+                        + 'image=approved id=' + 'b' * 64 + ' privileged=false ports=loopback\n'
+                        + 'taskRun=11111111-1111-1111-1111-111111111111\n'
+                        + 'session=22222222-2222-2222-2222-222222222222\n')
+        return path
+
+    def test_cleanup_audit_requires_complete_evidence(self):
+        self.assertFalse(reports.audit_task_c_cleanup(self.source / 'missing'))
+        path = self.runtime_evidence()
+        path.write_text(path.read_text().replace('taskRun=', 'invalid='))
+        self.assertFalse(reports.audit_task_c_cleanup(path))
+
+    def test_cleanup_audit_is_read_only_and_accepts_no_owned_resources(self):
+        with patch.object(reports.subprocess, 'run') as run:
+            run.return_value.returncode = 0
+            run.return_value.stdout = ''
+            self.assertTrue(reports.audit_task_c_cleanup(self.runtime_evidence(), timeout=0))
+            self.assertEqual(3, run.call_count)
+            for call in run.call_args_list:
+                self.assertIn(call.args[0][1], ('ps', 'volume'))
+                self.assertFalse(set(call.args[0]).intersection({'rm', 'prune', 'stop', 'kill'}))
+
+    def test_cleanup_audit_rejects_leaked_resources_or_docker_failure(self):
+        with patch.object(reports.subprocess, 'run') as run:
+            for outputs in (('a' * 64, '', ''), ('', 'c' * 64, ''), ('', '', 'd' * 64)):
+                run.side_effect = [reports.subprocess.CompletedProcess([], 0, stdout=value) for value in outputs]
+                self.assertFalse(reports.audit_task_c_cleanup(self.runtime_evidence(), timeout=0))
+            run.side_effect = None
+            run.return_value.returncode = 1
+            self.assertFalse(reports.audit_task_c_cleanup(self.runtime_evidence(), timeout=0))
 
     def test_missing_health_suite_fails_full_backend_modes(self):
         for mode in ('h2', 'postgres'):

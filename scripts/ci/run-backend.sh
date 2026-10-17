@@ -24,7 +24,15 @@ args=(-B -ntp -Dstyle.color=never --settings "$root/scripts/ci/maven-settings.xm
       "-Dmaven.repo.local=$MAVEN_USER_HOME/repository" -Ddebug=false -Dtrace=false)
 case "$mode" in
   architecture) args+=('-Dtest=ArchitectureTests,ArchitectureNegativeFixtureTests') ;;
-  postgres) args+=(-Ddemo.test.database=postgres) ;;
+  postgres)
+    args+=(-Ddemo.test.database=postgres -Ptestcontainers-postgres)
+    export TASK_C_PRIVATE_DIRECTORY="$private"
+    export TESTCONTAINERS_RYUK_DISABLED=false
+    export TESTCONTAINERS_RYUK_CONTAINER_PRIVILEGED=false
+    export TESTCONTAINERS_REUSE_ENABLE=false
+    export TESTCONTAINERS_CHECKS_DISABLE=false
+    export TESTCONTAINERS_HOST_OVERRIDE=127.0.0.1
+    ;;
 esac
 code=0
 if bash ./mvnw "${args[@]}" clean verify > "$private/maven.log" 2>&1; then code=0; else code=$?; fi
@@ -41,5 +49,22 @@ print('Temporary database credential log audit: ' + ('FAIL' if leak else 'PASS')
 raise SystemExit(1 if leak else 0)
 PY
 then code=1; fi
+if [[ "$mode" == postgres ]]; then
+  if ! python3 - "$root/scripts/ci/verify-reports.py" "$private" "$public" <<'PY'
+import importlib.util, sys
+from pathlib import Path
+spec = importlib.util.spec_from_file_location('reports', sys.argv[1])
+reports = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(reports)
+private, public = Path(sys.argv[2]), Path(sys.argv[3])
+paths = [private / 'maven.log', *Path('target/surefire-reports').glob('*'), *public.glob('*')]
+ok = reports.audit_task_c_credentials(private / 'task-c-secrets.txt', paths)
+print('Generated Testcontainers credential privacy audit: ' + ('PASS' if ok else 'FAIL'))
+cleanup = reports.audit_task_c_cleanup(private / 'task-c-runtime.txt')
+print('Testcontainers owned resource cleanup audit: ' + ('PASS' if cleanup else 'FAIL'))
+raise SystemExit(0 if ok and cleanup else 1)
+PY
+  then code=1; fi
+fi
 if [[ "$code" != 0 ]]; then echo 'FAIL: private Maven diagnostics retained on runner; raw logs are not artifacts'; fi
 exit "$code"

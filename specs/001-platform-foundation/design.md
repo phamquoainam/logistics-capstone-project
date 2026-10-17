@@ -1,5 +1,21 @@
 # Technical Design 001: Nền tảng repository, deploy và kiến trúc
 
+## Approved D1-08 Task C — isolated PostgreSQL/Flyway Testcontainers
+
+[ADR-0006](../../docs/architecture/decisions/ADR-0006-testcontainers-verification.md)
+records the explicit Task C authorization and successful runtime-helper canary.
+Boot-managed2.0.5 test dependencies; independent JUnit/JDBC/Flyway suite with
+approved PG18.6/Ryuk digest pins, non-privileged Ryuk, random loopback ports,
+strict helper allowlist, startup checks on/no reuse. Socket access is high trust
+and limited to Ryuk. No application Spring context or service-connection override.
+Independent role/database fixtures, unchanged V1/V2, fresh anonymous PG18 volume,
+fsync on, live binding refresh after restart, private credential/owned cleanup
+audits. Default/H2 excludes task-c before discovery; explicit Maven profile runs
+it in the existing PostgreSQL CI job with exact reports. Existing harness,
+production behavior, workflow/check names/ruleset unchanged. [Local evidence](../../docs/implementation/d1-08-testcontainers-evidence.md)
+PASS; hosted Task C runtime UNVERIFIED. Full Feature001/Day1 remain PARTIAL;
+original requirements/acceptance text below is unchanged.
+
 ## Approved D1-08 Task B — full dependency foundation, 2026-10-17
 
 Explicit user approval B-01..B-09 is recorded in
