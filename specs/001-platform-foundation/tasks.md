@@ -1,5 +1,22 @@
 # Implementation Tasks 001: Nền tảng repository, deploy và kiến trúc
 
+## D1-08 Task D — isolated actual CI red-then-fixed experiment
+
+**DONE in approved experiment scope**, 2026-10-17; AC-001-03 PASS.
+[Evidence](../../docs/implementation/d1-08-ci-red-green-evidence.md).
+
+- [x] Clean develop f8ba871 baseline; isolated branch and one Draft PR #13.
+- [x] Compiled test-only Finance -> Orders internal repository fixture checked by unchanged production MODULE_BOUNDARIES.
+- [x] Actual hosted RED73dac74/run39006911313: exactly intended ArchUnit failure, Maven exit1; exact inventory and privacy guards retained.
+- [x] Normal corrective c52819f deletes fixture and restores original test/reporter; no history rewrite.
+- [x] Hosted GREEN39007163856: architecture23/0, H2 48/17, PG73/5; guards25 each, artifacts/privacy/cleanup verified.
+- [x] Final implementation diff empty; only Task D Markdown evidence/metadata remain.
+- [ ] Transfer sanitized documentation through a separately approved documentation-only PR; experiment PR must stay Draft/unmerged.
+
+Task A/B/C and D1-07 are scoped DONE per integrated owner-approved context.
+Older status blocks below are historical; no original task/REQ/AC is removed.
+D1-08, Feature001 and Day1 remain PARTIAL. No Task E/F implementation here.
+
 ## D1-08 Task C — independent Testcontainers PostgreSQL/Flyway
 
 **LOCAL_DONE / READY_FOR_REVIEW**,2026-10-17; [decision](../../docs/architecture/decisions/ADR-0006-testcontainers-verification.md),

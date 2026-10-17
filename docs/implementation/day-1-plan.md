@@ -1,5 +1,18 @@
 # Day 1 — Existing Codebase Assessment, Baseline Verification & SDD Implementation Plan
 
+**D1-08 Task D — 2026-10-17: DONE for the approved isolated CI experiment; AC-001-03 PASS.**
+[Evidence](d1-08-ci-red-green-evidence.md): Draft PR #13, actual hosted RED
+39006911313 on 73dac74 (real Finance-to-Orders-internal dependency), followed by
+corrective c52819f and hosted GREEN39007163856. Architecture23/0, H2 48/17,
+PostgreSQL73/5, guards25 per job; exact method/status inventories verified.
+Temporary fixture deleted; test/reporter restored to baseline. Final diff is
+Task D documentation only. PR stays Draft/unmerged; develop is unchanged.
+Task A/B/C and D1-07 remain scoped DONE per integrated owner-approved context.
+Earlier headings below are historical snapshots, including old remote/red-CI
+UNVERIFIED statements. D1-08/Feature001/Day1 remain PARTIAL: full clean-clone and
+independent onboarding, configuration/security acceptance and coverage/risk
+disposition remain open. No Task E/F implementation or acceptance change.
+
 **D1-08 Task C —2026-10-17: LOCAL_DONE / READY_FOR_REVIEW for approved scope.**
 [ADR-0006](../architecture/decisions/ADR-0006-testcontainers-verification.md),
 [evidence/inventory](d1-08-testcontainers-evidence.md). Gate0 and real Windows

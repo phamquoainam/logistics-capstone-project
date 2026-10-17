@@ -1,5 +1,17 @@
 # Traceability Matrix (living document)
 
+**D1-08 Task D —2026-10-17: scoped DONE / AC-001-03 PASS.**
+[Evidence](../implementation/d1-08-ci-red-green-evidence.md), Draft PR #13 (unmerged).
+
+| Trace | Actual verification | Status |
+|---|---|---|
+| REQ-001-03; AC-001-03; TEST-001-CI-RED-GREEN-01 | Same production MODULE_BOUNDARIES rejects compiled Finance fixture -> Orders internal repository. RED73dac74/run39006911313 fails exactly financeCannotUseOrderInternalRepository, Maven exit1; correction c52819f removes fixture/restores implementation; GREEN39007163856 passes exact inventories | PASS hosted paired experiment; no rule/guard bypass |
+| CI/privacy regression | GREEN architecture23/0, H2 48/17, PG73/5; guards25 each; sanitized reports/digests, credential/owned cleanup checks | PASS within backend coverage; Redis/RabbitMQ5 remain skipped |
+| Integration/full acceptance | Experiment Draft PR remains unmerged; evidence transfer needs separate documentation approval; AC-001-01/04/05 and security/coverage disposition remain open | Feature001/Day1 PARTIAL |
+
+This dated Task D entry supersedes earlier red-experiment UNVERIFIED snapshots
+only; it does not rewrite original REQ/AC, other historical results or Task A/B/C.
+
 **D1-08 Task C —2026-10-17: LOCAL_DONE / READY_FOR_REVIEW.**
 [Decision](../architecture/decisions/ADR-0006-testcontainers-verification.md),
 [exact method/command evidence](../implementation/d1-08-testcontainers-evidence.md).
