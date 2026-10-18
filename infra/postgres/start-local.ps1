@@ -1,8 +1,23 @@
-param([switch]$InitializeOnly)
+param([switch]$InitializeOnly, [ValidateSet('legacy','protected')][string]$CredentialSource = 'legacy')
 $ErrorActionPreference = 'Stop'
 $foundationRoot = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
 $foundationDirectory = Join-Path $foundationRoot '.demo/postgres'
 $foundationSettingsPath = Join-Path $foundationDirectory 'settings.json'
+if ($CredentialSource -eq 'protected') {
+    $protectedPaths = & python -B (Join-Path $foundationRoot 'infra/security/credential_store.py') paths --mode postgres
+    if ($LASTEXITCODE -ne 0) { throw 'Protected PostgreSQL settings unavailable; no legacy fallback.' }
+    $protectedPaths = $protectedPaths | ConvertFrom-Json
+    $foundationSettingsPath = $protectedPaths.'postgres-settings.json'
+    $saved = Get-Content -LiteralPath $foundationSettingsPath -Raw | ConvertFrom-Json
+    foreach ($kind in @('bootstrap','migrator','runtime')) {
+        $value = $saved.PSObject.Properties["${kind}Password"].Value
+        if ([IO.File]::ReadAllText($protectedPaths.PSObject.Properties["$kind-password.txt"].Value) -cne $value) {
+            throw 'Protected PostgreSQL credential consistency check failed; no rotation.'
+        }
+    }
+    if ($InitializeOnly) { return }
+    throw 'Protected PostgreSQL container cutover is not authorized in Phase 1; no Docker operations performed.'
+}
 $dockerCommand = Get-Command docker -ErrorAction SilentlyContinue
 if ($dockerCommand) { $dockerExecutable = $dockerCommand.Source }
 else { $dockerExecutable = Join-Path $env:LOCALAPPDATA 'Programs/DockerDesktop/resources/bin/docker.exe' }

@@ -1,8 +1,14 @@
-param([switch]$InitializeOnly)
+param([switch]$InitializeOnly, [ValidateSet('legacy','protected')][string]$CredentialSource = 'legacy')
 $ErrorActionPreference = 'Stop'
 $demoRepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
 $demoDirectory = Join-Path $demoRepoRoot '.demo'
 $demoSettingsPath = Join-Path $demoDirectory 'settings.json'
+if ($CredentialSource -eq 'protected') {
+    $protectedPaths = & python -B (Join-Path $demoRepoRoot 'infra/security/credential_store.py') paths --mode demo
+    if ($LASTEXITCODE -ne 0) { throw 'Protected Demo settings unavailable; no legacy fallback. Migration requires separate approval.' }
+    $demoSettingsPath = ($protectedPaths | ConvertFrom-Json).'demo-settings.json'
+    if ($InitializeOnly) { return }
+}
 function New-DemoSecret {
     $randomBytes = New-Object byte[] 32
     [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($randomBytes)
@@ -10,6 +16,7 @@ function New-DemoSecret {
 }
 New-Item -ItemType Directory -Path (Join-Path $demoDirectory 'data') -Force | Out-Null
 if (!(Test-Path -LiteralPath $demoSettingsPath)) {
+    if ($CredentialSource -eq 'protected') { throw 'Protected settings missing; no automatic initialization or fallback.' }
     [ordered]@{ tokenSecret=(New-DemoSecret); databasePassword=(New-DemoSecret); adminPassword=(New-DemoSecret); merchantAPassword=(New-DemoSecret); merchantBPassword=(New-DemoSecret); operatorPassword=(New-DemoSecret); disabledPassword=(New-DemoSecret) } |
         ConvertTo-Json | Set-Content -LiteralPath $demoSettingsPath -Encoding UTF8
     Write-Host 'Generated local credentials in ignored .demo/settings.json. Keep this file private.'

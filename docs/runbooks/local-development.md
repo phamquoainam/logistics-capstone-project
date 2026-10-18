@@ -1,5 +1,102 @@
 # Local Development Runbook — repository hiện hữu
 
+## Protected credential store — Phase 1, explicit selection only
+
+Current final review: **REVIEW_PASS_READY_FOR_PR_PREPARATION**. PCS-01/02/03/04
+and PCS-RR-01 are RESOLVED for the bounded Phase 1 contract. Migration and
+AC-001-04 acceptance remain unapproved. Current Windows72 PASS/0 skips;
+Ubuntu59 PASS/13 intentional Windows-only skips after the scoped negative-fixture
+repair. Original Ubuntu failure is retained. This is portable fixture evidence,
+not Linux production support. Prior Web28/lint/source typing/build results are
+retained, not rerun for this correction; hosted backend checks are separate.
+
+The earlier PCS-RR-01 checkpoint was **PCS_RR01_PATCH_READY_FOR_REVIEW**. Security
+presence fields distinguish PRESENT/ABSENT/UNKNOWN with sanitized category/code.
+targetCollision=false requires verified absence of both target and reserved
+parent; a query error is UNKNOWN, not a free destination. Known source namespace
+problems and root owner action still block migration, even when metadata can be
+inspected. No credential-content reads are needed to report those findings.
+
+On UNKNOWN temporary/backup presence, stop: do not retry replace, write a success
+resolution or remove evidence. Journal replay continues to block normal writers;
+only explicit reconciliation with all required evidence verified may proceed.
+There is still no recovery/migration CLI, cutover authority or full power-loss /
+TOCTOU guarantee. Web regression results from the earlier phase are historical.
+
+The earlier corrective PCS-01..04 checkpoint was **CORRECTIVE_PATCH_READY_FOR_REVIEW**;
+the final independent review has since cleared its Phase 1 findings. Metadata controls reserve operation.lock,
+transactions and internal artifact/credential names, including Windows aliases.
+Ordinary metadata names stay compatible. Journal/revision/receipt semantics are
+specified in ADR-0008; no new recovery/migration CLI command is exposed.
+
+Dry-run separates inspectionStatus, ownerCompatibility, namespaceSafety,
+targetCollision, migrationEligibility and requiredOwnerAction. Current developer
+is the default expected owner; exceptions require a reviewed private inventory,
+not adoption of whichever owner is observed. A successful metadata collection
+exit does not mean migration is eligible. Unsafe/missing evidence blocks or is
+UNVERIFIED. Root OWNER_ACTION_REQUIRED and historical retention remain explicit.
+
+Do not remove operation.lock or edit journal files to clear a failure. Live lock
+handles prevent concurrent claims; journal replay blocks normal writers after
+interruption. The library's explicitly invoked reconciliation can accept only
+exact completed poststate or abort exact unchanged prestate. Missing/corrupt
+records and other partial outcomes require separately approved recovery. Keep
+backups/pending/journal evidence private. File flush and process-exit tests are
+not power-loss durability; real migration/cutover remains BLOCKED.
+
+[Decision](../architecture/decisions/ADR-0008-protected-credential-store.md),
+[evidence/limitations](../implementation/ac-001-04-credential-store-evidence.md).
+Normal developer launchers keep `legacy` as default before separately approved
+migration. This does not remediate existing legacy ACL exposure.
+
+Approved target: OS KnownFolder(LocalAppData)/ELogistics-Credentials/
+logistics-capstone-project; no arbitrary LOCALAPPDATA/root override. Protected
+directory/file descriptors are supplied atomically. Credentials are immutable FR;
+nonsecret state uses a separate writable policy and guarded rollback backup.
+
+Read-only inspection from repository root:
+
+```powershell
+python -B infra/security/credential_store.py dry-run
+python -B infra/security/credential_store.py paths --mode demo
+python -B infra/security/credential_store.py paths --mode postgres
+```
+
+Dry-run collects5 active+7 historical metadata records only. Treat its output as
+private: it includes owners/ACLs/NTFS identities. It never creates a destination,
+reads credential bytes or contacts Docker. `paths` requires an already valid
+protected development store; absence fails safely, with no .demo fallback.
+There is no real init/migrate/activate/retire command in Phase 1.
+
+`run-demo.ps1`, `run-postgres-demo.ps1`, `verify-postgres.ps1` and
+`infra/postgres/start-local.ps1` accept `-CredentialSource legacy|protected`.
+Do not use protected runtime commands against developer resources during review.
+Protected start-local `-InitializeOnly` validates only; its container cutover is
+blocked. Existing legacy commands below are not permission to migrate/rebind.
+
+Synthetic-only verification:
+
+```powershell
+python -B -m unittest discover -s infra/security -p "test_*.py" -v
+```
+
+Tests create uniquely owned private fixtures and remove only captured objects.
+No Docker/native builds or developer credentials. On cleanup/identity mismatch,
+preserve diagnostics and stop; no recursive resets or global prune.
+
+Web tests require explicit `C04_CONTEXT` from the existing isolated harness or
+`ELOGISTICS_TEST_SETTINGS_FILE` pointing to a test-only JSON wrapper with
+`purpose: synthetic-web-test` and `settings` containing synthetic merchantA,
+merchantB and admin password fields (keys merchantAPassword, merchantBPassword,
+adminPassword). Never configure both. Raw developer settings are not a supported
+fixture and there is no implicit .demo lookup. No runtime Web behavior changes.
+
+Real migration/retirement requires owner approval, protected byte-preserving
+transfer/rollback receipts, remaining consumer reconciliation, and owner1005
+action for root settings. PostgreSQL bind changes require separately approved
+container recreation with the same volume/data. Keep historical evidence and
+original DACL backups; do not rotate or delete legacy credentials automatically.
+
 ## Approved isolated clean-clone bootstrap
 
 For AC-001-01 use the [session-owned verification runbook](clean-clone-verification.md),

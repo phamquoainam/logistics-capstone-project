@@ -1,5 +1,49 @@
 # Day 1 — Existing Codebase Assessment, Baseline Verification & SDD Implementation Plan
 
+**2026-10-19 — Protected store Phase 1: REVIEW_PASS_READY_FOR_PR_PREPARATION.**
+Final independent review: PCS-01/02/03/04/RR-01 RESOLVED for the approved bounded
+contract. Initial Ubuntu publication58 PASS/1 FAIL/13 skips stopped publication;
+the test-only scoped owner fixture was repaired without changing production
+logic/assertions. Focused GREEN1+adjacent4; full Windows72 PASS/0 skips and
+Ubuntu59 PASS/13 expected Windows-only skips. Web28/lint/source typing/build
+PASS are retained from the preceding publication execution, not rerun here.
+Hosted backend verification remains separate; Linux protected mode unsupported.
+Migration BLOCKED, legacy exposure/root owner action and raw-cache findings OPEN;
+AC-001-04/05 NOT ACCEPTED, Feature001/D1-08/Day1 PARTIAL.
+[Current evidence](ac-001-04-credential-store-evidence.md). Earlier checkpoints follow.
+
+**2026-10-19 — PCS-RR-01 strict presence: PCS_RR01_PATCH_READY_FOR_REVIEW.**
+Security decisions distinguish PRESENT/ABSENT/UNKNOWN; UNKNOWN query failure
+cannot establish collision-free target, successful replace or reconciliation.
+72 local security/native/launcher tests PASS/0 skips; guarded actual dry-run12
+metadata rows/0 credential reads/0 destination writes, eligibility still BLOCKED.
+Web28 PASS is historical, not rerun. PCS-01/02 resolved by prior re-review;
+PCS-03/04/RR-01 corrections await final review. No PR/migration/acceptance claim.
+[Evidence](ac-001-04-credential-store-evidence.md). AC-001-04/05 unaccepted;
+Feature001/D1-08/Day1 PARTIAL. Earlier checkpoints remain below.
+
+**2026-10-18 — Protected-store corrective checkpoint: CORRECTIVE_PATCH_READY_FOR_REVIEW.**
+PCS-01..04 addressed in the bounded synthetic implementation: revision/identity
+rollback, reserved control names, explicit dry-run eligibility and append-only
+replace/reconciliation evidence.57 local Python/native/launcher tests PASS/0 skips;
+28 Web unit tests and lint/src typecheck/build PASS. Actual guarded dry-run remains
+BLOCKED for migration; legacy namespaces unsafe and root owner action required.
+Power-loss durability, real cutover and Linux/hosted validation remain open.
+[Evidence](ac-001-04-credential-store-evidence.md). Not READY_FOR_PR or acceptance;
+AC-001-04/05 unaccepted; Feature001/D1-08/Day1 PARTIAL. Earlier results follow.
+
+**2026-10-18 — AC-001-04 protected-store Phase 1: IMPLEMENTATION_READY_FOR_REVIEW.**
+[Evidence](ac-001-04-credential-store-evidence.md),
+[decision](../architecture/decisions/ADR-0008-protected-credential-store.md).
+Protected KnownFolder helper, explicit legacy/protected selectors and test-only
+Web configuration;36 Python/native/mock-launcher tests and28 Web unit tests PASS,
+Web lint/src typecheck/build PASS. Actual dry-run5 active+7 historical metadata
+rows only:0 credential-content reads/0 destination writes, root owner action.
+No real store/migration/retirement, Docker/native execution or CI changes.
+Legacy default and unresolved exposure remain; protected PG rebind is blocked.
+AC-001-04/05 remain unaccepted; S1 pending, S2/S3/S4 not resumed;
+Feature001/D1-08/Day1 PARTIAL. Original REQ/AC remain unchanged.
+
 **Formal owner acceptance — 2026-10-18: AC-001-01 DONE / PASS_WITH_DOCUMENTED_FINDINGS.**
 [Acceptance record and open findings](ac-001-01-final-acceptance.md): integrated
 develop `242e3d31192fb493938b09b398b4cd1ddd29a83b`, PR16 and actual develop
