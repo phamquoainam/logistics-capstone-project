@@ -1,5 +1,15 @@
 # Isolated clean-clone verification — AC-001-01
 
+**Owner acceptance recorded — 2026-10-18:** AC-001-01 is **DONE /
+PASS_WITH_DOCUMENTED_FINDINGS** for integrated242e3d31192fb493938b09b398b4cd1ddd29a83b.
+[Formal record and limitations](../implementation/ac-001-01-final-acceptance.md)
+contains24 PASS/0 FAIL/1 UNVERIFIED, retained raw privacy scan FAIL and accepted
+native wrapper deviation. The completion/pending statements below describe the
+procedure and historical checkpoints, not a revocation of that scoped approval.
+No command or safety requirement changes here. AC-001-04/05 remain independently
+unaccepted; Feature001/D1-08/Day1 remain PARTIAL. Raw diagnostics are private and
+not approved for publication; consult the record before reusing or sharing evidence.
+
 This is a verification-only path. Existing PostgreSQL/foundation developer commands
 remain unchanged. Do not use their settings, containers, volumes or database for
 this procedure. The implementation branch's local smoke is not official AC-001-01

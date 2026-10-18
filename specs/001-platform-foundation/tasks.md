@@ -1,5 +1,23 @@
 # Implementation Tasks 001: Nền tảng repository, deploy và kiến trúc
 
+## AC-001-01 formal owner acceptance — 2026-10-18
+
+**DONE / PASS_WITH_DOCUMENTED_FINDINGS**, literal cold-start scope only.
+[Acceptance record, exact25 gates and follow-ups](../../docs/implementation/ac-001-01-final-acceptance.md).
+
+- [x] PR16 merged at242e3d31192fb493938b09b398b4cd1ddd29a83b; actual develop push run39067632758/attempt1 SUCCESS.
+- [x] New remote clone at integrated SHA; SDK/infrastructure/backend/web/mobile and fresh native APK/device evidence reviewed.
+- [x] Formal owner approval recorded; original25 gates reconciled as24 PASS/0 FAIL/1 UNVERIFIED; earlier failures preserved.
+- [x] Accepted deviations and local follow-up IDs recorded; no libuv/Rabbit/parser/security FIXED claim.
+- [ ] Broad raw-artifact privacy assurance/source attribution, F-AC01-01; raw scan FAIL retained, outside accepted cold-start completion.
+- [ ] Independent AC-001-04 configuration/security acceptance, F-AC01-08.
+- [ ] Independent AC-001-05 other-developer onboarding, F-AC01-09.
+
+Feature001/D1-08/Day1 remain **PARTIAL**. No original REQ/AC or full-feature DoD
+is changed; no other task is marked DONE. Older sections below preserve the actual
+historical checkpoints, including unchecked publication/native work at those times;
+this approved record supersedes their AC-001-01 pending/blocked status only.
+
 ## AC-001-01 Windows blocker remediation — 2026-10-18
 
 [Current report](../../docs/implementation/ac-001-01-windows-remediation.md).

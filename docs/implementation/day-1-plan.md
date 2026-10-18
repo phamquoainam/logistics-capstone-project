@@ -1,5 +1,16 @@
 # Day 1 — Existing Codebase Assessment, Baseline Verification & SDD Implementation Plan
 
+**Formal owner acceptance — 2026-10-18: AC-001-01 DONE / PASS_WITH_DOCUMENTED_FINDINGS.**
+[Acceptance record and open findings](ac-001-01-final-acceptance.md): integrated
+develop `242e3d31192fb493938b09b398b4cd1ddd29a83b`, PR16 and actual develop
+run39067632758/attempt1 SUCCESS; new-clone SDK/web/mobile/native evidence reviewed.
+Original25-gate reconciliation: **24 PASS / 0 FAIL / 1 UNVERIFIED**; broad raw-artifact
+privacy assurance remains UNVERIFIED and the raw-cache scan FAIL is retained.
+Historical libuv/Rabbit findings and native wrapper exit1 are not FIXED or erased.
+AC-001-04/05 remain independently unaccepted; **Feature001/D1-08/Day1 PARTIAL**.
+The older checkpoint entries below retain their historical outcomes; this decision
+supersedes their AC-001-01 pending/blocked status only, without changing REQ/AC.
+
 **2026-10-18 — RabbitMQ remediation LOCAL_DONE / READY_FOR_REVIEW; AC-001-01 BLOCKED.**
 [Current report](ac-001-01-windows-remediation.md): authorized failed-session recovery
 completed; owner-disabled Resource Saver, stable Engine/bridge. One fresh owned
