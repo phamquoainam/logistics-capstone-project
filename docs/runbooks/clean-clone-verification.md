@@ -1,5 +1,17 @@
 # Isolated clean-clone verification — AC-001-01
 
+## Credential store Phase 1 boundary
+
+[Protected-store evidence](../implementation/ac-001-04-credential-store-evidence.md)
+adds a read-only migration dry-run and synthetic security/launcher tests.
+The standalone verification bootstrap below remains unchanged, session-owned and
+independent of developer credentials. Do not point it at the protected development
+store or interpret this phase as migration of retained verification sessions.
+Existing private evidence is preserved. New protected PostgreSQL test records
+have their own purpose-bound sessions; real transfer/retirement is unapproved.
+No AC-001-04/05 acceptance, raw-cache finding closure or AC-001-01 gate rerun is
+implied. Consult [local commands](local-development.md) before selecting a source.
+
 **Owner acceptance recorded — 2026-10-18:** AC-001-01 is **DONE /
 PASS_WITH_DOCUMENTED_FINDINGS** for integrated242e3d31192fb493938b09b398b4cd1ddd29a83b.
 [Formal record and limitations](../implementation/ac-001-01-final-acceptance.md)

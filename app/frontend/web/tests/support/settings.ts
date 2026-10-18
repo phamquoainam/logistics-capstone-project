@@ -1,14 +1,10 @@
-import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createHmac } from 'node:crypto';
+import { loadTestSettings } from './settings-source';
 
-const contextPath = process.env.C04_CONTEXT;
-const context = contextPath ? JSON.parse(readFileSync(contextPath, 'utf8')) : null;
-if (context && (!context.database?.startsWith('elogistics_wire_') || !/^http:\/\/127\.0\.0\.1:\d+\/api\/demo\/v1$/.test(context.baseUrl))) {
-  throw new Error('Invalid isolated C-04 test context');
-}
-export const settings = context ? { merchantAPassword: context.password, merchantBPassword: context.password, adminPassword: context.password }
-  : JSON.parse(readFileSync(resolve(process.cwd(), '../../../.demo/settings.json'), 'utf8').replace(/^\uFEFF/, ''));
+const source = loadTestSettings(process.env);
+const context = source.context;
+export const settings = source.settings;
 export const evidencePath = (file: string) => resolve(process.env.C04_RESULT_DIR ?? '../../../.demo/evidence', file);
 
 export function syntheticExpiredToken() {

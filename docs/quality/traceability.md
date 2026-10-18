@@ -1,5 +1,57 @@
 # Traceability Matrix (living document)
 
+## Protected-store final review and portable fixture regression — 2026-10-19
+
+| Trace/gate | Actual evidence | Disposition |
+| --- | --- | --- |
+| REQ-001-05 / AC-001-04 subset; TEST-001-STORE-04/05 | Independent review: all five PCS findings RESOLVED for Phase1; current Windows72 PASS/0 skips | REVIEW_PASS_READY_FOR_PR_PREPARATION, not full AC acceptance |
+| TEST-001-STORE-05 portable negatives | Original Ubuntu58 PASS/1 FAIL/13 skips preserved; scoped fixture-only correction; exact GREEN1, adjacent4, full59 PASS/13 Windows-only skips | Portable fixture execution PASS; Linux production protected mode unsupported |
+| TEST-001-STORE-03 | Prior publication Web28 unit PASS and lint/source typecheck/build PASS | Retained, not rerun for fixture correction; standalone test-source typing not newly proven |
+| Publication/hosted boundary | Existing backend jobs do not execute protected-store or Web suites | Actual remote checks pending checkpoint publication; no hosted store/Web claim |
+
+[Evidence](../implementation/ac-001-04-credential-store-evidence.md).
+Literal REQ/AC unchanged; legacy ACL/root action, consumer cutover, raw-cache
+scanner FAIL/npm attribution and privacy review2026-10-25 remain OPEN.
+AC-001-04/05 NOT ACCEPTED; Feature001/D1-08/Day1 PARTIAL.
+
+## PCS-RR-01 strict presence — 2026-10-19
+
+| Trace/gate | Actual evidence | Disposition |
+| --- | --- | --- |
+| REQ-001-05 / AC-001-04 subset; TEST-001-STORE-05 |72 focused tests PASS/0 skips:57 regressions +15 query/namespace/uncertainty controls; actual native replacement denied on unknown backup presence | PCS_RR01_PATCH_READY_FOR_REVIEW; independent final disposition pending |
+| TEST-001-STORE-02 | Guarded12-row actual dry-run; strict target/parent ABSENT proof; source unsafe/root owner action;0 content reads/writes | Migration BLOCKED, not eligible through UNKNOWN |
+| TEST-001-STORE-03 | No Web edits; prior28 unit/lint/src typing/build retained | Historical only; no newly executed Web/hosted/Linux/runtime claim |
+
+[Evidence](../implementation/ac-001-04-credential-store-evidence.md),
+[contract](../architecture/decisions/ADR-0008-protected-credential-store.md).
+No original REQ/AC changes or acceptance; raw-cache scanner FAIL/npm attribution
+and legacy exposure remain OPEN. Feature001/D1-08/Day1 PARTIAL.
+
+## AC-001-04 corrective checkpoint — PCS-01..04, 2026-10-18
+
+| Trace/gate | Evidence | Disposition |
+| --- | --- | --- |
+| REQ-001-05 / AC-001-04 subset; TEST-001-STORE-04 |57 focused tests PASS/0 skips:21 corrective controls for reserved names, ABA/object substitution, actual process exit/concurrency, injected partial failure and bounded reconciliation | CORRECTIVE_PATCH_READY_FOR_REVIEW; subsequent security review required before PR |
+| TEST-001-STORE-02 revised preflight |12 actual metadata rows; content-open/mutation guards; explicit incompatible-owner/unsafe-namespace/blocker classifications | Migration BLOCKED; root OWNER_ACTION_REQUIRED; no real credential access/cutover |
+| TEST-001-STORE-03 regression |28 Web unit PASS; lint/src typecheck/build PASS | Local only; no clean-install typing, Docker/backend/browser/native or hosted claims |
+
+[Updated evidence](../implementation/ac-001-04-credential-store-evidence.md) and
+[ADR-0008](../architecture/decisions/ADR-0008-protected-credential-store.md).
+No literal REQ/AC changes. Prior findings and original raw scanner FAIL/npm-source
+attribution remain OPEN; AC-001-04/05 unaccepted, Feature001/D1-08/Day1 PARTIAL.
+
+## AC-001-04 protected-store Phase 1 — 2026-10-18
+
+[Evidence](../implementation/ac-001-04-credential-store-evidence.md),
+[ADR-0008](../architecture/decisions/ADR-0008-protected-credential-store.md).
+
+| Trace/gate | Executed evidence | Disposition |
+| --- | --- | --- |
+| REQ-001-05 / AC-001-04 security subset; TEST-001-STORE-01 |36 local Python/Win32/mock-launcher tests PASS, no skips; immutable vs mutable policy, exclusive creation, fail-closed source/purpose/hash/namespace and rollback negatives | IMPLEMENTATION_READY_FOR_REVIEW; not full config/secret audit acceptance |
+| AC-001-04 migration preflight; TEST-001-STORE-02 |12 actual allowlisted metadata rows,5 active/7 historical,0 credential reads/0 destination writes; root owner1005 | OWNER_ACTION_REQUIRED; migration/legacy retirement not authorized; Docker consumers UNVERIFIED |
+| Demo001/Web regression; TEST-001-STORE-03 |28 Web unit PASS, lint/src typecheck/build PASS; explicit C04/synthetic fixture settings, no developer fallback | Local only; browser/CI/real developer runtime not executed |
+| Legacy/raw/privacy boundary | Legacy ACL exposure still confirmed; original scanner FAIL/attribution and evidence preserved | AC-001-04/05 unaccepted; S2/S3/S4 not resumed; Feature001/D1-08/Day1 PARTIAL |
+
 **Formal owner decision — 2026-10-18: AC-001-01 DONE / PASS_WITH_DOCUMENTED_FINDINGS.**
 [Acceptance record, E01–E08 and follow-up register](../implementation/ac-001-01-final-acceptance.md).
 Original wording in Feature001 spec is unchanged; integrated SHA

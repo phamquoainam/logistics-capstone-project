@@ -1,8 +1,13 @@
-param([switch]$Offline)
+param([switch]$Offline, [ValidateSet('legacy','protected')][string]$CredentialSource = 'legacy')
 $ErrorActionPreference = 'Stop'
 $foundationRoot = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
-$testSettingsPath = & python (Join-Path $foundationRoot 'infra/postgres/prepare-test.py')
+$testSettingsPath = & python -B (Join-Path $foundationRoot 'infra/postgres/prepare-test.py') --credential-source $CredentialSource
 if ($LASTEXITCODE -ne 0) { throw 'Test database provisioning failed.' }
+if ($CredentialSource -eq 'protected') {
+    $testSettingsPath = & python -B (Join-Path $foundationRoot 'infra/security/credential_store.py') test-record-path --session $testSettingsPath
+    if ($LASTEXITCODE -ne 0) { throw 'Protected test record invalid; no fallback.' }
+    $testSettingsPath = $testSettingsPath | ConvertFrom-Json
+}
 $testSettings = Get-Content -LiteralPath $testSettingsPath -Raw | ConvertFrom-Json
 $env:PG_TEST_DB_URL = "jdbc:postgresql://127.0.0.1:5433/$($testSettings.database)"
 $env:PG_TEST_UPGRADE_DB_URL = "jdbc:postgresql://127.0.0.1:5433/$($testSettings.upgradeDatabase)"

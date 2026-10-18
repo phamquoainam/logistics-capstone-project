@@ -1,5 +1,65 @@
 # Implementation Tasks 001: Nền tảng repository, deploy và kiến trúc
 
+## Phase 1 final review and Linux fixture publication checkpoint
+
+- [x] Final independent review: PCS-01/02/03/04/RR-01 RESOLVED for Phase1.
+- [x] Preserve original Ubuntu failure; test-only owner fixture correction, unchanged UNSAFE assertion.
+- [x] Exact Ubuntu GREEN1/adjacent4; full Windows72 PASS/0 skips, Ubuntu59 PASS/13 expected skips.
+- [x] Retain prior Web28/lint/source typing/build PASS with explicit execution boundary.
+- [ ] Actual checkpoint PR/hosted required checks and owner merge review.
+- [ ] Separately approved real migration, owner action/consumer wiring/PG cutover and full AC-001-04 acceptance.
+
+[Evidence](../../docs/implementation/ac-001-04-credential-store-evidence.md):
+REVIEW_PASS_READY_FOR_PR_PREPARATION only. AC-001-04/05 NOT ACCEPTED;
+Feature001/D1-08/Day1 PARTIAL. Original requirements and historical checkpoints preserved.
+
+## PCS-RR-01 strict filesystem presence checkpoint
+
+- [x] Explicit PRESENT/ABSENT/UNKNOWN query; narrow not-found only under verified ancestors.
+- [x] Preserve sanitized error categories; reject unsafe objects/namespaces and insufficient evidence.
+- [x] Apply strict absence to native guard, poststate, reconciliation, matching, intent and lock decisions.
+- [x] Dry-run collision UNKNOWN is not collision-free; eligibility stays BLOCKED where evidence is missing.
+- [x]72 local tests PASS/0 skips; guarded actual12-row dry-run/0 content reads/writes.
+- [x] Final independent review confirms PCS-RR-01 and remaining PCS-03/04 PR blockers resolved for Phase1 (2026-10-19).
+
+[Evidence](../../docs/implementation/ac-001-04-credential-store-evidence.md):
+Historical checkpoint PCS_RR01_PATCH_READY_FOR_REVIEW. No automatic real migration,
+live ACL/owner change or AC-001-04 acceptance. Original REQ/AC unchanged.
+
+## Protected-store corrective checkpoint — PCS-01..04
+
+- [x] Reserve metadata/control namespaces before mutation; reject Windows aliases.
+- [x] Append-only revision/identity-bound intent/receipt; ABA and same-byte substitution negatives.
+- [x] Exclusive live process lock; unresolved journal barrier; explicit bounded accept/abort.
+- [x] Injected failures plus actual subprocess exit before/after replace; preserved recovery evidence.
+- [x] Separate no-write migration inspection/owner/namespace/collision/eligibility fields and blockers.
+- [x]57 focused tests PASS/0 skips;28 Web unit PASS and lint/src typecheck/build PASS.
+- [x] Subsequent security review confirms original PCS PR blockers are resolved for Phase1 (2026-10-19).
+- [ ] Separate owner-approved recovery for unproven partial/corrupt outcomes and migration durability.
+
+[Evidence](../../docs/implementation/ac-001-04-credential-store-evidence.md):
+CORRECTIVE_PATCH_READY_FOR_REVIEW, not READY_FOR_PR. No migration or acceptance;
+legacy exposure/root owner action/real cutover remain open. Original REQ/AC unchanged.
+
+## AC-001-04 protected credential store — Phase 1 implementation only
+
+[Evidence](../../docs/implementation/ac-001-04-credential-store-evidence.md),
+[ADR-0008](../../docs/architecture/decisions/ADR-0008-protected-credential-store.md).
+
+- [x] Safe feature branch from verified e5994b08 baseline; no commit/push/PR.
+- [x] Win32 KnownFolder/token/ancestor/handle validation; atomic protected creation, exclusive credentials and separate metadata rollback.
+- [x] Explicit protected selection without fallback; legacy remains default; PG container cutover blocked.
+- [x] Purpose-bound synthetic/session tests and strict no-write5+7 migration dry-run.
+- [x]36 focused tests PASS/0 skips;28 Web unit tests PASS; lint/src typecheck/build PASS.
+- [ ] Owner review of Phase 1 source/tooling checkpoint.
+- [ ] Separately approved real provisioning/migration transaction and remaining consumer reconciliation.
+- [ ] Root settings owner action, seven-record retention, exact legacy retirement and approved developer-container rebinding/runtime.
+- [ ] Full independent AC-001-04 secret/config/fail-fast acceptance; AC-001-05 onboarding.
+
+IMPLEMENTATION_READY_FOR_REVIEW is not remediation DONE. Existing credential
+exposure, raw-cache privacy and historical findings remain open. No literal
+REQ/AC changed; Feature001/D1-08/Day1 PARTIAL; S2/S3/S4 not resumed.
+
 ## AC-001-01 formal owner acceptance — 2026-10-18
 
 **DONE / PASS_WITH_DOCUMENTED_FINDINGS**, literal cold-start scope only.
