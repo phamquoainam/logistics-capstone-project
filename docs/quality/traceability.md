@@ -1,6 +1,20 @@
 # Traceability Matrix (living document)
 
-**2026-10-18 — AC-001-01 Windows blocker remediation (current status).**
+**Formal owner decision — 2026-10-18: AC-001-01 DONE / PASS_WITH_DOCUMENTED_FINDINGS.**
+[Acceptance record, E01–E08 and follow-up register](../implementation/ac-001-01-final-acceptance.md).
+Original wording in Feature001 spec is unchanged; integrated SHA
+`242e3d31192fb493938b09b398b4cd1ddd29a83b`. Earlier checkpoints below are historical;
+their AC-001-01 blocked/pending labels are superseded only by this scoped approval.
+
+| Trace / gate | Accepted evidence | Current disposition |
+| --- | --- | --- |
+| AC-001-01; REQ-001-01/02/04 cold-start clauses | E01/E02/E05/E06: new clone, approved tools, three isolated dependencies, V1/V2/roles, full-profile health/API, web build and new native APK/install/render | DONE / PASS_WITH_DOCUMENTED_FINDINGS; literal clause matrix in acceptance record |
+| AC-001-01; original25 gates | E02 original22 PASS/1 FAIL/1 PARTIAL/1 UNVERIFIED; E03–E07 reconciliation24 PASS/0 FAIL/1 UNVERIFIED | Broad raw-artifact privacy assurance remains UNVERIFIED; historical failures retained |
+| SDK/native verification deviations | E03/E04 complete SDK aggregates incl uninstrumented PASS; E06 new APK/runtime and independent review of wrapper exit1 | Accepted scope, not a Node/root-cause/parser fix; F-AC01-02/04/05/06/07 OPEN |
+| Privacy/preservation; AC-001-04 boundary | E07 raw-cache scan FAIL/header origin UNDETERMINED; seven summaries PASS; E08 owned cleanup/foreign metadata preserved | F-AC01-01 OPEN; raw PRIVATE / NOT APPROVED FOR PUBLICATION; no comprehensive content-integrity claim |
+| AC-001-04 / AC-001-05 / parent scope | Independent configuration/security and other-developer reproduction still require acceptance | Independently unaccepted; F-AC01-08/09 OPEN; Feature001/D1-08/Day1 PARTIAL |
+
+**Historical checkpoint — 2026-10-18: AC-001-01 Windows blocker remediation.**
 [Evidence](../implementation/ac-001-01-windows-remediation.md).
 
 | Trace / gate | Actual current evidence | Status |
