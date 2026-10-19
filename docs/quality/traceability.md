@@ -1,5 +1,20 @@
 # Traceability Matrix (living document)
 
+## S2-R1 nonblank configuration and CI inventory checkpoint — 2026-10-19
+
+| Trace/gate | Evidence | Disposition |
+| --- | --- | --- |
+| REQ-001-05 / AC-001-04 subset; TEST-001-CONFIG-01 | Token: original 3 RED assertions preserved, byte/blank/raw-padding/JWT controls; 20 local PASS | S2-R1-01 RESOLVED for approved blank/length contract |
+| TEST-001-CONFIG-02 | Seed: original 5 RED assertions preserved; conditional, bounds, padding/idempotency and pre-encode checks; 38 local PASS | S2-R1-02 RESOLVED; no full process/transaction acceptance claim |
+| TEST-001-CONFIG-03/04 | Foundation context17 and PostgreSQL properties34 local PASS | Context/property evidence only; real startup/authentication matrix UNVERIFIED |
+| TEST-001-CI-CONFIG-01 | Explicit109-case S2 inventory; 37 report/privacy controls PASS; actual clean H2 guard174 identities PASS | Local integration PASS; hosted evidence requires actual PR/run review |
+| Regression | ArchUnit23 PASS; full H2 clean verify157 PASS/17 expected skips | No local PostgreSQL/Docker run; architecture and existing semantics preserved |
+
+[Sanitized S2 evidence](../implementation/ac-001-04-s2-evidence.md).
+S1 assessment complete; AC-001-04/05 remain NOT ACCEPTED. Real credential
+migration BLOCKED; legacy ACL/root owner and historical raw-cache FAIL/npm
+attribution remain OPEN. Feature001/D1-08/Day1 PARTIAL; original REQ/AC unchanged.
+
 ## Protected-store final review and portable fixture regression — 2026-10-19
 
 | Trace/gate | Actual evidence | Disposition |

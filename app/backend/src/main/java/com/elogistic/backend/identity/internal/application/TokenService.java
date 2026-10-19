@@ -16,7 +16,7 @@ public class TokenService {
  private final JwtDecoder decoder;
  public TokenService(@Value("${demo.token-secret}") String secret) {
   byte[] bytes=secret.getBytes(StandardCharsets.UTF_8);
-  if(bytes.length<32) throw new IllegalStateException("DEMO_TOKEN_SECRET must contain at least 32 bytes");
+  if(secret.isBlank()||bytes.length<32) throw new IllegalStateException("DEMO_TOKEN_SECRET must contain at least 32 bytes");
   encoder=new NimbusJwtEncoder(new ImmutableSecret<>(bytes));
   var d=NimbusJwtDecoder.withSecretKey(new SecretKeySpec(bytes,"HmacSHA256")).macAlgorithm(MacAlgorithm.HS256).build();
   d.setJwtValidator(JwtValidators.createDefaultWithIssuer("elogistics-demo"));decoder=d;
