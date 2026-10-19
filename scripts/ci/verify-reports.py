@@ -53,6 +53,47 @@ eventsAndReceiptsCannotBeChangedByRuntime validateAndRerunPreserveDataAndChecksu
 versionOneToTwoUpgradePreservesExistingTechnicalData failedForeignKeyRollsBackWholeTransaction
 concurrentCancelHasOneEventAndReceipt'''.split(),
 }
+# Source-reviewed S2 inventory. Finite invocation indices come from the Java
+# MethodSource fixtures, never from observed reports or arbitrary display names.
+S2_REQUIRED = {
+    BASE + 'identity.internal.application.TokenConfigurationEvidenceTests': [
+        'missingEnvironmentPlaceholderRejectsContext(CapturedOutput)',
+        *[f'shortOrBlankSecretRejectsContextWithoutEcho(String, String, CapturedOutput)[{i}]' for i in range(1, 6)],
+        *[f'supportedByteBoundariesInstantiateService(String, String, int, CapturedOutput)[{i}]' for i in range(1, 7)],
+        *[f'whitespaceOnlySecretMustRejectContext(String, String)[{i}]' for i in range(1, 4)],
+        *[f'blankSecretFailsForValidationCauseWithoutValueDisclosure(String, String, CapturedOutput)[{i}]' for i in range(1, 4)],
+        'directNullConstructorInputRetainsExistingRejection',
+        'paddedSecretSignsAndVerifiesWithoutNormalization(CapturedOutput)',
+    ],
+    BASE + 'identity.internal.infrastructure.DemoSeedConfigurationEvidenceTests': [
+        *[f'invalidAbsentAccountPasswordFailsBeforeThatAccountMutation(String, int, String)[{i}]' for i in range(1, 16)],
+        *[f'sourceCharacterBoundariesControlFirstAccountMutation(String, int, boolean)[{i}]' for i in range(1, 5)],
+        'multibyteSeedBoundaryUsesJavaCharactersNotTokenBytePolicy',
+        *[f'existingAccountDoesNotRequireItsMissingPassword(String, int)[{i}]' for i in range(1, 6)],
+        'disabledOrAbsentSeedFlagDoesNotCreateRunnerOrMutateFakePersistence',
+        'creatingEnabledRunnerBeanAloneDoesNotExecuteApplicationRunner',
+        *[f'whitespaceOnlySeedPasswordMustBeRejected(String, int)[{i}]' for i in range(1, 6)],
+        *[f'blankPasswordValidationPrecedesEncodingAndMutationOfTheAbsentAccount(String, int)[{i}]' for i in range(1, 6)],
+        'validPaddedPasswordReachesEncoderUnchangedAndSeedingRemainsIdempotent',
+    ],
+    BASE + 'platform.internal.infrastructure.FoundationContextEvidenceTests': [
+        *[f'invalidCredentialPreventsContextRefresh(String, String, String, CapturedOutput)[{i}]' for i in range(1, 13)],
+        *[f'incompleteProfilesRejectContext(String, String[])[{i}]' for i in range(1, 4)],
+        'defaultProfileDoesNotCreateFoundationBeans',
+        'validFoundationConfigurationRefreshesWithoutClientConnections(CapturedOutput)',
+    ],
+    BASE + 'platform.internal.infrastructure.PostgresConfigurationEvidenceTests': [
+        *[f'missingPlaceholderFailsExplicitResolutionWithoutNetwork(String, String, String, String)[{i}]' for i in range(1, 15)],
+        *[f'blankValuesAreNotRejectedAtPropertyResolutionBoundary(String, String, String, String)[{i}]' for i in range(1, 15)],
+        'validPostgresPropertiesKeepRuntimeAndMigratorResponsibilitiesDistinct',
+        'migrationOnlyNeedsGrantTargetButNotRuntimePasswordOrToken',
+        'runtimeOnlyResolvesRuntimePropertiesWithoutUnusedMigrationVariables',
+        'invalidMigrationBooleanHasConfigurationConversionFailure',
+        'jdbcUrlSyntaxCheckDoesNotOpenConnection',
+        'unrelatedDemoModeDoesNotRequirePostgresOrFoundationVariables',
+    ],
+}
+REQUIRED.update(S2_REQUIRED)
 PG = BASE + 'demo.PostgresFoundationTests'
 PG_ONLY = {PG, BASE + 'demo.PostgresHealthSafetyTests'}
 FOUNDATION_ONLY = {BASE + 'demo.FoundationDependencyTests'}

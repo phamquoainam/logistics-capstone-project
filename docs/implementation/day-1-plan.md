@@ -1,5 +1,18 @@
 # Day 1 — Existing Codebase Assessment, Baseline Verification & SDD Implementation Plan
 
+**2026-10-19 — AC-001-04 S2-R1 / CI inventory publication checkpoint.**
+S1 assessment complete; two reviewed nonblank validation defects resolved with
+exactly two production condition changes. Original eight RED assertions retained
+and GREEN; original98 cases plus11 controls now109 PASS. CI explicit inventory
+requires S2 in H2/PG only: expected architecture23/0 skips, H2157/17 skips,
+PG182/5 skips. Local report/privacy controls37 PASS, S2109 PASS, ArchUnit23 PASS,
+H2 clean verify157 PASS/17 expected skips and real H2 report guard PASS.
+Hosted checks/artifacts/ruleset require actual publication review; no hosted PASS
+inferred here. Full process/admission/PG configuration matrix remains UNVERIFIED;
+real migration BLOCKED, legacy ACL/root owner and raw-cache FAIL/npm attribution
+remain OPEN. AC-001-04/05 NOT ACCEPTED; Feature001/D1-08/Day1 PARTIAL.
+[Sanitized evidence](ac-001-04-s2-evidence.md). Original REQ/AC unchanged.
+
 **2026-10-19 — Protected store Phase 1: REVIEW_PASS_READY_FOR_PR_PREPARATION.**
 Final independent review: PCS-01/02/03/04/RR-01 RESOLVED for the approved bounded
 contract. Initial Ubuntu publication58 PASS/1 FAIL/13 skips stopped publication;

@@ -21,7 +21,7 @@ class DemoAccountSeed implements ApplicationRunner {
  }
  private void seed(String username,String display,String role,boolean enabled,String merchant,String property){
   if(accounts.credential(username).isPresent())return;String password=env.getProperty("demo.seed."+property,"");
-  if(password.length()<12||password.length()>72)throw new IllegalStateException("Configure all demo seed passwords (12–72 characters)");
+  if(password.isBlank()||password.length()<12||password.length()>72)throw new IllegalStateException("Configure all demo seed passwords (12–72 characters)");
   accounts.seed(UUID.randomUUID(),username,passwords.encode(password),display,role,enabled,merchant==null?null:UUID.fromString(merchant));
  }
 }
