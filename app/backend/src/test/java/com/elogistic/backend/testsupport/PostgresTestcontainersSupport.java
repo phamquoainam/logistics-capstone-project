@@ -21,7 +21,8 @@ public final class PostgresTestcontainersSupport {
     private static final SecureRandom RANDOM=new SecureRandom();
     private static final Map<String,String> SUITES=Map.of(
         "com.elogistic.backend.demo.PostgresTestcontainersTests", "demo-postgres",
-        "com.elogistic.backend.identity.internal.infrastructure.IdentityMigrationTests", "identity-migration");
+        "com.elogistic.backend.identity.internal.infrastructure.IdentityMigrationTests", "identity-migration",
+        "com.elogistic.backend.identity.internal.infrastructure.IdentityGrantApplicationTests", "identity-grants");
     private static final String EXECUTION=executionIdentity();
     private static final Path PRIVATE=privateDirectory();
 

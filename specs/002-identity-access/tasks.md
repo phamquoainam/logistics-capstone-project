@@ -1,6 +1,6 @@
 # Implementation Tasks 002: Xác thực và phân quyền theo phạm vi
 
-**Tình trạng hiện tại:** T-002-01/02/03/04 DONE theo scope được duyệt; T-002-05 Application READY / NOT STARTED. Production Feature002 và AC-002-01..05 chưa được nghiệm thu. **Rule:** Không tick DONE trước khi có code+test+evidence.
+**Tình trạng hiện tại:** T-002-01/02/03/04 DONE theo scope được duyệt; T-002-05 Application PARTIAL: first slice replaceIdentityGrants IMPLEMENTED_VERIFICATION_PENDING. Production Feature002 và AC-002-01..05 chưa được nghiệm thu. **Rule:** Không tick DONE trước khi có code+test+evidence.
 **Ordering:** T-002-01 → T-002-02…; các phần web/mobile có thể song song sau khi contract+API ổn định, không merge thiếu tests.
 
 - [x] **T-002-01 — Review**
@@ -214,3 +214,24 @@ slice in the handoff; canonical DoD unchanged. Closure documentation after CI is
 not included in tested source commit and needs a separate documentation commit;
 no second automatic commit/push here. PR integration/review remains separate.
 AC-002-01..05 NOT ACCEPTED; Feature002 incomplete; Feature001/D1-08/Day1 PARTIAL.
+
+## T-002-05 first Application slice — 2026-10-21
+
+OWNER_T_002_05_APPLICATION_IMPLEMENTATION: GO. Supersedes Application NOT STARTED
+only for the bounded replaceIdentityGrants slice. **T-002-05 PARTIAL /
+IMPLEMENTED_VERIFICATION_PENDING**, canonical checkbox remains open; canonical
+task body/DoD and REQ/AC unchanged.
+[Application source, persistence, tests and verification handoff](../../docs/implementation/t-002-05-identity-application-evidence.md).
+
+- [x] Source authored: public backend command/result, Application orchestration/inward ports and V3 PostgreSQL JDBC adapter.
+- [x] Reuse Domain full-target/union/default-deny/self/last-admin/version rules; current session/account checks; atomic grants/version/revocation/audit/receipt writes implemented.
+- [x]33 PostgreSQL integration methods authored: positive/negative/replay, real-DB fault rollback and two-transaction concurrency; no dummy success assertions.
+- [x] Strict finite report inventory and three-suite lifecycle registration;97 Python policy controls PASS (not Java tests).
+- [ ] Actual Java compilation, ArchUnit and all new PostgreSQL transaction/fault/concurrency tests PASS on this revision.
+- [ ] Actual reports, credentials/privacy and complete owned Testcontainers cleanup PASS on this revision.
+- [ ] Remaining canonical Application use cases and real owner-authority integrations implemented and verified within approved slices.
+
+No HTTP/controller, production authentication/provider fallback, Demo behavior,
+SQL migration, workflow, dependency, protected Foundation change or publication.
+T-002-01..04 remain DONE; Feature002/AC-002-01..05 NOT ACCEPTED;
+Feature001/D1-08/Day1 PARTIAL. Prior Domain CI verifies its historical source only.

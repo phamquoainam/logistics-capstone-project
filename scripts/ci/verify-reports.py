@@ -196,10 +196,47 @@ IDENTITY_DOMAIN_REQUIRED = {
     ],
 }
 REQUIRED.update(IDENTITY_DOMAIN_REQUIRED)
+IDENTITY_GRANTS = BASE + 'identity.internal.infrastructure.IdentityGrantApplicationTests'
+# T-002-05 finite, reviewed PostgreSQL-only transaction suite; no valid skips.
+REQUIRED[IDENTITY_GRANTS] = [
+    'authorizedReplacementPersistsMultipleScopesVersionsAuditAndReceipt',
+    'allTargetSessionsAndRefreshTokensAreRevokedWithoutTouchingActor',
+    'authorizedReplayPrecedesStaleVersionAndDoesNotRepeatEffects',
+    'reorderedGrantSetHasSameCanonicalReceiptFingerprint',
+    'sameKeyChangedPayloadConflictsWithoutWrites',
+    'sameKeyChangedTargetConflictsWithoutWrites',
+    'sameKeyChangedExpectedVersionConflictsBeforeStaleCheck',
+    'sameKeyChangedReasonConflictsWithoutWrites',
+    'revokedActorSessionCannotReplayReceipt',
+    'lostManagementAuthorityCannotReplayReceipt',
+    'missingOwnerProviderDefaultsDenyEvenForEmptyTarget',
+    'partialAuthorityCannotRemoveHiddenCurrentGrant',
+    'requestedGrantOutsideAssignableScopeIsDenied',
+    'nonManagementActorCannotUsePermissiveOwnerFixture',
+    'selfGrantManagementIsForbidden',
+    'lastAdministratorCannotRemoveItsOwnManagementGrant',
+    'staleNonReplayVersionIsRejectedWithoutWrites',
+    'duplicateGrantsAreRejectedWithoutWrites',
+    'emptyReplacementIsRejectedByAcceptedContractBoundary',
+    'malformedScopeIsRejectedWithoutWrites',
+    'unknownResourceScopeIsNotGrantedImplicitly',
+    'missingAndUnauthorizedTargetsHaveSameSafeClassification',
+    'disabledActorCannotSubmitCommand',
+    'expiredSessionAndChangedAuthVersionAreRejected',
+    'invalidCommandMetadataDoesNotMutateState',
+    'disabledTargetStaysDisabledAndDoesNotRegainSessions',
+    'auditWriteFailureRollsBackAllSecurityEffects',
+    'receiptWriteFailureRollsBackAuditAndAllSecurityEffects',
+    'refreshRevocationFailureRollsBackSessionAndGrantWrites',
+    'concurrentVersionsProduceOneMutationAndOneStaleResult',
+    'concurrentSameKeyCommandsCreateOneReceiptAndOneAudit',
+    'concurrentOppositeAdminRemovalCannotRemoveLastAdministrator',
+    'resultContainsOnlyAcceptedAccountFieldsAndRedactsToString',
+]
 PG = BASE + 'demo.PostgresFoundationTests'
 PG_ONLY = {PG, BASE + 'demo.PostgresHealthSafetyTests'}
 FOUNDATION_ONLY = {BASE + 'demo.FoundationDependencyTests'}
-TESTCONTAINERS_ONLY = {BASE + 'demo.PostgresTestcontainersTests', BASE + 'testsupport.TestcontainersRuntimePolicyTests', IDENTITY_MIGRATION}
+TESTCONTAINERS_ONLY = {BASE + 'demo.PostgresTestcontainersTests', BASE + 'testsupport.TestcontainersRuntimePolicyTests', IDENTITY_MIGRATION, IDENTITY_GRANTS}
 SUREFIRE_NAMES = {
     (BASE + 'demo.DemoSecurityEvidenceTests',
      'credentialsAndBearerTokenDoNotAppearInApplicationLogs(CapturedOutput)'):
@@ -233,6 +270,7 @@ def audit_task_c_credentials(credential_file, diagnostics):
 TASK_C_SUITES = {
     'demo-postgres': BASE + 'demo.PostgresTestcontainersTests',
     'identity-migration': IDENTITY_MIGRATION,
+    'identity-grants': IDENTITY_GRANTS,
 }
 TASK_C_POSTGRES = 'postgres:18.6-bookworm@sha256:afc7e2d441324c0388fa80c3d24f733b4194a4eb7f47dd8ee2b08eb1a24a647c'
 TASK_C_RYUK = 'testcontainers/ryuk:0.14.0@sha256:7c1a8a9a47c780ed0f983770a662f80deb115d95cce3e2daa3d12115b8cd28f0'

@@ -257,9 +257,9 @@ class ReportGuardTests(unittest.TestCase):
         self.assertEqual([20, 38, 17, 34], [len(v) for v in reports.S2_REQUIRED.values()])
         for name, methods in reports.S2_REQUIRED.items():
             self.assertEqual(len(methods), len(set(methods)), name)
-        # Prior cases retained; H2/PostgreSQL each add the exact48 Domain identities.
+        # Prior cases retained; PostgreSQL additionally requires33 grant application cases.
         for mode, passed, skipped in [('architecture', 23, 0), ('h2', 279, 17),
-                                      ('postgres', 318, 5), ('foundation', 5, 0)]:
+                                      ('postgres', 351, 5), ('foundation', 5, 0)]:
             with self.subTest(mode=mode):
                 self.fixture(mode)
                 self.assertTrue(self.check(mode))
@@ -805,6 +805,7 @@ LIFECYCLE_SESSION = '22222222-2222-4222-8222-222222222222'
 LIFECYCLE_SUITES = {
     'demo-postgres': 'com.elogistic.backend.demo.PostgresTestcontainersTests',
     'identity-migration': 'com.elogistic.backend.identity.internal.infrastructure.IdentityMigrationTests',
+    'identity-grants': 'com.elogistic.backend.identity.internal.infrastructure.IdentityGrantApplicationTests',
 }
 LIFECYCLE_STAGES = ('reserved', 'observed', 'created', 'verified', 'stopped')
 
@@ -821,7 +822,9 @@ def lifecycle_fixture(directory, reverse=False):
     entries = list(LIFECYCLE_SUITES.items())
     if reverse: entries.reverse()
     for suite, name in entries:
-        pg, volume = ('a' * 64, 'c' * 64) if suite == 'demo-postgres' else ('d' * 64, 'e' * 64)
+        pg, volume = {'demo-postgres': ('a' * 64, 'c' * 64),
+                      'identity-migration': ('d' * 64, 'e' * 64),
+                      'identity-grants': ('1' * 64, '2' * 64)}[suite]
         facts = {'pgContainer': pg, 'pgVolume': volume, 'volumeContainer': pg, 'ryukContainer': 'b' * 64,
                  'pgImage': 'postgres:18.6-bookworm@sha256:afc7e2d441324c0388fa80c3d24f733b4194a4eb7f47dd8ee2b08eb1a24a647c',
                  'ryukImage': 'testcontainers/ryuk:0.14.0@sha256:7c1a8a9a47c780ed0f983770a662f80deb115d95cce3e2daa3d12115b8cd28f0',
@@ -865,11 +868,11 @@ class LifecycleAuditTests(unittest.TestCase):
             self.assertFalse(reports.audit_task_c_cleanup(self.path, timeout=0))
             run.assert_not_called()  # Invalid evidence cannot even select a Docker action.
 
-    def test_two_suite_records_are_distinct_and_complete_inventory_is_exact(self):
+    def test_all_suite_records_are_distinct_and_complete_inventory_is_exact(self):
         self.assertEqual(LIFECYCLE_SUITES, reports.TASK_C_SUITES)
         ids, volumes, run = reports.task_c_resource_inventory(self.path)
-        self.assertEqual({'a' * 64, 'b' * 64, 'd' * 64}, ids)
-        self.assertEqual({'c' * 64, 'e' * 64}, volumes)
+        self.assertEqual({'a' * 64, 'b' * 64, 'd' * 64, '1' * 64}, ids)
+        self.assertEqual({'c' * 64, 'e' * 64, '2' * 64}, volumes)
         self.assertEqual(LIFECYCLE_RUN, run)
         before = {p.name: p.read_bytes() for p in self.child.iterdir()}
         with self.assertRaises(FileExistsError):
@@ -982,8 +985,8 @@ class LifecycleAuditTests(unittest.TestCase):
         self.rejected('Duplicate suite resource')
 
     def test_each_owned_container_or_volume_leftover_fails_read_only_audit(self):
-        for container, volume, owned in [('a'*64,'',''),('b'*64,'',''),('d'*64,'',''),
-                                         ('','c'*64,''),('','e'*64,''),('','','f'*64)]:
+        for container, volume, owned in [('a'*64,'',''),('b'*64,'',''),('d'*64,'',''),('1'*64,'',''),
+                                         ('','c'*64,''),('','e'*64,''),('','2'*64,''),('','','f'*64)]:
             with self.subTest(container=container, volume=volume, owned=owned):
                 with patch.object(reports.subprocess,'run') as run:
                     run.side_effect=[reports.subprocess.CompletedProcess([],0,stdout=v) for v in (container,volume,owned)]
@@ -1136,6 +1139,68 @@ class IdentityDomainInventoryTests(unittest.TestCase):
         published = ''.join(p.read_text(encoding='utf-8') for p in self.output.iterdir())
         self.assertNotIn(marker, published)
         self.assertIn('See local private diagnostics; raw output is not published.', published)
+
+class IdentityGrantApplicationInventoryTests(unittest.TestCase):
+    setUp = ReportGuardTests.setUp
+    fixture = ReportGuardTests.fixture
+    save = ReportGuardTests.save
+    check = ReportGuardTests.check
+
+    def test_grant_source_inventory_and_postgres_only_discovery(self):
+        root = Path(__file__).resolve().parents[2]
+        source = (root / 'app/backend/src/test/java/com/elogistic/backend/identity/internal/infrastructure/IdentityGrantApplicationTests.java').read_text(encoding='utf-8')
+        methods = re.findall(r'@Test\s+void\s+(\w+)\s*\(', source)
+        self.assertEqual(33, len(methods))
+        self.assertEqual(len(methods), len(set(methods)))
+        self.assertEqual(methods, reports.REQUIRED[reports.IDENTITY_GRANTS])
+        self.assertIn('@Tag("task-c")', source)
+        self.assertNotIn('@Disabled', source)
+        for mode in ('architecture', 'h2', 'foundation'):
+            self.assertNotIn(reports.IDENTITY_GRANTS, reports.expected_suites(mode))
+        self.assertIn(reports.IDENTITY_GRANTS, reports.expected_suites('postgres'))
+        self.assertEqual(reports.IDENTITY_GRANTS, reports.TASK_C_SUITES['identity-grants'])
+
+    def test_each_missing_grant_method_rejects_even_with_zero_maven_exit(self):
+        self.fixture('postgres')
+        path = self.source / ('TEST-' + reports.IDENTITY_GRANTS + '.xml')
+        original = path.read_bytes()
+        for method in reports.REQUIRED[reports.IDENTITY_GRANTS]:
+            with self.subTest(method=method):
+                suite = ET.fromstring(original)
+                suite.remove(next(c for c in suite if c.get('name') == method))
+                suite.set('tests', str(len(suite.findall('testcase'))))
+                self.save(suite)
+                self.assertFalse(self.check('postgres'))
+        path.write_bytes(original)
+        self.assertTrue(self.check('postgres'))
+
+    def test_grant_skip_failure_error_and_rename_are_never_accepted(self):
+        self.fixture('postgres')
+        path = self.source / ('TEST-' + reports.IDENTITY_GRANTS + '.xml')
+        original = path.read_bytes()
+        for status, count in [('skipped', 'skipped'), ('failure', 'failures'), ('error', 'errors')]:
+            suite = ET.fromstring(original)
+            ET.SubElement(suite.find('testcase'), status)
+            suite.set(count, '1')
+            self.save(suite)
+            self.assertFalse(self.check('postgres'))
+        suite = ET.fromstring(original)
+        suite.find('testcase').set('name', 'unapprovedMethod')
+        self.save(suite)
+        self.assertFalse(self.check('postgres'))
+
+    def test_grant_failure_diagnostics_remain_private(self):
+        self.fixture('postgres')
+        path = self.source / ('TEST-' + reports.IDENTITY_GRANTS + '.xml')
+        suite = ET.parse(path).getroot()
+        marker = 'synthetic-private-grant-failure'
+        ET.SubElement(suite.find('testcase'), 'failure', message=marker).text = marker
+        ET.SubElement(suite, 'system-out').text = marker
+        suite.set('failures', '1')
+        self.save(suite)
+        self.assertFalse(self.check('postgres'))
+        self.assertNotIn(marker, ''.join(p.read_text(encoding='utf-8') for p in self.output.iterdir()))
+
 
 if __name__ == '__main__':
     unittest.main()

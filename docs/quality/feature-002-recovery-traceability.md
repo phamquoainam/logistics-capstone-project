@@ -2,7 +2,7 @@
 
 Latest checkpoint: **T-002-03 DONE** on run39575568268 attempt1, using verified
 sanitized artifacts and exact source revision. T-002-04 is now
-DONE under actual CI; T-002-05 Application READY / NOT STARTED.
+DONE under actual CI; T-002-05 Application PARTIAL, first grant slice IMPLEMENTED_VERIFICATION_PENDING.
 [Domain source/test acceptance](../implementation/t-002-04-identity-domain-evidence.md#t-002-04-actual-ci-acceptance--2026-10-21).
 [Final migration acceptance and handoff](../implementation/t-002-03-identity-migration-evidence.md#final-migration-acceptance--2026-10-21).
 Earlier checkpoints below are historical and superseded only within that
@@ -228,3 +228,28 @@ PARTIAL. Only three post-CI SDD files change locally; separate documentation
 commit/publication and PR integration remain unperformed. The successful run
 tests bbb1098, not a later documentation revision. Main traceability and six
 Foundation changes remain protected; no next-task implementation.
+
+## T-002-05 first Application slice — 2026-10-21
+
+OWNER_T_002_05_APPLICATION_IMPLEMENTATION: GO.
+[Exact source/data/test mapping and runtime handoff](../implementation/t-002-05-identity-application-evidence.md).
+Source implemented, not runtime accepted. T-002-05 remains PARTIAL and unchecked.
+
+| Trace | Application/database effect | Authored evidence | Actual runtime |
+|---|---|---|---|
+| REQ-002-01/04, AC-002-01/02 | Complete grant replacement, current/requested-union authority, account/auth version and append-only audit | IdentityGrantApplicationTests positive/hidden-scope/default-deny/self cases | UNVERIFIED |
+| REQ-002-02/05, AC-002-04/05 | Trusted session/account lookup and current admission, target session/refresh revocation | Current/revoked/expired/authVersion and disabled account cases | UNVERIFIED |
+| REQ-002-04/05, AC-002-03 | Bound canonical command receipt before stale-version check, serial population/row locks | Authorized replay/conflicts, concurrent same-key/stale/opposite-admin cases | UNVERIFIED |
+| REQ-002-04/05, AC-002-02/05 | Grants, versions, revocation, receipt and audit in one JDBC transaction | Real PostgreSQL fault triggers and six-table rollback snapshots | UNVERIFIED |
+| REQ-002-02/03, AC-002-04 | Safe public Account fields and redacted representations, finite sanitized reports | Result field test;97 process-safe Python policy controls PASS | Java privacy/cleanup UNVERIFIED |
+
+33 Java integration methods authored and required only in the PostgreSQL job;
+no allowed new skips. Java lifecycle manifest/Python strict collector both
+require the exact new owned identity-grants suite; no weakening of image,
+ownership, cleanup or privacy checks. Existing workflow/check names, contract,
+V1/V2/V3 and protected main traceability remain unchanged.
+No current Java/Maven/Docker/CI execution or publication; historical Domain
+run39626192090 is not evidence for this working tree. Missing owner provider
+denies; synthetic test authority is not a production integration.
+T-002-01..04 DONE; Feature002 and AC-002-01..05 NOT ACCEPTED;
+Feature001/D1-08/Day1 PARTIAL. Other Application operations remain pending.

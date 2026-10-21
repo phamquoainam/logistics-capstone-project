@@ -20,7 +20,7 @@ public record ManagementAuthority(UUID actorId, long actorAuthVersion, UUID targ
         assignable = DomainValues.unique(assignable);
     }
 
-    void requireManagement(IdentityAccount actor, IdentityAccount target, Set<Grant> proposed) {
+    public void requireManagement(IdentityAccount actor, IdentityAccount target, Set<Grant> proposed) {
         require(actor != null && actor.active() && actor.managementAdmin(), AUTHORITY_REQUIRED);
         require(actor.id().equals(actorId) && actor.version().authVersion() == actorAuthVersion
             && target.id().equals(targetId) && target.version().version() == targetVersion, AUTHORITY_REQUIRED);
