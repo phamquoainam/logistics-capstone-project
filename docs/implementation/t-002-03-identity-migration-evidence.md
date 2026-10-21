@@ -1,5 +1,21 @@
 # T-002-03 — Production Identity persistence implementation
 
+Latest acceptance: **T-002-03 DONE**, under OWNER_T_002_03_FINAL_ACCEPTANCE: GO
+and OWNER_T_002_03_FINAL_EVIDENCE_REVIEW: GO. Run39575568268 attempt1 passed on
+PR head bf80d84a459e2b6c8f8431c47dcbbe9f0e84c817; actual synthetic merge checkout
+f426491f9b02c3045333f8296f6b1e320e4b7339. All three downloaded sanitized ZIPs
+match previously verified GitHub SHA-256 metadata. Identity migration14/14 and
+the corrected PostgreSQL rerun regression PASS.
+[Final evidence, DoD and Domain handoff](#final-migration-acceptance--2026-10-21).
+T-002-04 is READY for bounded Domain implementation, NOT STARTED. Production
+AC-002-01..05 remain NOT ACCEPTED; Feature001/D1-08/Day1 remain PARTIAL.
+
+## Historical source checkpoint before CI publication
+
+The implementation/preflight checkpoints below retain their original results.
+Their pending/not-run status is superseded only for the migration gates
+explicitly evidenced in the final acceptance section.
+
 Latest source checkpoint: **RI_LIFECYCLE_01_CORRECTED_CI_READY** under
 OWNER_RI_LIFECYCLE_01_CORRECTION: GO. Per-suite lifecycle accounting and existing
 workflow wiring are corrected;88 process-free policy tests PASS. Java publication/
@@ -988,3 +1004,172 @@ launcher unchanged.48 local file/anchor targets PASS; git diff --check exit0
 (prior line-ending notices only). Branch/HEAD unchanged, index empty; no
 commit/push/PR/merge, service startup or workflow dispatch. No runtime cleanup
 result is claimed.
+
+## Final migration acceptance — 2026-10-21
+
+**T-002-03 DONE.** Owner authorized final acceptance and offline review of the
+successful run's downloaded sanitized artifacts. This closes the earlier
+CI_EVIDENCE_INCOMPLETE retrieval limitation; no new runtime execution occurred.
+Canonical [task DoD](../../specs/002-identity-access/tasks.md) is unchanged:
+"Migration apply từ DB trống + nâng cấp, kiểm tra indexes/constraints ownership và không phá schema hiện có."
+
+### Run identity and provenance
+
+- [PR20](https://github.com/phamquoainam/logistics-capstone-project/pull/20)
+  targets develop; last API-verified state OPEN, mergeable/clean. No merge or
+  develop post-merge verification is claimed here.
+- Feature head: `bf80d84a459e2b6c8f8431c47dcbbe9f0e84c817`;
+  base: `e8dd52c6baff25ad5c75b80a85e7c81a9f85587f`.
+- [Run39575568268](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/39575568268),
+  attempt1, event pull_request, completed/success, using previously verified
+  run metadata. A later run-detail timeout does not replace that evidence.
+- All three job consoles independently recorded actual checkout
+  `f426491f9b02c3045333f8296f6b1e320e4b7339` in checkout's git-log output.
+  This is the tested synthetic PR merge SHA, not merely a potential merge SHA
+  or the feature head. Jobs/artifact metadata and allowlisted console projections
+  were verified before this offline artifact review. No historical failed report,
+  API retry, private Maven diagnostics or local Java/Maven/Docker run is used.
+
+| Required job | Job ID / evidence | Discovered | Executed / PASS | FAIL / ERROR | Expected skips |
+|---|---|---|---|---|---|
+| Architecture gate | [119140110863](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/39575568268/job/119140110863), SUCCESS |23 |23 |0 /0 |0 |
+| Backend default / H2 | [119140110697](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/39575568268/job/119140110697), SUCCESS |248 |231 |0 /0 |17 |
+| Backend PostgreSQL 18 | [119140110864](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/39575568268/job/119140110864), SUCCESS |275 |270 |0 /0 |5 |
+
+Architecture includes11 ArchitectureTests and12 ArchitectureNegativeFixtureTests
+(11 rejection cases and1 allowed-dependency positive control). H2's17 skips are
+exactly8 PostgresFoundationTests +4 PostgresHealthSafetyTests +5
+FoundationDependencyTests. PostgreSQL's5 skips are exactly FoundationDependencyTests;
+Redis/RabbitMQ runtime is not executed by this workflow. Testcontainers-only
+classes are excluded from H2 discovery, not counted as additional skipped tests.
+No unexpected skip, missing or duplicate class/method identity was found.
+
+### Artifact integrity and report checks
+
+Each owner-downloaded ZIP contains exactly summary.json and tests.xml. Its
+SHA-256 matches the previously verified GitHub artifact API digest for this
+run/head/attempt, rather than relying on the filename or a locally invented hash.
+
+| Artifact | Artifact ID | Verified SHA-256 |
+|---|---|---|
+| backend-architecture-1 |12333223677 |`dc36db3dcbdfdcb5a728a4cd88e806cca4396631048463c27ff4f644c10ced42` |
+| backend-h2-1 |12333613465 |`b71ed91d7871a31f7766eb7936af5e3f5f8187dfc4063268b900627351efb80c` |
+| backend-postgres-1 |12333827960 |`f5ce9043ffbb35245a339ce3fc0e6bf3acb27f06ba9beee299b73b0f0fb7ffb3` |
+
+All summaries have status PASS and problems=[], with counts matching XML suite
+attributes and individual outcomes. Every class/method and status matches the
+finite [strict collector](../../scripts/ci/verify-reports.py) inventory for its
+mode. XML contains only allowlisted class/method identities and fixed sanitized
+skip text: no raw exception, system-output, environment or credential fields.
+ZIPs were read in memory without extracting/publishing raw diagnostics.
+
+### IdentityMigrationTests: actual14/14 PASS
+
+Every row is an actual passed testcase in the verified PostgreSQL XML, mapped
+to [reviewed source assertions](../../app/backend/src/test/java/com/elogistic/backend/identity/internal/infrastructure/IdentityMigrationTests.java),
+not inferred solely from the overall job conclusion.
+
+| Method | Outcome | Migration assertion / trace |
+|---|---|---|
+| coldStartValidateAndRerunPreserveHistoryAndIdentityData | PASS | Empty V1/V2/V3, exact history, validate, rerun0, unchanged checksums/account; REQ-002-01..05 |
+| upgradeV2PreservesAllDemoTablesWithoutImportingAccounts | PASS | V2-to-V3 applies1; five Demo tables/data and V1/V2 checksums retained; no production account import |
+| ownerOwnsEightTablesIndexesAndOnlyIdentityForeignKeys | PASS | Eight owned tables, indexes present, six named indexes checked, no cross-schema Identity FK |
+| usernamesRemainExactCaseUnicodeAndRejectDuplicatesBlankAndNull | PASS | Exact case/Unicode; duplicate/blank/null/overlength rejection; REQ-002-01/03 |
+| accountLifecycleRequiresVerifiedActivatedCredentialAndPositiveVersions | PASS | Account state/credential/verification/version constraints; REQ-002-01/05 |
+| grantsAllowMultipleScopesButRejectDuplicatesInvalidScopesAndMissingAccounts | PASS | Multi-scope storage, duplicate/invalid/FK rejection; REQ-002-01/04 |
+| sessionsRejectInvalidDeadlinesMissingAccountsAndNullExpiry | PASS | Deadline/order/null/FK constraints; REQ-002-02/05 |
+| refreshHashesMustBeUniqueCorrectSizeAndHaveExistingSession | PASS | Hash width/uniqueness, session FK, expiry; REQ-002-03/05 |
+| refreshLineageCannotCrossFamiliesForkOrHaveTwoLiveMembers | PASS | Same-family lineage, unique successor/root/live member; REQ-002-03/05 |
+| proofPurposeLifetimeHashAndSingleOutstandingProofAreEnforced | PASS | Purpose/lifetime/hash/consumption/outstanding-proof constraints; REQ-002-03/05 |
+| csrfSupportsPreauthAndSessionBindingButRejectsBadHashesAndReferences | PASS | Preauth/session binding storage, hash/time/FK checks; REQ-002-02/03 |
+| receiptsBindActorProofOrPreauthWithoutExistenceDisclosureOrDuplicateKey | PASS | Typed receipt binding, duplicate/FK/preauth restrictions; REQ-002-04/05 |
+| runtimeCanAppendAuditButCannotDdlDeleteAccountsOrMutateAuditAndReceipts | PASS | Runtime append allowed; DDL/account deletion/audit/receipt mutation denied; REQ-002-04/05 |
+| preexistingSchemaDriftFailsWithoutBaselineOrRepair | PASS | Conflicting table rejects V3 while preserving V1/V2 history and drift marker |
+
+### Canonical DoD and compatibility
+
+| Obligation | Actual evidence | Verdict |
+|---|---|---|
+| Apply from empty DB | Identity cold-start case and PostgresTestcontainersTests.coldStartAppliesV1AndV2 (retained name now asserts V1/V2/V3) | PASS |
+| Upgrade without breaking existing schema/data | Identity V2-to-V3 case plus both retained V1-to-V2 regressions; prior checksums/Demo data preserved | PASS |
+| Indexes/constraints/ownership |14 Identity cases;8 PostgresFoundationTests and7 PostgresTestcontainersTests all PASS, including owner/migrator/runtime restrictions | PASS |
+| Validate/rerun/data persistence | Both Foundation/Testcontainers rerun cases and Testcontainers restartPreservesCommittedDataAndHistory PASS | PASS |
+| Architecture and backend regression | Exact inventories above;4 PostgreSQL health-safety cases and existing Demo authentication/shipment tests PASS; H2 compatibility PASS | PASS |
+
+PostgresFoundationTests.validateAndRerunPreserveDataAndChecksums is explicitly
+PASS in PostgreSQL XML (expected SKIPPED in H2). Commit bf80d84 corrected only
+its obsolete two-migration assertion to exact versions1/2/3; validate, rerun0,
+checksum and Demo-account preservation assertions remain. No V1/V2/V3 SQL was
+changed to obtain the green result. Historical failures remain historical.
+
+### Privacy, report guards and owned cleanup
+
+Previously read consoles of these exact jobs show88 report-policy unittest
+controls and OK in EACH job, with successful fail-closed-guard steps. Those
+Python controls are separate from the Java totals. Temporary database credential
+log audit PASS in all three jobs; PostgreSQL generated Testcontainers credential
+privacy audit PASS and Testcontainers owned resource cleanup audit PASS.
+The PostgreSQL workflow's separate owned temporary database cleanup step also
+completed successfully. Both expected Testcontainers suite records are mandatory
+under the unchanged strict auditor. No developer resource cleanup or database
+content-integrity claim is inferred. These bounded checks are not a general
+security certification or closure of unrelated Foundation findings.
+
+### Acceptance and publication boundary
+
+Owner-delegated canonical Migration DoD is satisfied; no additional nondelegable
+sign-off is specified for this task. PR review/merge and documentation publication
+remain separate, unperformed operations. PR CI is not develop post-merge evidence.
+Only this evidence, canonical tasks and supplemental traceability are updated;
+main traceability.md and six preexisting Foundation changes are preserved.
+A future separately authorized documentation commit must stage exactly those
+three SDD paths, review the diff and normally push the current feature branch.
+No commit/push or PR merge is performed or implicitly authorized here.
+
+This acceptance does not prove production HTTP/session admission, real RBAC /
+ownership decisions, last-admin concurrency, atomic grant/revocation/audit,
+refresh replay, delivery, mobile storage or full security acceptance.
+AC-002-01..05 remain NOT ACCEPTED; full Feature002 remains incomplete.
+Feature001/D1-08/Day1 remain PARTIAL. Earlier not-run/pending checkpoints are
+superseded only for the migration gates explicitly evidenced above.
+
+### T-002-04 Domain handoff
+
+**READY for bounded Domain implementation; NOT STARTED.** Dependency T-002-03
+is DONE. Canonical DoD remains "Unit test happy path, negative, bound và transition xanh."
+Trace REQ-002-01..05 / AC-002-01..05, without accepting those runtime ACs.
+Sources: [ADR-0009](../architecture/decisions/ADR-0009-production-identity-lifecycle.md),
+[accepted contract semantics](../../contracts/identity-access/README.md),
+[spec](../../specs/002-identity-access/spec.md), [design](../../specs/002-identity-access/design.md).
+
+| Scope from accepted decisions | Required unit fixtures / boundary |
+|---|---|
+| Account lifecycle and version/authVersion | Pending activation through eligible invitation; active/disabled/reactivation; invalid transition and disabled-pending rejection; no old-session resurrection |
+| Role/scope/ownership guards | Multi-scope/all-target authority, union of current/requested grants, missing-authority default-deny, Admin/Finance separation; self-management and last-active-admin removal rejection |
+| Session/proof/version policies |900s access cap,28800s absolute/1800s meaningful idle; before/at/after deadlines; polling never extends idle; revoked/stale version rejection; refresh-family/proof eligibility and24h invitation/15min recovery boundaries |
+| Username/password invariants | Exact nonblank1..80-codepoint username; case/Unicode distinctions; new password minimum15 codepoints/maximum72 UTF-8 bytes, malformed Unicode rejected, no trim/normalize/truncate; legacy login not given new minimum |
+
+Proposed internal files belong under app/backend/src/main/java/com/elogistic/backend/identity/internal/domain/
+and corresponding src/test/java domain packages: account/lifecycle types,
+username/credential-policy values, role/scope guards and session/proof/version
+policies as needed. Names remain internal implementation choices, not new public
+contracts or one mandatory aggregate per SQL table. Keep domain independent of
+Spring/JDBC/HTTP and foreign module internals, using deterministic supplied time
+and authoritative facts. Persistence/crypto/resource-authority adapters and
+transaction coordination belong to subsequent application/infrastructure work.
+Unit guards cannot prove concurrent last-admin protection or atomic effects.
+
+Existing Demo LoginService/TokenService/AccountQueries/AuthenticatedActor remain
+Demo contracts; the single-role/merchant projection is not a production
+multi-role model. No automatic account import, new production endpoint or Demo
+contract/RBAC change. Preserve SQL and accepted contracts, Java21 /
+Spring Boot4.1.1 / Maven3.10.0; plain-Java Domain tests need no new dependency.
+Unresolved mail/mobile/bootstrap/key-operation choices do not block this isolated
+Domain slice and do not authorize implementation of those integrations.
+
+Verification for the subsequent task: meaningful happy/negative/boundary/
+transition JUnit tests, real-scope ArchUnit/negative controls and backend verify.
+New test identities require an explicitly scoped strict report-inventory and
+guard-test update so CI cannot omit them. No such source/policy change or runtime
+execution occurs here. T-002-04 implementation remains a subsequent authorized
+task, not an automatic continuation of this acceptance checkpoint.

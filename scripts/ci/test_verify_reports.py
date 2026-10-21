@@ -257,8 +257,9 @@ class ReportGuardTests(unittest.TestCase):
         self.assertEqual([20, 38, 17, 34], [len(v) for v in reports.S2_REQUIRED.values()])
         for name, methods in reports.S2_REQUIRED.items():
             self.assertEqual(len(methods), len(set(methods)), name)
-        for mode, passed, skipped in [('architecture', 23, 0), ('h2', 231, 17),
-                                      ('postgres', 270, 5), ('foundation', 5, 0)]:
+        # Prior cases retained; H2/PostgreSQL each add the exact48 Domain identities.
+        for mode, passed, skipped in [('architecture', 23, 0), ('h2', 279, 17),
+                                      ('postgres', 318, 5), ('foundation', 5, 0)]:
             with self.subTest(mode=mode):
                 self.fixture(mode)
                 self.assertTrue(self.check(mode))
@@ -1046,6 +1047,95 @@ class LifecycleAuditTests(unittest.TestCase):
         self.assertIn('name: Backend PostgreSQL 18',workflow)
         self.assertIn('runs-on: ubuntu-24.04',workflow)
 
+
+class IdentityDomainInventoryTests(unittest.TestCase):
+    # Reuse only synthetic report fixtures, without duplicating inherited tests.
+    setUp = ReportGuardTests.setUp
+    fixture = ReportGuardTests.fixture
+    save = ReportGuardTests.save
+    check = ReportGuardTests.check
+
+    def test_domain_source_inventory_and_plain_jupiter_categories(self):
+        root = Path(__file__).resolve().parents[2]
+        sources = root / 'app/backend/src/test/java/com/elogistic/backend/identity/internal/domain'
+        expected_names = {'IdentityAccountTests', 'IdentityAuthorizationTests',
+                          'IdentitySessionTests', 'IdentityProofAndRefreshTests', 'IdentityValueTests'}
+        self.assertEqual({p.stem for p in sources.glob('*Tests.java')}, expected_names)
+        self.assertEqual(sum(map(len, reports.IDENTITY_DOMAIN_REQUIRED.values())), 48)
+        for suffix in sorted(expected_names):
+            source = (sources / (suffix + '.java')).read_text(encoding='utf-8')
+            name = reports.BASE + 'identity.internal.domain.' + suffix
+            methods = re.findall(r'@Test\s+void\s+(\w+)\s*\(', source)
+            self.assertEqual(methods, reports.IDENTITY_DOMAIN_REQUIRED[name])
+            self.assertEqual(len(methods), len(set(methods)))
+            for forbidden in ('@Disabled', '@Testcontainers', '@Tag(', '@ParameterizedTest'):
+                self.assertNotIn(forbidden, source)
+            self.assertNotIn(name, reports.TESTCONTAINERS_ONLY | reports.PG_ONLY | reports.FOUNDATION_ONLY)
+            for mode in ('h2', 'postgres'):
+                self.assertIn(name, reports.expected_suites(mode))
+            for mode in ('architecture', 'foundation'):
+                self.assertNotIn(name, reports.expected_suites(mode))
+
+    def test_missing_domain_class_and_each_method_fail_closed(self):
+        for mode in ('h2', 'postgres'):
+            self.fixture(mode)
+            for name, methods in reports.IDENTITY_DOMAIN_REQUIRED.items():
+                with self.subTest(mode=mode, suite=name):
+                    path = self.source / ('TEST-' + name + '.xml')
+                    original = path.read_bytes()
+                    path.unlink()
+                    self.assertFalse(self.check(mode))
+                    path.write_bytes(original)
+                    for method in methods:
+                        suite = ET.fromstring(original)
+                        case = next(c for c in suite if c.get('name') == method)
+                        suite.remove(case)
+                        suite.set('tests', str(len(suite.findall('testcase'))))
+                        self.save(suite)
+                        self.assertFalse(self.check(mode), method)
+                    path.write_bytes(original)
+            self.assertTrue(self.check(mode))
+
+    def test_domain_skip_failure_and_error_each_reject_in_both_modes(self):
+        for mode in ('h2', 'postgres'):
+            self.fixture(mode)
+            for name in reports.IDENTITY_DOMAIN_REQUIRED:
+                path = self.source / ('TEST-' + name + '.xml')
+                original = path.read_bytes()
+                for status, count in [('skipped', 'skipped'), ('failure', 'failures'), ('error', 'errors')]:
+                    with self.subTest(mode=mode, suite=name, status=status):
+                        suite = ET.fromstring(original)
+                        ET.SubElement(suite.find('testcase'), status)
+                        suite.set(count, '1')
+                        self.save(suite)
+                        self.assertFalse(self.check(mode))
+                path.write_bytes(original)
+
+    def test_renamed_or_unknown_domain_invocation_is_rejected(self):
+        self.fixture('h2')
+        for name in reports.IDENTITY_DOMAIN_REQUIRED:
+            path = self.source / ('TEST-' + name + '.xml')
+            original = path.read_bytes()
+            suite = ET.fromstring(original)
+            suite.find('testcase').set('name', 'unreviewedInvocation[1]')
+            self.save(suite)
+            self.assertFalse(self.check('h2'))
+            path.write_bytes(original)
+
+    def test_domain_failure_diagnostics_are_not_published(self):
+        self.fixture('h2')
+        name = reports.BASE + 'identity.internal.domain.IdentityValueTests'
+        path = self.source / ('TEST-' + name + '.xml')
+        suite = ET.parse(path).getroot()
+        marker = 'synthetic-private-domain-diagnostic'
+        ET.SubElement(suite.find('testcase'), 'failure', message=marker).text = marker
+        suite.set('failures', '1')
+        ET.SubElement(suite, 'system-out').text = marker
+        self.save(suite)
+        self.assertFalse(self.check('h2'))
+        published = ''.join(p.read_text(encoding='utf-8') for p in self.output.iterdir())
+        self.assertNotIn(marker, published)
+        self.assertIn('See local private diagnostics; raw output is not published.', published)
 
 if __name__ == '__main__':
     unittest.main()
