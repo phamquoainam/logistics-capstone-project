@@ -1,6 +1,6 @@
 # Implementation Tasks 002: Xác thực và phân quyền theo phạm vi
 
-**Tình trạng hiện tại:** T-002-01/02/03 DONE theo scope được duyệt; T-002-04 Domain IMPLEMENTED_VERIFICATION_PENDING. Production Feature002 và AC-002-01..05 chưa được nghiệm thu. **Rule:** Không tick DONE trước khi có code+test+evidence.
+**Tình trạng hiện tại:** T-002-01/02/03/04 DONE theo scope được duyệt; T-002-05 Application READY / NOT STARTED. Production Feature002 và AC-002-01..05 chưa được nghiệm thu. **Rule:** Không tick DONE trước khi có code+test+evidence.
 **Ordering:** T-002-01 → T-002-02…; các phần web/mobile có thể song song sau khi contract+API ổn định, không merge thiếu tests.
 
 - [x] **T-002-01 — Review**
@@ -18,7 +18,7 @@
   - Phụ thuộc: T-002-02.  
   - Hoàn thành khi: Migration apply từ DB trống + nâng cấp, kiểm tra indexes/constraints ownership và không phá schema hiện có.  
   - Trace: REQ-002-01..05; AC-002-01..05.
-- [ ] **T-002-04 — Domain**  
+- [x] **T-002-04 — Domain**
   - Thực hiện: Viết domain types/guards bảo vệ module/ownership rules.  
   - Phụ thuộc: T-002-03.  
   - Hoàn thành khi: Unit test happy path, negative, bound và transition xanh.  
@@ -194,3 +194,23 @@ T-002-05 Application is the next canonical task and is not started; its dependen
 T-002-04 is not DONE. T-002-03 acceptance evidence remains byte-identical.
 Production AC-002-01..05 NOT ACCEPTED; Feature002 incomplete;
 Feature001/D1-08/Day1 PARTIAL. No stage/commit/push/PR/merge or next-task code.
+
+## T-002-04 actual CI acceptance — 2026-10-21
+
+**T-002-04 DONE**, superseding its historical pending checkpoint above.
+[Run39626192090 attempt1, exact48 outcomes, artifact digests and Application handoff](../../docs/implementation/t-002-04-identity-domain-evidence.md#t-002-04-actual-ci-acceptance--2026-10-21).
+Source commit/actual checkout bbb10987faa8dbcf7a85ccffe72c7c299e8e38b0 on
+feature/002-identity-domain-ci, parent bf80d84; exactly25 scoped paths published,
+one normal push and one native workflow_dispatch; no PR20 change/new PR/merge.
+
+- [x] Real Java compile/backend verify and48/48 Domain JUnit cases PASS in BOTH H2 and PostgreSQL, including happy/negative/boundary/transitions.
+- [x] Architecture23 PASS/0 skips; H2279 PASS/17 expected skips; PostgreSQL318 PASS/5 expected skips;0 failures/errors, exact test inventories.
+- [x] PostgreSQL IdentityMigrationTests14/14 and corrected Foundation rerun regression PASS; no SQL changes or prohibited skips.
+- [x]93 report-policy controls per job, SHA-256-verified sanitized artifacts, actual credential/privacy and PostgreSQL/Testcontainers owned cleanup PASS.
+- [x] Evidence and supplemental trace updated; six Foundation changes and T-002-03 acceptance record preserved.
+
+T-002-05 Application READY / NOT STARTED: bounded grant-management transaction
+slice in the handoff; canonical DoD unchanged. Closure documentation after CI is
+not included in tested source commit and needs a separate documentation commit;
+no second automatic commit/push here. PR integration/review remains separate.
+AC-002-01..05 NOT ACCEPTED; Feature002 incomplete; Feature001/D1-08/Day1 PARTIAL.

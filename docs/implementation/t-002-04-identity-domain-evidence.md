@@ -1,5 +1,17 @@
 # T-002-04 — Production Identity Domain implementation
 
+Latest acceptance: **T-002-04 DONE / T-002-05 READY**, under owner-authorized
+[actual CI run39626192090 attempt1](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/39626192090).
+Tested source/checkout bbb10987faa8dbcf7a85ccffe72c7c299e8e38b0:48/48 Domain
+tests PASS in BOTH H2 and PostgreSQL; architecture/backend/report/privacy/cleanup
+gates PASS. [Full acceptance/provenance and Application handoff](#t-002-04-actual-ci-acceptance--2026-10-21).
+Feature002 and production AC-002-01..05 remain NOT ACCEPTED.
+
+## Historical implementation checkpoint
+
+Earlier pending/UNVERIFIED statements retain their original scope; final CI
+acceptance supersedes them only for the explicitly verified gates.
+
 Checkpoint: 2026-10-21. Authority: OWNER_T_002_04_DOMAIN_IMPLEMENTATION: GO.
 **T_002_04_IMPLEMENTED_VERIFICATION_PENDING**. Domain source and48 JUnit cases
 are implemented; Java compilation/JUnit/ArchUnit/backend runtime are UNVERIFIED.
@@ -220,3 +232,216 @@ branch/tag through the API/CLI. Use that native registered-ID path only, after
 verifying the new remote branch's exact committed SHA. If dispatch is rejected,
 STOP without PR fallback or a second dispatch. No dispatch outcome, Java test
 result, publication success or new task acceptance is claimed by this preflight.
+
+## T-002-04 actual CI acceptance — 2026-10-21
+
+**T_002_04_DONE_T_002_05_READY** under owner-authorized CI verification.
+Canonical Domain DoD is satisfied by actual Java compilation and
+happy/negative/boundary/transition JUnit execution, real-scope ArchUnit and
+backend regression on the exact source. This supersedes earlier UNVERIFIED
+statements only for the gates explicitly verified below.
+
+### Published source and run provenance
+
+- Branch feature/002-identity-domain-ci; source commit
+  `bbb10987faa8dbcf7a85ccffe72c7c299e8e38b0`, sole parent
+  `bf80d84a459e2b6c8f8431c47dcbbe9f0e84c817`.
+- Message: feat(identity): implement production identity domain policies.
+  Exactly25 reviewed paths committed; staged blobs matched working bytes using
+  command-scoped CRLF handling, not a persistent Git configuration change.
+- One normal push exit0; independent remote check matched the full source SHA.
+  Migration branch stayed bf80d84; no PR20 change, force push, new PR or merge.
+- Exactly ONE dispatch request, HTTP204, against registered workflow383888734
+  and the verified Domain branch. No historical rerun, failed-job retry or local
+  Java/Maven/Docker/developer-service execution.
+- [Run39626192090](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/39626192090),
+  attempt1, event workflow_dispatch, branch feature/002-identity-domain-ci:
+  completed/success. ALL THREE job consoles record actual checkout
+  `bbb10987faa8dbcf7a85ccffe72c7c299e8e38b0`.
+  This manual branch execution has no synthetic PR merge SHA.
+
+### Exact publication manifest
+
+The first19 paths are new Java source/tests; two policy files have narrow
+inventory changes; four SDD paths explicitly include the earlier T-002-03
+completion record. Six protected Foundation paths/private artifacts are excluded.
+
+```text
+app/backend/src/main/java/com/elogistic/backend/identity/internal/domain/AccountVersion.java
+app/backend/src/main/java/com/elogistic/backend/identity/internal/domain/ActionProof.java
+app/backend/src/main/java/com/elogistic/backend/identity/internal/domain/DomainValues.java
+app/backend/src/main/java/com/elogistic/backend/identity/internal/domain/DomainViolation.java
+app/backend/src/main/java/com/elogistic/backend/identity/internal/domain/Grant.java
+app/backend/src/main/java/com/elogistic/backend/identity/internal/domain/IdentityAccount.java
+app/backend/src/main/java/com/elogistic/backend/identity/internal/domain/IdentitySession.java
+app/backend/src/main/java/com/elogistic/backend/identity/internal/domain/ManagementAuthority.java
+app/backend/src/main/java/com/elogistic/backend/identity/internal/domain/PasswordPolicy.java
+app/backend/src/main/java/com/elogistic/backend/identity/internal/domain/RefreshFamily.java
+app/backend/src/main/java/com/elogistic/backend/identity/internal/domain/ResourceScope.java
+app/backend/src/main/java/com/elogistic/backend/identity/internal/domain/RoleCode.java
+app/backend/src/main/java/com/elogistic/backend/identity/internal/domain/Username.java
+app/backend/src/test/java/com/elogistic/backend/identity/internal/domain/DomainFixtures.java
+app/backend/src/test/java/com/elogistic/backend/identity/internal/domain/IdentityAccountTests.java
+app/backend/src/test/java/com/elogistic/backend/identity/internal/domain/IdentityAuthorizationTests.java
+app/backend/src/test/java/com/elogistic/backend/identity/internal/domain/IdentityProofAndRefreshTests.java
+app/backend/src/test/java/com/elogistic/backend/identity/internal/domain/IdentitySessionTests.java
+app/backend/src/test/java/com/elogistic/backend/identity/internal/domain/IdentityValueTests.java
+docs/implementation/t-002-03-identity-migration-evidence.md
+docs/implementation/t-002-04-identity-domain-evidence.md
+docs/quality/feature-002-recovery-traceability.md
+scripts/ci/test_verify_reports.py
+scripts/ci/verify-reports.py
+specs/002-identity-access/tasks.md
+```
+
+### Actual jobs and regression
+
+| Job | Actual job evidence | Discovered | Executed / PASS | FAIL / ERROR | Expected skips |
+|---|---|---|---|---|---|
+| Architecture gate | [119311974798](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/39626192090/job/119311974798), SUCCESS |23 |23 |0 /0 |0 |
+| Backend default / H2 | [119311974270](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/39626192090/job/119311974270), SUCCESS |296 |279 |0 /0 |17 |
+| Backend PostgreSQL 18 | [119311975054](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/39626192090/job/119311975054), SUCCESS |323 |318 |0 /0 |5 |
+
+All summaries have PASS/problems=[] and match individual XML statuses, counts
+and finite required inventories. No missing/duplicate/renamed identity or
+prohibited skip. H2 skips exactly8 PostgresFoundationTests +4
+PostgresHealthSafetyTests +5 FoundationDependencyTests; PostgreSQL skips exactly5
+FoundationDependencyTests. Testcontainers-only suites are excluded from H2
+discovery, not silently accepted as skipped.
+
+Architecture11 production rules and12 negative/positive-control cases PASS
+against new compiled Domain classes. Domain tests run in both backend jobs.
+PostgreSQL IdentityMigrationTests14/14 and
+PostgresFoundationTests.validateAndRerunPreserveDataAndChecksums PASS. Existing
+V1/V2/V3 cold-start/rerun/upgrade/constraints/ownership, Demo/H2/PostgreSQL and
+health regressions remain green on THIS run. Redis/RabbitMQ remote runtime is
+not covered by this workflow. No SQL or Java source fix was needed during CI.
+
+### Artifact identity, integrity and privacy
+
+Each downloaded ZIP matches its same-run GitHub API SHA-256 and contains exactly
+summary.json/tests.xml. Report mode, suite attributes, totals and exact
+class/method/outcome sets agree. Only allowlisted metadata and fixed sanitized
+skip text are published; no raw private Maven diagnostic, environment,
+system-output or arbitrary exception field was read/published.
+
+| Artifact | ID | Verified ZIP SHA-256 |
+|---|---|---|
+| backend-architecture-1 |12357985214 |`9767773a8d34e5a39ce43a7fd92ecae4e9b428d952fba887ab76ad8ca321887e` |
+| backend-h2-1 |12357096445 |`5242711d97b97cf5bdc20bfa1ee2913d1f1497653834fd7d51af709597405af4` |
+| backend-postgres-1 |12358105366 |`56fd1270d0a4ee27b873d02c39baec7fdf9ab426baf7b0bfa5d10ce448172421` |
+
+Actual consoles show93 report-policy controls and OK in EACH job; guard, Maven
+verify/discovery and upload steps succeeded. Temporary database credential log
+audit PASS in all three jobs. PostgreSQL generated Testcontainers credential
+privacy and owned cleanup audits PASS; separate temporary PostgreSQL cleanup
+step SUCCESS. Task-C audits are NOT_APPLICABLE in architecture/H2, not claimed
+executed there. This is bounded privacy/cleanup evidence, not general security
+certification or developer-data content-integrity verification.
+
+### Exact48 Domain outcomes
+
+Every identity below appears with passed status in BOTH downloaded backend XML
+reports and matches the finite source inventory. Names are suite.method within
+identity.internal.domain. These are48 distinct methods per job, not96 methods.
+
+| Test identity | H2 | PostgreSQL |
+|---|---|---|
+| IdentityAccountTests.activationRejectsDisabledPendingAndAlreadyActiveAccounts | PASS | PASS |
+| IdentityAccountTests.activationRejectsWrongSubjectPurposeExpiredProofAndWeakPassword | PASS | PASS |
+| IdentityAccountTests.activationReturnsAccountAndConsumedInvitationWithoutMutatingOriginals | PASS | PASS |
+| IdentityAccountTests.disableAndReactivatePreserveActivationButNeverRestoreOldSessions | PASS | PASS |
+| IdentityAccountTests.passwordResetConsumesRecoveryAndInvalidatesPreviousAuthVersion | PASS | PASS |
+| IdentityAccountTests.provisioningRequiresExplicitAuthorityAndCreatesOnlyPendingAccount | PASS | PASS |
+| IdentityAccountTests.recoveryRequiresActiveVerifiedAccountAndStoredEmailMatch | PASS | PASS |
+| IdentityAccountTests.repeatedDisableAndInvalidReactivationAreRejected | PASS | PASS |
+| IdentityAccountTests.restoreRejectsImpossibleActivationCombinations | PASS | PASS |
+| IdentityAccountTests.staleVersionPreventsLifecycleOrProofCommitResult | PASS | PASS |
+| IdentityAuthorizationTests.authorityCollectionsAreCopiedAndStaleExpectedVersionIsRejected | PASS | PASS |
+| IdentityAuthorizationTests.authorizedReplacementKeepsMultipleScopesAndInvalidatesSessions | PASS | PASS |
+| IdentityAuthorizationTests.emptyReplacementIsAllowedForNonAdminButDuplicatesAreRejected | PASS | PASS |
+| IdentityAuthorizationTests.functionalAccessRequiresExactRoleAndScopeWithoutAdminFinanceFallback | PASS | PASS |
+| IdentityAuthorizationTests.lastActiveAdminCannotBeDisabledOrLoseManagementRole | PASS | PASS |
+| IdentityAuthorizationTests.missingProviderAndNonManagementActorDefaultDeny | PASS | PASS |
+| IdentityAuthorizationTests.proposedGrantsNeedExplicitAssignabilityWithoutScopeCrossProduct | PASS | PASS |
+| IdentityAuthorizationTests.replacementRequiresAuthorityOverUnionIncludingRemovedGrants | PASS | PASS |
+| IdentityAuthorizationTests.selfDisableAndSelfGrantReplacementAreAlwaysRejected | PASS | PASS |
+| IdentityAuthorizationTests.snapshotBindsActorAuthVersionTargetAndVersionEvenWhenGrantsEmpty | PASS | PASS |
+| IdentityProofAndRefreshTests.consumedOrRevokedProofCannotBeReusedOrResurrected | PASS | PASS |
+| IdentityProofAndRefreshTests.consumedRefreshReplayRevokesFamilyAndSessionWithoutGrace | PASS | PASS |
+| IdentityProofAndRefreshTests.proofLifetimesAndExactExpiryBoundariesMatchAcceptedPolicy | PASS | PASS |
+| IdentityProofAndRefreshTests.proofRejectsWrongPurposeSubjectAndInvalidTime | PASS | PASS |
+| IdentityProofAndRefreshTests.proofRestoreAndIssueRejectImpossibleStatesOrEligibility | PASS | PASS |
+| IdentityProofAndRefreshTests.refreshExpiryAndRestoredMemberStateAreValidated | PASS | PASS |
+| IdentityProofAndRefreshTests.refreshRequiresMatchingFamilyAccountAndCurrentSession | PASS | PASS |
+| IdentityProofAndRefreshTests.refreshRotationConsumesPreviousMemberAndPreservesSessionDeadlines | PASS | PASS |
+| IdentityProofAndRefreshTests.revokedFamilyRejectsCurrentTokenRatherThanRotating | PASS | PASS |
+| IdentityProofAndRefreshTests.unknownRefreshDoesNotRevokeLegitimateFamilyAndSuccessorCannotBeReused | PASS | PASS |
+| IdentitySessionTests.absoluteBoundaryCapsIdleAndJwtEvenAfterMeaningfulActivity | PASS | PASS |
+| IdentitySessionTests.accountBindingStatusAndAuthVersionAreRechecked | PASS | PASS |
+| IdentitySessionTests.expiredActivityCannotResurrectSessionAndClockRollbackIsDenied | PASS | PASS |
+| IdentitySessionTests.explicitActivityExtendsIdleButPollingAndRefreshDoNot | PASS | PASS |
+| IdentitySessionTests.idleAdmissionIsValidBeforeDeadlineButNotAtOrAfter | PASS | PASS |
+| IdentitySessionTests.invalidRestoredDeadlinesAreRejected | PASS | PASS |
+| IdentitySessionTests.jwtLifetimeAlsoCannotExceedIdleDeadline | PASS | PASS |
+| IdentitySessionTests.openingSessionSetsAcceptedAbsoluteIdleAndAccessBounds | PASS | PASS |
+| IdentitySessionTests.revokedSessionCannotBeAdmittedAndRevocationIsIdempotent | PASS | PASS |
+| IdentityValueTests.collectionsAreDefensiveAndDuplicateInputIsRejected | PASS | PASS |
+| IdentityValueTests.loginAllowsLegacyMinimumWithoutRelaxingByteLimit | PASS | PASS |
+| IdentityValueTests.newPasswordEnforcesCodePointMinimumAndUtf8Maximum | PASS | PASS |
+| IdentityValueTests.passwordRejectsMalformedUnicodeAndDoesNotTransformInput | PASS | PASS |
+| IdentityValueTests.sensitiveValuesAndExceptionsHaveRedactedRepresentations | PASS | PASS |
+| IdentityValueTests.usernamePreservesExactCaseUnicodeAndPadding | PASS | PASS |
+| IdentityValueTests.usernameUsesCodePointsAndContractWhitespaceBoundaries | PASS | PASS |
+| IdentityValueTests.valueObjectsRejectMissingScopeAndDoNotInventRoleCatalog | PASS | PASS |
+| IdentityValueTests.versionsRejectInvalidStaleAndOverflowWithoutWrapping | PASS | PASS |
+
+These cases prove Domain account/lifecycle/version, whole-target authority/
+assignability/default-deny/self/last-admin guards, deadline/revocation/activity,
+strict replay result, proof purpose/subject/expiry/consumption and credential
+boundary decisions. They do not prove concurrent transaction serialization,
+production authentication admission, owner-provider integration or side effects.
+
+### SDD closure and integration boundary
+
+T-002-04 checkbox is checked; canonical DoD/REQ/AC wording unchanged.
+T-002-05 Application READY / NOT STARTED for its bounded canonical scope.
+T-002-03 remains DONE; production AC-002-01..05 NOT ACCEPTED, full Feature002
+incomplete, Feature001/D1-08/Day1 PARTIAL.
+
+Only this evidence, tasks and supplemental traceability change AFTER CI.
+Those closure edits are a separate documentation checkpoint, not part of
+tested/pushed bbb1098; no second automatic commit/push is performed. All21
+Java/test/policy hashes above still identify tested source. A later documentation
+commit must be separate under governance; earlier CI does not test that later
+Git revision. No PR/develop integration or develop post-merge result is claimed.
+A future Domain PR must keep Migration PR20 separate and check its base/diff
+against Migration integration.
+
+### T-002-05 Application handoff
+
+Canonical scope: use cases/ports/public module API, with Identity role update/
+assignment and audit in one local transaction; never update order/finance.
+Dependency T-002-04 is satisfied. Canonical DoD: transaction consistency, no
+foreign internal imports, integration tests PASS; trace REQ-002-01..05 /
+AC-002-01..05 without accepting the full runtime ACs.
+
+First bounded slice: accepted replaceIdentityGrants command. Load current actor/
+account/version/grants; resolve whole-target and current/requested-union
+authority through trusted public owner contracts; check authorized replay before
+stale preconditions; atomically persist grants, account/auth versions, affected
+session revocations, command receipt and audit in V3's authoritative tables.
+Missing/unimplemented owner authority must deny; no permissive provider or
+client-claimed actor. Protect last-admin/concurrent changes and rollback using
+real PostgreSQL integration tests, not just Domain units.
+
+Expected next-task files: focused Identity application use case/ports,
+persistence adapters and integration tests using accepted contract shapes.
+Do not change Demo LoginService/TokenService/API or expose internal Domain
+types through public API. Exact public interfaces/new SQL beyond accepted scope
+need the next task's scoped design/authorization; no migration rewrite or
+provider selection is implied. Fixtures/gates: successful grant replacement,
+full-union/cross-scope denial, self/last-admin, concurrent/stale/replay,
+atomic rollback/audit/receipt/revocation and ownership. Signing-key/bootstrap/
+production mail/mobile decisions remain prerequisites for those affected later
+slices, not hidden fallbacks. No T-002-05 code/provider/controller is implemented.
