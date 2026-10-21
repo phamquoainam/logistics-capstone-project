@@ -1,0 +1,12 @@
+extends:
+  - recommended-strict
+apis:
+  identity@v1:
+    root: ../openapi/identity-access.yaml
+rules:
+  # Existing repository publishing-metadata exception; no license invented.
+  info-license: off
+  no-unresolved-refs: error
+  operation-operationId: error
+  operation-operationId-unique: error
+  security-defined: error

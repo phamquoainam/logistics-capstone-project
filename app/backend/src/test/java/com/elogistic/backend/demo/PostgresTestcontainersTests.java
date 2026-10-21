@@ -31,8 +31,9 @@ class PostgresTestcontainersTests {
     @Test void coldStartAppliesV1AndV2() throws Exception {
         Database db=PostgresTestcontainersSupport.database(POSTGRES);
         Flyway flyway=db.flyway("latest");assertEquals(0,flyway.info().applied().length);
-        assertEquals(2,flyway.migrate().migrationsExecuted);assertTrue(flyway.validateWithResult().validationSuccessful);
-        assertEquals(List.of("1","2"),Arrays.stream(flyway.info().applied()).map(m->m.getVersion().toString()).toList());
+        // Retain the report-policy method identity, now asserting the complete V1/V2/V3 stream.
+        assertEquals(3,flyway.migrate().migrationsExecuted);assertTrue(flyway.validateWithResult().validationSuccessful);
+        assertEquals(List.of("1","2","3"),Arrays.stream(flyway.info().applied()).map(m->m.getVersion().toString()).toList());
     }
 
     private List<String> checksums(Flyway flyway) { return Arrays.stream(flyway.info().applied()).map(m->m.getVersion()+":"+m.getChecksum()).toList(); }
@@ -56,7 +57,7 @@ class PostgresTestcontainersTests {
 
     @Test void upgradeV1ToV2PreservesExistingData() throws Exception {
         Database db=PostgresTestcontainersSupport.database(POSTGRES);assertEquals(1,db.flyway("1").migrate().migrationsExecuted);marker(db);
-        Flyway latest=db.flyway("latest");assertEquals(1,latest.migrate().migrationsExecuted);latest.validate();
+        Flyway latest=db.flyway("2");assertEquals(1,latest.migrate().migrationsExecuted);latest.validate();
         assertEquals(2,latest.info().applied().length);assertMarker(db);assertEquals(0,latest.migrate().migrationsExecuted);
     }
 
@@ -67,7 +68,7 @@ class PostgresTestcontainersTests {
             s.execute("SET ROLE "+db.owner());
             try(ResultSet r=s.executeQuery("SELECT current_user")) { assertTrue(r.next());assertEquals(db.owner(),r.getString(1)); }
             try(ResultSet r=s.executeQuery("SELECT count(*) FROM pg_namespace WHERE nspowner=(SELECT oid FROM pg_roles WHERE rolname='"+db.owner()+"') AND nspname IN ('platform','identity','merchant','orders','pricing','warehouse','dispatch','finance','routing','notification')")) { assertTrue(r.next());assertEquals(10,r.getInt(1)); }
-            try(ResultSet r=s.executeQuery("SELECT count(*) FROM pg_tables WHERE tableowner='"+db.owner()+"' AND schemaname IN ('platform','identity','merchant','orders')")) { assertTrue(r.next());assertEquals(6,r.getInt(1)); }
+            try(ResultSet r=s.executeQuery("SELECT count(*) FROM pg_tables WHERE tableowner='"+db.owner()+"' AND schemaname IN ('platform','identity','merchant','orders')")) { assertTrue(r.next());assertEquals(14,r.getInt(1)); }
         }
     }
 

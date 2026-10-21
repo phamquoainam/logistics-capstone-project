@@ -16,8 +16,8 @@ feature decisions in009/015, not for already verified local starter tooling.
 | --- | --- | --- | --- | --- |
 | DEC-01 | BLOCKING | Phiên bản Spring Boot, Spring Modulith và Java distribution/patch | 001 | Maven wrapper build smoke + compatibility verified |
 | DEC-02 | BLOCKING | Node/package manager/React/Vite/Expo SDK, Android emulator & dev build | 001,009,015 | lockfile + native scan/location/SQLite spikes |
-| DEC-03 | BLOCKING | Session cookie vs JWT access/refresh; logout/revocation/expiration policy | 002 | ADR + RBAC smoke |
-| DEC-04 | BLOCKING | Ai được tạo account, reset password bằng kênh nào | 002 | flows/UC confirmation |
+| DEC-03 | ACCEPTED — browser design only, 2026-10-20 | JWT access15m, rotating opaque refresh, backend revocation, absolute8h/idle30m; separate production trust | 002 | Owner baseline-recovery approval; [ADR-0009](../architecture/decisions/ADR-0009-production-identity-lifecycle.md); runtime smoke UNVERIFIED |
+| DEC-04 | ACCEPTED — design only, 2026-10-20 | Admin provisioning, verified-email invitation24h/recovery15m, no public registration; default-deny scopes | 002 | Owner baseline-recovery approval; [ADR-0009](../architecture/decisions/ADR-0009-production-identity-lifecycle.md); sandbox only, production provider unapproved |
 | DEC-05 | BLOCKING | Danh mục địa chỉ/vùng tính cước áp dụng ở VN | 003,004 | sample data, catalog version and business approval |
 | DEC-06 | BLOCKING | Map tiles, geocoding, matrix provider, coverage, pricing/quota/license | 003,010 | provider integration + fallback spike |
 | DEC-07 | BLOCKING | Khối lượng quy đổi, đơn vị, bậc giá, VAT/fees, discount order và rounding | 004 | golden tariff cases signed off |

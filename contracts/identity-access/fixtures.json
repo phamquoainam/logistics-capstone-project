@@ -1,0 +1,728 @@
+{
+  "classification": "SYNTHETIC_CONTRACT_ONLY",
+  "operations": [
+    {
+      "id": "getIdentityCsrf",
+      "method": "get",
+      "path": "/auth/csrf",
+      "status": 200,
+      "request": null,
+      "response": {
+        "csrfToken": "SYNTHETIC_CSRF_CHALLENGE_NOT_A_CREDENTIAL"
+      },
+      "requestHeaders": {},
+      "responseHeaders": {
+        "Cache-Control": "no-store",
+        "X-Request-Id": "10000000-0000-4000-8000-000000000001",
+        "Set-Cookie": "__Host-elogistics.csrf=SYNTHETIC_NON_CREDENTIAL; Path=/; Secure; HttpOnly; SameSite=Strict"
+      }
+    },
+    {
+      "id": "loginIdentity",
+      "method": "post",
+      "path": "/auth/login",
+      "status": 200,
+      "request": {
+        "username": "fixture.identity",
+        "password": "legacy"
+      },
+      "response": {
+        "accessToken": "SYNTHETIC_ACCESS_TOKEN_NOT_SIGNED",
+        "tokenType": "Bearer",
+        "expiresIn": 900,
+        "sessionExpiresAt": "2026-10-20T16:00:00Z",
+        "user": {
+          "id": "10000000-0000-4000-8000-000000000002",
+          "username": "fixture.identity",
+          "displayName": "Synthetic Identity",
+          "email": "identity@example.invalid",
+          "status": "ACTIVE",
+          "grants": [
+            {
+              "role": "IDENTITY_MANAGEMENT",
+              "scopeType": "IDENTITY",
+              "scopeId": "10000000-0000-4000-8000-000000000003"
+            }
+          ],
+          "version": 1,
+          "emailVerified": true
+        }
+      },
+      "requestHeaders": {
+        "Origin": "https://portal.example.invalid",
+        "X-CSRF-Token": "SYNTHETIC_CSRF_CHALLENGE_NOT_A_CREDENTIAL"
+      },
+      "responseHeaders": {
+        "Cache-Control": "no-store",
+        "X-Request-Id": "10000000-0000-4000-8000-000000000001",
+        "Set-Cookie": "__Host-elogistics.csrf=SYNTHETIC_NON_CREDENTIAL; Path=/; Secure; HttpOnly; SameSite=Strict"
+      }
+    },
+    {
+      "id": "refreshIdentity",
+      "method": "post",
+      "path": "/auth/refresh",
+      "status": 200,
+      "request": null,
+      "response": {
+        "accessToken": "SYNTHETIC_ACCESS_TOKEN_NOT_SIGNED",
+        "tokenType": "Bearer",
+        "expiresIn": 900,
+        "sessionExpiresAt": "2026-10-20T16:00:00Z",
+        "user": {
+          "id": "10000000-0000-4000-8000-000000000002",
+          "username": "fixture.identity",
+          "displayName": "Synthetic Identity",
+          "email": "identity@example.invalid",
+          "status": "ACTIVE",
+          "grants": [
+            {
+              "role": "IDENTITY_MANAGEMENT",
+              "scopeType": "IDENTITY",
+              "scopeId": "10000000-0000-4000-8000-000000000003"
+            }
+          ],
+          "version": 1,
+          "emailVerified": true
+        }
+      },
+      "requestHeaders": {
+        "Origin": "https://portal.example.invalid",
+        "X-CSRF-Token": "SYNTHETIC_CSRF_CHALLENGE_NOT_A_CREDENTIAL"
+      },
+      "responseHeaders": {
+        "Cache-Control": "no-store",
+        "X-Request-Id": "10000000-0000-4000-8000-000000000001",
+        "Set-Cookie": "__Host-elogistics.csrf=SYNTHETIC_NON_CREDENTIAL; Path=/; Secure; HttpOnly; SameSite=Strict"
+      }
+    },
+    {
+      "id": "logoutIdentity",
+      "method": "post",
+      "path": "/auth/logout",
+      "status": 204,
+      "request": null,
+      "response": null,
+      "requestHeaders": {
+        "Origin": "https://portal.example.invalid",
+        "X-CSRF-Token": "SYNTHETIC_CSRF_CHALLENGE_NOT_A_CREDENTIAL"
+      },
+      "responseHeaders": {
+        "Cache-Control": "no-store",
+        "X-Request-Id": "10000000-0000-4000-8000-000000000001",
+        "Set-Cookie": "__Host-elogistics.csrf=SYNTHETIC_NON_CREDENTIAL; Path=/; Secure; HttpOnly; SameSite=Strict"
+      }
+    },
+    {
+      "id": "getIdentityMe",
+      "method": "get",
+      "path": "/auth/me",
+      "status": 200,
+      "request": null,
+      "response": {
+        "id": "10000000-0000-4000-8000-000000000002",
+        "username": "fixture.identity",
+        "displayName": "Synthetic Identity",
+        "email": "identity@example.invalid",
+        "status": "ACTIVE",
+        "grants": [
+          {
+            "role": "IDENTITY_MANAGEMENT",
+            "scopeType": "IDENTITY",
+            "scopeId": "10000000-0000-4000-8000-000000000003"
+          }
+        ],
+        "version": 1,
+        "emailVerified": true
+      },
+      "requestHeaders": {},
+      "responseHeaders": {
+        "Cache-Control": "no-store",
+        "X-Request-Id": "10000000-0000-4000-8000-000000000001",
+        "ETag": "\"v1\""
+      }
+    },
+    {
+      "id": "requestIdentityRecovery",
+      "method": "post",
+      "path": "/auth/recovery",
+      "status": 202,
+      "request": {
+        "username": "fixture.identity",
+        "email": "identity@example.invalid"
+      },
+      "response": {
+        "message": "If eligible, instructions will be sent."
+      },
+      "requestHeaders": {
+        "Idempotency-Key": "10000000-0000-4000-8000-000000000001",
+        "Origin": "https://portal.example.invalid",
+        "X-CSRF-Token": "SYNTHETIC_CSRF_CHALLENGE_NOT_A_CREDENTIAL"
+      },
+      "responseHeaders": {
+        "Cache-Control": "no-store",
+        "X-Request-Id": "10000000-0000-4000-8000-000000000001"
+      }
+    },
+    {
+      "id": "confirmIdentityRecovery",
+      "method": "post",
+      "path": "/auth/recovery/confirm",
+      "status": 204,
+      "request": {
+        "token": "SYNTHETIC_PROOF_NOT_A_CREDENTIAL_1234567890",
+        "password": "Synthetic-only-passphrase-2026"
+      },
+      "response": null,
+      "requestHeaders": {
+        "Idempotency-Key": "10000000-0000-4000-8000-000000000001",
+        "Origin": "https://portal.example.invalid",
+        "X-CSRF-Token": "SYNTHETIC_CSRF_CHALLENGE_NOT_A_CREDENTIAL"
+      },
+      "responseHeaders": {
+        "Cache-Control": "no-store",
+        "X-Request-Id": "10000000-0000-4000-8000-000000000001"
+      }
+    },
+    {
+      "id": "acceptIdentityInvitation",
+      "method": "post",
+      "path": "/auth/invitations/accept",
+      "status": 204,
+      "request": {
+        "token": "SYNTHETIC_PROOF_NOT_A_CREDENTIAL_1234567890",
+        "password": "Synthetic-only-passphrase-2026"
+      },
+      "response": null,
+      "requestHeaders": {
+        "Idempotency-Key": "10000000-0000-4000-8000-000000000001",
+        "Origin": "https://portal.example.invalid",
+        "X-CSRF-Token": "SYNTHETIC_CSRF_CHALLENGE_NOT_A_CREDENTIAL"
+      },
+      "responseHeaders": {
+        "Cache-Control": "no-store",
+        "X-Request-Id": "10000000-0000-4000-8000-000000000001"
+      }
+    },
+    {
+      "id": "listIdentityAccounts",
+      "method": "get",
+      "path": "/admin/users",
+      "status": 200,
+      "request": null,
+      "response": {
+        "items": [
+          {
+            "id": "10000000-0000-4000-8000-000000000002",
+            "username": "fixture.identity",
+            "displayName": "Synthetic Identity",
+            "email": "identity@example.invalid",
+            "status": "ACTIVE",
+            "grants": [
+              {
+                "role": "IDENTITY_MANAGEMENT",
+                "scopeType": "IDENTITY",
+                "scopeId": "10000000-0000-4000-8000-000000000003"
+              }
+            ],
+            "version": 1,
+            "emailVerified": true
+          }
+        ],
+        "nextCursor": null
+      },
+      "requestHeaders": {},
+      "responseHeaders": {
+        "Cache-Control": "no-store",
+        "X-Request-Id": "10000000-0000-4000-8000-000000000001"
+      }
+    },
+    {
+      "id": "provisionIdentityAccount",
+      "method": "post",
+      "path": "/admin/users",
+      "status": 201,
+      "request": {
+        "username": "fixture.identity",
+        "displayName": "Synthetic Identity",
+        "email": "identity@example.invalid",
+        "grants": [
+          {
+            "role": "IDENTITY_MANAGEMENT",
+            "scopeType": "IDENTITY",
+            "scopeId": "10000000-0000-4000-8000-000000000003"
+          }
+        ]
+      },
+      "response": {
+        "id": "10000000-0000-4000-8000-000000000002",
+        "username": "fixture.identity",
+        "displayName": "Synthetic Identity",
+        "email": "identity@example.invalid",
+        "status": "PENDING_ACTIVATION",
+        "grants": [
+          {
+            "role": "IDENTITY_MANAGEMENT",
+            "scopeType": "IDENTITY",
+            "scopeId": "10000000-0000-4000-8000-000000000003"
+          }
+        ],
+        "version": 1,
+        "emailVerified": false
+      },
+      "requestHeaders": {
+        "Idempotency-Key": "10000000-0000-4000-8000-000000000001"
+      },
+      "responseHeaders": {
+        "Cache-Control": "no-store",
+        "X-Request-Id": "10000000-0000-4000-8000-000000000001",
+        "ETag": "\"v1\"",
+        "Location": "/api/v1/admin/users/10000000-0000-4000-8000-000000000002"
+      }
+    },
+    {
+      "id": "getIdentityAccount",
+      "method": "get",
+      "path": "/admin/users/{accountId}",
+      "status": 200,
+      "request": null,
+      "response": {
+        "id": "10000000-0000-4000-8000-000000000002",
+        "username": "fixture.identity",
+        "displayName": "Synthetic Identity",
+        "email": "identity@example.invalid",
+        "status": "ACTIVE",
+        "grants": [
+          {
+            "role": "IDENTITY_MANAGEMENT",
+            "scopeType": "IDENTITY",
+            "scopeId": "10000000-0000-4000-8000-000000000003"
+          }
+        ],
+        "version": 1,
+        "emailVerified": true
+      },
+      "requestHeaders": {},
+      "responseHeaders": {
+        "Cache-Control": "no-store",
+        "X-Request-Id": "10000000-0000-4000-8000-000000000001",
+        "ETag": "\"v1\""
+      }
+    },
+    {
+      "id": "replaceIdentityGrants",
+      "method": "put",
+      "path": "/admin/users/{accountId}/grants",
+      "status": 200,
+      "request": {
+        "grants": [
+          {
+            "role": "IDENTITY_MANAGEMENT",
+            "scopeType": "IDENTITY",
+            "scopeId": "10000000-0000-4000-8000-000000000003"
+          }
+        ],
+        "reason": "Synthetic authorization test"
+      },
+      "response": {
+        "id": "10000000-0000-4000-8000-000000000002",
+        "username": "fixture.identity",
+        "displayName": "Synthetic Identity",
+        "email": "identity@example.invalid",
+        "status": "ACTIVE",
+        "grants": [
+          {
+            "role": "IDENTITY_MANAGEMENT",
+            "scopeType": "IDENTITY",
+            "scopeId": "10000000-0000-4000-8000-000000000003"
+          }
+        ],
+        "version": 2,
+        "emailVerified": true
+      },
+      "requestHeaders": {
+        "Idempotency-Key": "10000000-0000-4000-8000-000000000001",
+        "If-Match": "\"v1\""
+      },
+      "responseHeaders": {
+        "Cache-Control": "no-store",
+        "X-Request-Id": "10000000-0000-4000-8000-000000000001",
+        "ETag": "\"v2\""
+      }
+    },
+    {
+      "id": "disableIdentityAccount",
+      "method": "post",
+      "path": "/admin/users/{accountId}/disable",
+      "status": 200,
+      "request": {
+        "reason": "Synthetic lifecycle test"
+      },
+      "response": {
+        "id": "10000000-0000-4000-8000-000000000002",
+        "username": "fixture.identity",
+        "displayName": "Synthetic Identity",
+        "email": "identity@example.invalid",
+        "status": "DISABLED",
+        "grants": [
+          {
+            "role": "IDENTITY_MANAGEMENT",
+            "scopeType": "IDENTITY",
+            "scopeId": "10000000-0000-4000-8000-000000000003"
+          }
+        ],
+        "version": 2,
+        "emailVerified": true
+      },
+      "requestHeaders": {
+        "Idempotency-Key": "10000000-0000-4000-8000-000000000001",
+        "If-Match": "\"v1\""
+      },
+      "responseHeaders": {
+        "Cache-Control": "no-store",
+        "X-Request-Id": "10000000-0000-4000-8000-000000000001",
+        "ETag": "\"v2\""
+      }
+    },
+    {
+      "id": "reactivateIdentityAccount",
+      "method": "post",
+      "path": "/admin/users/{accountId}/reactivate",
+      "status": 200,
+      "request": {
+        "reason": "Synthetic lifecycle test"
+      },
+      "response": {
+        "id": "10000000-0000-4000-8000-000000000002",
+        "username": "fixture.identity",
+        "displayName": "Synthetic Identity",
+        "email": "identity@example.invalid",
+        "status": "ACTIVE",
+        "grants": [
+          {
+            "role": "IDENTITY_MANAGEMENT",
+            "scopeType": "IDENTITY",
+            "scopeId": "10000000-0000-4000-8000-000000000003"
+          }
+        ],
+        "version": 2,
+        "emailVerified": true
+      },
+      "requestHeaders": {
+        "Idempotency-Key": "10000000-0000-4000-8000-000000000001",
+        "If-Match": "\"v1\""
+      },
+      "responseHeaders": {
+        "Cache-Control": "no-store",
+        "X-Request-Id": "10000000-0000-4000-8000-000000000001",
+        "ETag": "\"v2\""
+      }
+    },
+    {
+      "id": "resendIdentityInvitation",
+      "method": "post",
+      "path": "/admin/users/{accountId}/invitation",
+      "status": 202,
+      "request": {
+        "reason": "Synthetic lifecycle test"
+      },
+      "response": {
+        "message": "If eligible, instructions will be sent."
+      },
+      "requestHeaders": {
+        "Idempotency-Key": "10000000-0000-4000-8000-000000000001",
+        "If-Match": "\"v1\""
+      },
+      "responseHeaders": {
+        "Cache-Control": "no-store",
+        "X-Request-Id": "10000000-0000-4000-8000-000000000001"
+      }
+    },
+    {
+      "id": "listIdentityRoles",
+      "method": "get",
+      "path": "/admin/roles",
+      "status": 200,
+      "request": null,
+      "response": {
+        "items": [
+          {
+            "code": "IDENTITY_MANAGEMENT",
+            "description": "Synthetic definition"
+          }
+        ]
+      },
+      "requestHeaders": {},
+      "responseHeaders": {
+        "Cache-Control": "no-store",
+        "X-Request-Id": "10000000-0000-4000-8000-000000000001"
+      }
+    },
+    {
+      "id": "listIdentityScopes",
+      "method": "get",
+      "path": "/admin/scopes",
+      "status": 200,
+      "request": null,
+      "response": {
+        "items": [
+          {
+            "id": "10000000-0000-4000-8000-000000000003",
+            "type": "IDENTITY",
+            "displayName": "Synthetic scope"
+          }
+        ]
+      },
+      "requestHeaders": {},
+      "responseHeaders": {
+        "Cache-Control": "no-store",
+        "X-Request-Id": "10000000-0000-4000-8000-000000000001"
+      }
+    }
+  ],
+  "expectations": [
+    {
+      "id": "csrf.binding",
+      "operation": "getIdentityCsrf",
+      "expected": "Cookie/header server binding; no refresh/idle rotation. Logout without refresh cookie still requires server-bound pre-auth CSRF and exact Origin; repeat returns204 without restoring session.",
+      "verification": "DECLARATIVE_NOT_RUNTIME_EXECUTED"
+    },
+    {
+      "id": "refresh.concurrent",
+      "operation": "refreshIdentity",
+      "expected": "One rotation commits; losing old-token request revokes family.",
+      "verification": "DECLARATIVE_NOT_RUNTIME_EXECUTED"
+    },
+    {
+      "id": "refresh.lost-response",
+      "operation": "refreshIdentity",
+      "expected": "No blind retry/grace; require reauthentication.",
+      "verification": "DECLARATIVE_NOT_RUNTIME_EXECUTED"
+    },
+    {
+      "id": "session.revoked",
+      "operation": "getIdentityMe",
+      "expected": "Signature-valid revoked session rejected.",
+      "verification": "DECLARATIVE_NOT_RUNTIME_EXECUTED"
+    },
+    {
+      "id": "idle.polling",
+      "operation": "getIdentityMe",
+      "expected": "Polling does not extend idle.",
+      "verification": "DECLARATIVE_NOT_RUNTIME_EXECUTED"
+    },
+    {
+      "id": "grant.scope-union",
+      "operation": "replaceIdentityGrants",
+      "expected": "Scope-A-only manager cannot remove Scope-B grants.",
+      "verification": "DECLARATIVE_NOT_RUNTIME_EXECUTED"
+    },
+    {
+      "id": "account.target-wide",
+      "operation": "getIdentityAccount",
+      "expected": "Entire target authority; missing/inaccessible same404.",
+      "verification": "DECLARATIVE_NOT_RUNTIME_EXECUTED"
+    },
+    {
+      "id": "last-admin.concurrent",
+      "operation": "disableIdentityAccount",
+      "expected": "Serialize last active Identity Management Admin invariant.",
+      "verification": "DECLARATIVE_NOT_RUNTIME_EXECUTED"
+    },
+    {
+      "id": "self.disable",
+      "operation": "disableIdentityAccount",
+      "expected": "Reject self-disable with SELF_MANAGEMENT_FORBIDDEN and no account/session mutation.",
+      "verification": "DECLARATIVE_NOT_RUNTIME_EXECUTED"
+    },
+    {
+      "id": "self.grants",
+      "operation": "replaceIdentityGrants",
+      "expected": "Reject self grants replacement.",
+      "verification": "DECLARATIVE_NOT_RUNTIME_EXECUTED"
+    },
+    {
+      "id": "reactivate.old-session",
+      "operation": "reactivateIdentityAccount",
+      "expected": "Old sessions stay revoked.",
+      "verification": "DECLARATIVE_NOT_RUNTIME_EXECUTED"
+    },
+    {
+      "id": "reactivate.pending",
+      "operation": "reactivateIdentityAccount",
+      "expected": "Disabled-pending account remains ineligible.",
+      "verification": "DECLARATIVE_NOT_RUNTIME_EXECUTED"
+    },
+    {
+      "id": "invitation.consumption",
+      "operation": "acceptIdentityInvitation",
+      "expected": "One credential effect with concurrent proof consumption or same-key replay.",
+      "verification": "DECLARATIVE_NOT_RUNTIME_EXECUTED"
+    },
+    {
+      "id": "invitation.resend",
+      "operation": "resendIdentityInvitation",
+      "expected": "Old unused proof invalidated; same receipt no duplicate outbox effect.",
+      "verification": "DECLARATIVE_NOT_RUNTIME_EXECUTED"
+    },
+    {
+      "id": "recovery.enumeration",
+      "operation": "requestIdentityRecovery",
+      "expected": "Known/unknown/disabled/unverified share202 shape and timing policy. Same server-preauth/key receipt behavior for eligible/ineligible targets; submitted email is only a matcher, never delivery authority.",
+      "verification": "DECLARATIVE_NOT_RUNTIME_EXECUTED"
+    },
+    {
+      "id": "reset.sessions",
+      "operation": "confirmIdentityRecovery",
+      "expected": "Atomic proof/password/revocations/audit/receipt.",
+      "verification": "DECLARATIVE_NOT_RUNTIME_EXECUTED"
+    },
+    {
+      "id": "version.replay",
+      "operation": "replaceIdentityGrants",
+      "expected": "Authorized receipt replay precedes stale-version rejection.",
+      "verification": "DECLARATIVE_NOT_RUNTIME_EXECUTED"
+    },
+    {
+      "id": "version.stale",
+      "operation": "replaceIdentityGrants",
+      "expected": "Malformed400/missing428/stale412/conflict409.",
+      "verification": "DECLARATIVE_NOT_RUNTIME_EXECUTED"
+    },
+    {
+      "id": "owner.authority",
+      "operation": "listIdentityScopes",
+      "expected": "Unavailable resource-owner authority denies; Admin not Finance.",
+      "verification": "DECLARATIVE_NOT_RUNTIME_EXECUTED"
+    },
+    {
+      "id": "audit.transaction",
+      "operation": "replaceIdentityGrants",
+      "expected": "Identity transaction owns audit/grants/revocation/receipt; no external SQL.",
+      "verification": "DECLARATIVE_NOT_RUNTIME_EXECUTED"
+    },
+    {
+      "id": "delivery.boundary",
+      "operation": "provisionIdentityAccount",
+      "expected": "Durable sandbox outbox after commit; no network in transaction.",
+      "verification": "DECLARATIVE_NOT_RUNTIME_EXECUTED"
+    }
+  ],
+  "credentialCases": [
+    {
+      "id": "new.ascii.valid",
+      "kind": "new",
+      "value": "Synthetic-only-passphrase-2026",
+      "valid": true
+    },
+    {
+      "id": "new.15-codepoints",
+      "kind": "new",
+      "value": "aaaaaaaaaaaaaaa",
+      "valid": true
+    },
+    {
+      "id": "new.too-short",
+      "kind": "new",
+      "value": "aaaaaaaaaaaaaa",
+      "valid": false
+    },
+    {
+      "id": "new.multibyte.over72",
+      "kind": "new",
+      "value": "\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac",
+      "valid": false
+    },
+    {
+      "id": "new.multibyte.boundary72",
+      "kind": "new",
+      "value": "\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac",
+      "valid": true
+    },
+    {
+      "id": "new.emoji.codepoints14",
+      "kind": "new",
+      "value": "\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00",
+      "valid": false
+    },
+    {
+      "id": "new.emoji.codepoints15",
+      "kind": "new",
+      "value": "\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00",
+      "valid": true
+    },
+    {
+      "id": "new.lone-surrogate",
+      "kind": "new",
+      "codeUnits": [
+        97,
+        97,
+        97,
+        97,
+        97,
+        97,
+        97,
+        97,
+        97,
+        97,
+        97,
+        97,
+        97,
+        97,
+        97,
+        55296
+      ],
+      "valid": false
+    },
+    {
+      "id": "login.legacy.short",
+      "kind": "login",
+      "value": "legacy",
+      "valid": true
+    },
+    {
+      "id": "login.multibyte.over72",
+      "kind": "login",
+      "value": "\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac",
+      "valid": false
+    }
+  ],
+  "logoutCases": [
+    {
+      "id": "initial-family",
+      "refreshCookiePresent": true,
+      "serverCsrfBinding": "SESSION_FAMILY",
+      "originValid": true,
+      "csrfValid": true,
+      "expectedStatus": 204,
+      "classification": "DECLARATIVE_NOT_RUNTIME_EXECUTED"
+    },
+    {
+      "id": "repeat-after-clear",
+      "refreshCookiePresent": false,
+      "serverCsrfBinding": "PREAUTH",
+      "originValid": true,
+      "csrfValid": true,
+      "expectedStatus": 204,
+      "classification": "DECLARATIVE_NOT_RUNTIME_EXECUTED"
+    },
+    {
+      "id": "missing-csrf",
+      "refreshCookiePresent": false,
+      "serverCsrfBinding": "PREAUTH",
+      "originValid": true,
+      "csrfValid": false,
+      "expectedStatus": 403,
+      "classification": "DECLARATIVE_NOT_RUNTIME_EXECUTED"
+    },
+    {
+      "id": "untrusted-origin",
+      "refreshCookiePresent": false,
+      "serverCsrfBinding": "PREAUTH",
+      "originValid": false,
+      "csrfValid": true,
+      "expectedStatus": 403,
+      "classification": "DECLARATIVE_NOT_RUNTIME_EXECUTED"
+    }
+  ]
+}
