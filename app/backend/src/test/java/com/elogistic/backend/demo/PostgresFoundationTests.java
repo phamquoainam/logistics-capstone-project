@@ -71,7 +71,7 @@ class PostgresFoundationTests extends DemoTestSupport {
  @Test void validateAndRerunPreserveDataAndChecksums() {
   long before=jdbc.queryForObject("SELECT COUNT(*) FROM identity.demo_account",Long.class);
   var applied=Arrays.stream(flyway.info().applied()).map(m->m.getVersion()+":"+m.getChecksum()).toList();
-  assertEquals(2,applied.size());assertTrue(flyway.validateWithResult().validationSuccessful);
+  assertEquals(List.of("1","2","3"),Arrays.stream(flyway.info().applied()).map(m->m.getVersion().toString()).toList());assertTrue(flyway.validateWithResult().validationSuccessful);
   assertEquals(0,flyway.migrate().migrationsExecuted);
   assertEquals(applied,Arrays.stream(flyway.info().applied()).map(m->m.getVersion()+":"+m.getChecksum()).toList());
   assertEquals(before,jdbc.queryForObject("SELECT COUNT(*) FROM identity.demo_account",Long.class));
