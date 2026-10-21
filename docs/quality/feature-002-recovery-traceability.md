@@ -1,5 +1,13 @@
 # Feature 002 recovery — supplemental traceability
 
+Latest checkpoint: **T-002-03 DONE** on run39575568268 attempt1, using verified
+sanitized artifacts and exact source revision. T-002-04 is now
+DONE under actual CI; T-002-05 Application READY / NOT STARTED.
+[Domain source/test acceptance](../implementation/t-002-04-identity-domain-evidence.md#t-002-04-actual-ci-acceptance--2026-10-21).
+[Final migration acceptance and handoff](../implementation/t-002-03-identity-migration-evidence.md#final-migration-acceptance--2026-10-21).
+Earlier checkpoints below are historical and superseded only within that
+migration scope. Production AC-002-01..05 remain NOT ACCEPTED.
+
 Checkpoint2026-10-21; owner baseline recovery approved2026-10-20.
 This supplements, does not modify, [protected main traceability](traceability.md).
 [Fresh evidence](../implementation/t-002-02-identity-contract-evidence.md);
@@ -138,3 +146,85 @@ and use the resulting exact commit for hosted CI. No current GitHub run is claim
 T-002-03 remains IMPLEMENTED_VERIFICATION_PENDING, T-002-04 NOT STARTED;
 Feature002 ACs NOT ACCEPTED, Feature001/D1-08/Day1 PARTIAL. Main traceability stays
 protected. No real cleanup PASS or observed resource leak is asserted.
+
+## T-002-03 final migration acceptance — 2026-10-21
+
+Owner-delegated Migration DoD is **DONE**. Actual
+[run39575568268 attempt1](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/39575568268)
+tests feature head bf80d84a459e2b6c8f8431c47dcbbe9f0e84c817 through synthetic
+checkout f426491f9b02c3045333f8296f6b1e320e4b7339, verified in all three consoles.
+[Artifact identities/digests, exact14 method outcomes and canonical DoD](../implementation/t-002-03-identity-migration-evidence.md#final-migration-acceptance--2026-10-21)
+now supersede the earlier source-only/pending migration results above.
+
+| Requirement / task | Actual PostgreSQL migration evidence | Remaining runtime acceptance |
+|---|---|---|
+| REQ-002-01 / T-002-03 | Username/lifecycle/grant constraint cases PASS | Production multi-role/object authority and lifecycle service guards not yet accepted |
+| REQ-002-02/05 / T-002-03 | Session deadline/FK and CSRF storage cases PASS | Actual request admission, CSRF and meaningful activity accounting remain future tasks |
+| REQ-002-03/05 / T-002-03 | Refresh hash/lineage/proof cases PASS | Crypto/password execution, rotation/replay concurrency and delivery remain unaccepted |
+| REQ-002-04/05 / T-002-03 | Receipt binding and runtime append-only/permission cases PASS | Atomic grants/audit/revocation, authorized replay and last-admin serialization remain unaccepted |
+| REQ-002-01..05 / Migration DoD | Cold V1/V2/V3, V2 upgrade/Demo preservation, indexes/ownership, drift rejection PASS;14/14 Identity tests, corrected Foundation rerun case and retained regressions PASS | No develop post-merge or full-feature acceptance inferred |
+
+Verified artifact summaries: Architecture23 PASS/0 skip; H2231 PASS/17 expected
+skips; PostgreSQL270 PASS/5 expected skips;0 failures/errors and no prohibited
+skips. SHA-256 and exact sanitized inventories match.88 report-policy controls
+PASS per job; actual credential/privacy and PostgreSQL owned cleanup audits PASS.
+Scope remains migration plus existing backend regression, not general security
+certification or Redis/RabbitMQ GitHub runtime coverage.
+
+T-002-04 Domain READY / NOT STARTED; bounded handoff and required unit cases are
+in final evidence. AC-002-01..05 remain NOT ACCEPTED; Feature002 incomplete;
+Feature001/D1-08/Day1 PARTIAL. Main traceability reconciliation, documentation
+commit/push and PR20 review/merge remain separate authorized integration work;
+none is performed here and no canonical REQ/AC or accepted contract is changed.
+
+## T-002-04 Domain source checkpoint — 2026-10-21
+
+Owner-authorized pure-Java implementation, **IMPLEMENTED_VERIFICATION_PENDING**.
+[Exact classes,48 unit methods, fingerprints and execution handoff](../implementation/t-002-04-identity-domain-evidence.md).
+This supersedes Domain READY / NOT STARTED only; T-002-03 DONE is preserved.
+
+| Requirement / accepted rule | Domain source and required unit cases | Actual evidence / remaining limit |
+|---|---|---|
+| REQ-002-01/04, O5/O6 | IdentityAccount, Grant/RoleCode/ResourceScope, ManagementAuthority/AccountVersion; IdentityAccountTests10 + IdentityAuthorizationTests10 | Written lifecycle/full-target union/assignability/self/last-admin/default-deny assertions; Java UNVERIFIED; current facts/serialization require Application |
+| REQ-002-01/03, O4 | Username/PasswordPolicy, IdentityValueTests9 | Exact Unicode/case, new/legacy/UTF-8/malformed/immutability/redaction assertions written; no BCrypt execution |
+| REQ-002-02/05, DEC-03/O3 | IdentitySession, IdentitySessionTests9 | Deadline/access cap, meaningful activity, revocation/account/authVersion checks written; no actual HTTP admission/security test |
+| REQ-002-03/05, DEC-04/O3/O4 | ActionProof/RefreshFamily, IdentityProofAndRefreshTests10 plus Account lifecycle tests | Purpose/subject/stored-email-match eligibility, TTL/consumption/replay revocation results written; no atomic persistence, delivery or concurrent replay proof |
+
+Strict CI adds all48 finite Domain identities as required PASS in H2 and
+PostgreSQL, not Testcontainers-only. All20 previous class lists and skip sets
+preserved; collector function ASTs unchanged.93 Python controls PASS (88 retained
++5 new); final five focused controls PASS. Source-derived future expectations:
+Architecture23/0 skips, H2279/17, PostgreSQL318/5; these are NOT executed Java
+counts. Current Domain sources are uncommitted and not covered by prior PR20 CI.
+No approved current-revision contained JVM path is established; no local Java /
+Maven/DB execution or CI trigger here. Domain canonical checkbox remains open.
+T-002-05 not started; production AC-002-01..05 NOT ACCEPTED, Feature002 incomplete,
+Feature001/D1-08/Day1 PARTIAL. Main traceability/T-002-03 evidence and six
+preexisting Foundation paths are preserved; no original REQ/AC changes.
+
+## T-002-04 actual CI acceptance — 2026-10-21
+
+**T-002-04 DONE** under OWNER_T_002_04_CI_VERIFICATION_APPROVAL, replacing the
+Domain source-only verification-pending classification above.
+[Run39626192090 attempt1](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/39626192090),
+event workflow_dispatch, actual source/checkout bbb10987faa8dbcf7a85ccffe72c7c299e8e38b0.
+[Exact class/method outcomes, artifacts/digests and bounded handoff](../implementation/t-002-04-identity-domain-evidence.md#t-002-04-actual-ci-acceptance--2026-10-21).
+
+| Requirement / task | Actual Domain evidence in BOTH backend jobs | Scope limit |
+|---|---|---|
+| REQ-002-01/04/05 / T-002-04 | IdentityAccountTests10 + IdentityAuthorizationTests10 PASS: lifecycle/version, full-target union, assignability, self/last-admin/default-deny/ownership scope decisions | No concurrent database transaction or real owner-provider enforcement proven |
+| REQ-002-01/03 / T-002-04 | IdentityValueTests9 PASS: exact username, password/codepoint/UTF-8/malformed input, version/immutability/redaction | No BCrypt adapter or runtime credential storage acceptance |
+| REQ-002-02/05 / T-002-04 | IdentitySessionTests9 PASS: absolute/idle/access caps, meaningful activity, account/authVersion/revocation | No production JWT/HTTP/CSRF/Origin/cookie admission acceptance |
+| REQ-002-03/05 / T-002-04 | IdentityProofAndRefreshTests10 PASS: purpose/subject/lifetime/consumption and strict refresh-family replay/rejection results | No atomic rotation, replay concurrency, delivery or external side-effect proof |
+
+Actual totals: Architecture23 PASS/0 skips; H2279 PASS/17 expected skips;
+PostgreSQL318 PASS/5 expected skips;0 failures/errors and exact finite inventories.
+PostgreSQL migration14/14 and Foundation rerun PASS. Three artifact ZIP digests
+verified;93 report-policy controls per job, credential/privacy and PostgreSQL
+owned cleanup PASS. Redis/RabbitMQ remote runtime is not claimed.
+Canonical Domain DoD satisfied without changing REQ/AC. T-002-05 READY / NOT
+STARTED; AC-002-01..05 NOT ACCEPTED; Feature002 incomplete; Feature001/D1-08/Day1
+PARTIAL. Only three post-CI SDD files change locally; separate documentation
+commit/publication and PR integration remain unperformed. The successful run
+tests bbb1098, not a later documentation revision. Main traceability and six
+Foundation changes remain protected; no next-task implementation.

@@ -134,6 +134,68 @@ REQUIRED[IDENTITY_MIGRATION] = [
     'runtimeCanAppendAuditButCannotDdlDeleteAccountsOrMutateAuditAndReceipts',
     'preexistingSchemaDriftFailsWithoutBaselineOrRepair',
 ]
+# T-002-04 source-reviewed plain-Jupiter identities; required in H2 and PostgreSQL.
+IDENTITY_DOMAIN_REQUIRED = {
+    BASE + 'identity.internal.domain.IdentityAccountTests': [
+        'provisioningRequiresExplicitAuthorityAndCreatesOnlyPendingAccount',
+        'activationReturnsAccountAndConsumedInvitationWithoutMutatingOriginals',
+        'activationRejectsWrongSubjectPurposeExpiredProofAndWeakPassword',
+        'activationRejectsDisabledPendingAndAlreadyActiveAccounts',
+        'disableAndReactivatePreserveActivationButNeverRestoreOldSessions',
+        'repeatedDisableAndInvalidReactivationAreRejected',
+        'passwordResetConsumesRecoveryAndInvalidatesPreviousAuthVersion',
+        'recoveryRequiresActiveVerifiedAccountAndStoredEmailMatch',
+        'restoreRejectsImpossibleActivationCombinations',
+        'staleVersionPreventsLifecycleOrProofCommitResult',
+    ],
+    BASE + 'identity.internal.domain.IdentityAuthorizationTests': [
+        'authorizedReplacementKeepsMultipleScopesAndInvalidatesSessions',
+        'replacementRequiresAuthorityOverUnionIncludingRemovedGrants',
+        'proposedGrantsNeedExplicitAssignabilityWithoutScopeCrossProduct',
+        'missingProviderAndNonManagementActorDefaultDeny',
+        'snapshotBindsActorAuthVersionTargetAndVersionEvenWhenGrantsEmpty',
+        'selfDisableAndSelfGrantReplacementAreAlwaysRejected',
+        'lastActiveAdminCannotBeDisabledOrLoseManagementRole',
+        'emptyReplacementIsAllowedForNonAdminButDuplicatesAreRejected',
+        'functionalAccessRequiresExactRoleAndScopeWithoutAdminFinanceFallback',
+        'authorityCollectionsAreCopiedAndStaleExpectedVersionIsRejected',
+    ],
+    BASE + 'identity.internal.domain.IdentityProofAndRefreshTests': [
+        'proofLifetimesAndExactExpiryBoundariesMatchAcceptedPolicy',
+        'consumedOrRevokedProofCannotBeReusedOrResurrected',
+        'proofRejectsWrongPurposeSubjectAndInvalidTime',
+        'proofRestoreAndIssueRejectImpossibleStatesOrEligibility',
+        'refreshRotationConsumesPreviousMemberAndPreservesSessionDeadlines',
+        'consumedRefreshReplayRevokesFamilyAndSessionWithoutGrace',
+        'revokedFamilyRejectsCurrentTokenRatherThanRotating',
+        'unknownRefreshDoesNotRevokeLegitimateFamilyAndSuccessorCannotBeReused',
+        'refreshRequiresMatchingFamilyAccountAndCurrentSession',
+        'refreshExpiryAndRestoredMemberStateAreValidated',
+    ],
+    BASE + 'identity.internal.domain.IdentitySessionTests': [
+        'openingSessionSetsAcceptedAbsoluteIdleAndAccessBounds',
+        'idleAdmissionIsValidBeforeDeadlineButNotAtOrAfter',
+        'explicitActivityExtendsIdleButPollingAndRefreshDoNot',
+        'absoluteBoundaryCapsIdleAndJwtEvenAfterMeaningfulActivity',
+        'jwtLifetimeAlsoCannotExceedIdleDeadline',
+        'revokedSessionCannotBeAdmittedAndRevocationIsIdempotent',
+        'accountBindingStatusAndAuthVersionAreRechecked',
+        'invalidRestoredDeadlinesAreRejected',
+        'expiredActivityCannotResurrectSessionAndClockRollbackIsDenied',
+    ],
+    BASE + 'identity.internal.domain.IdentityValueTests': [
+        'usernamePreservesExactCaseUnicodeAndPadding',
+        'usernameUsesCodePointsAndContractWhitespaceBoundaries',
+        'newPasswordEnforcesCodePointMinimumAndUtf8Maximum',
+        'loginAllowsLegacyMinimumWithoutRelaxingByteLimit',
+        'passwordRejectsMalformedUnicodeAndDoesNotTransformInput',
+        'valueObjectsRejectMissingScopeAndDoNotInventRoleCatalog',
+        'versionsRejectInvalidStaleAndOverflowWithoutWrapping',
+        'collectionsAreDefensiveAndDuplicateInputIsRejected',
+        'sensitiveValuesAndExceptionsHaveRedactedRepresentations',
+    ],
+}
+REQUIRED.update(IDENTITY_DOMAIN_REQUIRED)
 PG = BASE + 'demo.PostgresFoundationTests'
 PG_ONLY = {PG, BASE + 'demo.PostgresHealthSafetyTests'}
 FOUNDATION_ONLY = {BASE + 'demo.FoundationDependencyTests'}
