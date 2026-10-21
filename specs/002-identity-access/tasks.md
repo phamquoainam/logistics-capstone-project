@@ -3,12 +3,12 @@
 **Tình trạng hiện tại:** Chưa triển khai. **Rule:** Không tick DONE trước khi có code+test+evidence.  
 **Ordering:** T-002-01 → T-002-02…; các phần web/mobile có thể song song sau khi contract+API ổn định, không merge thiếu tests.
 
-- [ ] **T-002-01 — Review**  
+- [x] **T-002-01 — Review**
   - Thực hiện: Đọc source trace FR/BR/NFR và xác nhận [BLOCKING] Session cookie hay access+refresh token, vòng đời token, reset password qua mail sandbox, đăng ký account công khai hay chỉ admin cấp?.  
   - Phụ thuộc: specs/001.  
   - Hoàn thành khi: Owner và reviewer đánh dấu PROPOSED/ACCEPTED; không còn BLOCKING của vertical slice.  
   - Trace: REQ-002-01..05; AC-002-01..05.
-- [ ] **T-002-02 — Contract**  
+- [x] **T-002-02 — Contract**
   - Thực hiện: Tạo hoặc cập nhật OpenAPI/event DTO cho `POST /api/v1/auth/login; POST /api/v1/auth/logout; POST /api/v1/auth/refresh [nếu chọn token]; GET /api/v1/auth/me; Admin /api/v1/admin/users và /scopes.`.  
   - Phụ thuộc: T-002-01.  
   - Hoàn thành khi: Schema build/validate được, mẫu request/response và error cases xác định.  
@@ -63,3 +63,90 @@
 
 ## Prompt cho Codex sau khi duyệt thiết kế
 Đọc `AGENTS.md`, `docs/principles.md`, `docs/architecture/*`, các quyết định ACCEPTED và ba file feature này. Chỉ làm task đầu tiên chưa tick; không đổi tài liệu ngoài phạm vi nếu không có lý do và diff; chạy test, trình bày file đã chỉnh, kết quả, giả định và blocker. Không tự đánh dấu đã test khi chưa chạy.
+
+## Fresh recovery checkpoint — 2026-10-20
+
+T-002-01: DONE for owner-approved browser design decisions; DEC-03/04 plus O1–O7 recorded in [ADR-0009](../../docs/architecture/decisions/ADR-0009-production-identity-lifecycle.md). This is fresh decision evidence after deletion. Existing “Chưa triển khai” refers to production feature implementation.
+T-002-02: CONTRACT_REVIEW_PENDING; rebuilt schema/fixtures/validator require fresh results and strict lint/review. T-002-03..10 NOT STARTED; production AC-002-01..05 NOT ACCEPTED.
+[Fresh evidence](../../docs/implementation/t-002-02-identity-contract-evidence.md) and [supplemental trace](../../docs/quality/feature-002-recovery-traceability.md). Main traceability.md is protected by concurrent Foundation work and unchanged; final integration requires separately authorized reconciliation.
+
+## T-002-02 final checkpoint — 2026-10-21
+
+T-002-02 DONE under owner-delegated final technical review scope. Fresh512 contract checks PASS, including43 mutation controls; strict Linux Redocly2.64.0 single attempt PASS with0 errors/0 warnings/0 ignored on exact accepted revision. [Findings, source hashes, execution and T-002-03 DoR/DoD](../../docs/implementation/t-002-02-identity-contract-evidence.md#t-002-02-final-review-and-acceptance-2026-10-21). This supersedes the recovery REVIEW_PENDING checkpoint above.
+No distinct nondelegable human sign-off gate is specified for this contract task in its canonical DoD or owner authorization. Owner review of future publication remains separate; no commit or merge approval is inferred. The approved [supplemental trace](../../docs/quality/feature-002-recovery-traceability.md) covers task-level traceability; protected main traceability reconciliation and CI/runtime belong to later feature integration.
+T-002-03 Migration is next, NOT STARTED. DoR: accepted contract, explicit migration/model scope approval and isolated runtime verification plan. This checkpoint prepares that plan; it creates no SQL, does not approve concrete tables beyond canonical logical scope, and runs no Java/Maven/PostgreSQL. AC-002-01..05 and the complete Feature002 remain NOT ACCEPTED.
+
+## T-002-03 implementation checkpoint — 2026-10-21
+
+**T-002-03: IMPLEMENTED_VERIFICATION_PENDING**, under explicit
+OWNER_T_002_03_IMPLEMENTATION_APPROVAL: GO. This supersedes the NOT STARTED
+checkpoint above, without ticking its completion checkbox or changing its DoD.
+[Migration/evidence and bounded runtime authorization packet](../../docs/implementation/t-002-03-identity-migration-evidence.md).
+
+- [x] Inventory global V1/V2; append V3__production_identity.sql, preserving prior migrations and Demo data paths.
+- [x] Implement Identity-local account/grant/session-family/hash-proof/CSRF/receipt/audit schema; no production endpoints or automatic Demo import.
+- [x] Write14 isolated PostgreSQL migration test methods; retain existing regression method identities and adapt exact V3 inventory assertions.
+- [x] Run15 process-safe lexical/source controls, including15 mutation subcontrols and1 comment positive control (included, not additional DB tests).
+- [ ] Compile and execute new PostgreSQL tests on this exact revision after bounded runtime authorization.
+- [ ] Prove empty migrate, V2 upgrade/Demo preservation, FK/check/unique/index/ownership/permission negatives with actual PostgreSQL reports.
+- [ ] Run relevant backend regressions and reconcile strict CI inventory in a separately authorized integration scope; protected report-policy files remain unchanged.
+
+Source controls are NOT a PostgreSQL SQL parser or database enforcement evidence.
+No Java/Maven/H2/Docker/PostgreSQL was executed in this checkpoint. T-002-04 Domain
+remains NOT STARTED, dependent on T-002-03 acceptance. Feature002/AC-002-01..05
+remain NOT ACCEPTED; Feature001/D1-08/Day1 remain PARTIAL.
+
+## T-002-03-PG conditional verification checkpoint — 2026-10-21
+
+OWNER_T_002_03_ISOLATED_POSTGRES_VERIFICATION: CONDITIONAL_GO was evaluated.
+Verdict **T_002_03_ENVIRONMENT_BLOCKED**: source fingerprints and process-safe
+checks PASS, but the proposed Linux Java21/Maven3.10.0 execution/containment path
+has not been established. No Windows H2/Wrapper policy was reused for PostgreSQL.
+Strict report inventory also lacks IdentityMigrationTests and its14 methods;
+protected policy changes need a separately scoped authorization.
+
+Fresh static suite15/15 PASS; runtime batch0, JVM/Maven launches0, actual database
+migrations0, PostgreSQL assertions0. Compilation/cold-start/upgrade/constraints/
+regression remain UNVERIFIED; no SQL/build failure is inferred.
+[Current preflight and exact blockers](../../docs/implementation/t-002-03-identity-migration-evidence.md#t-002-03-pg-conditional-verification-preflight--2026-10-21).
+T-002-03 stays IMPLEMENTED_VERIFICATION_PENDING with its checkbox open;
+T-002-04 Domain NOT STARTED. Feature002/AC-002-01..05 remain NOT ACCEPTED;
+Feature001/D1-08/Day1 remain PARTIAL. No REQ/AC or implementation source changed.
+
+## T-002-03-RI readiness integration checkpoint — 2026-10-21
+
+OWNER_T_002_03_READINESS_INTEGRATION_APPROVAL permits inventory-only changes to
+the two protected report files. **T_002_03_CI_READY_RUNTIME_PENDING**:
+
+- [x] Exact14 IdentityMigrationTests methods added to REQUIRED/TESTCONTAINERS_ONLY; no old identity removed, no expected skip broadened.
+- [x]67 process-safe report tests PASS (56 retained +11 new);15 migration static tests PASS.
+- [x] Existing ubuntu-24.04 / Backend PostgreSQL18 job selected; active workflow and historical baseline run39211616700 verified through read-only API.
+- [ ] Resolve RI-LIFECYCLE-01: two suites currently overwrite the same single-container cleanup proof; current approval does not permit changing helper/audit behavior.
+- [ ] Freeze corrected source packet and satisfy live hosted-runner/containment/resource/privacy gates under separate runtime/publication authorization.
+- [ ] Actual Java compilation, PostgreSQL migration/upgrade/constraints/regressions and remote CI.
+
+[Exact packet, hashes and lifecycle finding](../../docs/implementation/t-002-03-identity-migration-evidence.md#t-002-03-ri-readiness-integration--2026-10-21).
+Nine other Foundation protected paths remain unchanged; two authorized policy
+hash deltas are recorded. Main traceability is not edited. T-002-03 checkbox stays
+open/IMPLEMENTED_VERIFICATION_PENDING; T-002-04 NOT STARTED; production ACs NOT
+ACCEPTED, Feature001/D1-08/Day1 PARTIAL. No runtime execution or publication.
+
+## RI-LIFECYCLE-01 correction checkpoint — 2026-10-21
+
+OWNER_RI_LIFECYCLE_01_CORRECTION: GO; **RI_LIFECYCLE_01_CORRECTED_CI_READY**
+(source/validation/wiring only).
+
+- [x] Two known suites have dedicated create-only lifecycle records; expected suite/run/job/session identities fixed and audited.
+- [x] Exact observations/created/verified/stopped resources retained; startup/ownership/stop uncertainty blocks PASS; teardown rechecks labels/mounts/consumers.
+- [x] Combined read-only audit requires both suites and absence of both PG containers, both volumes and the explicitly shared Ryuk; no unknown-resource deletion.
+- [x]88 current process-free report/lifecycle tests PASS; all67 original controls retained;15 current migration static tests PASS.
+- [x] Existing workflow entrypoint consumes corrected manifest/records; no YAML/launcher change required.
+- [ ] Separately authorize source dependency-closure review/publication and one exact-commit hosted verification batch.
+- [ ] Actual Java compilation, PostgreSQL/Flyway/constraints/regression, runtime privacy and complete cleanup evidence.
+
+[Current source hashes/protocol/runtime handoff](../../docs/implementation/t-002-03-identity-migration-evidence.md#ri-lifecycle-01-source-correction--2026-10-21).
+Prior RI-LIFECYCLE-01 source gap is superseded by this correction; no historical
+runtime result is rewritten. Nine other Foundation protected paths unchanged;
+two cleanup-policy deltas are authorized and recorded. T-002-03 stays open /
+IMPLEMENTED_VERIFICATION_PENDING; T-002-04 NOT STARTED; production ACs NOT ACCEPTED;
+Feature001/D1-08/Day1 PARTIAL. No JVM/container/service/publication execution.

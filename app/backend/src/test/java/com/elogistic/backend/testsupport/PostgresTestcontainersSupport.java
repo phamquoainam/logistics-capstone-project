@@ -2,6 +2,9 @@ package com.elogistic.backend.testsupport;
 
 import java.nio.file.*;
 import java.nio.file.attribute.PosixFilePermissions;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.sql.*;
 import java.time.Duration;
@@ -16,7 +19,43 @@ import static org.junit.jupiter.api.Assertions.*;
 public final class PostgresTestcontainersSupport {
     private PostgresTestcontainersSupport() {}
     private static final SecureRandom RANDOM=new SecureRandom();
+    private static final Map<String,String> SUITES=Map.of(
+        "com.elogistic.backend.demo.PostgresTestcontainersTests", "demo-postgres",
+        "com.elogistic.backend.identity.internal.infrastructure.IdentityMigrationTests", "identity-migration");
+    private static final String EXECUTION=executionIdentity();
     private static final Path PRIVATE=privateDirectory();
+
+    private static String executionIdentity() {
+        if ("true".equals(System.getenv("GITHUB_ACTIONS"))) {
+            String run=System.getenv("GITHUB_RUN_ID"),attempt=System.getenv("GITHUB_RUN_ATTEMPT"),job=System.getenv("GITHUB_JOB");
+            if (run == null || !run.matches("[1-9][0-9]*") || attempt == null || !attempt.matches("[1-9][0-9]*") ||
+                job == null || !job.matches("[A-Za-z0-9_-]{1,80}")) throw new IllegalStateException("Invalid hosted execution identity");
+            return "gha:"+run+":"+attempt+":"+job;
+        }
+        String local=System.getenv("TASK_C_EXECUTION_ID");
+        if (local == null || !local.matches("[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}"))
+            throw new IllegalStateException("Explicit local TASK_C_EXECUTION_ID is required");
+        return "local:"+local;
+    }
+
+    private static List<String> envelope() {
+        return List.of("format=task-c-lifecycle-v2", "execution="+EXECUTION,
+            "taskRun="+TestcontainersRuntimePolicy.RUN, "session="+DockerClientFactory.SESSION_ID);
+    }
+
+    /** CREATE_NEW is exclusive: a truncated/failed publication remains blocking, never overwritten. */
+    private static void writeNew(Path path,List<String> lines,boolean identicalAllowed) throws Exception {
+        if (!Files.isDirectory(path.getParent(),LinkOption.NOFOLLOW_LINKS) || Files.isSymbolicLink(path.getParent()))
+            throw new IllegalStateException("Lifecycle directory unavailable");
+        byte[] bytes=(String.join("\n",lines)+"\n").getBytes(StandardCharsets.US_ASCII);
+        if (identicalAllowed && Files.isRegularFile(path,LinkOption.NOFOLLOW_LINKS) && !Files.isSymbolicLink(path)) {
+            if (!Arrays.equals(bytes,Files.readAllBytes(path))) throw new IllegalStateException("Lifecycle identity changed");
+            return;
+        }
+        try(FileChannel channel=FileChannel.open(path,StandardOpenOption.CREATE_NEW,StandardOpenOption.WRITE)) {
+            ByteBuffer buffer=ByteBuffer.wrap(bytes);while(buffer.hasRemaining()) channel.write(buffer);channel.force(true);
+        }
+    }
 
     private static Path privateDirectory() {
         String configured=System.getenv("TASK_C_PRIVATE_DIRECTORY");
@@ -26,6 +65,12 @@ public final class PostgresTestcontainersSupport {
         try {
             if (Files.exists(directory.resolve("task-c-runtime.txt"),LinkOption.NOFOLLOW_LINKS))
                 throw new IllegalStateException("Use a fresh private test directory for each run");
+            Path lifecycle=Files.createDirectory(directory.resolve("task-c-runtime.d"));
+            if (Files.getFileStore(lifecycle).supportsFileAttributeView("posix"))
+                Files.setPosixFilePermissions(lifecycle,PosixFilePermissions.fromString("rwx------"));
+            var manifest=new ArrayList<>(envelope());
+            for(String suite:new TreeSet<>(SUITES.keySet())) manifest.add("suite."+SUITES.get(suite)+"="+suite);
+            writeNew(directory.resolve("task-c-runtime.txt"),manifest,false);
             Path credentials=Files.createFile(directory.resolve("task-c-secrets.txt"));
             if (Files.getFileStore(credentials).supportsFileAttributeView("posix"))
                 Files.setPosixFilePermissions(credentials,PosixFilePermissions.fromString("rw-------"));
@@ -47,10 +92,89 @@ public final class PostgresTestcontainersSupport {
 
     public static PostgreSQLContainer container() {
         TestcontainersRuntimePolicy.requireConfiguration();
-        return new PostgreSQLContainer(DockerImageName.parse(TestcontainersRuntimePolicy.POSTGRES).asCompatibleSubstituteFor("postgres"))
+        // Existing suites need no API/assertion changes; bind the known <clinit> caller once.
+        var callers=StackWalker.getInstance().walk(frames->frames.map(StackWalker.StackFrame::getClassName)
+            .filter(SUITES::containsKey).distinct().toList());
+        if (callers.size()!=1) throw new IllegalStateException("Unknown lifecycle suite");
+        return new OwnedPostgres(callers.getFirst())
             .withUsername("task_c_bootstrap").withPassword(password()).withDatabaseName("postgres")
             .withCommand("postgres","-c","fsync=on","-c","synchronous_commit=on")
-            .withStartupTimeout(Duration.ofSeconds(120)).withReuse(false);
+            .withStartupTimeout(Duration.ofSeconds(120)).withStartupAttempts(1).withReuse(false);
+    }
+
+    private static final class OwnedPostgres extends PostgreSQLContainer {
+        private final String suite;
+        private List<String> resources;
+
+        OwnedPostgres(String suite) {
+            super(DockerImageName.parse(TestcontainersRuntimePolicy.POSTGRES).asCompatibleSubstituteFor("postgres"));
+            this.suite=suite;
+            try { record("reserved",List.of(),false); }
+            catch(Exception e) { throw new IllegalStateException("Cannot reserve suite lifecycle evidence"); }
+        }
+
+        private synchronized void record(String stage,List<String> facts,boolean identicalAllowed) throws Exception {
+            var lines=new ArrayList<>(envelope());lines.add("suite="+suite);lines.add("stage="+stage);lines.addAll(facts);
+            writeNew(PRIVATE.resolve("task-c-runtime.d").resolve(SUITES.get(suite)+"."+stage),lines,identicalAllowed);
+        }
+
+        private void failed(String reason) {
+            try { record("failed",List.of("reason="+reason),true); }
+            catch(Exception e) { throw new IllegalStateException("Lifecycle failure evidence unavailable"); }
+        }
+
+        @Override protected void containerIsCreated(String id) {
+            super.containerIsCreated(id);
+            try {
+                if (!id.matches("[a-f0-9]{64}")) throw new IllegalStateException("Invalid container identity");
+                // Observation is retained even if subsequent ownership inspection fails.
+                // It never authorizes deletion: only validated resources below do that.
+                record("observed",List.of("pgContainer="+id),false);
+                if (!id.equals(getContainerId())) throw new IllegalStateException("Container identity mismatch");
+                resources=resourceFacts(this,false);
+                record("created",resources,false);
+            } catch(Exception | AssertionError e) {
+                failed("CREATION_UNVERIFIED");throw new IllegalStateException("Created resource provenance unavailable");
+            }
+        }
+
+        @Override protected void containerIsStarted(com.github.dockerjava.api.command.InspectContainerResponse info) {
+            super.containerIsStarted(info);
+            try { verifyRuntime(this); }
+            catch(Exception | AssertionError e) { failed("START_UNVERIFIED");throw new IllegalStateException("Runtime policy verification failed"); }
+        }
+
+        @Override public void start() {
+            try { super.start(); }
+            catch(RuntimeException | AssertionError e) { failed("START_FAILED");throw new IllegalStateException("Owned PostgreSQL startup failed; private evidence retained"); }
+        }
+
+        @Override public void stop() {
+            try {
+                if (resources==null) throw new IllegalStateException("Missing created resource identity");
+                if (getContainerId()==null) {
+                    requireAbsent(this,resources);record("stopped",resources,true);return;
+                }
+                // Reinspect labels, exact mount/volume, consumers and Ryuk before SDK deletion.
+                if (!resources.equals(resourceFacts(this,false))) throw new IllegalStateException("Resource identity changed before stop");
+                super.stop();
+                requireAbsent(this,resources);
+                record("stopped",resources,false);
+            } catch(Exception | AssertionError e) {
+                failed("STOP_UNVERIFIED");throw new IllegalStateException("Owned cleanup incomplete; no fallback deletion");
+            }
+        }
+    }
+
+    private static String fact(List<String> facts,String key) {
+        return facts.stream().filter(s->s.startsWith(key+"=")).findFirst().orElseThrow().substring(key.length()+1);
+    }
+
+    private static void requireAbsent(PostgreSQLContainer pg,List<String> resources) {
+        var client=pg.getDockerClient();String id=fact(resources,"pgContainer"),volume=fact(resources,"pgVolume");
+        if (client.listContainersCmd().withShowAll(true).exec().stream().anyMatch(c->id.equals(c.getId())) ||
+            client.listVolumesCmd().exec().getVolumes().stream().anyMatch(v->volume.equals(v.getName())))
+            throw new IllegalStateException("Owned resources remain after stop");
     }
 
     public record Database(String name,String owner,String migrator,String runtime,String migrationPassword,String runtimePassword,PostgreSQLContainer container) {
@@ -103,19 +227,30 @@ public final class PostgresTestcontainersSupport {
     }
 
     public static void verifyRuntime(PostgreSQLContainer pg) throws Exception {
+        if (!(pg instanceof OwnedPostgres owned)) throw new IllegalStateException("Unknown suite container");
+        var facts=resourceFacts(pg,true);
+        if (owned.resources==null || !owned.resources.equals(facts)) throw new IllegalStateException("Lifecycle resources changed");
+        owned.record("verified",facts,true);
+    }
+
+    private static List<String> resourceFacts(PostgreSQLContainer pg,boolean running) throws Exception {
         verifyOwnership(pg);
         var client=pg.getDockerClient();
-        var owned=client.listContainersCmd().withLabelFilter(Map.of(TestcontainersRuntimePolicy.LABEL,TestcontainersRuntimePolicy.RUN)).exec();
+        var owned=client.listContainersCmd().withShowAll(true).withLabelFilter(Map.of(TestcontainersRuntimePolicy.LABEL,TestcontainersRuntimePolicy.RUN)).exec();
         assertEquals(2,owned.size(),"Exactly PostgreSQL and Ryuk are permitted");
-        var proof=new ArrayList<String>();
+        String pgId=null,volumeId=null,ryukId=null;
         for(var container:owned) {
             var i=client.inspectContainerCmd(container.getId()).exec();
+            assertTrue(i.getId().matches("[a-f0-9]{64}"));
+            assertEquals(TestcontainersRuntimePolicy.RUN,i.getConfig().getLabels().get(TestcontainersRuntimePolicy.LABEL));
             String image=i.getConfig().getImage();TestcontainersRuntimePolicy.requireApprovedImage(DockerImageName.parse(image));
             assertFalse(Boolean.TRUE.equals(i.getHostConfig().getPrivileged()));
             assertFalse("host".equals(i.getHostConfig().getNetworkMode()));
-            assertFalse(i.getNetworkSettings().getPorts().getBindings().isEmpty());
-            for(var bindings:i.getNetworkSettings().getPorts().getBindings().values()) for(var binding:bindings) {
-                assertEquals("127.0.0.1",binding.getHostIp());assertTrue(Integer.parseInt(binding.getHostPortSpec())>0);
+            if (running || image.equals(TestcontainersRuntimePolicy.RYUK)) {
+                assertFalse(i.getNetworkSettings().getPorts().getBindings().isEmpty());
+                for(var bindings:i.getNetworkSettings().getPorts().getBindings().values()) for(var binding:bindings) {
+                    assertEquals("127.0.0.1",binding.getHostIp());assertTrue(Integer.parseInt(binding.getHostPortSpec())>0);
+                }
             }
             var identity=client.inspectImageCmd(image).exec();
             assertEquals("linux",identity.getOs());assertEquals("amd64",identity.getArch());
@@ -123,24 +258,33 @@ public final class PostgresTestcontainersSupport {
             for(String entry:identity.getRepoDigests()) if(entry.endsWith(image.substring(image.indexOf('@')))) digest=true;
             assertTrue(digest,"Docker must confirm the approved manifest identity");
             if(image.equals(TestcontainersRuntimePolicy.RYUK)) {
+                assertNull(ryukId);ryukId=i.getId();
                 assertEquals("/testcontainers-ryuk-"+DockerClientFactory.SESSION_ID,i.getName());
                 assertEquals(1,i.getMounts().size());
                 var mount=i.getMounts().getFirst();assertEquals("/var/run/docker.sock",mount.getDestination().getPath());
                 assertEquals("/var/run/docker.sock",mount.getSource().replaceFirst("^/+","/"));
             } else {
+                assertNull(pgId);pgId=i.getId();assertEquals(pg.getContainerId(),pgId);
+                assertEquals(DockerClientFactory.SESSION_ID,i.getConfig().getLabels().get("org.testcontainers.sessionId"));
                 assertEquals(1,i.getMounts().size());
                 var mount=i.getMounts().getFirst();assertNotNull(mount.getName());
                 var volume=client.inspectVolumeCmd(mount.getName()).exec();
                 assertEquals(volume.getMountpoint(),mount.getSource());assertEquals("local",volume.getDriver());
                 assertEquals("/var/lib/postgresql",mount.getDestination().getPath());
-                proof.add("anonymousVolume="+mount.getName());
+                volumeId=mount.getName();assertTrue(volumeId.matches("[a-f0-9]{64}"));
+                // Include stopped containers: a foreign consumer forbids SDK teardown.
+                for(var consumer:client.listContainersCmd().withShowAll(true).exec()) {
+                    var details=client.inspectContainerCmd(consumer.getId()).exec();
+                    for(var attached:details.getMounts()) if(volumeId.equals(attached.getName())) assertEquals(pgId,consumer.getId());
+                }
             }
-            proof.add("image="+image+" id="+container.getId()+" privileged=false ports=loopback");
         }
         TestcontainersRuntimePolicy.requireNoRejectedAttempts();
-        proof.add("session="+DockerClientFactory.SESSION_ID);
-        proof.add("taskRun="+TestcontainersRuntimePolicy.RUN);
-        Files.write(PRIVATE.resolve("task-c-runtime.txt"),proof);
+        assertNotNull(pgId);assertNotNull(volumeId);assertNotNull(ryukId);assertNotEquals(pgId,ryukId);
+        return List.of("pgContainer="+pgId,"pgVolume="+volumeId,"volumeContainer="+pgId,
+            "ryukContainer="+ryukId,"pgImage="+TestcontainersRuntimePolicy.POSTGRES,"ryukImage="+TestcontainersRuntimePolicy.RYUK,
+            "pgLabelRun="+TestcontainersRuntimePolicy.RUN,"pgLabelSession="+DockerClientFactory.SESSION_ID,
+            "ryukLabelRun="+TestcontainersRuntimePolicy.RUN,"ryukName=/testcontainers-ryuk-"+DockerClientFactory.SESSION_ID);
     }
 
     public static void restart(PostgreSQLContainer pg) throws Exception {

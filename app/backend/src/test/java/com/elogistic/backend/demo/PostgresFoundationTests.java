@@ -44,7 +44,8 @@ class PostgresFoundationTests extends DemoTestSupport {
   List<String> schemas=jdbc.queryForList("SELECT nspname FROM pg_namespace WHERE nspname IN ('identity','merchant','orders','pricing','warehouse','dispatch','finance','routing','notification') ORDER BY nspname",String.class);
   assertEquals(List.of("dispatch","finance","identity","merchant","notification","orders","pricing","routing","warehouse"),schemas);
   assertEquals(10,jdbc.queryForObject("SELECT count(*) FROM pg_namespace n JOIN pg_roles r ON r.oid=n.nspowner WHERE r.rolname=? AND n.nspname IN ('platform','identity','merchant','orders','pricing','warehouse','dispatch','finance','routing','notification')",Integer.class,requiredEnv("PG_TEST_OWNER_ROLE")));
-  assertEquals(6,jdbc.queryForObject("SELECT count(*) FROM pg_tables WHERE tableowner=? AND schemaname IN ('platform','identity','merchant','orders')",Integer.class,requiredEnv("PG_TEST_OWNER_ROLE")));
+  // Five Demo tables + eight Production Identity tables + Flyway history.
+  assertEquals(14,jdbc.queryForObject("SELECT count(*) FROM pg_tables WHERE tableowner=? AND schemaname IN ('platform','identity','merchant','orders')",Integer.class,requiredEnv("PG_TEST_OWNER_ROLE")));
  }
 
  @Test void runtimeCannotDdlAssumeOwnerOrReadHistory() throws Exception {
@@ -70,7 +71,7 @@ class PostgresFoundationTests extends DemoTestSupport {
  @Test void validateAndRerunPreserveDataAndChecksums() {
   long before=jdbc.queryForObject("SELECT COUNT(*) FROM identity.demo_account",Long.class);
   var applied=Arrays.stream(flyway.info().applied()).map(m->m.getVersion()+":"+m.getChecksum()).toList();
-  assertEquals(2,applied.size());assertTrue(flyway.validateWithResult().validationSuccessful);
+  assertEquals(List.of("1","2","3"),Arrays.stream(flyway.info().applied()).map(m->m.getVersion().toString()).toList());assertTrue(flyway.validateWithResult().validationSuccessful);
   assertEquals(0,flyway.migrate().migrationsExecuted);
   assertEquals(applied,Arrays.stream(flyway.info().applied()).map(m->m.getVersion()+":"+m.getChecksum()).toList());
   assertEquals(before,jdbc.queryForObject("SELECT COUNT(*) FROM identity.demo_account",Long.class));
@@ -87,7 +88,8 @@ class PostgresFoundationTests extends DemoTestSupport {
    sql.execute("CREATE TABLE platform.upgrade_probe(id integer PRIMARY KEY, value text NOT NULL)");
    sql.execute("INSERT INTO platform.upgrade_probe VALUES (1,'preserve-upgrade')");
   }
-  Flyway latest=configuration.target("latest").load();assertEquals(1,latest.migrate().migrationsExecuted);latest.validate();
+  // Keep this historical V1 -> V2 regression bounded; IdentityMigrationTests covers V2 -> V3.
+  Flyway latest=configuration.target("2").load();assertEquals(1,latest.migrate().migrationsExecuted);latest.validate();
   try(Connection connection=latest.getConfiguration().getDataSource().getConnection();Statement sql=connection.createStatement()) {
    ResultSet result=sql.executeQuery("SELECT value FROM platform.upgrade_probe WHERE id=1");assertTrue(result.next());assertEquals("preserve-upgrade",result.getString(1));
   }

@@ -2,7 +2,9 @@
 import contextlib
 import importlib.util
 import io
+import json
 from pathlib import Path
+import re
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -122,13 +124,9 @@ class ReportGuardTests(unittest.TestCase):
         self.assertFalse(reports.audit_task_c_credentials(path, [path]))
 
     def runtime_evidence(self):
-        path = self.source / 'runtime.txt'
-        path.write_text('anonymousVolume=' + 'c' * 64 + '\n'
-                        + 'image=approved id=' + 'a' * 64 + ' privileged=false ports=loopback\n'
-                        + 'image=approved id=' + 'b' * 64 + ' privileged=false ports=loopback\n'
-                        + 'taskRun=11111111-1111-1111-1111-111111111111\n'
-                        + 'session=22222222-2222-2222-2222-222222222222\n')
-        return path
+        self.enterContext(patch.dict(reports.os.environ, {'GITHUB_ACTIONS': 'false', 'TASK_C_EXECUTION_ID': LIFECYCLE_LOCAL}))
+        path = self.source / 'task-c-runtime.txt'
+        return path if path.exists() else lifecycle_fixture(self.source)
 
     def test_cleanup_audit_requires_complete_evidence(self):
         self.assertFalse(reports.audit_task_c_cleanup(self.source / 'missing'))
@@ -259,12 +257,11 @@ class ReportGuardTests(unittest.TestCase):
         self.assertEqual([20, 38, 17, 34], [len(v) for v in reports.S2_REQUIRED.values()])
         for name, methods in reports.S2_REQUIRED.items():
             self.assertEqual(len(methods), len(set(methods)), name)
-        for mode, passed, skipped in [('architecture', 23, 0), ('h2', 157, 17),
-                                      ('postgres', 182, 5), ('foundation', 5, 0)]:
+        for mode, passed, skipped in [('architecture', 23, 0), ('h2', 231, 17),
+                                      ('postgres', 270, 5), ('foundation', 5, 0)]:
             with self.subTest(mode=mode):
                 self.fixture(mode)
                 self.assertTrue(self.check(mode))
-                import json
                 summary = json.loads((self.output / 'summary.json').read_text())
                 self.assertEqual(passed, summary['passed'])
                 self.assertEqual(skipped, summary['skipped'])
@@ -377,6 +374,677 @@ class ReportGuardTests(unittest.TestCase):
         del suite.attrib['tests']
         self.save(suite)
         self.assertFalse(self.check('h2'))
+
+    def seed_suite(self):
+        return ET.parse(self.source / ('TEST-' + reports.SEED_PREFLIGHT + '.xml')).getroot()
+
+    def seed_rejection(self, mode, missing=None, malformed=False):
+        self.assertFalse(self.check(mode))
+        summary = json.loads((self.output / 'summary.json').read_text(encoding='utf-8'))
+        self.assertEqual('FAIL', summary['status'])
+        if missing is not None:
+            # Consistent fixture counters: rejection must be the target identity,
+            # not an unrelated XML/count error masquerading as a successful test.
+            self.assertEqual([reports.SEED_PREFLIGHT + '.' + missing + ': required passed'], summary['problems'])
+        if malformed:
+            self.assertIn('Malformed, unexpected or inconsistent Surefire report', summary['problems'])
+        return summary
+
+    def test_seed_finite_inventory_has_65_invocations_and_nine_singletons(self):
+        methods = reports.SEED_PREFLIGHT_REQUIRED
+        self.assertEqual(74, len(methods))
+        self.assertEqual(74, len(set(methods)))
+        groups = {
+            'invalidMissingAccountFailsPreflightWithoutEncodingOrWriting(String, String, String)': 25,
+            'pinnedBCryptCharacterization(String, String, int, int, boolean, boolean)': 15,
+            'preflightKeepsCharacterRulesAndRejectsEncoderByteOverflow(String, String, int, int, boolean, boolean)': 15,
+            'byteOverflowFailsBeforeEncodingForEveryMissingAccount(String)': 5,
+            'existingAccountExemptionIgnoresUnusedInvalidPasswords(String, String)': 5,
+        }
+        for signature, count in groups.items():
+            self.assertEqual({f'{signature}[{i}]' for i in range(1, count + 1)},
+                             {method for method in methods if method.startswith(signature + '[')})
+        self.assertEqual(9, len([method for method in methods if '(' not in method]))
+
+    def test_seed_and_all_s2_identities_pass_in_both_database_jobs(self):
+        for mode in ('h2', 'postgres'):
+            with self.subTest(mode=mode):
+                self.fixture(mode)
+                self.assertTrue(self.check(mode))
+                published = ET.parse(self.output / 'tests.xml').getroot().findall('testcase')
+                seed = [c for c in published if c.attrib['classname'] == reports.SEED_PREFLIGHT]
+                s2 = [c for c in published if c.attrib['classname'] in reports.S2_REQUIRED]
+                self.assertEqual(74, len(seed))
+                self.assertEqual(set(reports.SEED_PREFLIGHT_REQUIRED), {c.attrib['name'] for c in seed})
+                self.assertEqual(109, len(s2))
+                self.assertTrue(all(len(c) == 0 for c in seed + s2))
+
+    def test_each_missing_seed_invocation_is_rejected_for_identity_not_counts(self):
+        for mode in ('h2', 'postgres'):
+            for method in [m for m in reports.SEED_PREFLIGHT_REQUIRED if '(' in m]:
+                with self.subTest(mode=mode, method=method):
+                    self.fixture(mode)
+                    self.assertTrue(self.check(mode))
+                    suite = self.seed_suite()
+                    suite.remove(next(c for c in suite if c.attrib['name'] == method))
+                    suite.set('tests', '73')
+                    self.save(suite)
+                    self.seed_rejection(mode, missing=method)
+
+    def test_each_missing_seed_singleton_is_rejected_for_identity_not_counts(self):
+        for mode in ('h2', 'postgres'):
+            for method in [m for m in reports.SEED_PREFLIGHT_REQUIRED if '(' not in m]:
+                with self.subTest(mode=mode, method=method):
+                    self.fixture(mode)
+                    self.assertTrue(self.check(mode))
+                    suite = self.seed_suite()
+                    suite.remove(next(c for c in suite if c.attrib['name'] == method))
+                    suite.set('tests', '73')
+                    self.save(suite)
+                    self.seed_rejection(mode, missing=method)
+
+    def test_duplicate_seed_invocation_and_suite_are_rejected(self):
+        for mode in ('h2', 'postgres'):
+            for duplicate in ('invocation', 'suite'):
+                with self.subTest(mode=mode, duplicate=duplicate):
+                    self.fixture(mode)
+                    self.assertTrue(self.check(mode))
+                    suite = self.seed_suite()
+                    if duplicate == 'invocation':
+                        ET.SubElement(suite, 'testcase', **suite.find('testcase').attrib)
+                        suite.set('tests', '75')
+                        self.save(suite)
+                    else:
+                        ET.ElementTree(suite).write(self.source / 'TEST-duplicate.xml', encoding='utf-8')
+                    self.seed_rejection(mode, malformed=True)
+
+    def test_seed_rejects_both_index_boundaries_and_changed_signatures_for_every_group(self):
+        signatures = {m.rsplit('[', 1)[0] for m in reports.SEED_PREFLIGHT_REQUIRED if '(' in m}
+        for mode in ('h2', 'postgres'):
+            for signature in sorted(signatures):
+                count = sum(m.startswith(signature + '[') for m in reports.SEED_PREFLIGHT_REQUIRED)
+                for invalid in (signature + '[0]', signature + f'[{count + 1}]',
+                                signature.split('(')[0] + '(Object)[1]'):
+                    with self.subTest(mode=mode, invalid=invalid):
+                        self.fixture(mode)
+                        self.assertTrue(self.check(mode))
+                        suite = self.seed_suite()
+                        suite.find('testcase').set('name', invalid)
+                        self.save(suite)
+                        self.seed_rejection(mode, malformed=True)
+
+    def test_seed_unexpected_extra_case_is_rejected_with_consistent_counters(self):
+        for mode in ('h2', 'postgres'):
+            self.fixture(mode)
+            self.assertTrue(self.check(mode))
+            suite = self.seed_suite()
+            ET.SubElement(suite, 'testcase', classname=reports.SEED_PREFLIGHT, name='unapprovedExtraTest')
+            suite.set('tests', '75')
+            self.save(suite)
+            self.seed_rejection(mode, malformed=True)
+
+    def test_seed_wrong_testcase_class_is_rejected(self):
+        for mode in ('h2', 'postgres'):
+            self.fixture(mode)
+            self.assertTrue(self.check(mode))
+            suite = self.seed_suite()
+            suite.find('testcase').set('classname', reports.BASE + 'architecture.ArchitectureTests')
+            self.save(suite)
+            self.seed_rejection(mode, malformed=True)
+
+    def test_seed_unknown_suite_cannot_borrow_approved_method_names(self):
+        for mode in ('h2', 'postgres'):
+            self.fixture(mode)
+            self.assertTrue(self.check(mode))
+            suite = self.seed_suite()
+            (self.source / ('TEST-' + reports.SEED_PREFLIGHT + '.xml')).unlink()
+            suite.set('name', reports.SEED_PREFLIGHT + 'Unapproved')
+            for case in suite:
+                case.set('classname', suite.attrib['name'])
+            self.save(suite)
+            self.seed_rejection(mode, malformed=True)
+
+    def test_seed_cannot_be_assigned_to_architecture_or_foundation_job(self):
+        self.fixture('h2')
+        seed = self.seed_suite()
+        for mode in ('architecture', 'foundation'):
+            self.fixture(mode)
+            self.assertTrue(self.check(mode))
+            self.assertNotIn(reports.SEED_PREFLIGHT, reports.expected_suites(mode))
+            self.save(seed)
+            self.seed_rejection(mode, malformed=True)
+
+    def test_seed_skip_failure_and_error_each_require_pass_in_both_database_jobs(self):
+        for mode in ('h2', 'postgres'):
+            for tag, counter in [('skipped', 'skipped'), ('failure', 'failures'), ('error', 'errors')]:
+                with self.subTest(mode=mode, tag=tag):
+                    self.fixture(mode)
+                    self.assertTrue(self.check(mode))
+                    suite = self.seed_suite()
+                    case = suite.find('testcase')
+                    ET.SubElement(case, tag)
+                    suite.set(counter, '1')
+                    self.save(suite)
+                    self.seed_rejection(mode, missing=case.attrib['name'])
+
+    def test_seed_conflicting_outcomes_are_rejected(self):
+        for mode in ('h2', 'postgres'):
+            self.fixture(mode)
+            self.assertTrue(self.check(mode))
+            suite = self.seed_suite()
+            for tag, counter in [('failure', 'failures'), ('skipped', 'skipped')]:
+                ET.SubElement(suite.find('testcase'), tag)
+                suite.set(counter, '1')
+            self.save(suite)
+            self.seed_rejection(mode, malformed=True)
+
+    def test_seed_malformed_xml_and_incomplete_metadata_fail_closed(self):
+        for mode in ('h2', 'postgres'):
+            for damage in ('xml', 'tests', 'name', 'classname'):
+                with self.subTest(mode=mode, damage=damage):
+                    self.fixture(mode)
+                    self.assertTrue(self.check(mode))
+                    suite = self.seed_suite()
+                    if damage == 'xml':
+                        (self.source / ('TEST-' + reports.SEED_PREFLIGHT + '.xml')).write_text('<testsuite', encoding='utf-8')
+                    else:
+                        target = suite.find('testcase') if damage == 'classname' else suite
+                        del target.attrib[damage]
+                        ET.ElementTree(suite).write(
+                            self.source / ('TEST-' + reports.SEED_PREFLIGHT + '.xml'), encoding='utf-8')
+                    self.seed_rejection(mode, malformed=True)
+
+    def test_missing_seed_report_rejects_all_74_required_identities(self):
+        for mode in ('h2', 'postgres'):
+            self.fixture(mode)
+            self.assertTrue(self.check(mode))
+            (self.source / ('TEST-' + reports.SEED_PREFLIGHT + '.xml')).unlink()
+            summary = self.seed_rejection(mode)
+            self.assertEqual({reports.SEED_PREFLIGHT + '.' + m + ': required passed'
+                              for m in reports.SEED_PREFLIGHT_REQUIRED}, set(summary['problems']))
+
+    def test_seed_inconsistent_aggregate_counters_are_rejected(self):
+        for mode in ('h2', 'postgres'):
+            for counter in ('tests', 'failures', 'errors', 'skipped'):
+                with self.subTest(mode=mode, counter=counter):
+                    self.fixture(mode)
+                    self.assertTrue(self.check(mode))
+                    suite = self.seed_suite()
+                    suite.set(counter, str(int(suite.attrib[counter]) + 1))
+                    self.save(suite)
+                    self.seed_rejection(mode, malformed=True)
+
+    def test_seed_unsafe_parameter_payload_is_rejected_without_publication(self):
+        marker = 'synthetic-private-seed-parameter'
+        for mode in ('h2', 'postgres'):
+            self.fixture(mode)
+            self.assertTrue(self.check(mode))
+            suite = self.seed_suite()
+            suite.find('testcase').set('name', 'byteOverflowFailsBeforeEncodingForEveryMissingAccount(' + marker + ')[1]')
+            self.save(suite)
+            self.seed_rejection(mode, malformed=True)
+            for artifact in self.output.iterdir():
+                self.assertNotIn(marker, artifact.read_text(encoding='utf-8'))
+
+    def test_seed_failure_skip_and_error_payloads_are_never_published(self):
+        marker = 'synthetic-private-seed-diagnostics'
+        for mode in ('h2', 'postgres'):
+            for tag, counter in [('skipped', 'skipped'), ('failure', 'failures'), ('error', 'errors')]:
+                with self.subTest(mode=mode, tag=tag):
+                    self.fixture(mode)
+                    self.assertTrue(self.check(mode))
+                    suite = self.seed_suite()
+                    case = suite.find('testcase')
+                    ET.SubElement(case, tag, message=marker).text = marker
+                    suite.set(counter, '1')
+                    ET.SubElement(suite, 'system-out').text = marker
+                    ET.SubElement(suite, 'system-err').text = marker
+                    ET.SubElement(suite, 'properties', password=marker)
+                    self.save(suite)
+                    self.seed_rejection(mode, missing=case.attrib['name'])
+                    self.assertEqual({'summary.json', 'tests.xml'}, {p.name for p in self.output.iterdir()})
+                    for artifact in self.output.iterdir():
+                        self.assertNotIn(marker, artifact.read_text(encoding='utf-8'))
+
+    def test_seed_valid_prior_reports_do_not_hide_nonzero_maven_exit(self):
+        for mode in ('h2', 'postgres'):
+            self.fixture(mode)
+            self.assertTrue(self.check(mode))
+            self.assertFalse(self.check(mode, exit_code=1))
+            summary = json.loads((self.output / 'summary.json').read_text(encoding='utf-8'))
+            self.assertEqual(['Maven returned a nonzero exit code'], summary['problems'])
+
+    def test_empty_database_reports_are_rejected_despite_successful_maven_exit(self):
+        for mode in ('h2', 'postgres'):
+            self.fixture(mode)
+            self.assertTrue(self.check(mode))
+            for path in self.source.glob('TEST-*.xml'):
+                path.unlink()  # Only this test's synthetic TemporaryDirectory.
+            summary = self.seed_rejection(mode)
+            self.assertEqual(0, summary['discovered'])
+            self.assertIn('No test cases discovered', summary['problems'])
+
+
+# Independent expected identities; neither this list nor collector acceptance is
+# generated from the reports under test.
+IDENTITY_METHODS = (
+    'coldStartValidateAndRerunPreserveHistoryAndIdentityData',
+    'upgradeV2PreservesAllDemoTablesWithoutImportingAccounts',
+    'ownerOwnsEightTablesIndexesAndOnlyIdentityForeignKeys',
+    'usernamesRemainExactCaseUnicodeAndRejectDuplicatesBlankAndNull',
+    'accountLifecycleRequiresVerifiedActivatedCredentialAndPositiveVersions',
+    'grantsAllowMultipleScopesButRejectDuplicatesInvalidScopesAndMissingAccounts',
+    'sessionsRejectInvalidDeadlinesMissingAccountsAndNullExpiry',
+    'refreshHashesMustBeUniqueCorrectSizeAndHaveExistingSession',
+    'refreshLineageCannotCrossFamiliesForkOrHaveTwoLiveMembers',
+    'proofPurposeLifetimeHashAndSingleOutstandingProofAreEnforced',
+    'csrfSupportsPreauthAndSessionBindingButRejectsBadHashesAndReferences',
+    'receiptsBindActorProofOrPreauthWithoutExistenceDisclosureOrDuplicateKey',
+    'runtimeCanAppendAuditButCannotDdlDeleteAccountsOrMutateAuditAndReceipts',
+    'preexistingSchemaDriftFailsWithoutBaselineOrRepair',
+)
+
+
+class IdentityMigrationInventoryTests(unittest.TestCase):
+    # Reuse only synthetic-fixture helpers, not inherited test methods.
+    setUp = ReportGuardTests.setUp
+    fixture = ReportGuardTests.fixture
+    save = ReportGuardTests.save
+    check = ReportGuardTests.check
+
+    def identity_suite(self):
+        return ET.parse(self.source / ('TEST-' + reports.IDENTITY_MIGRATION + '.xml')).getroot()
+
+    def assert_rejected(self, missing=None, malformed=False):
+        self.assertFalse(self.check('postgres'))
+        summary = json.loads((self.output / 'summary.json').read_text(encoding='utf-8'))
+        self.assertEqual('FAIL', summary['status'])
+        if missing is not None:
+            self.assertEqual([reports.IDENTITY_MIGRATION + '.' + missing + ': required passed'], summary['problems'])
+        if malformed:
+            self.assertIn('Malformed, unexpected or inconsistent Surefire report', summary['problems'])
+        return summary
+
+    def test_identity_exact_source_reviewed_inventory(self):
+        source = (Path(__file__).resolve().parents[2] / 'app/backend/src/test/java/com/elogistic/backend/identity/internal/infrastructure/IdentityMigrationTests.java').read_text(encoding='utf-8')
+        self.assertEqual(list(IDENTITY_METHODS), re.findall(r'@Test\s+void\s+(\w+)\s*\(', source))
+        self.assertIn('package com.elogistic.backend.identity.internal.infrastructure;', source)
+        self.assertEqual('com.elogistic.backend.identity.internal.infrastructure.IdentityMigrationTests', reports.IDENTITY_MIGRATION)
+        self.assertEqual(14, len(set(IDENTITY_METHODS)))
+        self.assertEqual(list(IDENTITY_METHODS), reports.REQUIRED[reports.IDENTITY_MIGRATION])
+        self.assertIn(reports.IDENTITY_MIGRATION, reports.TESTCONTAINERS_ONLY)
+        self.assertNotIn(reports.IDENTITY_MIGRATION, reports.PG_ONLY)
+
+    def test_identity_passes_only_in_postgres_and_publishes_all_methods(self):
+        for mode in ('architecture', 'h2', 'postgres', 'foundation'):
+            with self.subTest(mode=mode):
+                self.assertEqual(mode == 'postgres', reports.IDENTITY_MIGRATION in reports.expected_suites(mode))
+                self.fixture(mode)
+                self.assertTrue(self.check(mode))
+                cases = ET.parse(self.output / 'tests.xml').getroot().findall('testcase')
+                identity = [c for c in cases if c.attrib['classname'] == reports.IDENTITY_MIGRATION]
+                self.assertEqual(set(IDENTITY_METHODS) if mode == 'postgres' else set(), {c.attrib['name'] for c in identity})
+                self.assertTrue(all(len(c) == 0 for c in identity))
+
+    def test_each_missing_identity_method_rejected_for_exact_reason(self):
+        for method in IDENTITY_METHODS:
+            with self.subTest(method=method):
+                self.fixture('postgres')
+                self.assertTrue(self.check('postgres'))
+                suite = self.identity_suite()
+                suite.remove(next(c for c in suite if c.attrib['name'] == method))
+                suite.set('tests', '13')
+                self.save(suite)
+                self.assert_rejected(missing=method)
+
+    def test_missing_identity_suite_requires_all_fourteen_methods(self):
+        self.fixture('postgres')
+        (self.source / ('TEST-' + reports.IDENTITY_MIGRATION + '.xml')).unlink()
+        summary = self.assert_rejected()
+        self.assertEqual({reports.IDENTITY_MIGRATION + '.' + m + ': required passed' for m in IDENTITY_METHODS}, set(summary['problems']))
+
+    def test_each_renamed_identity_method_rejected_without_publication(self):
+        marker = 'synthetic-unapproved-identity-method'
+        for method in IDENTITY_METHODS:
+            with self.subTest(method=method):
+                self.fixture('postgres')
+                suite = self.identity_suite()
+                next(c for c in suite if c.attrib['name'] == method).set('name', marker)
+                self.save(suite)
+                self.assert_rejected(malformed=True)
+                for artifact in self.output.iterdir():
+                    self.assertNotIn(marker, artifact.read_text(encoding='utf-8'))
+
+    def test_each_identity_skip_failure_or_error_is_rejected_and_redacted(self):
+        marker = 'synthetic-private-identity-diagnostic'
+        for method in IDENTITY_METHODS:
+            for tag, counter in [('skipped', 'skipped'), ('failure', 'failures'), ('error', 'errors')]:
+                with self.subTest(method=method, outcome=tag):
+                    self.fixture('postgres')
+                    suite = self.identity_suite()
+                    case = next(c for c in suite if c.attrib['name'] == method)
+                    ET.SubElement(case, tag, message=marker).text = marker
+                    suite.set(counter, '1')
+                    ET.SubElement(suite, 'system-out').text = marker
+                    ET.SubElement(suite, 'system-err').text = marker
+                    ET.SubElement(suite, 'properties', password=marker)
+                    self.save(suite)
+                    self.assert_rejected(missing=method)
+                    self.assertEqual({'summary.json', 'tests.xml'}, {p.name for p in self.output.iterdir()})
+                    for artifact in self.output.iterdir():
+                        self.assertNotIn(marker, artifact.read_text(encoding='utf-8'))
+
+    def test_duplicate_identity_case_or_suite_is_rejected(self):
+        for duplicate in ('case', 'suite'):
+            with self.subTest(duplicate=duplicate):
+                self.fixture('postgres')
+                suite = self.identity_suite()
+                if duplicate == 'case':
+                    ET.SubElement(suite, 'testcase', **suite.find('testcase').attrib)
+                    suite.set('tests', '15')
+                    self.save(suite)
+                else:
+                    ET.ElementTree(suite).write(self.source / 'TEST-duplicate-identity.xml', encoding='utf-8')
+                self.assert_rejected(malformed=True)
+
+    def test_forged_identity_class_or_extra_method_is_rejected(self):
+        for damage in ('case-class', 'suite-class', 'extra-method'):
+            with self.subTest(damage=damage):
+                self.fixture('postgres')
+                suite = self.identity_suite()
+                if damage == 'case-class':
+                    suite.find('testcase').set('classname', reports.PG)
+                elif damage == 'suite-class':
+                    (self.source / ('TEST-' + reports.IDENTITY_MIGRATION + '.xml')).unlink()
+                    suite.set('name', reports.IDENTITY_MIGRATION + 'Unapproved')
+                    for case in suite: case.set('classname', suite.attrib['name'])
+                else:
+                    ET.SubElement(suite, 'testcase', classname=reports.IDENTITY_MIGRATION, name='unapprovedExtraMethod')
+                    suite.set('tests', '15')
+                self.save(suite)
+                self.assert_rejected(malformed=True)
+
+    def test_identity_report_is_rejected_outside_postgres(self):
+        self.fixture('postgres')
+        suite = self.identity_suite()
+        for mode in ('architecture', 'h2', 'foundation'):
+            with self.subTest(mode=mode):
+                self.fixture(mode)
+                self.assertTrue(self.check(mode))
+                self.save(suite)
+                self.assertFalse(self.check(mode))
+
+    def test_identity_incomplete_metadata_counts_or_xml_fail_closed(self):
+        for damage in ('tests', 'failures', 'errors', 'skipped', 'name', 'classname', 'xml'):
+            with self.subTest(damage=damage):
+                self.fixture('postgres')
+                suite = self.identity_suite()
+                path = self.source / ('TEST-' + reports.IDENTITY_MIGRATION + '.xml')
+                if damage == 'xml':
+                    path.write_text('<testsuite synthetic-private-malformed', encoding='utf-8')
+                else:
+                    target = suite.find('testcase') if damage == 'classname' else suite
+                    del target.attrib[damage]
+                    ET.ElementTree(suite).write(path, encoding='utf-8')
+                self.assert_rejected(malformed=True)
+                for artifact in self.output.iterdir():
+                    self.assertNotIn('synthetic-private-malformed', artifact.read_text(encoding='utf-8'))
+
+    def test_identity_positive_reports_do_not_mask_maven_failure(self):
+        self.fixture('postgres')
+        self.assertTrue(self.check('postgres'))
+        self.assertFalse(self.check('postgres', exit_code=1))
+        summary = json.loads((self.output / 'summary.json').read_text(encoding='utf-8'))
+        self.assertEqual(['Maven returned a nonzero exit code'], summary['problems'])
+
+
+LIFECYCLE_LOCAL = '44444444-4444-4444-8444-444444444444'
+LIFECYCLE_RUN = '11111111-1111-4111-8111-111111111111'
+LIFECYCLE_SESSION = '22222222-2222-4222-8222-222222222222'
+LIFECYCLE_SUITES = {
+    'demo-postgres': 'com.elogistic.backend.demo.PostgresTestcontainersTests',
+    'identity-migration': 'com.elogistic.backend.identity.internal.infrastructure.IdentityMigrationTests',
+}
+LIFECYCLE_STAGES = ('reserved', 'observed', 'created', 'verified', 'stopped')
+
+
+def lifecycle_fixture(directory, reverse=False):
+    """Independent synthetic protocol fixtures; no Docker/Java execution or secret."""
+    path = directory / 'task-c-runtime.txt'
+    child = directory / 'task-c-runtime.d'
+    child.mkdir()
+    base = {'format': 'task-c-lifecycle-v2', 'execution': 'local:' + LIFECYCLE_LOCAL,
+            'taskRun': LIFECYCLE_RUN, 'session': LIFECYCLE_SESSION}
+    manifest = dict(base, **{'suite.' + key: value for key, value in LIFECYCLE_SUITES.items()})
+    fixture_record(path, manifest)
+    entries = list(LIFECYCLE_SUITES.items())
+    if reverse: entries.reverse()
+    for suite, name in entries:
+        pg, volume = ('a' * 64, 'c' * 64) if suite == 'demo-postgres' else ('d' * 64, 'e' * 64)
+        facts = {'pgContainer': pg, 'pgVolume': volume, 'volumeContainer': pg, 'ryukContainer': 'b' * 64,
+                 'pgImage': 'postgres:18.6-bookworm@sha256:afc7e2d441324c0388fa80c3d24f733b4194a4eb7f47dd8ee2b08eb1a24a647c',
+                 'ryukImage': 'testcontainers/ryuk:0.14.0@sha256:7c1a8a9a47c780ed0f983770a662f80deb115d95cce3e2daa3d12115b8cd28f0',
+                 'pgLabelRun': LIFECYCLE_RUN, 'pgLabelSession': LIFECYCLE_SESSION, 'ryukLabelRun': LIFECYCLE_RUN,
+                 'ryukName': '/testcontainers-ryuk-' + LIFECYCLE_SESSION}
+        stages = list(LIFECYCLE_STAGES)
+        if reverse: stages.reverse()
+        for stage in stages:
+            record = dict(base, suite=name, stage=stage)
+            if stage == 'observed': record['pgContainer'] = pg
+            elif stage in ('created', 'verified', 'stopped'): record.update(facts)
+            fixture_record(child / (suite + '.' + stage), record)
+    return path
+
+
+def fixture_record(path, values):
+    with path.open('x', encoding='ascii', newline='\n') as stream:
+        stream.write(''.join(key + '=' + value + '\n' for key, value in values.items()))
+
+
+class LifecycleAuditTests(unittest.TestCase):
+    def setUp(self):
+        ReportGuardTests.setUp(self)
+        self.enterContext(patch.dict(reports.os.environ, {'GITHUB_ACTIONS': 'false', 'TASK_C_EXECUTION_ID': LIFECYCLE_LOCAL}))
+        self.path = lifecycle_fixture(self.source)
+        self.child = self.source / 'task-c-runtime.d'
+
+    def alter(self, path, key, value):
+        # Mutations of this test's synthetic files only, never real runtime evidence.
+        lines = path.read_text(encoding='ascii').splitlines()
+        path.write_text(''.join((key + '=' + value if line.startswith(key + '=') else line) + '\n' for line in lines), encoding='ascii')
+
+    def facts(self, suite, key, value):
+        for stage in ('created', 'verified', 'stopped'):
+            self.alter(self.child / (suite + '.' + stage), key, value)
+
+    def rejected(self, reason):
+        with self.assertRaisesRegex(ValueError, '^' + re.escape(reason) + '$'):
+            reports.task_c_resource_inventory(self.path)
+        with patch.object(reports.subprocess, 'run') as run:
+            self.assertFalse(reports.audit_task_c_cleanup(self.path, timeout=0))
+            run.assert_not_called()  # Invalid evidence cannot even select a Docker action.
+
+    def test_two_suite_records_are_distinct_and_complete_inventory_is_exact(self):
+        self.assertEqual(LIFECYCLE_SUITES, reports.TASK_C_SUITES)
+        ids, volumes, run = reports.task_c_resource_inventory(self.path)
+        self.assertEqual({'a' * 64, 'b' * 64, 'd' * 64}, ids)
+        self.assertEqual({'c' * 64, 'e' * 64}, volumes)
+        self.assertEqual(LIFECYCLE_RUN, run)
+        before = {p.name: p.read_bytes() for p in self.child.iterdir()}
+        with self.assertRaises(FileExistsError):
+            fixture_record(self.child / 'demo-postgres.created', {'unapproved': 'overwrite'})
+        self.assertEqual(before, {p.name: p.read_bytes() for p in self.child.iterdir()})
+
+    def test_complete_cleanup_accepts_foreign_resources_without_targeting_them(self):
+        with patch.object(reports.subprocess, 'run') as run:
+            run.side_effect = [reports.subprocess.CompletedProcess([], 0, stdout=value) for value in ('f' * 64, '9' * 64, '')]
+            self.assertTrue(reports.audit_task_c_cleanup(self.path, timeout=0))
+            self.assertEqual(3, run.call_count)
+            self.assertEqual([['docker', 'ps', '-aq', '--no-trunc'], ['docker', 'volume', 'ls', '-q'],
+                              ['docker', 'ps', '-aq', '--filter', 'label=com.elogistic.task-c.run=' + LIFECYCLE_RUN]],
+                             [c.args[0] for c in run.call_args_list])
+
+    def test_every_missing_suite_stage_rejects_before_docker(self):
+        for suite in LIFECYCLE_SUITES:
+            for stage in LIFECYCLE_STAGES:
+                with self.subTest(suite=suite, stage=stage):
+                    path = self.child / (suite + '.' + stage); before = path.read_bytes();path.unlink()
+                    self.rejected('Missing, failed, duplicate or unexpected lifecycle record')
+                    path.write_bytes(before)
+
+    def test_suite_failure_before_completion_preserves_created_id_but_never_passes(self):
+        for suite in LIFECYCLE_SUITES:
+            with self.subTest(suite=suite):
+                path = self.child / (suite + '.verified');before = path.read_bytes();path.unlink()
+                observed = (self.child / (suite + '.observed')).read_bytes()
+                self.rejected('Missing, failed, duplicate or unexpected lifecycle record')
+                self.assertIn(b'pgContainer=', observed)
+                self.assertEqual(observed, (self.child / (suite + '.observed')).read_bytes())
+                path.write_bytes(before)
+
+    def test_never_started_suite_and_explicit_failed_record_are_rejected(self):
+        paths = [self.child / ('identity-migration.' + stage) for stage in LIFECYCLE_STAGES]
+        before = {p: p.read_bytes() for p in paths}
+        for p in paths: p.unlink()
+        self.rejected('Missing, failed, duplicate or unexpected lifecycle record')
+        for p, content in before.items(): p.write_bytes(content)
+        fixture_record(self.child / 'identity-migration.failed', {'reason': 'START_FAILED'})
+        self.rejected('Missing, failed, duplicate or unexpected lifecycle record')
+
+    def test_duplicate_suite_or_record_is_not_deduplicated(self):
+        duplicate = self.child / 'demo-postgres.created.copy'
+        duplicate.write_bytes((self.child / 'demo-postgres.created').read_bytes())
+        self.rejected('Missing, failed, duplicate or unexpected lifecycle record')
+        duplicate.unlink()
+        self.alter(self.path, 'suite.identity-migration', LIFECYCLE_SUITES['demo-postgres'])
+        self.rejected('Unknown or duplicate suite')
+
+    def test_truncated_duplicate_unknown_and_missing_fields_fail_for_exact_reasons(self):
+        path = self.child / 'demo-postgres.created'; before = path.read_bytes()
+        for payload, reason in [(before.rstrip(b'\n'), 'Incomplete evidence'),
+                                (before + b'pgContainer=' + b'a' * 64 + b'\n', 'Invalid evidence field'),
+                                (before + b'arbitraryResource=synthetic-private-value\n', 'Invalid evidence field'),
+                                (before.replace(b'pgVolume=' + b'c' * 64 + b'\n', b''), 'Missing evidence field')]:
+            with self.subTest(reason=reason):
+                path.write_bytes(payload); self.rejected(reason)
+        path.write_bytes(before)
+
+    def test_stale_self_consistent_execution_is_rejected_against_current_job(self):
+        for p in [self.path, *self.child.iterdir()]: self.alter(p, 'execution', 'local:55555555-5555-4555-8555-555555555555')
+        self.rejected('Stale or unsupported execution')
+
+    def test_hosted_job_attempt_binding_has_no_local_override(self):
+        with patch.dict(reports.os.environ, {'GITHUB_ACTIONS': 'true', 'GITHUB_RUN_ID': '420', 'GITHUB_RUN_ATTEMPT': '2', 'GITHUB_JOB': 'verify'}):
+            for p in [self.path, *self.child.iterdir()]: self.alter(p, 'execution', 'gha:420:2:verify')
+            reports.task_c_resource_inventory(self.path)
+            with patch.dict(reports.os.environ, {'GITHUB_RUN_ATTEMPT': '3'}):
+                self.rejected('Stale or unsupported execution')
+            with patch.dict(reports.os.environ, {'GITHUB_JOB': ''}):
+                self.rejected('Invalid execution identity')
+
+    def test_cross_run_session_or_suite_record_substitution_is_rejected(self):
+        path = self.child / 'identity-migration.created'; before = path.read_bytes()
+        for key, value in [('taskRun', '55555555-5555-4555-8555-555555555555'), ('session', LIFECYCLE_RUN),
+                           ('suite', LIFECYCLE_SUITES['demo-postgres']), ('stage', 'verified')]:
+            with self.subTest(key=key):
+                path.write_bytes(before);self.alter(path, key, value);self.rejected('Lifecycle identity mismatch')
+        path.write_bytes(before)
+
+    def test_ownership_labels_and_reaper_session_must_match(self):
+        for key, value in [('pgLabelRun', LIFECYCLE_LOCAL), ('pgLabelSession', LIFECYCLE_LOCAL),
+                           ('ryukLabelRun', LIFECYCLE_LOCAL), ('ryukName', '/testcontainers-ryuk-' + LIFECYCLE_LOCAL)]:
+            with self.subTest(key=key):
+                paths = [self.child / ('identity-migration.' + s) for s in ('created','verified','stopped')]
+                before = {p: p.read_bytes() for p in paths}
+                self.facts('identity-migration', key, value);self.rejected('Resource ownership mismatch')
+                for p, content in before.items(): p.write_bytes(content)
+
+    def test_resource_substitution_bad_types_and_duplicate_resources_are_rejected(self):
+        path = self.child / 'identity-migration.verified';before = path.read_bytes()
+        self.alter(path, 'pgVolume', 'f' * 64);self.rejected('Resource substitution');path.write_bytes(before)
+        paths = [self.child / ('identity-migration.' + s) for s in ('created','verified','stopped')]
+        before = {p: p.read_bytes() for p in paths}
+        for key, value, reason in [('pgVolume', 'bad-id', 'Invalid resource identity'),
+                                   ('pgVolume', 'c' * 64, 'Duplicate suite resource'),
+                                   ('pgImage', 'unapproved-image', 'Unapproved image'),
+                                   ('volumeContainer', 'f' * 64, 'Volume/observation binding mismatch'),
+                                   ('ryukContainer', 'f' * 64, 'Shared reaper identity mismatch')]:
+            with self.subTest(key=key, reason=reason):
+                for p, content in before.items(): p.write_bytes(content)
+                self.facts('identity-migration', key, value);self.rejected(reason)
+        for p, content in before.items(): p.write_bytes(content)
+
+    def test_duplicate_pg_identity_across_suites_is_rejected(self):
+        self.facts('identity-migration','pgContainer','a' * 64)
+        self.facts('identity-migration','volumeContainer','a' * 64)
+        self.alter(self.child / 'identity-migration.observed','pgContainer','a' * 64)
+        self.rejected('Duplicate suite resource')
+
+    def test_each_owned_container_or_volume_leftover_fails_read_only_audit(self):
+        for container, volume, owned in [('a'*64,'',''),('b'*64,'',''),('d'*64,'',''),
+                                         ('','c'*64,''),('','e'*64,''),('','','f'*64)]:
+            with self.subTest(container=container, volume=volume, owned=owned):
+                with patch.object(reports.subprocess,'run') as run:
+                    run.side_effect=[reports.subprocess.CompletedProcess([],0,stdout=v) for v in (container,volume,owned)]
+                    self.assertFalse(reports.audit_task_c_cleanup(self.path,timeout=0))
+                    self.assertTrue(all(c.args[0][1] in ('ps','volume') for c in run.call_args_list))
+
+    def test_docker_failure_timeout_and_false_cleanup_flag_cannot_pass(self):
+        with patch.object(reports.subprocess,'run') as run:
+            run.return_value=reports.subprocess.CompletedProcess([],1,stdout='')
+            self.assertFalse(reports.audit_task_c_cleanup(self.path,timeout=0))
+            run.side_effect=reports.subprocess.TimeoutExpired('docker',1)
+            self.assertFalse(reports.audit_task_c_cleanup(self.path,timeout=0))
+        with self.path.open('a',encoding='ascii') as stream:stream.write('cleaned=true\n')
+        self.rejected('Invalid evidence field')
+
+    def test_suite_and_stage_file_order_does_not_change_accounting(self):
+        other=self.source/'reverse';other.mkdir();path=lifecycle_fixture(other,reverse=True)
+        self.assertEqual(reports.task_c_resource_inventory(self.path),reports.task_c_resource_inventory(path))
+
+    def test_legacy_single_suite_evidence_is_not_a_combined_run_fallback(self):
+        self.path.write_text('anonymousVolume='+'c'*64+'\n',encoding='ascii')
+        self.rejected('Invalid evidence field')
+
+    def test_aliased_file_is_rejected_without_docker_or_deletion(self):
+        alias=self.source/'alias'
+        reports.os.link(self.path,alias)
+        self.rejected('Unsafe evidence file')
+
+    def test_sensitive_malformed_metadata_is_never_printed_or_used(self):
+        marker='synthetic-private-lifecycle-payload'
+        with self.path.open('a',encoding='ascii') as stream:stream.write('unknown='+marker+'\n')
+        stdout,stderr=io.StringIO(),io.StringIO()
+        with contextlib.redirect_stdout(stdout),contextlib.redirect_stderr(stderr),patch.object(reports.subprocess,'run') as run:
+            self.assertFalse(reports.audit_task_c_cleanup(self.path,timeout=0));run.assert_not_called()
+        self.assertNotIn(marker,stdout.getvalue()+stderr.getvalue())
+
+    def test_java_writer_protocol_hooks_and_fail_closed_boundaries_are_present(self):
+        source=(Path(__file__).resolve().parents[2]/'app/backend/src/test/java/com/elogistic/backend/testsupport/PostgresTestcontainersSupport.java').read_text(encoding='utf-8')
+        for name,key in [(name,key) for key,name in LIFECYCLE_SUITES.items()]:
+            self.assertIn('"'+name+'", "'+key+'"',source)
+        self.assertIn('StandardOpenOption.CREATE_NEW',source)
+        self.assertIn('channel.force(true)',source)
+        self.assertIn('containerIsCreated(String id)',source)
+        self.assertLess(source.index('record("observed"'),source.index('resources=resourceFacts(this,false)'))
+        self.assertLess(source.index('record("observed"'),source.index('if (!id.equals(getContainerId()))'))
+        self.assertIn('owned.record("verified",facts,true)',source)
+        self.assertLess(source.index('resources.equals(resourceFacts(this,false))'),source.index('super.stop();'))
+        self.assertIn('requireAbsent(this,resources);',source)
+        self.assertIn('withShowAll(true)',source)
+        self.assertNotIn('Files.write(PRIVATE.resolve("task-c-runtime.txt")',source)
+        self.assertIn('withStartupAttempts(1)',source)
+        self.assertIn('StackWalker.getInstance()',source)
+
+    def test_existing_postgres_workflow_consumes_the_same_manifest_entrypoint(self):
+        root=Path(__file__).resolve().parents[2]
+        launcher=(root/'scripts/ci/run-backend.sh').read_text(encoding='utf-8')
+        workflow=(root/'.github/workflows/backend-verification.yml').read_text(encoding='utf-8')
+        self.assertIn("cleanup = reports.audit_task_c_cleanup(private / 'task-c-runtime.txt')",launcher)
+        self.assertIn('export TASK_C_PRIVATE_DIRECTORY="$private"',launcher)
+        self.assertIn('bash scripts/ci/run-backend.sh "$VERIFICATION_MODE"',workflow)
+        self.assertIn('name: Backend PostgreSQL 18',workflow)
+        self.assertIn('runs-on: ubuntu-24.04',workflow)
 
 
 if __name__ == '__main__':

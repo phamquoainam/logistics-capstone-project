@@ -77,3 +77,20 @@ Feature prerequisites: 001. Không thêm call cycle; nếu thiếu contract, t�
 [BLOCKING] Session cookie hay access+refresh token, vòng đời token, reset password qua mail sandbox, đăng ký account công khai hay chỉ admin cấp?
 
 Mọi endpoint/tên bảng/field mới trong tài liệu là **[PROPOSED]**; báo cáo không định nghĩa đầy đủ API/migration. Sau khi duyệt, khóa hợp đồng ở `contracts/openapi/` và ghi ADR khi quyết định mang tính kiến trúc.
+
+## 2026-10-20 — reconstructed Production Identity decision baseline
+
+[ADR-0009](../../docs/architecture/decisions/ADR-0009-production-identity-lifecycle.md) records freshly reaffirmed DEC-03/04 and bounded O1–O7. This supplement supersedes section10's unresolved browser authentication choice for this scope only; original REQ/AC and historical proposal text are preserved.
+T-002-01 DONE for browser design-decision scope; production implementation and AC remain pending. Actual package root is app/backend/src/main/java/com/elogistic/backend/identity; earlier apps/com.example paths are historical proposals, not current source.
+
+[Reconstructed contract](../../contracts/openapi/identity-access.yaml), [semantics](../../contracts/identity-access/README.md), [fresh evidence](../../docs/implementation/t-002-02-identity-contract-evidence.md), [supplemental trace](../../docs/quality/feature-002-recovery-traceability.md).
+T-002-02 is CONTRACT_REVIEW_PENDING until schema/fixture/security/strict lint and focused candidate review gates are all satisfied. No original implementation AC is accepted by contract tests. Production code/data model is NOT IMPLEMENTED.
+
+Identity-only /api/v1 objects and flat stable errors do not promote global DEC-25. All target/grant-union authority, last-admin serialization, revocation, audit and receipt atomicity must be proved by later PostgreSQL integration/concurrency tests. JSON examples and declared effects do not provide those proofs.
+Remaining implementation decisions: deployment bootstrap/secret operations, production mail provider, mobile transport, authority integration availability, retention/rate-limit configs. Default deny and sandbox-only policies remain mandatory. No mobile/production-email completeness claimed. T-002-03 stays blocked on T-002-02 acceptance and approved data model.
+
+## T-002-02 final technical acceptance — 2026-10-21
+
+OWNER_T_002_02_FINAL_VERIFICATION_APPROVAL authorizes focused contract review/corrections and acceptance. T-002-02 DONE for exact OpenAPI SHA-256 acf92380c325698a1370a2ade6accff82bb338c4524f6328a9613d3e4b7b6128:512 fresh contract checks (43 document mutation controls included) and one Linux Redocly2.64.0 strict lint, exit0/zero errors/warnings/ignored. Prior review-pending state above is historical. No canonical REQ/AC text, accepted ADR or global DEC-25 change.
+Logout now permits an absent refresh cookie after successful logout, while always requiring server-bound CSRF and exact Origin; family binding remains required when refresh cookie is supplied. Recovery receipt scope is server-preauth/operation/key, equal for eligible/ineligible inputs; delivery authority is stored verified email, never arbitrary submitted email. [Full findings, evidence and migration handoff](../../docs/implementation/t-002-02-identity-contract-evidence.md#t-002-02-final-review-and-acceptance-2026-10-21).
+21 original behavioral expectations plus4 logout case declarations remain future HTTP/PostgreSQL/runtime acceptance, not tested effects. Supplemental traceability is explicitly authorized for this task; main Foundation traceability stays protected. Feature002 and AC-002-01..05 remain unaccepted; T-002-03 is next only under separate implementation authorization.

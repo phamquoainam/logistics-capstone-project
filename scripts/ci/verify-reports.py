@@ -1,7 +1,9 @@
 """Fail closed on missing/skipped tests; publish only allowlisted test metadata."""
 import argparse
 import json
+import os
 import re
+import stat
 import subprocess
 import time
 from pathlib import Path
@@ -94,10 +96,48 @@ S2_REQUIRED = {
     ],
 }
 REQUIRED.update(S2_REQUIRED)
+# Source/MethodSource-reviewed seed preflight inventory: 65 invocations + 9
+# singletons. These finite signatures/indices are not inferred from reports.
+SEED_PREFLIGHT = BASE + 'identity.internal.infrastructure.DemoSeedPreflightTests'
+SEED_PREFLIGHT_REQUIRED = [
+    *[f'invalidMissingAccountFailsPreflightWithoutEncodingOrWriting(String, String, String)[{i}]' for i in range(1, 26)],
+    *[f'pinnedBCryptCharacterization(String, String, int, int, boolean, boolean)[{i}]' for i in range(1, 16)],
+    *[f'preflightKeepsCharacterRulesAndRejectsEncoderByteOverflow(String, String, int, int, boolean, boolean)[{i}]' for i in range(1, 16)],
+    *[f'byteOverflowFailsBeforeEncodingForEveryMissingAccount(String)[{i}]' for i in range(1, 6)],
+    *[f'existingAccountExemptionIgnoresUnusedInvalidPasswords(String, String)[{i}]' for i in range(1, 6)],
+    'existingAccountsNeedNoPasswordsAndMixedStateChecksOnlyMissingAccounts',
+    'externalDeletionAfterPreflightStillRejectsMissingPasswordInsteadOfUnsafeCreation',
+    'invalidPreflightAbortsRefreshBeforeSmartLifecycleCanStart',
+    'validReadOnlyPreflightAllowsLifecycleThenRunnerCreatesAccounts',
+    'disabledAbsentOrNonDemoSeedDoesNotCreatePreflightOrQueryAccounts',
+    'actualH2ProxyRollbackBCryptAndExistingIdentityArePreserved',
+    'nullRequiredValueHasSanitizedConfigurationRejection',
+    'pinnedEncoderNullBehaviorDoesNotReplaceApplicationNonNullPolicy',
+    'malformedJavaUnicodeUsesSameUtf8ReplacementAsEncoder',
+]
+REQUIRED[SEED_PREFLIGHT] = SEED_PREFLIGHT_REQUIRED
+IDENTITY_MIGRATION = BASE + 'identity.internal.infrastructure.IdentityMigrationTests'
+# Finite source-reviewed T-002-03 inventory, not inferred from observed XML.
+REQUIRED[IDENTITY_MIGRATION] = [
+    'coldStartValidateAndRerunPreserveHistoryAndIdentityData',
+    'upgradeV2PreservesAllDemoTablesWithoutImportingAccounts',
+    'ownerOwnsEightTablesIndexesAndOnlyIdentityForeignKeys',
+    'usernamesRemainExactCaseUnicodeAndRejectDuplicatesBlankAndNull',
+    'accountLifecycleRequiresVerifiedActivatedCredentialAndPositiveVersions',
+    'grantsAllowMultipleScopesButRejectDuplicatesInvalidScopesAndMissingAccounts',
+    'sessionsRejectInvalidDeadlinesMissingAccountsAndNullExpiry',
+    'refreshHashesMustBeUniqueCorrectSizeAndHaveExistingSession',
+    'refreshLineageCannotCrossFamiliesForkOrHaveTwoLiveMembers',
+    'proofPurposeLifetimeHashAndSingleOutstandingProofAreEnforced',
+    'csrfSupportsPreauthAndSessionBindingButRejectsBadHashesAndReferences',
+    'receiptsBindActorProofOrPreauthWithoutExistenceDisclosureOrDuplicateKey',
+    'runtimeCanAppendAuditButCannotDdlDeleteAccountsOrMutateAuditAndReceipts',
+    'preexistingSchemaDriftFailsWithoutBaselineOrRepair',
+]
 PG = BASE + 'demo.PostgresFoundationTests'
 PG_ONLY = {PG, BASE + 'demo.PostgresHealthSafetyTests'}
 FOUNDATION_ONLY = {BASE + 'demo.FoundationDependencyTests'}
-TESTCONTAINERS_ONLY = {BASE + 'demo.PostgresTestcontainersTests', BASE + 'testsupport.TestcontainersRuntimePolicyTests'}
+TESTCONTAINERS_ONLY = {BASE + 'demo.PostgresTestcontainersTests', BASE + 'testsupport.TestcontainersRuntimePolicyTests', IDENTITY_MIGRATION}
 SUREFIRE_NAMES = {
     (BASE + 'demo.DemoSecurityEvidenceTests',
      'credentialsAndBearerTokenDoNotAppearInApplicationLogs(CapturedOutput)'):
@@ -128,18 +168,113 @@ def audit_task_c_credentials(credential_file, diagnostics):
         return False
 
 
+TASK_C_SUITES = {
+    'demo-postgres': BASE + 'demo.PostgresTestcontainersTests',
+    'identity-migration': IDENTITY_MIGRATION,
+}
+TASK_C_POSTGRES = 'postgres:18.6-bookworm@sha256:afc7e2d441324c0388fa80c3d24f733b4194a4eb7f47dd8ee2b08eb1a24a647c'
+TASK_C_RYUK = 'testcontainers/ryuk:0.14.0@sha256:7c1a8a9a47c780ed0f983770a662f80deb115d95cce3e2daa3d12115b8cd28f0'
+TASK_C_STAGES = ('reserved', 'observed', 'created', 'verified', 'stopped')
+TASK_C_UUID = r'[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}'
+
+
+def task_c_execution_identity():
+    """Bind evidence to this job/attempt; no self-declared artifact-only freshness."""
+    if os.environ.get('GITHUB_ACTIONS') == 'true':
+        run, attempt, job = (os.environ.get(k, '') for k in ('GITHUB_RUN_ID', 'GITHUB_RUN_ATTEMPT', 'GITHUB_JOB'))
+        if not re.fullmatch('[1-9][0-9]*', run) or not re.fullmatch('[1-9][0-9]*', attempt) or not re.fullmatch('[A-Za-z0-9_-]{1,80}', job):
+            raise ValueError('Invalid execution identity')
+        return f'gha:{run}:{attempt}:{job}'
+    local = os.environ.get('TASK_C_EXECUTION_ID', '')
+    if not re.fullmatch(TASK_C_UUID, local):
+        raise ValueError('Missing execution identity')
+    return 'local:' + local
+
+
+def task_c_record(path, keys):
+    """Bounded strict metadata, no aliases/duplicates/partial publications or secret output."""
+    info = path.lstat()
+    if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1 or info.st_size > 4096:
+        raise ValueError('Unsafe evidence file')
+    raw = path.read_text(encoding='ascii')
+    if not raw.endswith('\n'):
+        raise ValueError('Incomplete evidence')
+    result = {}
+    for line in raw.splitlines():
+        key, separator, value = line.partition('=')
+        if not separator or key in result or not value or key not in keys:
+            raise ValueError('Invalid evidence field')
+        result[key] = value
+    if set(result) != keys:
+        raise ValueError('Missing evidence field')
+    return result
+
+
+def task_c_resource_inventory(evidence):
+    """Exactly two known suites; shared Ryuk is explicit, never generic deduplication."""
+    path = Path(evidence)
+    if path.name != 'task-c-runtime.txt' or path.parent.is_symlink():
+        raise ValueError('Invalid evidence location')
+    base_keys = {'format', 'execution', 'taskRun', 'session'}
+    manifest = task_c_record(path, base_keys | {'suite.' + k for k in TASK_C_SUITES})
+    if manifest['format'] != 'task-c-lifecycle-v2' or manifest['execution'] != task_c_execution_identity():
+        raise ValueError('Stale or unsupported execution')
+    if not all(re.fullmatch(TASK_C_UUID, manifest[k]) for k in ('taskRun', 'session')):
+        raise ValueError('Invalid ownership identity')
+    if any(manifest['suite.' + k] != v for k, v in TASK_C_SUITES.items()):
+        raise ValueError('Unknown or duplicate suite')
+    directory = path.with_suffix('.d')
+    if directory.is_symlink() or not directory.is_dir():
+        raise ValueError('Missing evidence directory')
+    expected_files = {suite + '.' + stage for suite in TASK_C_SUITES for stage in TASK_C_STAGES}
+    if {p.name for p in directory.iterdir()} != expected_files:
+        raise ValueError('Missing, failed, duplicate or unexpected lifecycle record')
+    resource_keys = {'pgContainer', 'pgVolume', 'volumeContainer', 'ryukContainer', 'pgImage', 'ryukImage',
+                     'pgLabelRun', 'pgLabelSession', 'ryukLabelRun', 'ryukName'}
+    containers, volumes, shared_ryuk = set(), set(), None
+    for suite, classname in TASK_C_SUITES.items():
+        facts = None
+        for stage in TASK_C_STAGES:
+            keys = base_keys | {'suite', 'stage'}
+            if stage == 'observed': keys |= {'pgContainer'}
+            elif stage in ('created', 'verified', 'stopped'): keys |= resource_keys
+            record = task_c_record(directory / (suite + '.' + stage), keys)
+            if any(record[k] != manifest[k] for k in base_keys) or record['suite'] != classname or record['stage'] != stage:
+                raise ValueError('Lifecycle identity mismatch')
+            if stage == 'observed':
+                observed = record['pgContainer']
+                if not re.fullmatch('[a-f0-9]{64}', observed): raise ValueError('Invalid observed resource')
+            if stage not in ('created', 'verified', 'stopped'): continue
+            current = {k: record[k] for k in resource_keys}
+            if facts is not None and current != facts:
+                raise ValueError('Resource substitution')
+            facts = current
+        if facts['pgImage'] != TASK_C_POSTGRES or facts['ryukImage'] != TASK_C_RYUK:
+            raise ValueError('Unapproved image')
+        if not all(re.fullmatch('[a-f0-9]{64}', facts[k]) for k in ('pgContainer', 'pgVolume', 'ryukContainer')):
+            raise ValueError('Invalid resource identity')
+        if (facts['pgLabelRun'] != manifest['taskRun'] or facts['ryukLabelRun'] != manifest['taskRun'] or
+                facts['pgLabelSession'] != manifest['session'] or facts['ryukName'] != '/testcontainers-ryuk-' + manifest['session']):
+            raise ValueError('Resource ownership mismatch')
+        if facts['volumeContainer'] != facts['pgContainer'] or facts['pgContainer'] != observed:
+            raise ValueError('Volume/observation binding mismatch')
+        if facts['pgContainer'] in containers or facts['pgVolume'] in volumes or facts['pgContainer'] == facts['ryukContainer']:
+            raise ValueError('Duplicate suite resource')
+        ryuk = tuple(facts[k] for k in ('ryukContainer', 'ryukImage', 'ryukLabelRun', 'ryukName'))
+        if shared_ryuk is not None and shared_ryuk != ryuk:
+            raise ValueError('Shared reaper identity mismatch')
+        shared_ryuk = ryuk
+        containers.add(facts['pgContainer']); volumes.add(facts['pgVolume'])
+    if shared_ryuk[0] in containers:
+        raise ValueError('Resource type collision')
+    containers.add(shared_ryuk[0])
+    return containers, volumes, manifest['taskRun']
+
+
 def audit_task_c_cleanup(evidence, docker='docker', timeout=30):
-    """Read-only Docker audit. Never delete a resource or relax session ownership."""
+    """Read-only absence audit of ALL suites. No flag/record can authorize deletion."""
     try:
-        lines = Path(evidence).read_text(encoding='utf-8').splitlines()
-        volumes = [line.split('=', 1)[1] for line in lines if line.startswith('anonymousVolume=')]
-        runs = [line.split('=', 1)[1] for line in lines if line.startswith('taskRun=')]
-        sessions = [line.split('=', 1)[1] for line in lines if line.startswith('session=')]
-        ids = [match.group(1) for line in lines if (match := re.search(r' id=([a-f0-9]{64}) privileged=false ports=loopback$', line))]
-        if len(volumes) != 1 or not re.fullmatch('[a-f0-9]{64}', volumes[0]) or len(set(ids)) != 2 or len(runs) != 1 or len(sessions) != 1:
-            return False
-        if not all(re.fullmatch('[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}', value) for value in runs + sessions):
-            return False
+        ids, volumes, run = task_c_resource_inventory(evidence)
         deadline = time.monotonic() + timeout
         while True:
             def query(*args):
@@ -149,8 +284,8 @@ def audit_task_c_cleanup(evidence, docker='docker', timeout=30):
                 return set(p.stdout.splitlines())
             containers = query('ps', '-aq', '--no-trunc')
             volumes_now = query('volume', 'ls', '-q')
-            owned = query('ps', '-aq', '--filter', 'label=com.elogistic.task-c.run=' + runs[0])
-            if not set(ids).intersection(containers) and volumes[0] not in volumes_now and not owned:
+            owned = query('ps', '-aq', '--filter', 'label=com.elogistic.task-c.run=' + run)
+            if not ids.intersection(containers) and not volumes.intersection(volumes_now) and not owned:
                 return True
             if time.monotonic() >= deadline:
                 return False
