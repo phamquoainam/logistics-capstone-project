@@ -257,9 +257,9 @@ class ReportGuardTests(unittest.TestCase):
         self.assertEqual([20, 38, 17, 34], [len(v) for v in reports.S2_REQUIRED.values()])
         for name, methods in reports.S2_REQUIRED.items():
             self.assertEqual(len(methods), len(set(methods)), name)
-        # Prior cases retained; PostgreSQL additionally requires33 grant application cases.
-        for mode, passed, skipped in [('architecture', 23, 0), ('h2', 279, 17),
-                                      ('postgres', 351, 5), ('foundation', 5, 0)]:
+        # Prior cases retained; authority composition requires9 unit and12 PostgreSQL identities.
+        for mode, passed, skipped in [('architecture', 23, 0), ('h2', 296, 17),
+                                      ('postgres', 395, 5), ('foundation', 5, 0)]:
             with self.subTest(mode=mode):
                 self.fixture(mode)
                 self.assertTrue(self.check(mode))
@@ -642,6 +642,14 @@ IDENTITY_METHODS = (
     'csrfSupportsPreauthAndSessionBindingButRejectsBadHashesAndReferences',
     'receiptsBindActorProofOrPreauthWithoutExistenceDisclosureOrDuplicateKey',
     'runtimeCanAppendAuditButCannotDdlDeleteAccountsOrMutateAuditAndReceipts',
+    'realmRegistryStartsInactiveAndRuntimeCannotRegisterOrActivate',
+    'realmForeignKeyRejectsUnknownIdentityButPreservesExternalScope',
+    'realmUpgradePreservesV3DataAndChecksums',
+    'unmatchedLegacyIdentityScopeStopsRealmUpgradeAtomically',
+    'bootstrapCreatesPendingOnlyAndDuplicateCannotTakeOverAnAccount',
+    'realmActivationRequiresVerifiedInvitationAndCannotBeReplayedOrReactivated',
+    'bootstrapAuditFailureRollsBackPendingAccountGrantAndRealmBinding',
+    'inactiveRealmIsNotEnoughToCreateActiveAdministrativeAuthority',
     'preexistingSchemaDriftFailsWithoutBaselineOrRepair',
 )
 
@@ -671,7 +679,7 @@ class IdentityMigrationInventoryTests(unittest.TestCase):
         self.assertEqual(list(IDENTITY_METHODS), re.findall(r'@Test\s+void\s+(\w+)\s*\(', source))
         self.assertIn('package com.elogistic.backend.identity.internal.infrastructure;', source)
         self.assertEqual('com.elogistic.backend.identity.internal.infrastructure.IdentityMigrationTests', reports.IDENTITY_MIGRATION)
-        self.assertEqual(14, len(set(IDENTITY_METHODS)))
+        self.assertEqual(22, len(set(IDENTITY_METHODS)))
         self.assertEqual(list(IDENTITY_METHODS), reports.REQUIRED[reports.IDENTITY_MIGRATION])
         self.assertIn(reports.IDENTITY_MIGRATION, reports.TESTCONTAINERS_ONLY)
         self.assertNotIn(reports.IDENTITY_MIGRATION, reports.PG_ONLY)
@@ -694,7 +702,7 @@ class IdentityMigrationInventoryTests(unittest.TestCase):
                 self.assertTrue(self.check('postgres'))
                 suite = self.identity_suite()
                 suite.remove(next(c for c in suite if c.attrib['name'] == method))
-                suite.set('tests', '13')
+                suite.set('tests', str(len(IDENTITY_METHODS) - 1))
                 self.save(suite)
                 self.assert_rejected(missing=method)
 
@@ -1150,7 +1158,8 @@ class IdentityGrantApplicationInventoryTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[2]
         source = (root / 'app/backend/src/test/java/com/elogistic/backend/identity/internal/infrastructure/IdentityGrantApplicationTests.java').read_text(encoding='utf-8')
         methods = re.findall(r'@Test\s+void\s+(\w+)\s*\(', source)
-        self.assertEqual(33, len(methods))
+        self.assertEqual(33, len(methods) - len(reports.IDENTITY_AUTHORITY_PG_REQUIRED) - len(reports.IDENTITY_REALM_PG_REQUIRED))
+        self.assertEqual(12, len(reports.IDENTITY_AUTHORITY_PG_REQUIRED))
         self.assertEqual(len(methods), len(set(methods)))
         self.assertEqual(methods, reports.REQUIRED[reports.IDENTITY_GRANTS])
         self.assertIn('@Tag("task-c")', source)
@@ -1200,6 +1209,110 @@ class IdentityGrantApplicationInventoryTests(unittest.TestCase):
         self.save(suite)
         self.assertFalse(self.check('postgres'))
         self.assertNotIn(marker, ''.join(p.read_text(encoding='utf-8') for p in self.output.iterdir()))
+
+
+class IdentityAuthorityCompositionInventoryTests(unittest.TestCase):
+    setUp = ReportGuardTests.setUp
+    fixture = ReportGuardTests.fixture
+    save = ReportGuardTests.save
+    check = ReportGuardTests.check
+
+    def test_authority_source_identities_and_modes_are_exact(self):
+        root = Path(__file__).resolve().parents[2]
+        source = (root / 'app/backend/src/test/java/com/elogistic/backend/identity/internal/application/FailClosedGrantAuthorityTests.java').read_text(encoding='utf-8')
+        methods = re.findall(r'@Test\s+void\s+(\w+)\s*\(', source)
+        self.assertEqual(9, len(methods)); self.assertEqual(len(methods), len(set(methods)))
+        self.assertEqual(methods, reports.REQUIRED[reports.IDENTITY_AUTHORITY_UNIT])
+        self.assertNotIn('@Disabled', source); self.assertNotIn('@Testcontainers', source)
+        for mode in ('h2', 'postgres'):
+            self.assertIn(reports.IDENTITY_AUTHORITY_UNIT, reports.expected_suites(mode))
+        for mode in ('architecture', 'foundation'):
+            self.assertNotIn(reports.IDENTITY_AUTHORITY_UNIT, reports.expected_suites(mode))
+
+    def test_missing_authority_unit_suite_and_every_method_fail_closed(self):
+        for mode in ('h2', 'postgres'):
+            self.fixture(mode)
+            path = self.source / ('TEST-' + reports.IDENTITY_AUTHORITY_UNIT + '.xml')
+            original = path.read_bytes(); path.unlink(); self.assertFalse(self.check(mode)); path.write_bytes(original)
+            for method in reports.REQUIRED[reports.IDENTITY_AUTHORITY_UNIT]:
+                suite = ET.fromstring(original)
+                suite.remove(next(c for c in suite if c.get('name') == method))
+                suite.set('tests', str(len(suite.findall('testcase')))); self.save(suite)
+                self.assertFalse(self.check(mode), method)
+            path.write_bytes(original); self.assertTrue(self.check(mode))
+
+    def test_authority_skip_failure_error_and_rename_are_rejected(self):
+        for mode in ('h2', 'postgres'):
+            self.fixture(mode)
+            path = self.source / ('TEST-' + reports.IDENTITY_AUTHORITY_UNIT + '.xml'); original = path.read_bytes()
+            for status, count in [('skipped', 'skipped'), ('failure', 'failures'), ('error', 'errors')]:
+                suite = ET.fromstring(original); ET.SubElement(suite.find('testcase'), status); suite.set(count, '1')
+                self.save(suite); self.assertFalse(self.check(mode))
+            suite = ET.fromstring(original); suite.find('testcase').set('name', 'unapprovedAuthorityCase')
+            self.save(suite); self.assertFalse(self.check(mode))
+
+    def test_authority_private_failure_diagnostic_is_not_published(self):
+        self.fixture('h2'); path = self.source / ('TEST-' + reports.IDENTITY_AUTHORITY_UNIT + '.xml')
+        suite = ET.parse(path).getroot(); marker = 'synthetic-private-authority-failure'
+        ET.SubElement(suite.find('testcase'), 'failure', message=marker).text = marker
+        ET.SubElement(suite, 'system-out').text = marker; suite.set('failures', '1'); self.save(suite)
+        self.assertFalse(self.check('h2'))
+        self.assertNotIn(marker, ''.join(p.read_text(encoding='utf-8') for p in self.output.iterdir()))
+
+    def test_empty_target_denial_cases_are_mandatory_and_cannot_skip(self):
+        cases = [
+            (reports.IDENTITY_AUTHORITY_UNIT, 'emptyTargetIsDeniedBeforeAnAllowingDelegate', ('h2', 'postgres')),
+            (reports.IDENTITY_GRANTS, 'productionEmptyTargetIsDeniedBeforeAnAllowingDelegate', ('postgres',)),
+        ]
+        for name, method, modes in cases:
+            self.assertIn(method, reports.REQUIRED[name])
+            for mode in modes:
+                self.fixture(mode)
+                path = self.source / ('TEST-' + name + '.xml'); original = path.read_bytes()
+                suite = ET.fromstring(original)
+                case = next(c for c in suite if c.get('name') == method)
+                suite.remove(case); suite.set('tests', str(len(suite.findall('testcase')))); self.save(suite)
+                self.assertFalse(self.check(mode), method)
+                suite = ET.fromstring(original)
+                ET.SubElement(next(c for c in suite if c.get('name') == method), 'skipped')
+                suite.set('skipped', '1'); self.save(suite)
+                self.assertFalse(self.check(mode), method)
+                path.write_bytes(original); self.assertTrue(self.check(mode))
+
+
+class IdentityRealmInventoryTests(unittest.TestCase):
+    setUp = ReportGuardTests.setUp
+    fixture = ReportGuardTests.fixture
+    save = ReportGuardTests.save
+    check = ReportGuardTests.check
+
+    def test_realm_source_identities_and_modes_are_exact(self):
+        root = Path(__file__).resolve().parents[2]
+        source = (root / 'app/backend/src/test/java/com/elogistic/backend/identity/internal/application/IdentityRealmGrantPolicyTests.java').read_text(encoding='utf-8')
+        methods = re.findall(r'@Test\s+void\s+(\w+)\s*\(', source)
+        self.assertEqual(8, len(methods)); self.assertEqual(methods, reports.REQUIRED[reports.IDENTITY_REALM_UNIT])
+        self.assertEqual(7, len(reports.IDENTITY_REALM_PG_REQUIRED))
+        self.assertNotIn('@Disabled', source)
+        for mode in ('h2', 'postgres'):
+            self.assertIn(reports.IDENTITY_REALM_UNIT, reports.expected_suites(mode))
+        self.assertNotIn(reports.IDENTITY_REALM_UNIT, reports.expected_suites('architecture'))
+
+    def test_realm_missing_skipped_failed_and_private_reports_are_rejected(self):
+        for mode in ('h2', 'postgres'):
+            self.fixture(mode)
+            path = self.source / ('TEST-' + reports.IDENTITY_REALM_UNIT + '.xml'); original = path.read_bytes()
+            path.unlink(); self.assertFalse(self.check(mode))
+            for method in reports.REQUIRED[reports.IDENTITY_REALM_UNIT]:
+                for status in ('missing', 'skipped', 'failure', 'error'):
+                    suite = ET.fromstring(original); case = next(c for c in suite if c.get('name') == method)
+                    if status == 'missing':
+                        suite.remove(case); suite.set('tests', str(len(suite.findall('testcase'))))
+                    else:
+                        ET.SubElement(case, status, message='synthetic-private-realm-diagnostic')
+                        suite.set({'skipped':'skipped', 'failure':'failures', 'error':'errors'}[status], '1')
+                    self.save(suite); self.assertFalse(self.check(mode))
+                    self.assertNotIn('synthetic-private-realm-diagnostic', ''.join(p.read_text(encoding='utf-8') for p in self.output.iterdir()))
+            path.write_bytes(original); self.assertTrue(self.check(mode))
 
 
 if __name__ == '__main__':

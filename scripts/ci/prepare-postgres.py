@@ -96,7 +96,8 @@ CREATE SCHEMA platform AUTHORIZATION {owner};
                PG_TEST_UPGRADE_DB_URL=f'jdbc:postgresql://127.0.0.1:5433/{upgrade}',
                PG_TEST_OWNER_ROLE=owner, PG_TEST_MIGRATOR_USER=migrator,
                PG_TEST_MIGRATOR_PASSWORD=migrator_password, PG_TEST_RUNTIME_USER=runtime,
-               PG_TEST_RUNTIME_PASSWORD=runtime_password)
+               PG_TEST_RUNTIME_PASSWORD=runtime_password,
+               PG_TEST_IDENTITY_REALM_ID=str(uuid.uuid4()))
     content = ''.join(f'{key}={value}\n' for key, value in env.items())
     env_path = directory / 'postgres.env'
     env_path.write_text(content, encoding='utf-8')

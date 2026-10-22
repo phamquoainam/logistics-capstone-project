@@ -34,6 +34,7 @@ abstract class DemoTestSupport {
    registry.add("spring.flyway.schemas",()->"platform");
    registry.add("spring.flyway.create-schemas",()->"false");
    registry.add("spring.flyway.placeholders.runtimeRole",()->requiredEnv("PG_TEST_RUNTIME_USER"));
+   registry.add("spring.flyway.placeholders.identitySystemRealmId",()->UUID.fromString(requiredEnv("PG_TEST_IDENTITY_REALM_ID")).toString());
   } else {
    registry.add("spring.datasource.url",()->"jdbc:h2:mem:demo_tests;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1");
    registry.add("spring.datasource.username",()->"sa");registry.add("spring.datasource.password",()->"");

@@ -1,6 +1,7 @@
 package com.elogistic.backend.identity.internal.infrastructure;
 
 import com.elogistic.backend.identity.api.IdentityCommandFailure;
+import com.elogistic.backend.identity.api.IdentityGrantCommands;
 import com.elogistic.backend.identity.api.IdentityGrantCommands.*;
 import com.elogistic.backend.identity.internal.application.ReplaceIdentityGrants;
 import com.elogistic.backend.identity.internal.application.port.GrantAuthority;
@@ -11,6 +12,7 @@ import java.sql.*;
 import java.time.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.parallel.*;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
@@ -37,7 +39,7 @@ class IdentityGrantApplicationTests {
 
     @BeforeEach void fixture() throws Exception {
         db = PostgresTestcontainersSupport.database(POSTGRES);
-        assertEquals(3, db.flyway("latest").migrate().migrationsExecuted);
+        assertEquals(4, db.flyway("latest", SCOPE).migrate().migrationsExecuted);
         account(A, "ACTIVE", List.of(ADMIN)); account(B, "ACTIVE", List.of(ADMIN)); account(T, "ACTIVE", List.of(GX));
         session(S, A); session(AS, B); session(TS, T);
         execute("INSERT INTO identity.refresh_token(id,session_id,token_hash,issued_at,expires_at) VALUES ('" + id(20) + "','" + TS + "',decode(repeat('01',32),'hex'),TIMESTAMPTZ '2026-10-21 00:00:00Z',TIMESTAMPTZ '2026-10-21 08:00:00Z')");
@@ -70,7 +72,7 @@ class IdentityGrantApplicationTests {
         }
         for (GrantData g : grants) {
             try (Connection c = db.runtimeConnection(); PreparedStatement s = c.prepareStatement(
-                    "INSERT INTO identity.account_grant VALUES (?,?,?,?,TIMESTAMPTZ '2026-10-21 00:00:00Z')")) {
+                    "INSERT INTO identity.account_grant(account_id,role_code,scope_type,scope_id,granted_at) VALUES (?,?,?,?,TIMESTAMPTZ '2026-10-21 00:00:00Z')")) {
                 s.setObject(1, id); s.setString(2, g.role()); s.setString(3, g.scopeType()); s.setObject(4, g.scopeId()); s.executeUpdate();
             }
         }
@@ -258,5 +260,200 @@ class IdentityGrantApplicationTests {
         assertEquals(Set.of("id", "username", "displayName", "email", "status", "grants", "version", "emailVerified"),
             Arrays.stream(result.account().getClass().getRecordComponents()).map(java.lang.reflect.RecordComponent::getName).collect(java.util.stream.Collectors.toSet()));
         assertFalse(result.account().toString().contains("@")); assertFalse(command().toString().contains(command().reason()));
+    }
+
+    private IdentityGrantCommands production(GrantAuthority provider) {
+        return ProductionIdentityGrantComposition.create(
+            new DriverManagerDataSource(db.url(), db.runtime(), db.runtimePassword()),
+            provider, Clock.fixed(NOW, ZoneOffset.UTC), Duration.ofHours(24));
+    }
+    private void productionDenied(IdentityGrantCommands app, IdentityCommandFailure.Code code, Command input) throws Exception {
+        var before = snapshot();
+        var failure = assertThrows(IdentityCommandFailure.class, () -> app.replaceIdentityGrants(input));
+        assertEquals(code, failure.code()); assertEquals(code.name(), failure.getMessage());
+        assertNull(failure.getCause()); assertEquals(before, snapshot());
+    }
+    private GrantAuthority countingDeniedProvider(AtomicInteger calls) {
+        return (actor, target, requested) -> { calls.incrementAndGet(); return null; };
+    }
+    private void concurrentActorChange(String sql, IdentityCommandFailure.Code expected) throws Exception {
+        AtomicInteger calls = new AtomicInteger(); var app = production(countingDeniedProvider(calls));
+        ExecutorService pool = Executors.newSingleThreadExecutor(); CountDownLatch entered = new CountDownLatch(1);
+        Future<IdentityCommandFailure.Code> waiting = null;
+        try (Connection writer = db.runtimeConnection(); Statement s = writer.createStatement()) {
+            writer.setAutoCommit(false);
+            try {
+                // Same already-approved Identity lock protocol, held by a real competing transaction.
+                s.execute("SELECT pg_advisory_xact_lock(" + 0x4944454e54495459L + ")");
+                s.executeUpdate(sql);
+                waiting = pool.submit(() -> {
+                    entered.countDown();
+                    try { app.replaceIdentityGrants(command()); throw new AssertionError("Mutation must be denied"); }
+                    catch (IdentityCommandFailure denied) { return denied.code(); }
+                });
+                assertTrue(entered.await(2, TimeUnit.SECONDS));
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2);
+                boolean blocked = false;
+                while (System.nanoTime() < deadline) {
+                    if (scalar("SELECT count(*) FROM pg_locks WHERE locktype='advisory' AND NOT granted AND database=(SELECT oid FROM pg_database WHERE datname=current_database())") > 0) {
+                        blocked = true; break;
+                    }
+                    Thread.sleep(10);
+                }
+                assertTrue(blocked, "Competing command must wait for the Identity transaction lock");
+                assertEquals(0, calls.get()); writer.commit();
+            } finally { writer.rollback(); }
+            var afterAuthorityChange = snapshot();
+            assertEquals(expected, waiting.get(10, TimeUnit.SECONDS));
+            assertEquals(0, calls.get()); assertEquals(afterAuthorityChange, snapshot());
+            assertEquals(1, scalar("SELECT version FROM identity.user_account WHERE id='" + T + "'"));
+            assertEquals(0, scalar("SELECT count(*) FROM identity.audit_entry"));
+            assertEquals(0, scalar("SELECT count(*) FROM identity.command_receipt"));
+        } finally {
+            if (waiting != null && !waiting.isDone()) waiting.cancel(true);
+            pool.shutdownNow(); assertTrue(pool.awaitTermination(5, TimeUnit.SECONDS));
+        }
+    }
+
+    @Test void productionDefaultCompositionDeniesWithoutResourceContracts() throws Exception {
+        var app = ProductionIdentityGrantComposition.create(
+            new DriverManagerDataSource(db.url(), db.runtime(), db.runtimePassword()),
+            Clock.fixed(NOW, ZoneOffset.UTC), Duration.ofHours(24));
+        productionDenied(app, ACCOUNT_NOT_ACCESSIBLE, command());
+    }
+    @Test void productionProviderFailureIsSanitizedBeforeReceiptDisclosure() throws Exception {
+        service.replaceIdentityGrants(command()); // Existing synthetic transaction fixture, not production owner proof.
+        var app = production((actor, target, requested) -> { throw new IllegalStateException("synthetic-private-owner-diagnostic"); });
+        productionDenied(app, ACCOUNT_NOT_ACCESSIBLE, command());
+    }
+    @Test void productionIncompleteOwnerContextCannotRemoveHiddenGrants() throws Exception {
+        service.replaceIdentityGrants(command());
+        var app = production((actor, target, requested) -> new ManagementAuthority(actor.id(), actor.version().authVersion(),
+            target.id(), target.version().version(), Set.of(grant(GX)), Set.of(grant(GX))));
+        productionDenied(app, ACCOUNT_NOT_ACCESSIBLE, command(S, T, List.of(GX), 2, id(70), command().reason()));
+    }
+    @Test void productionMissingProviderRejectsEvenAnEmptyTargetGrantSet() throws Exception {
+        execute("DELETE FROM identity.account_grant WHERE account_id='" + T + "'");
+        productionDenied(production(null), ACCOUNT_NOT_ACCESSIBLE, command());
+    }
+    @Test void productionDisabledActorIsRejectedBeforeAuthorityLookup() throws Exception {
+        AtomicInteger calls = new AtomicInteger();
+        execute("UPDATE identity.user_account SET status='DISABLED',disabled_at=TIMESTAMPTZ '2026-10-21 00:01:00Z' WHERE id='" + A + "'");
+        productionDenied(production(countingDeniedProvider(calls)), SESSION_INVALID, command());
+        assertEquals(0, calls.get());
+    }
+    @Test void productionRevokedOrExpiredSessionIsRejectedBeforeAuthorityLookup() throws Exception {
+        AtomicInteger calls = new AtomicInteger(); var app = production(countingDeniedProvider(calls));
+        execute("UPDATE identity.auth_session SET revoked_at=TIMESTAMPTZ '2026-10-21 00:01:00Z' WHERE id='" + S + "'");
+        productionDenied(app, SESSION_INVALID, command());
+        execute("UPDATE identity.auth_session SET revoked_at=NULL,idle_expires_at=TIMESTAMPTZ '2026-10-21 00:05:00Z' WHERE id='" + S + "'");
+        productionDenied(app, SESSION_INVALID, command()); assertEquals(0, calls.get());
+    }
+    @Test void productionStaleAuthorizationVersionIsRejectedBeforeAuthorityLookup() throws Exception {
+        AtomicInteger calls = new AtomicInteger();
+        execute("UPDATE identity.user_account SET auth_version=2 WHERE id='" + A + "'");
+        productionDenied(production(countingDeniedProvider(calls)), SESSION_INVALID, command()); assertEquals(0, calls.get());
+    }
+    @Test void productionSnapshotSubstitutionAndUnassignableScopeAreRejected() throws Exception {
+        List<GrantAuthority> invalid = List.of(
+            (actor, target, requested) -> new ManagementAuthority(B, 1, target.id(), target.version().version(), Set.of(grant(GX), grant(GY)), Set.of(grant(GX), grant(GY))),
+            (actor, target, requested) -> new ManagementAuthority(actor.id(), 2, target.id(), target.version().version(), Set.of(grant(GX), grant(GY)), Set.of(grant(GX), grant(GY))),
+            (actor, target, requested) -> new ManagementAuthority(actor.id(), 1, B, target.version().version(), Set.of(grant(GX), grant(GY)), Set.of(grant(GX), grant(GY))),
+            (actor, target, requested) -> new ManagementAuthority(actor.id(), 1, target.id(), 2, Set.of(grant(GX), grant(GY)), Set.of(grant(GX), grant(GY))),
+            (actor, target, requested) -> new ManagementAuthority(actor.id(), 1, target.id(), 1, Set.of(grant(GX), grant(GY)), Set.of(grant(GX))));
+        for (GrantAuthority provider : invalid) productionDenied(production(provider), ACCOUNT_NOT_ACCESSIBLE, command());
+    }
+    @Test void productionSelfManagementPreservesSpecificDomainDenial() throws Exception {
+        productionDenied(production(authority), SELF_MANAGEMENT_FORBIDDEN,
+            command(S, A, List.of(ADMIN), 1, KEY, command().reason()));
+    }
+    @Test void productionConcurrentAuthorizationVersionChangeIsObservedAfterLock() throws Exception {
+        concurrentActorChange("UPDATE identity.user_account SET auth_version=2 WHERE id='" + A + "'", SESSION_INVALID);
+    }
+    @Test void productionConcurrentManagementGrantLossIsObservedAfterLock() throws Exception {
+        concurrentActorChange("DELETE FROM identity.account_grant WHERE account_id='" + A + "'", ACCOUNT_NOT_ACCESSIBLE);
+    }
+
+    @Test void productionEmptyTargetIsDeniedBeforeAnAllowingDelegate() throws Exception {
+        execute("DELETE FROM identity.account_grant WHERE account_id='" + T + "'");
+        AtomicInteger calls = new AtomicInteger();
+        var app = production((actor, target, requested) -> {
+            calls.incrementAndGet();
+            return new ManagementAuthority(actor.id(), actor.version().authVersion(),
+                target.id(), target.version().version(), requested, requested);
+        });
+        productionDenied(app, ACCOUNT_NOT_ACCESSIBLE, command());
+        assertEquals(0, calls.get());
+    }
+
+    private IdentityGrantCommands realmProduction() {
+        return ProductionIdentityGrantComposition.create(new DriverManagerDataSource(db.url(),db.runtime(),db.runtimePassword()),
+            Clock.fixed(NOW,ZoneOffset.UTC),Duration.ofHours(24));
+    }
+    private Command realmCommand() { return command(S,T,List.of(ADMIN),1,KEY,"Synthetic Realm management"); }
+    private void realmTarget() throws Exception {
+        execute("DELETE FROM identity.account_grant WHERE account_id='"+T+"'");
+        execute("INSERT INTO identity.account_grant(account_id,role_code,scope_type,scope_id,granted_at) VALUES ('"+T+"','IDENTITY_MANAGEMENT','IDENTITY','"+SCOPE+"',CURRENT_TIMESTAMP)");
+    }
+    @Test void realmProductionPerformsExactSameRealmReplacementAndAuthorizedReplay() throws Exception {
+        realmTarget();db.activateRealmForTest(SCOPE);var app=realmProduction();
+        var first=app.replaceIdentityGrants(realmCommand());assertFalse(first.replayed());assertEquals(2,first.appliedVersion());
+        var before=snapshot();var replay=app.replaceIdentityGrants(realmCommand());assertTrue(replay.replayed());
+        assertEquals(2,replay.appliedVersion());assertEquals(before,snapshot());
+        assertEquals(1,scalar("SELECT count(*) FROM identity.audit_entry WHERE event_type='IDENTITY_GRANTS_REPLACED'"));
+        assertEquals(0,scalar("SELECT count(*) FROM identity.auth_session WHERE account_id='"+T+"' AND revoked_at IS NULL"));
+        assertEquals(0,scalar("SELECT count(*) FROM identity.refresh_token WHERE session_id='"+TS+"' AND revoked_at IS NULL"));
+    }
+    @Test void realmProductionRejectsInactiveAndMissingRegistryWithoutDisclosure() throws Exception {
+        realmTarget();productionDenied(realmProduction(),ACCOUNT_NOT_ACCESSIBLE,realmCommand());
+        db.ownerExecute("ALTER TABLE identity.realm RENAME TO synthetic_unavailable_realm");
+        productionDenied(realmProduction(),ACCOUNT_NOT_ACCESSIBLE,realmCommand());
+    }
+    @Test void realmProductionRejectsExternalOrHiddenCurrentGrants() throws Exception {
+        db.activateRealmForTest(SCOPE);productionDenied(realmProduction(),ACCOUNT_NOT_ACCESSIBLE,realmCommand());
+        realmTarget();productionDenied(realmProduction(),ACCOUNT_NOT_ACCESSIBLE,command());
+        execute("INSERT INTO identity.account_grant(account_id,role_code,scope_type,scope_id,granted_at) VALUES ('"+T+"','OPERATOR','WAREHOUSE','"+X+"',CURRENT_TIMESTAMP)");
+        productionDenied(realmProduction(),ACCOUNT_NOT_ACCESSIBLE,realmCommand());
+    }
+    @Test void realmProductionPreservesSessionSelfAndVersionGuards() throws Exception {
+        realmTarget();db.activateRealmForTest(SCOPE);var app=realmProduction();
+        productionDenied(app,SELF_MANAGEMENT_FORBIDDEN,command(S,A,List.of(ADMIN),1,KEY,"Synthetic self denial"));
+        productionDenied(app,PRECONDITION_STALE,command(S,T,List.of(ADMIN),2,KEY,"Synthetic stale denial"));
+        execute("UPDATE identity.user_account SET auth_version=2 WHERE id='"+A+"'");
+        productionDenied(app,SESSION_INVALID,realmCommand());
+    }
+    @Test void realmProductionRollsBackOnAuditFailure() throws Exception {
+        realmTarget();db.activateRealmForTest(SCOPE);var before=snapshot();failWrite("audit_entry","INSERT");
+        assertThrows(org.springframework.dao.DataAccessException.class,()->realmProduction().replaceIdentityGrants(realmCommand()));
+        assertEquals(before,snapshot());
+    }
+    @Test void realmProductionRequiresSameTransactionAndAdministrationLock() throws Exception {
+        realmTarget();db.activateRealmForTest(SCOPE);
+        var ds=new DriverManagerDataSource(db.url(),db.runtime(),db.runtimePassword());
+        var provider=new JdbcIdentityRealmGrantAuthority(ds);
+        assertNull(provider.resolve(null,null,null)); // No transaction or JDBC query allowed.
+        new org.springframework.transaction.support.TransactionTemplate(new org.springframework.jdbc.support.JdbcTransactionManager(ds))
+            .execute(status->{ assertNull(provider.resolve(null,null,null));return null; }); // No administration lock.
+    }
+    @Test void realmDeactivationPrecedingAdmissionDeniesWaitingProductionCommand() throws Exception {
+        realmTarget();db.activateRealmForTest(SCOPE);var app=realmProduction();
+        ExecutorService pool=Executors.newSingleThreadExecutor();Future<IdentityCommandFailure.Code> waiting=null;
+        try(Connection c=db.migrationConnection();Statement s=c.createStatement()) {
+            s.execute("SET ROLE "+db.owner());c.setAutoCommit(false);
+            s.execute("SELECT pg_advisory_xact_lock(5279420865908921433)");
+            s.execute("UPDATE identity.realm SET status='INACTIVE',updated_at=CURRENT_TIMESTAMP");
+            waiting=pool.submit(()->{try {app.replaceIdentityGrants(realmCommand());throw new AssertionError("Must deny after Realm deactivation");}
+                catch(IdentityCommandFailure e){return e.code();}});
+            boolean blocked=false;long deadline=System.nanoTime()+TimeUnit.SECONDS.toNanos(3);
+            while(System.nanoTime()<deadline) {
+                if(scalar("SELECT count(*) FROM pg_locks WHERE locktype='advisory' AND NOT granted AND database=(SELECT oid FROM pg_database WHERE datname=current_database())")>0){blocked=true;break;}
+                Thread.sleep(10);
+            }
+            assertTrue(blocked);var before=snapshot();c.commit();
+            assertEquals(ACCOUNT_NOT_ACCESSIBLE,waiting.get(10,TimeUnit.SECONDS));assertEquals(before,snapshot());
+        } finally {
+            if(waiting!=null && !waiting.isDone())waiting.cancel(true);
+            pool.shutdownNow();assertTrue(pool.awaitTermination(5,TimeUnit.SECONDS));
+        }
     }
 }

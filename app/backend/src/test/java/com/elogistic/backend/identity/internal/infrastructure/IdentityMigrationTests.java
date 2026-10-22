@@ -37,7 +37,7 @@ class IdentityMigrationTests {
 
     private Database migrated() throws Exception {
         Database db = PostgresTestcontainersSupport.database(POSTGRES);
-        assertEquals(3, db.flyway("latest").migrate().migrationsExecuted);
+        assertEquals(4, db.flyway("latest").migrate().migrationsExecuted);
         return db;
     }
     private static String digest(int value) { return "decode('" + String.format("%064x", value) + "','hex')"; }
@@ -81,7 +81,7 @@ class IdentityMigrationTests {
         Database db = migrated(); account(db);
         var flyway = db.flyway("latest"); flyway.validate();
         var before = Arrays.stream(flyway.info().applied()).map(m -> m.getVersion() + ":" + m.getChecksum()).toList();
-        assertEquals(List.of("1","2","3"), Arrays.stream(flyway.info().applied()).map(m -> m.getVersion().toString()).toList());
+        assertEquals(List.of("1","2","3","4"), Arrays.stream(flyway.info().applied()).map(m -> m.getVersion().toString()).toList());
         var rows = snapshot(db, "identity.user_account");
         assertEquals(0, flyway.migrate().migrationsExecuted);
         assertEquals(before, Arrays.stream(flyway.info().applied()).map(m -> m.getVersion() + ":" + m.getChecksum()).toList());
@@ -100,7 +100,7 @@ class IdentityMigrationTests {
         var tables = List.of("merchant.demo_merchant", "identity.demo_account", "orders.demo_shipment", "orders.demo_event");
         Map<String,List<String>> before = new LinkedHashMap<>(); for (String table : tables) before.put(table, snapshot(db, table));
         var oldChecksums = Arrays.stream(db.flyway("2").info().applied()).map(m -> m.getChecksum()).toList();
-        assertEquals(1, db.flyway("latest").migrate().migrationsExecuted); db.flyway("latest").validate();
+        assertEquals(2, db.flyway("latest").migrate().migrationsExecuted); db.flyway("latest").validate();
         for (String table : tables) assertEquals(before.get(table), snapshot(db, table));
         assertEquals(oldChecksums, Arrays.stream(db.flyway("latest").info().applied()).limit(2).map(m -> m.getChecksum()).toList());
         try (Connection c = db.runtimeConnection(); Statement s = c.createStatement()) {
@@ -150,7 +150,7 @@ class IdentityMigrationTests {
 
     @Test void grantsAllowMultipleScopesButRejectDuplicatesInvalidScopesAndMissingAccounts() throws Exception {
         Database db = migrated(); account(db);
-        String grant = "INSERT INTO identity.account_grant VALUES (" + ACCOUNT + ",'IDENTITY_MANAGEMENT','IDENTITY'," + ACCOUNT + "," + NOW + ")";
+        String grant = "INSERT INTO identity.account_grant(account_id,role_code,scope_type,scope_id,granted_at) VALUES (" + ACCOUNT + ",'IDENTITY_MANAGEMENT','IDENTITY'," + ACCOUNT + "," + NOW + ")";
         execute(db, grant); rejects(db, "23505", grant);
         execute(db, grant.replace("'IDENTITY_MANAGEMENT','IDENTITY'", "'MERCHANT','MERCHANT'").replace("," + ACCOUNT + "," + NOW, "," + OTHER + "," + NOW));
         rejects(db, "23514", grant.replace("'IDENTITY',", "'UNKNOWN',"));
@@ -227,6 +227,99 @@ class IdentityMigrationTests {
         for (String sql : List.of("UPDATE identity.audit_entry SET reason='changed'", "DELETE FROM identity.audit_entry", "TRUNCATE identity.audit_entry", "UPDATE identity.command_receipt SET result_status=204", "DELETE FROM identity.command_receipt", "DELETE FROM identity.user_account", "CREATE TABLE identity.forbidden(id INTEGER)", "ALTER TABLE identity.user_account ADD COLUMN forbidden TEXT", "SET ROLE " + db.owner()))
             rejects(db, "42501", sql);
         rejects(db, "23503", "INSERT INTO identity.audit_entry VALUES (" + OTHER + "," + OTHER + "," + ACCOUNT + ",'ACCOUNT_PROVISIONED','IDENTITY',NULL,'fixture-request'," + NOW + ")");
+    }
+
+    @Test void realmRegistryStartsInactiveAndRuntimeCannotRegisterOrActivate() throws Exception {
+        Database db=migrated();
+        try(Connection c=db.runtimeConnection();Statement s=c.createStatement();ResultSet r=s.executeQuery("SELECT tableowner FROM pg_tables WHERE schemaname='identity' AND tablename='realm'")) {
+            assertTrue(r.next());assertEquals(db.owner(),r.getString(1));
+        }
+        try(Connection c=db.runtimeConnection();Statement s=c.createStatement();ResultSet r=s.executeQuery("SELECT code,status,bootstrap_account_id,activated_at FROM identity.realm")) {
+            assertTrue(r.next());assertEquals("SYSTEM",r.getString(1));assertEquals("INACTIVE",r.getString(2));
+            assertNull(r.getObject(3));assertNull(r.getObject(4));assertFalse(r.next());
+        }
+        for(String sql:List.of("UPDATE identity.realm SET status='ACTIVE'", "DELETE FROM identity.realm", "TRUNCATE identity.realm",
+                "INSERT INTO identity.realm SELECT * FROM identity.realm",
+                "SELECT identity.activate_system_realm("+ACCOUNT+","+ACCOUNT+","+KEY+")",
+                "SELECT identity.bootstrap_system_realm_admin("+ACCOUNT+","+OTHER+",'fixture.new','Synthetic','new@example.invalid',"+KEY+")"))
+            rejects(db,"42501",sql);
+    }
+    @Test void realmForeignKeyRejectsUnknownIdentityButPreservesExternalScope() throws Exception {
+        Database db=migrated();account(db);
+        String prefix="INSERT INTO identity.account_grant(account_id,role_code,scope_type,scope_id,granted_at) VALUES ("+ACCOUNT+",'IDENTITY_MANAGEMENT',";
+        rejects(db,"23503",prefix+"'IDENTITY',"+OTHER+","+NOW+")");
+        execute(db,prefix+"'IDENTITY',"+ACCOUNT+","+NOW+")");
+        execute(db,prefix+"'MERCHANT',"+OTHER+","+NOW+")");
+        rejects(db,"42501","UPDATE identity.account_grant SET identity_realm_id="+OTHER);
+        SQLException generated=assertThrows(SQLException.class,()->db.ownerExecute("UPDATE identity.account_grant SET identity_realm_id="+OTHER));
+        assertEquals("428C9",generated.getSQLState());
+        try(Connection c=db.runtimeConnection();Statement s=c.createStatement();ResultSet r=s.executeQuery("SELECT identity_realm_id FROM identity.account_grant WHERE scope_type='MERCHANT'")) {
+            assertTrue(r.next());assertNull(r.getObject(1));
+        }
+        assertThrows(SQLException.class,()->db.ownerExecute("DELETE FROM identity.realm"));
+    }
+    @Test void realmUpgradePreservesV3DataAndChecksums() throws Exception {
+        Database db=PostgresTestcontainersSupport.database(POSTGRES);db.flyway("3").migrate();account(db);
+        execute(db,"INSERT INTO identity.account_grant(account_id,role_code,scope_type,scope_id,granted_at) VALUES ("+ACCOUNT+",'IDENTITY_MANAGEMENT','IDENTITY',"+ACCOUNT+","+NOW+")");
+        var before=snapshot(db,"identity.user_account");
+        var checksums=Arrays.stream(db.flyway("3").info().applied()).map(m->m.getChecksum()).toList();
+        assertEquals(1,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();
+        assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);
+        assertEquals(before,snapshot(db,"identity.user_account"));
+        assertEquals(checksums,Arrays.stream(db.flyway("latest").info().applied()).limit(3).map(m->m.getChecksum()).toList());
+        try(Connection c=db.runtimeConnection();Statement s=c.createStatement();ResultSet r=s.executeQuery("SELECT scope_id,identity_realm_id,granted_at FROM identity.account_grant")) {
+            assertTrue(r.next());assertEquals(r.getObject(1),r.getObject(2));assertEquals(Timestamp.from(java.time.Instant.parse("2026-10-21T00:00:00Z")),r.getTimestamp(3));
+        }
+    }
+    @Test void unmatchedLegacyIdentityScopeStopsRealmUpgradeAtomically() throws Exception {
+        Database db=PostgresTestcontainersSupport.database(POSTGRES);db.flyway("3").migrate();account(db);
+        execute(db,"INSERT INTO identity.account_grant VALUES ("+ACCOUNT+",'IDENTITY_MANAGEMENT','IDENTITY',"+OTHER+","+NOW+")");
+        var before=snapshot(db,"identity.user_account");
+        assertThrows(FlywayException.class,()->db.flyway("latest").migrate());
+        assertEquals(before,snapshot(db,"identity.user_account"));
+        assertEquals(List.of("1","2","3"),Arrays.stream(db.flyway("3").info().applied()).map(m->m.getVersion().toString()).toList());
+        try(Connection c=db.runtimeConnection();Statement s=c.createStatement();ResultSet r=s.executeQuery("SELECT to_regclass('identity.realm'),scope_id FROM identity.account_grant")) {
+            assertTrue(r.next());assertNull(r.getObject(1));assertEquals(UUID.fromString(OTHER.replace("'","")),r.getObject(2,UUID.class));
+        }
+    }
+    private void bootstrap(Database db) throws SQLException {
+        db.ownerExecute("SELECT identity.bootstrap_system_realm_admin("+ACCOUNT+","+OTHER+",'fixture.bootstrap','Synthetic Bootstrap','bootstrap@example.invalid',"+KEY+")");
+    }
+    @Test void bootstrapCreatesPendingOnlyAndDuplicateCannotTakeOverAnAccount() throws Exception {
+        Database db=migrated();bootstrap(db);
+        try(Connection c=db.runtimeConnection();Statement s=c.createStatement();ResultSet r=s.executeQuery("SELECT status,email_verified,password_hash FROM identity.user_account")) {
+            assertTrue(r.next());assertEquals("PENDING_ACTIVATION",r.getString(1));assertFalse(r.getBoolean(2));assertNull(r.getString(3));assertFalse(r.next());
+        }
+        var before=snapshot(db,"identity.user_account");assertThrows(SQLException.class,()->bootstrap(db));assertEquals(before,snapshot(db,"identity.user_account"));
+        Database existing=migrated();execute(existing,account(OTHER,"'existing.identity'"));
+        var old=snapshot(existing,"identity.user_account");assertThrows(SQLException.class,()->bootstrap(existing));assertEquals(old,snapshot(existing,"identity.user_account"));
+    }
+    @Test void realmActivationRequiresVerifiedInvitationAndCannotBeReplayedOrReactivated() throws Exception {
+        Database db=migrated();bootstrap(db);
+        String activate="SELECT identity.activate_system_realm("+ACCOUNT+","+OTHER+","+BINDING+")";
+        assertThrows(SQLException.class,()->db.ownerExecute(activate));
+        db.completeInvitationForTest(UUID.fromString(OTHER.replace("'","")));db.ownerExecute(activate);
+        assertThrows(SQLException.class,()->db.ownerExecute(activate));
+        db.ownerExecute("SELECT pg_advisory_xact_lock(5279420865908921433); UPDATE identity.realm SET status='INACTIVE',updated_at=CURRENT_TIMESTAMP");
+        assertThrows(SQLException.class,()->db.ownerExecute(activate));
+        try(Connection c=db.runtimeConnection();Statement s=c.createStatement();ResultSet r=s.executeQuery("SELECT count(*) FROM identity.audit_entry WHERE source='OWNER_BOOTSTRAP'")) {
+            assertTrue(r.next());assertEquals(2,r.getInt(1));
+        }
+    }
+    @Test void bootstrapAuditFailureRollsBackPendingAccountGrantAndRealmBinding() throws Exception {
+        Database db=migrated();
+        execute(db,"INSERT INTO identity.audit_entry(id,event_type,source,request_id,occurred_at) VALUES ("+KEY+",'SYNTHETIC','FIXTURE','fixture',CURRENT_TIMESTAMP)");
+        assertThrows(SQLException.class,()->bootstrap(db));
+        try(Connection c=db.runtimeConnection();Statement s=c.createStatement();ResultSet r=s.executeQuery("SELECT bootstrap_account_id,(SELECT count(*) FROM identity.user_account),(SELECT count(*) FROM identity.account_grant) FROM identity.realm")) {
+            assertTrue(r.next());assertNull(r.getObject(1));assertEquals(0,r.getInt(2));assertEquals(0,r.getInt(3));
+        }
+    }
+    @Test void inactiveRealmIsNotEnoughToCreateActiveAdministrativeAuthority() throws Exception {
+        Database db=migrated();bootstrap(db);
+        assertThrows(SQLException.class,()->db.ownerExecute("SELECT identity.activate_system_realm("+ACCOUNT+","+ACCOUNT+","+BINDING+")"));
+        try(Connection c=db.runtimeConnection();Statement s=c.createStatement();ResultSet r=s.executeQuery("SELECT status,activated_at FROM identity.realm")) {
+            assertTrue(r.next());assertEquals("INACTIVE",r.getString(1));assertNull(r.getObject(2));
+        }
     }
 
     @Test void preexistingSchemaDriftFailsWithoutBaselineOrRepair() throws Exception {

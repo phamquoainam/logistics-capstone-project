@@ -2,7 +2,7 @@
 
 Latest checkpoint: **T-002-03 DONE** on run39575568268 attempt1, using verified
 sanitized artifacts and exact source revision. T-002-04 is now
-DONE under actual CI; T-002-05 Application PARTIAL, first grant slice IMPLEMENTED_VERIFICATION_PENDING.
+DONE under actual CI; T-002-05 Application PARTIAL, first grant slice CI_VERIFIED on1698940/run39641670408.
 [Domain source/test acceptance](../implementation/t-002-04-identity-domain-evidence.md#t-002-04-actual-ci-acceptance--2026-10-21).
 [Final migration acceptance and handoff](../implementation/t-002-03-identity-migration-evidence.md#final-migration-acceptance--2026-10-21).
 Earlier checkpoints below are historical and superseded only within that
@@ -253,3 +253,160 @@ run39626192090 is not evidence for this working tree. Missing owner provider
 denies; synthetic test authority is not a production integration.
 T-002-01..04 DONE; Feature002 and AC-002-01..05 NOT ACCEPTED;
 Feature001/D1-08/Day1 PARTIAL. Other Application operations remain pending.
+
+## T-002-05 first slice actual CI verification — 2026-10-22
+
+**T_002_05_FIRST_SLICE_CI_VERIFIED** supersedes source-only pending for this
+slice, not the full Application task.
+[Exact33 outcomes, transaction/authority/cleanup evidence and remaining scope](../implementation/t-002-05-identity-application-evidence.md#t-002-05-first-slice-actual-ci-verification--2026-10-22).
+Run39641670408 attempt1 workflow_dispatch, exact checkout/source
+1698940e4d4d888993daa2e38e995014c4f3282b on feature/002-identity-application-ci.
+
+| Trace | Actual tested evidence | Limit |
+|---|---|---|
+| REQ-002-01/04, AC-002-01/02/04 | PostgreSQL stored full grant replacement, current/requested-union/default-deny/self guards, account/auth versions, audit/receipt PASS | Synthetic trusted authority port; real owner composition pending |
+| REQ-002-02/05, AC-002-04/05 | Current account/session admission, revoked/expired/authVersion/disabled checks and target session/refresh invalidation PASS | Not production JWT/HTTP/CSRF/cookie admission |
+| REQ-002-04/05, AC-002-03/05 | Same-key replay/conflicts, stale versions, real concurrent same-key/competing-version/opposite-admin tests PASS | Bounded grant lock protocol; other lifecycle commands pending |
+| REQ-002-04/05, AC-002-02/05 | Real-DB audit/receipt/refresh-revocation fault triggers with six-table rollback snapshots PASS | Not general failure/availability certification |
+| REQ-002-02/03, AC-002-04 | Safe account field/redacted representations, finite sanitized reports and credential/privacy/owned-cleanup guards PASS | No full security or production AC acceptance |
+
+Actual totals: Architecture23 PASS/0 skips; H2279 PASS/17 expected skips;
+PostgreSQL351 PASS/5 expected skips;33/33 grant integration,48/48 Domain in
+BOTH backend jobs and14/14 PostgreSQL migration methods PASS.97 policy
+controls per job PASS. Three ZIP SHA-256 digests and complete finite XML
+inventories verified; all registered Testcontainers suites accounted for.
+No Redis/RabbitMQ remote test claim. Minimum24h retention source guard kept.
+
+Exactly14 Application paths committed/pushed once; no Foundation/private
+artifacts. PR20 already MERGED at preflight, no change by this task; Domain/
+Migration/develop refs preserved. Three SDD closure files change after CI and
+remain uncommitted, not part of tested1698940. T-002-01..04 DONE;
+T-002-05 PARTIAL; Feature002/AC-002-01..05 NOT ACCEPTED;
+Feature001/D1-08/Day1 PARTIAL. Other Application use cases and real production
+authority integration are next bounded dependencies; no automatic execution.
+
+## T-002-05-AUTH authority composition — 2026-10-22
+
+[Bounded source, trust boundaries, exact dependency and test evidence](../implementation/t-002-05-identity-application-evidence.md#t-002-05-auth--bounded-production-composition--2026-10-22).
+**T_002_05_AUTHORITY_DEPENDENCY_BLOCKED** for full production ownership integration.
+New independently valid source implemented, NEW Java/PostgreSQL UNVERIFIED.
+
+| Trace | New composition/test coverage | Current evidence / limitation |
+|---|---|---|
+| REQ-002-02/05, AC-002-04/05 | Existing persisted session/account admission wired through production factory; provider failure/default-deny wrapper |8 pure unit and current-state PostgreSQL tests authored; no new runtime PASS |
+| REQ-002-01/04, AC-002-01/02/04 | Existing full-target/union/self/version Domain checks retained after owner lookup |11 added PostgreSQL denial/context/concurrency methods; original33 bodies unchanged |
+| REQ-002-04/05, AC-002-03/05 | Existing atomic transaction, last-admin protocol, receipts/audit/revocation and24h protection retained | Core source unchanged; prior33 CI PASS remains1698940 evidence only |
+| O5 / owner boundary | Require approved actor-bound target/resource assignability and complete context | No suitable owner public contract; default DENY even for IDENTITY/empty target; no resource-existence-to-permission shortcut |
+
+Production source adds FailClosedGrantAuthority and ProductionIdentityGrantComposition;
+no new ownership abstraction, global role catalog, cross-module dependency,
+network call, REST endpoint or synthetic production authority. MerchantAccess
+require(UUID) is insufficient for actor-bound management; other owner APIs and
+Identity scope/delegation semantics are absent. Module Catalog forbids reverse
+Identity-to-Merchant/business imports, so a compatible approved public-contract
+bridge is a dependency, not an implicit architecture exception.
+
+101 process-safe report-policy controls PASS, not Java tests. Exact8 unit +
+11 PostgreSQL cases added; no existing requirements/skips/lifecycle registrations
+removed. Java/PostgreSQL/ArchUnit/privacy/cleanup for new source remain
+UNVERIFIED pending separate authorization. All earlier CI closure content is
+retained, not repurposed as verification of these additions.
+
+T-002-01..04 DONE; T-002-05 PARTIAL/unchecked; Feature002/AC-002-01..05 NOT ACCEPTED;
+Feature001/D1-08/Day1 PARTIAL. Main traceability, six Foundation files,
+T-002-03 evidence, V1/V2/V3, accepted contracts/ADRs and publication refs preserved.
+No commit/push/PR/merge, runtime, workflow dispatch or next-slice execution.
+
+## T-002-05-AUTH-CONTRACT authority decision packet — 2026-10-22
+
+**T_002_05_AUTHORITY_CONTRACT_READY_FOR_OWNER_APPROVAL**.
+[Policy/protocol/transaction decision packet](../implementation/t-002-05-identity-application-evidence.md#t-002-05-auth-contract--owner-decision-packet--2026-10-22).
+This is PROPOSED / OWNER_DECISION_REQUIRED, not accepted owner authorization.
+
+| Requirement | Accepted safeguard | Missing decision / future evidence |
+|---|---|---|
+| REQ-002-01/02; AC-002-01/04 | Exact role/resource checks, current actor/session and full-target union | AUTHC-D1 Identity realm/delegation policy; AUTHC-D2 public owner SPI/bridge; AUTHC-01..07 planned |
+| REQ-002-04; AC-002-02/04 | No Admin-to-Finance implication, self/last-admin guards, audit atomicity | Owner-specific management/assignability implementation; unknown/existence-only cases must deny |
+| REQ-002-05; EC-002-01/03/05; AC-002-03/05 | Revocation/authVersion, transactional replay and concurrency guards | AUTHC-D3/D4 direction/owner-lock policy; real authority-change races and transaction-participation proofs AUTHC-08..11 |
+| REQ-002-03 | No secret/principal/proof material in authority protocol or logs | Future production HTTP/session/security verification remains separate |
+
+No positive Identity-local provider is invented: accepted managementAdmin and
+ManagementAuthority define entry/consumption, not delegation. Proposed initial
+exact-pair realm policy (including unresolved-empty-target denial) needs explicit
+owner approval; it is not a change to accepted Domain tests or canonical REQ/AC.
+External resource ownership/assignability remains DEPENDENCY BLOCKED/default-deny.
+Narrow owner APIs must not infer permission from MerchantAccess.require(UUID).
+
+Only three SDD supplements appended; all previous source/tests/closure evidence,
+six Foundation paths and T-002-03 record preserved. Existing19 AUTH Java cases
+remain UNVERIFIED; earlier run39641670408 covers1698940 first slice only.
+No runtime/publication or new production source. T-002-05 PARTIAL; T-002-01..04
+DONE; Feature002/AC-002-01..05 NOT ACCEPTED; Feature001/D1-08/Day1 PARTIAL.
+
+## T-002-05-AUTHC-RESOLUTION restricted decision — 2026-10-22
+
+**T_002_05_IDENTITY_SCOPE_MAPPING_BLOCKED**.
+[Conditional owner decision and exact evidence](../implementation/t-002-05-identity-application-evidence.md#t-002-05-authc-resolution--restricted-owner-decision--2026-10-22).
+
+| Requirement / edge | Current checkpoint | Verification limitation |
+|---|---|---|
+| REQ-002-01/02; AC-002-01/04 | D1 explicit authority/full union; no wildcard or ordinary-grant delegation. scopeId authoritative resource + assignability mapping still missing | No allowing provider; one owner model decision remains |
+| REQ-002-02/04; AC-002-02/04 | Owner-approved empty-target replacement denial added before trusted delegate; provisioning remains separate; external scopes stay denied | Two new unit/PG negative cases authored, UNVERIFIED |
+| REQ-002-05; EC-002-01/03/05; AC-002-03/05 | Existing Identity lock/version/revocation/audit/receipt protocol retained; D4 approves no independent owner transaction assumption | Current Java/PG/concurrency runtime still UNVERIFIED |
+| REQ-002-03 | Safe denial, no private provider diagnostics or credential reads; exact report/privacy guards retained |102 synthetic Python policy controls PASS; not a new runtime or HTTP security acceptance |
+
+D2 is approved in principle within existing directions, not acceptance of every
+proposed DTO or external dependency; no SPI implementation/new module imports.
+Previous configured realm/actor-held delegation/owner-lock proposals are not
+silently accepted. D3 keeps all unsupported external authority denied.
+Original33 grant/48 Domain/14 migration and earlier19 AUTH methods preserved;
+one unit +one PG case added (authority total21 unverified). Collector functions,
+privacy/cleanup logic and lifecycle registry unchanged. Only the documented
+five source/test/policy paths plus three SDD supplements changed here.
+Main traceability, six Foundation changes, T-002-03 record and prior closure
+content preserved; no runtime/publication. T-002-05 PARTIAL;
+Feature002/AC-002-01..05 NOT ACCEPTED; Feature001/D1-08/Day1 PARTIAL.
+
+## T-002-05-AUTHC-REALM architecture checkpoint — 2026-10-22
+
+**T_002_05_REALM_MIGRATION_APPROVAL_REQUIRED**.
+[Authoritative Realm decision and proposed V4/authority gates](../implementation/t-002-05-identity-application-evidence.md#t-002-05-authc-realm--registered-identity-realm-decision--2026-10-22).
+
+| Requirement / guard | Decision or proposal | Evidence boundary |
+|---|---|---|
+| REQ-002-01/02; AC-002-01/04 | Owner establishes registered Realm UUID semantics for IDENTITY.scopeId; one system Realm proposed, no Merchant/tenant identity inference | Persistence missing in V3; explicit V4 registry/conditional FK/legacy-data review remains OWNER_DECISION_REQUIRED |
+| REQ-002-02/04; AC-002-02/04 | Registered Realm != actor authority; ordinary grant != delegation; full-target union, self/last-admin and empty-target denial retained | Same-Realm IDENTITY_MANAGEMENT assign/revoke policy proposed, not enabled/accepted |
+| REQ-002-05; AC-002-03/05 | Existing local lock/version/revocation/audit/receipt protocol preserved; Realm state changes proposed to join its locking protocol | REALM-08 two-transaction proof pending; no cached/cross-module consistency assumed |
+| REQ-002-03 | No credential access, runtime fallback registration or authority from client claims | Current102 synthetic report-policy controls PASS; future real-source privacy/cleanup still required |
+
+Architectural meaning is conditionally approved; registration/activation and
+delegation implementation need REALM-P1..P3. REALM-01..09 are planned gates,
+not authored/executed Java methods. Source count remains9 authority unit /
+45 grant PG with21 authority additions UNVERIFIED; original33/48/14 retained.
+Only three SDD append-only updates in this turn; all previous source, empty-target
+restriction, strict policy/cleanup, V1/V2/V3, acceptance evidence and six Foundation
+changes preserved. T-002-05 PARTIAL; Feature002/AC-002-01..05 NOT ACCEPTED;
+Feature001/D1-08/Day1 PARTIAL. No SQL/runtime/Git publication or new feature.
+
+## T-002-05-REALM-IMPLEMENTATION checkpoint — 2026-10-22
+
+**T_002_05_REALM_PROVIDER_IMPLEMENTED_VERIFICATION_PENDING**.
+[Source, tests, actual process-safe outcomes and runtime dependency closure](../implementation/t-002-05-identity-application-evidence.md#t-002-05-realm-implementation--approved-local-realm-provider--2026-10-22).
+[Accepted bounded Realm ADR](../architecture/decisions/ADR-0010-identity-system-realm.md).
+
+| Requirement / acceptance | Implemented source | Actual evidence limitation |
+|---|---|---|
+| REQ-002-01/02; AC-002-01/04 | V4 authoritative registration/conditional FK, actual locked account-grant target context, exact same-Realm delegated management pair, real default JDBC provider | Unit8 + provider7 + migration/bootstrap8 new methods authored; Java/SQL UNVERIFIED |
+| REQ-002-02/04; AC-002-02/04 | Owner-only pending-only bootstrap/one-time prerequisite activation, no existing-account takeover/global/ordinary-grant/external fallback; Domain self/last-admin retained | Bootstrap privilege/rollback/runtime proof pending; accepted invitation workflow still separate |
+| REQ-002-05; AC-002-03/05 | Existing lock/version/session/refresh/audit/receipt/replay/24h protocol reused; Realm state changes join its Identity lock protocol | New real-DB deactivation race + audit rollback tests authored, not executed |
+| REQ-002-03 | No credential bootstrap input, secrets/PII publication or runtime registry write; safe provider failure and exact privacy/report guards |104 synthetic report-policy and15 source controls PASS; real process/log/cleanup acceptance pending |
+
+Current source has9 retained authority unit,8 new Realm policy unit,52 grant PG
+(33 original +12 retained AUTH +7 Realm),22 migration (14 original +8 Realm) and
+unchanged48 Domain. Future totals Architecture23/0 skips, H2296/17 skips,
+PostgreSQL395/5 skips are required inventory expectations, not actual CI outcomes.
+Earlier39641670408 remains historical1698940 evidence only. OpenAPI bytes and
+V1/V2/V3 unchanged; README clarification explicitly records owner-approved meaning.
+Previous SDD content and six Foundation changes preserved; no source dispatch/
+publication/runtime/credential access. T-002-05 PARTIAL; Feature002 and AC-002-01..05
+NOT ACCEPTED; Feature001/D1-08/Day1 PARTIAL.

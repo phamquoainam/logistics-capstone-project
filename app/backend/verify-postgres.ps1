@@ -16,6 +16,8 @@ $env:PG_TEST_RUNTIME_USER = $testSettings.runtimeUser
 $env:PG_TEST_RUNTIME_PASSWORD = $testSettings.runtimePassword
 $env:PG_TEST_MIGRATOR_USER = $testSettings.migratorUser
 $env:PG_TEST_MIGRATOR_PASSWORD = $testSettings.migratorPassword
+# Explicit synthetic registration for these newly isolated test databases, never a production fallback.
+$env:PG_TEST_IDENTITY_REALM_ID = [guid]::NewGuid().ToString()
 $verifyArguments = @('-B','-ntp',"-Dmaven.repo.local=$(Join-Path $foundationRoot '.demo/maven-repository')",'-Ddebug=false','-Dtrace=false','-Ddemo.test.database=postgres','verify')
 if ($Offline) { $verifyArguments = @('-o') + $verifyArguments }
 Write-Host "Isolated PostgreSQL tests: $($testSettings.database), upgrade: $($testSettings.upgradeDatabase). Databases are retained."

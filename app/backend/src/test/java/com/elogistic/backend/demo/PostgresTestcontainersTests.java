@@ -31,9 +31,9 @@ class PostgresTestcontainersTests {
     @Test void coldStartAppliesV1AndV2() throws Exception {
         Database db=PostgresTestcontainersSupport.database(POSTGRES);
         Flyway flyway=db.flyway("latest");assertEquals(0,flyway.info().applied().length);
-        // Retain the report-policy method identity, now asserting the complete V1/V2/V3 stream.
-        assertEquals(3,flyway.migrate().migrationsExecuted);assertTrue(flyway.validateWithResult().validationSuccessful);
-        assertEquals(List.of("1","2","3"),Arrays.stream(flyway.info().applied()).map(m->m.getVersion().toString()).toList());
+        // Retain the report-policy method identity and assert the complete current stream.
+        assertEquals(4,flyway.migrate().migrationsExecuted);assertTrue(flyway.validateWithResult().validationSuccessful);
+        assertEquals(List.of("1","2","3","4"),Arrays.stream(flyway.info().applied()).map(m->m.getVersion().toString()).toList());
     }
 
     private List<String> checksums(Flyway flyway) { return Arrays.stream(flyway.info().applied()).map(m->m.getVersion()+":"+m.getChecksum()).toList(); }

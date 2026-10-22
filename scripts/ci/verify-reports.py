@@ -132,6 +132,14 @@ REQUIRED[IDENTITY_MIGRATION] = [
     'csrfSupportsPreauthAndSessionBindingButRejectsBadHashesAndReferences',
     'receiptsBindActorProofOrPreauthWithoutExistenceDisclosureOrDuplicateKey',
     'runtimeCanAppendAuditButCannotDdlDeleteAccountsOrMutateAuditAndReceipts',
+    'realmRegistryStartsInactiveAndRuntimeCannotRegisterOrActivate',
+    'realmForeignKeyRejectsUnknownIdentityButPreservesExternalScope',
+    'realmUpgradePreservesV3DataAndChecksums',
+    'unmatchedLegacyIdentityScopeStopsRealmUpgradeAtomically',
+    'bootstrapCreatesPendingOnlyAndDuplicateCannotTakeOverAnAccount',
+    'realmActivationRequiresVerifiedInvitationAndCannotBeReplayedOrReactivated',
+    'bootstrapAuditFailureRollsBackPendingAccountGrantAndRealmBinding',
+    'inactiveRealmIsNotEnoughToCreateActiveAdministrativeAuthority',
     'preexistingSchemaDriftFailsWithoutBaselineOrRepair',
 ]
 # T-002-04 source-reviewed plain-Jupiter identities; required in H2 and PostgreSQL.
@@ -233,6 +241,54 @@ REQUIRED[IDENTITY_GRANTS] = [
     'concurrentOppositeAdminRemovalCannotRemoveLastAdministrator',
     'resultContainsOnlyAcceptedAccountFieldsAndRedactsToString',
 ]
+IDENTITY_AUTHORITY_UNIT = BASE + 'identity.internal.application.FailClosedGrantAuthorityTests'
+REQUIRED[IDENTITY_AUTHORITY_UNIT] = [
+    'missingProviderDeniesWithoutInventingIdentityScopeAuthority',
+    'nullProviderResultDeniesWithoutFallback',
+    'providerFailureIsDeniedWithoutExposingItsMessage',
+    'disabledActorNeverReachesProvider',
+    'unrelatedRoleNeverEstablishesManagementAuthority',
+    'missingActorTargetOrRequestedContextDeniesBeforeProvider',
+    'trustedDelegateReceivesExactCurrentSnapshotsAndImmutableRequestedSet',
+    'vmErrorsAreNotSwallowedAsOrdinaryProviderUnavailability',
+    'emptyTargetIsDeniedBeforeAnAllowingDelegate',
+]
+IDENTITY_AUTHORITY_PG_REQUIRED = [
+    'productionDefaultCompositionDeniesWithoutResourceContracts',
+    'productionProviderFailureIsSanitizedBeforeReceiptDisclosure',
+    'productionIncompleteOwnerContextCannotRemoveHiddenGrants',
+    'productionMissingProviderRejectsEvenAnEmptyTargetGrantSet',
+    'productionDisabledActorIsRejectedBeforeAuthorityLookup',
+    'productionRevokedOrExpiredSessionIsRejectedBeforeAuthorityLookup',
+    'productionStaleAuthorizationVersionIsRejectedBeforeAuthorityLookup',
+    'productionSnapshotSubstitutionAndUnassignableScopeAreRejected',
+    'productionSelfManagementPreservesSpecificDomainDenial',
+    'productionConcurrentAuthorizationVersionChangeIsObservedAfterLock',
+    'productionConcurrentManagementGrantLossIsObservedAfterLock',
+    'productionEmptyTargetIsDeniedBeforeAnAllowingDelegate',
+]
+REQUIRED[IDENTITY_GRANTS] += IDENTITY_AUTHORITY_PG_REQUIRED
+IDENTITY_REALM_UNIT = BASE + 'identity.internal.application.IdentityRealmGrantPolicyTests'
+REQUIRED[IDENTITY_REALM_UNIT] = [
+    'exactCurrentSameRealmPairProducesBoundedAuthority',
+    'missingRegisteredRealmNeverAuthorizes',
+    'ordinaryGrantPossessionNeverDelegatesManagement',
+    'targetMustHaveActualSameRealmManagementContext',
+    'crossRealmActorCannotManageMatchingTarget',
+    'unrelatedRequestedAndHiddenCurrentGrantDenyEntireReplacement',
+    'disabledActorAndMissingInputsDeny',
+    'existingDomainStillRejectsSelfManagement',
+]
+IDENTITY_REALM_PG_REQUIRED = [
+    'realmProductionPerformsExactSameRealmReplacementAndAuthorizedReplay',
+    'realmProductionRejectsInactiveAndMissingRegistryWithoutDisclosure',
+    'realmProductionRejectsExternalOrHiddenCurrentGrants',
+    'realmProductionPreservesSessionSelfAndVersionGuards',
+    'realmProductionRollsBackOnAuditFailure',
+    'realmProductionRequiresSameTransactionAndAdministrationLock',
+    'realmDeactivationPrecedingAdmissionDeniesWaitingProductionCommand',
+]
+REQUIRED[IDENTITY_GRANTS] += IDENTITY_REALM_PG_REQUIRED
 PG = BASE + 'demo.PostgresFoundationTests'
 PG_ONLY = {PG, BASE + 'demo.PostgresHealthSafetyTests'}
 FOUNDATION_ONLY = {BASE + 'demo.FoundationDependencyTests'}
