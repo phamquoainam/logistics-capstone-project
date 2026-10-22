@@ -250,7 +250,13 @@ class IdentityMigrationTests {
         rejects(db,"23503",prefix+"'IDENTITY',"+OTHER+","+NOW+")");
         execute(db,prefix+"'IDENTITY',"+ACCOUNT+","+NOW+")");
         execute(db,prefix+"'MERCHANT',"+OTHER+","+NOW+")");
-        rejects(db,"42501","UPDATE identity.account_grant SET identity_realm_id="+OTHER);
+        // Generated-column validation precedes permission rejection for this statement on PG18.
+        // Prove the runtime privilege boundary independently, then test generated-column integrity.
+        try(Connection c=db.runtimeConnection();Statement s=c.createStatement();ResultSet r=s.executeQuery("SELECT has_column_privilege(current_user,'identity.account_grant','identity_realm_id','UPDATE')")) {
+            assertTrue(r.next());assertFalse(r.getBoolean(1));
+        }
+        rejects(db,"42501","UPDATE identity.account_grant SET granted_at=granted_at");
+        rejects(db,"428C9","UPDATE identity.account_grant SET identity_realm_id="+OTHER);
         SQLException generated=assertThrows(SQLException.class,()->db.ownerExecute("UPDATE identity.account_grant SET identity_realm_id="+OTHER));
         assertEquals("428C9",generated.getSQLState());
         try(Connection c=db.runtimeConnection();Statement s=c.createStatement();ResultSet r=s.executeQuery("SELECT identity_realm_id FROM identity.account_grant WHERE scope_type='MERCHANT'")) {
