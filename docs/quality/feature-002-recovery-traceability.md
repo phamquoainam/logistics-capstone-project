@@ -1,6 +1,11 @@
 # Feature 002 recovery — supplemental traceability
 
-Latest checkpoint: **T-002-03 DONE** on run39575568268 attempt1, using verified
+Current bounded Activation checkpoint:
+**T_002_05_INVITATION_ACTIVATION_CI_VERIFIED**, source081c14c/run39920826371.
+[Latest verified evidence and limitations](#activation-ci-verified-trace---2026-10-23).
+T-002-05 remains PARTIAL; Feature002 and AC-002-01..05 NOT ACCEPTED.
+
+Migration checkpoint: **T-002-03 DONE** on run39575568268 attempt1, using verified
 sanitized artifacts and exact source revision. T-002-04 is now
 DONE under actual CI; T-002-05 Application PARTIAL, first grant slice CI_VERIFIED on1698940/run39641670408.
 [Domain source/test acceptance](../implementation/t-002-04-identity-domain-evidence.md#t-002-04-actual-ci-acceptance--2026-10-21).
@@ -500,3 +505,72 @@ approval; original REQ/AC and canonical DoD remain unchanged.
 T-002-05 PARTIAL; Feature002/AC-002-01..05 NOT ACCEPTED; grant limitation retained.
 Main traceability and original six Foundation files unchanged. No business-feature
 readiness/approval is inferred from Identity Admin provisioning or activation.
+
+
+## Activation CI outcome ? 2026-10-23
+
+[Actual run39916095981 attempt1 and verified sanitized artifacts](../implementation/t-002-05-invitation-activation-evidence.md#activation-ci-checkpoint--2026-10-23)
+test source888da7e9d8004cbb887157b5d9e4a87d0c4b48db on
+feature/002-identity-activation. Architecture23 PASS/0 skips; H2330 PASS/17 exact
+expected skips, all12 Activation unit cases PASS, Domain48 and crypto10 retained.
+PostgreSQL job FAILURE at Maven Wrapper bootstrap before clean verify;20 new
+Activation PG and85 preserved integration identities remain runtime UNVERIFIED.
+No PostgreSQL counts/artifact, migration/concurrency or Testcontainers audit PASS
+is inferred. Only the separate disposable PostgreSQL cleanup step passed.
+113 Python policy controls PASS per job; two artifact ZIP digests and sanitized
+inventories/privacy allowlists verified. Required migration/outbox Python source
+suites are not invoked by existing workflow; CI coverage remains UNVERIFIED.
+V1-V5 publication blobs unchanged; V3/V4 canonical LF hashes match accepted pins;
+Windows CRLF source-guard limitation is recorded without weakening checks.
+
+T_002_05_ACTIVATION_CI_FAILED, T-002-05 PARTIAL; Feature002/ACs NOT ACCEPTED;
+GRANT_MUTATION_FUNCTIONALITY_LIMITED retained. These are LOCAL post-CI docs edits,
+not CI-tested source or an amended commit; docs-only closure publication remains
+separate. No PR/rerun/merge/repair. Original Foundation and main traceability
+untouched; business-feature owner-review boundary remains in force.
+
+
+## Activation CI verified trace - 2026-10-23
+
+**T_002_05_INVITATION_ACTIVATION_CI_VERIFIED**, authorized by
+`OWNER_ACTIVATION_CI_EVIDENCE_CLOSURE: CONDITIONAL_GO`.
+[Exact evidence, inventories, artifact digests and historical gaps](../implementation/t-002-05-invitation-activation-evidence.md#activation-ci-verified-closure---2026-10-23).
+[Actual run39920826371 attempt1](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/39920826371):
+SUCCESS, `workflow_dispatch`, `feature/002-identity-activation`, tested/checkout
+SHA `081c14cc059b61ddfabc2b1f4d1dbf7d682a70f7` in all three jobs, without a PR
+synthetic merge revision. This supersedes prior runtime UNVERIFIED/CI_FAILED
+statements only for that tested Activation checkpoint; history is preserved.
+
+| Existing requirement support | Actual evidence | Remaining acceptance boundary |
+| --- | --- | --- |
+| REQ-002-01; DEC-04; ADR-0009/0010 | Main/test compilation;12/12 Activation unit cases in H2 and PG;20/20 Activation PG cases with actual proof/password/account/version effects | Application-only; no production HTTP, bootstrap Realm activation or login |
+| REQ-002-03; O4; ADR-0011 | Crypto10, secret-negative/redaction cases, retained-key rotation; credential/privacy audits PASS | No email/provider deployment or full secret-store acceptance |
+| REQ-002-04/05; transaction/idempotency | Activation rollback/replay/concurrency PASS;85/85 retained Grant/Application PG cases, total105/105; migration25/25 | Remaining session/recovery/resend/lifecycle/query/authority use cases pending |
+| Exact CI/report/privacy inventory | Architecture23 PASS/0 skips; H2330 PASS/17 expected skips; PG485 PASS/5 expected skips; zero FAIL/ERROR;113 report-policy controls/job | Three ZIP SHA-256 match GitHub metadata; these are source081c14c results, not later docs-only CI |
+
+PostgreSQL generated credential privacy, owned Testcontainers cleanup and separate
+disposable PostgreSQL cleanup PASS. H2/PG exact inventories include all12 unit
+identities; PG includes all20 new and85 retained method identities. Counts in
+supporting groups overlap. Redis/RabbitMQ FoundationDependencyTests5 are expected
+skips, not verified remote infrastructure tests. Source guard/V1-V5 Git blob
+integrity was rechecked separately without changing SQL or accepted pins.
+
+Historical run39916095981 failed at `bash ./mvnw --version` before clean verify/
+PostgreSQL tests. The bounded diagnostic-only patch preserves exit status,
+allowlisted output/UNKNOWN fallback and private cleanup;21 synthetic controls
+PASS. Bootstrap now succeeded; original root cause remains OPEN/NOT REPRODUCED,
+not permanently fixed. The workflow still does not invoke either migration or
+outbox Python source suite. Their CI coverage is UNVERIFIED; preserve Windows
+CRLF/LF9-of10 outbox-source finding and unchanged V1-V5 canonical blobs.
+
+T-002-05 remains PARTIAL/unchecked; Feature002 and AC-002-01..05 NOT ACCEPTED;
+Feature001/D1-08/Day1 PARTIAL. GRANT_MUTATION_FUNCTIONALITY_LIMITED remains.
+Session/recovery/resend/lifecycle/query and remaining authority/security work are
+pending. HTTP secure mapping belongs to later canonical T-002-06; sender/provider/
+maintenance belongs to T-002-08 after dependencies. No deployment or business-module
+readiness is implied; owner business-feature review boundary remains unchanged.
+
+This record and linked evidence are the only two paths in the later documentation
+publication. Source CI does not test that docs-only commit. Protected main
+traceability and six original Foundation changes remain untouched. No source,
+SQL, contract, workflow, policy, credentials or runtime behavior changes here.
