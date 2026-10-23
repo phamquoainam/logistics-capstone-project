@@ -1998,3 +1998,121 @@ unproven. HTTP/security, browser flows and full Feature 002 AC remain pending.
 Next single gate: owner-authorized scoped current-revision compilation and CI
 verification of Provision + V5 + crypto + durable outbox, retaining all report,
 privacy and owned Testcontainers cleanup guards, before worker/activation expansion.
+
+
+## Provisioning and Secure Outbox CI closure - 2026-10-23
+
+**T_002_05_PROVISION_OUTBOX_CI_VERIFIED**, for this bounded Application checkpoint
+only, under OWNER authorization GO - EVIDENCE VERIFICATION ONLY.
+[Actual GitHub Actions run](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/39896561084),
+attempt **1**, event **workflow_dispatch**, workflow
+`.github/workflows/backend-verification.yml`, branch
+`feature/002-identity-application-ci`, tested SHA
+**0098461f2c4b242956c401430e5d5ca304521eb8**. Actual run and all three required
+jobs completed SUCCESS. Each job log contains the exact checkout SHA and confirms
+110 report-policy controls completed successfully. The workflow uses the unchanged
+strict inventory, expected skips, privacy and owned-resource cleanup policies.
+
+This supersedes IMPLEMENTED_VERIFICATION_PENDING for the exact Provisioning + V5
++ Crypto/Outbox source above and the FIX-03 dispatch blocker. It does not claim
+any later documentation edits were tested by this run. The previous run39889957889
+on3304a670 remains historical failing evidence, not current acceptance.
+
+### Actual sanitized results and scope
+
+| Job | Discovered | Executed / PASS | FAIL | ERROR | Expected skips |
+|---|---:|---:|---:|---:|---:|
+| Architecture gate | 23 | 23 | 0 | 0 | 0 |
+| Backend default / H2 | 335 | 318 | 0 | 0 | 17 |
+| Backend PostgreSQL 18 | 458 | 453 | 0 | 0 | 5 |
+
+H2 skips are the existing 8 PostgreSQL foundation + 4 PostgreSQL health safety +
+5 real Redis/Rabbit foundation methods; PostgreSQL skips only those 5 real
+Redis/Rabbit foundation methods. Testcontainers classes remain explicitly
+PostgreSQL-only discovery; no absent mandatory or unexpectedly skipped test was
+accepted. XML class/method/status inventory exactly matches the reviewed policy
+for every job, with no duplicates or extra methods. No rule/count/assertion was
+weakened to accept these reports.
+
+PostgreSQL evidence includes overlapping inventories (do not sum these subsets):
+
+| Inventory | Actual PASS |
+|---|---:|
+| Identity Domain | 48/48 |
+| Realm unit / authority unit | 8/8 and 9/9 |
+| IdentityMigrationTests | 25/25, including all 3 V5 methods |
+| IdentityGrantApplicationTests | 85/85 |
+| Provisioning unit | 12/12 |
+| Provisioning PostgreSQL | 18/18 |
+| InvitationProtectionTests crypto/unit | 10/10 |
+| Secure issuer/outbox PostgreSQL | 15/15 |
+| Realm PostgreSQL subset | 7/7 |
+
+`provisionWaitsForConcurrentActorAndRealmStateBeforeAdmission` is now **PASS**.
+FIX-03 changes only that test and its directly required helper: expected data is
+read through the authority writer connection after its deliberate actor/Realm
+change, while the administration lock is still held; after commit and exact
+SESSION_INVALID/AUTHORITY_REQUIRED denial, a fresh runtime connection must match
+all 10 snapshotted tables. Both actor and Realm scenarios and the lock-wait gate
+remain; an explicit unfinished-future assertion was added. Account/grant/proof,
+real and synthetic intent, audit/receipt/session and Realm state are all checked.
+The earlier sanitized XML did not expose the precise failing assertion; no raw
+Maven diagnostics were used to invent one. Source diagnosis and the current
+passing runtime now establish acceptance of this test-only correction.
+
+V1-V5 cold start, V4-to-V5 legacy-data/checksum preservation, proof association,
+uniqueness, protected shape, table ownership and runtime privilege negatives all
+passed. Provisioning atomicity, missing-dependency/fault rollback, current Realm /
+session/authVersion admission, replay/key conflict/username races, encrypted fresh
+DB read, AEAD/HMAC tampering/rotation, lease/reclaim/outcome/retry/expiry/purge and
+unchanged Domain/Realm/Grant/Demo/safety regressions passed through their exact
+required test inventories. This is test evidence, not production deployment.
+
+### Artifact integrity and privacy
+
+Three sanitized artifact ZIPs were downloaded with the existing GitHub CLI at
+`C:/Program Files/GitHub CLI/gh.exe`, using read-only `gh api` artifact endpoints.
+Each ZIP SHA-256 matched its GitHub artifact digest; **3/3 PASS, none UNVERIFIED**.
+Only summary.json/tests.xml are present in each ZIP; no raw Maven diagnostics,
+properties, system-out/system-err or unapproved testcase metadata were published.
+Artifact summaries have zero problems and exact totals agree with sanitized XML.
+
+| Artifact | SHA-256 verified against GitHub metadata |
+|---|---|
+| backend-postgres-1 | 87bfc72210ef6fa9c4e321acbea9dfc1d19a4bb13f5836fff3735a01e41f8eb5 |
+| backend-h2-1 | c4aa1c1d65ba1c3c1d8d5f2ddb922a7db219c80f7e3166f9b2f97c2a923774e4 |
+| backend-architecture-1 | 928521f3bf9d5668da8d29d9acc94ccf8187b7e6fb8c04373492ec1d9433e399 |
+
+Job-log projections were obtained through read-only GitHub API after the CLI job-log
+endpoint failed. Only allowlisted checkout/policy/privacy/cleanup facts were saved;
+raw job log content was processed in memory and not retained as evidence files.
+All jobs passed the temporary DB credential log audit. PostgreSQL additionally
+passed generated Testcontainers credential privacy and owned-resource cleanup
+audits; its final owned temporary PostgreSQL cleanup step succeeded. The existing
+three-suite lifecycle accounting was retained, not inferred from old resource IDs.
+
+Private isolated evidence packet:
+`.demo/t-002-05-ci-closure-39896561084/` contains CLI-downloaded ZIPs, extracted
+sanitized files, GitHub metadata, exact inventory verification, sanitized job
+projections and acceptance.json. No raw credentials or private Maven diagnostics
+were copied into tracked documentation. These artifacts are not committed by this
+closure task.
+
+### Git and acceptance boundary
+
+Verification ran against local HEAD0098461f, with an empty index and only the six
+protected Foundation changes before documentation edits. Their SHA-256 fingerprints
+were checked against the retained baseline; source, V1-V5 SQL, tests/assertions,
+OpenAPI, ADR/security/CI policies and T-002-03 evidence remain unchanged.
+Only this evidence file, Feature002 tasks and supplemental traceability are updated
+after CI. The run does **not** test those subsequent Markdown edits. No stage,
+commit, push, dispatch, PR or merge was performed in this closure.
+
+**T-002-05 stays PARTIAL/unchecked. Feature002 and AC-002-01..05 NOT ACCEPTED.**
+Remaining: approved email sender/worker, maintenance and scheduled physical purge,
+invitation consumption, password setup/account activation, other canonical
+Application use cases, later HTTP/browser/integration acceptance.
+**GRANT_MUTATION_FUNCTIONALITY_LIMITED** stays recorded: this initial-pair
+provisioning acceptance does not authorize general effective grant replacement.
+QUEUED, SENT, CONSUMED and ACTIVE remain distinct; no actual email delivery,
+production worker, activation or bootstrap execution is implied.

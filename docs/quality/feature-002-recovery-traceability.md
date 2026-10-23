@@ -457,3 +457,28 @@ prove Java compilation, PostgreSQL enforcement or HTTP/runtime AC. All original
 REQ/AC text and main traceability remain unchanged; AC-002-01..05 NOT ACCEPTED.
 Production sender/maintenance schedule/activation remain dependencies; physical
 purge is invocation-driven. GRANT_MUTATION_FUNCTIONALITY_LIMITED remains.
+
+
+## Provisioning and Secure Outbox CI evidence - 2026-10-23
+
+Bounded checkpoint **T_002_05_PROVISION_OUTBOX_CI_VERIFIED** for source
+0098461f2c4b242956c401430e5d5ca304521eb8; [run39896561084 attempt1](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/39896561084),
+workflow_dispatch on feature/002-identity-application-ci.
+[Evidence, exact inventories and digests](../implementation/t-002-05-identity-application-evidence.md#provisioning-and-secure-outbox-ci-closure---2026-10-23).
+
+| Requirement / acceptance coverage | Actual evidence | Acceptance limitation |
+|---|---|---|
+| REQ-002-01/04 controlled pending provisioning, grant and audit ownership | Provision unit12/12; PG18/18; Grant/Application85/85; migration25/25 | Bounded initial Identity pair only; no general delegation |
+| REQ-002-02/05 current session/authVersion/Realm admission | Realm unit8/8, authority unit9/9, Realm PG7/7; repaired concurrent actor/Realm admission method PASS | Production HTTP admission remains a later task |
+| REQ-002-03 protected invitation material | Crypto10/10 and real secure outbox PG15/15, credential/privacy guards PASS | No actual email, production key-store deployment or sender proof |
+| AC-002-02/03/04/05 supporting transaction, replay, race and authorization tests | Architecture23; H2318/17 expected skips; PG453/5 expected skips; zero FAIL/ERROR; all3 artifact digests verified | Supporting evidence only; no full runtime AC acceptance |
+
+These group counts overlap. Full Domain48 and V1-V5 cold/upgrade/ownership/
+constraint/permission checks passed. Exact report inventory, 110 report-policy
+controls/job, credential privacy and owned Testcontainers cleanup PASS.
+The main Foundation traceability is protected and unchanged. This append occurs
+after tested SHA0098461f and is not part of its CI-tested source.
+T-002-05 remains PARTIAL. Feature002/AC-002-01..05 NOT ACCEPTED.
+Pending: sender/worker, maintenance/scheduled purge, invitation consumption,
+password setup/account activation, remaining Application use cases and subsequent
+HTTP/integration acceptance. Preserve GRANT_MUTATION_FUNCTIONALITY_LIMITED.

@@ -400,9 +400,9 @@ T_002_05_INVITATION_OUTBOX_IMPLEMENTED_VERIFICATION_PENDING.
 - [x] Integrate durable intent in the existing provisioning transaction and replay boundary.
 - [x] Author 10 crypto/unit, 15 real-outbox PG and 3 V5 migration methods.
 - [x] Python report-policy 110/110 and static source 25/25 PASS; finite inventory extended.
-- [ ] Compile and execute this revision's Java/PostgreSQL/ArchUnit/Demo regressions.
-- [ ] Verify V1-V5 cold start, V4 upgrade, runtime roles, crypto/rollback/races/leases/purge.
-- [ ] Verify current CI report/privacy and owned Testcontainers cleanup evidence.
+- [x] Compile and execute this revision's Java/PostgreSQL/ArchUnit/Demo regressions (run39896561084, tested0098461f).
+- [x] Verify V1-V5 cold start, V4 upgrade, runtime roles, crypto/rollback/races/leases/purge (actual PostgreSQL CI PASS).
+- [x] Verify current CI report/privacy and owned Testcontainers cleanup evidence (110 controls/job and all guards PASS).
 - [ ] Separately integrate approved worker/provider and periodic retention maintenance.
 - [ ] Implement remaining canonical Application use cases including invitation activation.
 
@@ -410,3 +410,23 @@ Do not reuse run39795074146 for this source. Expected future jobs: Architecture2
 H2318/17skip, PG453/5skip, all with110 report-policy controls. These are expectations,
 not observed runtime results. GRANT_MUTATION_FUNCTIONALITY_LIMITED remains;
 Feature002 and AC-002-01..05 NOT ACCEPTED. No REQ/AC/DoD modification.
+
+
+## Provisioning and Secure Outbox CI acceptance - 2026-10-23
+
+T_002_05_PROVISION_OUTBOX_CI_VERIFIED for tested source
+0098461f2c4b242956c401430e5d5ca304521eb8, [run39896561084 attempt1](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/39896561084).
+[Exact counts, inventories, privacy/cleanup and artifact digests](../../docs/implementation/t-002-05-identity-application-evidence.md#provisioning-and-secure-outbox-ci-closure---2026-10-23).
+Architecture23 PASS/0 skips; H2318 PASS/17 expected skips; PG453 PASS/5 expected
+skips; zero FAIL/ERROR. Provisioning12 unit +18 PG, crypto10, secure outbox15,
+migration25 (including V5), Domain48 and all85 Grant/Application methods PASS.
+Previously failing concurrency method PASS. Three ZIP digests match GitHub metadata;
+110 report-policy controls per job, credential/privacy and owned cleanup PASS.
+This actual CI supersedes the earlier future/pending statements only for this
+source checkpoint; subsequent documentation edits are not CI-tested.
+
+T-002-05 remains PARTIAL/unchecked; Feature002 and AC-002-01..05 NOT ACCEPTED.
+Email sender/worker, maintenance/scheduled purge, invitation consumption, password
+setup/activation and remaining Application use cases stay pending.
+GRANT_MUTATION_FUNCTIONALITY_LIMITED remains. No production delivery/bootstrap,
+HTTP/API completion, full feature acceptance or new publication is implied.
