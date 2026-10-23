@@ -441,3 +441,137 @@ owner-authorized PostgreSQL CI checkpoint is required before PR-readiness review
 T-002-05 stays PARTIAL; Feature002/AC-002-01..05 NOT ACCEPTED;
 GRANT_MUTATION_FUNCTIONALITY_LIMITED retained. No further Identity/business slice
 or Foundation acceptance is implied. Original requirements and AC are unchanged.
+
+
+## Session transaction ownership CI verified closure - 2026-10-23
+
+Owner authorization: OWNER_SESSION_SECURITY_CI_CLOSURE: CONDITIONAL_GO.
+This checkpoint supersedes ONLY the PostgreSQL verification-pending conclusion
+of the preceding transaction ownership correction section. It preserves that
+historical local result and the original Session implementation evidence.
+
+### Tested revision and actual CI
+
+Workflow: Backend verification (ID383888734),
+[run39986298097](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/39986298097),
+attempt1, event workflow_dispatch, branch feature/002-identity-session-application.
+Tested source SHA: c851f5dc73809dafd3b22c4bf3cd81ccdcc1de17.
+Fresh GitHub run/job metadata and each job's actual checkout-log projection agree
+on this exact SHA. All three jobs completed SUCCESS:
+
+| Required job | Job ID | Discovered | PASS | FAIL | ERROR | Expected skips |
+| --- | --- | --- | --- | --- | --- | --- |
+| Architecture gate | 120526250050 | 23 | 23 | 0 | 0 | 0 |
+| Backend default / H2 | 120526250627 | 371 | 354 | 0 | 0 | 17 |
+| Backend PostgreSQL 18 | 120526250490 | 537 | 532 | 0 | 0 | 5 |
+
+Exact sanitized JUnit method identities match the strict finite inventories;
+no unexpected skips. H2 skips are8 PostgresFoundationTests,4 PostgresHealthSafetyTests
+and5 FoundationDependencyTests. PostgreSQL skips only the5 Redis/RabbitMQ
+FoundationDependencyTests: they are NOT remote Redis/RabbitMQ runtime PASS.
+Java compilation and current-source Maven verification completed successfully.
+
+### Transaction ownership security regression evidence
+
+Session unit:24/24 PASS in H2 and PostgreSQL, including4/4 new ownership controls:
+- storeRejectsActualAmbientTransactionBeforeJdbcAccess
+- storeRejectsAmbientSynchronizationBeforeJdbcAccess
+- storeRejectsBoundDataSourceBeforeJdbcAccess
+- storeRejectsUnknownBoundResourceBeforeJdbcAccess
+
+Five new methods executed against real PostgreSQL and PASS:
+
+| PostgreSQL method | Verified outcome |
+| --- | --- |
+| sessionAmbientRefreshRejectedBeforeRotationAndCallerCommit | Same application runtime DataSource and real JdbcTransactionManager, caller READ_COMMITTED; ownership rejection before rotation; independent post-commit snapshot unchanged; direct refresh positive control succeeds |
+| sessionAmbientReplayRejectedBeforeCallerRollback | Consumed-token call inside caller transaction raises ownership failure, not REFRESH_REPLAY; caller explicitly rolls back; independent state unchanged; current successor remains usable until a genuine direct replay |
+| sessionDirectReplayRevocationAndAuditAreIndependentlyCommitted | Direct rotation succeeds; old-token replay returns REFRESH_REPLAY; a separate JDBC transaction observes revoked session/family and required audit; successor rejected |
+| sessionAmbientLoginRejectedBeforeCallerCommit | Caller transaction rejected before Session writes; independent state unchanged after commit; normal Session-owned Login succeeds |
+| sessionAmbientLogoutRejectedBeforeCallerRollback | Caller transaction rejected without taking over rollback; independent state unchanged after caller rollback; normal Logout revokes family and remains idempotent |
+
+The tests use the actual application Session JDBC composition, the SAME runtime
+DataSource instance and real JdbcTransactionManager/TransactionTemplate. Snapshot
+assertions after outer scope completion use independent runtime connections.
+The direct replay test starts a new READ_COMMITTED JDBC transaction to verify
+committed revocation and audit, rather than asserting inside the revoked operation.
+Session does not commit, roll back or suspend any caller-owned transaction.
+
+Both existing critical methods also executed and PASS:
+- sessionReplayCommitsFamilyRevocationBeforeDenial
+- sessionConcurrentRefreshHasOneRotationThenReplayRevocation
+
+Previous123 PostgreSQL methods:123/123 PASS. Relevant combined suite:128/128 PASS,
+including23/23 Session PostgreSQL cases (previous18 plus5). Session unit24 and
+these PostgreSQL figures overlap the job totals above; do NOT add them as separate
+executions to inflate532. Domain48, Migration25, Crypto10, Grant/Realm, Provisioning,
+Outbox and Invitation Activation inventories remain present and PASS, including
+existing transaction, audit rollback, authority and concurrency regressions.
+
+### Privacy, report policy and artifact integrity
+
+116 report-policy controls per job PASS. Actual job checkout, report-policy and
+fixed security-status messages were projected from one aggregate log per job;
+per-step duplicates were excluded, not counted as additional executions.
+Temporary database credential log audits PASS in all three jobs. PostgreSQL's
+generated Testcontainers credential privacy audit and owned-resource cleanup audit
+PASS; cleanup removed only the recorded disposable CI PostgreSQL container.
+
+Three sanitized ZIPs were downloaded with GitHub CLI and all3 SHA-256 values
+matched available GitHub metadata. ZIP CRC and exact entry allowlist PASS:
+only sanitized summary.json and tests.xml, with fixed skip text; no raw diagnostics,
+properties, session credentials or runtime log files in published artifacts.
+
+| Artifact | GitHub artifact ID | Verified SHA-256 |
+| --- | --- | --- |
+| backend-architecture-1 | 12514933948 | 5c3fdeab4eb3c731ea0d0bcf60e06734799734ff9309ca84cfc3af553b43a374 |
+| backend-h2-1 | 12515233796 | 21d638248898dd81814bad039ab121588abcaf494d60b6e3c6e354228c626ddd |
+| backend-postgres-1 | 12515917895 | 8b780cf372b645acc7f8e4bc4af014b2bc58c74e302981cd9f8e6341fb629979 |
+
+Private retained evidence: .demo/session-transaction-ownership-ci/ contains
+sanitized summaries/XML, artifact integrity, exact method reconciliation and fixed
+checkout/privacy/cleanup projections. CI logs and run-log archive were processed
+only in memory; raw Maven diagnostics, passwords, tokens and sensitive logs were
+not copied to SDD documents. API job-log access was unavailable; the official
+run-log archive supplied the verified projections without persisting raw logs.
+
+### Specific finding disposition and outstanding boundaries
+
+Previous blocker: T_002_05_SESSION_PR_SECURITY_BLOCKED, specifically the shared
+REQUIRED callback completion versus physical-commit gap. A compatible outer
+transaction could otherwise roll back replay revocation after outward denial.
+The approved JdbcIdentitySessionStore-specific fail-closed guard rejects actual
+transactions, synchronization or ambiguous bound resources before shared-store
+participation; no shared Grant propagation or public HTTP contract change.
+
+This specific finding now has passing real PostgreSQL transaction-ownership,
+independent-connection replay durability and concurrency regression evidence.
+Verified checkpoint: T_002_05_SESSION_TRANSACTION_OWNERSHIP_CI_VERIFIED.
+It is ready for final PR-readiness reassessment; this is not completion of all
+Session security work, PR integration verification or production deployment.
+
+Original Session run39932569608 remains historical for sourcecaa150fb3c1a2c4ac1a60d27566f07f6a3c3c479.
+The security correction is tested by run39986298097 on sourcec851f5dc73809dafd3b22c4bf3cd81ccdcc1de17.
+This closure is a LATER docs-only commit: neither run is execution evidence for
+that documentation revision. Its exact docs SHA and push result are recorded in
+the publication handoff/private checkpoint; no self-referential commit hash is
+invented in tracked Markdown. No new CI dispatch/rerun, PR or merge is authorized.
+
+Keep historical Maven Wrapper bootstrap attribution OPEN / NOT REPRODUCED:
+this successful clean-runner bootstrap does not prove the old root cause fixed.
+Current CI does not invoke the Python migration/outbox source suites. Windows
+outbox source guard remains9/10 methods PASS with2 failed V3/V4 CRLF raw-byte
+subcases; pinned canonical LF blobs match and working bytes remain unchanged.
+V1-V5 canonical Git identities and accepted integrity expectations are preserved;
+no SQL edit, hash-pin replacement or migration repair was introduced.
+
+T-002-05 remains PARTIAL/unchecked; Feature002 and AC-002-01..05 NOT ACCEPTED;
+GRANT_MUTATION_FUNCTIONALITY_LIMITED remains. Pending: current-session/activity,
+recovery, resend, lifecycle/query, remaining authority/security and HTTP/JWT/cookie/
+CSRF/throttling adapters. Delivery/provider integration stays T-002-08 after its
+dependencies. Feature001/D1-08/Day1 remain PARTIAL. No full Production Identity,
+end-to-end business capability or business-module implementation approval implied.
+
+Closure scope is exactly this file and the
+[supplemental security CI trace](../quality/feature-002-recovery-traceability.md#session-transaction-ownership-ci-verified-trace---2026-10-23).
+Protected main traceability, all Java/tests/SQL/CI policies, six original Foundation
+fingerprints and the clean Activation worktree remain unchanged by this closure.
