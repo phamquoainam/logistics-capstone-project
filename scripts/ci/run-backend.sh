@@ -15,10 +15,56 @@ chmod 700 "$private" "$MAVEN_USER_HOME"
 cd "$root/app/backend"
 java --version > "$private/java-version.txt" 2>&1
 grep -Eq '^(openjdk|java) 21[.]' "$private/java-version.txt" || { echo 'FAIL: Java 21 required'; exit 1; }
-if ! bash ./mvnw --version > "$private/maven-version.txt" 2>&1; then
-  echo 'FAIL: Maven Wrapper bootstrap; private diagnostics retained'; exit 1
+# Bootstrap capture is private, bounded when classified, and never an artifact.
+bootstrap_log="$private/maven-version.txt"
+(umask 077; set -o noclobber; : > "$bootstrap_log")
+trap 'rm -f -- "$bootstrap_log" 2>/dev/null' EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+if bash ./mvnw --version > "$bootstrap_log" 2>&1; then
+  :
+else
+  bootstrap_rc=$?
+  if ! python3 - "$bootstrap_log" "$bootstrap_rc" 2>/dev/null <<'BOOTSTRAP_DIAGNOSTIC'
+import os, re, sys
+category = 'UNKNOWN'
+try:
+    with open(sys.argv[1], 'rb') as source:
+        captured = source.read(65537)
+    if len(captured) <= 65536:
+        lines = captured.decode('utf-8', errors='replace').splitlines()
+        # Only literal failures emitted by the tracked wrapper; never infer from rc alone.
+        signatures = {
+            'DOWNLOAD_FAILED': (r'(?:wget|curl): Failed to fetch \S+',),
+            'EXTRACT_FAILED': (r'failed to unzip', r'failed to untar',
+                               r'Could not find Maven distribution directory in extracted archive'),
+            'FILESYSTEM_FAILED': (r'cannot create temp dir', r'fail to move MAVEN_HOME'),
+            'JAVA_CONFIG_FAILED': (r'The JAVA_HOME environment variable is not defined correctly, so mvnw cannot run\.',
+                                   r'The java/javac command does not exist in PATH nor is JAVA_HOME set, so mvnw cannot run\.'),
+            'EXEC_FAILED': (r'cannot exec \S+',),
+        }
+        matches = {name for name, patterns in signatures.items()
+                   if any(re.fullmatch(pattern, line) for pattern in patterns for line in lines)}
+        if len(matches) == 1:
+            category = matches.pop()
+except (OSError, ValueError):
+    pass
+runner_os = os.environ.get('RUNNER_OS', 'UNKNOWN')
+runner_arch = os.environ.get('RUNNER_ARCH', 'UNKNOWN')
+runner_os = runner_os if runner_os in {'Linux', 'Windows', 'macOS'} else 'UNKNOWN'
+runner_arch = runner_arch if runner_arch in {'X64', 'X86', 'ARM', 'ARM64'} else 'UNKNOWN'
+print('MAVEN_BOOTSTRAP_DIAGNOSTIC stage=WRAPPER_VERSION exit_code=' + str(int(sys.argv[2]))
+      + ' category=' + category + ' runner_os=' + runner_os + ' runner_arch=' + runner_arch)
+BOOTSTRAP_DIAGNOSTIC
+  then
+    printf 'MAVEN_BOOTSTRAP_DIAGNOSTIC stage=WRAPPER_VERSION exit_code=%s category=UNKNOWN runner_os=UNKNOWN runner_arch=UNKNOWN\n' "$bootstrap_rc"
+  fi
+  exit "$bootstrap_rc"
 fi
-grep -q 'Apache Maven 3.10.0' "$private/maven-version.txt" || { echo 'FAIL: Maven 3.10.0 required'; exit 1; }
+grep -q 'Apache Maven 3.10.0' "$bootstrap_log" || { echo 'FAIL: Maven 3.10.0 required'; exit 1; }
+rm -f -- "$bootstrap_log"
+trap - EXIT HUP INT TERM
 echo 'Java 21 / Maven Wrapper 3.10.0 verified with a fresh Maven home'
 args=(-B -ntp -Dstyle.color=never --settings "$root/scripts/ci/maven-settings.xml"
       "-Dmaven.repo.local=$MAVEN_USER_HOME/repository" -Ddebug=false -Dtrace=false)

@@ -91,6 +91,18 @@ public final class InvitationProtection {
         byte[] actual=verifier(proof.id(),proof.accountId(),proof.purpose(),proof.createdAt(),proof.expiresAt(),keyId,supplied);
         try {return MessageDigest.isEqual(actual,expected);} finally {wipe(actual);}
     }
+    /** Purpose-separated keyed fingerprint for secret-bearing activation commands. Not a password verifier.
+     * Bind to the proof's retained key ID, never the active issuance ID, so rotation preserves replay. */
+    public byte[] acceptanceFingerprint(ActionProof proof,String keyId,byte[] token,String password) {
+        if(proof==null || !validId(keyId) || !verifiers.containsKey(keyId) || !canonicalToken(token) || password==null)throw rejected();
+        byte[] encoded=password.getBytes(StandardCharsets.UTF_8);
+        try {
+            Mac mac=Mac.getInstance("HmacSHA256");mac.init(verifiers.get(keyId));
+            mac.update(contextBytes("identity-invitation-acceptance-fingerprint-v1",proof.id(),proof.accountId(),proof.purpose().name(),proof.createdAt(),proof.expiresAt(),keyId));
+            mac.update(token);return mac.doFinal(encoded);
+        }catch(GeneralSecurityException failure){throw rejected();}
+        finally {wipe(encoded);}
+    }
     public byte[] open(Context c,byte[] nonce,byte[] ciphertext,Instant now) {
         if(c==null || now==null || now.isBefore(c.createdAt()) || !now.isBefore(c.expiresAt())
             || nonce==null || nonce.length!=12 || ciphertext==null || ciphertext.length!=59)throw rejected();
