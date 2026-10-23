@@ -258,8 +258,8 @@ class ReportGuardTests(unittest.TestCase):
         for name, methods in reports.S2_REQUIRED.items():
             self.assertEqual(len(methods), len(set(methods)), name)
         # Prior cases retained; authority composition requires9 unit and12 PostgreSQL identities.
-        for mode, passed, skipped in [('architecture', 23, 0), ('h2', 330, 17),
-                                      ('postgres', 485, 5), ('foundation', 5, 0)]:
+        for mode, passed, skipped in [('architecture', 23, 0), ('h2', 350, 17),
+                                      ('postgres', 523, 5), ('foundation', 5, 0)]:
             with self.subTest(mode=mode):
                 self.fixture(mode)
                 self.assertTrue(self.check(mode))
@@ -1161,7 +1161,7 @@ class IdentityGrantApplicationInventoryTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[2]
         source = (root / 'app/backend/src/test/java/com/elogistic/backend/identity/internal/infrastructure/IdentityGrantApplicationTests.java').read_text(encoding='utf-8')
         methods = re.findall(r'@Test\s+void\s+(\w+)\s*\(', source)
-        self.assertEqual(33, len(methods) - len(reports.IDENTITY_AUTHORITY_PG_REQUIRED) - len(reports.IDENTITY_REALM_PG_REQUIRED) - len(reports.IDENTITY_PROVISION_PG_REQUIRED) - len(reports.IDENTITY_INVITATION_PG_REQUIRED) - len(reports.IDENTITY_ACTIVATION_PG_REQUIRED))
+        self.assertEqual(33, len(methods) - len(reports.IDENTITY_AUTHORITY_PG_REQUIRED) - len(reports.IDENTITY_REALM_PG_REQUIRED) - len(reports.IDENTITY_PROVISION_PG_REQUIRED) - len(reports.IDENTITY_INVITATION_PG_REQUIRED) - len(reports.IDENTITY_ACTIVATION_PG_REQUIRED) - len(reports.IDENTITY_SESSION_PG_REQUIRED))
         self.assertEqual(12, len(reports.IDENTITY_AUTHORITY_PG_REQUIRED))
         self.assertEqual(len(methods), len(set(methods)))
         self.assertEqual(methods, reports.REQUIRED[reports.IDENTITY_GRANTS])
@@ -1508,7 +1508,7 @@ class IdentityActivationInventoryTests(unittest.TestCase):
         self.assertEqual(list(ACTIVATION_UNIT_METHODS), reports.REQUIRED[reports.IDENTITY_ACTIVATION_UNIT])
         self.assertEqual(list(ACTIVATION_PG_METHODS), reports.IDENTITY_ACTIVATION_PG_REQUIRED)
         self.assertEqual(12, len(ACTIVATION_UNIT_METHODS)); self.assertEqual(20, len(ACTIVATION_PG_METHODS))
-        self.assertEqual(105, len(reports.REQUIRED[reports.IDENTITY_GRANTS]))
+        self.assertEqual(123, len(reports.REQUIRED[reports.IDENTITY_GRANTS]))
         self.assertEqual(3, len(reports.TASK_C_SUITES))
         self.assertNotIn(reports.IDENTITY_GRANTS, reports.expected_suites('h2'))
         for mode in ('h2', 'postgres'): self.assertIn(reports.IDENTITY_ACTIVATION_UNIT, reports.expected_suites(mode))
@@ -1539,6 +1539,61 @@ class IdentityActivationInventoryTests(unittest.TestCase):
         marker = 'synthetic-private-activation-proof-password-marker'
         ET.SubElement(case, 'failure', message=marker).text = marker
         ET.SubElement(suite, 'system-out').text = marker; suite.set('failures', '1'); self.save(suite)
+        self.assertFalse(self.check('postgres'))
+        self.assertNotIn(marker, ''.join(p.read_text(encoding='utf-8') for p in self.output.iterdir()))
+
+
+
+class IdentitySessionInventoryTests(unittest.TestCase):
+    setUp = ReportGuardTests.setUp
+    fixture = ReportGuardTests.fixture
+    save = ReportGuardTests.save
+    check = ReportGuardTests.check
+
+    def test_session_source_and_execution_inventory_are_exact(self):
+        root = Path(__file__).resolve().parents[2] / 'app/backend/src/test/java/com/elogistic/backend/identity/internal'
+        unit = (root / 'application/IdentitySessionApplicationTests.java').read_text(encoding='utf-8')
+        pg = (root / 'infrastructure/IdentityGrantApplicationTests.java').read_text(encoding='utf-8')
+        self.assertEqual(re.findall(r'@Test\s+void\s+(\w+)\s*\(', unit), reports.IDENTITY_SESSION_UNIT_REQUIRED)
+        self.assertEqual(re.findall(r'@Test\s+void\s+(session\w+)\s*\(', pg), reports.IDENTITY_SESSION_PG_REQUIRED)
+        self.assertEqual(20, len(reports.IDENTITY_SESSION_UNIT_REQUIRED))
+        self.assertEqual(18, len(reports.IDENTITY_SESSION_PG_REQUIRED))
+        self.assertEqual(123, len(reports.REQUIRED[reports.IDENTITY_GRANTS]))
+        self.assertEqual(3, len(reports.TASK_C_SUITES))
+        for mode in ('h2', 'postgres'): self.assertIn(reports.IDENTITY_SESSION_UNIT, reports.expected_suites(mode))
+        self.assertNotIn(reports.IDENTITY_SESSION_UNIT, reports.expected_suites('architecture'))
+        self.assertNotIn('@Disabled', unit)
+
+    def test_each_session_identity_is_mandatory_and_cannot_skip_or_hide_failure(self):
+        for cls, methods, modes in ((reports.IDENTITY_SESSION_UNIT, reports.IDENTITY_SESSION_UNIT_REQUIRED, ('h2', 'postgres')),
+                                    (reports.IDENTITY_GRANTS, reports.IDENTITY_SESSION_PG_REQUIRED, ('postgres',))):
+            for mode in modes:
+                self.fixture(mode)
+                path = self.source / ('TEST-' + cls + '.xml')
+                original = path.read_bytes()
+                for method in methods:
+                    for status in ('missing', 'renamed', 'skipped', 'failure', 'error'):
+                        with self.subTest(mode=mode, method=method, status=status):
+                            suite = ET.fromstring(original)
+                            case = next(c for c in suite if c.get('name') == method)
+                            if status == 'missing':
+                                suite.remove(case); suite.set('tests', str(len(suite.findall('testcase'))))
+                            elif status == 'renamed': case.set('name', 'unapprovedSessionCase')
+                            else:
+                                ET.SubElement(case, status)
+                                suite.set({'skipped':'skipped', 'failure':'failures', 'error':'errors'}[status], '1')
+                            self.save(suite); self.assertFalse(self.check(mode))
+                path.write_bytes(original); self.assertTrue(self.check(mode))
+
+    def test_session_secret_diagnostics_are_not_published(self):
+        self.fixture('postgres')
+        path = self.source / ('TEST-' + reports.IDENTITY_GRANTS + '.xml')
+        suite = ET.parse(path).getroot()
+        case = next(c for c in suite if c.get('name') == reports.IDENTITY_SESSION_PG_REQUIRED[0])
+        marker = 'synthetic-private-session-password-refresh-marker'
+        ET.SubElement(case, 'failure', message=marker).text = marker
+        ET.SubElement(suite, 'system-out').text = marker
+        suite.set('failures', '1'); self.save(suite)
         self.assertFalse(self.check('postgres'))
         self.assertNotIn(marker, ''.join(p.read_text(encoding='utf-8') for p in self.output.iterdir()))
 

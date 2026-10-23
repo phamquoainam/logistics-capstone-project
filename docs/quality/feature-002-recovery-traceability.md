@@ -574,3 +574,28 @@ This record and linked evidence are the only two paths in the later documentatio
 publication. Source CI does not test that docs-only commit. Protected main
 traceability and six original Foundation changes remain untouched. No source,
 SQL, contract, workflow, policy, credentials or runtime behavior changes here.
+
+
+## Identity Session Application source trace - 2026-10-23
+
+[Bounded Session source and actual evidence](../implementation/t-002-05-identity-session-evidence.md).
+T_002_05_SESSION_APPLICATION_IMPLEMENTED_VERIFICATION_PENDING; source baseline
+merged PR23/d0615d2. Prior Activation CI proves only its historical revision.
+
+| Trace | Implemented support | Actual evidence / limit |
+| --- | --- | --- |
+| REQ-002-01/02; ADR-0009/0010 | Authoritative exact credentials/account/ACTIVE Realm, no pending/disabled/Demo fallback | New20 unit cases PASS; real session PostgreSQL admission UNVERIFIED |
+| REQ-002-03 | Real BCrypt verification,256-bit refresh material/digest-only persistence, secret-safe owned buffers and mandatory security admission port | Crypto/unit negatives PASS; full HTTP/Origin/CSRF/throttle/JWT signing remain T-002-06 |
+| REQ-002-05; AC-002-02/03/04/05 support | Session deadlines/authVersion, atomic rotation, durable strict replay revocation, scoped idempotent logout |18 PostgreSQL cases AUTHORED, not executed; transaction/concurrency acceptance pending |
+| CI inventory/privacy | Every new20+18 method mandatory; preserve123 Grant/Application identities and three lifecycle suites |116 Python report-policy controls PASS, including290 method mutations; no skip relaxation |
+
+Focused Java55/55 (Session20/Activation12/Architecture23) and migration static15/15
+PASS. Full H2 result and current-source PostgreSQL/CI coverage are separately
+recorded in linked evidence. Future PG523/5 skips is not an executed result.
+V1-V5/Domain/contracts/Demo, main traceability and six original Foundation paths
+preserved. T-002-05 remains PARTIAL; Feature002/AC-002-01..05 NOT ACCEPTED;
+GRANT_MUTATION_FUNCTIONALITY_LIMITED remains; no business-feature readiness.
+
+Session local full default/H2 clean verify:350 PASS/0 FAIL/0 ERROR/17 expected
+skips; actual strict report guard exit0. This does not prove PostgreSQL or new
+GitHub CI. Current-source Session PostgreSQL18 cases remain UNVERIFIED.

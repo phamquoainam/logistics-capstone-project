@@ -449,3 +449,25 @@ T-002-05 stays PARTIAL and canonical checkbox unchecked; Feature002 and
 AC-002-01..05 NOT ACCEPTED. GRANT_MUTATION_FUNCTIONALITY_LIMITED remains.
 Future business-feature scope requires separate owner review when dependencies
 are actually ready; no Merchant/Business Admin/Shipper implementation here.
+
+
+## T-002-05 bounded Session Application - 2026-10-23
+
+OWNER_IDENTITY_SESSION_APPLICATION: CONDITIONAL_GO.
+[Current source/evidence and PostgreSQL handoff](../../docs/implementation/t-002-05-identity-session-evidence.md).
+T_002_05_SESSION_APPLICATION_IMPLEMENTED_VERIFICATION_PENDING.
+
+- [x] Implement backend login/refresh/logout, mandatory trusted admission port and real BCrypt/opaque-refresh crypto; no production HTTP/JWT registration.
+- [x] Implement same-DataSource session/family/audit atomicity, strict replay commit-before-denial, current account/authVersion/Realm checks and scoped logout.
+- [x] Author20 unit +18 PostgreSQL cases; preserve105 previous integration methods, immutable V1-V5 and three-suite cleanup registry.
+- [x] Compile/run focused55 Java tests;116 policy and15 migration static controls PASS.
+- [ ] Verify current-source PostgreSQL transaction/rollback/races, exact reports and credential/privacy/owned cleanup on an authorized Docker runtime/CI.
+- [ ] Complete remaining current-session/activity, recovery/resend/lifecycle/query and authoritative security use cases; later HTTP integration stays T-002-06.
+
+Canonical T-002-05 checkbox stays open/PARTIAL; original DoD/REQ/AC unchanged.
+Feature002/AC-002-01..05 NOT ACCEPTED; GRANT_MUTATION_FUNCTIONALITY_LIMITED retained.
+No automatic publication, dispatch, new business feature or production deployment.
+
+Session local full default/H2 clean verify:350 PASS/0 FAIL/0 ERROR/17 expected
+skips; actual strict report guard exit0. This does not prove PostgreSQL or new
+GitHub CI. Current-source Session PostgreSQL18 cases remain UNVERIFIED.
