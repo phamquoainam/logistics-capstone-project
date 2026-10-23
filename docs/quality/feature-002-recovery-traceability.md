@@ -482,3 +482,21 @@ T-002-05 remains PARTIAL. Feature002/AC-002-01..05 NOT ACCEPTED.
 Pending: sender/worker, maintenance/scheduled purge, invitation consumption,
 password setup/account activation, remaining Application use cases and subsequent
 HTTP/integration acceptance. Preserve GRANT_MUTATION_FUNCTIONALITY_LIMITED.
+
+
+## Invitation activation source trace ? 2026-10-23
+
+T-002-05 bounded source IMPLEMENTED_VERIFICATION_PENDING under explicit owner
+approval; original REQ/AC and canonical DoD remain unchanged.
+
+| Trace | Authored source/tests | Actual evidence |
+| --- | --- | --- |
+| REQ-002-01; DEC-04; ADR-0009/0010 |AcceptIdentityInvitation, Domain activate;20 activation PG methods |Source only; real activation/Realm/concurrency UNVERIFIED |
+| REQ-002-03; O4; ADR-0011 |ProtectedInvitationCredentials;12 Application unit methods; password/token/key negatives |No new JVM/BCrypt/JCE runtime; policy controls are not crypto proof |
+| REQ-002-04/05; transaction/idempotency |Proof receipt, audit, version/authVersion, revoke/rollback/race cases |Existing85 PG bodies preserved; new runtime UNVERIFIED |
+| CI inventory/privacy |Exact12 unit +20 PG identities; same skips and owned lifecycle |113 Python policy PASS;15 migration-source PASS; Outbox source9/10 methods with V3/V4 CRLF hash limitation |
+
+[Full sanitized evidence and exact manifest](../implementation/t-002-05-invitation-activation-evidence.md).
+T-002-05 PARTIAL; Feature002/AC-002-01..05 NOT ACCEPTED; grant limitation retained.
+Main traceability and original six Foundation files unchanged. No business-feature
+readiness/approval is inferred from Identity Admin provisioning or activation.

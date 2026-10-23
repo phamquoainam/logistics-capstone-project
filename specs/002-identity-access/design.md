@@ -94,3 +94,23 @@ Remaining implementation decisions: deployment bootstrap/secret operations, prod
 OWNER_T_002_02_FINAL_VERIFICATION_APPROVAL authorizes focused contract review/corrections and acceptance. T-002-02 DONE for exact OpenAPI SHA-256 acf92380c325698a1370a2ade6accff82bb338c4524f6328a9613d3e4b7b6128:512 fresh contract checks (43 document mutation controls included) and one Linux Redocly2.64.0 strict lint, exit0/zero errors/warnings/ignored. Prior review-pending state above is historical. No canonical REQ/AC text, accepted ADR or global DEC-25 change.
 Logout now permits an absent refresh cookie after successful logout, while always requiring server-bound CSRF and exact Origin; family binding remains required when refresh cookie is supplied. Recovery receipt scope is server-preauth/operation/key, equal for eligible/ineligible inputs; delivery authority is stored verified email, never arbitrary submitted email. [Full findings, evidence and migration handoff](../../docs/implementation/t-002-02-identity-contract-evidence.md#t-002-02-final-review-and-acceptance-2026-10-21).
 21 original behavioral expectations plus4 logout case declarations remain future HTTP/PostgreSQL/runtime acceptance, not tested effects. Supplemental traceability is explicitly authorized for this task; main Foundation traceability stays protected. Feature002 and AC-002-01..05 remain unaccepted; T-002-03 is next only under separate implementation authorization.
+
+
+## T-002-05 bounded invitation activation application ? 2026-10-23
+
+[Implementation checkpoint](../../docs/implementation/t-002-05-invitation-activation-evidence.md)
+records owner-approved Application source, not new HTTP/wire behavior. Internal
+command carries proof locator, owned token buffer, exact password and operation/
+correlation IDs. Proof locator is never authority; existing HMAC with retained
+key, current pending account/exact grant/destination/ACTIVE Realm admit only the
+ordinary provisioned target. Resolving accepted HTTP token/password to proof
+context remains T-002-06; no new request field/envelope is introduced here.
+Reuse existing Domain activate/password policy and Identity transaction lock.
+Password, proof, account/versions, revocation, audit, receipt and matching obsolete
+outbox payload clearing commit atomically; exact authorized same-key replay is a
+no-op. Keyed fingerprint uses a new explicit HMAC purpose separator under the
+proof's retained verifier key; it is never a plaintext/unkeyed password digest.
+No external I/O or session issuance. Runtime role has no Realm UPDATE/bootstrap
+privilege; inactive bootstrap flow remains separate and fails closed here.
+Production composition is explicit/unregistered with externally supplied rings.
+Java/PostgreSQL effects and32 new tests remain UNVERIFIED; no accepted AC change.

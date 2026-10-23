@@ -797,4 +797,165 @@ class IdentityGrantApplicationTests {
         assertEquals(0,scalar("SELECT count(*) FROM identity.invitation_outbox"));
     }
 
+
+    // Activation tests reuse this suite's three-suite owned Testcontainers lifecycle unchanged.
+    private static final String ACTIVATION_PASSWORD="Synthetic-only-activation-password";
+    private record ActivationFixture(UUID account,UUID proof,byte[] token) implements AutoCloseable {
+        @Override public void close(){Arrays.fill(token,(byte)0);}
+        @Override public String toString(){return "ActivationFixture[redacted]";}
+    }
+    private ActivationFixture activationFixture(InvitationProtection protection) throws Exception {
+        db.activateRealmForTest(SCOPE);
+        UUID target=secureProvision(protection).provisionIdentityAccount(provisionCommand()).account().id();
+        var worker=outbox(protection,NOW);var lease=worker.claim().orElseThrow();
+        // Synthetic trusted-boundary input, not an assertion of external email delivery.
+        try(var delivery=worker.open(lease);Connection c=db.runtimeConnection();PreparedStatement q=c.prepareStatement("SELECT id FROM identity.action_proof WHERE account_id=? AND purpose='INVITATION'")) {
+            q.setObject(1,target);try(ResultSet r=q.executeQuery()){assertTrue(r.next());return new ActivationFixture(target,r.getObject(1,UUID.class),delivery.token().clone());}
+        }
+    }
+    private com.elogistic.backend.identity.api.IdentityInvitationCommands activationApp(InvitationProtection protection,Instant now) {
+        return ProductionIdentityActivationComposition.create(outboxDataSource(),protection,Clock.fixed(now,ZoneOffset.UTC),Duration.ofHours(24));
+    }
+    private void accept(ActivationFixture f,InvitationProtection p,UUID key,String password,Instant now) {
+        try(var command=new com.elogistic.backend.identity.api.IdentityInvitationCommands.Command(f.proof(),f.token(),password,key,REQUEST)) {
+            activationApp(p,now).acceptIdentityInvitation(command);
+        }
+    }
+    private void activationRejected(IdentityCommandFailure.Code code,ActivationFixture f,InvitationProtection p,UUID key,String password,Instant now) throws Exception {
+        var before=secureSnapshot();var error=assertThrows(IdentityCommandFailure.class,()->accept(f,p,key,password,now));
+        assertEquals(code,error.code());assertEquals(code.name(),error.getMessage());assertEquals(before,secureSnapshot());
+    }
+    private void activationRollback(String table,String event) throws Exception {
+        var p=outboxProtection();try(var f=activationFixture(p)) {
+            failWrite(table,event);var before=secureSnapshot();assertThrows(org.springframework.dao.DataAccessException.class,()->accept(f,p,id(201),ACTIVATION_PASSWORD,NOW));assertEquals(before,secureSnapshot());
+        }
+    }
+    @Test void activationCommitsVerifierProofVersionsAuditReceiptWithoutSession() throws Exception {
+        var p=outboxProtection();try(var f=activationFixture(p)) {
+            accept(f,p,id(201),ACTIVATION_PASSWORD,NOW);
+            assertEquals(1,scalar("SELECT count(*) FROM identity.user_account WHERE id='"+f.account()+"' AND status='ACTIVE' AND email_verified AND activated_at IS NOT NULL AND version=2 AND auth_version=2"));
+            try(Connection c=db.runtimeConnection();PreparedStatement q=c.prepareStatement("SELECT password_hash FROM identity.user_account WHERE id=?")) {
+                q.setObject(1,f.account());try(ResultSet r=q.executeQuery()){assertTrue(r.next());assertTrue(new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder().matches(ACTIVATION_PASSWORD,r.getString(1)));assertFalse(r.getString(1).equals(ACTIVATION_PASSWORD));}
+            }
+            assertEquals(1,scalar("SELECT count(*) FROM identity.action_proof WHERE id='"+f.proof()+"' AND consumed_at IS NOT NULL"));
+            assertEquals(1,scalar("SELECT count(*) FROM identity.audit_entry WHERE target_id='"+f.account()+"' AND event_type='IDENTITY_INVITATION_ACCEPTED'"));
+            assertEquals(1,scalar("SELECT count(*) FROM identity.command_receipt WHERE proof_id='"+f.proof()+"' AND result_status=204 AND original_version=1 AND result_version=2 AND expires_at>=created_at+INTERVAL '24 hours'"));
+            assertEquals(0,scalar("SELECT count(*) FROM identity.auth_session WHERE account_id='"+f.account()+"'"));
+        }
+    }
+    @Test void activationExactReceiptReplayHasNoSecondEffect() throws Exception {
+        var p=outboxProtection();try(var f=activationFixture(p)){accept(f,p,id(201),ACTIVATION_PASSWORD,NOW);var before=secureSnapshot();accept(f,p,id(201),ACTIVATION_PASSWORD,NOW.plusSeconds(1));assertEquals(before,secureSnapshot());}
+    }
+    @Test void activationChangedPasswordConflictsOnTheBoundReceipt() throws Exception {
+        var p=outboxProtection();try(var f=activationFixture(p)){accept(f,p,id(201),ACTIVATION_PASSWORD,NOW);activationRejected(IDEMPOTENCY_CONFLICT,f,p,id(201),ACTIVATION_PASSWORD+"-changed",NOW);}
+    }
+    @Test void activationWrongTokenAndUnknownLocatorCannotAuthenticate() throws Exception {
+        var p=outboxProtection();try(var f=activationFixture(p);var wrong=new ActivationFixture(f.account(),f.proof(),Base64.getUrlEncoder().withoutPadding().encode(outboxKey()));var unknown=new ActivationFixture(f.account(),UUID.randomUUID(),f.token().clone())) {
+            activationRejected(TOKEN_INVALID_OR_EXPIRED,wrong,p,id(201),ACTIVATION_PASSWORD,NOW);activationRejected(TOKEN_INVALID_OR_EXPIRED,unknown,p,id(201),ACTIVATION_PASSWORD,NOW);
+        }
+    }
+    @Test void activationExactExpiryAndFutureProofFailClosed() throws Exception {
+        var p=outboxProtection();try(var f=activationFixture(p)){activationRejected(TOKEN_INVALID_OR_EXPIRED,f,p,id(201),ACTIVATION_PASSWORD,NOW.plusSeconds(86400));activationRejected(TOKEN_INVALID_OR_EXPIRED,f,p,id(201),ACTIVATION_PASSWORD,NOW.minusSeconds(1));}
+    }
+    @Test void activationConsumedAndRevokedProofCannotBeUsedAgain() throws Exception {
+        var p=outboxProtection();try(var f=activationFixture(p)) {
+            execute("UPDATE identity.action_proof SET revoked_at=created_at WHERE id='"+f.proof()+"'");activationRejected(TOKEN_INVALID_OR_EXPIRED,f,p,id(201),ACTIVATION_PASSWORD,NOW);
+        }
+        fixture();p=outboxProtection();try(var f=activationFixture(p)){accept(f,p,id(201),ACTIVATION_PASSWORD,NOW);activationRejected(TOKEN_INVALID_OR_EXPIRED,f,p,id(202),ACTIVATION_PASSWORD,NOW);}
+    }
+    @Test void activationWrongPurposeAndAccountBindingAreRejected() throws Exception {
+        var p=outboxProtection();try(var f=activationFixture(p)) {
+            UUID recovery=id(250);execute("INSERT INTO identity.action_proof(id,account_id,purpose,token_hash,created_at,expires_at,verifier_key_id) VALUES ('"+recovery+"','"+f.account()+"','RECOVERY',decode(repeat('23',32),'hex'),TIMESTAMPTZ '2026-10-21 00:05:00Z',TIMESTAMPTZ '2026-10-21 00:20:00Z','v1')");
+            try(var wrong=new ActivationFixture(f.account(),recovery,f.token().clone())){activationRejected(TOKEN_INVALID_OR_EXPIRED,wrong,p,id(201),ACTIVATION_PASSWORD,NOW);}
+            try(Connection c=db.runtimeConnection();Statement q=c.createStatement();ResultSet r=q.executeQuery("SELECT created_at,expires_at,token_hash FROM identity.action_proof WHERE id='"+f.proof()+"'")) {
+                assertTrue(r.next());var wrong=new ActionProof(f.proof(),A,ActionProof.Purpose.INVITATION,r.getTimestamp(1).toInstant(),r.getTimestamp(2).toInstant(),ActionProof.State.AVAILABLE,null);
+                assertFalse(p.matches(wrong,"v1",f.token(),r.getBytes(3),NOW));
+            }
+        }
+    }
+    @Test void activationDisabledPendingAccountIsNotReactivated() throws Exception {
+        var p=outboxProtection();try(var f=activationFixture(p)){execute("UPDATE identity.user_account SET status='DISABLED',disabled_at=updated_at WHERE id='"+f.account()+"'");activationRejected(INVALID_ACCOUNT_STATE,f,p,id(201),ACTIVATION_PASSWORD,NOW);}
+    }
+    @Test void activationInactiveRealmAndRemovedGrantDeny() throws Exception {
+        for(boolean grant:List.of(false,true)) {
+            fixture();var p=outboxProtection();try(var f=activationFixture(p)) {
+                if(grant)execute("DELETE FROM identity.account_grant WHERE account_id='"+f.account()+"'");else db.ownerExecute("UPDATE identity.realm SET status='INACTIVE',updated_at=CURRENT_TIMESTAMP");
+                activationRejected(INVALID_ACCOUNT_STATE,f,p,id(201),ACTIVATION_PASSWORD,NOW);
+            }
+        }
+    }
+    @Test void activationPasswordBoundsPrecedeEveryPersistentWrite() throws Exception {
+        var p=outboxProtection();try(var f=activationFixture(p)) {
+            for(String password:List.of("x".repeat(14),"x".repeat(73),"\u20ac".repeat(25),"\ud800"+"x".repeat(20)))activationRejected(VALIDATION_FAILED,f,p,id(201),password,NOW);
+            accept(f,p,id(201),"\u20ac".repeat(24),NOW);
+            assertEquals(1,scalar("SELECT count(*) FROM identity.user_account WHERE id='"+f.account()+"' AND status='ACTIVE'"));
+        }
+    }
+    @Test void activationPasswordWriteFailureRollsBackAllEffects() throws Exception {activationRollback("user_account","UPDATE");}
+    @Test void activationAuditFailureRollsBackAllEffects() throws Exception {activationRollback("audit_entry","INSERT");}
+    @Test void activationReceiptFailureRollsBackAllEffects() throws Exception {activationRollback("command_receipt","INSERT");}
+    @Test void activationProofConsumptionFailureRollsBackPassword() throws Exception {activationRollback("action_proof","UPDATE");}
+    @Test void activationPayloadClearFailureRollsBackConsumption() throws Exception {activationRollback("invitation_outbox","UPDATE");}
+    private List<Object> activationRace(ActivationFixture f,InvitationProtection p,boolean sameKey) throws Exception {
+        var pool=Executors.newFixedThreadPool(2);var ready=new CountDownLatch(2);var start=new CountDownLatch(1);
+        try {
+            var tasks=new ArrayList<Future<Object>>();
+            for(UUID key:List.of(id(201),sameKey?id(201):id(202)))tasks.add(pool.submit(()->{
+                ready.countDown();if(!start.await(5,TimeUnit.SECONDS))throw new AssertionError("Activation start timeout");
+                try{accept(f,p,key,ACTIVATION_PASSWORD,NOW);return "COMMITTED";}catch(IdentityCommandFailure e){return e.code();}
+            }));
+            assertTrue(ready.await(5,TimeUnit.SECONDS));start.countDown();return List.of(tasks.get(0).get(20,TimeUnit.SECONDS),tasks.get(1).get(20,TimeUnit.SECONDS));
+        }finally{start.countDown();pool.shutdownNow();assertTrue(pool.awaitTermination(5,TimeUnit.SECONDS));}
+    }
+    @Test void activationConcurrentDifferentKeysConsumeExactlyOnce() throws Exception {
+        var p=outboxProtection();try(var f=activationFixture(p)) {
+            var results=activationRace(f,p,false);assertEquals(1,results.stream().filter("COMMITTED"::equals).count());assertEquals(1,results.stream().filter(TOKEN_INVALID_OR_EXPIRED::equals).count());
+            assertEquals(1,scalar("SELECT count(*) FROM identity.command_receipt WHERE proof_id='"+f.proof()+"'"));
+        }
+    }
+    @Test void activationConcurrentSameKeyHasOneDurableEffect() throws Exception {
+        var p=outboxProtection();try(var f=activationFixture(p)) {
+            assertTrue(activationRace(f,p,true).stream().allMatch("COMMITTED"::equals));
+            assertEquals(1,scalar("SELECT count(*) FROM identity.audit_entry WHERE target_id='"+f.account()+"' AND event_type='IDENTITY_INVITATION_ACCEPTED'"));
+            assertEquals(2,scalar("SELECT version FROM identity.user_account WHERE id='"+f.account()+"'"));
+        }
+    }
+    @Test void activationRetiredKeyRotationSupportsReplayAndMissingKeyDenies() throws Exception {
+        byte[] v=outboxKey(),e=outboxKey();var p=new InvitationProtection(Map.of("v1",v),"v1",Map.of("e1",e),"e1");
+        try(var f=activationFixture(p)) {
+            var rotated=new InvitationProtection(Map.of("v1",v,"v2",outboxKey()),"v2",Map.of("e1",e,"e2",outboxKey()),"e2");
+            accept(f,rotated,id(201),ACTIVATION_PASSWORD,NOW);accept(f,rotated,id(201),ACTIVATION_PASSWORD,NOW);
+            var missing=new InvitationProtection(Map.of("v2",outboxKey()),"v2",Map.of("e2",outboxKey()),"e2");
+            activationRejected(TOKEN_INVALID_OR_EXPIRED,f,missing,id(201),ACTIVATION_PASSWORD,NOW);
+        }finally{Arrays.fill(v,(byte)0);Arrays.fill(e,(byte)0);}
+    }
+    @Test void activationOptimisticVersionMismatchRollsBackTheTransaction() throws Exception {
+        var p=outboxProtection();try(var f=activationFixture(p)) {
+            var source=outboxDataSource();var real=new ProtectedInvitationCredentials(p);
+            var credentials=new com.elogistic.backend.identity.internal.application.port.InvitationCredentials() {
+                public boolean matches(com.elogistic.backend.identity.internal.application.port.IdentityInvitationStore.StoredProof proof,byte[] token,Instant now){return real.matches(proof,token,now);}
+                public byte[] fingerprint(com.elogistic.backend.identity.internal.application.port.IdentityInvitationStore.StoredProof proof,byte[] token,String password){return real.fingerprint(proof,token,password);}
+                public String hashPassword(String password){new org.springframework.jdbc.core.JdbcTemplate(source).update("UPDATE identity.user_account SET version=version+1 WHERE id=?",f.account());return real.hashPassword(password);}
+            };
+            var app=new com.elogistic.backend.identity.internal.application.AcceptIdentityInvitation(new JdbcIdentityInvitationStore(source),credentials,Clock.fixed(NOW,ZoneOffset.UTC),Duration.ofHours(24));
+            var before=secureSnapshot();try(var command=new com.elogistic.backend.identity.api.IdentityInvitationCommands.Command(f.proof(),f.token(),ACTIVATION_PASSWORD,id(201),REQUEST)) {
+                assertEquals(INVALID_ACCOUNT_STATE,assertThrows(IdentityCommandFailure.class,()->app.acceptIdentityInvitation(command)).code());
+            }
+            assertEquals(before,secureSnapshot());
+        }
+    }
+    @Test void activationRedactsSecretsRevokesOldSessionsAndDeniesStaleDelivery() throws Exception {
+        var p=outboxProtection();try(var f=activationFixture(p)) {
+            session(id(260),f.account());long sessions=scalar("SELECT count(*) FROM identity.auth_session");
+            var auditBefore=scalar("SELECT count(*) FROM identity.audit_entry");var receiptBefore=scalar("SELECT count(*) FROM identity.command_receipt");
+            accept(f,p,id(201),ACTIVATION_PASSWORD,NOW);
+            assertEquals(sessions,scalar("SELECT count(*) FROM identity.auth_session"));assertEquals(1,scalar("SELECT count(*) FROM identity.auth_session WHERE account_id='"+f.account()+"' AND revoked_at IS NOT NULL"));
+            assertEquals(auditBefore+1,scalar("SELECT count(*) FROM identity.audit_entry"));assertEquals(receiptBefore+1,scalar("SELECT count(*) FROM identity.command_receipt"));
+            assertEquals(1,scalar("SELECT count(*) FROM identity.invitation_outbox WHERE proof_id='"+f.proof()+"' AND ciphertext IS NULL AND nonce IS NULL AND lease_id IS NULL"));
+            assertTrue(outbox(p,NOW).claim().isEmpty());assertEquals(1,scalar("SELECT count(*) FROM identity.realm WHERE id='"+SCOPE+"' AND status='ACTIVE'"));
+            String rows=secureSnapshot().toString();assertFalse(rows.contains(ACTIVATION_PASSWORD));assertFalse(rows.contains(new String(f.token(),java.nio.charset.StandardCharsets.US_ASCII)));
+            try(var command=new com.elogistic.backend.identity.api.IdentityInvitationCommands.Command(f.proof(),f.token(),ACTIVATION_PASSWORD,id(201),REQUEST)){assertFalse(command.toString().contains(ACTIVATION_PASSWORD));assertFalse(command.toString().contains(new String(f.token(),java.nio.charset.StandardCharsets.US_ASCII)));}
+        }
+    }
+
 }

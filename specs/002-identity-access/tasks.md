@@ -430,3 +430,22 @@ Email sender/worker, maintenance/scheduled purge, invitation consumption, passwo
 setup/activation and remaining Application use cases stay pending.
 GRANT_MUTATION_FUNCTIONALITY_LIMITED remains. No production delivery/bootstrap,
 HTTP/API completion, full feature acceptance or new publication is implied.
+
+
+## Invitation consumption / initial activation ? 2026-10-23
+
+OWNER_T_002_05_INVITATION_ACTIVATION: GO; bounded Application source
+IMPLEMENTED_VERIFICATION_PENDING. [Scope, exact tests/files and limitations](../../docs/implementation/t-002-05-invitation-activation-evidence.md).
+
+- [x] Author inward application/store/crypto ports and explicit runtime JDBC composition, reusing Domain password/account/proof policy and V3-V5.
+- [x] Author atomic proof authentication/consumption, BCrypt password setup, ACTIVE account/version/authVersion, revocation/audit/proof-bound receipt and obsolete payload clearing; no Realm activation, HTTP or login.
+- [x] Author12 unit +20 PostgreSQL activation cases; retain all85 existing grant/provision/outbox PG test bodies and three-suite cleanup protocol.
+- [x] Execute113 Python report-policy and15 migration-source controls; exact inventory/expected skips preserved.
+- [ ] Resolve/carry Windows raw-byte source-guard limitation:9/10 Outbox source methods PASS, V3/V4 CRLF checkout differs from pinned LF blobs despite no SQL diff.
+- [ ] Execute current-source Java compile/ArchUnit/H2/PostgreSQL/crypto/transaction/races, exact reports, runtime privacy and owned cleanup on an approved runner.
+- [ ] Complete other canonical Application use cases; HTTP proof locator/admission stays T-002-06, actual sender/maintenance T-002-08.
+
+T-002-05 stays PARTIAL and canonical checkbox unchecked; Feature002 and
+AC-002-01..05 NOT ACCEPTED. GRANT_MUTATION_FUNCTIONALITY_LIMITED remains.
+Future business-feature scope requires separate owner review when dependencies
+are actually ready; no Merchant/Business Admin/Shipper implementation here.

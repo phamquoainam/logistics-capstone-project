@@ -2116,3 +2116,17 @@ Application use cases, later HTTP/browser/integration acceptance.
 provisioning acceptance does not authorize general effective grant replacement.
 QUEUED, SENT, CONSUMED and ACTIVE remain distinct; no actual email delivery,
 production worker, activation or bootstrap execution is implied.
+
+
+## Invitation activation application checkpoint ? 2026-10-23
+
+OWNER_T_002_05_INVITATION_ACTIVATION: GO. Source implemented in isolated
+feature/002-identity-activation from merged develop3c1fd042, without changing the
+original Foundation worktree. [Exact flow,18-file manifest, tests, boundaries and
+CI handoff](t-002-05-invitation-activation-evidence.md).
+12 unit +20 PG methods authored/UNVERIFIED;113 policy and15 migration-source
+controls PASS. Existing Outbox source guard9/10 methods PASS with2 immutable-hash
+subfailures caused by untouched Windows V3/V4 CRLF checkout versus pinned LF
+blobs; no migration or pinned hash was changed. Actual JVM/PostgreSQL/privacy/
+cleanup remains UNVERIFIED. No commit/push/PR/dispatch or production services.
+T-002-05 PARTIAL, Feature002/ACs NOT ACCEPTED; grant limitation retained.

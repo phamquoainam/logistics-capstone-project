@@ -359,6 +359,46 @@ IDENTITY_INVITATION_PG_REQUIRED = [
     'secureOutboxRejectsIntentOutsideTheProvisionTransaction',
 ]
 REQUIRED[IDENTITY_GRANTS] += IDENTITY_INVITATION_PG_REQUIRED
+
+IDENTITY_ACTIVATION_UNIT = BASE + 'identity.internal.application.IdentityInvitationActivationTests'
+IDENTITY_ACTIVATION_UNIT_REQUIRED = [
+    'validActivationInvokesAllWritesInsideTheTransaction',
+    'missingCommandIdentifiersFailBeforeTheStore',
+    'invalidNewPasswordsNeverReachPersistence',
+    'passwordUnicodeAndUtf8BoundsReuseTheDomainPolicy',
+    'invalidTokenCannotReachReceiptOrPasswordHashing',
+    'unavailableRealmCannotReachPasswordHashing',
+    'consumedProofWithoutExactReceiptCannotActivate',
+    'exactConsumedProofReceiptReplayHasNoWrites',
+    'changedReceiptFingerprintConflictsBeforeAnyWrite',
+    'replayRequiresCurrentActiveAccountAndRetainedVersion',
+    'receiptRetentionCannotBeShortenedBelowTwentyFourHours',
+    'commandBuffersAreCopiedRedactedAndClosed',
+]
+REQUIRED[IDENTITY_ACTIVATION_UNIT] = IDENTITY_ACTIVATION_UNIT_REQUIRED
+IDENTITY_ACTIVATION_PG_REQUIRED = [
+    'activationCommitsVerifierProofVersionsAuditReceiptWithoutSession',
+    'activationExactReceiptReplayHasNoSecondEffect',
+    'activationChangedPasswordConflictsOnTheBoundReceipt',
+    'activationWrongTokenAndUnknownLocatorCannotAuthenticate',
+    'activationExactExpiryAndFutureProofFailClosed',
+    'activationConsumedAndRevokedProofCannotBeUsedAgain',
+    'activationWrongPurposeAndAccountBindingAreRejected',
+    'activationDisabledPendingAccountIsNotReactivated',
+    'activationInactiveRealmAndRemovedGrantDeny',
+    'activationPasswordBoundsPrecedeEveryPersistentWrite',
+    'activationPasswordWriteFailureRollsBackAllEffects',
+    'activationAuditFailureRollsBackAllEffects',
+    'activationReceiptFailureRollsBackAllEffects',
+    'activationProofConsumptionFailureRollsBackPassword',
+    'activationPayloadClearFailureRollsBackConsumption',
+    'activationConcurrentDifferentKeysConsumeExactlyOnce',
+    'activationConcurrentSameKeyHasOneDurableEffect',
+    'activationRetiredKeyRotationSupportsReplayAndMissingKeyDenies',
+    'activationOptimisticVersionMismatchRollsBackTheTransaction',
+    'activationRedactsSecretsRevokesOldSessionsAndDeniesStaleDelivery',
+]
+REQUIRED[IDENTITY_GRANTS] += IDENTITY_ACTIVATION_PG_REQUIRED
 PG = BASE + 'demo.PostgresFoundationTests'
 PG_ONLY = {PG, BASE + 'demo.PostgresHealthSafetyTests'}
 FOUNDATION_ONLY = {BASE + 'demo.FoundationDependencyTests'}
