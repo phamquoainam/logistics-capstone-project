@@ -620,6 +620,20 @@ class IdentityGrantApplicationTests {
         assertEquals(0,scalar("SELECT count(*) FROM identity.auth_session WHERE account_id='"+target+"'"));
         assertEquals(1,scalar("SELECT count(*) FROM identity.user_account WHERE id='"+target+"' AND status='PENDING_ACTIVATION' AND NOT email_verified AND password_hash IS NULL"));
     }
+    /** Expected state includes the writer's deliberate uncommitted authority change, while
+     * the administration lock still prevents provisioning effects from contaminating the oracle. */
+    private Map<String,List<String>> provisionAdmissionSnapshot(Connection connection) throws SQLException {
+        var tables=new TreeSet<>(TABLES);
+        tables.addAll(List.of("action_proof","synthetic_invitation_intent","invitation_outbox","realm"));
+        var rows=new TreeMap<String,List<String>>();
+        for(String table:tables) {
+            try(Statement statement=connection.createStatement();ResultSet result=statement.executeQuery(
+                    "SELECT row_to_json(t)::text FROM identity."+table+" t ORDER BY row_to_json(t)::text")) {
+                var values=new ArrayList<String>();while(result.next())values.add(result.getString(1));rows.put(table,values);
+            }
+        }
+        return rows;
+    }
     @Test void provisionWaitsForConcurrentActorAndRealmStateBeforeAdmission() throws Exception {
         for(boolean deactivateRealm:List.of(false,true)) {
             fixture();provisionFixture(true);var app=provisionApp(new AtomicInteger(),false);var pool=Executors.newSingleThreadExecutor();Future<IdentityCommandFailure.Code> waiting=null;
@@ -629,7 +643,11 @@ class IdentityGrantApplicationTests {
                 waiting=pool.submit(()->{try {app.provisionIdentityAccount(provisionCommand());throw new AssertionError("Must deny after current-state change");}catch(IdentityCommandFailure denied){return denied.code();}});
                 boolean blocked=false;long deadline=System.nanoTime()+TimeUnit.SECONDS.toNanos(3);
                 while(System.nanoTime()<deadline) {if(scalar("SELECT count(*) FROM pg_locks WHERE locktype='advisory' AND NOT granted AND database=(SELECT oid FROM pg_database WHERE datname=current_database())")>0){blocked=true;break;}Thread.sleep(10);}
-                assertTrue(blocked);var before=provisionSnapshot();c.commit();assertEquals(deactivateRealm ? AUTHORITY_REQUIRED : SESSION_INVALID,waiting.get(10,TimeUnit.SECONDS));assertEquals(before,provisionSnapshot());
+                assertTrue(blocked);assertFalse(waiting.isDone());
+                var expected=provisionAdmissionSnapshot(c); // Read our own intentional actor/Realm delta, not stale committed data.
+                c.commit();
+                assertEquals(deactivateRealm ? AUTHORITY_REQUIRED : SESSION_INVALID,waiting.get(10,TimeUnit.SECONDS));
+                try(Connection observed=db.runtimeConnection()) {assertEquals(expected,provisionAdmissionSnapshot(observed));}
             } finally {if(waiting!=null && !waiting.isDone())waiting.cancel(true);pool.shutdownNow();assertTrue(pool.awaitTermination(5,TimeUnit.SECONDS));}
         }
     }
