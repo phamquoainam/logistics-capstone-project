@@ -1,6 +1,10 @@
 # T-002-05 Identity Session Application checkpoint - 2026-10-23
 
-Status: **T_002_05_SESSION_APPLICATION_IMPLEMENTED_VERIFICATION_PENDING** under
+Status: **T_002_05_SESSION_CI_VERIFIED**.
+The final CI closure section supersedes earlier pending/runtime-unverified
+statements only for tested source caa150fb; preceding sections retain their
+historical implementation/local checkpoint state.
+Original implementation authorization:
 `OWNER_IDENTITY_SESSION_APPLICATION: CONDITIONAL_GO`.
 T-002-05 remains PARTIAL/unchecked; Feature002 and AC-002-01..05 NOT ACCEPTED.
 GRANT_MUTATION_FUNCTIONALITY_LIMITED remains. No original REQ/AC is changed.
@@ -194,3 +198,130 @@ source and SDD are intentional; index remains empty. Generated target and privat
 - `scripts/ci/verify-reports.py`
 - `specs/002-identity-access/design.md`
 - `specs/002-identity-access/tasks.md`
+
+
+## Session CI verified closure - 2026-10-23
+
+**T_002_05_SESSION_CI_VERIFIED** under
+`OWNER_SESSION_CI_EVIDENCE_CLOSURE: CONDITIONAL_GO`.
+This is bounded Session Application acceptance, not completion of T-002-05 or
+Production Identity. The original local/verification-pending records above are
+preserved as history and superseded only for the tested source below.
+
+### Run and source provenance
+
+[Backend verification run39932569608, attempt1](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/39932569608)
+completed SUCCESS; event `workflow_dispatch`; workflow383888734,
+`.github/workflows/backend-verification.yml`; branch
+`feature/002-identity-session-application`.
+Published/tested source and actual checkout in all three jobs:
+`caa150fb3c1a2c4ac1a60d27566f07f6a3c3c479`, parent
+`d0615d2d1fb4706228114aab0ef30e06228a5095` (merged PR23).
+Source publication contained18 approved paths, one implementation commit,
+one normal push and one workflow dispatch; no PR, merge or rerun.
+
+| Job | Job ID | Discovered | PASS / executed | FAIL | ERROR | Expected skips |
+| --- | --- | --- | --- | --- | --- | --- |
+| Architecture gate |120344179401 |23 |23 |0 |0 |0 |
+| Backend default / H2 |120344178985 |367 |350 |0 |0 |17 |
+| Backend PostgreSQL 18 |120344179274 |528 |523 |0 |0 |5 |
+
+Main/test compilation and current-source Maven Wrapper clean verify succeeded.
+Architecture includes11 production/scope cases and12 negative-fixture/control
+cases. H2 skips exactly FoundationDependencyTests5, PostgresFoundationTests8 and
+PostgresHealthSafetyTests4. PostgreSQL skips exactly FoundationDependencyTests5;
+these are not Redis/RabbitMQ runtime PASS. There are no unexpected skips.
+Each job passed116 report-policy controls and strict finite method/status/skip
+discovery; all actual job checkout projections identify the full source SHA above.
+
+Session unit20/20 PASS in both H2 and PostgreSQL. All18 new Session PostgreSQL
+methods PASS; all105 prior IdentityGrantApplicationTests methods PASS, including
+20 Activation PG methods. Combined suite123/123 PASS. Retained regression evidence
+also includes Activation unit12, Domain48, migration25, crypto10, provisioning
+unit12/PG18, Realm unit8/PG7, authority unit9/PG12 and original grant33. These groups
+overlap with CI totals and each other; do not add them as extra executed tests.
+
+### Actual PostgreSQL security evidence
+
+- `sessionLoginPersistsOnlyDigestSessionAndAudit`: real runtime-role session,
+  refresh digest and audit persisted atomically; account version unchanged.
+  Credential, pending/disabled, inactive Realm/unsupported scope and concurrent
+  Realm-deactivation admission negatives also PASS without unauthorized writes.
+- `sessionRefreshRotatesPredecessorAndPreservesDeadlines`: unique successor and
+  predecessor consumption PASS; absolute8h/idle30min are not extended by refresh.
+  Access facts remain capped at15min and session deadlines. Exact expiry,
+  stale authVersion, disabled account and Realm-deactivation rejection PASS.
+- **`sessionReplayCommitsFamilyRevocationBeforeDenial` PASS**: after the caller
+  receives REFRESH_REPLAY, the stored session and all family refresh rows are
+  revoked, and the latest successor cannot refresh. The denial is raised after
+  the transaction returns/commits, not inside the callback where it would undo
+  required revocation. This is real PostgreSQL evidence, not the mock unit case.
+- **`sessionConcurrentRefreshHasOneRotationThenReplayRevocation` PASS**: two
+  concurrent calls using the same token yield one rotation and one replay;
+  only two token rows exist and the session is durably revoked. No replay grace,
+  second usable successor or client retry exemption is introduced.
+- Cross-account logout isolation/idempotence, expired logout and no-cookie
+  admission, authoritative family binding and secret-persistence negatives PASS.
+  `sessionLoginMandatoryWriteFailuresRollBackEverything`,
+  `sessionRefreshSuccessorFailureRollsBackConsumption` and
+  `sessionReplayAuditFailureRollsBackRevocation` PASS: mandatory failures retain
+  atomic state; an audit-failure exception is not falsely returned as a completed
+  REFRESH_REPLAY transition.
+
+Exact20 unit/18 PG method identities and the preserved105 outcomes were compared
+with the tested source and sanitized JUnit XML. No methods/assertions, skip policy,
+Testcontainers lifecycle registry, SQL or contract were weakened for this result.
+`AccessGrant` remains unsigned Application signing facts, not an issued JWT,
+verified HTTP principal or a new authentication bypass. Test-only permitting
+SessionAdmission fixtures prove orchestration/DB behavior, not production HTTP
+Origin/CSRF/throttling. Composition remains explicit and unregistered.
+
+### Artifact integrity, privacy and cleanup
+
+Fresh GitHub metadata was rechecked against the retained sanitized ZIPs during
+closure. All artifacts belong to run39932569608/sourcecaa150fb/attempt1; job matrix
+names, successful upload steps and summary modes match their producing jobs.
+All3 ZIP SHA-256 values match authoritative GitHub digest metadata:
+
+| Artifact | GitHub ID | Verified ZIP SHA-256 = GitHub digest |
+| --- | --- | --- |
+| backend-architecture-1 |12492900195 |9dba838bd971aca0d9df164cf59ab5f58ff78d1adb090c41ac30c8447bfcbf85 |
+| backend-h2-1 |12491972893 |dd6e2ece19ca808f05c9affb8bb2b9f463422e32b2f090d8138380fb72a50496 |
+| backend-postgres-1 |12493045204 |b77d0940c98c42bd5cfb3a9847c79440465759d286512105defa5136fcd8790a |
+
+ZIP CRC, exact `summary.json`/`tests.xml` entry allowlist, summary/XML counter and
+method identity reconciliation PASS. XML contains only fixed fields/statuses and
+the existing fixed non-sensitive skip placeholder, no raw failure/system output,
+properties, credentials or private diagnostics. Sanitized evidence remains in
+ignored `.demo/session-ci-publication/`; it is not staged or published by closure.
+
+Every job's temporary database credential log audit PASS. PostgreSQL generated
+Testcontainers credential privacy and owned-resource cleanup audits PASS, as did
+removal of only the recorded disposable CI PostgreSQL container. Three existing
+suite ownership/lifecycle requirements remained intact. Raw job logs were handled
+only in memory for fixed SHA/count/status projections; no raw diagnostics, access
+token or signed artifact URL was stored in the evidence/public documentation.
+
+### Remaining coverage and SDD boundary
+
+The workflow still does not invoke `app/backend/test_identity_migration.py` or
+`app/backend/test_identity_invitation_outbox.py`; neither Python source suite has
+CI execution evidence from this run. Java migration25/25 PASS is distinct from
+Python source-suite execution. Historical Windows CRLF/LF source-guard findings,
+accepted migration pins and unresolved historical bootstrap attribution remain
+unchanged; successful Session bootstrap is not proof of a permanent root-cause fix.
+
+T-002-05 overall remains **PARTIAL/unchecked**; Feature002 and AC-002-01..05 remain
+**NOT ACCEPTED**; `GRANT_MUTATION_FUNCTIONALITY_LIMITED` remains. Feature001/D1-08/
+Day1 remain PARTIAL. Pending: current-session/activity integration, recovery,
+resend, lifecycle/query, remaining authority/security integration and canonical
+HTTP/JWT/CSRF/cookie adapters. Delivery/provider/maintenance integration belongs
+to T-002-08 after dependencies. No end-to-end or deployment-ready identity claim.
+
+This closure publishes exactly this evidence and
+[the supplemental trace](../quality/feature-002-recovery-traceability.md#session-ci-verified-trace---2026-10-23).
+It is a later docs-only commit: run39932569608 verifies sourcecaa150fb above,
+NOT the documentation revision recording it. No manual CI dispatch/rerun or PR/
+merge is part of closure. Original six Foundation fingerprints, clean Activation
+worktree, V1-V5 and all unrelated source/contracts are preserved. Business-module
+readiness is not reached; the documented owner-review gate remains in force.

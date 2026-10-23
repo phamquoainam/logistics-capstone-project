@@ -1,8 +1,10 @@
 # Feature 002 recovery — supplemental traceability
 
-Current bounded Activation checkpoint:
-**T_002_05_INVITATION_ACTIVATION_CI_VERIFIED**, source081c14c/run39920826371.
-[Latest verified evidence and limitations](#activation-ci-verified-trace---2026-10-23).
+Current bounded Session checkpoint:
+**T_002_05_SESSION_CI_VERIFIED**, sourcecaa150fb/run39932569608.
+[Latest verified evidence and limitations](#session-ci-verified-trace---2026-10-23).
+Previous Activation checkpoint remains CI_VERIFIED on081c14c/run39920826371.
+[Activation evidence](#activation-ci-verified-trace---2026-10-23).
 T-002-05 remains PARTIAL; Feature002 and AC-002-01..05 NOT ACCEPTED.
 
 Migration checkpoint: **T-002-03 DONE** on run39575568268 attempt1, using verified
@@ -599,3 +601,50 @@ GRANT_MUTATION_FUNCTIONALITY_LIMITED remains; no business-feature readiness.
 Session local full default/H2 clean verify:350 PASS/0 FAIL/0 ERROR/17 expected
 skips; actual strict report guard exit0. This does not prove PostgreSQL or new
 GitHub CI. Current-source Session PostgreSQL18 cases remain UNVERIFIED.
+
+
+## Session CI verified trace - 2026-10-23
+
+**T_002_05_SESSION_CI_VERIFIED**, under
+`OWNER_SESSION_CI_EVIDENCE_CLOSURE: CONDITIONAL_GO`.
+[Exact Session evidence, inventories and digests](../implementation/t-002-05-identity-session-evidence.md#session-ci-verified-closure---2026-10-23).
+[Run39932569608 attempt1](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/39932569608)
+SUCCESS, `workflow_dispatch`, `feature/002-identity-session-application`;
+actual tested/checkout SHA in all three jobs:
+`caa150fb3c1a2c4ac1a60d27566f07f6a3c3c479`.
+Earlier Session runtime-pending statements are historical and superseded only
+for this source and bounded Application scope, not full feature acceptance.
+
+| Existing trace | Actual CI evidence | Remaining boundary |
+| --- | --- | --- |
+| REQ-002-01/02; ADR-0009/0010 | Authoritative account/Realm eligibility;20/20 Session unit cases in H2 and PG;18/18 Session PG cases | Bounded Identity Management pair, unsupported owners denied; no production HTTP admission |
+| REQ-002-03 | BCrypt/refresh digest-only persistence, privacy and secret-negative cases PASS | AccessGrant is signing facts, not JWT/principal; actual JWT/Origin/CSRF/cookie/throttle adapters pending |
+| REQ-002-05; AC-002-02/03/04/05 supporting evidence | Real PostgreSQL authVersion/deadlines, rotation, cross-account logout, rollback and concurrency PASS | No full runtime AC acceptance; current-session/activity and remaining use cases pending |
+| Exact CI inventory | Architecture23 PASS/0 skips; H2350 PASS/17 expected skips; PG523 PASS/5 expected skips; zero FAIL/ERROR | Session20+18 and retained105 PG cases overlap totals; combined Grant/Application123/123 PASS |
+
+`sessionReplayCommitsFamilyRevocationBeforeDenial` and
+`sessionConcurrentRefreshHasOneRotationThenReplayRevocation` PASS on real PG:
+replay denial follows durable session/family revocation; concurrent reuse yields
+one rotation then replay/family revocation, without two usable successors.
+Mandatory-write rollback cases also PASS. Prior105 PG methods include20 Activation;
+Domain48/migration25/provision/Realm/Grant/outbox inventories all retained and ran.
+
+116 report-policy controls/job, exact identities/expected skips, credential/privacy
+and Testcontainers owned cleanup PASS. Three sanitized ZIP digests match fresh
+GitHub metadata, with only summary/XML allowlisted content and fixed skip text.
+The five Redis/RabbitMQ foundation skips are not remote infrastructure PASS.
+Migration/outbox Python source suites remain not invoked in CI; their CI coverage
+is UNVERIFIED. Keep historical Windows CRLF/LF and bootstrap findings unchanged.
+
+This trace and linked evidence form a separate later docs-only publication.
+Run39932569608 verifies sourcecaa150fb, not that documentation commit. No raw
+logs/reports/credentials enter tracked docs. Protected main traceability, six
+original Foundation fingerprints, Activation worktree and immutable V1-V5 remain
+unchanged. No new source/contract/security/CI policy modification is authorized.
+
+T-002-05 remains PARTIAL/unchecked; Feature002 and AC-002-01..05 NOT ACCEPTED;
+GRANT_MUTATION_FUNCTIONALITY_LIMITED remains. Pending: current-session/activity,
+recovery/resend/lifecycle/query, remaining authority/security and HTTP/JWT/CSRF/
+cookie adapters; provider/delivery integration stays T-002-08 after dependencies.
+Feature001/D1-08/Day1 remain PARTIAL. No deployment/end-to-end or business-module
+readiness is implied; separate business-feature owner approval remains required.
