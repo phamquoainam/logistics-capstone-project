@@ -358,3 +358,55 @@ activation is not a production bypass. Full T-002-05 PARTIAL/unchecked; canonica
 task/DoD/REQ/AC unchanged. Feature002/AC-002-01..05 NOT ACCEPTED;
 Feature001/D1-08/Day1 PARTIAL. No Git publication, dispatch, credentials, developer
 services or privileged production bootstrap. Main Foundation trace protected.
+
+## T-002-05-PROVISION bounded implementation checkpoint — 2026-10-22
+
+[Source, authority approval, transaction, tests and delivery dependency](../../docs/implementation/t-002-05-identity-application-evidence.md#t-002-05-provision--bounded-invitation-provisioning-implementation--2026-10-22).
+[Accepted narrow provisioning extension](../../docs/architecture/decisions/ADR-0010-identity-system-realm.md#bounded-ordinary-provisioning-extension--owner-approved-2026-10-22).
+
+- [x] Reconcile prior Realm runtime evidence: exact4a90baf/run39795074146 attempt1
+  SUCCESS, Architecture23/H2296+17 skips/PostgreSQL395+5 skips. Historical
+  Realm runtime-pending statements above are superseded for that source only.
+- [x] Record OWNER_PROVISION_INITIAL_IDENTITY_PAIR restrictions: explicit exact
+  same-Realm management initial pair for a NEW pending account only; no external/
+  mixed/automatic grants, activation, bootstrap or empty-target replacement change.
+- [x] Author command, payload validation/fingerprint, dedicated authority,
+  existing-transaction JDBC account/grant/proof/audit/receipt orchestration.
+- [x] Require same-transaction invitation delivery port; default missing adapter
+  fails before account writes. No new migration, crypto or provider invented.
+- [x] Author12 unit and18 PostgreSQL methods; strict report inventory/privacy
+  controls107 PASS and migration static controls15 PASS.
+- [ ] Approve/implement durable protected invitation intent schema/key/issuer
+  adapter. Synthetic test intent is NOT a production outbox/delivery mechanism.
+- [ ] Execute current-source Java, ArchUnit/H2/PostgreSQL, transaction/concurrency,
+  privacy and complete owned cleanup under separate runtime authorization.
+- [ ] Complete other canonical T-002-05 use cases and later HTTP/security tasks.
+
+T_002_05_PROVISIONING_IMPLEMENTED_VERIFICATION_PENDING, with production delivery
+dependency BLOCKED. Future inventories23/0,308/17,425/5 are not actual test results.
+T-002-05 remains PARTIAL and unchecked. T-002-01..04 DONE; Feature002/AC-002-01..05
+NOT ACCEPTED. Original REQ/AC/DoD and six protected Foundation changes preserved.
+
+
+## T-002-05 invitation/outbox checkpoint — 2026-10-23
+
+T-002-05 remains PARTIAL, checkbox unchecked. Owner-approved source slice:
+T_002_05_INVITATION_OUTBOX_IMPLEMENTED_VERIFICATION_PENDING.
+[Evidence, exact inventory and runtime handoff](../../docs/implementation/t-002-05-identity-application-evidence.md#t-002-05-invitation-outbox-checkpoint--2026-10-23),
+[ADR-0011](../../docs/architecture/decisions/ADR-0011-identity-invitation-outbox.md).
+
+- [x] Append V5; preserve V1-V4 bytes and legacy proof representation.
+- [x] Implement separate externally keyed HMAC verifier / AEAD delivery protection.
+- [x] Integrate durable intent in the existing provisioning transaction and replay boundary.
+- [x] Author 10 crypto/unit, 15 real-outbox PG and 3 V5 migration methods.
+- [x] Python report-policy 110/110 and static source 25/25 PASS; finite inventory extended.
+- [ ] Compile and execute this revision's Java/PostgreSQL/ArchUnit/Demo regressions.
+- [ ] Verify V1-V5 cold start, V4 upgrade, runtime roles, crypto/rollback/races/leases/purge.
+- [ ] Verify current CI report/privacy and owned Testcontainers cleanup evidence.
+- [ ] Separately integrate approved worker/provider and periodic retention maintenance.
+- [ ] Implement remaining canonical Application use cases including invitation activation.
+
+Do not reuse run39795074146 for this source. Expected future jobs: Architecture23/0skip,
+H2318/17skip, PG453/5skip, all with110 report-policy controls. These are expectations,
+not observed runtime results. GRANT_MUTATION_FUNCTIONALITY_LIMITED remains;
+Feature002 and AC-002-01..05 NOT ACCEPTED. No REQ/AC/DoD modification.

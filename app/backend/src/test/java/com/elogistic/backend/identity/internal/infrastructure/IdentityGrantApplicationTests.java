@@ -2,6 +2,7 @@ package com.elogistic.backend.identity.internal.infrastructure;
 
 import com.elogistic.backend.identity.api.IdentityCommandFailure;
 import com.elogistic.backend.identity.api.IdentityGrantCommands;
+import com.elogistic.backend.identity.api.IdentityProvisionCommands;
 import com.elogistic.backend.identity.api.IdentityGrantCommands.*;
 import com.elogistic.backend.identity.internal.application.ReplaceIdentityGrants;
 import com.elogistic.backend.identity.internal.application.port.GrantAuthority;
@@ -39,7 +40,7 @@ class IdentityGrantApplicationTests {
 
     @BeforeEach void fixture() throws Exception {
         db = PostgresTestcontainersSupport.database(POSTGRES);
-        assertEquals(4, db.flyway("latest", SCOPE).migrate().migrationsExecuted);
+        assertEquals(5, db.flyway("latest", SCOPE).migrate().migrationsExecuted);
         account(A, "ACTIVE", List.of(ADMIN)); account(B, "ACTIVE", List.of(ADMIN)); account(T, "ACTIVE", List.of(GX));
         session(S, A); session(AS, B); session(TS, T);
         execute("INSERT INTO identity.refresh_token(id,session_id,token_hash,issued_at,expires_at) VALUES ('" + id(20) + "','" + TS + "',decode(repeat('01',32),'hex'),TIMESTAMPTZ '2026-10-21 00:00:00Z',TIMESTAMPTZ '2026-10-21 08:00:00Z')");
@@ -456,4 +457,326 @@ class IdentityGrantApplicationTests {
             pool.shutdownNow();assertTrue(pool.awaitTermination(5,TimeUnit.SECONDS));
         }
     }
+
+    // Provisioning uses the REAL JDBC authority. Only the pending delivery adapter is synthetic:
+    // its durable test table contains NO token/ciphertext and is NOT a production outbox schema.
+    private void provisionFixture(boolean activate) throws Exception {
+        db.ownerExecute("CREATE TABLE identity.synthetic_invitation_intent(proof_id UUID PRIMARY KEY REFERENCES identity.action_proof(id),account_id UUID NOT NULL REFERENCES identity.user_account(id),marker TEXT NOT NULL CHECK(marker='SYNTHETIC_NO_TOKEN')); GRANT SELECT,INSERT ON identity.synthetic_invitation_intent TO "+db.runtime());
+        if(activate) db.activateRealmForTest(SCOPE);
+    }
+    private IdentityProvisionCommands.Command provisionCommand(String username,List<GrantData> grants,UUID key) {
+        return new IdentityProvisionCommands.Command(S,username,"Synthetic Provision","provision@example.invalid",grants,key,REQUEST);
+    }
+    private IdentityProvisionCommands.Command provisionCommand() {return provisionCommand("fixture.provisioned",List.of(ADMIN),KEY);}
+    private IdentityProvisionCommands provisionApp(AtomicInteger closed,boolean invalidProof) {
+        return provisionApp(closed,invalidProof ? 1 : 0);
+    }
+    private IdentityProvisionCommands provisionApp(AtomicInteger closed,int invitationDefect) {
+        var ds=new DriverManagerDataSource(db.url(),db.runtime(),db.runtimePassword());
+        com.elogistic.backend.identity.internal.application.port.InvitationIssuer issuer=(pending,destination,now)->new com.elogistic.backend.identity.internal.application.port.InvitationIssuer.Prepared() {
+            private final ActionProof proof=ActionProof.invitation(UUID.randomUUID(),pending,now);
+            // Synthetic test-only digest, NOT evidence of production token generation/protection.
+            private final byte[] hash=syntheticDigest();
+            private byte[] syntheticDigest() {
+                try {return java.security.MessageDigest.getInstance("SHA-256").digest(UUID.randomUUID().toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));}
+                catch(java.security.NoSuchAlgorithmException e){throw new AssertionError(e);}
+            }
+            public ActionProof proof(){
+                return switch(invitationDefect) {
+                    case 2 -> new ActionProof(proof.id(),pending.id(),ActionProof.Purpose.RECOVERY,now,now.plus(Duration.ofMinutes(15)),ActionProof.State.AVAILABLE,null);
+                    case 3 -> proof.consume(ActionProof.Purpose.INVITATION,pending.id(),now);
+                    case 4 -> new ActionProof(proof.id(),pending.id(),ActionProof.Purpose.INVITATION,now,now.plus(Duration.ofHours(23)),ActionProof.State.AVAILABLE,null);
+                    case 5 -> new ActionProof(proof.id(),id(99),ActionProof.Purpose.INVITATION,now,now.plus(Duration.ofHours(24)),ActionProof.State.AVAILABLE,null);
+                    default -> proof;
+                };
+            }
+            public byte[] tokenHash(){return invitationDefect==1 ? new byte[31] : hash.clone();}
+            public void appendDeliveryIntent(){
+                assertTrue(org.springframework.transaction.support.TransactionSynchronizationManager.hasResource(ds));
+                new org.springframework.jdbc.core.JdbcTemplate(ds).update("INSERT INTO identity.synthetic_invitation_intent(proof_id,account_id,marker) VALUES (?,?,'SYNTHETIC_NO_TOKEN')",proof.id(),pending.id());
+            }
+            public void close(){Arrays.fill(hash,(byte)0);closed.incrementAndGet();}
+            @Override public String toString(){return "Synthetic invitation fixture[redacted]";}
+        };
+        return ProductionIdentityProvisionComposition.create(ds,issuer,Clock.fixed(NOW,ZoneOffset.UTC),Duration.ofHours(24));
+    }
+    private Map<String,List<String>> provisionSnapshot() throws Exception {
+        var rows=new TreeMap<>(snapshot());
+        for(String table:List.of("action_proof","synthetic_invitation_intent")) {
+            try(Connection c=db.runtimeConnection();Statement s=c.createStatement();ResultSet r=s.executeQuery("SELECT row_to_json(t)::text FROM identity."+table+" t ORDER BY row_to_json(t)::text")) {
+                var values=new ArrayList<String>();while(r.next())values.add(r.getString(1));rows.put(table,values);
+            }
+        }
+        return rows;
+    }
+    private void provisionDenied(IdentityProvisionCommands app,IdentityCommandFailure.Code code,IdentityProvisionCommands.Command command) throws Exception {
+        var before=provisionSnapshot();var error=assertThrows(IdentityCommandFailure.class,()->app.provisionIdentityAccount(command));
+        assertEquals(code,error.code());assertEquals(code.name(),error.getMessage());assertNull(error.getCause());assertEquals(before,provisionSnapshot());
+    }
+    private List<Object> provisionRace(IdentityProvisionCommands app,IdentityProvisionCommands.Command left,IdentityProvisionCommands.Command right) throws Exception {
+        var pool=Executors.newFixedThreadPool(2);var ready=new CountDownLatch(2);var go=new CountDownLatch(1);
+        try {
+            var futures=new ArrayList<Future<Object>>();
+            for(var input:List.of(left,right)) futures.add(pool.submit(()->{
+                ready.countDown();if(!go.await(5,TimeUnit.SECONDS))throw new AssertionError("Start gate timed out");
+                try{return app.provisionIdentityAccount(input);}catch(IdentityCommandFailure denied){return denied.code();}
+            }));
+            assertTrue(ready.await(5,TimeUnit.SECONDS));go.countDown();return List.of(futures.get(0).get(20,TimeUnit.SECONDS),futures.get(1).get(20,TimeUnit.SECONDS));
+        } finally {go.countDown();pool.shutdownNow();assertTrue(pool.awaitTermination(5,TimeUnit.SECONDS));}
+    }
+    @Test void provisionPersistsPendingInitialPairProofAuditReceiptAndTestIntent() throws Exception {
+        provisionFixture(true);var closed=new AtomicInteger();var result=provisionApp(closed,false).provisionIdentityAccount(provisionCommand());
+        assertFalse(result.replayed());assertEquals(1,result.appliedVersion());assertEquals("PENDING_ACTIVATION",result.account().status());assertFalse(result.account().emailVerified());assertEquals(List.of(ADMIN),result.account().grants());
+        UUID target=result.account().id();assertNotEquals(A,target);assertNotEquals(T,target);
+        assertEquals(1,scalar("SELECT count(*) FROM identity.user_account WHERE id='"+target+"' AND version=1 AND auth_version=1 AND password_hash IS NULL AND activated_at IS NULL AND NOT email_verified"));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.account_grant WHERE account_id='"+target+"' AND identity_realm_id='"+SCOPE+"'"));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.action_proof WHERE account_id='"+target+"' AND purpose='INVITATION' AND expires_at=created_at+INTERVAL '24 hours' AND consumed_at IS NULL AND revoked_at IS NULL AND octet_length(token_hash)=32"));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.audit_entry WHERE actor_id='"+A+"' AND target_id='"+target+"' AND event_type='IDENTITY_ACCOUNT_PROVISIONED'"));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.command_receipt WHERE operation='provisionIdentityAccount' AND target_id='"+target+"' AND result_status=201 AND original_version IS NULL AND result_version=1 AND expires_at>=created_at+INTERVAL '24 hours'"));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.synthetic_invitation_intent WHERE account_id='"+target+"'"));assertEquals(1,closed.get());
+    }
+    @Test void provisionExactReplayDoesNotRepeatAccountProofAuditOrDelivery() throws Exception {
+        provisionFixture(true);var closed=new AtomicInteger();var app=provisionApp(closed,false);var first=app.provisionIdentityAccount(provisionCommand());var before=provisionSnapshot();
+        var replay=app.provisionIdentityAccount(provisionCommand());assertTrue(replay.replayed());assertEquals(first.account(),replay.account());assertEquals(before,provisionSnapshot());assertEquals(1,closed.get());
+    }
+    @Test void provisionConflictingPayloadKeyDoesNotDiscloseOrRepeatEffects() throws Exception {
+        provisionFixture(true);var app=provisionApp(new AtomicInteger(),false);app.provisionIdentityAccount(provisionCommand());
+        var c=provisionCommand();provisionDenied(app,IDEMPOTENCY_CONFLICT,new IdentityProvisionCommands.Command(S,c.username(),"Changed Contact",c.email(),c.grants(),KEY,REQUEST));
+    }
+    @Test void provisionDuplicateUsernameCannotTakeOverExistingAccount() throws Exception {
+        provisionFixture(true);var app=provisionApp(new AtomicInteger(),false);app.provisionIdentityAccount(provisionCommand());
+        provisionDenied(app,USERNAME_CONFLICT,provisionCommand("fixture.provisioned",List.of(ADMIN),id(90)));
+    }
+    @Test void provisionUnauthenticatedAndUnknownSessionsMakeNoWrites() throws Exception {
+        provisionFixture(true);var app=provisionApp(new AtomicInteger(),false);provisionDenied(app,SESSION_INVALID,null);
+        var c=provisionCommand();provisionDenied(app,SESSION_INVALID,new IdentityProvisionCommands.Command(id(99),c.username(),c.displayName(),c.email(),c.grants(),KEY,REQUEST));
+    }
+    @Test void provisionRevokedSessionCannotUseCurrentAdministrativeGrant() throws Exception {
+        provisionFixture(true);execute("UPDATE identity.auth_session SET revoked_at=TIMESTAMPTZ '2026-10-21 00:01:00Z' WHERE id='"+S+"'");
+        provisionDenied(provisionApp(new AtomicInteger(),false),SESSION_INVALID,provisionCommand());
+    }
+    @Test void provisionExpiredSessionFailsBeforeContactLookup() throws Exception {
+        provisionFixture(true);execute("UPDATE identity.auth_session SET idle_expires_at=TIMESTAMPTZ '2026-10-21 00:05:00Z' WHERE id='"+S+"'");
+        provisionDenied(provisionApp(new AtomicInteger(),false),SESSION_INVALID,provisionCommand());
+    }
+    @Test void provisionDisabledActorAndStaleAuthVersionAreRejected() throws Exception {
+        provisionFixture(true);var app=provisionApp(new AtomicInteger(),false);
+        execute("UPDATE identity.user_account SET auth_version=2 WHERE id='"+A+"'");provisionDenied(app,SESSION_INVALID,provisionCommand());
+        execute("UPDATE identity.user_account SET auth_version=1,status='DISABLED',disabled_at=TIMESTAMPTZ '2026-10-21 00:01:00Z' WHERE id='"+A+"'");provisionDenied(app,SESSION_INVALID,provisionCommand());
+    }
+    @Test void provisionInactiveUnknownAndCrossRealmAuthorityFailClosed() throws Exception {
+        provisionFixture(false);var app=provisionApp(new AtomicInteger(),false);provisionDenied(app,AUTHORITY_REQUIRED,provisionCommand());
+        db.activateRealmForTest(SCOPE);provisionDenied(app,AUTHORITY_REQUIRED,provisionCommand("fixture.provisioned",List.of(new GrantData("IDENTITY_MANAGEMENT","IDENTITY",X)),KEY));
+        db.ownerExecute("ALTER TABLE identity.realm RENAME TO synthetic_unavailable_realm");provisionDenied(app,AUTHORITY_REQUIRED,provisionCommand());
+    }
+    @Test void provisionExternalMixedAndOrdinaryRoleRequestsNeverAssignGrants() throws Exception {
+        provisionFixture(true);var app=provisionApp(new AtomicInteger(),false);
+        for(var grants:List.of(List.of(GX),List.of(ADMIN,GX),List.of(new GrantData("FINANCE","IDENTITY",SCOPE))))
+            provisionDenied(app,AUTHORITY_REQUIRED,provisionCommand("fixture.provisioned",grants,KEY));
+        execute("DELETE FROM identity.account_grant WHERE account_id='"+A+"'");provisionDenied(app,AUTHORITY_REQUIRED,provisionCommand());
+    }
+    @Test void provisionMissingDurableInvitationAdapterFailsBeforeWrites() throws Exception {
+        provisionFixture(true);var app=ProductionIdentityProvisionComposition.create(new DriverManagerDataSource(db.url(),db.runtime(),db.runtimePassword()),Clock.fixed(NOW,ZoneOffset.UTC),Duration.ofHours(24));
+        var before=provisionSnapshot();var error=assertThrows(IllegalStateException.class,()->app.provisionIdentityAccount(provisionCommand()));
+        assertEquals("PROVISIONING_INVITATION_ADAPTER_REQUIRED",error.getMessage());assertEquals(before,provisionSnapshot());
+    }
+    @Test void provisionInvalidPreparedProofClosesMaterialWithoutPartialAccount() throws Exception {
+        provisionFixture(true);var before=provisionSnapshot();
+        for(int defect:List.of(1,2,3,4,5)) {
+            var closed=new AtomicInteger();
+            assertThrows(IllegalStateException.class,()->provisionApp(closed,defect).provisionIdentityAccount(provisionCommand()));
+            assertEquals(before,provisionSnapshot());assertEquals(1,closed.get());
+        }
+    }
+    @Test void provisionGrantProofDeliveryAuditAndReceiptFaultsRollBackAtomically() throws Exception {
+        for(String table:List.of("account_grant","action_proof","synthetic_invitation_intent","audit_entry","command_receipt")) {
+            fixture();provisionFixture(true);failWrite(table,"INSERT");var before=provisionSnapshot();var closed=new AtomicInteger();
+            assertThrows(org.springframework.dao.DataAccessException.class,()->provisionApp(closed,false).provisionIdentityAccount(provisionCommand()));
+            assertEquals(before,provisionSnapshot(),table);assertEquals(1,closed.get());
+        }
+    }
+    @Test void provisionConcurrentSameKeyHasOneAccountProofAndTestIntent() throws Exception {
+        provisionFixture(true);var closed=new AtomicInteger();var results=provisionRace(provisionApp(closed,false),provisionCommand(),provisionCommand());
+        assertTrue(results.stream().allMatch(Result.class::isInstance));
+        assertEquals(1,results.stream().map(Result.class::cast).filter(Result::replayed).count());assertEquals(1,closed.get());
+        assertEquals(1,scalar("SELECT count(*) FROM identity.user_account WHERE username='fixture.provisioned'"));assertEquals(1,scalar("SELECT count(*) FROM identity.synthetic_invitation_intent"));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.command_receipt WHERE operation='provisionIdentityAccount'"));
+    }
+    @Test void provisionConcurrentUsernameConflictHasNoLoserEffects() throws Exception {
+        provisionFixture(true);var closed=new AtomicInteger();var results=provisionRace(provisionApp(closed,false),provisionCommand(),provisionCommand("fixture.provisioned",List.of(ADMIN),id(90)));
+        assertEquals(1,results.stream().filter(Result.class::isInstance).count());assertEquals(1,results.stream().filter(USERNAME_CONFLICT::equals).count());assertEquals(1,closed.get());
+        assertEquals(1,scalar("SELECT count(*) FROM identity.synthetic_invitation_intent"));assertEquals(1,scalar("SELECT count(*) FROM identity.command_receipt WHERE operation='provisionIdentityAccount'"));
+    }
+    @Test void provisionReplayRechecksStoredTargetGrantUnionAndCurrentSession() throws Exception {
+        provisionFixture(true);var app=provisionApp(new AtomicInteger(),false);UUID target=app.provisionIdentityAccount(provisionCommand()).account().id();
+        execute("INSERT INTO identity.account_grant(account_id,role_code,scope_type,scope_id,granted_at) VALUES ('"+target+"','OPERATOR','WAREHOUSE','"+X+"',CURRENT_TIMESTAMP)");
+        provisionDenied(app,AUTHORITY_REQUIRED,provisionCommand());execute("UPDATE identity.user_account SET auth_version=2 WHERE id='"+A+"'");provisionDenied(app,SESSION_INVALID,provisionCommand());
+    }
+    @Test void provisionCannotActivateRealmAccountOrIssueSessions() throws Exception {
+        provisionFixture(true);String before;
+        try(Connection c=db.runtimeConnection();Statement s=c.createStatement();ResultSet r=s.executeQuery("SELECT row_to_json(t)::text FROM identity.realm t")){assertTrue(r.next());before=r.getString(1);}
+        UUID target=provisionApp(new AtomicInteger(),false).provisionIdentityAccount(provisionCommand()).account().id();
+        try(Connection c=db.runtimeConnection();Statement s=c.createStatement();ResultSet r=s.executeQuery("SELECT row_to_json(t)::text FROM identity.realm t")){assertTrue(r.next());assertEquals(before,r.getString(1));}
+        assertEquals(0,scalar("SELECT count(*) FROM identity.auth_session WHERE account_id='"+target+"'"));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.user_account WHERE id='"+target+"' AND status='PENDING_ACTIVATION' AND NOT email_verified AND password_hash IS NULL"));
+    }
+    @Test void provisionWaitsForConcurrentActorAndRealmStateBeforeAdmission() throws Exception {
+        for(boolean deactivateRealm:List.of(false,true)) {
+            fixture();provisionFixture(true);var app=provisionApp(new AtomicInteger(),false);var pool=Executors.newSingleThreadExecutor();Future<IdentityCommandFailure.Code> waiting=null;
+            try(Connection c=db.migrationConnection();Statement s=c.createStatement()) {
+                s.execute("SET ROLE "+db.owner());c.setAutoCommit(false);s.execute("SELECT pg_advisory_xact_lock(5279420865908921433)");
+                s.execute(deactivateRealm ? "UPDATE identity.realm SET status='INACTIVE',updated_at=CURRENT_TIMESTAMP" : "UPDATE identity.user_account SET auth_version=2 WHERE id='"+A+"'");
+                waiting=pool.submit(()->{try {app.provisionIdentityAccount(provisionCommand());throw new AssertionError("Must deny after current-state change");}catch(IdentityCommandFailure denied){return denied.code();}});
+                boolean blocked=false;long deadline=System.nanoTime()+TimeUnit.SECONDS.toNanos(3);
+                while(System.nanoTime()<deadline) {if(scalar("SELECT count(*) FROM pg_locks WHERE locktype='advisory' AND NOT granted AND database=(SELECT oid FROM pg_database WHERE datname=current_database())")>0){blocked=true;break;}Thread.sleep(10);}
+                assertTrue(blocked);var before=provisionSnapshot();c.commit();assertEquals(deactivateRealm ? AUTHORITY_REQUIRED : SESSION_INVALID,waiting.get(10,TimeUnit.SECONDS));assertEquals(before,provisionSnapshot());
+            } finally {if(waiting!=null && !waiting.isDone())waiting.cancel(true);pool.shutdownNow();assertTrue(pool.awaitTermination(5,TimeUnit.SECONDS));}
+        }
+    }
+    // Real secure issuer/outbox tests: no synthetic delivery table/issuer substitutes here.
+    private static byte[] outboxKey(){byte[] value=new byte[32];new java.security.SecureRandom().nextBytes(value);return value;}
+    private static InvitationProtection outboxProtection(){return new InvitationProtection(Map.of("v1",outboxKey()),"v1",Map.of("e1",outboxKey()),"e1");}
+    private DriverManagerDataSource outboxDataSource(){return new DriverManagerDataSource(db.url(),db.runtime(),db.runtimePassword());}
+    private static JdbcInvitationOutbox.Policy outboxPolicy(){return new JdbcInvitationOutbox.Policy(2,Duration.ofSeconds(5),Duration.ofSeconds(1));}
+    private JdbcInvitationOutbox outbox(InvitationProtection protection,Instant time){return new JdbcInvitationOutbox(outboxDataSource(),protection,outboxPolicy(),Clock.fixed(time,ZoneOffset.UTC));}
+    private IdentityProvisionCommands secureProvision(InvitationProtection protection){return ProductionIdentityProvisionComposition.secure(outboxDataSource(),protection,outboxPolicy(),Clock.fixed(NOW,ZoneOffset.UTC),Duration.ofHours(24));}
+    private Map<String,List<String>> secureSnapshot() throws Exception {
+        var rows=new TreeMap<>(snapshot());
+        for(String table:List.of("action_proof","invitation_outbox")) {
+            try(Connection c=db.runtimeConnection();Statement s=c.createStatement();ResultSet r=s.executeQuery("SELECT row_to_json(t)::text FROM identity."+table+" t ORDER BY id")) {
+                var values=new ArrayList<String>();while(r.next())values.add(r.getString(1));rows.put(table,values);
+            }
+        }
+        return rows;
+    }
+    private void assertPending(UUID account) throws Exception {
+        assertEquals(1,scalar("SELECT count(*) FROM identity.user_account WHERE id='"+account+"' AND status='PENDING_ACTIVATION' AND NOT email_verified AND password_hash IS NULL AND activated_at IS NULL AND version=1 AND auth_version=1"));
+        assertEquals(0,scalar("SELECT count(*) FROM identity.auth_session WHERE account_id='"+account+"'"));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.action_proof WHERE account_id='"+account+"' AND consumed_at IS NULL AND revoked_at IS NULL"));
+    }
+    @Test void secureProvisionQueuesEncryptedIntentWithMatchingHmac() throws Exception {
+        db.activateRealmForTest(SCOPE);var protection=outboxProtection();UUID target=secureProvision(protection).provisionIdentityAccount(provisionCommand()).account().id();
+        var worker=outbox(protection,NOW);var lease=worker.claim().orElseThrow();
+        try(var delivery=worker.open(lease);Connection c=db.runtimeConnection();PreparedStatement s=c.prepareStatement("SELECT p.id,p.created_at,p.expires_at,p.token_hash,p.verifier_key_id,o.nonce,o.ciphertext FROM identity.action_proof p JOIN identity.invitation_outbox o ON o.proof_id=p.id WHERE p.account_id=?")) {
+            s.setObject(1,target);try(ResultSet r=s.executeQuery()) {
+                assertTrue(r.next());var proof=new ActionProof(r.getObject(1,UUID.class),target,ActionProof.Purpose.INVITATION,r.getTimestamp(2).toInstant(),r.getTimestamp(3).toInstant(),ActionProof.State.AVAILABLE,null);
+                assertTrue(protection.matches(proof,r.getString(5),delivery.token(),r.getBytes(4),NOW));
+                assertEquals(12,r.getBytes(6).length);assertEquals(59,r.getBytes(7).length);assertEquals(43,delivery.token().length);
+                assertFalse(Arrays.equals(delivery.token(),r.getBytes(4)));assertFalse(Arrays.equals(delivery.token(),r.getBytes(7)));
+                // Exact raw material must not occur in ANY persisted row/audit/receipt snapshot.
+                String marker=new String(delivery.token(),java.nio.charset.StandardCharsets.US_ASCII);
+                assertFalse(secureSnapshot().toString().contains(marker));assertTrue(delivery.destination().equals("provision@example.invalid"));
+                assertFalse(delivery.toString().contains(marker));assertFalse(delivery.toString().contains(delivery.destination()));
+            }
+        }
+        assertPending(target);assertEquals(1,scalar("SELECT count(*) FROM identity.account_grant WHERE account_id='"+target+"'"));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.audit_entry WHERE target_id='"+target+"' AND event_type='IDENTITY_ACCOUNT_PROVISIONED'"));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.command_receipt WHERE target_id='"+target+"' AND operation='provisionIdentityAccount'"));
+    }
+    @Test void secureProvisionReplayAndConflictingKeyNeverRegenerateOutbox() throws Exception {
+        db.activateRealmForTest(SCOPE);var app=secureProvision(outboxProtection());var result=app.provisionIdentityAccount(provisionCommand());var before=secureSnapshot();
+        assertTrue(app.provisionIdentityAccount(provisionCommand()).replayed());assertEquals(before,secureSnapshot());
+        var error=assertThrows(IdentityCommandFailure.class,()->app.provisionIdentityAccount(provisionCommand("different.fixture",List.of(ADMIN),KEY)));
+        assertEquals(IDEMPOTENCY_CONFLICT,error.code());assertEquals(before,secureSnapshot());assertPending(result.account().id());
+    }
+    @Test void secureProvisionEveryMandatoryPersistenceFailureRollsBack() throws Exception {
+        for(String table:List.of("account_grant","action_proof","invitation_outbox","audit_entry","command_receipt")) {
+            fixture();db.activateRealmForTest(SCOPE);var app=secureProvision(outboxProtection());var before=secureSnapshot();failWrite(table,"INSERT");
+            assertThrows(org.springframework.dao.DataAccessException.class,()->app.provisionIdentityAccount(provisionCommand()));assertEquals(before,secureSnapshot());
+        }
+    }
+    @Test void secureProvisionConcurrentKeyAndUsernameHaveOneDurableEffect() throws Exception {
+        for(boolean sameKey:List.of(true,false)) {
+            fixture();db.activateRealmForTest(SCOPE);var app=secureProvision(outboxProtection());var result=provisionRace(app,provisionCommand(),sameKey?provisionCommand():provisionCommand("fixture.provisioned",List.of(ADMIN),id(90)));
+            assertEquals(sameKey?2:1,result.stream().filter(IdentityGrantCommands.Result.class::isInstance).count());
+            assertEquals(sameKey?0:1,result.stream().filter(USERNAME_CONFLICT::equals).count());
+            assertEquals(1,scalar("SELECT count(*) FROM identity.invitation_outbox"));assertEquals(1,scalar("SELECT count(*) FROM identity.command_receipt WHERE operation='provisionIdentityAccount'"));
+            assertEquals(1,scalar("SELECT count(*) FROM identity.user_account WHERE username='fixture.provisioned'"));
+        }
+    }
+    @Test void secureOutboxClaimLeaseRecoveryRejectsStaleOwner() throws Exception {
+        db.activateRealmForTest(SCOPE);var p=outboxProtection();secureProvision(p).provisionIdentityAccount(provisionCommand());var worker=outbox(p,NOW);var first=worker.claim().orElseThrow();
+        assertTrue(worker.claim().isEmpty());var later=outbox(p,NOW.plusSeconds(6));var second=later.claim().orElseThrow();
+        assertEquals(first.messageId(),second.messageId());assertNotEquals(first.leaseId(),second.leaseId());
+        assertThrows(IllegalStateException.class,()->later.open(first));assertThrows(IllegalStateException.class,()->later.complete(first,JdbcInvitationOutbox.Outcome.SENT));
+        try(var delivered=later.open(second)){assertEquals(43,delivered.token().length);}
+    }
+    @Test void secureOutboxConcurrentClaimsHaveExactlyOneLease() throws Exception {
+        db.activateRealmForTest(SCOPE);var p=outboxProtection();secureProvision(p).provisionIdentityAccount(provisionCommand());var pool=Executors.newFixedThreadPool(2);
+        var ready=new CountDownLatch(2);var go=new CountDownLatch(1);
+        try {
+            Callable<Optional<JdbcInvitationOutbox.Lease>> claim=()->{ready.countDown();if(!go.await(5,TimeUnit.SECONDS))throw new AssertionError("Claim gate timed out");return outbox(p,NOW).claim();};
+            var first=pool.submit(claim);var second=pool.submit(claim);assertTrue(ready.await(5,TimeUnit.SECONDS));go.countDown();
+            assertEquals(1,List.of(first.get(20,TimeUnit.SECONDS),second.get(20,TimeUnit.SECONDS)).stream().filter(Optional::isPresent).count());
+            assertEquals(1,scalar("SELECT attempts FROM identity.invitation_outbox"));
+        }finally {go.countDown();pool.shutdownNow();assertTrue(pool.awaitTermination(5,TimeUnit.SECONDS));}
+    }
+    @Test void secureOutboxSentClearsPayloadWithoutConsumingOrActivating() throws Exception {
+        db.activateRealmForTest(SCOPE);var p=outboxProtection();UUID target=secureProvision(p).provisionIdentityAccount(provisionCommand()).account().id();var worker=outbox(p,NOW);var lease=worker.claim().orElseThrow();byte[] material;
+        try(var delivery=worker.open(lease)){material=delivery.token();assertEquals(43,material.length);}
+        assertTrue(Arrays.equals(new byte[43],material));worker.complete(lease,JdbcInvitationOutbox.Outcome.SENT);
+        assertEquals(1,scalar("SELECT count(*) FROM identity.invitation_outbox WHERE status='SENT' AND nonce IS NULL AND ciphertext IS NULL AND lease_id IS NULL"));
+        assertThrows(IllegalStateException.class,()->worker.open(lease));assertThrows(IllegalStateException.class,()->worker.complete(lease,JdbcInvitationOutbox.Outcome.SENT));assertPending(target);
+    }
+    @Test void secureOutboxTransientRetriesAreBoundedAndExhaustionPurges() throws Exception {
+        db.activateRealmForTest(SCOPE);var p=outboxProtection();secureProvision(p).provisionIdentityAccount(provisionCommand());var worker=outbox(p,NOW);
+        worker.complete(worker.claim().orElseThrow(),JdbcInvitationOutbox.Outcome.TRANSIENT_FAILURE);assertTrue(worker.claim().isEmpty());
+        var later=outbox(p,NOW.plusSeconds(1));later.complete(later.claim().orElseThrow(),JdbcInvitationOutbox.Outcome.TRANSIENT_FAILURE);
+        assertTrue(later.claim().isEmpty());assertEquals(1,scalar("SELECT count(*) FROM identity.invitation_outbox WHERE status='FAILED' AND attempts=2 AND ciphertext IS NULL AND nonce IS NULL"));
+    }
+    @Test void secureOutboxPermanentFailurePurgesWithoutBusinessMutation() throws Exception {
+        db.activateRealmForTest(SCOPE);var p=outboxProtection();UUID target=secureProvision(p).provisionIdentityAccount(provisionCommand()).account().id();var worker=outbox(p,NOW);
+        worker.complete(worker.claim().orElseThrow(),JdbcInvitationOutbox.Outcome.PERMANENT_FAILURE);
+        assertEquals(1,scalar("SELECT count(*) FROM identity.invitation_outbox WHERE status='FAILED' AND ciphertext IS NULL AND nonce IS NULL AND last_outcome='PERMANENT_FAILURE'"));assertPending(target);
+    }
+    @Test void secureOutboxExpiryRevocationAndConsumptionPurgeOnlyPayloads() throws Exception {
+        for(String mode:List.of("expiry","revoked_at","consumed_at")) {
+            fixture();db.activateRealmForTest(SCOPE);var p=outboxProtection();UUID target=secureProvision(p).provisionIdentityAccount(provisionCommand()).account().id();
+            if(!mode.equals("expiry"))execute("UPDATE identity.action_proof SET "+mode+"=created_at");
+            var worker=outbox(p,mode.equals("expiry")?NOW.plusSeconds(86400):NOW);assertEquals(1,worker.purge());assertEquals(0,worker.purge());assertTrue(worker.claim().isEmpty());
+            assertEquals(1,scalar("SELECT count(*) FROM identity.invitation_outbox WHERE status='EXPIRED' AND nonce IS NULL AND ciphertext IS NULL"));
+            assertEquals(1,scalar("SELECT count(*) FROM identity.user_account WHERE id='"+target+"' AND status='PENDING_ACTIVATION'"));
+            assertEquals(1,scalar("SELECT count(*) FROM identity.command_receipt WHERE target_id='"+target+"'"));
+        }
+    }
+    @Test void secureOutboxCurrentRealmAndGrantStateGateDelivery() throws Exception {
+        for(boolean revokeGrant:List.of(false,true)) {
+            fixture();db.activateRealmForTest(SCOPE);var p=outboxProtection();UUID target=secureProvision(p).provisionIdentityAccount(provisionCommand()).account().id();var worker=outbox(p,NOW);var lease=worker.claim().orElseThrow();
+            if(revokeGrant)execute("DELETE FROM identity.account_grant WHERE account_id='"+target+"'");
+            else db.ownerExecute("UPDATE identity.realm SET status='INACTIVE',updated_at=CURRENT_TIMESTAMP");
+            assertThrows(IllegalStateException.class,()->worker.open(lease));assertEquals(1,worker.purge());assertTrue(worker.claim().isEmpty());
+        }
+    }
+    @Test void secureOutboxTamperingCannotProducePlaintextDelivery() throws Exception {
+        for(boolean contact:List.of(false,true)) {
+            fixture();db.activateRealmForTest(SCOPE);var p=outboxProtection();UUID target=secureProvision(p).provisionIdentityAccount(provisionCommand()).account().id();var worker=outbox(p,NOW);var lease=worker.claim().orElseThrow();
+            if(contact){execute("UPDATE identity.user_account SET email='changed@example.invalid' WHERE id='"+target+"'");execute("UPDATE identity.invitation_outbox SET destination='changed@example.invalid'");}
+            else execute("UPDATE identity.invitation_outbox SET ciphertext=decode(repeat('00',59),'hex')");
+            var error=assertThrows(IllegalStateException.class,()->worker.open(lease));assertEquals("INVITATION_PROTECTION_REJECTED",error.getMessage());assertNull(error.getCause());
+        }
+    }
+    @Test void secureOutboxRotationReadsPersistedOldKeyIdentity() throws Exception {
+        db.activateRealmForTest(SCOPE);byte[] v=outboxKey(),e=outboxKey();var p=new InvitationProtection(Map.of("v1",v),"v1",Map.of("e1",e),"e1");
+        secureProvision(p).provisionIdentityAccount(provisionCommand());var lease=outbox(p,NOW).claim().orElseThrow();
+        var rotated=new InvitationProtection(Map.of("v1",v,"v2",outboxKey()),"v2",Map.of("e1",e,"e2",outboxKey()),"e2");
+        try(var delivery=outbox(rotated,NOW).open(lease)){assertEquals(43,delivery.token().length);}
+        var unavailable=new InvitationProtection(Map.of("v2",outboxKey()),"v2",Map.of("e2",outboxKey()),"e2");
+        assertThrows(IllegalStateException.class,()->outbox(unavailable,NOW).open(lease));InvitationProtection.wipe(v);InvitationProtection.wipe(e);
+    }
+    @Test void secureOutboxMissingKeysOrRuntimeInsertPrivilegeCannotCommit() throws Exception {
+        db.activateRealmForTest(SCOPE);var before=secureSnapshot();
+        var missing=assertThrows(IllegalStateException.class,()->ProductionIdentityProvisionComposition.secure(outboxDataSource(),null,outboxPolicy(),Clock.fixed(NOW,ZoneOffset.UTC),Duration.ofHours(24)));
+        assertEquals("PROVISIONING_INVITATION_KEYS_REQUIRED",missing.getMessage());
+        assertEquals(before,secureSnapshot());var app=secureProvision(outboxProtection());db.ownerExecute("REVOKE INSERT ON identity.invitation_outbox FROM "+db.runtime());
+        assertThrows(org.springframework.dao.DataAccessException.class,()->app.provisionIdentityAccount(provisionCommand()));assertEquals(before,secureSnapshot());
+    }
+    @Test void secureOutboxRejectsIntentOutsideTheProvisionTransaction() throws Exception {
+        var p=outboxProtection();var issuer=new SecureInvitationIssuer(p,outbox(p,NOW));
+        var pending=new IdentityAccount(id(99),new Username("fixture.pending"),IdentityAccount.Status.PENDING_ACTIVATION,IdentityAccount.Activation.UNVERIFIED,new AccountVersion(1,1),Set.of(grant(ADMIN)));
+        try(var prepared=issuer.prepare(pending,"fixture@example.invalid",NOW)) {
+            var error=assertThrows(IllegalStateException.class,prepared::appendDeliveryIntent);assertEquals("INVITATION_SAME_TRANSACTION_REQUIRED",error.getMessage());
+        }
+        assertEquals(0,scalar("SELECT count(*) FROM identity.invitation_outbox"));
+    }
+
 }

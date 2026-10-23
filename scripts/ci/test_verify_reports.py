@@ -258,8 +258,8 @@ class ReportGuardTests(unittest.TestCase):
         for name, methods in reports.S2_REQUIRED.items():
             self.assertEqual(len(methods), len(set(methods)), name)
         # Prior cases retained; authority composition requires9 unit and12 PostgreSQL identities.
-        for mode, passed, skipped in [('architecture', 23, 0), ('h2', 296, 17),
-                                      ('postgres', 395, 5), ('foundation', 5, 0)]:
+        for mode, passed, skipped in [('architecture', 23, 0), ('h2', 318, 17),
+                                      ('postgres', 453, 5), ('foundation', 5, 0)]:
             with self.subTest(mode=mode):
                 self.fixture(mode)
                 self.assertTrue(self.check(mode))
@@ -650,6 +650,9 @@ IDENTITY_METHODS = (
     'realmActivationRequiresVerifiedInvitationAndCannotBeReplayedOrReactivated',
     'bootstrapAuditFailureRollsBackPendingAccountGrantAndRealmBinding',
     'inactiveRealmIsNotEnoughToCreateActiveAdministrativeAuthority',
+    'invitationV5UpgradePreservesLegacyProofsDataAndChecksums',
+    'invitationOutboxEnforcesProofAssociationUniquenessAndProtectedShape',
+    'invitationOutboxOwnershipAndRuntimePrivilegesRemainNarrow',
     'preexistingSchemaDriftFailsWithoutBaselineOrRepair',
 )
 
@@ -679,7 +682,7 @@ class IdentityMigrationInventoryTests(unittest.TestCase):
         self.assertEqual(list(IDENTITY_METHODS), re.findall(r'@Test\s+void\s+(\w+)\s*\(', source))
         self.assertIn('package com.elogistic.backend.identity.internal.infrastructure;', source)
         self.assertEqual('com.elogistic.backend.identity.internal.infrastructure.IdentityMigrationTests', reports.IDENTITY_MIGRATION)
-        self.assertEqual(22, len(set(IDENTITY_METHODS)))
+        self.assertEqual(25, len(set(IDENTITY_METHODS)))
         self.assertEqual(list(IDENTITY_METHODS), reports.REQUIRED[reports.IDENTITY_MIGRATION])
         self.assertIn(reports.IDENTITY_MIGRATION, reports.TESTCONTAINERS_ONLY)
         self.assertNotIn(reports.IDENTITY_MIGRATION, reports.PG_ONLY)
@@ -1158,7 +1161,7 @@ class IdentityGrantApplicationInventoryTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[2]
         source = (root / 'app/backend/src/test/java/com/elogistic/backend/identity/internal/infrastructure/IdentityGrantApplicationTests.java').read_text(encoding='utf-8')
         methods = re.findall(r'@Test\s+void\s+(\w+)\s*\(', source)
-        self.assertEqual(33, len(methods) - len(reports.IDENTITY_AUTHORITY_PG_REQUIRED) - len(reports.IDENTITY_REALM_PG_REQUIRED))
+        self.assertEqual(33, len(methods) - len(reports.IDENTITY_AUTHORITY_PG_REQUIRED) - len(reports.IDENTITY_REALM_PG_REQUIRED) - len(reports.IDENTITY_PROVISION_PG_REQUIRED) - len(reports.IDENTITY_INVITATION_PG_REQUIRED))
         self.assertEqual(12, len(reports.IDENTITY_AUTHORITY_PG_REQUIRED))
         self.assertEqual(len(methods), len(set(methods)))
         self.assertEqual(methods, reports.REQUIRED[reports.IDENTITY_GRANTS])
@@ -1313,6 +1316,175 @@ class IdentityRealmInventoryTests(unittest.TestCase):
                     self.save(suite); self.assertFalse(self.check(mode))
                     self.assertNotIn('synthetic-private-realm-diagnostic', ''.join(p.read_text(encoding='utf-8') for p in self.output.iterdir()))
             path.write_bytes(original); self.assertTrue(self.check(mode))
+
+
+PROVISION_UNIT_METHODS = (
+    'exactUsernameAndContactAreNotNormalized',
+    'displayNameCountsUnicodeCodePointsAndRejectsMalformedText',
+    'missingKeysOrRequiredFieldsAreRejectedWithoutEcho',
+    'grantSetRejectsEmptyDuplicateAndMalformedMembers',
+    'emailMatchesAcceptedFullFormatRatherThanTrimming',
+    'fingerprintBindsEveryPayloadFieldAndIgnoresGrantOrder',
+    'commandAndValidatedInputAreImmutableAndRedacted',
+    'explicitInitialPairBindsActorAndNewPendingTarget',
+    'unsupportedOrCrossRealmInitialGrantsCannotDelegate',
+    'initialAuthorityRequiresActiveActorRealmAndFreshUnverifiedTarget',
+    'provisioningDoesNotRelaxReplacementEmptyTargetGuard',
+    'domainProvisioningRemainsPendingUnverifiedAndVersionOne',
+)
+PROVISION_PG_METHODS = (
+    'provisionPersistsPendingInitialPairProofAuditReceiptAndTestIntent',
+    'provisionExactReplayDoesNotRepeatAccountProofAuditOrDelivery',
+    'provisionConflictingPayloadKeyDoesNotDiscloseOrRepeatEffects',
+    'provisionDuplicateUsernameCannotTakeOverExistingAccount',
+    'provisionUnauthenticatedAndUnknownSessionsMakeNoWrites',
+    'provisionRevokedSessionCannotUseCurrentAdministrativeGrant',
+    'provisionExpiredSessionFailsBeforeContactLookup',
+    'provisionDisabledActorAndStaleAuthVersionAreRejected',
+    'provisionInactiveUnknownAndCrossRealmAuthorityFailClosed',
+    'provisionExternalMixedAndOrdinaryRoleRequestsNeverAssignGrants',
+    'provisionMissingDurableInvitationAdapterFailsBeforeWrites',
+    'provisionInvalidPreparedProofClosesMaterialWithoutPartialAccount',
+    'provisionGrantProofDeliveryAuditAndReceiptFaultsRollBackAtomically',
+    'provisionConcurrentSameKeyHasOneAccountProofAndTestIntent',
+    'provisionConcurrentUsernameConflictHasNoLoserEffects',
+    'provisionReplayRechecksStoredTargetGrantUnionAndCurrentSession',
+    'provisionCannotActivateRealmAccountOrIssueSessions',
+    'provisionWaitsForConcurrentActorAndRealmStateBeforeAdmission',
+)
+
+
+class IdentityProvisionInventoryTests(unittest.TestCase):
+    setUp = ReportGuardTests.setUp
+    fixture = ReportGuardTests.fixture
+    save = ReportGuardTests.save
+    check = ReportGuardTests.check
+
+    def test_provision_source_inventory_and_execution_modes_are_exact(self):
+        root = Path(__file__).resolve().parents[2]
+        unit = (root / 'app/backend/src/test/java/com/elogistic/backend/identity/internal/application/IdentityProvisionInputTests.java').read_text(encoding='utf-8')
+        pg = (root / 'app/backend/src/test/java/com/elogistic/backend/identity/internal/infrastructure/IdentityGrantApplicationTests.java').read_text(encoding='utf-8')
+        self.assertEqual(12, len(PROVISION_UNIT_METHODS)); self.assertEqual(18, len(PROVISION_PG_METHODS))
+        self.assertEqual(list(PROVISION_UNIT_METHODS), re.findall(r'@Test\s+void\s+(\w+)\s*\(', unit))
+        self.assertEqual(list(PROVISION_UNIT_METHODS), reports.REQUIRED[reports.IDENTITY_PROVISION_UNIT])
+        self.assertEqual(list(PROVISION_PG_METHODS), reports.IDENTITY_PROVISION_PG_REQUIRED)
+        self.assertEqual(list(PROVISION_PG_METHODS), re.findall(r'@Test\s+void\s+(provision\w+)\s*\(', pg))
+        for mode in ('h2', 'postgres'):
+            self.assertIn(reports.IDENTITY_PROVISION_UNIT, reports.expected_suites(mode))
+        self.assertNotIn(reports.IDENTITY_PROVISION_UNIT, reports.expected_suites('architecture'))
+        self.assertNotIn(reports.IDENTITY_GRANTS, reports.expected_suites('h2'))
+        self.assertEqual(3, len(reports.TASK_C_SUITES))
+        self.assertNotIn('@Disabled', unit); self.assertNotIn('@Disabled', pg)
+
+    def test_provision_missing_failed_skipped_and_renamed_cases_fail_closed(self):
+        for name, methods, modes in ((reports.IDENTITY_PROVISION_UNIT, PROVISION_UNIT_METHODS, ('h2', 'postgres')),
+                                     (reports.IDENTITY_GRANTS, PROVISION_PG_METHODS, ('postgres',))):
+            for mode in modes:
+                self.fixture(mode); path = self.source / ('TEST-' + name + '.xml'); original = path.read_bytes()
+                path.unlink(); self.assertFalse(self.check(mode)); path.write_bytes(original)
+                for method in methods:
+                    for status in ('missing', 'skipped', 'failure', 'error', 'renamed'):
+                        with self.subTest(mode=mode, method=method, status=status):
+                            suite = ET.fromstring(original); case = next(c for c in suite if c.get('name') == method)
+                            if status == 'missing':
+                                suite.remove(case); suite.set('tests', str(len(suite.findall('testcase'))))
+                            elif status == 'renamed':
+                                case.set('name', 'unapprovedProvisionCase')
+                            else:
+                                ET.SubElement(case, status); suite.set({'skipped':'skipped', 'failure':'failures', 'error':'errors'}[status], '1')
+                            self.save(suite); self.assertFalse(self.check(mode))
+                path.write_bytes(original); self.assertTrue(self.check(mode))
+
+    def test_provision_private_failure_details_never_reach_public_reports(self):
+        self.fixture('postgres'); path = self.source / ('TEST-' + reports.IDENTITY_GRANTS + '.xml')
+        suite = ET.parse(path).getroot(); case = next(c for c in suite if c.get('name') == PROVISION_PG_METHODS[0])
+        marker = 'synthetic-private-provision-invitation-diagnostic'
+        ET.SubElement(case, 'failure', message=marker).text = marker
+        ET.SubElement(suite, 'system-out').text = marker; suite.set('failures', '1'); self.save(suite)
+        self.assertFalse(self.check('postgres'))
+        self.assertNotIn(marker, ''.join(p.read_text(encoding='utf-8') for p in self.output.iterdir()))
+
+
+INVITATION_UNIT_METHODS = (
+    'freshTokensHaveFullUrlSafeEncodingAndDistinctProtectedValues',
+    'verifierAcceptsOnlyExactTokenAndBoundProofAccountPurposeAndTimes',
+    'exactExpiryAndConsumedRevokedOrFutureProofFailClosed',
+    'missingMalformedAndSharedPurposeKeysAreRejectedWithoutValues',
+    'keysAreDefensivelyCopiedAndOldKeysSupportRotation',
+    'aeadRejectsCiphertextNonceAndContextTampering',
+    'malformedNoncanonicalOrUnknownVerifierNeverAuthenticates',
+    'protectedBuffersAreDefensiveRedactedAndDestroyedOnClose',
+    'persistedMicrosecondPrecisionIsMandatoryForAuthenticatedContext',
+    'deliveryPolicyRequiresExplicitBoundedAttemptsAndBudgets',
+)
+INVITATION_PG_METHODS = (
+    'secureProvisionQueuesEncryptedIntentWithMatchingHmac',
+    'secureProvisionReplayAndConflictingKeyNeverRegenerateOutbox',
+    'secureProvisionEveryMandatoryPersistenceFailureRollsBack',
+    'secureProvisionConcurrentKeyAndUsernameHaveOneDurableEffect',
+    'secureOutboxClaimLeaseRecoveryRejectsStaleOwner',
+    'secureOutboxConcurrentClaimsHaveExactlyOneLease',
+    'secureOutboxSentClearsPayloadWithoutConsumingOrActivating',
+    'secureOutboxTransientRetriesAreBoundedAndExhaustionPurges',
+    'secureOutboxPermanentFailurePurgesWithoutBusinessMutation',
+    'secureOutboxExpiryRevocationAndConsumptionPurgeOnlyPayloads',
+    'secureOutboxCurrentRealmAndGrantStateGateDelivery',
+    'secureOutboxTamperingCannotProducePlaintextDelivery',
+    'secureOutboxRotationReadsPersistedOldKeyIdentity',
+    'secureOutboxMissingKeysOrRuntimeInsertPrivilegeCannotCommit',
+    'secureOutboxRejectsIntentOutsideTheProvisionTransaction',
+)
+
+
+class IdentityInvitationInventoryTests(unittest.TestCase):
+    setUp = ReportGuardTests.setUp
+    fixture = ReportGuardTests.fixture
+    save = ReportGuardTests.save
+    check = ReportGuardTests.check
+
+    def test_invitation_crypto_and_postgres_exact_reviewed_inventory(self):
+        root = Path(__file__).resolve().parents[2] / 'app/backend/src/test/java/com/elogistic/backend/identity/internal/infrastructure'
+        unit = (root / 'InvitationProtectionTests.java').read_text(encoding='utf-8')
+        pg = (root / 'IdentityGrantApplicationTests.java').read_text(encoding='utf-8')
+        self.assertEqual(10, len(INVITATION_UNIT_METHODS)); self.assertEqual(15, len(INVITATION_PG_METHODS))
+        self.assertEqual(list(INVITATION_UNIT_METHODS), re.findall(r'@Test\s+void\s+(\w+)\s*\(', unit))
+        self.assertEqual(list(INVITATION_UNIT_METHODS), reports.REQUIRED[reports.IDENTITY_INVITATION_UNIT])
+        self.assertEqual(list(INVITATION_PG_METHODS), re.findall(r'@Test\s+void\s+(secure\w+)\s*\(', pg))
+        self.assertEqual(list(INVITATION_PG_METHODS), reports.IDENTITY_INVITATION_PG_REQUIRED)
+        for mode in ('h2', 'postgres'):
+            self.assertIn(reports.IDENTITY_INVITATION_UNIT, reports.expected_suites(mode))
+        self.assertNotIn(reports.IDENTITY_INVITATION_UNIT, reports.expected_suites('architecture'))
+        self.assertNotIn(reports.IDENTITY_GRANTS, reports.expected_suites('h2'))
+        self.assertEqual(3, len(reports.TASK_C_SUITES))
+        self.assertNotIn('@Disabled', unit); self.assertNotIn('@Disabled', pg)
+
+    def test_invitation_missing_renamed_skipped_or_failed_methods_are_rejected(self):
+        for name, methods, modes in ((reports.IDENTITY_INVITATION_UNIT, INVITATION_UNIT_METHODS, ('h2', 'postgres')),
+                                     (reports.IDENTITY_GRANTS, INVITATION_PG_METHODS, ('postgres',))):
+            for mode in modes:
+                self.fixture(mode); path = self.source / ('TEST-' + name + '.xml'); original = path.read_bytes()
+                path.unlink(); self.assertFalse(self.check(mode)); path.write_bytes(original)
+                for method in methods:
+                    for status in ('missing', 'renamed', 'skipped', 'failure', 'error'):
+                        with self.subTest(mode=mode, method=method, status=status):
+                            suite = ET.fromstring(original); case = next(c for c in suite if c.get('name') == method)
+                            if status == 'missing':
+                                suite.remove(case); suite.set('tests', str(len(suite.findall('testcase'))))
+                            elif status == 'renamed':
+                                case.set('name', 'unapprovedInvitationCase')
+                            else:
+                                ET.SubElement(case, status); suite.set({'skipped':'skipped', 'failure':'failures', 'error':'errors'}[status], '1')
+                            self.save(suite); self.assertFalse(self.check(mode))
+                path.write_bytes(original); self.assertTrue(self.check(mode))
+
+    def test_invitation_diagnostics_properties_and_private_markers_are_never_published(self):
+        self.fixture('postgres'); path = self.source / ('TEST-' + reports.IDENTITY_GRANTS + '.xml')
+        suite = ET.parse(path).getroot(); case = next(c for c in suite if c.get('name') == INVITATION_PG_METHODS[0])
+        marker = 'synthetic-private-invitation-secret-marker'
+        ET.SubElement(case, 'failure', message=marker).text = marker
+        ET.SubElement(suite, 'system-out').text = marker; ET.SubElement(suite, 'properties', token=marker)
+        suite.set('failures', '1'); self.save(suite); self.assertFalse(self.check('postgres'))
+        self.assertNotIn(marker, ''.join(p.read_text(encoding='utf-8') for p in self.output.iterdir()))
 
 
 if __name__ == '__main__':

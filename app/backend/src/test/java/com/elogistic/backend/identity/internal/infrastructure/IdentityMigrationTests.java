@@ -37,7 +37,7 @@ class IdentityMigrationTests {
 
     private Database migrated() throws Exception {
         Database db = PostgresTestcontainersSupport.database(POSTGRES);
-        assertEquals(4, db.flyway("latest").migrate().migrationsExecuted);
+        assertEquals(5, db.flyway("latest").migrate().migrationsExecuted);
         return db;
     }
     private static String digest(int value) { return "decode('" + String.format("%064x", value) + "','hex')"; }
@@ -81,7 +81,7 @@ class IdentityMigrationTests {
         Database db = migrated(); account(db);
         var flyway = db.flyway("latest"); flyway.validate();
         var before = Arrays.stream(flyway.info().applied()).map(m -> m.getVersion() + ":" + m.getChecksum()).toList();
-        assertEquals(List.of("1","2","3","4"), Arrays.stream(flyway.info().applied()).map(m -> m.getVersion().toString()).toList());
+        assertEquals(List.of("1","2","3","4","5"), Arrays.stream(flyway.info().applied()).map(m -> m.getVersion().toString()).toList());
         var rows = snapshot(db, "identity.user_account");
         assertEquals(0, flyway.migrate().migrationsExecuted);
         assertEquals(before, Arrays.stream(flyway.info().applied()).map(m -> m.getVersion() + ":" + m.getChecksum()).toList());
@@ -100,7 +100,7 @@ class IdentityMigrationTests {
         var tables = List.of("merchant.demo_merchant", "identity.demo_account", "orders.demo_shipment", "orders.demo_event");
         Map<String,List<String>> before = new LinkedHashMap<>(); for (String table : tables) before.put(table, snapshot(db, table));
         var oldChecksums = Arrays.stream(db.flyway("2").info().applied()).map(m -> m.getChecksum()).toList();
-        assertEquals(2, db.flyway("latest").migrate().migrationsExecuted); db.flyway("latest").validate();
+        assertEquals(3, db.flyway("latest").migrate().migrationsExecuted); db.flyway("latest").validate();
         for (String table : tables) assertEquals(before.get(table), snapshot(db, table));
         assertEquals(oldChecksums, Arrays.stream(db.flyway("latest").info().applied()).limit(2).map(m -> m.getChecksum()).toList());
         try (Connection c = db.runtimeConnection(); Statement s = c.createStatement()) {
@@ -269,7 +269,7 @@ class IdentityMigrationTests {
         execute(db,"INSERT INTO identity.account_grant(account_id,role_code,scope_type,scope_id,granted_at) VALUES ("+ACCOUNT+",'IDENTITY_MANAGEMENT','IDENTITY',"+ACCOUNT+","+NOW+")");
         var before=snapshot(db,"identity.user_account");
         var checksums=Arrays.stream(db.flyway("3").info().applied()).map(m->m.getChecksum()).toList();
-        assertEquals(1,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();
+        assertEquals(2,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();
         assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);
         assertEquals(before,snapshot(db,"identity.user_account"));
         assertEquals(checksums,Arrays.stream(db.flyway("latest").info().applied()).limit(3).map(m->m.getChecksum()).toList());
@@ -328,6 +328,44 @@ class IdentityMigrationTests {
         }
     }
 
+    @Test void invitationV5UpgradePreservesLegacyProofsDataAndChecksums() throws Exception {
+        Database db=PostgresTestcontainersSupport.database(POSTGRES);assertEquals(4,db.flyway("4").migrate().migrationsExecuted);account(db);
+        execute(db,proof(PROOF,"INVITATION",501,"24 hours"));var accounts=snapshot(db,"identity.user_account");
+        var checksums=Arrays.stream(db.flyway("4").info().applied()).map(m->m.getChecksum()).toList();
+        assertEquals(1,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);
+        assertEquals(checksums,Arrays.stream(db.flyway("latest").info().applied()).limit(4).map(m->m.getChecksum()).toList());assertEquals(accounts,snapshot(db,"identity.user_account"));
+        try(Connection c=db.runtimeConnection();Statement s=c.createStatement();ResultSet r=s.executeQuery("SELECT account_id,purpose,token_hash,expires_at-created_at=INTERVAL '24 hours',verifier_key_id,consumed_at,revoked_at FROM identity.action_proof WHERE id="+PROOF)) {
+            assertTrue(r.next());assertEquals(UUID.fromString(ACCOUNT.replace("'","")),r.getObject(1,UUID.class));assertEquals("INVITATION",r.getString(2));
+            assertEquals(501,new java.math.BigInteger(1,r.getBytes(3)).intValueExact());assertTrue(r.getBoolean(4));assertNull(r.getString(5));assertNull(r.getObject(6));assertNull(r.getObject(7));assertFalse(r.next());
+        }
+        assertTrue(snapshot(db,"identity.invitation_outbox").isEmpty());
+    }
+    @Test void invitationOutboxEnforcesProofAssociationUniquenessAndProtectedShape() throws Exception {
+        Database db=migrated();account(db);execute(db,account(OTHER,"'fixture.other'"));execute(db,proof(PROOF,"INVITATION",502,"24 hours"));
+        execute(db,"UPDATE identity.action_proof SET verifier_key_id='v1' WHERE id="+PROOF);
+        String insert="INSERT INTO identity.invitation_outbox(id,proof_id,account_id,realm_id,purpose,destination,format_version,verifier_key_id,encryption_key_id,created_at,expires_at,status,next_attempt_at,nonce,ciphertext) VALUES ("+KEY+","+PROOF+","+ACCOUNT+","+ACCOUNT+",'INVITATION','fixture@example.invalid',1,'v1','e1',"+NOW+","+NOW+"+INTERVAL '24 hours','PENDING',"+NOW+",decode(repeat('00',12),'hex'),decode(repeat('00',59),'hex'))";
+        rejects(db,"23503",insert.replace(PROOF+","+ACCOUNT+","+ACCOUNT,PROOF+","+OTHER+","+ACCOUNT));
+        rejects(db,"23503",insert.replace("'v1'","'unknown'"));
+        rejects(db,"23514",insert.replace("repeat('00',12)","repeat('00',11)"));
+        rejects(db,"23514",insert.replace("repeat('00',59)","repeat('00',43)"));
+        rejects(db,"23514",insert.replace("'PENDING'","'SENT'"));
+        rejects(db,"23514",insert.replace("'INVITATION'","'RECOVERY'"));
+        execute(db,insert);rejects(db,"23505",insert.replace(KEY,BINDING));
+        rejects(db,"23514","UPDATE identity.invitation_outbox SET status='LEASED'");
+        rejects(db,"23514","UPDATE identity.invitation_outbox SET attempts=11");
+        rejects(db,"23514","UPDATE identity.invitation_outbox SET verifier_key_id='bad/key'");
+    }
+    @Test void invitationOutboxOwnershipAndRuntimePrivilegesRemainNarrow() throws Exception {
+        Database db=migrated();
+        try(Connection c=db.runtimeConnection();Statement s=c.createStatement()) {
+            try(ResultSet r=s.executeQuery("SELECT tableowner FROM pg_tables WHERE schemaname='identity' AND tablename='invitation_outbox'")){assertTrue(r.next());assertEquals(db.owner(),r.getString(1));}
+            for(String privilege:List.of("SELECT","INSERT","UPDATE"))try(ResultSet r=s.executeQuery("SELECT has_table_privilege(current_user,'identity.invitation_outbox','"+privilege+"')")){assertTrue(r.next());assertTrue(r.getBoolean(1));}
+            for(String privilege:List.of("DELETE","TRUNCATE","REFERENCES","TRIGGER"))try(ResultSet r=s.executeQuery("SELECT has_table_privilege(current_user,'identity.invitation_outbox','"+privilege+"')")){assertTrue(r.next());assertFalse(r.getBoolean(1));}
+            try(ResultSet r=s.executeQuery("SELECT count(*) FROM information_schema.columns WHERE table_schema='identity' AND table_name='invitation_outbox' AND column_name IN ('raw_token','token','invitation_link','payload')")){assertTrue(r.next());assertEquals(0,r.getInt(1));}
+        }
+        rejects(db,"42501","DELETE FROM identity.invitation_outbox");rejects(db,"42501","TRUNCATE identity.invitation_outbox");
+        rejects(db,"42501","ALTER TABLE identity.invitation_outbox ADD COLUMN raw_token TEXT");
+    }
     @Test void preexistingSchemaDriftFailsWithoutBaselineOrRepair() throws Exception {
         Database db = PostgresTestcontainersSupport.database(POSTGRES); db.flyway("2").migrate();
         try (Connection c = db.migrationConnection(); Statement s = c.createStatement()) {

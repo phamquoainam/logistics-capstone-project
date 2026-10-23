@@ -1665,3 +1665,336 @@ assignment or removal of the last pair. Initial assignment belongs to provisioni
 other target role/resource combinations need approved owner authority. No empty
 request, ordinary role or external scope is enabled to manufacture a broader
 positive path. Full grant lifecycle/Feature002 acceptance remains pending.
+
+## T-002-05-PROVISION — bounded invitation provisioning implementation — 2026-10-22
+
+OWNER_T_002_05_PROVISIONING_IMPLEMENTATION: GO. Source baseline/branch:
+feature/002-identity-application-ci at4a90bafc00ddfd89ec9ea0023534027e6bf1a395,
+empty index, six pre-existing Foundation dirty paths preserved.
+OWNER_PROVISION_INITIAL_IDENTITY_PAIR: APPROVED_WITH_RESTRICTIONS was received
+during preflight; its exact narrow extension is recorded in
+[ADR-0010](../architecture/decisions/ADR-0010-identity-system-realm.md#bounded-ordinary-provisioning-extension--owner-approved-2026-10-22).
+
+### Previously verified baseline, not new provisioning evidence
+
+[Run39795074146 attempt1](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/39795074146)
+completed SUCCESS on exact4a90baf: Architecture23 PASS/0 skips, H2296 PASS/17
+expected skips, PostgreSQL395 PASS/5 expected skips. Domain48, authority9,
+Realm policy8, migration22, grant integration52 and104 policy controls/job passed.
+Both earlier PostgreSQL regression failures were corrected by two test changes:
+15 exact owner tables including Realm, and generated-column428C9 distinguished
+from independent42501 UPDATE privilege rejection. V1..V4 remained immutable.
+This supersedes prior Realm runtime-PENDING statements for that source only.
+
+### Canonical scope and explicit decisions
+
+Accepted POST /api/v1/admin/users / provisionIdentityAccount requires username,
+displayName, email and a nonempty unique grant set; Idempotency-Key is required.
+No password, target ID, verification state, request If-Match or bootstrap operation
+is accepted. Exact username/case/Unicode sequence and contacts are retained.
+Email uses the accepted harness's full email format; malformed Unicode/NUL cannot
+be persisted as PostgreSQL text. Email is contact data, NOT a unique identity:
+no email-uniqueness constraint or verification bypass was invented.
+
+Only an admitted actual Identity Management actor in ACTIVE registered Realm R
+can explicitly request the exact initial management pair for R. New target ID
+is generated server-side. Membership is established by atomic creation of that
+account/grant with the existing V4 Realm FK; no independent account-tenant model.
+New accounts stay PENDING_ACTIVATION, UNVERIFIED, version/authVersion1, without
+password or session. Empty/mixed/external/other-role/cross-Realm requests deny.
+The old empty-target replacement guard, self/last-admin guards and bootstrap
+procedures remain unchanged. This is not full grant lifecycle completion.
+
+### Implemented code and transaction behavior
+
+- IdentityProvisionCommands exposes the accepted backend command and reuses the
+  safe Account/Result DTOs; AUTHORITY_REQUIRED/USERNAME_CONFLICT are existing
+  accepted wire error codes added to the internal command error enum.
+- ProvisionInput validates payloads, rejects duplicate/malformed grants, and
+  fingerprints exact contact/username plus sorted grant pairs. It never accepts
+  an initial password; command/input string representations are redacted.
+- ProvisionIdentityAccount and ports IdentityProvisionStore, ProvisionAuthority,
+  InvitationIssuer implement admission, authority, pending creation, invitation
+  metadata, audit and receipt orchestration. No HTTP or external mail adapter.
+- JdbcIdentityProvisionStore reuses JdbcIdentityGrantStore's existing transaction,
+  READ_COMMITTED, administration lock and timeouts. All inserts use the same
+  runtime DataSource. Username conflict is INSERT-only/DO NOTHING, never takeover.
+- JdbcIdentityRealmGrantAuthority shares its existing registry/transaction/lock
+  checks between separate new-account and replay authority paths. Replacement
+  still delegates to the unchanged nonempty-current-target policy.
+- ProductionIdentityProvisionComposition installs the genuine JDBC authority.
+  It is explicit trusted infrastructure composition, not Demo/HTTP registration.
+
+Ordering: administration lock -> current actor/session admission -> payload ->
+internal actor/key receipt lookup -> current new-target/full stored replay-target
+authority -> deadline recheck -> authorized replay/conflict -> username uniqueness ->
+required invitation adapter -> pending Domain creation -> prepared proof validation ->
+deadline recheck -> account/grants -> proof -> same-transaction durable intent ->
+deadline recheck -> audit -> receipt -> authorized result.
+Receipt lookup is internal only; no receipt/existence/contact result is returned
+before authority. Replays precede username conflict and do not regenerate invitation.
+Different keys for one username serialize and only one insert can win. Receipt
+retention is at least24h. Invalid proof metadata or any mandatory write/intent/close
+failure rolls the transaction back. No external delivery inside the transaction.
+
+### Explicit durable invitation dependency
+
+V3/V4 contain action_proof hash/state, but NO durable invitation delivery-intent
+table. No V5, provider, key configuration or cryptographic implementation has
+been invented. InvitationIssuer.Prepared keeps raw material private to a future
+reviewed adapter; only proof metadata and a32-byte protected token digest cross
+the port. It must enqueue a durable protected intent on the SAME transaction,
+then destroy transient material. Missing adapter raises
+PROVISIONING_INVITATION_ADAPTER_REQUIRED before any account/grant/proof write;
+this internal configuration failure is not a new accepted HTTP response mapping.
+
+The production default is therefore safe but NOT deployably usable provisioning.
+A separately approved protected delivery schema/key/issuer implementation is a
+mandatory completion dependency. Do not inject a synthetic fixture into deployment.
+
+### Tests authored versus executed
+
+New12 IdentityProvisionInputTests methods cover exact identity/contact, Unicode
+bounds, missing keys, invalid/duplicate grants, full email format, canonical
+fingerprints, immutability/redaction, exact initial authority/new-target binding,
+scope denial, pending-state eligibility, unchanged replacement denial and
+pending/unverified/version1 Domain result.
+
+New18 PostgreSQL methods are appended to IdentityGrantApplicationTests (70 total;
+all52 original method bodies retained). They use the real JDBC Realm provider.
+Only invitation preparation/delivery is a clearly marked test fixture: fresh
+test-only identity.synthetic_invitation_intent contains proof/account IDs and
+SYNTHETIC_NO_TOKEN, never a token/ciphertext. Owner-only fixture DDL in isolated
+test databases is not a production migration. It proves transaction participation,
+not secure token generation, real durable outbox compatibility or email delivery.
+
+Authored cases cover pending account/grant/proof/audit/receipt/test-intent state;
+exact replay and changed-payload conflict; duplicate username; missing/revoked/
+expired/stale/disabled actor; inactive/missing/cross-Realm/mixed/external authority;
+missing adapter; malformed digest, wrong purpose/subject/lifetime/consumed proof;
+grant/proof/delivery/audit/receipt fault rollback; concurrent same-key and username
+races; current target grant union and session replay guards; no Realm activation/
+bootstrap/session side effects; real competing actor/Realm state changes.
+
+Actual process-safe checks:
+- python -B -m unittest discover -s scripts/ci -p 'test_*.py':
+ 107/107 PASS,60.835s, exit0. Three new strict inventory/privacy controls; all
+ old104 preserved. New methods missing/renamed/failed/error/skipped are rejected.
+- python -B -m unittest discover -s app/backend -p 'test_identity_migration.py':
+ 15/15 PASS,0.018s, exit0; immutable migration/source guards retained.
+- Java compilation/JUnit, current-source ArchUnit/H2/PostgreSQL, production crypto/
+ delivery, runtime logs and current-source Testcontainers cleanup: UNVERIFIED.
+ The earlier one-run CI authorizations are consumed; no new runtime path is inferred.
+ No local JVM/Maven/Docker/native execution or GitHub dispatch in this checkpoint.
+
+Required FUTURE inventories (NOT measured outcomes): Architecture23/0 skips;
+H2308 PASS/17 expected skips (325 discovered); PostgreSQL425 PASS/5 expected skips
+(430 discovered). Migration22, prior Domain48, authority9 and Realm8 remain.
+Three Testcontainers suite ownership/cleanup registry, all collector functions,
+prior method identities, required skips and CI workflow are unchanged.
+
+### Status and scoped verification handoff
+
+T_002_05_PROVISIONING_IMPLEMENTED_VERIFICATION_PENDING applies only to these
+bounded components; deployable invitation delivery remains BLOCKED on its explicit
+schema/protection/issuer decision and implementation. Do not describe the positive
+test fixture path as complete production provisioning or bootstrap activation.
+GRANT_MUTATION_FUNCTIONALITY_LIMITED remains for the replacement operation.
+T-002-01..04 DONE; T-002-05 PARTIAL; Feature002/AC-002-01..05 NOT ACCEPTED.
+Feature001/D1-08/Day1 PARTIAL. Main traceability and all six Foundation paths,
+T-002-03 evidence, accepted OpenAPI/REQ/AC, V1..V4 and original Domain preserved.
+No staging, commit, push, PR, merge, workflow dispatch, credentials or developer
+services. Source/runtime verification must use a separately authorized current
+revision after the narrow delivery dependency is resolved or explicitly bounded.
+
+### Final source-only checkpoint inventory
+
+Exactly19 task-owned paths (9 new,10 modified); six unrelated Foundation paths
+remain unstaged and byte-identical to the preflight. Original52 grant test bodies,
+replacement policy body and four SDD/ADR original byte prefixes preserved.
+Finite import/delimiter/UTF-8/disclosure checks PASS;71 relative documentation
+file links resolve. Tracked-delta and new-file whitespace checks PASS. These
+static checks are not Java compilation. Final focused inventory controls after
+fixture/validation edits:3/3 PASS,2.708s, exit0. No additional runtime or Git action.
+
+```text
+app/backend/src/main/java/com/elogistic/backend/identity/api/IdentityCommandFailure.java
+app/backend/src/main/java/com/elogistic/backend/identity/api/IdentityProvisionCommands.java
+app/backend/src/main/java/com/elogistic/backend/identity/internal/application/IdentityRealmGrantPolicy.java
+app/backend/src/main/java/com/elogistic/backend/identity/internal/application/ProvisionIdentityAccount.java
+app/backend/src/main/java/com/elogistic/backend/identity/internal/application/ProvisionInput.java
+app/backend/src/main/java/com/elogistic/backend/identity/internal/application/port/IdentityProvisionStore.java
+app/backend/src/main/java/com/elogistic/backend/identity/internal/application/port/InvitationIssuer.java
+app/backend/src/main/java/com/elogistic/backend/identity/internal/application/port/ProvisionAuthority.java
+app/backend/src/main/java/com/elogistic/backend/identity/internal/infrastructure/JdbcIdentityProvisionStore.java
+app/backend/src/main/java/com/elogistic/backend/identity/internal/infrastructure/JdbcIdentityRealmGrantAuthority.java
+app/backend/src/main/java/com/elogistic/backend/identity/internal/infrastructure/ProductionIdentityProvisionComposition.java
+app/backend/src/test/java/com/elogistic/backend/identity/internal/application/IdentityProvisionInputTests.java
+app/backend/src/test/java/com/elogistic/backend/identity/internal/infrastructure/IdentityGrantApplicationTests.java
+docs/architecture/decisions/ADR-0010-identity-system-realm.md
+docs/implementation/t-002-05-identity-application-evidence.md
+docs/quality/feature-002-recovery-traceability.md
+scripts/ci/test_verify_reports.py
+scripts/ci/verify-reports.py
+specs/002-identity-access/tasks.md
+```
+
+
+## T-002-05 Invitation Outbox checkpoint — 2026-10-23
+
+**T_002_05_INVITATION_OUTBOX_IMPLEMENTED_VERIFICATION_PENDING.**
+Owner scope: `OWNER_T_002_05_SECURE_INVITATION_STORAGE: GO` and
+`OWNER_T_002_05_TRANSACTIONAL_OUTBOX: CONDITIONAL_GO`. T-002-05 stays PARTIAL;
+Feature 002 and AC-002-01..05 stay NOT ACCEPTED. This supersedes the prior
+missing-production-issuer/outbox *source* dependency only; it does not replace
+pending provisioning/runtime verification with historical green CI.
+
+### Schema and bounded security decision
+
+[ADR-0011](../architecture/decisions/ADR-0011-identity-invitation-outbox.md)
+records the approved bounded implementation. V3/V4 cannot recover a delivery
+secret after commit; `SYNTHETIC_NO_TOKEN` is only a transaction test fixture.
+Append V5__identity_invitation_outbox.sql; never edit V1-V4. Preserve legacy
+proof rows with NULL verifier_key_id. New outbox rows have exact composite proof
+binding, unique proof/message identities, Realm FK, protected payload, lease,
+attempt/retry metadata and fixed outcome codes. Runtime gains SELECT/INSERT/UPDATE
+only on this Identity table, no DELETE/TRUNCATE/owner/global privileges.
+
+Issuer: 256-bit CSPRNG token, 43-byte unpadded Base64url; HMAC-SHA-256 over the
+versioned proof/account/purpose/time/key context; MessageDigest.isEqual comparison.
+Delivery: independent AES-256-GCM key, random 12-byte nonce, 128-bit tag, exact
+context AAD including private destination/Realm and stable message identity.
+PostgreSQL microseconds are canonicalized before HMAC/AEAD. Raw token is never
+stored plaintext, passed as a JDBC parameter, returned in Account, receipt/audit,
+logged or sent to an external provider. Returned internal worker material is
+transient, redacted and closeable/wiped. Java cannot promise erasure of provider,
+GC or historical storage copies; no such claim is made.
+
+External composition receives independently supplied verifier/encryption key rings
+and explicit lease/retry policy. No secret file read, default key or environment
+mutation was introduced. Invalid/missing/shared-purpose keys fail closed. Current
+IDs issue; retained old IDs read. Rotation must retain live proof/payload keys;
+unknown keys deny. Production sender/worker configuration remains unapproved and
+unregistered, with no SMTP/provider calls or automatic provisioning bootstrap.
+
+### Atomicity, replay and delivery boundary
+
+The existing trusted actor/session/authVersion, exact same ACTIVE Realm delegation,
+initial pair, administration lock, username uniqueness and >=24h receipt retention
+remain. Exact authorized replay returns before crypto preparation. New commands
+prepare protected material then append account + grants + proof + durable intent +
+audit + receipt in the existing runtime DataSource transaction. Any mandatory
+persistence error rolls everything back. No external delivery occurs inside it.
+
+Internal JdbcInvitationOutbox claims one pending/recoverable row under the existing
+administration lock and FOR UPDATE/SKIP LOCKED, with 1-10 attempts, 5-300s lease,
+1-300s retry delay. Open rechecks current proof/account/destination/Realm/grant
+eligibility and verifies AEAD/HMAC from a fresh DB read. Stale leases cannot open
+or acknowledge. SENT/permanent failure/exhaustion clears protected payload;
+expired/consumed/revoked/ineligible intents are purgeable in bounded 100-row batches.
+No domain account/proof/audit/receipt is removed or activated by delivery outcomes.
+QUEUED != SENT != CONSUMED != ACTIVE. Transport is at-least-once; provider dedupe
+on stable message identity is a future sender requirement, not exactly-once email.
+
+**Retention limitation:** logical expiry is enforced at 24h; physical ciphertext
+purge is invocation-driven, not a running scheduled service. Production enablement
+requires a maintenance schedule (also while sending is disabled), backlog monitoring,
+key retention/rotation and DB/backup retention policy. No physical purge SLA or
+production delivery readiness is claimed before those integrations are verified.
+
+### Authored versus executed verification
+
+| Gate | Current result | Evidence / scope |
+|---|---|---|
+| Python report-policy controls | PASS 110/110, 58.866s | `python -B -m unittest discover -s scripts/ci -p 'test_*.py'` |
+| Static Identity migration + outbox source controls | PASS 25/25, 0.372s | `python -B -m unittest discover -s app/backend -p 'test_identity_*.py'`; 15 prior controls + 10 new source controls, including 10 schema mutation subcases and a comment positive control |
+| Exact finite inventory/privacy negatives | PASS within 110 controls | missing/renamed/failed/error/skipped new crypto and PG methods reject; private diagnostics never enter public reports |
+| Collector algorithms / Foundation integrity | PASS | all 7 collector function AST bodies unchanged against HEAD; six protected Foundation hashes, T-002-03 evidence and accepted OpenAPI hashes match recorded baseline |
+| Java compilation / JCE unit execution | UNVERIFIED | no fresh authorized Java/Maven execution; 10 genuine crypto/policy JUnit methods authored |
+| Real PostgreSQL V5, outbox, rollback/concurrency | UNVERIFIED | 15 real secure issuer/outbox methods + 3 V5 migration methods authored; not replaced by synthetic fixture evidence |
+| ArchUnit / H2 / PostgreSQL current revision | UNVERIFIED | exact required inventory prepared; no runtime or CI dispatch authorized |
+| Physical purge scheduling / SMTP / activation consumer | NOT IMPLEMENTED | separate approved worker/provider and activation integration needed |
+
+The earlier Python attempts found stale finite totals (22->25 migration methods,
+H2 308->318, PG 425->453). These were corrected by adding the exact new reviewed
+identities; no assertion/skip/privacy/cleanup waiver. Final results above supersede
+those source-control failures only. The previous run39795074146 validates published
+4a90baf, NOT any uncommitted provisioning/V5/outbox source.
+
+New Java methods (all execution UNVERIFIED): InvitationProtectionTests10;
+IdentityGrantApplicationTests secure-prefix15; IdentityMigrationTests invitation-prefix3.
+The previous 70 grant/provisioning methods and 22 migration methods remain required.
+Only complete-stream/table inventory expectations and the synthetic issuer's added
+destination argument were adapted. Full expected runtime inventory:
+
+| Mode | Expected passed | Expected skips | Discovered |
+|---|---:|---:|---:|
+| Architecture | 23 | 0 | 23 |
+| H2 | 318 | 17 | 335 |
+| PostgreSQL 18 | 453 | 5 | 458 |
+
+PostgreSQL includes 85 grant/application methods, 25 migration methods, 10 crypto
+unit methods, all 48 Domain methods, existing Realm/authority/Demo/foundation/safety
+regressions. The three owned Testcontainers suites and cleanup policy are unchanged.
+Expected skips retain their precise prior classification; they are not optional new
+tests. New outbox tests must pass, never skip, in the PostgreSQL job.
+
+### Git safety and exact scoped working manifest
+
+Branch feature/002-identity-application-ci; HEAD
+4a90bafc00ddfd89ec9ea0023534027e6bf1a395, index empty. No stage/commit/push/dispatch/PR.
+Six Foundation paths remain separate/protected. The scoped accumulated working
+manifest has 30 task paths: all 19 prior Provision paths retained plus 11 additional
+paths (including V5, crypto/outbox adapters/tests, regression inventory and ADR).
+This is an accumulated publication candidate, not a claim all 30 were newly created
+by Invitation Outbox. No SQL was executed; V1-V4, contract, T-002-03 evidence,
+workflow, POM, dependencies, developer services and credentials remain unchanged.
+Sanitized SHA-256 manifest is retained privately at
+`.demo/t-002-05-invitation-outbox/assessment.json`; no key/token is placed there.
+
+```text
+app/backend/src/main/java/com/elogistic/backend/identity/api/IdentityCommandFailure.java
+app/backend/src/main/java/com/elogistic/backend/identity/api/IdentityProvisionCommands.java
+app/backend/src/main/java/com/elogistic/backend/identity/internal/application/IdentityRealmGrantPolicy.java
+app/backend/src/main/java/com/elogistic/backend/identity/internal/application/ProvisionIdentityAccount.java
+app/backend/src/main/java/com/elogistic/backend/identity/internal/application/ProvisionInput.java
+app/backend/src/main/java/com/elogistic/backend/identity/internal/application/port/IdentityProvisionStore.java
+app/backend/src/main/java/com/elogistic/backend/identity/internal/application/port/InvitationIssuer.java
+app/backend/src/main/java/com/elogistic/backend/identity/internal/application/port/ProvisionAuthority.java
+app/backend/src/main/java/com/elogistic/backend/identity/internal/infrastructure/InvitationProtection.java
+app/backend/src/main/java/com/elogistic/backend/identity/internal/infrastructure/JdbcIdentityProvisionStore.java
+app/backend/src/main/java/com/elogistic/backend/identity/internal/infrastructure/JdbcIdentityRealmGrantAuthority.java
+app/backend/src/main/java/com/elogistic/backend/identity/internal/infrastructure/JdbcInvitationOutbox.java
+app/backend/src/main/java/com/elogistic/backend/identity/internal/infrastructure/ProductionIdentityProvisionComposition.java
+app/backend/src/main/java/com/elogistic/backend/identity/internal/infrastructure/SecureInvitationIssuer.java
+app/backend/src/main/resources/db/migration/V5__identity_invitation_outbox.sql
+app/backend/src/test/java/com/elogistic/backend/demo/PostgresFoundationTests.java
+app/backend/src/test/java/com/elogistic/backend/demo/PostgresTestcontainersTests.java
+app/backend/src/test/java/com/elogistic/backend/identity/internal/application/IdentityProvisionInputTests.java
+app/backend/src/test/java/com/elogistic/backend/identity/internal/infrastructure/IdentityGrantApplicationTests.java
+app/backend/src/test/java/com/elogistic/backend/identity/internal/infrastructure/IdentityMigrationTests.java
+app/backend/src/test/java/com/elogistic/backend/identity/internal/infrastructure/InvitationProtectionTests.java
+app/backend/test_identity_invitation_outbox.py
+app/backend/test_identity_migration.py
+docs/architecture/decisions/ADR-0010-identity-system-realm.md
+docs/architecture/decisions/ADR-0011-identity-invitation-outbox.md
+docs/implementation/t-002-05-identity-application-evidence.md
+docs/quality/feature-002-recovery-traceability.md
+scripts/ci/test_verify_reports.py
+scripts/ci/verify-reports.py
+specs/002-identity-access/tasks.md
+```
+
+### Remaining canonical Application work
+
+Real sender/worker (including retention scheduling), invitation acceptance and
+password setup with atomic proof consumption, recovery request/confirmation,
+login/refresh/logout/session admission, account/role/scope queries, disable/reactivate,
+resend and remaining resource-owner authority integration are not completed by this
+checkpoint. Preserve GRANT_MUTATION_FUNCTIONALITY_LIMITED: current replacement
+still permits only the exact bounded pair and meaningful grant changes remain
+unproven. HTTP/security, browser flows and full Feature 002 AC remain pending.
+
+Next single gate: owner-authorized scoped current-revision compilation and CI
+verification of Provision + V5 + crypto + durable outbox, retaining all report,
+privacy and owned Testcontainers cleanup guards, before worker/activation expansion.

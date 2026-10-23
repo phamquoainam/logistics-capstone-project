@@ -410,3 +410,50 @@ V1/V2/V3 unchanged; README clarification explicitly records owner-approved meani
 Previous SDD content and six Foundation changes preserved; no source dispatch/
 publication/runtime/credential access. T-002-05 PARTIAL; Feature002 and AC-002-01..05
 NOT ACCEPTED; Feature001/D1-08/Day1 PARTIAL.
+
+## T-002-05-PROVISION bounded source checkpoint — 2026-10-22
+
+[Detailed implementation/evidence/limits](../implementation/t-002-05-identity-application-evidence.md#t-002-05-provision--bounded-invitation-provisioning-implementation--2026-10-22).
+[Owner-approved initial-pair scope](../architecture/decisions/ADR-0010-identity-system-realm.md#bounded-ordinary-provisioning-extension--owner-approved-2026-10-22).
+
+Prior Realm source4a90baf/run39795074146 attempt1 SUCCESS is reconciled:
+23 Architecture,296 H2/17 skips,395 PostgreSQL/5 skips,104 policy controls/job,
+exact artifact digests/inventories and credential/privacy/owned cleanup PASS.
+This supersedes old Realm pending states, not new provisioning verification.
+
+| Trace | Current implementation/authored evidence | Actual status / limit |
+|---|---|---|
+| REQ-002-01/04; AC-002-01/02/04 | Owner-approved explicit same-Realm initial management pair; pending/unverified new account; full grant-set/default-deny policy |12 unit methods authored; Java UNVERIFIED; external scopes denied |
+| REQ-002-02/05; AC-002-02/04/05 | Current stored actor/session/authVersion and ACTIVE Realm, same DataSource/admin lock, replay target union | New real-provider PostgreSQL denial/concurrency methods authored, not executed |
+| REQ-002-04/05; AC-002-03/05 | Atomic account/grants/proof/audit/receipt/intent port; username race; exact replay/conflict; minimum24h receipts |18 PostgreSQL methods appended, old52 bodies retained; synthetic test delivery only |
+| REQ-002-03; AC-002-02/04 | No password/session issue or plaintext proof in API/audit/receipt; metadata validation and material cleanup | Privacy107 policy controls PASS; production cryptographic issuer/durable protected delivery missing |
+
+Three Task-C suite resource registries, expected skip categories, V1..V4,
+accepted contracts and original Domain48 are unchanged. New future totals:
+Architecture23/0, H2308/17, PostgreSQL425/5; these are NOT current runtime PASS.
+107 process-safe report controls and15 static migration checks PASS. Production
+composition without a reviewed invitation adapter fails before any account write.
+No production bootstrap, new migration, provider, credentials, JVM/Docker runtime,
+Git publication or CI dispatch. Main traceability remains protected.
+
+T_002_05_PROVISIONING_IMPLEMENTED_VERIFICATION_PENDING for bounded components;
+production delivery dependency BLOCKED. GRANT_MUTATION_FUNCTIONALITY_LIMITED
+remains for replacement; first-pair policy approval is not full lifecycle/runtime
+acceptance. T-002-01..04 DONE; T-002-05 PARTIAL; Feature002/AC-002-01..05 NOT ACCEPTED.
+
+
+## Invitation Outbox source checkpoint — 2026-10-23
+
+T-002-05 PARTIAL; secure issuer and durable encrypted V5 invitation outbox are
+IMPLEMENTED_VERIFICATION_PENDING under the owner's bounded approval.
+[Evidence and exact 30-path manifest](../implementation/t-002-05-identity-application-evidence.md#t-002-05-invitation-outbox-checkpoint--2026-10-23),
+[ADR-0011](../architecture/decisions/ADR-0011-identity-invitation-outbox.md).
+REQ-002-01/04 -> pending controlled initial-pair provisioning, audit and transactional
+intent; REQ-002-02/05 -> current persisted actor/session/Realm and replay admission;
+REQ-002-03 -> separate-key HMAC/AEAD protected proof/delivery material.
+AC-002-02/03/04/05 now have 10 crypto + 15 PostgreSQL outbox + 3 V5 migration
+methods AUTHORED, not executed. Python source/report controls PASS25/110 do not
+prove Java compilation, PostgreSQL enforcement or HTTP/runtime AC. All original
+REQ/AC text and main traceability remain unchanged; AC-002-01..05 NOT ACCEPTED.
+Production sender/maintenance schedule/activation remain dependencies; physical
+purge is invocation-driven. GRANT_MUTATION_FUNCTIONALITY_LIMITED remains.
