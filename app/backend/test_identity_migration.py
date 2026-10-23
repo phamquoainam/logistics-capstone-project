@@ -87,7 +87,8 @@ class IdentityMigrationSourceTests(unittest.TestCase):
 
     def test_global_version_inventory_is_exact(self):
         self.assertEqual(['V1__ownership_schemas.sql', 'V2__demo_identity_merchant_drafts.sql',
-                          'V3__production_identity.sql'], sorted(p.name for p in MIGRATIONS.glob('V*.sql')))
+                          'V3__production_identity.sql', 'V4__identity_system_realm.sql',
+                          'V5__identity_invitation_outbox.sql'], sorted(p.name for p in MIGRATIONS.glob('V*.sql')))
 
     def test_prior_postgres_and_h2_migrations_are_immutable(self):
         for path, expected in IMMUTABLE.items():
@@ -156,7 +157,7 @@ class IdentityMigrationSourceTests(unittest.TestCase):
 
     def test_runtime_suite_has_no_developer_fallback_or_skip_annotation(self):
         source = (ROOT/'app/backend/src/test/java/com/elogistic/backend/identity/internal/infrastructure/IdentityMigrationTests.java').read_text(encoding='utf-8')
-        self.assertEqual(14, len(re.findall(r'@Test void ', source)))
+        self.assertEqual(25, len(re.findall(r'@Test void ', source)))
         self.assertIn('@Tag("task-c")', source)
         self.assertIn('PostgresTestcontainersSupport.container()', source)
         self.assertIn('PostgresTestcontainersSupport.verifyRuntime(POSTGRES)', source)

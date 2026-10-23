@@ -132,6 +132,17 @@ REQUIRED[IDENTITY_MIGRATION] = [
     'csrfSupportsPreauthAndSessionBindingButRejectsBadHashesAndReferences',
     'receiptsBindActorProofOrPreauthWithoutExistenceDisclosureOrDuplicateKey',
     'runtimeCanAppendAuditButCannotDdlDeleteAccountsOrMutateAuditAndReceipts',
+    'realmRegistryStartsInactiveAndRuntimeCannotRegisterOrActivate',
+    'realmForeignKeyRejectsUnknownIdentityButPreservesExternalScope',
+    'realmUpgradePreservesV3DataAndChecksums',
+    'unmatchedLegacyIdentityScopeStopsRealmUpgradeAtomically',
+    'bootstrapCreatesPendingOnlyAndDuplicateCannotTakeOverAnAccount',
+    'realmActivationRequiresVerifiedInvitationAndCannotBeReplayedOrReactivated',
+    'bootstrapAuditFailureRollsBackPendingAccountGrantAndRealmBinding',
+    'inactiveRealmIsNotEnoughToCreateActiveAdministrativeAuthority',
+    'invitationV5UpgradePreservesLegacyProofsDataAndChecksums',
+    'invitationOutboxEnforcesProofAssociationUniquenessAndProtectedShape',
+    'invitationOutboxOwnershipAndRuntimePrivilegesRemainNarrow',
     'preexistingSchemaDriftFailsWithoutBaselineOrRepair',
 ]
 # T-002-04 source-reviewed plain-Jupiter identities; required in H2 and PostgreSQL.
@@ -196,10 +207,162 @@ IDENTITY_DOMAIN_REQUIRED = {
     ],
 }
 REQUIRED.update(IDENTITY_DOMAIN_REQUIRED)
+IDENTITY_GRANTS = BASE + 'identity.internal.infrastructure.IdentityGrantApplicationTests'
+# T-002-05 finite, reviewed PostgreSQL-only transaction suite; no valid skips.
+REQUIRED[IDENTITY_GRANTS] = [
+    'authorizedReplacementPersistsMultipleScopesVersionsAuditAndReceipt',
+    'allTargetSessionsAndRefreshTokensAreRevokedWithoutTouchingActor',
+    'authorizedReplayPrecedesStaleVersionAndDoesNotRepeatEffects',
+    'reorderedGrantSetHasSameCanonicalReceiptFingerprint',
+    'sameKeyChangedPayloadConflictsWithoutWrites',
+    'sameKeyChangedTargetConflictsWithoutWrites',
+    'sameKeyChangedExpectedVersionConflictsBeforeStaleCheck',
+    'sameKeyChangedReasonConflictsWithoutWrites',
+    'revokedActorSessionCannotReplayReceipt',
+    'lostManagementAuthorityCannotReplayReceipt',
+    'missingOwnerProviderDefaultsDenyEvenForEmptyTarget',
+    'partialAuthorityCannotRemoveHiddenCurrentGrant',
+    'requestedGrantOutsideAssignableScopeIsDenied',
+    'nonManagementActorCannotUsePermissiveOwnerFixture',
+    'selfGrantManagementIsForbidden',
+    'lastAdministratorCannotRemoveItsOwnManagementGrant',
+    'staleNonReplayVersionIsRejectedWithoutWrites',
+    'duplicateGrantsAreRejectedWithoutWrites',
+    'emptyReplacementIsRejectedByAcceptedContractBoundary',
+    'malformedScopeIsRejectedWithoutWrites',
+    'unknownResourceScopeIsNotGrantedImplicitly',
+    'missingAndUnauthorizedTargetsHaveSameSafeClassification',
+    'disabledActorCannotSubmitCommand',
+    'expiredSessionAndChangedAuthVersionAreRejected',
+    'invalidCommandMetadataDoesNotMutateState',
+    'disabledTargetStaysDisabledAndDoesNotRegainSessions',
+    'auditWriteFailureRollsBackAllSecurityEffects',
+    'receiptWriteFailureRollsBackAuditAndAllSecurityEffects',
+    'refreshRevocationFailureRollsBackSessionAndGrantWrites',
+    'concurrentVersionsProduceOneMutationAndOneStaleResult',
+    'concurrentSameKeyCommandsCreateOneReceiptAndOneAudit',
+    'concurrentOppositeAdminRemovalCannotRemoveLastAdministrator',
+    'resultContainsOnlyAcceptedAccountFieldsAndRedactsToString',
+]
+IDENTITY_AUTHORITY_UNIT = BASE + 'identity.internal.application.FailClosedGrantAuthorityTests'
+REQUIRED[IDENTITY_AUTHORITY_UNIT] = [
+    'missingProviderDeniesWithoutInventingIdentityScopeAuthority',
+    'nullProviderResultDeniesWithoutFallback',
+    'providerFailureIsDeniedWithoutExposingItsMessage',
+    'disabledActorNeverReachesProvider',
+    'unrelatedRoleNeverEstablishesManagementAuthority',
+    'missingActorTargetOrRequestedContextDeniesBeforeProvider',
+    'trustedDelegateReceivesExactCurrentSnapshotsAndImmutableRequestedSet',
+    'vmErrorsAreNotSwallowedAsOrdinaryProviderUnavailability',
+    'emptyTargetIsDeniedBeforeAnAllowingDelegate',
+]
+IDENTITY_AUTHORITY_PG_REQUIRED = [
+    'productionDefaultCompositionDeniesWithoutResourceContracts',
+    'productionProviderFailureIsSanitizedBeforeReceiptDisclosure',
+    'productionIncompleteOwnerContextCannotRemoveHiddenGrants',
+    'productionMissingProviderRejectsEvenAnEmptyTargetGrantSet',
+    'productionDisabledActorIsRejectedBeforeAuthorityLookup',
+    'productionRevokedOrExpiredSessionIsRejectedBeforeAuthorityLookup',
+    'productionStaleAuthorizationVersionIsRejectedBeforeAuthorityLookup',
+    'productionSnapshotSubstitutionAndUnassignableScopeAreRejected',
+    'productionSelfManagementPreservesSpecificDomainDenial',
+    'productionConcurrentAuthorizationVersionChangeIsObservedAfterLock',
+    'productionConcurrentManagementGrantLossIsObservedAfterLock',
+    'productionEmptyTargetIsDeniedBeforeAnAllowingDelegate',
+]
+REQUIRED[IDENTITY_GRANTS] += IDENTITY_AUTHORITY_PG_REQUIRED
+IDENTITY_REALM_UNIT = BASE + 'identity.internal.application.IdentityRealmGrantPolicyTests'
+REQUIRED[IDENTITY_REALM_UNIT] = [
+    'exactCurrentSameRealmPairProducesBoundedAuthority',
+    'missingRegisteredRealmNeverAuthorizes',
+    'ordinaryGrantPossessionNeverDelegatesManagement',
+    'targetMustHaveActualSameRealmManagementContext',
+    'crossRealmActorCannotManageMatchingTarget',
+    'unrelatedRequestedAndHiddenCurrentGrantDenyEntireReplacement',
+    'disabledActorAndMissingInputsDeny',
+    'existingDomainStillRejectsSelfManagement',
+]
+IDENTITY_REALM_PG_REQUIRED = [
+    'realmProductionPerformsExactSameRealmReplacementAndAuthorizedReplay',
+    'realmProductionRejectsInactiveAndMissingRegistryWithoutDisclosure',
+    'realmProductionRejectsExternalOrHiddenCurrentGrants',
+    'realmProductionPreservesSessionSelfAndVersionGuards',
+    'realmProductionRollsBackOnAuditFailure',
+    'realmProductionRequiresSameTransactionAndAdministrationLock',
+    'realmDeactivationPrecedingAdmissionDeniesWaitingProductionCommand',
+]
+REQUIRED[IDENTITY_GRANTS] += IDENTITY_REALM_PG_REQUIRED
+IDENTITY_PROVISION_UNIT = BASE + 'identity.internal.application.IdentityProvisionInputTests'
+REQUIRED[IDENTITY_PROVISION_UNIT] = [
+    'exactUsernameAndContactAreNotNormalized',
+    'displayNameCountsUnicodeCodePointsAndRejectsMalformedText',
+    'missingKeysOrRequiredFieldsAreRejectedWithoutEcho',
+    'grantSetRejectsEmptyDuplicateAndMalformedMembers',
+    'emailMatchesAcceptedFullFormatRatherThanTrimming',
+    'fingerprintBindsEveryPayloadFieldAndIgnoresGrantOrder',
+    'commandAndValidatedInputAreImmutableAndRedacted',
+    'explicitInitialPairBindsActorAndNewPendingTarget',
+    'unsupportedOrCrossRealmInitialGrantsCannotDelegate',
+    'initialAuthorityRequiresActiveActorRealmAndFreshUnverifiedTarget',
+    'provisioningDoesNotRelaxReplacementEmptyTargetGuard',
+    'domainProvisioningRemainsPendingUnverifiedAndVersionOne',
+]
+IDENTITY_PROVISION_PG_REQUIRED = [
+    'provisionPersistsPendingInitialPairProofAuditReceiptAndTestIntent',
+    'provisionExactReplayDoesNotRepeatAccountProofAuditOrDelivery',
+    'provisionConflictingPayloadKeyDoesNotDiscloseOrRepeatEffects',
+    'provisionDuplicateUsernameCannotTakeOverExistingAccount',
+    'provisionUnauthenticatedAndUnknownSessionsMakeNoWrites',
+    'provisionRevokedSessionCannotUseCurrentAdministrativeGrant',
+    'provisionExpiredSessionFailsBeforeContactLookup',
+    'provisionDisabledActorAndStaleAuthVersionAreRejected',
+    'provisionInactiveUnknownAndCrossRealmAuthorityFailClosed',
+    'provisionExternalMixedAndOrdinaryRoleRequestsNeverAssignGrants',
+    'provisionMissingDurableInvitationAdapterFailsBeforeWrites',
+    'provisionInvalidPreparedProofClosesMaterialWithoutPartialAccount',
+    'provisionGrantProofDeliveryAuditAndReceiptFaultsRollBackAtomically',
+    'provisionConcurrentSameKeyHasOneAccountProofAndTestIntent',
+    'provisionConcurrentUsernameConflictHasNoLoserEffects',
+    'provisionReplayRechecksStoredTargetGrantUnionAndCurrentSession',
+    'provisionCannotActivateRealmAccountOrIssueSessions',
+    'provisionWaitsForConcurrentActorAndRealmStateBeforeAdmission',
+]
+REQUIRED[IDENTITY_GRANTS] += IDENTITY_PROVISION_PG_REQUIRED
+IDENTITY_INVITATION_UNIT = BASE + 'identity.internal.infrastructure.InvitationProtectionTests'
+REQUIRED[IDENTITY_INVITATION_UNIT] = [
+    'freshTokensHaveFullUrlSafeEncodingAndDistinctProtectedValues',
+    'verifierAcceptsOnlyExactTokenAndBoundProofAccountPurposeAndTimes',
+    'exactExpiryAndConsumedRevokedOrFutureProofFailClosed',
+    'missingMalformedAndSharedPurposeKeysAreRejectedWithoutValues',
+    'keysAreDefensivelyCopiedAndOldKeysSupportRotation',
+    'aeadRejectsCiphertextNonceAndContextTampering',
+    'malformedNoncanonicalOrUnknownVerifierNeverAuthenticates',
+    'protectedBuffersAreDefensiveRedactedAndDestroyedOnClose',
+    'persistedMicrosecondPrecisionIsMandatoryForAuthenticatedContext',
+    'deliveryPolicyRequiresExplicitBoundedAttemptsAndBudgets',
+]
+IDENTITY_INVITATION_PG_REQUIRED = [
+    'secureProvisionQueuesEncryptedIntentWithMatchingHmac',
+    'secureProvisionReplayAndConflictingKeyNeverRegenerateOutbox',
+    'secureProvisionEveryMandatoryPersistenceFailureRollsBack',
+    'secureProvisionConcurrentKeyAndUsernameHaveOneDurableEffect',
+    'secureOutboxClaimLeaseRecoveryRejectsStaleOwner',
+    'secureOutboxConcurrentClaimsHaveExactlyOneLease',
+    'secureOutboxSentClearsPayloadWithoutConsumingOrActivating',
+    'secureOutboxTransientRetriesAreBoundedAndExhaustionPurges',
+    'secureOutboxPermanentFailurePurgesWithoutBusinessMutation',
+    'secureOutboxExpiryRevocationAndConsumptionPurgeOnlyPayloads',
+    'secureOutboxCurrentRealmAndGrantStateGateDelivery',
+    'secureOutboxTamperingCannotProducePlaintextDelivery',
+    'secureOutboxRotationReadsPersistedOldKeyIdentity',
+    'secureOutboxMissingKeysOrRuntimeInsertPrivilegeCannotCommit',
+    'secureOutboxRejectsIntentOutsideTheProvisionTransaction',
+]
+REQUIRED[IDENTITY_GRANTS] += IDENTITY_INVITATION_PG_REQUIRED
 PG = BASE + 'demo.PostgresFoundationTests'
 PG_ONLY = {PG, BASE + 'demo.PostgresHealthSafetyTests'}
 FOUNDATION_ONLY = {BASE + 'demo.FoundationDependencyTests'}
-TESTCONTAINERS_ONLY = {BASE + 'demo.PostgresTestcontainersTests', BASE + 'testsupport.TestcontainersRuntimePolicyTests', IDENTITY_MIGRATION}
+TESTCONTAINERS_ONLY = {BASE + 'demo.PostgresTestcontainersTests', BASE + 'testsupport.TestcontainersRuntimePolicyTests', IDENTITY_MIGRATION, IDENTITY_GRANTS}
 SUREFIRE_NAMES = {
     (BASE + 'demo.DemoSecurityEvidenceTests',
      'credentialsAndBearerTokenDoNotAppearInApplicationLogs(CapturedOutput)'):
@@ -233,6 +396,7 @@ def audit_task_c_credentials(credential_file, diagnostics):
 TASK_C_SUITES = {
     'demo-postgres': BASE + 'demo.PostgresTestcontainersTests',
     'identity-migration': IDENTITY_MIGRATION,
+    'identity-grants': IDENTITY_GRANTS,
 }
 TASK_C_POSTGRES = 'postgres:18.6-bookworm@sha256:afc7e2d441324c0388fa80c3d24f733b4194a4eb7f47dd8ee2b08eb1a24a647c'
 TASK_C_RYUK = 'testcontainers/ryuk:0.14.0@sha256:7c1a8a9a47c780ed0f983770a662f80deb115d95cce3e2daa3d12115b8cd28f0'

@@ -71,3 +71,26 @@ No fixture proves JWT cryptography, CSRF HTTP rejection, revocation/authority, D
 ## Review/handoff
 T-002-01 DONE for reaffirmed design directions, not runtime. T-002-02 stays REVIEW_PENDING if strict lint or focused review incomplete. Exact username/DTO/status/role vocabulary and command retention are candidate details; review before T-002-03 migration. Mobile transport, production delivery, bootstrap deployment and secret-operation configuration remain separate affected-scope prerequisites.
 [Supplemental trace](../../docs/quality/feature-002-recovery-traceability.md) preserves the protected main Foundation traceability file. No canonical REQ/AC, Demo contract, SDK, Java/migration, manifest or CI changes are made.
+
+## Registered system Realm clarification — 2026-10-22
+
+Owner REALM-P1/P2/P3 approval establishes IDENTITY.scopeId as the UUID of an
+authoritative registered Identity Realm. This changes no OpenAPI JSON field,
+UUID syntax, endpoint/status, cookie/session or O1–O7 behavior. Earlier arbitrary
+example UUIDs are synthetic, not automatically registered/global scopes.
+
+[ADR-0010](../../docs/architecture/decisions/ADR-0010-identity-system-realm.md)
+records the exact bounded single-SYSTEM-Realm delegation: current admitted
+Identity Management actor, ACTIVE registered Realm, different existing target
+with nonempty authoritative current grant context, full current/requested exact
+IDENTITY_MANAGEMENT pair coverage in that same Realm, then existing Domain
+self/last-admin/version guards. Ordinary grant possession, resource existence or
+FK alone is insufficient. All external/mixed roles/scopes remain denied.
+
+V4 registration begins INACTIVE; owner-only controlled bootstrap creates a new
+pending initial administrator and requires separately completed accepted
+verified-email invitation activation before enabling the Realm. No automatic
+credentials/provisioning bypass, HTTP bootstrap or complete Feature002 acceptance.
+[Procedure](../../docs/runbooks/identity-realm-bootstrap.md).
+Current-source SQL/provider/runtime and HTTP security evidence are still pending;
+synthetic fixtures and earlier CI are not those proofs.

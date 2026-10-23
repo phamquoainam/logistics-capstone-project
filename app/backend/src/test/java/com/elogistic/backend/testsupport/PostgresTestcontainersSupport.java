@@ -21,7 +21,8 @@ public final class PostgresTestcontainersSupport {
     private static final SecureRandom RANDOM=new SecureRandom();
     private static final Map<String,String> SUITES=Map.of(
         "com.elogistic.backend.demo.PostgresTestcontainersTests", "demo-postgres",
-        "com.elogistic.backend.identity.internal.infrastructure.IdentityMigrationTests", "identity-migration");
+        "com.elogistic.backend.identity.internal.infrastructure.IdentityMigrationTests", "identity-migration",
+        "com.elogistic.backend.identity.internal.infrastructure.IdentityGrantApplicationTests", "identity-grants");
     private static final String EXECUTION=executionIdentity();
     private static final Path PRIVATE=privateDirectory();
 
@@ -183,9 +184,34 @@ public final class PostgresTestcontainersSupport {
         public Connection runtimeConnection() throws SQLException { return DriverManager.getConnection(url(),runtime,runtimePassword); }
         public Connection migrationConnection() throws SQLException { return DriverManager.getConnection(url(),migrator,migrationPassword); }
         public Flyway flyway(String target) {
+            // Explicit synthetic registration for isolated test databases only; never production bootstrap.
+            return flyway(target, UUID.fromString("10000000-0000-4000-8000-000000000001"));
+        }
+        public Flyway flyway(String target, UUID realm) {
             return Flyway.configure().dataSource(url(),migrator,migrationPassword).initSql("SET ROLE "+owner)
                 .defaultSchema("platform").schemas("platform").createSchemas(false).locations("classpath:db/migration")
-                .placeholders(Map.of("runtimeRole",runtime)).cleanDisabled(true).baselineOnMigrate(false).target(target).load();
+                .placeholders(Map.of("runtimeRole",runtime,"identitySystemRealmId",realm.toString()))
+                .cleanDisabled(true).baselineOnMigrate(false).target(target).load();
+        }
+        /** Isolated synthetic fixture only: production activation uses the accepted invitation workflow. */
+        public void ownerExecute(String sql) throws SQLException {
+            try(Connection c=migrationConnection();Statement s=c.createStatement()) {
+                s.execute("SET ROLE "+owner);s.execute(sql);
+            }
+        }
+        public void completeInvitationForTest(UUID account) throws SQLException {
+            ownerExecute("UPDATE identity.user_account SET status='ACTIVE',email_verified=TRUE,password_hash='$2b$12$"
+                + ".".repeat(53)+"',activated_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE id='"+account+"'");
+            ownerExecute("INSERT INTO identity.action_proof(id,account_id,purpose,token_hash,created_at,expires_at,consumed_at) VALUES ('"
+                +UUID.randomUUID()+"','"+account+"','INVITATION',decode(repeat('ab',32),'hex'),CURRENT_TIMESTAMP,"
+                +"CURRENT_TIMESTAMP+INTERVAL '24 hours',CURRENT_TIMESTAMP)");
+        }
+        public void activateRealmForTest(UUID realm) throws SQLException {
+            UUID account=UUID.randomUUID();
+            ownerExecute("SELECT identity.bootstrap_system_realm_admin('"+realm+"','"+account+"','realm.bootstrap.fixture',"
+                +"'Synthetic Bootstrap','bootstrap@example.invalid','"+UUID.randomUUID()+"')");
+            completeInvitationForTest(account);
+            ownerExecute("SELECT identity.activate_system_realm('"+realm+"','"+account+"','"+UUID.randomUUID()+"')");
         }
     }
 

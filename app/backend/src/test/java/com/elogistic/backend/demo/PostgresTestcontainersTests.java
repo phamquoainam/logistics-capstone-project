@@ -31,9 +31,9 @@ class PostgresTestcontainersTests {
     @Test void coldStartAppliesV1AndV2() throws Exception {
         Database db=PostgresTestcontainersSupport.database(POSTGRES);
         Flyway flyway=db.flyway("latest");assertEquals(0,flyway.info().applied().length);
-        // Retain the report-policy method identity, now asserting the complete V1/V2/V3 stream.
-        assertEquals(3,flyway.migrate().migrationsExecuted);assertTrue(flyway.validateWithResult().validationSuccessful);
-        assertEquals(List.of("1","2","3"),Arrays.stream(flyway.info().applied()).map(m->m.getVersion().toString()).toList());
+        // Retain the report-policy method identity and assert the complete current stream.
+        assertEquals(5,flyway.migrate().migrationsExecuted);assertTrue(flyway.validateWithResult().validationSuccessful);
+        assertEquals(List.of("1","2","3","4","5"),Arrays.stream(flyway.info().applied()).map(m->m.getVersion().toString()).toList());
     }
 
     private List<String> checksums(Flyway flyway) { return Arrays.stream(flyway.info().applied()).map(m->m.getVersion()+":"+m.getChecksum()).toList(); }
@@ -68,7 +68,23 @@ class PostgresTestcontainersTests {
             s.execute("SET ROLE "+db.owner());
             try(ResultSet r=s.executeQuery("SELECT current_user")) { assertTrue(r.next());assertEquals(db.owner(),r.getString(1)); }
             try(ResultSet r=s.executeQuery("SELECT count(*) FROM pg_namespace WHERE nspowner=(SELECT oid FROM pg_roles WHERE rolname='"+db.owner()+"') AND nspname IN ('platform','identity','merchant','orders','pricing','warehouse','dispatch','finance','routing','notification')")) { assertTrue(r.next());assertEquals(10,r.getInt(1)); }
-            try(ResultSet r=s.executeQuery("SELECT count(*) FROM pg_tables WHERE tableowner='"+db.owner()+"' AND schemaname IN ('platform','identity','merchant','orders')")) { assertTrue(r.next());assertEquals(14,r.getInt(1)); }
+            // Five Demo tables + eight V3 Identity tables + V4 Realm + V5 outbox + Flyway history.
+            try(ResultSet r=s.executeQuery("SELECT count(*) FROM pg_tables WHERE tableowner='"+db.owner()+"' AND schemaname IN ('platform','identity','merchant','orders')")) { assertTrue(r.next());assertEquals(16,r.getInt(1)); }
+            Set<String> expectedTables=Set.of("platform.flyway_schema_history", "identity.demo_account",
+                "merchant.demo_merchant", "orders.demo_shipment", "orders.demo_event", "orders.demo_operation",
+                "identity.user_account", "identity.account_grant", "identity.auth_session", "identity.refresh_token",
+                "identity.action_proof", "identity.csrf_binding", "identity.command_receipt", "identity.audit_entry", "identity.realm", "identity.invitation_outbox");
+            Map<String,String> actualTables=new TreeMap<>();
+            try(ResultSet r=s.executeQuery("SELECT schemaname||'.'||tablename,tableowner FROM pg_tables WHERE schemaname IN ('platform','identity','merchant','orders')")) {
+                while(r.next()) actualTables.put(r.getString(1),r.getString(2));
+            }
+            assertEquals(expectedTables,actualTables.keySet());
+            assertTrue(actualTables.values().stream().allMatch(db.owner()::equals),"Every expected table must retain the authorized owner");
+            Set<String> realmFunctions=new HashSet<>();
+            try(ResultSet r=s.executeQuery("SELECT p.proname,pg_get_userbyid(p.proowner),p.prosecdef FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='identity' AND p.proname IN ('bootstrap_system_realm_admin','activate_system_realm')")) {
+                while(r.next()) { assertTrue(realmFunctions.add(r.getString(1)));assertEquals(db.owner(),r.getString(2));assertFalse(r.getBoolean(3)); }
+            }
+            assertEquals(Set.of("bootstrap_system_realm_admin","activate_system_realm"),realmFunctions);
         }
     }
 
