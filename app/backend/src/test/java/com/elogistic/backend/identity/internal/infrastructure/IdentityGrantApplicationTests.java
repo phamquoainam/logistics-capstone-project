@@ -958,4 +958,235 @@ class IdentityGrantApplicationTests {
         }
     }
 
+
+    // Session tests share the existing isolated database/container and cleanup registry.
+    private static final String SESSION_PASSWORD="synthetic-session-password";
+    private void sessionFixture() throws Exception {
+        db.activateRealmForTest(SCOPE);
+        String hash=new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder(4).encode(SESSION_PASSWORD);
+        try(Connection c=db.runtimeConnection();PreparedStatement q=c.prepareStatement("UPDATE identity.user_account SET password_hash=? WHERE id=?")) {q.setString(1,hash);q.setObject(2,A);assertEquals(1,q.executeUpdate());}
+    }
+    private com.elogistic.backend.identity.api.IdentitySessionCommands sessions(Instant now) {
+        // Explicit test-only admission. No production transport/security assurance is inferred.
+        return ProductionIdentitySessionComposition.create(outboxDataSource(),(operation,request,session,present)->{},Clock.fixed(now,ZoneOffset.UTC));
+    }
+    private com.elogistic.backend.identity.api.IdentitySessionCommands.Result sessionLogin() {
+        return sessions(NOW).loginIdentity(new com.elogistic.backend.identity.api.IdentitySessionCommands.Login("fixture."+A,SESSION_PASSWORD,REQUEST));
+    }
+    private com.elogistic.backend.identity.api.IdentitySessionCommands.Token sessionToken(byte[] raw) {return new com.elogistic.backend.identity.api.IdentitySessionCommands.Token(raw,REQUEST);}
+    private void sessionDenied(IdentityCommandFailure.Code code,Runnable action) throws Exception {
+        var before=secureSnapshot();var e=assertThrows(IdentityCommandFailure.class,action::run);assertEquals(code,e.code());assertEquals(code.name(),e.getMessage());assertEquals(before,secureSnapshot());
+    }
+    @Test void sessionLoginPersistsOnlyDigestSessionAndAudit() throws Exception {
+        sessionFixture();long count=scalar("SELECT count(*) FROM identity.auth_session");
+        try(var r=sessionLogin()) {
+            assertEquals(A,r.access().accountId());assertEquals(NOW.plusSeconds(900),r.access().expiresAt());
+            assertEquals(count+1,scalar("SELECT count(*) FROM identity.auth_session"));
+            assertEquals(1,scalar("SELECT count(*) FROM identity.refresh_token WHERE session_id='"+r.access().sessionId()+"' AND octet_length(token_hash)=32"));
+            assertEquals(1,scalar("SELECT count(*) FROM identity.audit_entry WHERE event_type='IDENTITY_LOGIN' AND actor_id='"+A+"'"));
+            assertEquals(1,scalar("SELECT version FROM identity.user_account WHERE id='"+A+"'"));
+        }
+    }
+    @Test void sessionInvalidAndUnknownCredentialsHaveSameNoWriteOutcome() throws Exception {
+        sessionFixture();var app=sessions(NOW);
+        for(String username:List.of("fixture."+A,"not-a-real-account"))sessionDenied(INVALID_CREDENTIALS,()->app.loginIdentity(new com.elogistic.backend.identity.api.IdentitySessionCommands.Login(username,"wrong",REQUEST)));
+    }
+    @Test void sessionPendingAndDisabledAccountsCannotLogin() throws Exception {
+        for(boolean pending:List.of(false,true)) {
+            if(pending)fixture();sessionFixture();
+            execute(pending?"UPDATE identity.user_account SET status='PENDING_ACTIVATION',password_hash=NULL,email_verified=FALSE,activated_at=NULL WHERE id='"+A+"'":"UPDATE identity.user_account SET status='DISABLED',disabled_at=updated_at WHERE id='"+A+"'");
+            sessionDenied(INVALID_CREDENTIALS,()->sessions(NOW).loginIdentity(new com.elogistic.backend.identity.api.IdentitySessionCommands.Login("fixture."+A,SESSION_PASSWORD,REQUEST)));
+        }
+    }
+    @Test void sessionInactiveRealmAndUnsupportedScopeFailClosed() throws Exception {
+        sessionFixture();db.ownerExecute("UPDATE identity.realm SET status='INACTIVE',updated_at=CURRENT_TIMESTAMP");
+        sessionDenied(INVALID_CREDENTIALS,()->sessionLogin());
+        db.ownerExecute("UPDATE identity.realm SET status='ACTIVE',updated_at=CURRENT_TIMESTAMP");
+        execute("DELETE FROM identity.account_grant WHERE account_id='"+A+"'");
+        execute("INSERT INTO identity.account_grant(account_id,role_code,scope_type,scope_id,granted_at) VALUES ('"+A+"','OPERATOR','WAREHOUSE','"+X+"',CURRENT_TIMESTAMP)");
+        sessionDenied(INVALID_CREDENTIALS,()->sessionLogin());
+    }
+    @Test void sessionRefreshRotatesPredecessorAndPreservesDeadlines() throws Exception {
+        sessionFixture();try(var first=sessionLogin();var c=sessionToken(first.refreshToken());var next=sessions(NOW.plusSeconds(60)).refreshIdentity(c)) {
+            assertEquals(first.access().sessionId(),next.access().sessionId());assertEquals(first.absoluteExpiresAt(),next.absoluteExpiresAt());
+            assertFalse(Arrays.equals(first.refreshToken(),next.refreshToken()));
+            assertEquals(2,scalar("SELECT count(*) FROM identity.refresh_token WHERE session_id='"+first.access().sessionId()+"'"));
+            assertEquals(1,scalar("SELECT count(*) FROM identity.refresh_token WHERE session_id='"+first.access().sessionId()+"' AND predecessor_id IS NOT NULL AND consumed_at IS NULL"));
+            assertEquals(1,scalar("SELECT count(*) FROM identity.auth_session WHERE id='"+first.access().sessionId()+"' AND last_activity_at=TIMESTAMPTZ '2026-10-21 00:05:00Z' AND idle_expires_at=TIMESTAMPTZ '2026-10-21 00:35:00Z'"));
+        }
+    }
+    @Test void sessionReplayCommitsFamilyRevocationBeforeDenial() throws Exception {
+        sessionFixture();try(var first=sessionLogin();var old=sessionToken(first.refreshToken());var next=sessions(NOW).refreshIdentity(old)) {
+            assertEquals(REFRESH_REPLAY,assertThrows(IdentityCommandFailure.class,()->sessions(NOW).refreshIdentity(old)).code());
+            assertEquals(1,scalar("SELECT count(*) FROM identity.auth_session WHERE id='"+first.access().sessionId()+"' AND revoked_at IS NOT NULL"));
+            assertEquals(0,scalar("SELECT count(*) FROM identity.refresh_token WHERE session_id='"+first.access().sessionId()+"' AND revoked_at IS NULL"));
+            try(var newest=sessionToken(next.refreshToken())) {sessionDenied(SESSION_INVALID,()->sessions(NOW).refreshIdentity(newest));}
+        }
+    }
+    @Test void sessionConcurrentRefreshHasOneRotationThenReplayRevocation() throws Exception {
+        sessionFixture();try(var first=sessionLogin()) {
+            var pool=Executors.newFixedThreadPool(2);var ready=new CountDownLatch(2);var start=new CountDownLatch(1);
+            try {
+                List<Future<Object>> results=new ArrayList<>();
+                for(int i=0;i<2;i++)results.add(pool.submit(()->{ready.countDown();assertTrue(start.await(5,TimeUnit.SECONDS));try(var c=sessionToken(first.refreshToken());var next=sessions(NOW).refreshIdentity(c)){return "ROTATED";}catch(IdentityCommandFailure e){return e.code();}}));
+                assertTrue(ready.await(5,TimeUnit.SECONDS));start.countDown();var values=List.of(results.get(0).get(20,TimeUnit.SECONDS),results.get(1).get(20,TimeUnit.SECONDS));
+                assertEquals(1,values.stream().filter("ROTATED"::equals).count());assertEquals(1,values.stream().filter(REFRESH_REPLAY::equals).count());
+                assertEquals(2,scalar("SELECT count(*) FROM identity.refresh_token WHERE session_id='"+first.access().sessionId()+"'"));
+                assertEquals(1,scalar("SELECT count(*) FROM identity.auth_session WHERE id='"+first.access().sessionId()+"' AND revoked_at IS NOT NULL"));
+            } finally {start.countDown();pool.shutdownNow();assertTrue(pool.awaitTermination(5,TimeUnit.SECONDS));}
+        }
+    }
+    @Test void sessionExactIdleAndAbsoluteExpiryRejectRefresh() throws Exception {
+        sessionFixture();try(var first=sessionLogin();var c=sessionToken(first.refreshToken())) {
+            sessionDenied(SESSION_INVALID,()->sessions(NOW.plusSeconds(1800)).refreshIdentity(c));
+            sessionDenied(SESSION_INVALID,()->sessions(NOW.plusSeconds(28800)).refreshIdentity(c));
+        }
+    }
+    @Test void sessionStaleAuthVersionAndDisabledAccountRejectRefresh() throws Exception {
+        sessionFixture();try(var first=sessionLogin();var c=sessionToken(first.refreshToken())) {
+            execute("UPDATE identity.user_account SET version=2,auth_version=2 WHERE id='"+A+"'");sessionDenied(SESSION_INVALID,()->sessions(NOW).refreshIdentity(c));
+            execute("UPDATE identity.user_account SET auth_version=1,status='DISABLED',disabled_at=updated_at WHERE id='"+A+"'");sessionDenied(SESSION_INVALID,()->sessions(NOW).refreshIdentity(c));
+        }
+    }
+    @Test void sessionRealmDeactivationRejectsRefreshWithoutMutation() throws Exception {
+        sessionFixture();try(var first=sessionLogin();var c=sessionToken(first.refreshToken())) {
+            db.ownerExecute("UPDATE identity.realm SET status='INACTIVE',updated_at=CURRENT_TIMESTAMP");sessionDenied(SESSION_INVALID,()->sessions(NOW).refreshIdentity(c));
+        }
+    }
+    @Test void sessionLogoutPreservesOtherAccountsAndIsIdempotent() throws Exception {
+        sessionFixture();try(var first=sessionLogin();var c=sessionToken(first.refreshToken())) {
+            sessions(NOW).logoutIdentity(c);var before=secureSnapshot();sessions(NOW).logoutIdentity(c);assertEquals(before,secureSnapshot());
+            assertEquals(1,scalar("SELECT count(*) FROM identity.auth_session WHERE id='"+AS+"' AND account_id='"+B+"' AND revoked_at IS NULL"));
+            assertEquals(1,scalar("SELECT count(*) FROM identity.audit_entry WHERE event_type='IDENTITY_LOGOUT'"));
+            sessionDenied(SESSION_INVALID,()->sessions(NOW).refreshIdentity(c));
+        }
+    }
+    @Test void sessionExpiredLogoutAndMissingCookieDoNotRestoreSessions() throws Exception {
+        sessionFixture();try(var first=sessionLogin();var c=sessionToken(first.refreshToken());var absent=sessionToken(null)) {
+            sessions(NOW.plusSeconds(30000)).logoutIdentity(c);var before=secureSnapshot();sessions(NOW.plusSeconds(30000)).logoutIdentity(absent);assertEquals(before,secureSnapshot());
+        }
+    }
+    @Test void sessionLoginMandatoryWriteFailuresRollBackEverything() throws Exception {
+        for(String table:List.of("auth_session","refresh_token","audit_entry")) {
+            if(!table.equals("auth_session"))fixture();sessionFixture();failWrite(table,"INSERT");var before=secureSnapshot();
+            assertThrows(org.springframework.dao.DataAccessException.class,()->sessionLogin());assertEquals(before,secureSnapshot());
+        }
+    }
+    @Test void sessionRefreshSuccessorFailureRollsBackConsumption() throws Exception {
+        sessionFixture();try(var first=sessionLogin();var c=sessionToken(first.refreshToken())) {
+            failWrite("refresh_token","INSERT");var before=secureSnapshot();assertThrows(org.springframework.dao.DataAccessException.class,()->sessions(NOW).refreshIdentity(c));assertEquals(before,secureSnapshot());
+        }
+    }
+    @Test void sessionReplayAuditFailureRollsBackRevocation() throws Exception {
+        sessionFixture();try(var first=sessionLogin();var c=sessionToken(first.refreshToken());var next=sessions(NOW).refreshIdentity(c)) {
+            failWrite("audit_entry","INSERT");var before=secureSnapshot();assertThrows(org.springframework.dao.DataAccessException.class,()->sessions(NOW).refreshIdentity(c));assertEquals(before,secureSnapshot());
+        }
+    }
+    @Test void sessionAdmissionMustBindTheAuthoritativeFamily() throws Exception {
+        sessionFixture();try(var first=sessionLogin();var c=sessionToken(first.refreshToken())) {
+            var app=ProductionIdentitySessionComposition.create(outboxDataSource(),(op,req,sid,present)->{assertEquals(first.access().sessionId(),sid);throw new IdentityCommandFailure(CSRF_REJECTED);},Clock.fixed(NOW,ZoneOffset.UTC));
+            sessionDenied(CSRF_REJECTED,()->app.refreshIdentity(c));sessionDenied(CSRF_REJECTED,()->app.logoutIdentity(c));
+        }
+    }
+    @Test void sessionPasswordsAndRawRefreshNeverEnterPersistedRows() throws Exception {
+        sessionFixture();try(var first=sessionLogin();var c=sessionToken(first.refreshToken());var next=sessions(NOW).refreshIdentity(c)) {
+            String rows=secureSnapshot().toString();assertFalse(rows.contains(SESSION_PASSWORD));
+            byte[] a=first.refreshToken(),b=next.refreshToken();try {assertFalse(rows.contains(new String(a,java.nio.charset.StandardCharsets.US_ASCII)));assertFalse(rows.contains(new String(b,java.nio.charset.StandardCharsets.US_ASCII)));}finally {Arrays.fill(a,(byte)0);Arrays.fill(b,(byte)0);}
+            assertEquals("IdentitySessionResult[redacted]",next.toString());assertEquals("IdentitySessionToken[redacted]",c.toString());
+        }
+    }
+    @Test void sessionWaitingLoginObservesConcurrentRealmDeactivation() throws Exception {
+        sessionFixture();var pool=Executors.newSingleThreadExecutor();
+        try(Connection c=db.migrationConnection();Statement q=c.createStatement()) {
+            c.setAutoCommit(false);q.execute("SET ROLE "+db.owner());
+            // Use the exact same lock identity as JdbcIdentityGrantStore; assert the waiting admission result.
+            q.execute("SELECT pg_advisory_xact_lock("+0x4944454e54495459L+")");
+            q.execute("UPDATE identity.realm SET status='INACTIVE',updated_at=CURRENT_TIMESTAMP");
+            var started=new CountDownLatch(1);var waiting=pool.submit(()->{started.countDown();try(var result=sessionLogin()){return "ADMITTED";}catch(IdentityCommandFailure e){return e.code();}});
+            assertTrue(started.await(5,TimeUnit.SECONDS));assertThrows(TimeoutException.class,()->waiting.get(150,TimeUnit.MILLISECONDS));c.commit();assertEquals(INVALID_CREDENTIALS,waiting.get(15,TimeUnit.SECONDS));
+        } finally {pool.shutdownNow();assertTrue(pool.awaitTermination(5,TimeUnit.SECONDS));}
+    }
+
+    private org.springframework.transaction.support.TransactionTemplate sessionCallerTransaction(javax.sql.DataSource source) {
+        var outer=new org.springframework.transaction.support.TransactionTemplate(new org.springframework.jdbc.support.JdbcTransactionManager(source));
+        outer.setIsolationLevel(org.springframework.transaction.TransactionDefinition.ISOLATION_READ_COMMITTED);
+        return outer;
+    }
+    private void sessionOwnershipRejected(Runnable action) {
+        var failure=assertThrows(IllegalStateException.class,action::run);
+        assertEquals("SESSION_TRANSACTION_OWNERSHIP_REQUIRED",failure.getMessage());
+    }
+    @Test void sessionAmbientRefreshRejectedBeforeRotationAndCallerCommit() throws Exception {
+        sessionFixture();var source=outboxDataSource();
+        var app=ProductionIdentitySessionComposition.create(source,(op,request,sid,present)->{},Clock.fixed(NOW,ZoneOffset.UTC));
+        try(var first=sessionLogin();var token=sessionToken(first.refreshToken())) {
+            var before=secureSnapshot();
+            sessionCallerTransaction(source).executeWithoutResult(status->{
+                assertTrue(org.springframework.transaction.support.TransactionSynchronizationManager.hasResource(source));
+                sessionOwnershipRejected(()->app.refreshIdentity(token));
+                assertFalse(status.isRollbackOnly());
+            });
+            // Snapshot uses independent runtime connections after the caller's physical commit.
+            assertEquals(before,secureSnapshot());
+            try(var rotated=app.refreshIdentity(token)) {assertEquals(first.access().sessionId(),rotated.access().sessionId());}
+        }
+    }
+    @Test void sessionAmbientReplayRejectedBeforeCallerRollback() throws Exception {
+        sessionFixture();var source=outboxDataSource();
+        var app=ProductionIdentitySessionComposition.create(source,(op,request,sid,present)->{},Clock.fixed(NOW,ZoneOffset.UTC));
+        try(var first=sessionLogin();var old=sessionToken(first.refreshToken());var next=app.refreshIdentity(old)) {
+            var before=secureSnapshot();
+            sessionCallerTransaction(source).executeWithoutResult(status->{
+                sessionOwnershipRejected(()->app.refreshIdentity(old));
+                // The caller retains control: denial is ownership failure, never REFRESH_REPLAY.
+                assertFalse(status.isRollbackOnly());status.setRollbackOnly();
+            });
+            assertEquals(before,secureSnapshot());
+            try(var current=sessionToken(next.refreshToken());var rotated=app.refreshIdentity(current)) {
+                assertEquals(first.access().sessionId(),rotated.access().sessionId());
+            }
+        }
+    }
+    @Test void sessionDirectReplayRevocationAndAuditAreIndependentlyCommitted() throws Exception {
+        sessionFixture();
+        try(var first=sessionLogin();var old=sessionToken(first.refreshToken());var next=sessions(NOW).refreshIdentity(old)) {
+            assertEquals(REFRESH_REPLAY,assertThrows(IdentityCommandFailure.class,()->sessions(NOW).refreshIdentity(old)).code());
+            // A new JDBC transaction, not a Spring thread-bound/caller connection.
+            try(Connection c=db.runtimeConnection()) {
+                c.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);c.setAutoCommit(false);
+                try(PreparedStatement q=c.prepareStatement("SELECT (SELECT count(*) FROM identity.auth_session WHERE id=? AND revoked_at IS NOT NULL),(SELECT count(*) FROM identity.refresh_token WHERE session_id=? AND revoked_at IS NULL),(SELECT count(*) FROM identity.audit_entry WHERE target_id=? AND event_type='IDENTITY_REFRESH_REPLAY')")) {
+                    q.setObject(1,first.access().sessionId());q.setObject(2,first.access().sessionId());q.setObject(3,A);
+                    try(ResultSet row=q.executeQuery()) {assertTrue(row.next());assertEquals(1,row.getLong(1));assertEquals(0,row.getLong(2));assertEquals(1,row.getLong(3));}
+                }
+                c.commit();
+            }
+            try(var current=sessionToken(next.refreshToken())) {sessionDenied(SESSION_INVALID,()->sessions(NOW).refreshIdentity(current));}
+        }
+    }
+    @Test void sessionAmbientLoginRejectedBeforeCallerCommit() throws Exception {
+        sessionFixture();var source=outboxDataSource();
+        var app=ProductionIdentitySessionComposition.create(source,(op,request,sid,present)->{},Clock.fixed(NOW,ZoneOffset.UTC));
+        var before=secureSnapshot();
+        sessionCallerTransaction(source).executeWithoutResult(status->{
+            sessionOwnershipRejected(()->app.loginIdentity(new com.elogistic.backend.identity.api.IdentitySessionCommands.Login("fixture."+A,SESSION_PASSWORD,REQUEST)));
+            assertFalse(status.isRollbackOnly());
+        });
+        assertEquals(before,secureSnapshot());
+        try(var valid=app.loginIdentity(new com.elogistic.backend.identity.api.IdentitySessionCommands.Login("fixture."+A,SESSION_PASSWORD,REQUEST))) {assertEquals(A,valid.access().accountId());}
+    }
+    @Test void sessionAmbientLogoutRejectedBeforeCallerRollback() throws Exception {
+        sessionFixture();var source=outboxDataSource();
+        var app=ProductionIdentitySessionComposition.create(source,(op,request,sid,present)->{},Clock.fixed(NOW,ZoneOffset.UTC));
+        try(var first=sessionLogin();var token=sessionToken(first.refreshToken())) {
+            var before=secureSnapshot();
+            sessionCallerTransaction(source).executeWithoutResult(status->{
+                sessionOwnershipRejected(()->app.logoutIdentity(token));assertFalse(status.isRollbackOnly());status.setRollbackOnly();
+            });
+            assertEquals(before,secureSnapshot());
+            app.logoutIdentity(token);app.logoutIdentity(token);
+            assertEquals(1,scalar("SELECT count(*) FROM identity.auth_session WHERE id='"+first.access().sessionId()+"' AND revoked_at IS NOT NULL"));
+            assertEquals(0,scalar("SELECT count(*) FROM identity.refresh_token WHERE session_id='"+first.access().sessionId()+"' AND revoked_at IS NULL"));
+            assertEquals(1,scalar("SELECT count(*) FROM identity.audit_entry WHERE event_type='IDENTITY_LOGOUT' AND target_id='"+A+"'"));
+        }
+    }
 }

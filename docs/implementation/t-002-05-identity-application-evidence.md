@@ -2130,3 +2130,20 @@ subfailures caused by untouched Windows V3/V4 CRLF checkout versus pinned LF
 blobs; no migration or pinned hash was changed. Actual JVM/PostgreSQL/privacy/
 cleanup remains UNVERIFIED. No commit/push/PR/dispatch or production services.
 T-002-05 PARTIAL, Feature002/ACs NOT ACCEPTED; grant limitation retained.
+
+
+## Identity Session Application source checkpoint - 2026-10-23
+
+OWNER_IDENTITY_SESSION_APPLICATION: CONDITIONAL_GO. Bounded login/refresh/logout
+Application/JDBC source implemented from merged PR23/d0615d2 in a new isolated
+worktree. [Exact scope, tests, local verification and CI handoff](t-002-05-identity-session-evidence.md).
+20 unit/crypto +18 PostgreSQL methods authored; previous105 PG methods retained.
+Compilation and focused55 Java tests PASS;116 report-policy/15 migration source
+controls PASS. Current-source PostgreSQL execution remains UNVERIFIED; no reuse of
+Activation CI. No JWT/HTTP/CSRF/throttling/provider runtime adapter is installed.
+T_002_05_SESSION_APPLICATION_IMPLEMENTED_VERIFICATION_PENDING; T-002-05 PARTIAL,
+Feature002/AC-002-01..05 NOT ACCEPTED; GRANT_MUTATION_FUNCTIONALITY_LIMITED retained.
+
+Session local full default/H2 clean verify:350 PASS/0 FAIL/0 ERROR/17 expected
+skips; actual strict report guard exit0. This does not prove PostgreSQL or new
+GitHub CI. Current-source Session PostgreSQL18 cases remain UNVERIFIED.

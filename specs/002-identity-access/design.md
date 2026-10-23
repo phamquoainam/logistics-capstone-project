@@ -114,3 +114,18 @@ No external I/O or session issuance. Runtime role has no Realm UPDATE/bootstrap
 privilege; inactive bootstrap flow remains separate and fails closed here.
 Production composition is explicit/unregistered with externally supplied rings.
 Java/PostgreSQL effects and32 new tests remain UNVERIFIED; no accepted AC change.
+
+
+## Bounded Session Application - 2026-10-23
+
+[Source, inward ports and verification](../../docs/implementation/t-002-05-identity-session-evidence.md).
+Login/refresh/logout reuse existing Identity account/session/RefreshFamily Domain
+and administration-locked runtime transaction. Fresh256-bit refresh material is
+persisted only as SHA-256. Replay revocation commits before outward denial;
+mandatory-write failures roll back. Eligibility is bounded to approved ACTIVE
+Identity Realm management pair; unsupported external owners deny. No migration.
+SessionAdmission is a mandatory trusted per-request Origin/CSRF/family/throttle
+port with no permissive default, not a request-ID-based authorization shortcut.
+Production composition remains unregistered. AccessGrant is unsigned signing facts,
+not a principal/JWT/HTTP result; T-002-06 retains secure transport/signing/admission.
+Application source does not claim completed current-session/HTTP or full ACs.

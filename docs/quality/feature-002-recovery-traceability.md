@@ -1,8 +1,10 @@
 # Feature 002 recovery — supplemental traceability
 
-Current bounded Activation checkpoint:
-**T_002_05_INVITATION_ACTIVATION_CI_VERIFIED**, source081c14c/run39920826371.
-[Latest verified evidence and limitations](#activation-ci-verified-trace---2026-10-23).
+Current bounded Session checkpoint:
+**T_002_05_SESSION_CI_VERIFIED**, sourcecaa150fb/run39932569608.
+[Latest verified evidence and limitations](#session-ci-verified-trace---2026-10-23).
+Previous Activation checkpoint remains CI_VERIFIED on081c14c/run39920826371.
+[Activation evidence](#activation-ci-verified-trace---2026-10-23).
 T-002-05 remains PARTIAL; Feature002 and AC-002-01..05 NOT ACCEPTED.
 
 Migration checkpoint: **T-002-03 DONE** on run39575568268 attempt1, using verified
@@ -574,3 +576,150 @@ This record and linked evidence are the only two paths in the later documentatio
 publication. Source CI does not test that docs-only commit. Protected main
 traceability and six original Foundation changes remain untouched. No source,
 SQL, contract, workflow, policy, credentials or runtime behavior changes here.
+
+
+## Identity Session Application source trace - 2026-10-23
+
+[Bounded Session source and actual evidence](../implementation/t-002-05-identity-session-evidence.md).
+T_002_05_SESSION_APPLICATION_IMPLEMENTED_VERIFICATION_PENDING; source baseline
+merged PR23/d0615d2. Prior Activation CI proves only its historical revision.
+
+| Trace | Implemented support | Actual evidence / limit |
+| --- | --- | --- |
+| REQ-002-01/02; ADR-0009/0010 | Authoritative exact credentials/account/ACTIVE Realm, no pending/disabled/Demo fallback | New20 unit cases PASS; real session PostgreSQL admission UNVERIFIED |
+| REQ-002-03 | Real BCrypt verification,256-bit refresh material/digest-only persistence, secret-safe owned buffers and mandatory security admission port | Crypto/unit negatives PASS; full HTTP/Origin/CSRF/throttle/JWT signing remain T-002-06 |
+| REQ-002-05; AC-002-02/03/04/05 support | Session deadlines/authVersion, atomic rotation, durable strict replay revocation, scoped idempotent logout |18 PostgreSQL cases AUTHORED, not executed; transaction/concurrency acceptance pending |
+| CI inventory/privacy | Every new20+18 method mandatory; preserve123 Grant/Application identities and three lifecycle suites |116 Python report-policy controls PASS, including290 method mutations; no skip relaxation |
+
+Focused Java55/55 (Session20/Activation12/Architecture23) and migration static15/15
+PASS. Full H2 result and current-source PostgreSQL/CI coverage are separately
+recorded in linked evidence. Future PG523/5 skips is not an executed result.
+V1-V5/Domain/contracts/Demo, main traceability and six original Foundation paths
+preserved. T-002-05 remains PARTIAL; Feature002/AC-002-01..05 NOT ACCEPTED;
+GRANT_MUTATION_FUNCTIONALITY_LIMITED remains; no business-feature readiness.
+
+Session local full default/H2 clean verify:350 PASS/0 FAIL/0 ERROR/17 expected
+skips; actual strict report guard exit0. This does not prove PostgreSQL or new
+GitHub CI. Current-source Session PostgreSQL18 cases remain UNVERIFIED.
+
+
+## Session CI verified trace - 2026-10-23
+
+**T_002_05_SESSION_CI_VERIFIED**, under
+`OWNER_SESSION_CI_EVIDENCE_CLOSURE: CONDITIONAL_GO`.
+[Exact Session evidence, inventories and digests](../implementation/t-002-05-identity-session-evidence.md#session-ci-verified-closure---2026-10-23).
+[Run39932569608 attempt1](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/39932569608)
+SUCCESS, `workflow_dispatch`, `feature/002-identity-session-application`;
+actual tested/checkout SHA in all three jobs:
+`caa150fb3c1a2c4ac1a60d27566f07f6a3c3c479`.
+Earlier Session runtime-pending statements are historical and superseded only
+for this source and bounded Application scope, not full feature acceptance.
+
+| Existing trace | Actual CI evidence | Remaining boundary |
+| --- | --- | --- |
+| REQ-002-01/02; ADR-0009/0010 | Authoritative account/Realm eligibility;20/20 Session unit cases in H2 and PG;18/18 Session PG cases | Bounded Identity Management pair, unsupported owners denied; no production HTTP admission |
+| REQ-002-03 | BCrypt/refresh digest-only persistence, privacy and secret-negative cases PASS | AccessGrant is signing facts, not JWT/principal; actual JWT/Origin/CSRF/cookie/throttle adapters pending |
+| REQ-002-05; AC-002-02/03/04/05 supporting evidence | Real PostgreSQL authVersion/deadlines, rotation, cross-account logout, rollback and concurrency PASS | No full runtime AC acceptance; current-session/activity and remaining use cases pending |
+| Exact CI inventory | Architecture23 PASS/0 skips; H2350 PASS/17 expected skips; PG523 PASS/5 expected skips; zero FAIL/ERROR | Session20+18 and retained105 PG cases overlap totals; combined Grant/Application123/123 PASS |
+
+`sessionReplayCommitsFamilyRevocationBeforeDenial` and
+`sessionConcurrentRefreshHasOneRotationThenReplayRevocation` PASS on real PG:
+replay denial follows durable session/family revocation; concurrent reuse yields
+one rotation then replay/family revocation, without two usable successors.
+Mandatory-write rollback cases also PASS. Prior105 PG methods include20 Activation;
+Domain48/migration25/provision/Realm/Grant/outbox inventories all retained and ran.
+
+116 report-policy controls/job, exact identities/expected skips, credential/privacy
+and Testcontainers owned cleanup PASS. Three sanitized ZIP digests match fresh
+GitHub metadata, with only summary/XML allowlisted content and fixed skip text.
+The five Redis/RabbitMQ foundation skips are not remote infrastructure PASS.
+Migration/outbox Python source suites remain not invoked in CI; their CI coverage
+is UNVERIFIED. Keep historical Windows CRLF/LF and bootstrap findings unchanged.
+
+This trace and linked evidence form a separate later docs-only publication.
+Run39932569608 verifies sourcecaa150fb, not that documentation commit. No raw
+logs/reports/credentials enter tracked docs. Protected main traceability, six
+original Foundation fingerprints, Activation worktree and immutable V1-V5 remain
+unchanged. No new source/contract/security/CI policy modification is authorized.
+
+T-002-05 remains PARTIAL/unchecked; Feature002 and AC-002-01..05 NOT ACCEPTED;
+GRANT_MUTATION_FUNCTIONALITY_LIMITED remains. Pending: current-session/activity,
+recovery/resend/lifecycle/query, remaining authority/security and HTTP/JWT/CSRF/
+cookie adapters; provider/delivery integration stays T-002-08 after dependencies.
+Feature001/D1-08/Day1 remain PARTIAL. No deployment/end-to-end or business-module
+readiness is implied; separate business-feature owner approval remains required.
+
+
+## Session transaction ownership correction trace - 2026-10-23
+
+[Scoped finding, guard, exact tests and local evidence](../implementation/t-002-05-identity-session-evidence.md#session-transaction-ownership-correction---2026-10-23).
+REQ-002-02/03/05 and AC-002-02/03/05 gain corrective verification coverage only;
+no requirement text or production feature AC is accepted by this checkpoint.
+
+Session-only JDBC boundary rejects actual ambient transactions, synchronization
+or any bound resource before shared REQUIRED participation; fixed internal failure,
+no public contract change or caller transaction manipulation. Four guard unit tests
+PASS within24 Session unit cases; five PG regressions authored/compiled, execution
+UNVERIFIED (Docker CLI unavailable). Existing direct replay and concurrent refresh
+remain mandatory. Full local Java21/Maven3.10.0 offline verify and strict H2 guard:
+354 PASS/17 expected skips/0 failure/0 error; Architecture23, Activation unit12,
+Domain48 and report-policy116 PASS. Migration Python source15 PASS. Outbox Python
+source9/10 methods PASS, with2 pre-existing V3/V4 CRLF byte-pin subcase failures;
+unchanged pre-edit bytes/HEAD canonical pins verified, no repair or assertion bypass.
+
+Historical sourcecaa150fb/run39932569608 and later docs0551b279 are preserved.
+Neither verifies this uncommitted correction. Current-source PostgreSQL (including
+ownership/durable replay/concurrency and privacy/owned cleanup) plus new CI/PR
+integration remain pending; synthetic inventory expectations are not runtime PASS.
+T-002-05 PARTIAL, Feature002/AC-002-01..05 NOT ACCEPTED;
+GRANT_MUTATION_FUNCTIONALITY_LIMITED retained. Protected main traceability,
+Foundation changes, Activation, SQL V1-V5 and accepted contracts are unchanged.
+No commit/push/dispatch/PR/merge or further-feature implementation authorized here.
+
+
+## Session transaction ownership CI verified trace - 2026-10-23
+
+[Exact provenance, security cases, artifact hashes and finding disposition](../implementation/t-002-05-identity-session-evidence.md#session-transaction-ownership-ci-verified-closure---2026-10-23).
+Owner: OWNER_SESSION_SECURITY_CI_CLOSURE: CONDITIONAL_GO. This supersedes only the
+preceding correction's PG-pending checkpoint; historical evidence is preserved.
+
+REQ-002-02/03/05 and AC-002-02/03/05 have bounded runtime verification coverage:
+[Backend verification run39986298097](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/39986298097),
+attempt1, workflow_dispatch, feature/002-identity-session-application,
+actual checkout SHA c851f5dc73809dafd3b22c4bf3cd81ccdcc1de17 in all three jobs.
+Architecture: 23 PASS/0 skip; H2: 354 PASS/17 expected skips; PostgreSQL 18: 532 PASS/5
+expected skips; all0 failure/error. Exact method inventories PASS;5 Redis/RabbitMQ
+foundation skips are NOT remote infrastructure PASS.
+
+Session unit 24/24 (new guards4/4); PG Session 23/23 (new methods5/5);
+previous PG123/123 and combined128/128 PASS. These counts overlap overall 532.
+The five exact new identities and independent connection checks are in the linked
+evidence. They verify same runtime DataSource/real JdbcTransactionManager,
+READ_COMMITTED caller commit/rollback rejection without Session mutation, normal
+Session-owned operations and durable direct replay/audit with successor denial.
+Existing direct replay and concurrent refresh methods remain PASS. Domain,
+Migration, Grant/Realm, Provisioning, Crypto, Outbox and Activation inventories PASS.
+
+Report-policy116 controls/job PASS. Actual checkout and privacy/credential/owned
+Testcontainers cleanup projections PASS. Sanitized ZIPs3/3 SHA-256 match GitHub
+metadata; entries only summary.json/tests.xml. No raw diagnostics or credentials
+in public artifacts/SDD. Original Session run39932569608/sourcecaa150fb remains
+historical; run39986298097 verifies only security sourcec851f5dc, not the later
+published docs-only closure revision. No CI rerun/dispatch, PR creation or merge.
+
+Specific ambient-transaction replay-durability finding behind
+T_002_05_SESSION_PR_SECURITY_BLOCKED now has passing PG evidence:
+T_002_05_SESSION_TRANSACTION_OWNERSHIP_CI_VERIFIED. Ready for final PR-readiness
+reassessment ONLY; neither final PR integration nor all Session security is accepted.
+
+Keep Maven bootstrap root cause OPEN / NOT REPRODUCED. Python migration/outbox
+source suites remain outside current CI; Windows outbox source9/10 methods PASS
+with2 V3/V4 CRLF raw-byte subcase failures remains documented. Canonical V1-V5 Git
+blobs/pins and accepted contracts unchanged; no SQL/hash patch or source-policy
+relaxation. Protected main traceability and Foundation/Activation remain untouched.
+
+T-002-05 PARTIAL/unchecked; Feature002/AC-002-01..05 NOT ACCEPTED;
+GRANT_MUTATION_FUNCTIONALITY_LIMITED retained. Current-session/activity, recovery,
+resend, lifecycle/query, remaining authority/security, HTTP/JWT/cookie/CSRF/throttling
+and T-002-08 delivery/provider integration remain pending. Feature001/D1-08/Day1
+PARTIAL. No full Production Identity or business-feature readiness claim.
