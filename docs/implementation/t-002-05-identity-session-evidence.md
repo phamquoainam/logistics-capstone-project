@@ -325,3 +325,119 @@ NOT the documentation revision recording it. No manual CI dispatch/rerun or PR/
 merge is part of closure. Original six Foundation fingerprints, clean Activation
 worktree, V1-V5 and all unrelated source/contracts are preserved. Business-module
 readiness is not reached; the documented owner-review gate remains in force.
+
+
+## Session transaction ownership correction - 2026-10-23
+
+Owner authorization: OWNER_SESSION_TRANSACTION_OWNERSHIP_FIX: CONDITIONAL_GO.
+Baseline HEAD: 0551b27976e8b6e7d78ecbd504335c82c0c28d14. This section records
+uncommitted corrective source; it is NOT evidence that historical run39932569608
+(sourcecaa150fb) tested the correction. No commit/push/dispatch/PR/merge performed.
+
+### Finding and enforcement
+
+The Session JDBC store delegates to JdbcIdentityGrantStore's TransactionTemplate
+with default REQUIRED propagation. In a compatible caller READ_COMMITTED transaction
+on the same DataSource, callback completion is not physical commit. Raising
+REFRESH_REPLAY afterward could roll back family revocation/audit with the caller.
+This violates durable replay denial despite the prior direct-call tests passing.
+
+JdbcIdentitySessionStore.transaction now rejects before entering the shared store
+when TransactionSynchronizationManager reports an actual transaction, active
+synchronization, or any pre-bound resource. The resource check is deliberately
+conservative, including unknown/unrelated resource keys: a clean Spring transaction
+context is required rather than guessing DataSource wrapper/resource ownership.
+The internal IllegalStateException has the fixed, value-free message
+SESSION_TRANSACTION_OWNERSHIP_REQUIRED; no public HTTP/error-code contract changed.
+All persistence-backed Login/Refresh/Logout paths use this boundary. Missing-cookie
+Logout still performs mandatory admission without a persistence transaction.
+No caller resource is suspended, committed, rolled back, unbound or cleared by the
+production guard. Shared Grant propagation, SQL, admission, deadlines, authVersion,
+Realm policy, rotation/audit semantics and cleanup registration are unchanged.
+
+### Added regression inventory
+
+Four real unit methods (Mockito only proves pre-JDBC rejection, not PG durability):
+- storeRejectsActualAmbientTransactionBeforeJdbcAccess
+- storeRejectsAmbientSynchronizationBeforeJdbcAccess
+- storeRejectsBoundDataSourceBeforeJdbcAccess
+- storeRejectsUnknownBoundResourceBeforeJdbcAccess
+
+Five added PostgreSQL methods in IdentityGrantApplicationTests:
+- sessionAmbientRefreshRejectedBeforeRotationAndCallerCommit
+- sessionAmbientReplayRejectedBeforeCallerRollback
+- sessionDirectReplayRevocationAndAuditAreIndependentlyCommitted
+- sessionAmbientLoginRejectedBeforeCallerCommit
+- sessionAmbientLogoutRejectedBeforeCallerRollback
+
+Outer-transaction tests use the SAME runtime DataSource instance and real
+JdbcTransactionManager/TransactionTemplate at READ_COMMITTED as Session composition.
+Caught ownership rejection leaves transaction control with the caller. Committed
+state is checked using independent runtime connections only after the outer scope
+finishes; snapshots cover account/grant/session/refresh/audit state. Direct replay
+checks revoked family plus replay audit in a separate JDBC transaction and rejects
+the successor. Existing replay/concurrency methods remain untouched and mandatory.
+Normal Session-owned Login/Refresh/Logout positive controls remain in scope.
+
+Strict report inventories now require24 Session unit identities and23 Session PG
+identities (128 total existing Grant/Provision/Outbox/Activation/Session PG methods).
+H2 synthetic inventory totals354 pass/17 skip; PostgreSQL expected inventory totals
+532 pass/5 skip. These fixture expectations are NOT observed PostgreSQL execution.
+Every new identity is covered by existing missing/renamed/skipped/failure/error
+negative report-policy controls; no skip/inventory/privacy relaxation was added.
+
+### Actual local execution and limitations
+
+| Gate | Actual result |
+| --- | --- |
+| Direct Maven3.10.0 / Java21.0.10 version preflight | PASS |
+| Offline direct Maven verify, synthetic user/global settings, allowlisted child environment | exit0 / BUILD SUCCESS |
+| Strict H2 report guard, fresh reports only | PASS: discovered371, executed354, passed354, failure0, error0, expected skips17 |
+| Session unit, including all4 new ownership guards | 24/24 PASS |
+| Architecture / negative fixtures | 23/23 PASS (11 rules +12 fixture cases) |
+| Invitation Activation unit | 12/12 PASS |
+| Domain unit | 48/48 PASS |
+| Grant authority / Realm policy unit | 9/9 and8/8 PASS |
+| Strict Python report-policy controls | 116/116 PASS |
+| Python migration source suite | 15/15 PASS |
+| Python invitation/outbox source suite | 9/10 methods PASS; one method has2 failed subcases (V3/V4 working-tree raw-byte pins) |
+| New PostgreSQL Java compilation | PASS; all5 new methods present in compiled class |
+| Current-source PostgreSQL execution, replay/concurrency, cleanup/privacy runtime | UNVERIFIED: Docker CLI absent from PATH and checked installation paths |
+| Current-source GitHub CI / PR integration | NOT RUN; separate owner-authorized checkpoint required |
+
+The two raw-byte subcase failures are pre-existing Windows checkout line endings:
+V3/V4 bytes equal the pre-edit fingerprints; HEAD Git blobs match the immutable
+pinned hashes; CRLF-to-LF projection of working bytes equals those exact HEAD
+blobs. This attribution does NOT turn the failed raw-byte assertions into PASS.
+No migration bytes, expected pins, source guard or Git configuration were changed.
+
+The initial local command invocation exited1 before test reports with no captured
+compiler diagnostic. Corrected cmd.exe quoting was verified by direct --version,
+then the offline verify above succeeded in43.7s. No raw Maven output was persisted
+by the launcher; only sanitized status/count projections were retained. Maven's
+ignored raw Surefire reports stay local/private, never proposed for publication.
+No PostgreSQL services or Testcontainers resources were started locally.
+
+Commands executed: python -B -m unittest discover -s scripts/ci -p test_verify_reports.py;
+direct verified Maven3.10.0/bin/mvn.cmd -o -B -ntp -s <synthetic-settings>
+-gs <synthetic-settings> -Dmaven.repo.local=<resolved-local-cache> -Dstyle.color=never
+-DargLine=<bounded-heap-and-session-temp> verify; python -B scripts/ci/verify-reports.py
+--source <fresh-private-reports> --output <sanitized-output> --mode h2 --maven-exit 0.
+The two static Python suites were executed through unittest in memory; output
+records test/method/subcase identities without raw assertion diagnostics.
+
+Private ignored evidence: .demo/session-transaction-ownership-fix/ contains
+pre-edit tracked SHA-256 manifest, local status/results, outbox hash attribution,
+fresh raw reports and sanitized summaries/XML. Raw reports are not public evidence.
+Preflight confirmed clean Session index/tree and matching local/remote HEAD before
+patch; PR23 merge is an ancestor. Six original Foundation fingerprints and the
+Activation worktree remain protected; final checks are recorded privately.
+
+Verdict: T_002_05_SESSION_TRANSACTION_OWNERSHIP_FIXED_VERIFICATION_PENDING.
+Source guard and local Java/H2 coverage are implemented/verified; PostgreSQL
+ownership, durable replay and concurrency still require current-source runtime
+verification. Historical18 Session PG PASS cannot establish this new fix. A new
+owner-authorized PostgreSQL CI checkpoint is required before PR-readiness review.
+T-002-05 stays PARTIAL; Feature002/AC-002-01..05 NOT ACCEPTED;
+GRANT_MUTATION_FUNCTIONALITY_LIMITED retained. No further Identity/business slice
+or Foundation acceptance is implied. Original requirements and AC are unchanged.

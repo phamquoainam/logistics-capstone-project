@@ -8,6 +8,7 @@ import java.util.*;
 import java.util.function.Function;
 import javax.sql.DataSource;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /** V3/V4 runtime DML, same DataSource/administration-lock protocol as Grant/Provision/Activation. */
 public final class JdbcIdentitySessionStore implements IdentitySessionStore {
@@ -17,6 +18,14 @@ public final class JdbcIdentitySessionStore implements IdentitySessionStore {
     private static Timestamp stamp(Instant t) {return Timestamp.from(t);}
     private static void one(int count) {if(count!=1)throw new IllegalStateException("SESSION_WRITE_REJECTED");}
     @Override public <T>T transaction(Function<Transaction,T> work) {
+        // Session must own the physical commit before returning a result or replay denial.
+        // Synchronization or pre-bound resources also make ownership ambiguous: fail closed.
+        // Do not suspend, commit or roll back any caller-owned transaction/resource.
+        if (TransactionSynchronizationManager.isActualTransactionActive()
+                || TransactionSynchronizationManager.isSynchronizationActive()
+                || !TransactionSynchronizationManager.getResourceMap().isEmpty()) {
+            throw new IllegalStateException("SESSION_TRANSACTION_OWNERSHIP_REQUIRED");
+        }
         return store.transaction(a->work.apply(new Transaction() {
             public IdentityGrantStore.Transaction accounts() {return a;}
             public Optional<UUID> findUsername(String username) {return jdbc.query("SELECT id FROM identity.user_account WHERE username=?",(r,n)->r.getObject(1,UUID.class),username).stream().findFirst();}

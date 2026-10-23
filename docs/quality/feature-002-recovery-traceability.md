@@ -648,3 +648,30 @@ recovery/resend/lifecycle/query, remaining authority/security and HTTP/JWT/CSRF/
 cookie adapters; provider/delivery integration stays T-002-08 after dependencies.
 Feature001/D1-08/Day1 remain PARTIAL. No deployment/end-to-end or business-module
 readiness is implied; separate business-feature owner approval remains required.
+
+
+## Session transaction ownership correction trace - 2026-10-23
+
+[Scoped finding, guard, exact tests and local evidence](../implementation/t-002-05-identity-session-evidence.md#session-transaction-ownership-correction---2026-10-23).
+REQ-002-02/03/05 and AC-002-02/03/05 gain corrective verification coverage only;
+no requirement text or production feature AC is accepted by this checkpoint.
+
+Session-only JDBC boundary rejects actual ambient transactions, synchronization
+or any bound resource before shared REQUIRED participation; fixed internal failure,
+no public contract change or caller transaction manipulation. Four guard unit tests
+PASS within24 Session unit cases; five PG regressions authored/compiled, execution
+UNVERIFIED (Docker CLI unavailable). Existing direct replay and concurrent refresh
+remain mandatory. Full local Java21/Maven3.10.0 offline verify and strict H2 guard:
+354 PASS/17 expected skips/0 failure/0 error; Architecture23, Activation unit12,
+Domain48 and report-policy116 PASS. Migration Python source15 PASS. Outbox Python
+source9/10 methods PASS, with2 pre-existing V3/V4 CRLF byte-pin subcase failures;
+unchanged pre-edit bytes/HEAD canonical pins verified, no repair or assertion bypass.
+
+Historical sourcecaa150fb/run39932569608 and later docs0551b279 are preserved.
+Neither verifies this uncommitted correction. Current-source PostgreSQL (including
+ownership/durable replay/concurrency and privacy/owned cleanup) plus new CI/PR
+integration remain pending; synthetic inventory expectations are not runtime PASS.
+T-002-05 PARTIAL, Feature002/AC-002-01..05 NOT ACCEPTED;
+GRANT_MUTATION_FUNCTIONALITY_LIMITED retained. Protected main traceability,
+Foundation changes, Activation, SQL V1-V5 and accepted contracts are unchanged.
+No commit/push/dispatch/PR/merge or further-feature implementation authorized here.

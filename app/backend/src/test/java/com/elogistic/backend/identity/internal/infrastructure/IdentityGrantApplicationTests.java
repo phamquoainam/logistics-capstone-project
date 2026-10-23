@@ -1106,4 +1106,87 @@ class IdentityGrantApplicationTests {
             assertTrue(started.await(5,TimeUnit.SECONDS));assertThrows(TimeoutException.class,()->waiting.get(150,TimeUnit.MILLISECONDS));c.commit();assertEquals(INVALID_CREDENTIALS,waiting.get(15,TimeUnit.SECONDS));
         } finally {pool.shutdownNow();assertTrue(pool.awaitTermination(5,TimeUnit.SECONDS));}
     }
+
+    private org.springframework.transaction.support.TransactionTemplate sessionCallerTransaction(javax.sql.DataSource source) {
+        var outer=new org.springframework.transaction.support.TransactionTemplate(new org.springframework.jdbc.support.JdbcTransactionManager(source));
+        outer.setIsolationLevel(org.springframework.transaction.TransactionDefinition.ISOLATION_READ_COMMITTED);
+        return outer;
+    }
+    private void sessionOwnershipRejected(Runnable action) {
+        var failure=assertThrows(IllegalStateException.class,action::run);
+        assertEquals("SESSION_TRANSACTION_OWNERSHIP_REQUIRED",failure.getMessage());
+    }
+    @Test void sessionAmbientRefreshRejectedBeforeRotationAndCallerCommit() throws Exception {
+        sessionFixture();var source=outboxDataSource();
+        var app=ProductionIdentitySessionComposition.create(source,(op,request,sid,present)->{},Clock.fixed(NOW,ZoneOffset.UTC));
+        try(var first=sessionLogin();var token=sessionToken(first.refreshToken())) {
+            var before=secureSnapshot();
+            sessionCallerTransaction(source).executeWithoutResult(status->{
+                assertTrue(org.springframework.transaction.support.TransactionSynchronizationManager.hasResource(source));
+                sessionOwnershipRejected(()->app.refreshIdentity(token));
+                assertFalse(status.isRollbackOnly());
+            });
+            // Snapshot uses independent runtime connections after the caller's physical commit.
+            assertEquals(before,secureSnapshot());
+            try(var rotated=app.refreshIdentity(token)) {assertEquals(first.access().sessionId(),rotated.access().sessionId());}
+        }
+    }
+    @Test void sessionAmbientReplayRejectedBeforeCallerRollback() throws Exception {
+        sessionFixture();var source=outboxDataSource();
+        var app=ProductionIdentitySessionComposition.create(source,(op,request,sid,present)->{},Clock.fixed(NOW,ZoneOffset.UTC));
+        try(var first=sessionLogin();var old=sessionToken(first.refreshToken());var next=app.refreshIdentity(old)) {
+            var before=secureSnapshot();
+            sessionCallerTransaction(source).executeWithoutResult(status->{
+                sessionOwnershipRejected(()->app.refreshIdentity(old));
+                // The caller retains control: denial is ownership failure, never REFRESH_REPLAY.
+                assertFalse(status.isRollbackOnly());status.setRollbackOnly();
+            });
+            assertEquals(before,secureSnapshot());
+            try(var current=sessionToken(next.refreshToken());var rotated=app.refreshIdentity(current)) {
+                assertEquals(first.access().sessionId(),rotated.access().sessionId());
+            }
+        }
+    }
+    @Test void sessionDirectReplayRevocationAndAuditAreIndependentlyCommitted() throws Exception {
+        sessionFixture();
+        try(var first=sessionLogin();var old=sessionToken(first.refreshToken());var next=sessions(NOW).refreshIdentity(old)) {
+            assertEquals(REFRESH_REPLAY,assertThrows(IdentityCommandFailure.class,()->sessions(NOW).refreshIdentity(old)).code());
+            // A new JDBC transaction, not a Spring thread-bound/caller connection.
+            try(Connection c=db.runtimeConnection()) {
+                c.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);c.setAutoCommit(false);
+                try(PreparedStatement q=c.prepareStatement("SELECT (SELECT count(*) FROM identity.auth_session WHERE id=? AND revoked_at IS NOT NULL),(SELECT count(*) FROM identity.refresh_token WHERE session_id=? AND revoked_at IS NULL),(SELECT count(*) FROM identity.audit_entry WHERE target_id=? AND event_type='IDENTITY_REFRESH_REPLAY')")) {
+                    q.setObject(1,first.access().sessionId());q.setObject(2,first.access().sessionId());q.setObject(3,A);
+                    try(ResultSet row=q.executeQuery()) {assertTrue(row.next());assertEquals(1,row.getLong(1));assertEquals(0,row.getLong(2));assertEquals(1,row.getLong(3));}
+                }
+                c.commit();
+            }
+            try(var current=sessionToken(next.refreshToken())) {sessionDenied(SESSION_INVALID,()->sessions(NOW).refreshIdentity(current));}
+        }
+    }
+    @Test void sessionAmbientLoginRejectedBeforeCallerCommit() throws Exception {
+        sessionFixture();var source=outboxDataSource();
+        var app=ProductionIdentitySessionComposition.create(source,(op,request,sid,present)->{},Clock.fixed(NOW,ZoneOffset.UTC));
+        var before=secureSnapshot();
+        sessionCallerTransaction(source).executeWithoutResult(status->{
+            sessionOwnershipRejected(()->app.loginIdentity(new com.elogistic.backend.identity.api.IdentitySessionCommands.Login("fixture."+A,SESSION_PASSWORD,REQUEST)));
+            assertFalse(status.isRollbackOnly());
+        });
+        assertEquals(before,secureSnapshot());
+        try(var valid=app.loginIdentity(new com.elogistic.backend.identity.api.IdentitySessionCommands.Login("fixture."+A,SESSION_PASSWORD,REQUEST))) {assertEquals(A,valid.access().accountId());}
+    }
+    @Test void sessionAmbientLogoutRejectedBeforeCallerRollback() throws Exception {
+        sessionFixture();var source=outboxDataSource();
+        var app=ProductionIdentitySessionComposition.create(source,(op,request,sid,present)->{},Clock.fixed(NOW,ZoneOffset.UTC));
+        try(var first=sessionLogin();var token=sessionToken(first.refreshToken())) {
+            var before=secureSnapshot();
+            sessionCallerTransaction(source).executeWithoutResult(status->{
+                sessionOwnershipRejected(()->app.logoutIdentity(token));assertFalse(status.isRollbackOnly());status.setRollbackOnly();
+            });
+            assertEquals(before,secureSnapshot());
+            app.logoutIdentity(token);app.logoutIdentity(token);
+            assertEquals(1,scalar("SELECT count(*) FROM identity.auth_session WHERE id='"+first.access().sessionId()+"' AND revoked_at IS NOT NULL"));
+            assertEquals(0,scalar("SELECT count(*) FROM identity.refresh_token WHERE session_id='"+first.access().sessionId()+"' AND revoked_at IS NULL"));
+            assertEquals(1,scalar("SELECT count(*) FROM identity.audit_entry WHERE event_type='IDENTITY_LOGOUT' AND target_id='"+A+"'"));
+        }
+    }
 }

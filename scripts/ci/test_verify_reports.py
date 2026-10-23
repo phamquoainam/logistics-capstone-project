@@ -258,8 +258,8 @@ class ReportGuardTests(unittest.TestCase):
         for name, methods in reports.S2_REQUIRED.items():
             self.assertEqual(len(methods), len(set(methods)), name)
         # Prior cases retained; authority composition requires9 unit and12 PostgreSQL identities.
-        for mode, passed, skipped in [('architecture', 23, 0), ('h2', 350, 17),
-                                      ('postgres', 523, 5), ('foundation', 5, 0)]:
+        for mode, passed, skipped in [('architecture', 23, 0), ('h2', 354, 17),
+                                      ('postgres', 532, 5), ('foundation', 5, 0)]:
             with self.subTest(mode=mode):
                 self.fixture(mode)
                 self.assertTrue(self.check(mode))
@@ -1508,7 +1508,7 @@ class IdentityActivationInventoryTests(unittest.TestCase):
         self.assertEqual(list(ACTIVATION_UNIT_METHODS), reports.REQUIRED[reports.IDENTITY_ACTIVATION_UNIT])
         self.assertEqual(list(ACTIVATION_PG_METHODS), reports.IDENTITY_ACTIVATION_PG_REQUIRED)
         self.assertEqual(12, len(ACTIVATION_UNIT_METHODS)); self.assertEqual(20, len(ACTIVATION_PG_METHODS))
-        self.assertEqual(123, len(reports.REQUIRED[reports.IDENTITY_GRANTS]))
+        self.assertEqual(128, len(reports.REQUIRED[reports.IDENTITY_GRANTS]))
         self.assertEqual(3, len(reports.TASK_C_SUITES))
         self.assertNotIn(reports.IDENTITY_GRANTS, reports.expected_suites('h2'))
         for mode in ('h2', 'postgres'): self.assertIn(reports.IDENTITY_ACTIVATION_UNIT, reports.expected_suites(mode))
@@ -1556,9 +1556,9 @@ class IdentitySessionInventoryTests(unittest.TestCase):
         pg = (root / 'infrastructure/IdentityGrantApplicationTests.java').read_text(encoding='utf-8')
         self.assertEqual(re.findall(r'@Test\s+void\s+(\w+)\s*\(', unit), reports.IDENTITY_SESSION_UNIT_REQUIRED)
         self.assertEqual(re.findall(r'@Test\s+void\s+(session\w+)\s*\(', pg), reports.IDENTITY_SESSION_PG_REQUIRED)
-        self.assertEqual(20, len(reports.IDENTITY_SESSION_UNIT_REQUIRED))
-        self.assertEqual(18, len(reports.IDENTITY_SESSION_PG_REQUIRED))
-        self.assertEqual(123, len(reports.REQUIRED[reports.IDENTITY_GRANTS]))
+        self.assertEqual(24, len(reports.IDENTITY_SESSION_UNIT_REQUIRED))
+        self.assertEqual(23, len(reports.IDENTITY_SESSION_PG_REQUIRED))
+        self.assertEqual(128, len(reports.REQUIRED[reports.IDENTITY_GRANTS]))
         self.assertEqual(3, len(reports.TASK_C_SUITES))
         for mode in ('h2', 'postgres'): self.assertIn(reports.IDENTITY_SESSION_UNIT, reports.expected_suites(mode))
         self.assertNotIn(reports.IDENTITY_SESSION_UNIT, reports.expected_suites('architecture'))

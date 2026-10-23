@@ -124,4 +124,38 @@ class IdentitySessionApplicationTests {
         var real=new ProtectedSessionCredentials();String hash=new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder(4).encode("legacy");
         assertTrue(real.verify("legacy",hash));assertFalse(real.verify("wrong",hash));assertFalse(real.verify("legacy",null));assertFalse(real.verify("legacy","invalid"));
     }
+
+    private void rejectsUnownedStoreTransaction(javax.sql.DataSource source) {
+        var entered=new java.util.concurrent.atomic.AtomicBoolean();
+        var store=new com.elogistic.backend.identity.internal.infrastructure.JdbcIdentitySessionStore(source);
+        var failure=assertThrows(IllegalStateException.class,()->store.transaction(tx->{entered.set(true);return null;}));
+        assertEquals("SESSION_TRANSACTION_OWNERSHIP_REQUIRED",failure.getMessage());
+        assertFalse(entered.get());verifyNoInteractions(source);
+    }
+    @Test void storeRejectsActualAmbientTransactionBeforeJdbcAccess() {
+        var source=mock(javax.sql.DataSource.class);
+        assertFalse(org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive());
+        org.springframework.transaction.support.TransactionSynchronizationManager.setActualTransactionActive(true);
+        try {rejectsUnownedStoreTransaction(source);}
+        finally {org.springframework.transaction.support.TransactionSynchronizationManager.setActualTransactionActive(false);}
+    }
+    @Test void storeRejectsAmbientSynchronizationBeforeJdbcAccess() {
+        var source=mock(javax.sql.DataSource.class);
+        assertFalse(org.springframework.transaction.support.TransactionSynchronizationManager.isSynchronizationActive());
+        org.springframework.transaction.support.TransactionSynchronizationManager.initSynchronization();
+        try {rejectsUnownedStoreTransaction(source);}
+        finally {org.springframework.transaction.support.TransactionSynchronizationManager.clearSynchronization();}
+    }
+    @Test void storeRejectsBoundDataSourceBeforeJdbcAccess() {
+        var source=mock(javax.sql.DataSource.class);
+        org.springframework.transaction.support.TransactionSynchronizationManager.bindResource(source,new Object());
+        try {rejectsUnownedStoreTransaction(source);}
+        finally {org.springframework.transaction.support.TransactionSynchronizationManager.unbindResource(source);}
+    }
+    @Test void storeRejectsUnknownBoundResourceBeforeJdbcAccess() {
+        var source=mock(javax.sql.DataSource.class);var key=new Object();
+        org.springframework.transaction.support.TransactionSynchronizationManager.bindResource(key,new Object());
+        try {rejectsUnownedStoreTransaction(source);}
+        finally {org.springframework.transaction.support.TransactionSynchronizationManager.unbindResource(key);}
+    }
 }
