@@ -1439,4 +1439,114 @@ class IdentityGrantApplicationTests {
     @Test void adminConcurrentConflictingKeysNeverRepeatLifecycleEffect() throws Exception {
         sessionFixture();var app=administration(S,A,null);var result=adminRace(()->app.disableIdentityAccount(adminCommand()),()->app.disableIdentityAccount(adminCommand(B,1,KEY,"Changed reason")));assertEquals(1,result.stream().filter(Result.class::isInstance).count());assertEquals(1,result.stream().filter(x->x==IDEMPOTENCY_CONFLICT).count());assertEquals(2,scalar("SELECT version FROM identity.user_account WHERE id='"+B+"'"));
     }
+
+    // Production HTTP read boundary. Same owned PostgreSQL lifecycle; no new container/volume.
+    private static java.security.KeyPair httpKeys;
+    private static synchronized java.security.KeyPair httpKeys() throws Exception {
+        if(httpKeys==null){var generator=java.security.KeyPairGenerator.getInstance("RSA");generator.initialize(3072);httpKeys=generator.generateKeyPair();}return httpKeys;
+    }
+    @org.springframework.boot.test.context.TestConfiguration(proxyBeanMethods=false)
+    @org.springframework.web.servlet.config.annotation.EnableWebMvc
+    @org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
+    static class HttpFixtureConfiguration {
+        static javax.sql.DataSource source;
+        @org.springframework.context.annotation.Bean javax.sql.DataSource dataSource(){return source;}
+    }
+    private org.springframework.web.context.support.AnnotationConfigWebApplicationContext httpContext(Instant time)throws Exception {
+        HttpFixtureConfiguration.source=outboxDataSource();
+        var key=new com.nimbusds.jose.jwk.RSAKey.Builder((java.security.interfaces.RSAPublicKey)httpKeys().getPublic())
+            .privateKey((java.security.interfaces.RSAPrivateKey)httpKeys().getPrivate()).keyID("http-test")
+            .keyUse(com.nimbusds.jose.jwk.KeyUse.SIGNATURE).algorithm(com.nimbusds.jose.JWSAlgorithm.RS256).build();
+        var context=new org.springframework.web.context.support.AnnotationConfigWebApplicationContext();
+        context.setServletContext(new org.springframework.mock.web.MockServletContext());context.getEnvironment().setActiveProfiles("identity","postgres");
+        context.getEnvironment().getPropertySources().addFirst(new org.springframework.core.env.MapPropertySource("isolated-http-fixture",Map.of(
+            "identity.security.issuer","https://identity.example.invalid","identity.security.audience","elogistics-browser",
+            "identity.security.current-kid","http-test","identity.security.jwk-set",new com.nimbusds.jose.jwk.JWKSet(key).toString(false),
+            "identity.security.origin","https://portal.example.invalid")));
+        context.addBeanFactoryPostProcessor(factory->factory.registerSingleton("identityHttpClock",Clock.fixed(time,ZoneOffset.UTC)));
+        context.register(HttpFixtureConfiguration.class,com.elogistic.backend.identity.internal.ProductionIdentityHttpConfiguration.class,
+            com.elogistic.backend.identity.internal.web.ProductionIdentityReads.class,com.elogistic.backend.identity.internal.web.ProductionIdentityErrors.class);
+        try{context.refresh();return context;}catch(Exception failure){context.close();throw failure;}
+    }
+    private org.springframework.test.web.servlet.MockMvc httpMvc(org.springframework.web.context.support.AnnotationConfigWebApplicationContext context){
+        return org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup(context)
+            .addFilters(context.getBean("springSecurityFilterChain",jakarta.servlet.Filter.class)).build();
+    }
+    private String httpToken(org.springframework.web.context.support.AnnotationConfigWebApplicationContext context,UUID sid,UUID actor,long version,Instant issued,Instant expiry){
+        return context.getBean(com.elogistic.backend.identity.internal.web.ProductionAccessTokens.class).issue(new com.elogistic.backend.identity.api.IdentitySessionCommands.AccessGrant(sid,actor,version,issued,expiry));
+    }
+    private org.springframework.mock.web.MockHttpServletResponse httpRead(org.springframework.test.web.servlet.MockMvc mvc,String path,String token)throws Exception{
+        return mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(path).secure(true).header("Authorization","Bearer "+token)).andReturn().getResponse();
+    }
+    @Test void httpReadValidRs256UsesRealCurrentStateWithoutIdleWrites() throws Exception {
+        sessionFixture();try(var context=httpContext(NOW)){var before=secureSnapshot();var r=httpRead(httpMvc(context),"/api/v1/auth/me",httpToken(context,S,A,1,NOW,NOW.plusSeconds(900)));
+            assertEquals(200,r.getStatus());assertEquals("no-store",r.getHeader("Cache-Control"));assertEquals("\"v1\"",r.getHeader("ETag"));
+            var body=new tools.jackson.databind.ObjectMapper().readTree(r.getContentAsString());assertEquals(A.toString(),body.get("id").asString());assertEquals(8,body.size());assertFalse(r.getContentAsString().contains("password"));assertFalse(r.getContentAsString().contains("accessToken"));assertEquals(before,secureSnapshot());}
+    }
+    @Test void httpReadIntegerJwtDatesResolveOnlyOwnedMicrosecondSession() throws Exception {
+        sessionFixture();Instant time=NOW.plusNanos(123456000);try(var login=sessions(time).loginIdentity(new com.elogistic.backend.identity.api.IdentitySessionCommands.Login("fixture."+A,SESSION_PASSWORD,REQUEST));var context=httpContext(time)){
+            var before=secureSnapshot();var token=context.getBean(com.elogistic.backend.identity.internal.web.ProductionAccessTokens.class).issue(login.access());
+            assertEquals(200,httpRead(httpMvc(context),"/api/v1/auth/me",token).getStatus());assertEquals(before,secureSnapshot());}
+    }
+    @Test void httpReadAlreadySignedTokenRejectsRevocation() throws Exception {
+        sessionFixture();try(var context=httpContext(NOW)){String token=httpToken(context,S,A,1,NOW,NOW.plusSeconds(900));execute("UPDATE identity.auth_session SET revoked_at=created_at WHERE id='"+S+"'");var before=secureSnapshot();assertEquals(401,httpRead(httpMvc(context),"/api/v1/auth/me",token).getStatus());assertEquals(before,secureSnapshot());}
+    }
+    @Test void httpReadAlreadySignedTokenRejectsChangedAuthVersion() throws Exception {
+        sessionFixture();try(var context=httpContext(NOW)){String token=httpToken(context,S,A,1,NOW,NOW.plusSeconds(900));execute("UPDATE identity.user_account SET auth_version=auth_version+1 WHERE id='"+A+"'");var before=secureSnapshot();assertEquals(401,httpRead(httpMvc(context),"/api/v1/auth/me",token).getStatus());assertEquals(before,secureSnapshot());}
+    }
+    @Test void httpReadDisabledAndUnverifiedAccountsReject() throws Exception {
+        sessionFixture();try(var context=httpContext(NOW)){String token=httpToken(context,S,A,1,NOW,NOW.plusSeconds(900));execute("UPDATE identity.user_account SET status='DISABLED',disabled_at=created_at WHERE id='"+A+"'");var before=secureSnapshot();assertEquals(401,httpRead(httpMvc(context),"/api/v1/auth/me",token).getStatus());assertEquals(before,secureSnapshot());execute("UPDATE identity.user_account SET status='PENDING_ACTIVATION',email_verified=FALSE,password_hash=NULL,activated_at=NULL,disabled_at=NULL WHERE id='"+A+"'");var pending=secureSnapshot();assertEquals(401,httpRead(httpMvc(context),"/api/v1/auth/me",token).getStatus());assertEquals(pending,secureSnapshot());}
+    }
+    @Test void httpReadInactiveRealmAndMixedActorReject() throws Exception {
+        sessionFixture();try(var context=httpContext(NOW)){String token=httpToken(context,S,A,1,NOW,NOW.plusSeconds(900));
+            execute("INSERT INTO identity.account_grant(account_id,role_code,scope_type,scope_id,granted_at) VALUES ('"+A+"','OPERATOR','WAREHOUSE','"+X+"',TIMESTAMPTZ '2026-10-21 00:00:00Z')");
+            assertEquals(401,httpRead(httpMvc(context),"/api/v1/auth/me",token).getStatus());execute("DELETE FROM identity.account_grant WHERE account_id='"+A+"' AND scope_type='WAREHOUSE'");
+            db.ownerExecute("UPDATE identity.realm SET status='INACTIVE',updated_at=CURRENT_TIMESTAMP");var before=secureSnapshot();assertEquals(401,httpRead(httpMvc(context),"/api/v1/auth/me",token).getStatus());assertEquals(before,secureSnapshot());}
+    }
+    @Test void httpReadSessionIdleAndAbsoluteExpiryRejectBeforeDisclosure() throws Exception {
+        sessionFixture();try(var context=httpContext(NOW)){String token=httpToken(context,S,A,1,NOW,NOW.plusSeconds(900));execute("UPDATE identity.auth_session SET idle_expires_at=TIMESTAMPTZ '2026-10-21 00:05:00Z' WHERE id='"+S+"'");assertEquals(401,httpRead(httpMvc(context),"/api/v1/auth/me",token).getStatus());
+            execute("UPDATE identity.auth_session SET absolute_expires_at=TIMESTAMPTZ '2026-10-21 00:05:00Z' WHERE id='"+S+"'");var before=secureSnapshot();assertEquals(401,httpRead(httpMvc(context),"/api/v1/auth/me",token).getStatus());assertEquals(before,secureSnapshot());}
+    }
+    @Test void httpReadForeignAndUnknownTargetsHaveSameMaskedContract() throws Exception {
+        sessionFixture();try(var context=httpContext(NOW)){var mvc=httpMvc(context);String token=httpToken(context,S,A,1,NOW,NOW.plusSeconds(900));var before=secureSnapshot();var foreign=httpRead(mvc,"/api/v1/admin/users/"+T,token);var absent=httpRead(mvc,"/api/v1/admin/users/"+UUID.randomUUID(),token);assertEquals(404,foreign.getStatus());assertEquals(404,absent.getStatus());assertNull(foreign.getHeader("ETag"));assertNull(absent.getHeader("ETag"));var json=new tools.jackson.databind.ObjectMapper();assertEquals("ACCOUNT_NOT_ACCESSIBLE",json.readTree(foreign.getContentAsString()).get("code").asString());assertEquals("ACCOUNT_NOT_ACCESSIBLE",json.readTree(absent.getContentAsString()).get("code").asString());assertFalse(foreign.getContentAsString().contains("fixture@example.invalid"));assertEquals(before,secureSnapshot());}
+    }
+    @Test void httpReadListingsRolesAndScopesKeepWholeTargetIsolation() throws Exception {
+        sessionFixture();try(var context=httpContext(NOW)){var mvc=httpMvc(context);String token=httpToken(context,S,A,1,NOW,NOW.plusSeconds(900));var before=secureSnapshot();var json=new tools.jackson.databind.ObjectMapper();var users=httpRead(mvc,"/api/v1/admin/users?limit=100",token);assertEquals(200,users.getStatus());var body=json.readTree(users.getContentAsString());assertEquals(2,body.size());assertFalse(users.getContentAsString().contains("fixture."+T));assertTrue(users.getContentAsString().contains("fixture."+B));var roles=httpRead(mvc,"/api/v1/admin/roles",token);assertEquals(200,roles.getStatus());assertEquals("IDENTITY_MANAGEMENT",json.readTree(roles.getContentAsString()).get("items").get(0).get("code").asString());var scopes=httpRead(mvc,"/api/v1/admin/scopes",token);assertEquals(200,scopes.getStatus());assertEquals(SCOPE.toString(),json.readTree(scopes.getContentAsString()).get("items").get(0).get("id").asString());assertEquals(before,secureSnapshot());}
+    }
+    @Test void httpReadWrongSessionOwnerFailsBeforeAuthoritativeView() throws Exception {
+        sessionFixture();try(var context=httpContext(NOW)){String token=httpToken(context,S,B,1,NOW,NOW.plusSeconds(900));var before=secureSnapshot();assertEquals(401,httpRead(httpMvc(context),"/api/v1/auth/me",token).getStatus());assertEquals(before,secureSnapshot());}
+    }
+    @Test void httpReadFullChainRejectsPostAndAmbientTransaction() throws Exception {
+        sessionFixture();try(var context=httpContext(NOW)){var mvc=httpMvc(context);String token=httpToken(context,S,A,1,NOW,NOW.plusSeconds(900));var before=secureSnapshot();assertEquals(401,mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/v1/admin/users").secure(true).header("Authorization","Bearer "+token)).andReturn().getResponse().getStatus());
+            sessionCallerTransaction(outboxDataSource()).executeWithoutResult(status->{try{assertEquals(401,httpRead(mvc,"/api/v1/auth/me",token).getStatus());assertFalse(status.isRollbackOnly());}catch(Exception error){throw new IllegalStateException(error);}status.setRollbackOnly();});assertEquals(before,secureSnapshot());}
+    }
+    @Test void httpReadWaitingForLockObservesConcurrentRevocation() throws Exception {
+        sessionFixture();try(var context=httpContext(NOW)){var mvc=httpMvc(context);String token=httpToken(context,S,A,1,NOW,NOW.plusSeconds(900));var pool=Executors.newSingleThreadExecutor();
+            try(Connection c=db.runtimeConnection();Statement q=c.createStatement()){c.setAutoCommit(false);q.execute("SELECT pg_advisory_xact_lock("+0x4944454e54495459L+")");q.execute("UPDATE identity.auth_session SET revoked_at=created_at WHERE id='"+S+"'");var started=new CountDownLatch(1);var waiting=pool.submit(()->{started.countDown();return httpRead(mvc,"/api/v1/auth/me",token).getStatus();});assertTrue(started.await(5,TimeUnit.SECONDS));assertThrows(TimeoutException.class,()->waiting.get(150,TimeUnit.MILLISECONDS));c.commit();assertEquals(401,waiting.get(15,TimeUnit.SECONDS));}
+            finally{pool.shutdownNow();assertTrue(pool.awaitTermination(5,TimeUnit.SECONDS));}}
+    }
+
+
+    private org.springframework.mock.web.MockHttpServletResponse httpMutation(org.springframework.test.web.servlet.MockMvc mvc,String verb,UUID target,String operation,String token,long version,UUID key,String body)throws Exception {
+        var request="PUT".equals(verb)?org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/v1/admin/users/"+target+"/"+operation):org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/v1/admin/users/"+target+"/"+operation);
+        return mvc.perform(request.secure(true).header("Authorization","Bearer "+token).header("If-Match","\"v"+version+"\"").header("Idempotency-Key",key).contentType("application/json").content(body)).andReturn().getResponse();
+    }
+    @Test void httpReadBearerDisableAndReplayKeepAtomicApplicationEffects()throws Exception {
+        sessionFixture();try(var context=httpContext(NOW)){var mvc=httpMvc(context);String token=httpToken(context,S,A,1,NOW,NOW.plusSeconds(900));String body="{\"reason\":\"Synthetic HTTP disable\"}";assertEquals(200,httpMutation(mvc,"POST",B,"disable",token,1,KEY,body).getStatus());assertEquals(1,scalar("SELECT count(*) FROM identity.user_account WHERE id='"+B+"' AND status='DISABLED' AND version=2 AND auth_version=2"));assertEquals(1,scalar("SELECT count(*) FROM identity.auth_session WHERE id='"+AS+"' AND revoked_at IS NOT NULL"));assertEquals(1,scalar("SELECT count(*) FROM identity.auth_session WHERE id='"+S+"' AND last_activity_at=TIMESTAMPTZ '2026-10-21 00:05:00Z'"));var after=secureSnapshot();assertEquals(200,httpMutation(mvc,"POST",B,"disable",token,1,KEY,body).getStatus());assertEquals(after,secureSnapshot());}
+    }
+    @Test void httpReadBearerReactivationDoesNotRestoreTargetSessions()throws Exception {
+        sessionFixture();administration(S,A,null).disableIdentityAccount(adminCommand());try(var context=httpContext(NOW)){assertEquals(200,httpMutation(httpMvc(context),"POST",B,"reactivate",httpToken(context,S,A,1,NOW,NOW.plusSeconds(900)),2,UUID.randomUUID(),"{\"reason\":\"Synthetic HTTP reactivation\"}").getStatus());assertEquals(1,scalar("SELECT count(*) FROM identity.user_account WHERE id='"+B+"' AND status='ACTIVE' AND version=3 AND auth_version=3"));assertEquals(1,scalar("SELECT count(*) FROM identity.auth_session WHERE id='"+AS+"' AND revoked_at IS NOT NULL"));}
+    }
+    @Test void httpReadGrantReplacementRequiresAuthoritativeWholeTarget()throws Exception {
+        sessionFixture();String body="{\"reason\":\"Synthetic HTTP grants\",\"grants\":[{\"role\":\"IDENTITY_MANAGEMENT\",\"scopeType\":\"IDENTITY\",\"scopeId\":\""+SCOPE+"\"}]}";try(var context=httpContext(NOW)){var mvc=httpMvc(context);String token=httpToken(context,S,A,1,NOW,NOW.plusSeconds(900));assertEquals(200,httpMutation(mvc,"PUT",B,"grants",token,1,KEY,body).getStatus());assertEquals(1,scalar("SELECT count(*) FROM identity.user_account WHERE id='"+B+"' AND auth_version=2 AND version=2"));var after=secureSnapshot();assertEquals(404,httpMutation(mvc,"PUT",T,"grants",token,1,UUID.randomUUID(),body).getStatus());assertEquals(after,secureSnapshot());}
+    }
+    @Test void httpReadMutationFailuresNeverRecordActivityOrPartialCommit()throws Exception {
+        sessionFixture();failWrite("audit_entry","INSERT");try(var context=httpContext(NOW)){var before=secureSnapshot();int status=httpMutation(httpMvc(context),"POST",B,"disable",httpToken(context,S,A,1,NOW,NOW.plusSeconds(900)),1,KEY,"{\"reason\":\"Synthetic failed mutation\"}").getStatus();assertEquals(401,status);assertEquals(before,secureSnapshot());}
+    }
+    @Test void httpReadMutationConflictAndStaleVersionHaveAcceptedCodes()throws Exception {
+        sessionFixture();try(var context=httpContext(NOW)){var mvc=httpMvc(context);String token=httpToken(context,S,A,1,NOW,NOW.plusSeconds(900)),body="{\"reason\":\"Synthetic HTTP disable\"}";assertEquals(200,httpMutation(mvc,"POST",B,"disable",token,1,KEY,body).getStatus());var before=secureSnapshot();assertEquals(409,httpMutation(mvc,"POST",B,"disable",token,1,KEY,"{\"reason\":\"Changed reason\"}").getStatus());assertEquals(412,httpMutation(mvc,"POST",B,"reactivate",token,1,UUID.randomUUID(),body).getStatus());assertEquals(before,secureSnapshot());}
+    }
+    @Test void httpReadConcurrentSameKeyMutationHasOneEffect()throws Exception {
+        sessionFixture();try(var context=httpContext(NOW)){var mvc=httpMvc(context);String token=httpToken(context,S,A,1,NOW,NOW.plusSeconds(900)),body="{\"reason\":\"Synthetic concurrent HTTP disable\"}";var statuses=adminRace(()->httpMutation(mvc,"POST",B,"disable",token,1,KEY,body).getStatus(),()->httpMutation(mvc,"POST",B,"disable",token,1,KEY,body).getStatus());assertEquals(List.of(200,200),statuses);assertEquals(1,scalar("SELECT count(*) FROM identity.audit_entry WHERE target_id='"+B+"' AND event_type='IDENTITY_ACCOUNT_DISABLED'"));}
+    }
 }

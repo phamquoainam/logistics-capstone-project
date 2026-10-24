@@ -193,3 +193,17 @@ Recovery remains dependent on reviewed15min storage/crypto forward migration;
 T-002-05 PARTIAL; Feature002/AC-002-01..05 NOT ACCEPTED;
 GRANT_MUTATION_FUNCTIONALITY_LIMITED retained. This later docs-only closure is not
 the CI-tested source; actual PR integration must pass before human merge review.
+
+
+## T-002-06 security direction and bounded HTTP implementation ? 2026-10-24
+
+[ADR-0012](../../docs/architecture/decisions/ADR-0012-production-identity-http-security.md)
+records OWNER_T_002_06_SECURITY_DESIGN decisions: pinned RS256/external key lifecycle,
+approved shared limiter thresholds and v1 invitation token direction, with explicit
+compatibility/persistence qualifications. [Evidence](../../docs/implementation/t-002-06-http-security-evidence.md).
+Eight independently owned HTTP operations use genuine production JWT and current persisted
+account/session/Realm authorization, strict accepted mappings and server-attested activity only
+after new successful mutations. /me/polling, failed operations and receipts never extend idle.
+Browser auth/CSRF/limiter, issuance/activation compatibility, Recovery and T-002-08 remain open.
+No original contract, migration, Domain invariant or broader authority changes. T-002-06 PARTIAL;
+Feature002/AC-002-01..05 NOT ACCEPTED; GRANT_MUTATION_FUNCTIONALITY_LIMITED unchanged.

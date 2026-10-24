@@ -518,3 +518,17 @@ prediction lines are historical. Seven-operation verification gates above are
 complete; combined publication/PR-integration gate remains pending until the
 actual PR checks pass. Recovery dependency remains open; original T-002-05 stays
 unchecked/PARTIAL and original Feature002/AC acceptance is unchanged.
+
+
+## T-002-06 bounded HTTP/security checkpoint ? 2026-10-24
+
+Owner: OWNER_T_002_06_SECURITY_DESIGN: CONDITIONAL_GO. T-002-06 PARTIAL/unchecked.
+[Scope and actual-versus-pending verification](../../docs/implementation/t-002-06-http-security-evidence.md),
+[ADR-0012](../../docs/architecture/decisions/ADR-0012-production-identity-http-security.md)
+and [runbook](../../docs/runbooks/production-identity-security.md). Eight accepted operations
+implemented independently of Recovery: me/account list/object/role/scope reads and grants/disable/
+reactivate. External RS256 keys, authoritative per-request admission, exact request/error mappings,
+no polling/replay idle extension. 43 unit/18 PG methods authored; current PostgreSQL/CI pending.
+Full T-002-06 DoD remains open for browser auth/cookie/CSRF/shared limiter, protected issuance/
+invitation compatibility and Recovery dependencies. No task checkbox or original REQ/AC changed;
+T-002-05 PARTIAL, Feature002/AC-002-01..05 NOT ACCEPTED, grant limitation unchanged.

@@ -852,3 +852,15 @@ the CI-tested source; actual PR integration must pass before human merge review.
 
 REQ-002-01/02/04/05 and AC-002-02/03/04/05 receive bounded supporting coverage only.
 No original REQ/AC is rewritten or accepted. Protected main traceability unchanged.
+
+
+## T-002-06 bounded HTTP/security ? 2026-10-24
+
+REQ-002-01..05 / original AC-002-01..05 -> T-002-06 / ADR-0012 ->
+ProductionIdentitySecurityTests43 and IdentityGrantApplicationTests.httpRead*18 (authored).
+[Evidence and execution provenance](../implementation/t-002-06-http-security-evidence.md).
+Covers bounded production RS256, trusted/current session/account/Realm/authVersion admission,
+eight accepted HTTP mappings, target masking/preconditions/replay, meaningful activity and
+privacy/isolation. Current-source PostgreSQL/CI remains UNVERIFIED until actual run evidence.
+Browser auth/cookies/CSRF/shared limiter, proof compatibility, Recovery, UI/provider and full
+Feature002/original AC acceptance remain OPEN; no broad Grant authority or main traceability edit.
