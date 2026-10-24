@@ -172,6 +172,45 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "Required security dependency unavailable; request fails closed. No database, account or credential details.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Do not cache sensitive responses.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                },
+                "example": "no-store"
+              },
+              "X-Request-Id": {
+                "description": "Safe correlation UUID.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "example": "10000000-0000-4000-8000-000000000001"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/getIdentityCsrfError503"
+                },
+                "examples": {
+                  "SERVICE_UNAVAILABLE": {
+                    "value": {
+                      "code": "SERVICE_UNAVAILABLE",
+                      "message": "Request could not be completed.",
+                      "requestId": "10000000-0000-4000-8000-000000000001"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -438,6 +477,45 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "Required security dependency unavailable; request fails closed. No database, account or credential details.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Do not cache sensitive responses.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                },
+                "example": "no-store"
+              },
+              "X-Request-Id": {
+                "description": "Safe correlation UUID.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "example": "10000000-0000-4000-8000-000000000001"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/loginIdentityError503"
+                },
+                "examples": {
+                  "SERVICE_UNAVAILABLE": {
+                    "value": {
+                      "code": "SERVICE_UNAVAILABLE",
+                      "message": "Request could not be completed.",
+                      "requestId": "10000000-0000-4000-8000-000000000001"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "requestBody": {
@@ -677,6 +755,45 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "Required security dependency unavailable; request fails closed. No database, account or credential details.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Do not cache sensitive responses.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                },
+                "example": "no-store"
+              },
+              "X-Request-Id": {
+                "description": "Safe correlation UUID.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "example": "10000000-0000-4000-8000-000000000001"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/refreshIdentityError503"
+                },
+                "examples": {
+                  "SERVICE_UNAVAILABLE": {
+                    "value": {
+                      "code": "SERVICE_UNAVAILABLE",
+                      "message": "Request could not be completed.",
+                      "requestId": "10000000-0000-4000-8000-000000000001"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -808,6 +925,45 @@
                   "ORIGIN_REJECTED": {
                     "value": {
                       "code": "ORIGIN_REJECTED",
+                      "message": "Request could not be completed.",
+                      "requestId": "10000000-0000-4000-8000-000000000001"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Required security dependency unavailable; request fails closed. No database, account or credential details.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Do not cache sensitive responses.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                },
+                "example": "no-store"
+              },
+              "X-Request-Id": {
+                "description": "Safe correlation UUID.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "example": "10000000-0000-4000-8000-000000000001"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/logoutIdentityError503"
+                },
+                "examples": {
+                  "SERVICE_UNAVAILABLE": {
+                    "value": {
+                      "code": "SERVICE_UNAVAILABLE",
                       "message": "Request could not be completed.",
                       "requestId": "10000000-0000-4000-8000-000000000001"
                     }
@@ -6270,6 +6426,90 @@
                 "type": "string",
                 "enum": [
                   "AUTHORITY_REQUIRED"
+                ]
+              }
+            },
+            "required": [
+              "code"
+            ]
+          }
+        ]
+      },
+      "getIdentityCsrfError503": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Error"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "SERVICE_UNAVAILABLE"
+                ]
+              }
+            },
+            "required": [
+              "code"
+            ]
+          }
+        ]
+      },
+      "loginIdentityError503": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Error"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "SERVICE_UNAVAILABLE"
+                ]
+              }
+            },
+            "required": [
+              "code"
+            ]
+          }
+        ]
+      },
+      "refreshIdentityError503": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Error"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "SERVICE_UNAVAILABLE"
+                ]
+              }
+            },
+            "required": [
+              "code"
+            ]
+          }
+        ]
+      },
+      "logoutIdentityError503": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Error"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "SERVICE_UNAVAILABLE"
                 ]
               }
             },

@@ -221,3 +221,14 @@ Eight-operation boundary CI_VERIFIED; earlier current-source CI pending statemen
 Full T-002-06 PARTIAL/unchecked; browser auth/CSRF/shared limiter/issuance/compatibility/Recovery
 gates and original Feature002/AC-002-01..05 remain OPEN/NOT ACCEPTED; grant limitation unchanged.
 This later documentation revision is NOT the source run's checkout; PR integration remains required.
+
+## Authentication HTTP implementation checkpoint — 2026-10-24
+
+Owner approved PostgreSQL limiter and exact four-operation503 extension.
+[ADR-0013](../../docs/architecture/decisions/ADR-0013-identity-browser-authentication-limiter.md)
+and [actual evidence](../../docs/implementation/t-002-06-authentication-http-evidence.md).
+CSRF/Login/Refresh/Logout implementation and new unit/PostgreSQL cases are pending
+current-source final verification. V1-V5, original REQ/AC and other contract operations
+unchanged. T-002-05/T-002-06 PARTIAL; Feature002/AC-002-01..05 NOT ACCEPTED;
+GRANT_MUTATION_FUNCTIONALITY_LIMITED unchanged. Invitation/Recovery/T-002-07/08
+and full business modules remain excluded; no checkbox is promoted by authored code.

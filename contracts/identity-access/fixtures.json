@@ -630,25 +630,25 @@
     {
       "id": "new.multibyte.over72",
       "kind": "new",
-      "value": "\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac",
+      "value": "€€€€€€€€€€€€€€€€€€€€€€€€€",
       "valid": false
     },
     {
       "id": "new.multibyte.boundary72",
       "kind": "new",
-      "value": "\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac",
+      "value": "€€€€€€€€€€€€€€€€€€€€€€€€",
       "valid": true
     },
     {
       "id": "new.emoji.codepoints14",
       "kind": "new",
-      "value": "\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00",
+      "value": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀",
       "valid": false
     },
     {
       "id": "new.emoji.codepoints15",
       "kind": "new",
-      "value": "\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00",
+      "value": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀",
       "valid": true
     },
     {
@@ -683,7 +683,7 @@
     {
       "id": "login.multibyte.over72",
       "kind": "login",
-      "value": "\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac\u20ac",
+      "value": "€€€€€€€€€€€€€€€€€€€€€€€€€",
       "valid": false
     }
   ],
@@ -723,6 +723,28 @@
       "csrfValid": true,
       "expectedStatus": 403,
       "classification": "DECLARATIVE_NOT_RUNTIME_EXECUTED"
+    }
+  ],
+  "serviceUnavailableCases": [
+    {
+      "operationId": "getIdentityCsrf",
+      "status": 503,
+      "code": "SERVICE_UNAVAILABLE"
+    },
+    {
+      "operationId": "loginIdentity",
+      "status": 503,
+      "code": "SERVICE_UNAVAILABLE"
+    },
+    {
+      "operationId": "refreshIdentity",
+      "status": 503,
+      "code": "SERVICE_UNAVAILABLE"
+    },
+    {
+      "operationId": "logoutIdentity",
+      "status": 503,
+      "code": "SERVICE_UNAVAILABLE"
     }
   ]
 }

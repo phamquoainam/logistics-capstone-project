@@ -51,9 +51,19 @@ public class ProductionIdentityHttpConfiguration {
     @Bean IdentityCurrentSessionCommands productionCurrentSession(DataSource runtime,ProductionAccessAdmission admission,@Qualifier("identityHttpClock")Clock clock){return ProductionIdentityCurrentSessionComposition.create(runtime,admission,clock);}
     @Bean IdentityAdministrationCommands productionReadAdministration(DataSource runtime,ProductionAccessAdmission admission,@Qualifier("identityHttpClock")Clock clock){return ProductionIdentityAdministrationComposition.create(runtime,admission,clock,Duration.ofHours(24));}
     @Bean IdentityGrantCommands productionGrantCommands(DataSource runtime,@Qualifier("identityHttpClock")Clock clock){return ProductionIdentityGrantComposition.create(runtime,clock,Duration.ofHours(24));}
+    @Bean com.elogistic.backend.identity.internal.application.port.IdentityRateLimiter identityRateLimiter(DataSource runtime,Environment environment){
+        byte[] secret=null;
+        try{String encoded=environment.getRequiredProperty("identity.security.limiter-hmac");secret=Base64.getDecoder().decode(encoded);if(!Base64.getEncoder().encodeToString(secret).equals(encoded))throw new IllegalArgumentException();return new JdbcIdentityRateLimiter(runtime,secret);}
+        catch(Exception invalid){throw new IllegalStateException("IDENTITY_LIMITER_CONFIGURATION_INVALID");}
+        finally{if(secret!=null)Arrays.fill(secret,(byte)0);}
+    }
+    @Bean com.elogistic.backend.identity.internal.application.port.IdentityBrowserState identityBrowserState(DataSource runtime){return new JdbcIdentityBrowserState(runtime);}
+    @Bean ProductionSessionAdmission productionSessionAdmission(com.elogistic.backend.identity.internal.application.port.IdentityBrowserState browser,com.elogistic.backend.identity.internal.application.port.IdentityRateLimiter limiter){return new ProductionSessionAdmission(browser,limiter);}
+    @Bean IdentitySessionCommands productionSessionCommands(DataSource runtime,ProductionSessionAdmission admission,@Qualifier("identityHttpClock")Clock clock){return ProductionIdentitySessionComposition.create(runtime,admission,clock);}
+    @Bean ProductionAuthenticationHttp productionAuthenticationHttp(IdentitySessionCommands sessions,ProductionSessionAdmission admission,com.elogistic.backend.identity.internal.application.port.IdentityBrowserState browser,com.elogistic.backend.identity.internal.application.port.IdentityRateLimiter limiter,ProductionAccessTokens tokens,Environment environment,@Qualifier("identityHttpClock")Clock clock){return new ProductionAuthenticationHttp(sessions,admission,browser,limiter,tokens,environment.getRequiredProperty("identity.security.origin"),clock);}
     @Bean @Order(-10) SecurityFilterChain productionIdentityChain(HttpSecurity http,ProductionAccessTokens tokens,ProductionAccessAdmission admission,
-            IdentityCurrentSessionCommands sessions,Environment environment)throws Exception {
-        var guard=new ProductionReadGuard(tokens,admission,sessions,environment.getRequiredProperty("identity.security.origin"));
+            IdentityCurrentSessionCommands sessions,Environment environment,ProductionAuthenticationHttp authentication)throws Exception {
+        var guard=new ProductionReadGuard(tokens,admission,sessions,environment.getRequiredProperty("identity.security.origin")).browser(authentication);
         http.securityMatcher("/api/v1/**").csrf(c->c.disable()).httpBasic(c->c.disable()).formLogin(c->c.disable())
             .requestCache(c->c.disable()).sessionManagement(c->c.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(c->c.requestMatchers(HttpMethod.GET,"/api/v1/auth/me","/api/v1/admin/users","/api/v1/admin/users/*","/api/v1/admin/roles","/api/v1/admin/scopes").authenticated().requestMatchers(HttpMethod.PUT,"/api/v1/admin/users/*/grants").authenticated().requestMatchers(HttpMethod.POST,"/api/v1/admin/users/*/disable","/api/v1/admin/users/*/reactivate").authenticated().anyRequest().denyAll())

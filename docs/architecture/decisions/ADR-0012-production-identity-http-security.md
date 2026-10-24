@@ -102,3 +102,11 @@ Architecture23/0 skips, H2454/17, PostgreSQL698/5,125 report controls/job; exact
 artifact digests, credential/privacy and owned cleanup PASS. This verifies the scoped implementation,
 not an operational key rollout, complete TLS/proxy deployment, shared limiter, legacy invitation
 transition or full T-002-06. Accepted policy and all open prerequisites above are unchanged.
+
+## Superseding bounded authentication direction — 2026-10-24
+
+Owner approved PostgreSQL shared limiter and four-operation503 contract extension.
+[ADR-0013](ADR-0013-identity-browser-authentication-limiter.md) resolves the persistence
+decision for this scope and records the exact design. Earlier NOT INSTALLED/runtime
+statements are historical; new implementation/CI acceptance must be recorded by
+actual evidence. Invitation compatibility/issuance and Recovery decisions stay open.

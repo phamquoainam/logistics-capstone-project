@@ -71,3 +71,16 @@ counter, spoofable forwarded-IP key or unavailable-storage fail-open is permitte
 bare-verifier compatibility remains unresolved; never scan proofs or expose selector as authority.
 
 Verification evidence: [T-002-06 checkpoint](../implementation/t-002-06-http-security-evidence.md).
+
+## Authentication deployment prerequisites
+
+Apply owner-authorized V6 with migrator before starting the runtime; never change
+V1-V5 or run repair. Supply identity.security.limiter-hmac through protected secret
+injection, independent of JWT and invitation keys. No value is provided here.
+[ADR-0013](../architecture/decisions/ADR-0013-identity-browser-authentication-limiter.md)
+defines coordinated rotation (all instances,3660s quiescence), bounds and cleanup.
+GET CSRF before login and after login/logout rebinding; keep access only in memory.
+Refresh is single-flight; lost rotation response requires reauthentication.
+503 is dependency failure,429 verified quota; neither authorizes permissive retry.
+Logout503 cannot be presented as confirmed server revocation. Direct HTTPS only;
+forwarded headers do not establish TLS/client identity. No deployment is executed.

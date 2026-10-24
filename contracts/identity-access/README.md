@@ -94,3 +94,13 @@ credentials/provisioning bypass, HTTP bootstrap or complete Feature002 acceptanc
 [Procedure](../../docs/runbooks/identity-realm-bootstrap.md).
 Current-source SQL/provider/runtime and HTTP security evidence are still pending;
 synthetic fixtures and earlier CI are not those proofs.
+
+## Approved authentication outage response — 2026-10-24
+
+OWNER_AUTH_HTTP_503_CONTRACT_CHANGE adds only503/SERVICE_UNAVAILABLE to CSRF,
+Login, Refresh and Logout, preserving every prior request/success/error contract.
+Flat error, no-store and correlation ID remain; no default response. Storage outage
+is never RATE_LIMITED or INVALID_CREDENTIALS. Logout503 does not assert server-side
+revocation. Existing consumers must handle this additional non-success result;
+Demo generated SDK is unrelated and unchanged. Exact validator/negative fixtures
+remain mandatory. [Design and limits](../../docs/architecture/decisions/ADR-0013-identity-browser-authentication-limiter.md).
