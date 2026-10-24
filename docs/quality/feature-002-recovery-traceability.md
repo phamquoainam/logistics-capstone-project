@@ -809,3 +809,46 @@ authority and canonical T-002-08 delivery/provider integration remain open. Full
 Production Identity end-to-end readiness is not claimed. Feature 001/D1-08/Day 1
 PARTIAL. Ready only for a bounded PR-readiness review. Business modules require
 BUSINESS_FEATURE_IMPLEMENTATION_REVIEW_REQUIRED and explicit owner approval.
+
+
+## Remaining Application delivery - 2026-10-24
+
+[Canonical dependency matrix and scoped verification](../implementation/t-002-05-remaining-application-evidence.md).
+Baseline899cf8f211c1a8b52441e01849bcfefbdbee6162, actual develop push CI40069216714
+PASS:23 Architecture,375 H2/17 expected skips,567 PG/5 expected skips,119 policy
+controls/job, exact reports/digests/privacy/owned cleanup. This is baseline evidence,
+not verification of the new uncommitted administration source.
+
+REQ-002-01/02/04/05 and AC-002-02/03/04/05 map to whole-target read authorization,
+filter-before-pagination, bounded catalogs, lifecycle/version/session invalidation,
+secured invitation reissue, idempotency/rollback and concurrency. Production
+Application/JDBC and36 unit/34 PG tests are authored; new-source runtime/CI remains
+UNVERIFIED until actual checks pass. Tests reuse the existing three owned suites;
+no unknown skip allowance or broad grant policy is introduced.
+
+Recovery remains affected-scope BLOCKED by invitation-only V5 storage/crypto;
+owner-reviewed forward migration/protection design required. Runtime Realm writes,
+external resource authority, T-002-06 transport/security and T-002-08 delivery/
+maintenance remain excluded. Keep T-002-05 PARTIAL, Feature002/AC-002-01..05 NOT
+ACCEPTED and GRANT_MUTATION_FUNCTIONALITY_LIMITED. Main traceability/protected
+Foundation and previous worktrees are unchanged; no original REQ/AC text changed.
+
+
+## Remaining Application source CI verification - 2026-10-24
+
+Owner: OWNER_T_002_05_REMAINING_APPLICATION: CONDITIONAL_GO.
+[Exact scope, source/failure/correction/CI evidence](../implementation/t-002-05-remaining-application-evidence.md).
+Actual source 0f49ff8d0b5329437cf783b8f632d4a844ece58b, [run40072363351](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/40072363351), attempt1/workflow_dispatch:
+Architecture23/0 skips; H2411/17 expected skips; PostgreSQL637/5 expected skips;
+zero FAIL/ERROR,122 controls/job, exact inventory/digests/privacy/owned cleanup PASS.
+Seven operations CI_VERIFIED: list/get accounts, bounded role/scope catalogs,
+disable/reactivate, secured invitation resend. New36 unit/34 PG plus previous142
+PG are proven, combined176 PG; counts overlap totals. No new transport/provider
+or broader authorization decision. Earlier pending statements are historical.
+Recovery remains dependent on reviewed15min storage/crypto forward migration;
+T-002-05 PARTIAL; Feature002/AC-002-01..05 NOT ACCEPTED;
+GRANT_MUTATION_FUNCTIONALITY_LIMITED retained. This later docs-only closure is not
+the CI-tested source; actual PR integration must pass before human merge review.
+
+REQ-002-01/02/04/05 and AC-002-02/03/04/05 receive bounded supporting coverage only.
+No original REQ/AC is rewritten or accepted. Protected main traceability unchanged.

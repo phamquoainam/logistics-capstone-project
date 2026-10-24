@@ -1303,4 +1303,140 @@ class IdentityGrantApplicationTests {
             } finally {start.countDown();pool.shutdownNow();assertTrue(pool.awaitTermination(5,TimeUnit.SECONDS));}
         }
     }
+
+    // Remaining Application operations: real runtime DML/crypto; no HTTP or external authority.
+    private com.elogistic.backend.identity.api.IdentityAdministrationCommands administration(UUID sid,UUID actor,InvitationProtection protection) {
+        return administration(sid,actor,protection,NOW);
+    }
+    private com.elogistic.backend.identity.api.IdentityAdministrationCommands administration(UUID sid,UUID actor,InvitationProtection protection,Instant time) {
+        var source=outboxDataSource();var clock=Clock.fixed(time,ZoneOffset.UTC);
+        com.elogistic.backend.identity.internal.application.port.CurrentSessionAdmission admission=(op,request)->new com.elogistic.backend.identity.internal.application.port.CurrentSessionAdmission.Context(sid,actor,1,time,time.plusSeconds(900));
+        return protection==null?ProductionIdentityAdministrationComposition.create(source,admission,clock,Duration.ofHours(24)):
+            ProductionIdentityAdministrationComposition.secure(source,admission,protection,outboxPolicy(),clock,Duration.ofHours(24));
+    }
+    private com.elogistic.backend.identity.api.IdentityAdministrationCommands.Command adminCommand(UUID target,long version,UUID key,String reason){return new com.elogistic.backend.identity.api.IdentityAdministrationCommands.Command(REQUEST,target,version,key,reason);}
+    private com.elogistic.backend.identity.api.IdentityAdministrationCommands.Command adminCommand(){return adminCommand(B,1,KEY,"Synthetic administration");}
+    private void adminDenied(IdentityCommandFailure.Code code,Runnable action) throws Exception {var before=secureSnapshot();assertEquals(code,assertThrows(IdentityCommandFailure.class,action::run).code());assertEquals(before,secureSnapshot());}
+    private UUID adminBootstrapId() throws Exception {
+        try(Connection c=db.runtimeConnection();Statement s=c.createStatement();ResultSet row=s.executeQuery("SELECT bootstrap_account_id FROM identity.realm WHERE id='"+SCOPE+"'")){assertTrue(row.next());return row.getObject(1,UUID.class);}
+    }
+    private List<Object> adminRace(Callable<Object> left,Callable<Object> right) throws Exception {
+        var pool=Executors.newFixedThreadPool(2);var ready=new CountDownLatch(2);var go=new CountDownLatch(1);
+        try {
+            var futures=new ArrayList<Future<Object>>();for(var work:List.of(left,right))futures.add(pool.submit(()->{ready.countDown();assertTrue(go.await(5,TimeUnit.SECONDS));try{return work.call();}catch(IdentityCommandFailure e){return e.code();}}));
+            assertTrue(ready.await(5,TimeUnit.SECONDS));go.countDown();return List.of(futures.get(0).get(20,TimeUnit.SECONDS),futures.get(1).get(20,TimeUnit.SECONDS));
+        }finally{go.countDown();pool.shutdownNow();assertTrue(pool.awaitTermination(5,TimeUnit.SECONDS));}
+    }
+    @Test void adminReadFiltersWholeTargetAndDoesNotWriteActivity() throws Exception {
+        sessionFixture();var app=administration(S,A,null);var before=secureSnapshot();assertEquals(B,app.getIdentityAccount(B,REQUEST).id());assertEquals(before,secureSnapshot());
+        adminDenied(ACCOUNT_NOT_ACCESSIBLE,()->app.getIdentityAccount(T,REQUEST));adminDenied(ACCOUNT_NOT_ACCESSIBLE,()->app.getIdentityAccount(id(399),REQUEST));
+    }
+    @Test void adminCatalogsExposeOnlyCurrentRegisteredIdentityPair() throws Exception {
+        sessionFixture();var app=administration(S,A,null);var before=secureSnapshot();assertEquals(List.of("IDENTITY_MANAGEMENT"),app.listIdentityRoles(REQUEST).items().stream().map(com.elogistic.backend.identity.api.IdentityAdministrationCommands.Role::code).toList());
+        var scopes=app.listIdentityScopes(REQUEST).items();assertEquals(1,scopes.size());assertEquals(SCOPE,scopes.getFirst().id());assertEquals("IDENTITY",scopes.getFirst().type());assertEquals(before,secureSnapshot());
+    }
+    @Test void adminPaginationFiltersUnauthorizedRowsBeforeLimit() throws Exception {
+        sessionFixture();UUID extra=id(310),mixed=id(311),unscoped=id(312);account(extra,"ACTIVE",List.of(ADMIN));account(mixed,"ACTIVE",List.of(ADMIN,GX));account(unscoped,"ACTIVE",List.of());
+        var app=administration(S,A,null);var before=secureSnapshot();var seen=new HashSet<UUID>();String cursor=null;
+        for(int page=0;page<4;page++) {
+            var result=app.listIdentityAccounts(new com.elogistic.backend.identity.api.IdentityAdministrationCommands.Query(REQUEST,cursor,1));
+            assertEquals(1,result.items().size());assertTrue(seen.add(result.items().getFirst().id()));cursor=result.nextCursor();if(cursor==null)break;
+        }
+        assertNull(cursor);assertEquals(Set.of(B,extra,adminBootstrapId()),seen);assertEquals(before,secureSnapshot());
+    }
+    @Test void adminCursorCannotBeTransferredBetweenActors() throws Exception {
+        sessionFixture();account(id(313),"ACTIVE",List.of(ADMIN));var a=administration(S,A,null);var cursor=a.listIdentityAccounts(new com.elogistic.backend.identity.api.IdentityAdministrationCommands.Query(REQUEST,null,1)).nextCursor();assertNotNull(cursor);
+        adminDenied(VALIDATION_FAILED,()->administration(AS,B,null).listIdentityAccounts(new com.elogistic.backend.identity.api.IdentityAdministrationCommands.Query(REQUEST,cursor,1)));
+    }
+    @Test void adminRevokedStaleAndExpiredSessionsCannotReadOrMutate() throws Exception {
+        sessionFixture();var app=administration(S,A,null);execute("UPDATE identity.auth_session SET revoked_at=created_at WHERE id='"+S+"'");adminDenied(SESSION_INVALID,()->app.getIdentityAccount(B,REQUEST));adminDenied(SESSION_INVALID,()->app.disableIdentityAccount(adminCommand()));
+        execute("UPDATE identity.auth_session SET revoked_at=NULL WHERE id='"+S+"'");execute("UPDATE identity.user_account SET version=2,auth_version=2 WHERE id='"+A+"'");adminDenied(SESSION_INVALID,()->app.listIdentityRoles(REQUEST));
+        execute("UPDATE identity.user_account SET auth_version=1 WHERE id='"+A+"'");execute("UPDATE identity.auth_session SET idle_expires_at=TIMESTAMPTZ '2026-10-21 00:05:00Z' WHERE id='"+S+"'");adminDenied(SESSION_INVALID,()->app.reactivateIdentityAccount(adminCommand()));
+    }
+    @Test void adminInactiveRealmAndMixedActorRemainDefaultDeny() throws Exception {
+        sessionFixture();var app=administration(S,A,null);db.ownerExecute("UPDATE identity.realm SET status='INACTIVE',updated_at=CURRENT_TIMESTAMP");adminDenied(ACCOUNT_NOT_ACCESSIBLE,()->app.getIdentityAccount(B,REQUEST));adminDenied(AUTHORITY_REQUIRED,()->app.listIdentityRoles(REQUEST));
+        db.ownerExecute("UPDATE identity.realm SET status='ACTIVE',updated_at=CURRENT_TIMESTAMP");execute("INSERT INTO identity.account_grant(account_id,role_code,scope_type,scope_id,granted_at) VALUES ('"+A+"','OPERATOR','WAREHOUSE','"+X+"',CURRENT_TIMESTAMP)");adminDenied(AUTHORITY_REQUIRED,()->app.listIdentityScopes(REQUEST));
+    }
+    @Test void adminDisableAtomicallyRevokesTargetAndPreservesActor() throws Exception {
+        sessionFixture();execute("INSERT INTO identity.refresh_token(id,session_id,token_hash,issued_at,expires_at) VALUES ('"+id(314)+"','"+AS+"',decode(repeat('03',32),'hex'),TIMESTAMPTZ '2026-10-21 00:00:00Z',TIMESTAMPTZ '2026-10-21 08:00:00Z')");
+        var result=administration(S,A,null).disableIdentityAccount(adminCommand());assertEquals("DISABLED",result.account().status());assertEquals(2,result.appliedVersion());
+        assertEquals(1,scalar("SELECT count(*) FROM identity.user_account WHERE id='"+B+"' AND version=2 AND auth_version=2 AND email_verified AND password_hash IS NOT NULL"));assertEquals(1,scalar("SELECT count(*) FROM identity.auth_session WHERE id='"+AS+"' AND revoked_at IS NOT NULL"));assertEquals(1,scalar("SELECT count(*) FROM identity.refresh_token WHERE id='"+id(314)+"' AND revoked_at IS NOT NULL"));assertEquals(1,scalar("SELECT count(*) FROM identity.auth_session WHERE id='"+S+"' AND revoked_at IS NULL"));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.audit_entry WHERE target_id='"+B+"' AND event_type='IDENTITY_ACCOUNT_DISABLED'"));
+    }
+    @Test void adminPendingDisablePreservesUnverifiedCredentialState() throws Exception {
+        sessionFixture();var protection=outboxProtection();UUID target=secureProvision(protection).provisionIdentityAccount(provisionCommand()).account().id();administration(S,A,protection).disableIdentityAccount(adminCommand(target,1,KEY,"Synthetic disable"));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.user_account WHERE id='"+target+"' AND status='DISABLED' AND password_hash IS NULL AND NOT email_verified AND activated_at IS NULL AND version=2"));assertEquals(0,scalar("SELECT count(*) FROM identity.action_proof WHERE account_id='"+target+"' AND revoked_at IS NULL"));assertEquals(0,scalar("SELECT count(*) FROM identity.invitation_outbox WHERE account_id='"+target+"' AND ciphertext IS NOT NULL"));
+    }
+    @Test void adminReactivationNeverRestoresOldSessionsOrProofs() throws Exception {
+        sessionFixture();var app=administration(S,A,null);app.disableIdentityAccount(adminCommand());var r=app.reactivateIdentityAccount(adminCommand(B,2,id(315),"Synthetic reactivate"));assertEquals("ACTIVE",r.account().status());assertEquals(3,r.account().version());assertEquals(1,scalar("SELECT count(*) FROM identity.user_account WHERE id='"+B+"' AND auth_version=3 AND email_verified AND password_hash IS NOT NULL AND disabled_at IS NULL"));assertEquals(1,scalar("SELECT count(*) FROM identity.auth_session WHERE id='"+AS+"' AND revoked_at IS NOT NULL"));
+    }
+    @Test void adminDisabledPendingCannotBeReactivated() throws Exception {
+        sessionFixture();var protection=outboxProtection();UUID target=secureProvision(protection).provisionIdentityAccount(provisionCommand()).account().id();var app=administration(S,A,protection);app.disableIdentityAccount(adminCommand(target,1,KEY,"Synthetic disable"));adminDenied(INVALID_ACCOUNT_STATE,()->app.reactivateIdentityAccount(adminCommand(target,2,id(316),"Synthetic reactivate")));
+    }
+    @Test void adminSelfDisableDeniedWithoutAnyMutation() throws Exception {sessionFixture();adminDenied(SELF_MANAGEMENT_FORBIDDEN,()->administration(S,A,null).disableIdentityAccount(adminCommand(A,1,KEY,"Synthetic")));}
+    @Test void adminCurrentAuthorityIsRequiredBeforeReceiptReplay() throws Exception {sessionFixture();var app=administration(S,A,null);app.disableIdentityAccount(adminCommand());execute("UPDATE identity.auth_session SET revoked_at=created_at WHERE id='"+S+"'");adminDenied(SESSION_INVALID,()->app.disableIdentityAccount(adminCommand()));}
+    @Test void adminExactLifecycleReplayHasNoSecondEffect() throws Exception {sessionFixture();var app=administration(S,A,null);app.disableIdentityAccount(adminCommand());var before=secureSnapshot();var result=app.disableIdentityAccount(adminCommand());assertTrue(result.replayed());assertEquals(2,result.appliedVersion());assertEquals(before,secureSnapshot());}
+    @Test void adminLifecycleChangedPayloadConflictsBeforeStaleVersion() throws Exception {
+        sessionFixture();var app=administration(S,A,null);app.disableIdentityAccount(adminCommand());adminDenied(IDEMPOTENCY_CONFLICT,()->app.disableIdentityAccount(adminCommand(B,1,KEY,"Changed")));adminDenied(IDEMPOTENCY_CONFLICT,()->app.disableIdentityAccount(adminCommand(B,2,KEY,"Synthetic administration")));
+    }
+    @Test void adminOperationsUseSeparateReceiptNamespaces() throws Exception {sessionFixture();var app=administration(S,A,null);app.disableIdentityAccount(adminCommand());app.reactivateIdentityAccount(adminCommand(B,2,KEY,"Synthetic reactivate"));assertEquals(2,scalar("SELECT count(*) FROM identity.command_receipt WHERE actor_id='"+A+"' AND operation_key='"+KEY+"'"));}
+    @Test void adminDisableAuditFailureRollsBackAllState() throws Exception {sessionFixture();failWrite("audit_entry","INSERT");var before=secureSnapshot();assertThrows(org.springframework.dao.DataAccessException.class,()->administration(S,A,null).disableIdentityAccount(adminCommand()));assertEquals(before,secureSnapshot());}
+    @Test void adminDisableReceiptFailureRollsBackAllState() throws Exception {sessionFixture();failWrite("command_receipt","INSERT");var before=secureSnapshot();assertThrows(org.springframework.dao.DataAccessException.class,()->administration(S,A,null).disableIdentityAccount(adminCommand()));assertEquals(before,secureSnapshot());}
+    @Test void adminDisableStateWriteFailureRollsBackAllState() throws Exception {sessionFixture();failWrite("user_account","UPDATE");var before=secureSnapshot();assertThrows(org.springframework.dao.DataAccessException.class,()->administration(S,A,null).disableIdentityAccount(adminCommand()));assertEquals(before,secureSnapshot());}
+    @Test void adminDisableRevocationFailureRollsBackAllState() throws Exception {sessionFixture();failWrite("auth_session","UPDATE");var before=secureSnapshot();assertThrows(org.springframework.dao.DataAccessException.class,()->administration(S,A,null).disableIdentityAccount(adminCommand()));assertEquals(before,secureSnapshot());}
+    @Test void adminAmbientCallerTransactionsCannotOwnResults() throws Exception {
+        sessionFixture();var source=outboxDataSource();var app=ProductionIdentityAdministrationComposition.create(source,(op,request)->new com.elogistic.backend.identity.internal.application.port.CurrentSessionAdmission.Context(S,A,1,NOW,NOW.plusSeconds(900)),Clock.fixed(NOW,ZoneOffset.UTC),Duration.ofHours(24));
+        var before=secureSnapshot();sessionCallerTransaction(source).executeWithoutResult(status->{sessionOwnershipRejected(()->app.getIdentityAccount(B,REQUEST));sessionOwnershipRejected(()->app.disableIdentityAccount(adminCommand()));assertFalse(status.isRollbackOnly());});assertEquals(before,secureSnapshot());
+    }
+    @Test void adminOppositeDisableConcurrencyKeepsOneActiveAdministrator() throws Exception {
+        sessionFixture();Instant time;
+        // Bootstrap helper uses database wall time; this test must share that clock domain.
+        try(Connection c=db.runtimeConnection();Statement q=c.createStatement();ResultSet row=q.executeQuery("SELECT CURRENT_TIMESTAMP")){assertTrue(row.next());time=row.getTimestamp(1).toInstant();}
+        try(Connection c=db.runtimeConnection();PreparedStatement q=c.prepareStatement("UPDATE identity.auth_session SET created_at=?,absolute_expires_at=?,last_activity_at=?,idle_expires_at=? WHERE id IN (?,?)")) {
+            q.setTimestamp(1,Timestamp.from(time));q.setTimestamp(2,Timestamp.from(time.plusSeconds(28800)));q.setTimestamp(3,Timestamp.from(time));q.setTimestamp(4,Timestamp.from(time.plusSeconds(1800)));q.setObject(5,S);q.setObject(6,AS);assertEquals(2,q.executeUpdate());
+        }
+        var left=administration(S,A,null,time);var right=administration(AS,B,null,time);
+        // Retire the third bootstrap fixture through the real authorized lifecycle first.
+        left.disableIdentityAccount(adminCommand(adminBootstrapId(),1,id(320),"Synthetic bootstrap administrator handoff"));
+        var result=adminRace(()->left.disableIdentityAccount(adminCommand()),()->right.disableIdentityAccount(adminCommand(A,1,KEY,"Synthetic opposite")));assertEquals(1,result.stream().filter(Result.class::isInstance).count());assertEquals(1,result.stream().filter(x->x==SESSION_INVALID).count());assertEquals(1,scalar("SELECT count(*) FROM identity.user_account a WHERE a.status='ACTIVE' AND EXISTS (SELECT 1 FROM identity.account_grant g WHERE g.account_id=a.id AND g.role_code='IDENTITY_MANAGEMENT')"));
+    }
+    @Test void adminConcurrentSameKeyHasOneLifecycleEffect() throws Exception {
+        sessionFixture();var app=administration(S,A,null);var results=adminRace(()->app.disableIdentityAccount(adminCommand()),()->app.disableIdentityAccount(adminCommand()));assertEquals(2,results.stream().filter(Result.class::isInstance).count());assertEquals(1,results.stream().filter(x->x instanceof Result z && !z.replayed()).count());assertEquals(1,scalar("SELECT count(*) FROM identity.audit_entry WHERE target_id='"+B+"' AND event_type='IDENTITY_ACCOUNT_DISABLED'"));
+    }
+    @Test void adminWaitingMutationObservesConcurrentRealmDeactivation() throws Exception {
+        sessionFixture();var pool=Executors.newSingleThreadExecutor();try(Connection c=db.migrationConnection();Statement q=c.createStatement()) {
+            c.setAutoCommit(false);q.execute("SET ROLE "+db.owner());q.execute("SELECT pg_advisory_xact_lock("+0x4944454e54495459L+")");q.execute("UPDATE identity.realm SET status='INACTIVE',updated_at=CURRENT_TIMESTAMP");var ready=new CountDownLatch(1);var future=pool.submit(()->{ready.countDown();try{administration(S,A,null).disableIdentityAccount(adminCommand());return "ADMITTED";}catch(IdentityCommandFailure e){return e.code();}});assertTrue(ready.await(5,TimeUnit.SECONDS));assertThrows(TimeoutException.class,()->future.get(150,TimeUnit.MILLISECONDS));c.commit();assertEquals(ACCOUNT_NOT_ACCESSIBLE,future.get(15,TimeUnit.SECONDS));assertEquals(1,scalar("SELECT version FROM identity.user_account WHERE id='"+B+"'"));
+        }finally{pool.shutdownNow();assertTrue(pool.awaitTermination(5,TimeUnit.SECONDS));}
+    }
+    @Test void adminResendQueuesProtectedReplacementAndKeepsPending() throws Exception {
+        sessionFixture();var protection=outboxProtection();UUID target=secureProvision(protection).provisionIdentityAccount(provisionCommand()).account().id();administration(S,A,protection).resendIdentityInvitation(adminCommand(target,1,KEY,"Synthetic resend"));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.user_account WHERE id='"+target+"' AND status='PENDING_ACTIVATION' AND password_hash IS NULL AND NOT email_verified AND version=2 AND auth_version=2"));assertEquals(1,scalar("SELECT count(*) FROM identity.action_proof WHERE account_id='"+target+"' AND revoked_at IS NOT NULL"));assertEquals(1,scalar("SELECT count(*) FROM identity.action_proof WHERE account_id='"+target+"' AND revoked_at IS NULL AND consumed_at IS NULL"));assertEquals(1,scalar("SELECT count(*) FROM identity.invitation_outbox WHERE account_id='"+target+"' AND status='EXPIRED' AND ciphertext IS NULL"));
+        var worker=outbox(protection,NOW);var lease=worker.claim().orElseThrow();try(var delivery=worker.open(lease)) {assertEquals(43,delivery.token().length);String token=new String(delivery.token(),java.nio.charset.StandardCharsets.US_ASCII);assertFalse(secureSnapshot().toString().contains(token));assertEquals("provision@example.invalid",delivery.destination());}
+        assertEquals(0,scalar("SELECT count(*) FROM identity.auth_session WHERE account_id='"+target+"'"));
+    }
+    @Test void adminResendReplayAndConflictNeverRegenerateMaterial() throws Exception {
+        sessionFixture();var protection=outboxProtection();UUID target=secureProvision(protection).provisionIdentityAccount(provisionCommand()).account().id();var app=administration(S,A,protection);var cmd=adminCommand(target,1,KEY,"Synthetic resend");app.resendIdentityInvitation(cmd);var before=secureSnapshot();app.resendIdentityInvitation(cmd);assertEquals(before,secureSnapshot());adminDenied(IDEMPOTENCY_CONFLICT,()->app.resendIdentityInvitation(adminCommand(target,1,KEY,"Changed")));assertEquals(2,scalar("SELECT count(*) FROM identity.action_proof WHERE account_id='"+target+"'"));
+    }
+    private void adminResendRollback(String table) throws Exception {
+        sessionFixture();var protection=outboxProtection();UUID target=secureProvision(protection).provisionIdentityAccount(provisionCommand()).account().id();failWrite(table,"INSERT");var before=secureSnapshot();assertThrows(org.springframework.dao.DataAccessException.class,()->administration(S,A,protection).resendIdentityInvitation(adminCommand(target,1,KEY,"Synthetic resend")));assertEquals(before,secureSnapshot());
+    }
+    @Test void adminResendProofFailureRollsBackPriorRevocation() throws Exception {adminResendRollback("action_proof");}
+    @Test void adminResendOutboxFailureRollsBackAllState() throws Exception {adminResendRollback("invitation_outbox");}
+    @Test void adminResendAuditFailureRollsBackAllState() throws Exception {adminResendRollback("audit_entry");}
+    @Test void adminResendReceiptFailureRollsBackAllState() throws Exception {adminResendRollback("command_receipt");}
+    @Test void adminConcurrentResendKeyCreatesOneReplacement() throws Exception {
+        sessionFixture();var protection=outboxProtection();UUID target=secureProvision(protection).provisionIdentityAccount(provisionCommand()).account().id();var app=administration(S,A,protection);var cmd=adminCommand(target,1,KEY,"Synthetic resend");var result=adminRace(()->{app.resendIdentityInvitation(cmd);return "DONE";},()->{app.resendIdentityInvitation(cmd);return "DONE";});assertEquals(List.of("DONE","DONE"),result);assertEquals(2,scalar("SELECT count(*) FROM identity.action_proof WHERE account_id='"+target+"'"));assertEquals(1,scalar("SELECT count(*) FROM identity.audit_entry WHERE target_id='"+target+"' AND event_type='IDENTITY_INVITATION_RESENT'"));
+    }
+    @Test void adminResendRejectsActiveAndDisabledPendingAccounts() throws Exception {
+        sessionFixture();var protection=outboxProtection();var app=administration(S,A,protection);adminDenied(INVALID_ACCOUNT_STATE,()->app.resendIdentityInvitation(adminCommand()));UUID target=secureProvision(protection).provisionIdentityAccount(provisionCommand()).account().id();app.disableIdentityAccount(adminCommand(target,1,KEY,"Synthetic disable"));adminDenied(INVALID_ACCOUNT_STATE,()->app.resendIdentityInvitation(adminCommand(target,2,id(317),"Synthetic resend")));
+    }
+    @Test void adminMissingCryptoFailsBeforeProofOrAccountMutation() throws Exception {
+        sessionFixture();UUID target=secureProvision(outboxProtection()).provisionIdentityAccount(provisionCommand()).account().id();var before=secureSnapshot();assertThrows(IllegalStateException.class,()->administration(S,A,null).resendIdentityInvitation(adminCommand(target,1,KEY,"Synthetic resend")));assertEquals(before,secureSnapshot());
+    }
+    @Test void adminUnsupportedTargetScopesRemainDeniedForAllCommands() throws Exception {
+        sessionFixture();var app=administration(S,A,outboxProtection());adminDenied(ACCOUNT_NOT_ACCESSIBLE,()->app.disableIdentityAccount(adminCommand(T,1,KEY,"Synthetic")));adminDenied(ACCOUNT_NOT_ACCESSIBLE,()->app.reactivateIdentityAccount(adminCommand(T,1,KEY,"Synthetic")));adminDenied(ACCOUNT_NOT_ACCESSIBLE,()->app.resendIdentityInvitation(adminCommand(T,1,KEY,"Synthetic")));
+    }
+    @Test void adminConcurrentConflictingKeysNeverRepeatLifecycleEffect() throws Exception {
+        sessionFixture();var app=administration(S,A,null);var result=adminRace(()->app.disableIdentityAccount(adminCommand()),()->app.disableIdentityAccount(adminCommand(B,1,KEY,"Changed reason")));assertEquals(1,result.stream().filter(Result.class::isInstance).count());assertEquals(1,result.stream().filter(x->x==IDEMPOTENCY_CONFLICT).count());assertEquals(2,scalar("SELECT version FROM identity.user_account WHERE id='"+B+"'"));
+    }
 }
