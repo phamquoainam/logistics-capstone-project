@@ -193,3 +193,31 @@ Recovery remains dependent on reviewed15min storage/crypto forward migration;
 T-002-05 PARTIAL; Feature002/AC-002-01..05 NOT ACCEPTED;
 GRANT_MUTATION_FUNCTIONALITY_LIMITED retained. This later docs-only closure is not
 the CI-tested source; actual PR integration must pass before human merge review.
+
+
+## T-002-06 security direction and bounded HTTP implementation ? 2026-10-24
+
+[ADR-0012](../../docs/architecture/decisions/ADR-0012-production-identity-http-security.md)
+records OWNER_T_002_06_SECURITY_DESIGN decisions: pinned RS256/external key lifecycle,
+approved shared limiter thresholds and v1 invitation token direction, with explicit
+compatibility/persistence qualifications. [Evidence](../../docs/implementation/t-002-06-http-security-evidence.md).
+Eight independently owned HTTP operations use genuine production JWT and current persisted
+account/session/Realm authorization, strict accepted mappings and server-attested activity only
+after new successful mutations. /me/polling, failed operations and receipts never extend idle.
+Browser auth/CSRF/limiter, issuance/activation compatibility, Recovery and T-002-08 remain open.
+No original contract, migration, Domain invariant or broader authority changes. T-002-06 PARTIAL;
+Feature002/AC-002-01..05 NOT ACCEPTED; GRANT_MUTATION_FUNCTIONALITY_LIMITED unchanged.
+
+
+### T-002-06 current-source CI checkpoint ? 2026-10-24
+
+Source1962a839fce6e601d0f541e094a1dc9d2c663c05,
+[run40103151184](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/40103151184),
+attempt1/workflow_dispatch: Architecture23 PASS/0 skips, H2454/17 expected skips,
+PostgreSQL698/5 expected skips,0 failures/errors,125 policy controls/job. Exact inventory,
+all three artifact SHA-256 digests, credential/privacy and owned cleanup PASS. New43 security
+methods and18 PG/filter-chain cases verified; prior176 PG retained, combined194 PG PASS.
+Eight-operation boundary CI_VERIFIED; earlier current-source CI pending statements are historical.
+Full T-002-06 PARTIAL/unchecked; browser auth/CSRF/shared limiter/issuance/compatibility/Recovery
+gates and original Feature002/AC-002-01..05 remain OPEN/NOT ACCEPTED; grant limitation unchanged.
+This later documentation revision is NOT the source run's checkout; PR integration remains required.

@@ -852,3 +852,29 @@ the CI-tested source; actual PR integration must pass before human merge review.
 
 REQ-002-01/02/04/05 and AC-002-02/03/04/05 receive bounded supporting coverage only.
 No original REQ/AC is rewritten or accepted. Protected main traceability unchanged.
+
+
+## T-002-06 bounded HTTP/security ? 2026-10-24
+
+REQ-002-01..05 / original AC-002-01..05 -> T-002-06 / ADR-0012 ->
+ProductionIdentitySecurityTests43 and IdentityGrantApplicationTests.httpRead*18 (authored).
+[Evidence and execution provenance](../implementation/t-002-06-http-security-evidence.md).
+Covers bounded production RS256, trusted/current session/account/Realm/authVersion admission,
+eight accepted HTTP mappings, target masking/preconditions/replay, meaningful activity and
+privacy/isolation. Current-source PostgreSQL/CI remains UNVERIFIED until actual run evidence.
+Browser auth/cookies/CSRF/shared limiter, proof compatibility, Recovery, UI/provider and full
+Feature002/original AC acceptance remain OPEN; no broad Grant authority or main traceability edit.
+
+
+### T-002-06 current-source CI checkpoint ? 2026-10-24
+
+Source1962a839fce6e601d0f541e094a1dc9d2c663c05,
+[run40103151184](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/40103151184),
+attempt1/workflow_dispatch: Architecture23 PASS/0 skips, H2454/17 expected skips,
+PostgreSQL698/5 expected skips,0 failures/errors,125 policy controls/job. Exact inventory,
+all three artifact SHA-256 digests, credential/privacy and owned cleanup PASS. New43 security
+methods and18 PG/filter-chain cases verified; prior176 PG retained, combined194 PG PASS.
+Eight-operation boundary CI_VERIFIED; earlier current-source CI pending statements are historical.
+Full T-002-06 PARTIAL/unchecked; browser auth/CSRF/shared limiter/issuance/compatibility/Recovery
+gates and original Feature002/AC-002-01..05 remain OPEN/NOT ACCEPTED; grant limitation unchanged.
+This later documentation revision is NOT the source run's checkout; PR integration remains required.
