@@ -1306,8 +1306,11 @@ class IdentityGrantApplicationTests {
 
     // Remaining Application operations: real runtime DML/crypto; no HTTP or external authority.
     private com.elogistic.backend.identity.api.IdentityAdministrationCommands administration(UUID sid,UUID actor,InvitationProtection protection) {
-        var source=outboxDataSource();var clock=Clock.fixed(NOW,ZoneOffset.UTC);
-        com.elogistic.backend.identity.internal.application.port.CurrentSessionAdmission admission=(op,request)->new com.elogistic.backend.identity.internal.application.port.CurrentSessionAdmission.Context(sid,actor,1,NOW,NOW.plusSeconds(900));
+        return administration(sid,actor,protection,NOW);
+    }
+    private com.elogistic.backend.identity.api.IdentityAdministrationCommands administration(UUID sid,UUID actor,InvitationProtection protection,Instant time) {
+        var source=outboxDataSource();var clock=Clock.fixed(time,ZoneOffset.UTC);
+        com.elogistic.backend.identity.internal.application.port.CurrentSessionAdmission admission=(op,request)->new com.elogistic.backend.identity.internal.application.port.CurrentSessionAdmission.Context(sid,actor,1,time,time.plusSeconds(900));
         return protection==null?ProductionIdentityAdministrationComposition.create(source,admission,clock,Duration.ofHours(24)):
             ProductionIdentityAdministrationComposition.secure(source,admission,protection,outboxPolicy(),clock,Duration.ofHours(24));
     }
@@ -1386,7 +1389,13 @@ class IdentityGrantApplicationTests {
         var before=secureSnapshot();sessionCallerTransaction(source).executeWithoutResult(status->{sessionOwnershipRejected(()->app.getIdentityAccount(B,REQUEST));sessionOwnershipRejected(()->app.disableIdentityAccount(adminCommand()));assertFalse(status.isRollbackOnly());});assertEquals(before,secureSnapshot());
     }
     @Test void adminOppositeDisableConcurrencyKeepsOneActiveAdministrator() throws Exception {
-        sessionFixture();var left=administration(S,A,null);var right=administration(AS,B,null);
+        sessionFixture();Instant time;
+        // Bootstrap helper uses database wall time; this test must share that clock domain.
+        try(Connection c=db.runtimeConnection();Statement q=c.createStatement();ResultSet row=q.executeQuery("SELECT CURRENT_TIMESTAMP")){assertTrue(row.next());time=row.getTimestamp(1).toInstant();}
+        try(Connection c=db.runtimeConnection();PreparedStatement q=c.prepareStatement("UPDATE identity.auth_session SET created_at=?,absolute_expires_at=?,last_activity_at=?,idle_expires_at=? WHERE id IN (?,?)")) {
+            q.setTimestamp(1,Timestamp.from(time));q.setTimestamp(2,Timestamp.from(time.plusSeconds(28800)));q.setTimestamp(3,Timestamp.from(time));q.setTimestamp(4,Timestamp.from(time.plusSeconds(1800)));q.setObject(5,S);q.setObject(6,AS);assertEquals(2,q.executeUpdate());
+        }
+        var left=administration(S,A,null,time);var right=administration(AS,B,null,time);
         // Retire the third bootstrap fixture through the real authorized lifecycle first.
         left.disableIdentityAccount(adminCommand(adminBootstrapId(),1,id(320),"Synthetic bootstrap administrator handoff"));
         var result=adminRace(()->left.disableIdentityAccount(adminCommand()),()->right.disableIdentityAccount(adminCommand(A,1,KEY,"Synthetic opposite")));assertEquals(1,result.stream().filter(Result.class::isInstance).count());assertEquals(1,result.stream().filter(x->x==SESSION_INVALID).count());assertEquals(1,scalar("SELECT count(*) FROM identity.user_account a WHERE a.status='ACTIVE' AND EXISTS (SELECT 1 FROM identity.account_grant g WHERE g.account_id=a.id AND g.role_code='IDENTITY_MANAGEMENT')"));

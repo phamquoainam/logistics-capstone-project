@@ -93,3 +93,23 @@ workflow execution evidence; Windows outbox raw-byte source check remains9/10
 methods with two historical V3/V4 CRLF subcases. No SQL/pin/security guard changed.
 Source publication/CI and later docs closure/PR integration are separate revisions.
 Recovery and full Production Identity acceptance remain blocked/pending as above.
+
+## First source CI and bounded fixture correction
+
+[Run40071846327](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/40071846327),
+attempt1/workflow_dispatch, sourcecbf9bf10d2a8246d2a15c1d338e8eeab2df4c47a:
+Architecture23 PASS; H2411 PASS/17 expected skips; PostgreSQL636 PASS/1 ERROR/5 skips.
+Exact failing method: IdentityGrantApplicationTests.
+adminOppositeDisableConcurrencyKeepsOneActiveAdministrator. All142 previous PG
+methods and the other33 new PG cases passed. Sanitized reports hide diagnostic
+bodies; no raw SQLState/exception body was obtained or published.
+
+Source attribution: bootstrap fixture uses database CURRENT_TIMESTAMP (run2026-10-24)
+but the new test's Application clock was fixed2026-10-21. Retiring that bootstrap
+account therefore requested disabled_at before created_at, violating the unchanged
+V3 account-clock CHECK. The one authorized correction anchors this test's two
+session fixtures/admission/Application clock to one database timestamp obtained
+AFTER bootstrap. Bootstrap retirement still uses the real authorized lifecycle;
+concurrent opposite-disable and exactly-one-active-admin assertions stay intact.
+No production source, migration, permissions, policy, skip or test identity changed.
+Corrected PostgreSQL runtime remains UNVERIFIED until a fresh exact-SHA CI passes.
