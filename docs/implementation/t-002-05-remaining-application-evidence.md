@@ -1,5 +1,8 @@
 # T-002-05 remaining Application delivery
 
+Current checkpoint: **seven Application operations CI_VERIFIED; T-002-05 PARTIAL**.
+See the verified source CI closure below; preceding pending states are historical.
+
 Owner: OWNER_T_002_05_REMAINING_APPLICATION: CONDITIONAL_GO. Date: 2026-10-24.
 Baseline: 899cf8f211c1a8b52441e01849bcfefbdbee6162 (PR25 merged).
 Status: IMPLEMENTATION_IN_PROGRESS; T-002-05 PARTIAL, Feature002/AC-002-01..05 NOT ACCEPTED.
@@ -113,3 +116,79 @@ AFTER bootstrap. Bootstrap retirement still uses the real authorized lifecycle;
 concurrent opposite-disable and exactly-one-active-admin assertions stay intact.
 No production source, migration, permissions, policy, skip or test identity changed.
 Corrected PostgreSQL runtime remains UNVERIFIED until a fresh exact-SHA CI passes.
+
+## Verified source CI and Application slice closure - 2026-10-24
+
+Current seven-operation slice: CI_VERIFIED / READY_FOR_PR_REVIEW.
+[Backend verification run40072363351](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/40072363351), attempt1/workflow_dispatch,
+actual checkout **0f49ff8d0b5329437cf783b8f632d4a844ece58b** in ALL three jobs. This corrected source checkpoint
+supersedes only the earlier new-source runtime pending/failing state. Initial
+run40071846327 and its bounded fixture correction remain recorded above.
+
+| Job | Job ID | Discovered | PASS | FAIL/ERROR | Expected skips | Policy controls |
+| --- | --- | ---: | ---: | --- | ---: | ---: |
+| Architecture gate | 120808369055 | 23 | 23 | 0/0 | 0 | 122 PASS |
+| Backend default / H2 | 120808368897 | 428 | 411 | 0/0 | 17 | 122 PASS |
+| Backend PostgreSQL 18 | 120808369092 | 642 | 637 | 0/0 | 5 | 122 PASS |
+
+Exact finite class/method/outcome inventory PASS, no unexpected skips. New36 unit
+and34 PostgreSQL cases all PASS. Previous142 PG methods/body identities remain
+intact and all PASS; combined IdentityGrantApplicationTests176/176 PASS. These
+subsets overlap overall637, never add them again. Existing Domain48/Migration25,
+Session24 unit/23 PG, Current Session21 unit/14 PG, Activation, Realm/Grant,
+Provisioning/Outbox and architecture/negative-fixture regressions all PASS.
+The corrected adminOppositeDisableConcurrencyKeepsOneActiveAdministrator PASS.
+H2 skips exactly8 PostgresFoundation+4 PostgresHealthSafety+5 FoundationDependency;
+PG skips only5 Redis/Rabbit FoundationDependency cases, not remote infra PASS.
+
+| Canonical operation | Implemented Application/Persistence evidence |
+| --- | --- |
+| listIdentityAccounts | complete exact-Realm target SQL filter BEFORE cursor/LIMIT; actor/Realm-bound untrusted keyset navigation, no global totals; adminPaginationFiltersUnauthorizedRowsBeforeLimit/adminCursorCannotBeTransferredBetweenActors |
+| getIdentityAccount | accepted Account only after full-target authority/current session/access revalidation; absent/unauthorized share404; no activity/idle writes; adminReadFiltersWholeTargetAndDoesNotWriteActivity |
+| listIdentityRoles/listIdentityScopes | dedicated current management capability in registered ACTIVE SYSTEM Realm only; no external assignability fabricated; adminCatalogsExposeOnlyCurrentRegisteredIdentityPair/adminInactiveRealmAndMixedActorRemainDefaultDeny |
+| disableIdentityAccount/reactivateIdentityAccount | existing Domain self/last-admin/activation/version guards, atomic versions+all-session revocation+proof/outbox invalidation+audit+receipts; disabled-pending cannot reactivate; replay/conflict/operation namespaces, four write-fault rollbacks, ambient rejection and real last-admin concurrency |
+| resendIdentityInvitation | pending/unverified only, missing crypto fails closed,24h single-use protected replacement, invalid old proof/payload, version/authVersion/audit/receipt in same owned transaction; real crypto, exact replay/conflict, four write-fault rollbacks and concurrent same-key dedupe |
+
+Mandatory CurrentSessionAdmission is still an inward trust contract, not a JWT
+implementation. Real transport/signature/issuer/audience/Origin/CSRF/throttling
+and completed-action adapter remain T-002-06. Queries never advance idle; no new
+HTTP/Spring registration, caller principal, activity flag or Demo fallback.
+Existing Session-owned guard is reused unchanged; no shared Grant propagation,
+Login/Refresh/Logout/strict-replay or old Current Session semantics changed.
+
+| Sanitized artifact | ID | GitHub SHA-256 digest (matched ZIP) |
+| --- | --- | --- |
+| backend-architecture-1 | 12551852374 | 73366da0ddc8f465b71c34e8e38e1f9e2ab20be05462f555c4de521b7f8906d3 |
+| backend-h2-1 | 12552081103 | b4ec20053047e8a8bdfdf9ad21098a54af9c129d773a1e951b03810654815274 |
+| backend-postgres-1 | 12551349918 | 87c69353c4644be36934c10393a40e32f1bb71e72264f77ae16da897d1bee70b |
+
+All ZIP CRC and allowlisted summary.json/tests.xml contents PASS. XML contains
+only approved method/status/count projections and fixed redacted skip text.
+Credential/privacy log audit, Testcontainers generated-credential audit, all-owned
+resource cleanup audit and disposable PostgreSQL cleanup PASS. No raw Maven log,
+SQL diagnostics, password/proof material or private artifact is published. Ignored
+sanitized packet is retained under .demo/remaining-application/verified-source-ci/.
+
+Source commits: cbf9bf10d2a8246d2a15c1d338e8eeab2df4c47a (implementation), then
+0f49ff8d0b5329437cf783b8f632d4a844ece58b (one bounded test-fixture correction).
+The subsequent evidence-closure commit modifies SDD only; source CI does NOT test
+that later documentation revision or a future PR integration SHA. PR must obtain
+its own three required integration checks; no automatic merge is authorized.
+
+## Remaining dependencies and task acceptance
+
+The coherent seven-operation Application slice has real PostgreSQL evidence;
+T-002-05 remains PARTIAL because requestIdentityRecovery/confirmIdentityRecovery
+still lack approved purpose-separated15min protected issuance/storage. V5 is
+INVITATION-only/exact24h; a separately reviewed forward migration/protection design
+is needed. No dummy issuer, plaintext intent, legacy proof fallback or unapproved
+crypto generalization was installed. No accepted V1-V5/contract/Domain changes.
+External owner authority remains unavailable/default deny; keep
+GRANT_MUTATION_FUNCTIONALITY_LIMITED. Remaining HTTP/security/UI and provider/
+maintenance integrations retain canonical T-002-06/07/08 ownership; no business-role
+implementation or full end-to-end Production Identity readiness is claimed.
+Feature002/AC-002-01..05 NOT ACCEPTED; Feature001/D1-08/Day1 remain PARTIAL.
+Historical Maven bootstrap attribution and Python/outbox CRLF findings stay OPEN
+as recorded; no new result relabels them PASS. Four protected worktrees and six
+Foundation fingerprints remain unchanged. Business implementation still requires
+BUSINESS_FEATURE_IMPLEMENTATION_REVIEW_REQUIRED and explicit owner approval.

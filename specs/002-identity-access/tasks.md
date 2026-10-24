@@ -499,9 +499,9 @@ Owner: OWNER_T_002_05_REMAINING_APPLICATION: CONDITIONAL_GO.
 [Canonical operation/dependency matrix and evidence](../../docs/implementation/t-002-05-remaining-application-evidence.md).
 
 - [x] Revalidate actual PR25 develop push CI40069216714 on899cf8f211c1a8b52441e01849bcfefbdbee6162, including exact reports/privacy/cleanup.
-- [ ] Verify seven Application operations: list/get account, role/scope catalogs, disable/reactivate, resend invitation.
-- [ ] Verify36 new unit and34 real PostgreSQL cases; all previous142 PG methods stay mandatory, combined176.
-- [ ] Verify unchanged Domain/Migration/Session/Activation/Provisioning/Outbox/Realm/Grant regressions and exact finite report policy.
+- [x] Verify seven Application operations: list/get account, role/scope catalogs, disable/reactivate, resend invitation.
+- [x] Verify36 new unit and34 real PostgreSQL cases; all previous142 PG methods stay mandatory, combined176.
+- [x] Verify unchanged Domain/Migration/Session/Activation/Provisioning/Outbox/Realm/Grant regressions and exact finite report policy.
 - [ ] Publish scoped source, verify real PostgreSQL CI, separately close evidence, then create one PR and verify actual integration checks.
 - [ ] Resolve affected Recovery storage/crypto dependency via reviewed forward migration/owner decision; V1-V5 remain immutable.
 
@@ -509,3 +509,12 @@ Predicted counts411 H2/17 expected skips,637 PG/5 expected skips are NOT actual
 runtime results. Original T-002-05 remains unchecked/PARTIAL. Feature002 and all
 AC-002-01..05 NOT ACCEPTED; GRANT_MUTATION_FUNCTIONALITY_LIMITED retained.
 No automatic PR merge or business-module implementation is authorized.
+
+
+Remaining Application source CI checkpoint: 0f49ff8d0b5329437cf783b8f632d4a844ece58b,
+run40072363351 attempt1 PASS:23 Architecture/411 H2/637 PostgreSQL,0 FAIL/ERROR,
+17/5 exact skips,122 report controls/job, privacy/owned cleanup PASS. Previous
+prediction lines are historical. Seven-operation verification gates above are
+complete; combined publication/PR-integration gate remains pending until the
+actual PR checks pass. Recovery dependency remains open; original T-002-05 stays
+unchecked/PARTIAL and original Feature002/AC acceptance is unchanged.
