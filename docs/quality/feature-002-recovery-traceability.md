@@ -755,3 +755,57 @@ T-002-06 production access/meaningful-action adapter integration remain open;
 recovery/resend/lifecycle/query/authority and T-002-08 delivery/provider work stay
 out of this slice. Foundation/Day1 PARTIAL. Protected main traceability, six original
 Foundation paths, old Session/Activation worktrees and accepted SQL/contracts intact.
+
+
+## Current Session/Activity verified source CI closure - 2026-10-24
+
+Owner: OWNER_CURRENT_SESSION_ACTIVITY_CI_CLOSURE: CONDITIONAL_GO.
+**T_002_05_CURRENT_SESSION_ACTIVITY_CI_VERIFIED**.
+[Exact provenance, methods, artifacts, security evidence and limitations](../implementation/t-002-05-current-session-activity-evidence.md#verified-current-sessionactivity-ci-checkpoint---2026-10-24).
+This supersedes ONLY the preceding implementation checkpoint's PG/CI-pending state;
+its historical local results and findings remain intact.
+
+REQ-002-02/03/05 and AC-002-02/03/04/05 receive bounded Application/Persistence runtime
+verification coverage, not acceptance. [Backend verification run 40062627539](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/40062627539),
+attempt 1, workflow_dispatch, feature/002-identity-current-session-activity, completed
+SUCCESS. All three jobs actually checkout source SHA
+231ce63fa6ca5d12aae57e8ad2069d95ada59da9.
+
+Architecture 23 PASS/0 skip; H2: 375 PASS/17 expected skips; PostgreSQL 18: 567 PASS/5
+expected skips; all 0 FAIL/ERROR. 119 report-policy controls per job PASS. Exact
+class/method/outcome inventory and expected skips PASS; the five Redis/RabbitMQ
+skips do not establish remote infrastructure PASS. Current Session unit 21/21 PASS
+in both full jobs; new PG 14/14, previous PG 128/128 and combined 142/142 PASS.
+These subsets overlap full job totals and must not be double-counted. Prior
+Session 24 unit/23 PG, ownership/replay/concurrency, Activation, Provisioning/Outbox,
+Realm/Grant, Domain and Migration inventories remain present and PASS.
+
+Real PostgreSQL cases verify authoritative owner/account/authVersion/Realm checks,
+read-only /me, allowed activity fields, exact expiry/revocation denial, absolute
+cap, rollback, ambient-transaction rejection and concurrent revocation/Realm/idle
+monotonicity. Unit tests also exercise post-lock access expiry and distinct trusted
+meaningful-action admission; no client identity/activity flag or Demo fallback.
+Access 15m/absolute 8h/idle 30m, durable refresh-replay revocation and owned transaction
+guards are retained; shared Grant propagation is unchanged. Synthetic admission
+fixtures are not production JWT/HTTP/Spring Security verification.
+
+Three sanitized artifacts match authoritative GitHub SHA-256 metadata; CRC and
+summary.json/tests.xml-only contents PASS. Credential/privacy guards, Testcontainers
+owned-resource audit and disposable PostgreSQL cleanup PASS. Raw logs were handled
+in memory; no raw diagnostics/credentials/ZIPs/private evidence are tracked here.
+This later two-document closure SHA is separate from the tested source SHA above;
+the existing CI does not test the docs-only revision. No rerun/dispatch/PR/merge.
+
+Keep historical Maven bootstrap attribution OPEN / NOT REPRODUCED. Python migration/
+outbox source suites remain outside current workflow evidence; Windows outbox 9/10
+methods with two V3/V4 CRLF subcases is unchanged, not relabelled PASS. Accepted
+V1-V5 Git blobs/contracts, original six Foundation fingerprints, protected main
+traceability and previous Activation/Session worktrees are unchanged.
+
+T-002-05 PARTIAL; Feature 002/AC-002-01..05 NOT ACCEPTED;
+GRANT_MUTATION_FUNCTIONALITY_LIMITED retained. T-002-06 trusted admission and
+HTTP/JWT/cookie/CSRF/throttling adapters, Recovery/Resend, remaining lifecycle/query/
+authority and canonical T-002-08 delivery/provider integration remain open. Full
+Production Identity end-to-end readiness is not claimed. Feature 001/D1-08/Day 1
+PARTIAL. Ready only for a bounded PR-readiness review. Business modules require
+BUSINESS_FEATURE_IMPLEMENTATION_REVIEW_REQUIRED and explicit owner approval.
