@@ -68,12 +68,12 @@ class PostgresTestcontainersTests {
             s.execute("SET ROLE "+db.owner());
             try(ResultSet r=s.executeQuery("SELECT current_user")) { assertTrue(r.next());assertEquals(db.owner(),r.getString(1)); }
             try(ResultSet r=s.executeQuery("SELECT count(*) FROM pg_namespace WHERE nspowner=(SELECT oid FROM pg_roles WHERE rolname='"+db.owner()+"') AND nspname IN ('platform','identity','merchant','orders','pricing','warehouse','dispatch','finance','routing','notification')")) { assertTrue(r.next());assertEquals(10,r.getInt(1)); }
-            // Five Demo tables + eight V3 Identity tables + V4 Realm + V5 outbox + Flyway history.
+            // Five Demo tables + eight V3 Identity tables + V4 Realm + V5 outbox + two V6 limiter tables + Flyway history.
             try(ResultSet r=s.executeQuery("SELECT count(*) FROM pg_tables WHERE tableowner='"+db.owner()+"' AND schemaname IN ('platform','identity','merchant','orders')")) { assertTrue(r.next());assertEquals(18,r.getInt(1)); }
             Set<String> expectedTables=Set.of("platform.flyway_schema_history", "identity.demo_account",
                 "merchant.demo_merchant", "orders.demo_shipment", "orders.demo_event", "orders.demo_operation",
                 "identity.user_account", "identity.account_grant", "identity.auth_session", "identity.refresh_token",
-                "identity.action_proof", "identity.csrf_binding", "identity.command_receipt", "identity.audit_entry", "identity.realm", "identity.invitation_outbox");
+                "identity.action_proof", "identity.csrf_binding", "identity.command_receipt", "identity.audit_entry", "identity.realm", "identity.invitation_outbox", "identity.rate_limit_subject", "identity.rate_limit_attempt");
             Map<String,String> actualTables=new TreeMap<>();
             try(ResultSet r=s.executeQuery("SELECT schemaname||'.'||tablename,tableowner FROM pg_tables WHERE schemaname IN ('platform','identity','merchant','orders')")) {
                 while(r.next()) actualTables.put(r.getString(1),r.getString(2));
