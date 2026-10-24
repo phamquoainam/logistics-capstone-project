@@ -491,3 +491,21 @@ Recovery/resend/remaining lifecycle/query/authority and T-002-08 delivery remain
 pending. Canonical T-002-05 stays unchecked/PARTIAL; Feature002/AC-002-01..05 NOT
 ACCEPTED; GRANT_MUTATION_FUNCTIONALITY_LIMITED retained. No source CI, publication,
 next business feature or new endpoint is accepted by local unit evidence.
+
+
+## Remaining Application checkpoint - 2026-10-24
+
+Owner: OWNER_T_002_05_REMAINING_APPLICATION: CONDITIONAL_GO.
+[Canonical operation/dependency matrix and evidence](../../docs/implementation/t-002-05-remaining-application-evidence.md).
+
+- [x] Revalidate actual PR25 develop push CI40069216714 on899cf8f211c1a8b52441e01849bcfefbdbee6162, including exact reports/privacy/cleanup.
+- [ ] Verify seven Application operations: list/get account, role/scope catalogs, disable/reactivate, resend invitation.
+- [ ] Verify36 new unit and34 real PostgreSQL cases; all previous142 PG methods stay mandatory, combined176.
+- [ ] Verify unchanged Domain/Migration/Session/Activation/Provisioning/Outbox/Realm/Grant regressions and exact finite report policy.
+- [ ] Publish scoped source, verify real PostgreSQL CI, separately close evidence, then create one PR and verify actual integration checks.
+- [ ] Resolve affected Recovery storage/crypto dependency via reviewed forward migration/owner decision; V1-V5 remain immutable.
+
+Predicted counts411 H2/17 expected skips,637 PG/5 expected skips are NOT actual
+runtime results. Original T-002-05 remains unchecked/PARTIAL. Feature002 and all
+AC-002-01..05 NOT ACCEPTED; GRANT_MUTATION_FUNCTIONALITY_LIMITED retained.
+No automatic PR merge or business-module implementation is authorized.
