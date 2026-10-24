@@ -106,3 +106,13 @@ No TLS/proxy/browser production rollout or throughput claim is made by mock test
 T-002-05/T-002-06 PARTIAL; Feature002 and AC-002-01..05 NOT ACCEPTED;
 GRANT_MUTATION_FUNCTIONALITY_LIMITED unchanged. Invitation/Recovery/T-002-07/08
 and business features remain excluded. Actual source/CI evidence is recorded separately.
+
+## Implementation verification — 2026-10-24
+
+Sourcef96df93c49f98bd098d02889de8943e6816b3509, [run40110885806](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/40110885806) attempt1:
+23 Architecture/0 skips,483 H2/17,758 PostgreSQL/5;0 failures/errors,128 controls/job.
+Exact29 new unit and31 PostgreSQL cases, combined225 Application methods,530
+contract checks/45 mutations and strict lint PASS. Artifact SHA-256/CRC/privacy/
+owned cleanup PASS. [Evidence and limitations](../../implementation/t-002-06-authentication-http-evidence.md).
+This later documentation revision requires separate PR integration checks. No
+operational rollout, full T-002-06/Feature acceptance or new authority is implied.

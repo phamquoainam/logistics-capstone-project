@@ -84,3 +84,13 @@ Refresh is single-flight; lost rotation response requires reauthentication.
 503 is dependency failure,429 verified quota; neither authorizes permissive retry.
 Logout503 cannot be presented as confirmed server revocation. Direct HTTPS only;
 forwarded headers do not establish TLS/client identity. No deployment is executed.
+
+### Verified revision boundary
+
+The eight-operation-only availability statements above describe the previous
+revision. Four browser operations now have current-source CI evidence at
+f96df93c49f98bd098d02889de8943e6816b3509, [run40110885806](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/40110885806):
+23 Architecture/483 H2/758 PostgreSQL PASS;17/5 expected skips,128 controls/job.
+See [scope and operational limits](../implementation/t-002-06-authentication-http-evidence.md).
+This is no proof of production TLS/browser/key rollout or an executed developer
+bootstrap. All external secret/role/migration prerequisites remain explicit.
