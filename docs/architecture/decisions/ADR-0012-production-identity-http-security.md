@@ -93,3 +93,12 @@ forward decision. No fake endpoint, provider, secret or success response substit
 T-002-06 PARTIAL; full HTTP/task DoD and Feature002/AC-002-01..05 are NOT ACCEPTED. Tests are
 actual servlet/filter-chain fixtures with synthetic TLS metadata and owned PostgreSQL; this is
 not evidence of an operated TLS/reverse-proxy deployment or browser E2E.
+
+## Implementation verification metadata ? 2026-10-24
+
+Eight-operation source1962a839fce6e601d0f541e094a1dc9d2c663c05 is CI_VERIFIED by
+[run40103151184](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/40103151184):
+Architecture23/0 skips, H2454/17, PostgreSQL698/5,125 report controls/job; exact inventories,
+artifact digests, credential/privacy and owned cleanup PASS. This verifies the scoped implementation,
+not an operational key rollout, complete TLS/proxy deployment, shared limiter, legacy invitation
+transition or full T-002-06. Accepted policy and all open prerequisites above are unchanged.

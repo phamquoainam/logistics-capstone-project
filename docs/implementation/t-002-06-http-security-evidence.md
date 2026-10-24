@@ -1,7 +1,7 @@
 # T-002-06 bounded HTTP/security delivery evidence
 
 Owner: OWNER_T_002_06_SECURITY_DESIGN: CONDITIONAL_GO, 2026-10-24.
-State: LOCAL_VERIFIED; PostgreSQL/source CI and PR CI UNVERIFIED.
+State: SOURCE_CI_VERIFIED for the eight-operation boundary; actual PR integration CI remains UNVERIFIED.
 T-002-06 PARTIAL; T-002-05 PARTIAL; Feature002/AC-002-01..05 NOT ACCEPTED;
 GRANT_MUTATION_FUNCTIONALITY_LIMITED unchanged. No original REQ/AC/contract/migration change.
 
@@ -67,3 +67,45 @@ current-source CI before this scoped delivery is accepted. Full task and origina
 Supplemental [traceability](../quality/feature-002-recovery-traceability.md) is used; the main
 Foundation traceability file is protected. Later documentation HEAD must be distinguished from
 any previously tested source SHA. No future PR merge is authorized in this delivery.
+
+## Actual source CI acceptance ? 2026-10-24
+
+Owner authorization remains bounded to independent T-002-06 scope, not full task/Feature acceptance.
+Source and actual checkout SHA: **1962a839fce6e601d0f541e094a1dc9d2c663c05**.
+[Run40103151184](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/40103151184), attempt1, workflow_dispatch,
+branch feature/002-identity-http-security, Backend verification. All three jobs SUCCESS.
+
+| Mode | Discovered | PASS | FAIL / ERROR | Expected skips | Report controls |
+| --- | ---: | ---: | --- | ---: | ---: |
+| Architecture |23|23|0 /0|0|125|
+| H2 |471|454|0 /0|17|125|
+| PostgreSQL18 |703|698|0 /0|5|125|
+
+Exact class/method/outcome inventory PASS, including43/43 new security methods in H2 AND
+PostgreSQL and18/18 new PostgreSQL/Spring Security filter-chain methods. Previous176 PG method
+bodies/identities retained, combined194/194 Grant/Application cases PASS. This proves current
+DB revocation/version/account/Realm/owner/deadline checks, eight HTTP mappings, atomic business
+mutations, concurrent same-key effect, rollback, meaningful activity and no replay/polling extension
+within the synthetic owned fixture. Existing Migration/Domain/Provision/Activation/Session/Outbox
+regressions remain present/passing; no Java/SQL fix or corrective CI run was required.
+
+All three aggregate job logs show this exact source checkout; Java21/Maven Wrapper3.10.0 clean
+bootstrap,125 policy controls/job and temporary credential audit PASS. PostgreSQL generated-secret
+privacy audit, three-suite Testcontainers owned cleanup and disposable CI PG cleanup PASS. No
+local Docker/DB/secret access or developer resource mutation. Raw remote logs processed in memory
+only; retained downloads contain only sanitized summary.json/tests.xml.
+
+| Sanitized artifact | GitHub artifact ID | Verified ZIP SHA-256 |
+| --- | --- | --- |
+|backend-architecture-1|12563826233|b8fde3b7f3ca0e8482c4ba1456c86d6c4f956f68ca713a70471a5c89d5fd2442|
+|backend-h2-1|12564015598|0b90c88e2a9591db11c051fc36f882d02dfd03b8b2895792001849582f4d2587|
+|backend-postgres-1|12564150488|9dfe0faaef20d8d640683915f75d51b80debe8f28af2340532336709ac5adf22|
+
+ZIP metadata digest, CRC and exact entry allowlist PASS. Private local evidence lives only under
+ignored .demo/identity-http/. No private key, bearer, cookie or raw diagnostic is a public artifact.
+
+This documentation closure is LATER than the tested source commit. Its future HEAD must not be
+attributed to the source run above; actual PR integration checks remain mandatory. Eight-operation
+source is CI_VERIFIED; T-002-06 stays PARTIAL/unchecked for the explicitly excluded browser auth,
+CSRF/cookie, shared limiter, protected issuance/compatibility and Recovery gates. No original AC
+accepted; T-002-05/Feature002 and GRANT_MUTATION_FUNCTIONALITY_LIMITED remain unchanged.
