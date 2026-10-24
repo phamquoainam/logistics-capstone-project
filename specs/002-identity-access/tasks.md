@@ -471,3 +471,23 @@ No automatic publication, dispatch, new business feature or production deploymen
 Session local full default/H2 clean verify:350 PASS/0 FAIL/0 ERROR/17 expected
 skips; actual strict report guard exit0. This does not prove PostgreSQL or new
 GitHub CI. Current-source Session PostgreSQL18 cases remain UNVERIFIED.
+
+
+## Current-session/activity Application checkpoint - 2026-10-24
+
+Owner: OWNER_IDENTITY_CURRENT_SESSION_ACTIVITY: CONDITIONAL_GO.
+[Exact scope/test inventory/evidence](../../docs/implementation/t-002-05-current-session-activity-evidence.md).
+T_002_05_CURRENT_SESSION_ACTIVITY_IMPLEMENTED_VERIFICATION_PENDING.
+
+- [x] Implement approved Account current-session lookup and Domain meaningful idle accounting behind required trusted admission; no HTTP/JWT/default principal.
+- [x] Preserve owned-transaction guard, account/authVersion/Realm/deadline checks, strict replay and all existing128 PG methods.
+- [x] Run21 new unit cases; full local Java/H2375 PASS/17 expected skips; Architecture23 and119 report-policy controls PASS.
+- [x] Author/compile14 new PostgreSQL cases with independent-state, rollback and controlled concurrency assertions; extend exact finite inventory.
+- [ ] Execute current-source PG cases and142 combined methods with strict reports/privacy/owned cleanup on an authorized runtime/CI.
+- [ ] Supply real T-002-06 production access and meaningful-action admission, HTTP/JWT/cookie/CSRF/throttling adapters.
+
+Activity feed/audit-query pagination is not a contract operation in this slice.
+Recovery/resend/remaining lifecycle/query/authority and T-002-08 delivery remain
+pending. Canonical T-002-05 stays unchecked/PARTIAL; Feature002/AC-002-01..05 NOT
+ACCEPTED; GRANT_MUTATION_FUNCTIONALITY_LIMITED retained. No source CI, publication,
+next business feature or new endpoint is accepted by local unit evidence.

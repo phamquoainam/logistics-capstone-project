@@ -59,6 +59,10 @@ public final class JdbcIdentitySessionStore implements IdentitySessionStore {
                 int tokens=jdbc.update("UPDATE identity.refresh_token SET revoked_at=? WHERE session_id=? AND revoked_at IS NULL",stamp(now),id);
                 return session>0 || tokens>0;
             }
+            public void recordActivity(IdentitySession before,IdentitySession after) {
+                one(jdbc.update("UPDATE identity.auth_session SET last_activity_at=?,idle_expires_at=? WHERE id=? AND account_id=? AND auth_version=? AND revoked_at IS NULL AND last_activity_at=? AND idle_expires_at=? AND absolute_expires_at=?",
+                    stamp(after.lastActivityAt()),stamp(after.idleExpiresAt()),before.id(),before.accountId(),before.authVersion(),stamp(before.lastActivityAt()),stamp(before.idleExpiresAt()),stamp(before.absoluteExpiresAt())));
+            }
             public void audit(UUID account,UUID request,String event,Instant now) {
                 if(!Set.of("IDENTITY_LOGIN","IDENTITY_REFRESH","IDENTITY_REFRESH_REPLAY","IDENTITY_LOGOUT").contains(event))throw new IllegalArgumentException("SESSION_EVENT_INVALID");
                 one(jdbc.update("INSERT INTO identity.audit_entry(id,actor_id,target_id,event_type,source,reason,request_id,occurred_at) VALUES (?,?,?,?,'IDENTITY_APPLICATION','Identity session transition',?,?)",UUID.randomUUID(),account,account,event,request.toString(),stamp(now)));

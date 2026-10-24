@@ -21,6 +21,8 @@ public interface IdentitySessionStore {
         void insertRefresh(UUID id, UUID predecessor, IdentitySession session, byte[] digest, Instant now);
         void consumeRefresh(UUID id, Instant now);
         boolean revokeFamily(UUID sessionId, Instant now);
+        /** Only Domain-approved idle/last-activity fields; caller uses the owned transaction. */
+        void recordActivity(IdentitySession before, IdentitySession after);
         void audit(UUID account, UUID request, String event, Instant now);
     }
 }

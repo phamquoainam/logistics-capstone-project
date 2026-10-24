@@ -1189,4 +1189,118 @@ class IdentityGrantApplicationTests {
             assertEquals(1,scalar("SELECT count(*) FROM identity.audit_entry WHERE event_type='IDENTITY_LOGOUT' AND target_id='"+A+"'"));
         }
     }
+
+    // Current-session/activity Application only; synthetic trusted admission, never a JWT/HTTP adapter.
+    private com.elogistic.backend.identity.api.IdentityCurrentSessionCommands currentApp(UUID sid,UUID subject,long version,Instant time) {
+        return ProductionIdentityCurrentSessionComposition.create(outboxDataSource(),(op,req)->
+            new com.elogistic.backend.identity.internal.application.port.CurrentSessionAdmission.Context(sid,subject,version,time,time.plusSeconds(900)),Clock.fixed(time,ZoneOffset.UTC));
+    }
+    private void currentDeniedBoth(UUID sid,UUID subject,long version,Instant time) throws Exception {
+        var app=currentApp(sid,subject,version,time);sessionDenied(SESSION_INVALID,()->app.getIdentityMe(REQUEST));sessionDenied(SESSION_INVALID,()->app.recordMeaningfulActivity(REQUEST));
+    }
+    private void currentActivityTimes(UUID sid,Instant last,Instant idle,Instant absolute) throws Exception {
+        try(Connection c=db.runtimeConnection();PreparedStatement q=c.prepareStatement("SELECT last_activity_at,idle_expires_at,absolute_expires_at,auth_version,revoked_at FROM identity.auth_session WHERE id=?")) {
+            q.setObject(1,sid);try(ResultSet row=q.executeQuery()) {assertTrue(row.next());assertEquals(last,row.getTimestamp(1).toInstant());assertEquals(idle,row.getTimestamp(2).toInstant());assertEquals(absolute,row.getTimestamp(3).toInstant());assertEquals(1,row.getLong(4));assertNull(row.getTimestamp(5));}
+        }
+    }
+    @Test void currentSessionMeReturnsApprovedAccountWithoutExtendingIdle() throws Exception {
+        sessionFixture();try(var first=sessionLogin()) {
+            var before=secureSnapshot();var result=currentApp(first.access().sessionId(),A,1,NOW.plusSeconds(60)).getIdentityMe(REQUEST);
+            assertEquals(A,result.id());assertEquals(List.of(ADMIN),result.grants());assertEquals(1,result.version());assertTrue(result.emailVerified());assertEquals("IdentityAccountResult[redacted]",result.toString());assertEquals(before,secureSnapshot());
+        }
+    }
+    @Test void currentSessionActivityUpdatesOnlyOwnedIdleFields() throws Exception {
+        sessionFixture();try(var first=sessionLogin()) {
+            var before=secureSnapshot();var app=currentApp(first.access().sessionId(),A,1,NOW.plusSeconds(60));app.recordMeaningfulActivity(REQUEST);
+            currentActivityTimes(first.access().sessionId(),NOW.plusSeconds(60),NOW.plusSeconds(1860),first.absoluteExpiresAt());
+            var after=secureSnapshot();before.remove("auth_session");after.remove("auth_session");assertEquals(before,after);
+            var once=secureSnapshot();app.recordMeaningfulActivity(REQUEST);assertEquals(once,secureSnapshot());
+        }
+    }
+    @Test void currentSessionAccountAndRealmSubstitutionFailClosed() throws Exception {
+        sessionFixture();try(var first=sessionLogin()) {
+            currentDeniedBoth(first.access().sessionId(),B,1,NOW);currentDeniedBoth(AS,A,1,NOW);
+            // A valid session for B returns only B, never caller-selected A or A's contacts.
+            var own=currentApp(AS,B,1,NOW).getIdentityMe(REQUEST);assertEquals(B,own.id());assertNotEquals(A,own.id());
+        }
+    }
+    @Test void currentSessionExpiredAccessCannotReadOrRecordActivity() throws Exception {
+        sessionFixture();try(var first=sessionLogin()) {
+            var app=ProductionIdentityCurrentSessionComposition.create(outboxDataSource(),(op,req)->new com.elogistic.backend.identity.internal.application.port.CurrentSessionAdmission.Context(first.access().sessionId(),A,1,NOW.minusSeconds(900),NOW),Clock.fixed(NOW,ZoneOffset.UTC));
+            sessionDenied(SESSION_INVALID,()->app.getIdentityMe(REQUEST));sessionDenied(SESSION_INVALID,()->app.recordMeaningfulActivity(REQUEST));
+        }
+    }
+    @Test void currentSessionStaleVersionAndDisabledAccountDenyWithoutMutation() throws Exception {
+        sessionFixture();try(var first=sessionLogin()) {
+            currentDeniedBoth(first.access().sessionId(),A,2,NOW);
+            execute("UPDATE identity.user_account SET version=2,auth_version=2 WHERE id='"+A+"'");currentDeniedBoth(first.access().sessionId(),A,1,NOW);
+            execute("UPDATE identity.user_account SET auth_version=1,status='DISABLED',disabled_at=updated_at WHERE id='"+A+"'");currentDeniedBoth(first.access().sessionId(),A,1,NOW);
+        }
+    }
+    @Test void currentSessionPendingAccountCannotUseOldSession() throws Exception {
+        sessionFixture();try(var first=sessionLogin()) {
+            execute("UPDATE identity.user_account SET status='PENDING_ACTIVATION',password_hash=NULL,email_verified=FALSE,activated_at=NULL WHERE id='"+A+"'");currentDeniedBoth(first.access().sessionId(),A,1,NOW);
+        }
+    }
+    @Test void currentSessionExactIdleAbsoluteAndRevocationDenyWithoutMutation() throws Exception {
+        sessionFixture();try(var first=sessionLogin()) {
+            currentDeniedBoth(first.access().sessionId(),A,1,NOW.plusSeconds(1800));currentDeniedBoth(first.access().sessionId(),A,1,NOW.plusSeconds(28800));
+            execute("UPDATE identity.auth_session SET revoked_at=created_at WHERE id='"+first.access().sessionId()+"'");currentDeniedBoth(first.access().sessionId(),A,1,NOW);
+        }
+    }
+    @Test void currentSessionInactiveRealmAndExternalGrantsFailClosed() throws Exception {
+        sessionFixture();try(var first=sessionLogin()) {
+            db.ownerExecute("UPDATE identity.realm SET status='INACTIVE',updated_at=CURRENT_TIMESTAMP");currentDeniedBoth(first.access().sessionId(),A,1,NOW);
+            db.ownerExecute("UPDATE identity.realm SET status='ACTIVE',updated_at=CURRENT_TIMESTAMP");execute("DELETE FROM identity.account_grant WHERE account_id='"+A+"'");
+            execute("INSERT INTO identity.account_grant(account_id,role_code,scope_type,scope_id,granted_at) VALUES ('"+A+"','OPERATOR','WAREHOUSE','"+X+"',CURRENT_TIMESTAMP)");currentDeniedBoth(first.access().sessionId(),A,1,NOW);
+        }
+    }
+    @Test void currentSessionActivityNeverExtendsAbsoluteDeadline() throws Exception {
+        sessionFixture();try(var first=sessionLogin()) {
+            execute("UPDATE identity.auth_session SET last_activity_at=created_at+INTERVAL '7 hours 50 minutes',idle_expires_at=absolute_expires_at WHERE id='"+first.access().sessionId()+"'");
+            Instant time=NOW.plusSeconds(28740);var app=ProductionIdentityCurrentSessionComposition.create(outboxDataSource(),(op,req)->new com.elogistic.backend.identity.internal.application.port.CurrentSessionAdmission.Context(first.access().sessionId(),A,1,time,first.absoluteExpiresAt()),Clock.fixed(time,ZoneOffset.UTC));
+            var before=secureSnapshot();app.recordMeaningfulActivity(REQUEST);currentActivityTimes(first.access().sessionId(),time,first.absoluteExpiresAt(),first.absoluteExpiresAt());
+            var after=secureSnapshot();before.remove("auth_session");after.remove("auth_session");assertEquals(before,after);
+        }
+    }
+    @Test void currentSessionActivityWriteFailureRollsBackAllState() throws Exception {
+        sessionFixture();try(var first=sessionLogin()) {
+            failWrite("auth_session","UPDATE");var before=secureSnapshot();assertThrows(org.springframework.dao.DataAccessException.class,()->currentApp(first.access().sessionId(),A,1,NOW.plusSeconds(60)).recordMeaningfulActivity(REQUEST));assertEquals(before,secureSnapshot());
+        }
+    }
+    @Test void currentSessionOwnedBoundaryRejectsAmbientReadAndActivity() throws Exception {
+        sessionFixture();try(var first=sessionLogin()) {
+            var source=outboxDataSource();var app=ProductionIdentityCurrentSessionComposition.create(source,(op,req)->new com.elogistic.backend.identity.internal.application.port.CurrentSessionAdmission.Context(first.access().sessionId(),A,1,NOW,NOW.plusSeconds(900)),Clock.fixed(NOW.plusSeconds(60),ZoneOffset.UTC));
+            var before=secureSnapshot();sessionCallerTransaction(source).executeWithoutResult(status->{sessionOwnershipRejected(()->app.getIdentityMe(REQUEST));sessionOwnershipRejected(()->app.recordMeaningfulActivity(REQUEST));assertFalse(status.isRollbackOnly());status.setRollbackOnly();});assertEquals(before,secureSnapshot());
+        }
+    }
+    @Test void currentSessionWaitingActivityObservesConcurrentRevocation() throws Exception {
+        sessionFixture();try(var first=sessionLogin()) {
+            var pool=Executors.newSingleThreadExecutor();try(Connection c=db.runtimeConnection();Statement q=c.createStatement()) {
+                c.setAutoCommit(false);q.execute("SELECT pg_advisory_xact_lock("+0x4944454e54495459L+")");q.execute("UPDATE identity.auth_session SET revoked_at=created_at WHERE id='"+first.access().sessionId()+"'");
+                var started=new CountDownLatch(1);var waiting=pool.submit(()->{started.countDown();try{currentApp(first.access().sessionId(),A,1,NOW.plusSeconds(60)).recordMeaningfulActivity(REQUEST);return "ADMITTED";}catch(IdentityCommandFailure e){return e.code();}});
+                assertTrue(started.await(5,TimeUnit.SECONDS));assertThrows(TimeoutException.class,()->waiting.get(150,TimeUnit.MILLISECONDS));c.commit();assertEquals(SESSION_INVALID,waiting.get(15,TimeUnit.SECONDS));
+                assertEquals(1,scalar("SELECT count(*) FROM identity.auth_session WHERE id='"+first.access().sessionId()+"' AND last_activity_at=created_at AND revoked_at IS NOT NULL"));
+            } finally {pool.shutdownNow();assertTrue(pool.awaitTermination(5,TimeUnit.SECONDS));}
+        }
+    }
+    @Test void currentSessionWaitingMeObservesConcurrentRealmDeactivation() throws Exception {
+        sessionFixture();try(var first=sessionLogin()) {
+            var pool=Executors.newSingleThreadExecutor();try(Connection c=db.migrationConnection();Statement q=c.createStatement()) {
+                c.setAutoCommit(false);q.execute("SET ROLE "+db.owner());q.execute("SELECT pg_advisory_xact_lock("+0x4944454e54495459L+")");q.execute("UPDATE identity.realm SET status='INACTIVE',updated_at=CURRENT_TIMESTAMP");
+                var started=new CountDownLatch(1);var waiting=pool.submit(()->{started.countDown();try{currentApp(first.access().sessionId(),A,1,NOW).getIdentityMe(REQUEST);return "ADMITTED";}catch(IdentityCommandFailure e){return e.code();}});
+                assertTrue(started.await(5,TimeUnit.SECONDS));assertThrows(TimeoutException.class,()->waiting.get(150,TimeUnit.MILLISECONDS));c.commit();assertEquals(SESSION_INVALID,waiting.get(15,TimeUnit.SECONDS));
+            } finally {pool.shutdownNow();assertTrue(pool.awaitTermination(5,TimeUnit.SECONDS));}
+        }
+    }
+    @Test void currentSessionConcurrentActivityCannotRewindIdle() throws Exception {
+        sessionFixture();try(var first=sessionLogin()) {
+            var pool=Executors.newFixedThreadPool(2);var ready=new CountDownLatch(2);var start=new CountDownLatch(1);
+            try {
+                List<Future<Object>> results=new ArrayList<>();for(int elapsed:List.of(60,120))results.add(pool.submit(()->{ready.countDown();assertTrue(start.await(5,TimeUnit.SECONDS));try{currentApp(first.access().sessionId(),A,1,NOW.plusSeconds(elapsed)).recordMeaningfulActivity(REQUEST);return "UPDATED";}catch(IdentityCommandFailure e){return e.code();}}));
+                assertTrue(ready.await(5,TimeUnit.SECONDS));start.countDown();Object older=results.get(0).get(20,TimeUnit.SECONDS),newer=results.get(1).get(20,TimeUnit.SECONDS);assertEquals("UPDATED",newer);assertTrue(older.equals("UPDATED") || older==SESSION_INVALID);
+                currentActivityTimes(first.access().sessionId(),NOW.plusSeconds(120),NOW.plusSeconds(1920),first.absoluteExpiresAt());
+            } finally {start.countDown();pool.shutdownNow();assertTrue(pool.awaitTermination(5,TimeUnit.SECONDS));}
+        }
+    }
 }

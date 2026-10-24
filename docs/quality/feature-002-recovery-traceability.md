@@ -723,3 +723,35 @@ GRANT_MUTATION_FUNCTIONALITY_LIMITED retained. Current-session/activity, recover
 resend, lifecycle/query, remaining authority/security, HTTP/JWT/cookie/CSRF/throttling
 and T-002-08 delivery/provider integration remain pending. Feature001/D1-08/Day1
 PARTIAL. No full Production Identity or business-feature readiness claim.
+
+
+## Current-session and meaningful activity Application - 2026-10-24
+
+[Ownership, inward admission contract, exact methods and local results](../implementation/t-002-05-current-session-activity-evidence.md).
+Baseline PR24 merge f935c8e9fdfac5dd0fd97e1a5d2a07fa2e238ede; isolated
+feature/002-identity-current-session-activity. REQ-002-02/03/05 and AC-002-02/03/04/05
+receive supporting implementation/test coverage, not acceptance.
+getIdentityMe returns approved Account without idle writes. recordMeaningfulActivity
+requires distinct trusted server admission and updates only Domain-approved session
+idle/last-activity fields. No client identity/activity flags, JWT/HTTP adapter, raw
+audit feed, pagination endpoint, secrets, migration or business-role scope added.
+Existing guarded owned transaction, authoritative account/authVersion/Realm and
+session deadlines/strict replay remain; no shared Grant propagation change.
+
+Actual local Java21/Maven3.10.0 offline verify PASS:375 PASS/17 expected skips;
+Current Session unit21, prior Session unit24, Architecture23, Domain48 PASS;
+strict H2 report guard PASS. Python report-policy119/119; migration source15/15.
+Outbox source9/10 methods PASS with2 unchanged historical V3/V4 CRLF subcase
+failures. New14 PG cases compile, runtime UNVERIFIED: Docker CLI exists but
+desktop-linux Engine endpoint unavailable. No Docker/service mutation or CI run.
+142 combined PG methods are mandatory inventory, not execution evidence.
+Original128 PG methods, five ownership regressions and replay/concurrency cases
+are preserved. Existing CI runs do not verify this uncommitted current revision.
+
+T_002_05_CURRENT_SESSION_ACTIVITY_IMPLEMENTED_VERIFICATION_PENDING.
+T-002-05 PARTIAL; Feature002/AC-002-01..05 NOT ACCEPTED;
+GRANT_MUTATION_FUNCTIONALITY_LIMITED retained. Current-source PG/CI plus actual
+T-002-06 production access/meaningful-action adapter integration remain open;
+recovery/resend/lifecycle/query/authority and T-002-08 delivery/provider work stay
+out of this slice. Foundation/Day1 PARTIAL. Protected main traceability, six original
+Foundation paths, old Session/Activation worktrees and accepted SQL/contracts intact.
