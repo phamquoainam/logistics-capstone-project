@@ -129,3 +129,20 @@ port with no permissive default, not a request-ID-based authorization shortcut.
 Production composition remains unregistered. AccessGrant is unsigned signing facts,
 not a principal/JWT/HTTP result; T-002-06 retains secure transport/signing/admission.
 Application source does not claim completed current-session/HTTP or full ACs.
+
+
+## Current-session and meaningful activity Application - 2026-10-24
+
+[Scoped implementation and dependency mapping](../../docs/implementation/t-002-05-current-session-activity-evidence.md).
+T-002-05 owns getIdentityMe and server-classified meaningful idle accounting through
+IdentityCurrentSessionCommands/CurrentSessionAdmission. Trusted production context
+binds subject/session/authVersion/access issue-expiry facts; actual signature,
+issuer/audience/JWT/HTTP/cookie/CSRF/throttling and successful-action classification
+adapter remain T-002-06, with no permissive/default implementation. /me polling is
+read-only and returns existing Account only; no session/token/digest DTO extension.
+Activity requires explicit trusted admission, uses Domain USER_ACTION, and updates
+only last_activity_at/idle_expires_at inside the existing guarded Session-owned
+transaction and administration/row-lock protocol. No new endpoint, audit feed,
+pagination contract, SQL migration, retention change or shared Grant propagation.
+Local unit/H2 checks PASS;14 new PG cases compile but runtime/CI UNVERIFIED.
+T-002-05 PARTIAL; Feature002 and original AC NOT ACCEPTED.
