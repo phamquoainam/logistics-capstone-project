@@ -31,6 +31,9 @@ const EXPECTED = [
       ],
       "429": [
         "RATE_LIMITED"
+      ],
+      "503": [
+        "SERVICE_UNAVAILABLE"
       ]
     }
   ],
@@ -57,6 +60,9 @@ const EXPECTED = [
       ],
       "429": [
         "RATE_LIMITED"
+      ],
+      "503": [
+        "SERVICE_UNAVAILABLE"
       ]
     }
   ],
@@ -81,6 +87,9 @@ const EXPECTED = [
       ],
       "429": [
         "RATE_LIMITED"
+      ],
+      "503": [
+        "SERVICE_UNAVAILABLE"
       ]
     }
   ],
@@ -98,6 +107,9 @@ const EXPECTED = [
       "403": [
         "CSRF_REJECTED",
         "ORIGIN_REJECTED"
+      ],
+      "503": [
+        "SERVICE_UNAVAILABLE"
       ]
     }
   ],
@@ -1124,6 +1136,9 @@ mutation('recovery-receipt-only-existing','POLICY_RECOVERY',d=>d['x-identity-pol
 mutation('recovery-plaintext-receipt','POLICY_RECOVERY',d=>d['x-identity-policy'].recovery.receiptStoresPlaintextSecrets=true);
 test('logout.case-declarations-covered',()=>assert.deepEqual(fixtures.logoutCases.map(x=>x.id).sort(),['initial-family','missing-csrf','repeat-after-clear','untrusted-origin'].sort()));
 for(const f of fixtures.logoutCases)test('logout.declaration-only.'+f.id,()=>{assert.equal(f.classification,'DECLARATIVE_NOT_RUNTIME_EXECUTED');assert.equal(f.expectedStatus,f.originValid&&f.csrfValid?204:403);});
+mutation('missing-auth-503','STATUSES',d=>delete d.paths['/auth/login'].post.responses['503']);
+mutation('mislabel-storage-outage','ERROR_BINDING',d=>d.components.schemas.loginIdentityError503.allOf[1].properties.code.enum=['RATE_LIMITED']);
+for(const f of fixtures.serviceUnavailableCases)test('unavailable.declaration.'+f.operationId,()=>{assert.equal(f.status,503);assert.equal(f.code,'SERVICE_UNAVAILABLE');assert(EXPECTED.slice(0,4).some(x=>x[0]===f.operationId));});
 test('document-positive.nonpolicy-description',()=>{const d=structuredClone(doc);d.info.description+=' Documentation clarification.';assert.equal(inspect(d),true);});
 console.log(JSON.stringify({classification:'CONTRACT_ONLY_NOT_RUNTIME',passed,failed,skipped:0,documentMutationControls:mutations,operations:EXPECTED.length,schemas:Object.keys(validators).length,behavioralDeclarations:fixtures.expectations.length}));
 process.exitCode=failed?1:0;

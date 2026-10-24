@@ -14,7 +14,7 @@ MIGRATIONS = ROOT / 'app/backend/src/main/resources/db/migration'
 SQL_PATH = MIGRATIONS / 'V3__production_identity.sql'
 TABLES = {'user_account', 'account_grant', 'auth_session', 'refresh_token',
           'action_proof', 'csrf_binding', 'command_receipt', 'audit_entry'}
-CONTRACT_SHA = 'acf92380c325698a1370a2ade6accff82bb338c4524f6328a9613d3e4b7b6128'
+CONTRACT_SHA = '128ae6e39e6f5f22e10940aa2a4aaceb4bedd8c3fa1e4594b627e7b12094e3c8'
 IMMUTABLE = {
     'app/backend/src/main/resources/db/migration/V1__ownership_schemas.sql':
         'fc634d0cc30aeda75f894dd78aa4e987ba5feacccf4f30ce86a72e539abe9cca',
@@ -88,7 +88,7 @@ class IdentityMigrationSourceTests(unittest.TestCase):
     def test_global_version_inventory_is_exact(self):
         self.assertEqual(['V1__ownership_schemas.sql', 'V2__demo_identity_merchant_drafts.sql',
                           'V3__production_identity.sql', 'V4__identity_system_realm.sql',
-                          'V5__identity_invitation_outbox.sql'], sorted(p.name for p in MIGRATIONS.glob('V*.sql')))
+                          'V5__identity_invitation_outbox.sql', 'V6__identity_shared_rate_limiter.sql'], sorted(p.name for p in MIGRATIONS.glob('V*.sql')))
 
     def test_prior_postgres_and_h2_migrations_are_immutable(self):
         for path, expected in IMMUTABLE.items():

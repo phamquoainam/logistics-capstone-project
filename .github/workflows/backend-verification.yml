@@ -34,6 +34,19 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - name: Setup pinned contract Node
+        if: matrix.mode == 'architecture'
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # official v6 commit
+        with:
+          node-version: '24.13.0'
+          check-latest: false
+          package-manager-cache: false
+      - name: Verify accepted Identity contract
+        if: matrix.mode == 'architecture'
+        run: |
+          npm --prefix packages/api-client ci --ignore-scripts --no-audit --no-fund
+          node contracts/identity-access/validate.mjs
+          node packages/api-client/node_modules/@redocly/cli/bin/cli.js lint contracts/openapi/identity-access.yaml --config contracts/identity-access/redocly.yaml
       - name: Setup Java 21
         uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
         with:
