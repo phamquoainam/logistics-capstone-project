@@ -1,5 +1,18 @@
 # Traceability Matrix (living document)
 
+## Foundation pending changes — reconciliation 2026-10-27
+
+| Trace / gate | Evidence | Disposition |
+|---|---|---|
+| T-001-10; REQ-001-05 / AC-001-04 subset; TEST-001-S3A-SEED-01 | Production preflight +74 tests already integrated by c59a3f0/PR20; actual develop84e72ac CI: Arch23, H2 483 PASS/17 skip, PG18 758 PASS/5 skip;74 preflight PASS in both DB jobs | Do not duplicate Java/Identity changes; scoped test evidence, not full AC acceptance |
+| Historical six-file debt / preservation | Root has1 modified +8 untracked paths (six Foundation +three V3 sources); all9 bytes/hash preserved; two docs ADAPT, four checkpoint tools OBSOLETE for this integration, three sources ALREADY_INTEGRATED | Docs-only reconciliation proposed; no deletion/restore/cleanup authorization implied |
+| Current policy / historical harness compatibility | Current report-policy128, isolation43, historical runner24 and observer310 controls PASS; current500-identity H2 artifact rejected by old248 contract; legacy H2 launch remains blocked | No weakened guard, unreviewed harness integration or runtime acceptance claim |
+| AC-001-04/05 / security boundaries | Historical35 telemetry violations, raw-cache/legacy-store findings, S3AR1-07 LOW/open, Wrapper/observer and S3-B/S4 remain outstanding | NOT ACCEPTED; Feature001/D1-08/Day1 remain PARTIAL |
+
+[Inventory, per-file decisions, exact tests/CI and safe consolidation proposal](../implementation/foundation-pending-changes-resolution.md).
+Existing Identity/V3/earlier evidence below is retained. A scoped business task
+uses its actual dependencies; historical file debt alone adds no new feature gate.
+
 ## S2-R1 nonblank configuration and CI inventory checkpoint — 2026-10-19
 
 | Trace/gate | Evidence | Disposition |
