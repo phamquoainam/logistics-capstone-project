@@ -83,3 +83,11 @@ Admin tạo tariff DRAFT → validate → publish version không sửa → merch
 [BLOCKING] Đơn vị kg/g/cm, divisor cân nặng quy đổi, vùng giá, thứ tự phụ phí/chiết khấu, rounding, thời hạn quote, tariff sample.
 
 **Giả định:** bảng master/demo seeded, người dùng và phạm vi quyền hợp lệ, các phụ thuộc ngoài dùng Sandbox/mô phỏng, các ngưỡng được đặt tại cấu hình sau khi chốt. Mọi assumption phải được đánh dấu `PROPOSED` hoặc `BLOCKING` trong quyết định chung.
+
+## V3 reconciliation overlay — PROPOSED, 2026-10-26
+
+ID/nội dung/checkbox cũ giữ nguyên lịch sử; candidate không DONE/REPORT/accepted decision. Target: [L005 pricing-contracts-quotation](../../specs/planning/v3/L005-pricing-contracts-quotation/spec.md); [L018 billing-ledger-fees-invoices](../../specs/planning/v3/L018-billing-ledger-fees-invoices/spec.md). [Crosswalk](../../docs/reconciliation/v3/legacy-crosswalk.csv) SPLIT/EXTEND/PRESERVE là scope relation, không automatic equivalence.
+
+Actors/flow/guard bổ sung theo REQ-V3-BC tại linked specs; P1/exclusions cũ không loại CORE FULL.5 DEFER và CORE negative cần direct API denial, không xóa AC cũ. Outcomes: Báo giá theo khách gửi/hợp đồng/thời điểm — Draft→duyệt/publish→quote→expiry/requote; không lộ giá tenant khác; Ledger, billing, phí và chứng từ — Verified charge→balanced posting; duplicate callback/refund không thêm tiền; correction bằng entry mới.
+
+[Delivery/DoR/DoD](../../docs/reconciliation/v3/delivery-plan.md). Research016 chỉ RQ/L030, không Returns. T-003-01 còn mở cho authority/address/enrollment; [first packet](../planning/v3/first-business-slice/spec.md).

@@ -63,3 +63,11 @@
 
 ## Prompt cho Codex sau khi duyệt thiết kế
 Đọc `AGENTS.md`, `docs/principles.md`, `docs/architecture/*`, các quyết định ACCEPTED và ba file feature này. Chỉ làm task đầu tiên chưa tick; không đổi tài liệu ngoài phạm vi nếu không có lý do và diff; chạy test, trình bày file đã chỉnh, kết quả, giả định và blocker. Không tự đánh dấu đã test khi chưa chạy.
+
+## V3 reconciliation overlay — PROPOSED, 2026-10-26
+
+ID/nội dung/checkbox cũ giữ nguyên lịch sử; candidate không DONE/REPORT/accepted decision. Target: [L005 pricing-contracts-quotation](../../specs/planning/v3/L005-pricing-contracts-quotation/spec.md); [L018 billing-ledger-fees-invoices](../../specs/planning/v3/L018-billing-ledger-fees-invoices/spec.md). [Crosswalk](../../docs/reconciliation/v3/legacy-crosswalk.csv) SPLIT/EXTEND/PRESERVE là scope relation, không automatic equivalence.
+
+Review task đầu tiên chưa tick giữ mở, chốt DEC-07; DEC-08; D-V3-04; DEC-11; DEC-12; D-V3-04. Một authorization capability gồm contract+migration+BE/HTTP+FE+tests/CI/evidence, không checkpoints routine theo tầng; dependencies đối chiếu DAG trước code.
+
+[Delivery/DoR/DoD](../../docs/reconciliation/v3/delivery-plan.md). Research016 chỉ RQ/L030, không Returns. T-003-01 còn mở cho authority/address/enrollment; [first packet](../planning/v3/first-business-slice/spec.md).

@@ -82,3 +82,11 @@ Admin quản lý tài khoản/role → cập nhật ngưỡng cấu hình có re
 [BLOCKING] Quyền quản trị cụ thể; cho phép hot-reload config nào; retention logs và quy trình duyệt thủ công.
 
 **Giả định:** bảng master/demo seeded, người dùng và phạm vi quyền hợp lệ, các phụ thuộc ngoài dùng Sandbox/mô phỏng, các ngưỡng được đặt tại cấu hình sau khi chốt. Mọi assumption phải được đánh dấu `PROPOSED` hoặc `BLOCKING` trong quyết định chung.
+
+## V3 reconciliation overlay — PROPOSED, 2026-10-26
+
+ID/nội dung/checkbox cũ giữ nguyên lịch sử; candidate không DONE/REPORT/accepted decision. Target: [L026 risk-fraud-compliance](../../specs/planning/v3/L026-risk-fraud-compliance/spec.md); [L027 platform-admin-audit-governance](../../specs/planning/v3/L027-platform-admin-audit-governance/spec.md). [Crosswalk](../../docs/reconciliation/v3/legacy-crosswalk.csv) SPLIT/EXTEND/PRESERVE là scope relation, không automatic equivalence.
+
+Actors/flow/guard bổ sung theo REQ-V3-BC tại linked specs; P1/exclusions cũ không loại CORE FULL.5 DEFER và CORE negative cần direct API denial, không xóa AC cũ. Outcomes: Risk case/hold/release đúng quyền — Flag→investigate→propose→approve/release; replay/self-approval deny; Governance phân tách admin/IT/Auditor — Authorized change+reason/approval→audit; deny fake POD/COD/delete audit/impersonation.
+
+[Delivery/DoR/DoD](../../docs/reconciliation/v3/delivery-plan.md). Research016 chỉ RQ/L030, không Returns. T-003-01 còn mở cho authority/address/enrollment; [first packet](../planning/v3/first-business-slice/spec.md).

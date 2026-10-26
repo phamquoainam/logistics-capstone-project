@@ -1,3 +1,5 @@
+> **V3 candidate để Owner review:** [Roadmap](implementation/roadmap-v3.md). Giữ accepted/runtime baseline; các mục REPORT/legacy bên dưới là lịch sử, không dùng để loại target FULL hoặc suy acceptance.
+
 # Product Requirements Document — E-Logistics Prototype
 
 **Nguồn:** [REPORT] Phần A §3–5; Chương 2 §2.1–2.7; Chương 3 §3.3–3.7.
@@ -49,3 +51,18 @@ Tính đúng của dữ liệu hành chính và vùng giá, thanh toán sandbox,
 
 ## 9. Ràng buộc thực thi
 Nhóm ba thành viên, khoảng 14 tuần trong báo cáo; triển khai theo vertical slice ưu tiên P0. Các thành phần chưa chốt ở `docs/decisions/open-questions.md` phải ghi ADR trước khi phụ thuộc triển khai.
+
+<a id="v3-target-business-baseline"></a>
+## V3 target business baseline — PROPOSED, 2026-10-26
+
+Mục1–9 giữ nguyên REPORT/prototype. Owner VIII.8.9–8.12 bổ sung target; [conflict register](reconciliation/v3/decisions.md) ghi khác biệt. Không dùng P1/exclusion cũ để âm thầm loại CORE, không dùng proposal mới thay accepted security/cho phép tiền thật.
+
+Vision mở rộng: codebase Modular Monolith hiện hữu phục vụ Guest, Retail Sender cá nhân, FULL Merchant, physical logistics, Finance/Support/Governance/Partner:33 roles/actors/principals,18 modules,371 BC=366 CORE+5 DEFER. [Business baseline](reconciliation/v3/business-baseline.md), [crosswalk](reconciliation/v3/capability-crosswalk.csv) là target FR bổ sung với source/guard/owner/API/DB/UI/test status; không renumber FR/BR/NFR.
+
+[30 specs/F0–F5](implementation/roadmap-v3.md) là full inventory. Guest public tracking/quote/coverage/Station/Hub/service/contact/hai nhánh đăng ký, cấm anonymous online Shipment. Sender profile/address/quote/booking/pickup/payment/tracking/cancel/return/support/history/receipt trong account cá nhân, không ép Merchant membership. Merchant Owner/Manager/Operator/Warehouse/Finance/Support và integration principal có org/delegation/fulfillment/contracts/COD/claims/report/API đầy đủ. Recipient external không IAM/portal, đơn Merchant qua Merchant Support, đơn Sender qua Logistics CS. Walk-in staff Station/Partner có quyền tại quầy, verification/fee/receipt/custody.
+
+Physical: pickup pool→assignment→evidence→Station→sorting/bag/manifest→line-haul/seal/trip→destination→delivery assignment→attempt/POD hoặc retry/return. Assignment/custody/tracking/money custody riêng. Finance: collected→Cashier received→reconciled→settlement proof; immutable ledger/price snapshot/adjustment. Ticket khác claim; proposer/approver/payer riêng. Business Admin/Identity Admin/Super Admin/IT/Auditor khác quyền; Partner org+Station; cấm fake POD/COD/sửa audit/closed recon.
+
+[J1–J9](reconciliation/v3/journeys.md) bổ sung AC-01–08; denial qua direct API/browser. Complete capability: accepted contract→migration/domain→application/HTTP auth→FE integrated→PG/security/concurrency→browser/native→source+PR CI→evidence. NFR giữ ngưỡng REPORT mục7, privacy/retention/abuse trước first use; không benchmark mới.
+
+[First BE+FE packet](../specs/planning/v3/first-business-slice/spec.md) gồm Guest paths/Sender cá nhân/Merchant membership/pickup/address; BLOCKED tới approved D01/02/03/05 và API/data contract. Không coi001/002/Demo fully accepted.

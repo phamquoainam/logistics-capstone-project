@@ -77,3 +77,11 @@ Feature prerequisites: 001, 002, 008. Không thêm call cycle; nếu thiếu con
 [BLOCKING] Map tiles/geocoding/matrix provider, coverage, license and credentials; route baseline algorithm; optimization constraints; GPS stale/accuracy thresholds and location transport.
 
 Mọi endpoint/tên bảng/field mới trong tài liệu là **[PROPOSED]**; báo cáo không định nghĩa đầy đủ API/migration. Sau khi duyệt, khóa hợp đồng ở `contracts/openapi/` và ghi ADR khi quyết định mang tính kiến trúc.
+
+## V3 reconciliation overlay — PROPOSED, 2026-10-26
+
+ID/nội dung/checkbox cũ giữ nguyên lịch sử; candidate không DONE/REPORT/accepted decision. Target: [L004 address-coverage-service-catalog](../../specs/planning/v3/L004-address-coverage-service-catalog/spec.md); [L014 delivery-dispatch-and-route](../../specs/planning/v3/L014-delivery-dispatch-and-route/spec.md); [L025 network-ops-routing-optimization](../../specs/planning/v3/L025-network-ops-routing-optimization/spec.md). [Crosswalk](../../docs/reconciliation/v3/legacy-crosswalk.csv) SPLIT/EXTEND/PRESERVE là scope relation, không automatic equivalence.
+
+Source thật app/backend/src/main/java/com/elogistic/backend, app/frontend/web, app/frontend/shipper-mobile; apps/com.example cũ chỉ blueprint.9 domains giữ DML ownership, không internals import. L004: BE Catalog phiên bản, địa chỉ/coverage/điểm phục vụ; routing adapter theo contract; FE Public coverage/Station/Hub, Sender address book, Merchant pickup; L014: BE Delivery pool/assignment; routing proposal/confirm giữ completed stops; FE Dispatcher pool/route/reassign; Team Leader đề xuất; Courier nhận tải; L025: BE Routing/capacity proposals; dispatch phê duyệt assignment/trip/custody; FE Network region/capacity/exception; Dispatcher review; Courier freshness. Schema/API mới PROPOSED trước review.
+
+[Delivery/DoR/DoD](../../docs/reconciliation/v3/delivery-plan.md). Research016 chỉ RQ/L030, không Returns. T-003-01 còn mở cho authority/address/enrollment; [first packet](../planning/v3/first-business-slice/spec.md).

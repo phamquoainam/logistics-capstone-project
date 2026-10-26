@@ -84,3 +84,11 @@ Warehouse tạo SKU/location → tiếp nhận ASN → kiểm/QC → putaway →
 [BLOCKING] SKU measurement units, QC eligibility, warehouse picking statuses, scan label format, fulfillment vs direct pickup policy.
 
 **Giả định:** bảng master/demo seeded, người dùng và phạm vi quyền hợp lệ, các phụ thuộc ngoài dùng Sandbox/mô phỏng, các ngưỡng được đặt tại cấu hình sau khi chốt. Mọi assumption phải được đánh dấu `PROPOSED` hoặc `BLOCKING` trong quyết định chung.
+
+## V3 reconciliation overlay — PROPOSED, 2026-10-26
+
+ID/nội dung/checkbox cũ giữ nguyên lịch sử; candidate không DONE/REPORT/accepted decision. Target: [L008 parcel-label-merchant-fulfillment](../../specs/planning/v3/L008-parcel-label-merchant-fulfillment/spec.md); [L016 returns-reverse-logistics](../../specs/planning/v3/L016-returns-reverse-logistics/spec.md). [Crosswalk](../../docs/reconciliation/v3/legacy-crosswalk.csv) SPLIT/EXTEND/PRESERVE là scope relation, không automatic equivalence.
+
+Actors/flow/guard bổ sung theo REQ-V3-BC tại linked specs; P1/exclusions cũ không loại CORE FULL.5 DEFER và CORE negative cần direct API denial, không xóa AC cũ. Outcomes: Chuẩn bị SKU/kiện và nhãn có kiểm đếm — Reserve→pick/pack/count→label→handover; không giả Courier pickup; Returns và bằng chứng gửi lại — Failed→retry hoặc approved return→returning→handed back; không cancel sau pickup.
+
+[Delivery/DoR/DoD](../../docs/reconciliation/v3/delivery-plan.md). Research016 chỉ RQ/L030, không Returns. T-003-01 còn mở cho authority/address/enrollment; [first packet](../planning/v3/first-business-slice/spec.md).

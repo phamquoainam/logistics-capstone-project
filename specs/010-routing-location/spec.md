@@ -83,3 +83,11 @@ Dispatcher lấy tập nhiệm vụ active + điểm xuất phát + map matrix �
 [BLOCKING] Map tiles/geocoding/matrix provider, coverage, license and credentials; route baseline algorithm; optimization constraints; GPS stale/accuracy thresholds and location transport.
 
 **Giả định:** bảng master/demo seeded, người dùng và phạm vi quyền hợp lệ, các phụ thuộc ngoài dùng Sandbox/mô phỏng, các ngưỡng được đặt tại cấu hình sau khi chốt. Mọi assumption phải được đánh dấu `PROPOSED` hoặc `BLOCKING` trong quyết định chung.
+
+## V3 reconciliation overlay — PROPOSED, 2026-10-26
+
+ID/nội dung/checkbox cũ giữ nguyên lịch sử; candidate không DONE/REPORT/accepted decision. Target: [L004 address-coverage-service-catalog](../../specs/planning/v3/L004-address-coverage-service-catalog/spec.md); [L014 delivery-dispatch-and-route](../../specs/planning/v3/L014-delivery-dispatch-and-route/spec.md); [L025 network-ops-routing-optimization](../../specs/planning/v3/L025-network-ops-routing-optimization/spec.md). [Crosswalk](../../docs/reconciliation/v3/legacy-crosswalk.csv) SPLIT/EXTEND/PRESERVE là scope relation, không automatic equivalence.
+
+Actors/flow/guard bổ sung theo REQ-V3-BC tại linked specs; P1/exclusions cũ không loại CORE FULL.5 DEFER và CORE negative cần direct API denial, không xóa AC cũ. Outcomes: Địa chỉ/điểm lấy và catalog public — Validate→xác nhận tọa độ→lưu/reload; timeout/mơ hồ chưa confirmed; Phân công giao và route có custody — Kiện đích hợp lệ→assign/load→route; race/revoked không tạo hai active; Network capacity và routing có phiên bản — Propose→verify constraints→approve; timeout/infeasible giữ plan cũ có nhãn.
+
+[Delivery/DoR/DoD](../../docs/reconciliation/v3/delivery-plan.md). Research016 chỉ RQ/L030, không Returns. T-003-01 còn mở cho authority/address/enrollment; [first packet](../planning/v3/first-business-slice/spec.md).

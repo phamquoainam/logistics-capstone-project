@@ -77,3 +77,11 @@ Feature prerequisites: 001, 002, 005, 008, 011. Không thêm call cycle; nếu t
 [BLOCKING] Danh sách thông báo P0 thiết yếu và người nhận từng loại; KPI dashboard, lịch sync và retention.
 
 Mọi endpoint/tên bảng/field mới trong tài liệu là **[PROPOSED]**; báo cáo không định nghĩa đầy đủ API/migration. Sau khi duyệt, khóa hợp đồng ở `contracts/openapi/` và ghi ADR khi quyết định mang tính kiến trúc.
+
+## V3 reconciliation overlay — PROPOSED, 2026-10-26
+
+ID/nội dung/checkbox cũ giữ nguyên lịch sử; candidate không DONE/REPORT/accepted decision. Target: [L009 tracking-event-core-public-lookup](../../specs/planning/v3/L009-tracking-event-core-public-lookup/spec.md); [L020 customer-support-tickets-sla](../../specs/planning/v3/L020-customer-support-tickets-sla/spec.md); [L028 notifications-analytics-sla](../../specs/planning/v3/L028-notifications-analytics-sla/spec.md). [Crosswalk](../../docs/reconciliation/v3/legacy-crosswalk.csv) SPLIT/EXTEND/PRESERVE là scope relation, không automatic equivalence.
+
+Source thật app/backend/src/main/java/com/elogistic/backend, app/frontend/web, app/frontend/shipper-mobile; apps/com.example cũ chỉ blueprint.9 domains giữ DML ownership, không internals import. L009: BE Canonical append-only events, privacy projection/rate limit; FE Public masked tracking; Sender owned/Merchant scoped timeline; L020: BE Public contact core F1; Sender direct/Merchant Support handoff; approved source-domain command; FE Public contact/Sender support/Merchant inbox/Logistics CS queue; L028: BE Outbox/inbox/templates/scoped projection/retry/DLQ; minimum notification first use; FE Role dashboards/inbox/SLA freshness/lag/export theo scope. Schema/API mới PROPOSED trước review.
+
+[Delivery/DoR/DoD](../../docs/reconciliation/v3/delivery-plan.md). Research016 chỉ RQ/L030, không Returns. T-003-01 còn mở cho authority/address/enrollment; [first packet](../planning/v3/first-business-slice/spec.md).

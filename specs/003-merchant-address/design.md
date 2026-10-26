@@ -77,3 +77,11 @@ Feature prerequisites: 001, 002. Không thêm call cycle; nếu thiếu contract
 [BLOCKING] Dataset danh mục hành chính (phiên bản áp dụng), provider geocoding/matrix, phạm vi hỗ trợ tỉnh/thành và confidence threshold.
 
 Mọi endpoint/tên bảng/field mới trong tài liệu là **[PROPOSED]**; báo cáo không định nghĩa đầy đủ API/migration. Sau khi duyệt, khóa hợp đồng ở `contracts/openapi/` và ghi ADR khi quyết định mang tính kiến trúc.
+
+## V3 reconciliation overlay — PROPOSED, 2026-10-26
+
+ID/nội dung/checkbox cũ giữ nguyên lịch sử; candidate không DONE/REPORT/accepted decision. Target: [L003 sender-merchant-onboarding](../../specs/planning/v3/L003-sender-merchant-onboarding/spec.md); [L004 address-coverage-service-catalog](../../specs/planning/v3/L004-address-coverage-service-catalog/spec.md). [Crosswalk](../../docs/reconciliation/v3/legacy-crosswalk.csv) SPLIT/EXTEND/PRESERVE là scope relation, không automatic equivalence.
+
+Source thật app/backend/src/main/java/com/elogistic/backend, app/frontend/web, app/frontend/shipper-mobile; apps/com.example cũ chỉ blueprint.9 domains giữ DML ownership, không internals import. L003: BE Sender profile, org/membership/delegation/lifecycle; credential chỉ Identity; FE Public chọn đăng ký, Sender profile, Merchant staff/context; L004: BE Catalog phiên bản, địa chỉ/coverage/điểm phục vụ; routing adapter theo contract; FE Public coverage/Station/Hub, Sender address book, Merchant pickup. Schema/API mới PROPOSED trước review.
+
+[Delivery/DoR/DoD](../../docs/reconciliation/v3/delivery-plan.md). Research016 chỉ RQ/L030, không Returns. T-003-01 còn mở cho authority/address/enrollment; [first packet](../planning/v3/first-business-slice/spec.md).

@@ -1,3 +1,5 @@
+> **V3 candidate để Owner review:** [Roadmap](../docs/implementation/roadmap-v3.md). Giữ accepted/runtime baseline; các mục REPORT/legacy bên dưới là lịch sử, không dùng để loại target FULL hoặc suy acceptance.
+
 # Feature Register — SDD
 
 **[REPORT]** Mã FR/BR từ báo cáo, tính năng grouping riêng để Codex phát triển theo vertical slice. Tất cả 16 mục đang `DRAFT_SPEC/NOT_IMPLEMENTED`.
@@ -25,3 +27,9 @@
 `DRAFT_SPEC` → `REVIEWED` → `READY_FOR_IMPLEMENTATION` → `IN_PROGRESS` → `IMPLEMENTED` → `VERIFIED`.
 
 Mỗi feature phải có đủ `spec.md`, `design.md`, `tasks.md`; xem `docs/codex/definition-of-ready.md`, `docs/quality/traceability.md`.
+
+## V3 proposed logical register
+
+Register16 feature ban đầu không là trạng thái hiện tại001/002; xem tasks/evidence, không tự hạ/nâng acceptance. Giữ physical001–016/demo.
+
+[Roadmap](../docs/implementation/roadmap-v3.md) dẫn L001–L030; L003–L030 ở planning/v3 chờ D08. [Legacy IDs](../docs/reconciliation/v3/legacy-crosswalk.csv), [371 BC](../docs/reconciliation/v3/capability-crosswalk.csv), [first packet](planning/v3/first-business-slice/spec.md). Không rename Research016 thành Returns.

@@ -82,3 +82,11 @@ Merchant tạo điểm lấy → nhập địa chỉ có cấu trúc → kiểm 
 [BLOCKING] Dataset danh mục hành chính (phiên bản áp dụng), provider geocoding/matrix, phạm vi hỗ trợ tỉnh/thành và confidence threshold.
 
 **Giả định:** bảng master/demo seeded, người dùng và phạm vi quyền hợp lệ, các phụ thuộc ngoài dùng Sandbox/mô phỏng, các ngưỡng được đặt tại cấu hình sau khi chốt. Mọi assumption phải được đánh dấu `PROPOSED` hoặc `BLOCKING` trong quyết định chung.
+
+## V3 reconciliation overlay — PROPOSED, 2026-10-26
+
+ID/nội dung/checkbox cũ giữ nguyên lịch sử; candidate không DONE/REPORT/accepted decision. Target: [L003 sender-merchant-onboarding](../../specs/planning/v3/L003-sender-merchant-onboarding/spec.md); [L004 address-coverage-service-catalog](../../specs/planning/v3/L004-address-coverage-service-catalog/spec.md). [Crosswalk](../../docs/reconciliation/v3/legacy-crosswalk.csv) SPLIT/EXTEND/PRESERVE là scope relation, không automatic equivalence.
+
+Actors/flow/guard bổ sung theo REQ-V3-BC tại linked specs; P1/exclusions cũ không loại CORE FULL.5 DEFER và CORE negative cần direct API denial, không xóa AC cũ. Outcomes: Khách gửi cá nhân và Merchant tổ chức — Guest chọn loại→xác minh→đúng profile/org; revoke giữa form và submit phải deny; Địa chỉ/điểm lấy và catalog public — Validate→xác nhận tọa độ→lưu/reload; timeout/mơ hồ chưa confirmed.
+
+[Delivery/DoR/DoD](../../docs/reconciliation/v3/delivery-plan.md). Research016 chỉ RQ/L030, không Returns. T-003-01 còn mở cho authority/address/enrollment; [first packet](../planning/v3/first-business-slice/spec.md).

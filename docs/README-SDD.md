@@ -1,3 +1,5 @@
+> **V3 candidate để Owner review:** [Roadmap](implementation/roadmap-v3.md). Giữ accepted/runtime baseline; các mục REPORT/legacy bên dưới là lịch sử, không dùng để loại target FULL hoặc suy acceptance.
+
 # E-Logistics — Bộ tài liệu phát triển theo đặc tả (SDD)
 
 **Trạng thái:** Bộ tài liệu lập kế hoạch triển khai P0, chưa phải phần mềm đã hoạt động.  
@@ -37,3 +39,9 @@ Xây dựng prototype E-Logistics hỗ trợ giao nhận chặng cuối với we
 ## Nguyên tắc kết luận
 
 Không xem việc tạo file, compile thành công hoặc demo đẹp là bằng chứng đã đạt P0; cần thêm migration, kiểm thử quyền, bất biến, end-to-end và thực nghiệm RQ1–RQ4.
+
+## V3 candidate — entrypoint cho Owner review
+
+[Roadmap](implementation/roadmap-v3.md) · [Business](reconciliation/v3/business-baseline.md) · [Inventory](reconciliation/v3/inventory.md) · [371 BC](reconciliation/v3/capability-crosswalk.csv) · [Decisions](reconciliation/v3/decisions.md) · [First BE+FE](../specs/planning/v3/first-business-slice/spec.md).
+
+PROPOSED tới Owner approval. Hướng dẫn P0/ngày đầu phía trên là lịch sử; source thật app/backend, app/frontend/web, app/frontend/shipper-mobile; hai accepted OpenAPI;001/002 PARTIAL, Demo regression. Không suy readiness từ folder/table cũ.

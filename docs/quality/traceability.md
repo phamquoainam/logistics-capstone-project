@@ -446,3 +446,7 @@ onboarding prerequisites. D1-04 approved local task DONE; D1-05 overall PARTIAL
 until real hosted runner execution and required-check enforcement. A successful
 fixture test proves detection, not that a deliberately violating remote PR has
 been blocked. No production violation, acceptance change or implicit deferral.
+
+## V3 business reconciliation — planning only, 2026-10-26
+
+[371 BC](../reconciliation/v3/capability-crosswalk.csv), [legacy IDs](../reconciliation/v3/legacy-crosswalk.csv), [roadmap](../implementation/roadmap-v3.md), [validation](../reconciliation/v3/validation.md). Mapping PROPOSED, target test IDs là kế hoạch. Không thay REQ/AC acceptance/auto VERIFIED. Feature001/D1-08/Day1 PARTIAL; T-002-05/06 PARTIAL; Feature002/AC-002-01..05 NOT ACCEPTED; GRANT_MUTATION_FUNCTIONALITY_LIMITED. Sáu Foundation files gốc nguyên vẹn; append chỉ worktree mới từ origin/develop.

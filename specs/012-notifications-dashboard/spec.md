@@ -84,3 +84,11 @@ Transaction nghiệp vụ commit cùng outbox → publish → notification inbox
 [BLOCKING] Danh sách thông báo P0 thiết yếu và người nhận từng loại; KPI dashboard, lịch sync và retention.
 
 **Giả định:** bảng master/demo seeded, người dùng và phạm vi quyền hợp lệ, các phụ thuộc ngoài dùng Sandbox/mô phỏng, các ngưỡng được đặt tại cấu hình sau khi chốt. Mọi assumption phải được đánh dấu `PROPOSED` hoặc `BLOCKING` trong quyết định chung.
+
+## V3 reconciliation overlay — PROPOSED, 2026-10-26
+
+ID/nội dung/checkbox cũ giữ nguyên lịch sử; candidate không DONE/REPORT/accepted decision. Target: [L009 tracking-event-core-public-lookup](../../specs/planning/v3/L009-tracking-event-core-public-lookup/spec.md); [L020 customer-support-tickets-sla](../../specs/planning/v3/L020-customer-support-tickets-sla/spec.md); [L028 notifications-analytics-sla](../../specs/planning/v3/L028-notifications-analytics-sla/spec.md). [Crosswalk](../../docs/reconciliation/v3/legacy-crosswalk.csv) SPLIT/EXTEND/PRESERVE là scope relation, không automatic equivalence.
+
+Actors/flow/guard bổ sung theo REQ-V3-BC tại linked specs; P1/exclusions cũ không loại CORE FULL.5 DEFER và CORE negative cần direct API denial, không xóa AC cũ. Outcomes: Tracking an toàn và có nguồn — Source commit→timeline; đoán code/UUID không lộ PII; late/duplicate không sửa lịch sử; Ticket có nguồn/scope/SLA — Tiếp nhận→verify→phân công→phối hợp/escalate→phản hồi; không sửa POD/COD; Notifications/KPI/SLA từ committed facts — Commit→dedup notification→read; late/missing event đối chiếu; không success inflation.
+
+[Delivery/DoR/DoD](../../docs/reconciliation/v3/delivery-plan.md). Research016 chỉ RQ/L030, không Returns. T-003-01 còn mở cho authority/address/enrollment; [first packet](../planning/v3/first-business-slice/spec.md).
