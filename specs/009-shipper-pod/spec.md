@@ -83,3 +83,11 @@ Shipper đăng nhập mobile → xem assignment active → bắt đầu nhiệm 
 [BLOCKING] Allowed POD form photo/signature/OTP and fields, file provider, max size, retry/delivery attempt limits, offline-safe mutations.
 
 **Giả định:** bảng master/demo seeded, người dùng và phạm vi quyền hợp lệ, các phụ thuộc ngoài dùng Sandbox/mô phỏng, các ngưỡng được đặt tại cấu hình sau khi chốt. Mọi assumption phải được đánh dấu `PROPOSED` hoặc `BLOCKING` trong quyết định chung.
+
+## V3 reconciliation overlay — PROPOSED, 2026-10-26
+
+ID/nội dung/checkbox cũ giữ nguyên lịch sử; candidate không DONE/REPORT/accepted decision. Target: [L010 pickup-dispatch-execution](../../specs/planning/v3/L010-pickup-dispatch-execution/spec.md); [L015 lastmile-attempt-pod](../../specs/planning/v3/L015-lastmile-attempt-pod/spec.md); [L017 cod-collection-cashier-remittance](../../specs/planning/v3/L017-cod-collection-cashier-remittance/spec.md); [L029 courier-offline-sync](../../specs/planning/v3/L029-courier-offline-sync/spec.md). [Crosswalk](../../docs/reconciliation/v3/legacy-crosswalk.csv) SPLIT/EXTEND/PRESERVE là scope relation, không automatic equivalence.
+
+Actors/flow/guard bổ sung theo REQ-V3-BC tại linked specs; P1/exclusions cũ không loại CORE FULL.5 DEFER và CORE negative cần direct API denial, không xóa AC cũ. Outcomes: Dispatcher giao việc, Courier nhận kiện — Assign→scan/count→nhận→handover; stale/reassign/double scan deny; Delivery attempt/POD và COD thực thu — OFD→POD hoặc failed reason; COD theo giá trị chốt; orphan upload có cleanup; COD collection và Cashier remittance — Collected→submitted→Cashier kiểm nhận; shortage giữ nghĩa vụ; courier không tự confirm; Offline Courier durable queue/revalidation — Offline enqueue→kill/restart→reconnect→ACK/conflict; double sync không double POD/COD.
+
+[Delivery/DoR/DoD](../../docs/reconciliation/v3/delivery-plan.md). Research016 chỉ RQ/L030, không Returns. T-003-01 còn mở cho authority/address/enrollment; [first packet](../planning/v3/first-business-slice/spec.md).

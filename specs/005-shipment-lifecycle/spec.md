@@ -83,3 +83,11 @@ Merchant tạo DRAFT → chọn pickup/delivery/address → tính quote → subm
 [BLOCKING] Chính sách fee refund khi hủy, allowed cancel state chính xác theo flow; shipment code format; các bắt buộc tối thiểu khi tạo draft.
 
 **Giả định:** bảng master/demo seeded, người dùng và phạm vi quyền hợp lệ, các phụ thuộc ngoài dùng Sandbox/mô phỏng, các ngưỡng được đặt tại cấu hình sau khi chốt. Mọi assumption phải được đánh dấu `PROPOSED` hoặc `BLOCKING` trong quyết định chung.
+
+## V3 reconciliation overlay — PROPOSED, 2026-10-26
+
+ID/nội dung/checkbox cũ giữ nguyên lịch sử; candidate không DONE/REPORT/accepted decision. Target: [L006 order-shipment-parcel-contract](../../specs/planning/v3/L006-order-shipment-parcel-contract/spec.md); [L007 shipment-booking-sender-payments](../../specs/planning/v3/L007-shipment-booking-sender-payments/spec.md); [L009 tracking-event-core-public-lookup](../../specs/planning/v3/L009-tracking-event-core-public-lookup/spec.md); [L015 lastmile-attempt-pod](../../specs/planning/v3/L015-lastmile-attempt-pod/spec.md); [L016 returns-reverse-logistics](../../specs/planning/v3/L016-returns-reverse-logistics/spec.md). [Crosswalk](../../docs/reconciliation/v3/legacy-crosswalk.csv) SPLIT/EXTEND/PRESERVE là scope relation, không automatic equivalence.
+
+Actors/flow/guard bổ sung theo REQ-V3-BC tại linked specs; P1/exclusions cũ không loại CORE FULL.5 DEFER và CORE negative cần direct API denial, không xóa AC cũ. Outcomes: Identity và guard Order/Shipment/Parcel — Draft→kiểm điều kiện confirm; reject illegal transition/hold/foreign object; Booking Sender/Merchant và thu cước đúng — Confirm→một charge/hold/snapshot; thiếu tiền/tồn rollback; timeout tra cứu cùng key; Tracking an toàn và có nguồn — Source commit→timeline; đoán code/UUID không lộ PII; late/duplicate không sửa lịch sử; Delivery attempt/POD và COD thực thu — OFD→POD hoặc failed reason; COD theo giá trị chốt; orphan upload có cleanup; Returns và bằng chứng gửi lại — Failed→retry hoặc approved return→returning→handed back; không cancel sau pickup.
+
+[Delivery/DoR/DoD](../../docs/reconciliation/v3/delivery-plan.md). Research016 chỉ RQ/L030, không Returns. T-003-01 còn mở cho authority/address/enrollment; [first packet](../planning/v3/first-business-slice/spec.md).

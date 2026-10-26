@@ -83,3 +83,11 @@ Merchant xem wallet → tạo topup intent → redirect Sandbox → callback/que
 [BLOCKING] Currency exact representation policy, accounting account mapping, VNPay Sandbox parameters/signature contract, reimbursement/fee policy.
 
 **Giả định:** bảng master/demo seeded, người dùng và phạm vi quyền hợp lệ, các phụ thuộc ngoài dùng Sandbox/mô phỏng, các ngưỡng được đặt tại cấu hình sau khi chốt. Mọi assumption phải được đánh dấu `PROPOSED` hoặc `BLOCKING` trong quyết định chung.
+
+## V3 reconciliation overlay — PROPOSED, 2026-10-26
+
+ID/nội dung/checkbox cũ giữ nguyên lịch sử; candidate không DONE/REPORT/accepted decision. Target: [L007 shipment-booking-sender-payments](../../specs/planning/v3/L007-shipment-booking-sender-payments/spec.md); [L017 cod-collection-cashier-remittance](../../specs/planning/v3/L017-cod-collection-cashier-remittance/spec.md); [L018 billing-ledger-fees-invoices](../../specs/planning/v3/L018-billing-ledger-fees-invoices/spec.md); [L019 cod-reconciliation-merchant-settlement](../../specs/planning/v3/L019-cod-reconciliation-merchant-settlement/spec.md). [Crosswalk](../../docs/reconciliation/v3/legacy-crosswalk.csv) SPLIT/EXTEND/PRESERVE là scope relation, không automatic equivalence.
+
+Actors/flow/guard bổ sung theo REQ-V3-BC tại linked specs; P1/exclusions cũ không loại CORE FULL.5 DEFER và CORE negative cần direct API denial, không xóa AC cũ. Outcomes: Booking Sender/Merchant và thu cước đúng — Confirm→một charge/hold/snapshot; thiếu tiền/tồn rollback; timeout tra cứu cùng key; COD collection và Cashier remittance — Collected→submitted→Cashier kiểm nhận; shortage giữ nghĩa vụ; courier không tự confirm; Ledger, billing, phí và chứng từ — Verified charge→balanced posting; duplicate callback/refund không thêm tiền; correction bằng entry mới; Reconciliation và settlement có điều kiện — Delivered+collected+confirmed remitted→reconcile→simulated payout; late data kỳ sau.
+
+[Delivery/DoR/DoD](../../docs/reconciliation/v3/delivery-plan.md). Research016 chỉ RQ/L030, không Returns. T-003-01 còn mở cho authority/address/enrollment; [first packet](../planning/v3/first-business-slice/spec.md).

@@ -18,3 +18,7 @@ Shipment confirm atomic ↔ fee debit ↔ reservation; tests cạnh tranh/xung �
 
 ## MVP demo slice 3
 WMS outbound → hub manifest/custody → assign → route confirm → shipper POD → COD collection/remittance/closing → notification.
+
+## V3 candidate dependency delta
+
+Chuỗi P0/MVP trên giữ lịch sử. Target FULL theo [roadmap](roadmap-v3.md) sau approval: L018 minimum ledger trước fee booking, L017 collection trước POD/COD; public contact/audit/scope tại first use. Logical numbers khác physical, không đổi compile-time direction9 modules; validator kiểm DAG, contract plan không runtime evidence.

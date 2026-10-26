@@ -77,3 +77,11 @@ Feature prerequisites: 001, 004, 005, 006, 007, 008, 010, 011, 012. Không thêm
 [BLOCKING] Baseline load environment, datasets, target devices, fixed maps provider/matrix, optional multi-replica plan.
 
 Mọi endpoint/tên bảng/field mới trong tài liệu là **[PROPOSED]**; báo cáo không định nghĩa đầy đủ API/migration. Sau khi duyệt, khóa hợp đồng ở `contracts/openapi/` và ghi ADR khi quyết định mang tính kiến trúc.
+
+## V3 reconciliation overlay — PROPOSED, 2026-10-26
+
+ID/nội dung/checkbox cũ giữ nguyên lịch sử; candidate không DONE/REPORT/accepted decision. Target: [L030 capstone-e2e-hardening-release](../../specs/planning/v3/L030-capstone-e2e-hardening-release/spec.md). [Crosswalk](../../docs/reconciliation/v3/legacy-crosswalk.csv) SPLIT/EXTEND/PRESERVE là scope relation, không automatic equivalence.
+
+Source thật app/backend/src/main/java/com/elogistic/backend, app/frontend/web, app/frontend/shipper-mobile; apps/com.example cũ chỉ blueprint.9 domains giữ DML ownership, không internals import. L030: BE Regression/restore/health/load/CI evidence; reuse Research016 RQ1–4; FE Browser J1–J9/native device; không business UI mới. Schema/API mới PROPOSED trước review.
+
+[Delivery/DoR/DoD](../../docs/reconciliation/v3/delivery-plan.md). Research016 chỉ RQ/L030, không Returns. T-003-01 còn mở cho authority/address/enrollment; [first packet](../planning/v3/first-business-slice/spec.md).

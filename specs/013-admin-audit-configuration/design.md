@@ -77,3 +77,11 @@ Feature prerequisites: 001, 002, 004, 012. Không thêm call cycle; nếu thiế
 [BLOCKING] Quyền quản trị cụ thể; cho phép hot-reload config nào; retention logs và quy trình duyệt thủ công.
 
 Mọi endpoint/tên bảng/field mới trong tài liệu là **[PROPOSED]**; báo cáo không định nghĩa đầy đủ API/migration. Sau khi duyệt, khóa hợp đồng ở `contracts/openapi/` và ghi ADR khi quyết định mang tính kiến trúc.
+
+## V3 reconciliation overlay — PROPOSED, 2026-10-26
+
+ID/nội dung/checkbox cũ giữ nguyên lịch sử; candidate không DONE/REPORT/accepted decision. Target: [L026 risk-fraud-compliance](../../specs/planning/v3/L026-risk-fraud-compliance/spec.md); [L027 platform-admin-audit-governance](../../specs/planning/v3/L027-platform-admin-audit-governance/spec.md). [Crosswalk](../../docs/reconciliation/v3/legacy-crosswalk.csv) SPLIT/EXTEND/PRESERVE là scope relation, không automatic equivalence.
+
+Source thật app/backend/src/main/java/com/elogistic/backend, app/frontend/web, app/frontend/shipper-mobile; apps/com.example cũ chỉ blueprint.9 domains giữ DML ownership, không internals import. L026: BE Guard trước L007; full rules/case/approval đọc finance/identity qua API duyệt; FE Risk case/evidence/propose hold/release approval, minimal PII; L027: BE Identity policy, platform technical ops; business admin qua owner APIs; FE Workspaces theo permission, Auditor read-only, IT scoped retry. Schema/API mới PROPOSED trước review.
+
+[Delivery/DoR/DoD](../../docs/reconciliation/v3/delivery-plan.md). Research016 chỉ RQ/L030, không Returns. T-003-01 còn mở cho authority/address/enrollment; [first packet](../planning/v3/first-business-slice/spec.md).

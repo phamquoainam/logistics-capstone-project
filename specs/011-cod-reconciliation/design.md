@@ -77,3 +77,11 @@ Feature prerequisites: 001, 002, 006, 009. Không thêm call cycle; nếu thiế
 [BLOCKING] Cutoff timezone and schedule, dispute policy, partial remittance rules, simulated payout deduction formula, adjustment authority and accounting examples.
 
 Mọi endpoint/tên bảng/field mới trong tài liệu là **[PROPOSED]**; báo cáo không định nghĩa đầy đủ API/migration. Sau khi duyệt, khóa hợp đồng ở `contracts/openapi/` và ghi ADR khi quyết định mang tính kiến trúc.
+
+## V3 reconciliation overlay — PROPOSED, 2026-10-26
+
+ID/nội dung/checkbox cũ giữ nguyên lịch sử; candidate không DONE/REPORT/accepted decision. Target: [L017 cod-collection-cashier-remittance](../../specs/planning/v3/L017-cod-collection-cashier-remittance/spec.md); [L018 billing-ledger-fees-invoices](../../specs/planning/v3/L018-billing-ledger-fees-invoices/spec.md); [L019 cod-reconciliation-merchant-settlement](../../specs/planning/v3/L019-cod-reconciliation-merchant-settlement/spec.md). [Crosswalk](../../docs/reconciliation/v3/legacy-crosswalk.csv) SPLIT/EXTEND/PRESERVE là scope relation, không automatic equivalence.
+
+Source thật app/backend/src/main/java/com/elogistic/backend, app/frontend/web, app/frontend/shipper-mobile; apps/com.example cũ chỉ blueprint.9 domains giữ DML ownership, không internals import. L017: BE Collection contract trước L015; remittance/allocation/shift/variance; FE Courier COD due/submit; Cashier count/confirm/close; Manager giám sát; L018: BE Minimal balanced posting/fee/refund API trước L007; full invoice/debt/adjustment; FE Sender receipt; Merchant Finance fee/debt; Finance ledger; Pricing adjustment; L019: BE Eligibility recheck/unique closed membership/cutoff/dispute/payout evidence; FE Finance preview/close/approve; Merchant đối chiếu/chứng từ/dispute. Schema/API mới PROPOSED trước review.
+
+[Delivery/DoR/DoD](../../docs/reconciliation/v3/delivery-plan.md). Research016 chỉ RQ/L030, không Returns. T-003-01 còn mở cho authority/address/enrollment; [first packet](../planning/v3/first-business-slice/spec.md).

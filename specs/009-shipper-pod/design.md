@@ -77,3 +77,11 @@ Feature prerequisites: 001, 002, 005, 008, 006. Không thêm call cycle; nếu t
 [BLOCKING] Allowed POD form photo/signature/OTP and fields, file provider, max size, retry/delivery attempt limits, offline-safe mutations.
 
 Mọi endpoint/tên bảng/field mới trong tài liệu là **[PROPOSED]**; báo cáo không định nghĩa đầy đủ API/migration. Sau khi duyệt, khóa hợp đồng ở `contracts/openapi/` và ghi ADR khi quyết định mang tính kiến trúc.
+
+## V3 reconciliation overlay — PROPOSED, 2026-10-26
+
+ID/nội dung/checkbox cũ giữ nguyên lịch sử; candidate không DONE/REPORT/accepted decision. Target: [L010 pickup-dispatch-execution](../../specs/planning/v3/L010-pickup-dispatch-execution/spec.md); [L015 lastmile-attempt-pod](../../specs/planning/v3/L015-lastmile-attempt-pod/spec.md); [L017 cod-collection-cashier-remittance](../../specs/planning/v3/L017-cod-collection-cashier-remittance/spec.md); [L029 courier-offline-sync](../../specs/planning/v3/L029-courier-offline-sync/spec.md). [Crosswalk](../../docs/reconciliation/v3/legacy-crosswalk.csv) SPLIT/EXTEND/PRESERVE là scope relation, không automatic equivalence.
+
+Source thật app/backend/src/main/java/com/elogistic/backend, app/frontend/web, app/frontend/shipper-mobile; apps/com.example cũ chỉ blueprint.9 domains giữ DML ownership, không internals import. L010: BE Pickup pool/assignment/version/attempt/scan/custody API; FE Operations assignment; Courier check-in/scan/failure; Sender request; L015: BE Orders attempt/POD/result, dispatch authority, finance collection cùng workflow; FE Courier scan/POD/failure/retry; Recipient đưa evidence ngoài account; L017: BE Collection contract trước L015; remittance/allocation/shift/variance; FE Courier COD due/submit; Cashier count/confirm/close; Manager giám sát; L029: BE RN SQLite queue; server reuse commands/current assignment/resource guards; FE Existing shipper-mobile scan/POD/COD pending/ACK/conflict/re-auth. Schema/API mới PROPOSED trước review.
+
+[Delivery/DoR/DoD](../../docs/reconciliation/v3/delivery-plan.md). Research016 chỉ RQ/L030, không Returns. T-003-01 còn mở cho authority/address/enrollment; [first packet](../planning/v3/first-business-slice/spec.md).

@@ -77,3 +77,11 @@ Feature prerequisites: 001, 002, 003. Không thêm call cycle; nếu thiếu con
 [BLOCKING] SKU measurement units, QC eligibility, warehouse picking statuses, scan label format, fulfillment vs direct pickup policy.
 
 Mọi endpoint/tên bảng/field mới trong tài liệu là **[PROPOSED]**; báo cáo không định nghĩa đầy đủ API/migration. Sau khi duyệt, khóa hợp đồng ở `contracts/openapi/` và ghi ADR khi quyết định mang tính kiến trúc.
+
+## V3 reconciliation overlay — PROPOSED, 2026-10-26
+
+ID/nội dung/checkbox cũ giữ nguyên lịch sử; candidate không DONE/REPORT/accepted decision. Target: [L008 parcel-label-merchant-fulfillment](../../specs/planning/v3/L008-parcel-label-merchant-fulfillment/spec.md); [L016 returns-reverse-logistics](../../specs/planning/v3/L016-returns-reverse-logistics/spec.md). [Crosswalk](../../docs/reconciliation/v3/legacy-crosswalk.csv) SPLIT/EXTEND/PRESERVE là scope relation, không automatic equivalence.
+
+Source thật app/backend/src/main/java/com/elogistic/backend, app/frontend/web, app/frontend/shipper-mobile; apps/com.example cũ chỉ blueprint.9 domains giữ DML ownership, không internals import. L008: BE Warehouse stock/reservation/pick-pack; orders Parcel/label qua API; FE Merchant Warehouse count/measure/label/variance/handover list; L016: BE Orders return/state; dispatch reverse custody; warehouse QC khi WMS; FE Sender/Merchant yêu cầu/theo dõi; Operations tasks; Courier handover. Schema/API mới PROPOSED trước review.
+
+[Delivery/DoR/DoD](../../docs/reconciliation/v3/delivery-plan.md). Research016 chỉ RQ/L030, không Returns. T-003-01 còn mở cho authority/address/enrollment; [first packet](../planning/v3/first-business-slice/spec.md).
