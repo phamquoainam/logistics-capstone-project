@@ -80,7 +80,7 @@ Source: BC-134/R18/M01, CORE; [matrix](../../docs/business-references/E_Logistic
 
 ### REQ-V3-BC-135 — Quản lý hồ sơ, tên, liên hệ, trạng thái tài khoản
 
-Source: BC-135/R18/M01, CORE; [matrix](../../docs/business-references/E_Logistics_Role_Module_Business_Capability_Matrix_GroupEF_Full.md). Guard: Chỉ dữ liệu bản thân; thay đổi nhạy cảm cần xác minh; permission code DECISION_REQUIRED (no runtime allowlist expansion). Scope: PERSONAL_OWNER. Retail Sender business-data owner UNRESOLVED / DATA-01, candidate `merchant` chưa accepted; Identity giữ verified security contacts/account security state.
+Source: BC-135/R18/M01, CORE; [matrix](../../docs/business-references/E_Logistics_Role_Module_Business_Capability_Matrix_GroupEF_Full.md). Guard: Chỉ dữ liệu bản thân; thay đổi nhạy cảm cần xác minh; permission code DECISION_REQUIRED (no runtime allowlist expansion). Scope: PERSONAL_OWNER. Retail Sender business-data authority `customer_profile` được Owner DATA-01 duyệt, self scope độc lập org/member; physical module candidate `merchant` không là tenant authority; Identity giữ verified security contacts/account security state.
 
 - **AC-BC-135-SUCCESS:** Given current subject và resource đúng PERSONAL_OWNER; When Quản lý hồ sơ, tên, liên hệ, trạng thái tài khoản; Then outcome lưu/đọc đúng self business profile/contact preferences; Identity security contacts authoritative, giữ guard «Chỉ dữ liệu bản thân»; reload/API/PG assertion; TEST-V3-BC-135-FLOW.
 - **AC-BC-135-DENY:** Given wrong subject/tenant/assignment, expired/revoked authority hoặc illegal state; When direct API/query/submit/replay; Then no unauthorized effect, no private data/receipt disclosure, safe error và UI không báo success.
@@ -136,7 +136,7 @@ Các ID cũ là aliases nguồn, không đổi nghĩa hoặc coi mapping bằng 
 
 ## Quy tắc chung và evidence
 
-Canonical target documentation; NOT_STARTED/BLOCKED_FOR_IMPLEMENTATION. Không acceptance do promotion. Exact route/DTO/error/permission/schema: DECISION_REQUIRED trong contracts sau review; các khái niệm dưới đây không phải DDL hay wire field được tự duyệt.
+Canonical target documentation; NOT_STARTED/BLOCKED_FOR_IMPLEMENTATION. Không acceptance do promotion. Exact candidate route/DTO/error/permission/schema: contracts/openapi.candidate.json + policy.json + data-model.md; pending explicit technical acceptance, không là runtime authority.
 
 Authority = current account/session + explicit permission + personal/org/branch/assignment/resource scope + current state/evidence; server recheck cả list, pagination, submit, replay và async recovery. Deny trước khi tiết lộ existence/receipt; không body actor/role/owner authority. Machine principal tách human; Recipient external; Guest không tạo online Shipment.
 
@@ -155,15 +155,15 @@ Mọi assigned CORE/negative/legacy obligation và supplemental portal requireme
 
 REQ-003-ACCOUNT: BC132/134 dùng normal personal enrollment qua Identity002; không account-type chooser. Verified current customer login vào personal dashboard shell/profile, Merchant application entry chỉ sau eligibility. Guest deep-link application phải login rồi server recheck; no anonymous submit. Account có từ trước chỉ reuse sau authenticated proof, không match email để takeover. Duplicate registration trả non-enumerating outcome theo Identity amendment; không tạo identity thứ hai hoặc thêm role.
 
-REQ-003-PROFILE: BC135 business display/contact preferences có business-data owner UNRESOLVED / DATA-01 (candidate Merchant, chưa accepted), gắn personal account bằng authoritative Identity ID qua approved contract; Identity sở hữu verified security email/phone/password/session/account security status. Thay business contact không tự đổi recovery destination; thay security contact phải qua Identity reverify/session policy. Người dùng không patch activation/status/verified flags. Full name/contact/status hiển thị theo purpose/minimal DTO; không tự copy credential fields.
+REQ-003-PROFILE: BC135 business display/contact preferences thuộc customer_profile boundary độc lập Merchant organization/membership theo Owner DATA-01, gắn personal account bằng authoritative Identity ID qua approved contract; Identity sở hữu verified security email/phone/password/session/account security status. Thay business contact không tự đổi recovery destination; thay security contact phải qua Identity reverify/session policy. Người dùng không patch activation/status/verified flags. Full name/contact/status hiển thị theo purpose/minimal DTO; không tự copy credential fields.
 
 AC-003-ACCOUNT: Given Guest; When đăng ký; Then chỉ có personal account/proof theo Identity, zero org/member/SYSTEM grants. Given eligible verified account; When login; Then personal default. Given suspended/rejected Merchant nhưng account còn valid; When mở personal profile; Then hợp lệ. Given unverified/disabled account; When submit Merchant application; Then deny, no org/Owner.
 
 ## S003-APPLICATION — manual/sandbox admission, không giả legal verification
 
-REQ-003-APPLICATION (BC133/032/157): application gồm business entity type, registered name, registration/tax identifier nếu entity policy yêu cầu, registered address, operational/contact information, representative và applicant authority, business contact channels, supporting evidence, consent/policy version. Đây là field categories để review, không official API/schema hoặc tuyên bố tuân thủ pháp luật. POLICY-003-01 chốt entity-type policy, required evidence, duplicate key và permitted multi-org trước code. Registered address của application là evidence nghiệp vụ; không tự coi serviceable/confirmed pickup address. Pickup/service validation thuộc Spec004.
+REQ-003-APPLICATION (BC133/032/157): application gồm business entity type, registered name, registration/tax identifier nếu entity policy yêu cầu, registered address, operational/contact information, representative và applicant authority, business contact channels, supporting evidence, consent/policy version. Đây là field categories để review, không official API/schema hoặc tuyên bố tuân thủ pháp luật. Owner POLICY-003-01 đã duyệt manual/sandbox COMPANY/HOUSEHOLD_BUSINESS và explicit multi-org; exact candidate entity fields/evidence/business key tại contracts/README.md và contracts/policy.json cần review trước code. Registered address của application là evidence nghiệp vụ; không tự coi serviceable/confirmed pickup address. Pickup/service validation thuộc Spec004.
 
-Các lifecycle dưới đây là design candidate labels, không tự thêm wire enum/DB migration:
+Business transition policy được Owner duyệt; exact wire enums/schema vẫn candidate tại contracts/policy.json và OpenAPI, chưa được tự triển khai migration:
 
 | Application state | Actor/action/guard | Next state và effect |
 |---|---|---|
@@ -182,7 +182,7 @@ Duplicate-business detection: xác định normalized identifiers theo entity ty
 
 REQ-003-ACTIVATION: Merchant owner TX recheck applicant current identity eligibility qua approved protocol + current reviewer scope + application revision/state + representative evidence. Lock application/business uniqueness/ownership population; atomically tạo tổ chức ACTIVE, exactly one initial-owner binding ACTIVE cho applicant, mark application APPROVED, audit/receipt/outbox. Server cấp IDs và quyền theo policy; role/owner/org ID request không authority. Unique initial-owner binding/business key ngăn duplicate activation; audit failure rollback toàn bộ; mất response replay một activation. Không cần đổi credentials hoặc SYSTEM grants của applicant trong approval TX.
 
-Org lifecycle candidate: ACTIVE → SUSPENDED bởi authorized Business Admin có reason/evidence → ACTIVE sau reviewed reinstatement; ACTIVE/SUSPENDED → CLOSURE_REQUESTED → CLOSED chỉ khi downstream obligations có clearance theo contract Finance/Orders/claims. CLOSED không hard-delete history hoặc tự đóng shipments/ledger; pending closure không được giả hoàn tất nếu dependencies chưa có. Initial application approval không tự tái kích hoạt org cũ. Membership Owner cuối cùng không bị revoke/suspend/transfer nếu tạo orphan org; controlled replacement/succession policy và DB lock/constraint cần review, không mượn invariant last Identity Admin làm proof.
+Owner-approved org lifecycle direction (candidate wire labels): ACTIVE → SUSPENDED bởi authorized Business Admin có reason/evidence → ACTIVE sau reviewed reinstatement; ACTIVE/SUSPENDED → CLOSURE_REQUESTED → CLOSED chỉ khi downstream obligations có clearance theo contract Finance/Orders/claims. CLOSED không hard-delete history hoặc tự đóng shipments/ledger; pending closure không được giả hoàn tất nếu dependencies chưa có. Initial application approval không tự tái kích hoạt org cũ. Membership Owner cuối cùng không bị revoke/suspend/transfer nếu tạo orphan org; controlled replacement/succession policy và DB lock/constraint cần review, không mượn invariant last Identity Admin làm proof.
 
 Suspended org chặn business mutations/context theo policy, cho phép scoped read/history nếu được duyệt; carrier tiếp tục xử lý custody/financial obligations bằng workflow owner, không xóa lịch sử. Account cá nhân còn hợp lệ vẫn truy cập personal workspace. Account bị Identity disable thì cả personal/business requests phải deny.
 
@@ -190,7 +190,7 @@ AC-003-ACTIVATION: two concurrent approvals/replay → one org/initial Owner/aud
 
 ## S003-MEMBERSHIP — invitation, delegation và context
 
-REQ-003-MEMBERSHIP (BC007/008/020/158/166): Owner/Manager có management AND assignability chỉ mời đúng org/branch và business permissions được phép. Invitation candidate PENDING → ACCEPTED / REJECTED / EXPIRED / REVOKED; deadline và recipient binding do approved policy, không mặc định dùng Identity invitation24h. Existing verified customer accept bằng account của chính họ; new recipient hoàn tất normal personal registration/login trước accept; không tạo SYSTEM account. Recheck inviter current delegation, org ACTIVE, recipient binding và allowed rights tại acceptance. Duplicate/replay một membership; changed binding conflict; expired/revoked proof không authority.
+REQ-003-MEMBERSHIP (BC007/008/020/158/166): Owner/Manager có management AND assignability chỉ mời đúng org/branch và business permissions được phép. Invitation candidate PENDING → ACCEPTED / REJECTED / EXPIRED / REVOKED; 72h configurable, recipient/purpose-bound theo Owner policy; không dùng Identity invitation24h; inviter revoke/suspend hoặc policy/delegation version change invalidates pending invitation, resend revokes prior proof. Existing verified customer accept bằng account của chính họ; new recipient hoàn tất normal personal registration/login trước accept; không tạo SYSTEM account. Recheck inviter current delegation, org ACTIVE, recipient binding và allowed rights tại acceptance. Duplicate/replay một membership; changed binding conflict; expired/revoked proof không authority.
 
 Membership candidate PENDING → ACTIVE khi accepted hợp lệ; ACTIVE → SUSPENDED / REVOKED do authorized org manager trong bounds; SUSPENDED → ACTIVE chỉ qua reviewed reinstatement; REVOKED muốn tham gia lại cần new admission, không revive revoked proof. Person self-leave có last-Owner safeguard. Không global-disable account khi khóa membership. Effective business permission không vượt current delegation/resource scope; replacement kiểm cả rights bị remove/add theo management contract, không xóa quyền org B từ org A.
 
@@ -209,7 +209,7 @@ REQ-003-FULL: đủ mọi assigned BC, S003-ACCOUNT/APPLICATION/ACTIVATION/MEMBE
 
 Owner target: L003; source BC-132;BC-133;BC-134; latest Owner portal scope, no new BC ID. UI/channel: Public/personal entry.
 
-Required behavior: Public landing/register/login/recovery navigation; one personal registration, personal default; Merchant application only authenticated; no dead-end Guest Merchant form. Exact routes/DTO/permission/schema CONFIG/DECISION_REQUIRED before code.
+Required behavior: Public landing/register/login/recovery navigation; one personal registration, personal default; Merchant application only authenticated; no dead-end Guest Merchant form. Exact candidate routes/DTO/permissions/schema đã định nghĩa tại contracts/openapi.candidate.json, contracts/policy.json và contracts/data-model.md; Owner acceptance pending before code.
 
 **AC-ENTRY:** Given valid current actor/resource/state; When thực hiện workflow nguồn; Then Guest cannot submit application; verified personal login default; deep links rechecked; no role grants. Negative: wrong owner/revoked/expired/illegal state → no unauthorized effect/private disclosure. Evidence: real source-owner HTTP/PG + browser/channel; TEST-AB-ENTRY PLANNED_NOT_EXECUTED. Dependencies: L002.
 
@@ -218,6 +218,18 @@ Required behavior: Public landing/register/login/recovery navigation; one person
 
 Owner target: L003; source BC-007;BC-020;BC-158;BC-166; latest Owner portal scope, no new BC ID. UI/channel: Context switch/profile/staff.
 
-Required behavior: Accessible organizations only; active context indicator; partition/clear cache, cancel or ignore stale previous-context responses; preserve personal access after org rejection/revoke. Exact routes/DTO/permission/schema CONFIG/DECISION_REQUIRED before code.
+Required behavior: Accessible organizations only; active context indicator; partition/clear cache, cancel or ignore stale previous-context responses; preserve personal access after org rejection/revoke. Exact candidate routes/DTO/permissions/schema đã định nghĩa tại contracts/openapi.candidate.json, contracts/policy.json và contracts/data-model.md; Owner acceptance pending before code.
 
 **AC-CONTEXT:** Given valid current actor/resource/state; When thực hiện workflow nguồn; Then A→B switch cannot show A response in B; revoked org cleared and current request denied; personal still valid. Negative: wrong owner/revoked/expired/illegal state → no unauthorized effect/private disclosure. Evidence: real source-owner HTTP/PG + browser/channel; TEST-AB-CONTEXT PLANNED_NOT_EXECUTED. Dependencies: L002.
+
+## Owner six-decision closure and exact contract package
+
+[OWNER-S003-SIX-2026-10-27](../../docs/decisions/spec003-six-decisions.md) approves all six policy directions with refinements. [Contract package](contracts/README.md), [data model](contracts/data-model.md), [minimum dependencies](contracts/minimum-dependencies.md), [coverage](contracts/coverage.csv) and [DoR](readiness.md) are the concrete technical candidates for one scoped review. Production implementation remains NOT_AUTHORIZED/BLOCKED_FOR_IMPLEMENTATION.
+
+- BR-S003-AUTH: verified email customer admission distinct SYSTEM; unverified phone never login/recovery authority; no public business/admin grants. Register→verify→activate→login→refresh→logout→recovery must be real.
+- BR-S003-SELF: customer_profile self scope is independent of organization/membership/approval; business contact updates cannot alter Identity verified security contacts/password/status/recovery destination.
+- BR-S003-STATE: approved business policy transitions only; submitted revisions/evidence immutable; resubmission creates new revision; approval+org+initial Owner atomic; pending activation/transfer/recovery grants no active authority; independent Business Admin, no self-review.
+- BR-S003-REPLAY: current authority and version/assignability at final locked decision point; revoke-first denies, earlier valid commit survives. Same-key replay rechecks authority; changed binding conflicts; no duplicate initial Owner/membership or orphan last Owner.
+- BR-S003-EVIDENCE: five retained/reserved private files/application,5MiB/file, PDF/PNG/JPEG signature/parse screening; unavailable scanner denies access. Delivery queued/provider-accepted != delivered. Sandbox30/90/365d retention with holds/references, purge disabled pending separate approval.
+
+Additional acceptance: legal-profile changes stage independent-review revisions; target-consented two-person Owner recovery can admit an eligible new personal customer without trusting supplied account IDs. Reviewer bootstrap is offline Owner-controlled and audited, not a public privilege endpoint. Closure with missing/active obligations stays pending; successful closure requires real owner clearances. See exact schema/scenario mappings, no new BC IDs.

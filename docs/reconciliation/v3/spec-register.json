@@ -86,9 +86,9 @@
     "purpose": "Hồ sơ cá nhân, Merchant application/approval và organization/membership",
     "backend_scope": "Customer onboarding phối hợp L002; Merchant application/legal evidence/manual review; controlled org/Owner activation; membership/delegation; pickup management consumed from L004",
     "frontend_scope": "Personal default/profile/application/status; Merchant context/profile/facilities/staff; pickup link only when L004 delivered; no Guest type chooser",
-    "database_scope": "merchant application/org/Merchant business profile/membership/delegation; Retail Sender business profile DATA-01 UNRESOLVED (candidate Merchant, not accepted); pickup owner L004; Identity account/authoritative ID/credentials/verification/security contacts/session/security lifecycle; Spec003 orchestration only, exact schema/API pending",
+    "database_scope": "Identity security master; independent customer_profile boundary (no org/member prerequisite), physical candidate existing merchant module; separate Merchant application/org/member/settings aggregates; candidate data-model.md before DDL",
     "workflow": "Guest đăng ký cá nhân→Identity verify/login→personal workspace→Merchant apply→manual sandbox review→approval+Owner activation→context; rejection/revocation giữ personal access",
-    "blockers": "IAM-CUSTOMER-01; IAM-CONTEXT-02; IAM-INVITE-03; DATA-01; PRIVACY-01; POLICY-003-01",
+    "blockers": "CANDIDATE_CONTRACT_ACCEPTANCE; IMPLEMENTATION_AUTHORIZATION; first-use real delivery/storage/scanner configuration; minimum CAT-004/POL-005 before BC159 full acceptance",
     "approval_status": "CANONICAL_DOCUMENTATION_OWNER_AUTHORIZED",
     "readiness": "BLOCKED_FOR_IMPLEMENTATION",
     "capability_ids": [
@@ -122,7 +122,7 @@
       "L005"
     ],
     "invariants": "Guest đăng ký cá nhân→Identity verify/login→personal→Merchant application/review/activation; revoke giữa form và submit phải deny; giữ BR-01–21 theo applicability; xem business-baseline.md.",
-    "contract_scope": "Sender profile, org/membership/delegation/lifecycle; credential chỉ Identity; exact API/event/DTO/permission/schema DECISION_REQUIRED trước code; contracts/ là nguồn duy nhất.",
+    "contract_scope": "Candidate contracts at specs/003-sender-merchant-onboarding/contracts; Owner six policy refinements recorded, exact new names pending review; accepted contracts unchanged",
     "authorization": "Current account/session AND explicit permission AND authoritative membership/resource/assignment scope AND current state/evidence; actors: R01,R02,R03,R04,R05,R16,R18,R19,R29",
     "idempotency_concurrency": "Mutation: stable key+scope/canonical payload; replay một effect, khác payload conflict; DB uniqueness/locking và rollback tests. Read-only không mutation. Identity Refresh strict single-flight/no blind retry.",
     "audit_privacy": "Actor/source/reason/correlation, append-only audit/evidence; PII tối thiểu, không secrets/raw payment trong log; retention D-V3-06.",

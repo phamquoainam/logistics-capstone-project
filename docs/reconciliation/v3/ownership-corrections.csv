@@ -20,3 +20,4 @@ BC-009,L003,L004,merchant,merchant,SINGLE_PICKUP_COMMAND_OWNER_IN_CANONICAL_004;
 BC-021,L003,L004,merchant,merchant,SINGLE_PICKUP_COMMAND_OWNER_IN_CANONICAL_004; no feature removed
 BC-168,L004,L004,merchant,merchant,SINGLE_PICKUP_COMMAND_OWNER_IN_CANONICAL_004; no feature removed
 BC-134,L003,L003,merchant,identity,"Identity owns account/credential/verification/security-contact/session resources; Spec003 orchestrates workflow/UI only; Retail Sender business profile remains DATA-01 unresolved (candidate Merchant), not reassigned to Identity"
+BC-135,L003,L003,merchant,customer_profile,"OWNER-S003-SIX-2026-10-27 DATA-01 refinement: independent self customer business authority; no org/member dependency; physical existing merchant module candidate does not confer tenant authority. Supersedes prior unresolved candidate, not historical evidence."

@@ -1,0 +1,3751 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Spec003 controlled onboarding contract CANDIDATE",
+    "version": "0.1.0",
+    "description": "CANDIDATE_FOR_OWNER_REVIEW. No runtime/accepted-contract change. All new identifiers are proposals."
+  },
+  "servers": [{"url": "/api/v1"}],
+  "x-status": "CANDIDATE_FOR_OWNER_REVIEW",
+  "security": [{"customerBearer": []}],
+  "paths": {
+    "/customer-auth/csrf": {
+      "get": {
+        "operationId": "getCustomerCsrf",
+        "summary": "getCustomerCsrf [CANDIDATE]",
+        "tags": ["Customer Identity"],
+        "security": [],
+        "x-authority": "PREAUTH",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": false,
+        "x-idempotency": false,
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "Set-Cookie": {"$ref": "#/components/headers/SetCookie"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/CsrfChallenge"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        }
+      }
+    },
+    "/customer-auth/enrollments": {
+      "post": {
+        "operationId": "enrollCustomer",
+        "summary": "enrollCustomer [CANDIDATE]",
+        "tags": ["Customer Identity"],
+        "security": [],
+        "x-authority": "PREAUTH",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": false,
+        "x-idempotency": true,
+        "parameters": [
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "202": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Accepted"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {
+          "required": true,
+          "content": {"application/json": {"schema": {"$ref": "#/components/schemas/EnrollmentInput"}}}
+        }
+      }
+    },
+    "/customer-auth/verification-resend": {
+      "post": {
+        "operationId": "resendCustomerVerification",
+        "summary": "resendCustomerVerification [CANDIDATE]",
+        "tags": ["Customer Identity"],
+        "security": [],
+        "x-authority": "PREAUTH",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": false,
+        "x-idempotency": true,
+        "parameters": [
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "202": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Accepted"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/EmailInput"}}}}
+      }
+    },
+    "/customer-auth/verifications": {
+      "post": {
+        "operationId": "verifyCustomerEmail",
+        "summary": "verifyCustomerEmail [CANDIDATE]",
+        "tags": ["Customer Identity"],
+        "security": [],
+        "x-authority": "PREAUTH",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": false,
+        "x-idempotency": true,
+        "parameters": [
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "204": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"}
+            }
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ProofInput"}}}}
+      }
+    },
+    "/customer-auth/login": {
+      "post": {
+        "operationId": "loginCustomer",
+        "summary": "loginCustomer [CANDIDATE]",
+        "tags": ["Customer Identity"],
+        "security": [],
+        "x-authority": "PREAUTH",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": false,
+        "x-idempotency": false,
+        "parameters": [{"$ref": "#/components/parameters/header_Origin"}, {"$ref": "#/components/parameters/header_XCSRFToken"}],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "Set-Cookie": {"$ref": "#/components/headers/SetCookie"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/AccessSession"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/CustomerLogin"}}}}
+      }
+    },
+    "/customer-auth/refresh": {
+      "post": {
+        "operationId": "refreshCustomer",
+        "summary": "refreshCustomer [CANDIDATE]",
+        "tags": ["Customer Identity"],
+        "security": [{"customerRefresh": []}],
+        "x-authority": "REFRESH_FAMILY",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": true,
+        "x-idempotency": false,
+        "parameters": [{"$ref": "#/components/parameters/header_Origin"}, {"$ref": "#/components/parameters/header_XCSRFToken"}],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "Set-Cookie": {"$ref": "#/components/headers/SetCookie"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/AccessSession"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        }
+      }
+    },
+    "/customer-auth/logout": {
+      "post": {
+        "operationId": "logoutCustomer",
+        "summary": "logoutCustomer [CANDIDATE]",
+        "tags": ["Customer Identity"],
+        "security": [],
+        "x-authority": "CSRF_SESSION_OR_PREAUTH",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": true,
+        "x-idempotency": false,
+        "parameters": [{"$ref": "#/components/parameters/header_Origin"}, {"$ref": "#/components/parameters/header_XCSRFToken"}],
+        "responses": {
+          "204": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "Set-Cookie": {"$ref": "#/components/headers/SetCookie"}
+            }
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        }
+      }
+    },
+    "/customer-auth/me": {
+      "get": {
+        "operationId": "getCustomerSubject",
+        "summary": "getCustomerSubject [CANDIDATE]",
+        "tags": ["Customer Identity"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": true,
+        "x-idempotency": false,
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/CustomerSubject"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        }
+      }
+    },
+    "/customer-auth/recovery": {
+      "post": {
+        "operationId": "requestCustomerRecovery",
+        "summary": "requestCustomerRecovery [CANDIDATE]",
+        "tags": ["Customer Identity"],
+        "security": [],
+        "x-authority": "PREAUTH",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": false,
+        "x-idempotency": true,
+        "parameters": [
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "202": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Accepted"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/EmailInput"}}}}
+      }
+    },
+    "/customer-auth/recovery-confirm": {
+      "post": {
+        "operationId": "confirmCustomerRecovery",
+        "summary": "confirmCustomerRecovery [CANDIDATE]",
+        "tags": ["Customer Identity"],
+        "security": [],
+        "x-authority": "PREAUTH",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": false,
+        "x-idempotency": true,
+        "parameters": [
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "204": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "Set-Cookie": {"$ref": "#/components/headers/SetCookie"}
+            }
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {
+          "required": true,
+          "content": {"application/json": {"schema": {"$ref": "#/components/schemas/RecoveryConfirm"}}}
+        }
+      }
+    },
+    "/customer-auth/security-email-changes": {
+      "post": {
+        "operationId": "requestSecurityEmailChange",
+        "summary": "requestSecurityEmailChange [CANDIDATE]",
+        "tags": ["Customer Identity"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "202": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Accepted"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {
+          "required": true,
+          "content": {"application/json": {"schema": {"$ref": "#/components/schemas/SecurityContactChange"}}}
+        }
+      }
+    },
+    "/customer-auth/security-email-confirmations": {
+      "post": {
+        "operationId": "confirmSecurityEmailChange",
+        "summary": "confirmSecurityEmailChange [CANDIDATE]",
+        "tags": ["Customer Identity"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "204": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "Set-Cookie": {"$ref": "#/components/headers/SetCookie"}
+            }
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ProofInput"}}}}
+      }
+    },
+    "/customer-auth/reauthentication": {
+      "post": {
+        "operationId": "requestCustomerReauthentication",
+        "summary": "requestCustomerReauthentication [CANDIDATE]",
+        "tags": ["Customer Identity"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Reauthentication"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/CustomerLogin"}}}}
+      }
+    },
+    "/customer-auth/owner-recovery-consents": {
+      "post": {
+        "operationId": "createOwnerRecoveryConsent",
+        "summary": "createOwnerRecoveryConsent [CANDIDATE]",
+        "tags": ["Customer Identity"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "201": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "Location": {"$ref": "#/components/headers/Location"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/RecoveryConsent"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {
+          "required": true,
+          "content": {"application/json": {"schema": {"$ref": "#/components/schemas/RecoveryConsentInput"}}}
+        }
+      }
+    },
+    "/customer/profile": {
+      "get": {
+        "operationId": "getCustomerProfile",
+        "summary": "getCustomerProfile [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": true,
+        "x-idempotency": false,
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/CustomerProfile"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        }
+      },
+      "put": {
+        "operationId": "updateCustomerProfile",
+        "summary": "updateCustomerProfile [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_IfMatch"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/CustomerProfile"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "412": {"$ref": "#/components/responses/Error412"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "428": {"$ref": "#/components/responses/Error428"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ProfileInput"}}}}
+      }
+    },
+    "/customer/contexts": {
+      "get": {
+        "operationId": "listCustomerContexts",
+        "summary": "listCustomerContexts [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": true,
+        "x-idempotency": false,
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ContextList"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        }
+      }
+    },
+    "/customer/context-selection": {
+      "post": {
+        "operationId": "selectCustomerContext",
+        "summary": "selectCustomerContext [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": true,
+        "x-idempotency": false,
+        "parameters": [{"$ref": "#/components/parameters/header_Origin"}, {"$ref": "#/components/parameters/header_XCSRFToken"}],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Context"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ContextInput"}}}}
+      }
+    },
+    "/customer/business-contact-proofs": {
+      "post": {
+        "operationId": "requestBusinessContactProof",
+        "summary": "requestBusinessContactProof [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "202": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Accepted"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {
+          "required": true,
+          "content": {"application/json": {"schema": {"$ref": "#/components/schemas/BusinessContactInput"}}}
+        }
+      }
+    },
+    "/customer/business-contact-confirmations": {
+      "post": {
+        "operationId": "confirmBusinessContactProof",
+        "summary": "confirmBusinessContactProof [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/BusinessContactAttestation"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ProofInput"}}}}
+      }
+    },
+    "/merchant-applications": {
+      "get": {
+        "operationId": "listOwnApplications",
+        "summary": "listOwnApplications [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": true,
+        "x-idempotency": false,
+        "parameters": [
+          {"$ref": "#/components/parameters/query_page"},
+          {"$ref": "#/components/parameters/query_size"},
+          {"$ref": "#/components/parameters/query_search"},
+          {"$ref": "#/components/parameters/query_state"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ApplicationPage"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        }
+      },
+      "post": {
+        "operationId": "createApplicationDraft",
+        "summary": "createApplicationDraft [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "201": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"},
+              "Location": {"$ref": "#/components/headers/Location"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Application"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {
+          "required": true,
+          "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ApplicationDraftInput"}}}
+        }
+      }
+    },
+    "/merchant-applications/{applicationId}": {
+      "get": {
+        "operationId": "getOwnApplication",
+        "summary": "getOwnApplication [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": true,
+        "x-idempotency": false,
+        "parameters": [{"name": "applicationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Application"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        }
+      },
+      "put": {
+        "operationId": "updateApplicationDraft",
+        "summary": "updateApplicationDraft [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"name": "applicationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_IfMatch"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Application"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "412": {"$ref": "#/components/responses/Error412"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "428": {"$ref": "#/components/responses/Error428"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {
+          "required": true,
+          "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ApplicationDraftInput"}}}
+        }
+      }
+    },
+    "/merchant-applications/{applicationId}/submit": {
+      "post": {
+        "operationId": "submitApplication",
+        "summary": "submitApplication [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"name": "applicationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_IfMatch"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Application"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "412": {"$ref": "#/components/responses/Error412"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "428": {"$ref": "#/components/responses/Error428"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/EmptyCommand"}}}}
+      }
+    },
+    "/merchant-applications/{applicationId}/resubmit": {
+      "post": {
+        "operationId": "resubmitApplication",
+        "summary": "resubmitApplication [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"name": "applicationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_IfMatch"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Application"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "412": {"$ref": "#/components/responses/Error412"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "428": {"$ref": "#/components/responses/Error428"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/EmptyCommand"}}}}
+      }
+    },
+    "/merchant-applications/{applicationId}/withdrawal": {
+      "post": {
+        "operationId": "withdrawApplication",
+        "summary": "withdrawApplication [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"name": "applicationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_IfMatch"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Application"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "412": {"$ref": "#/components/responses/Error412"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "428": {"$ref": "#/components/responses/Error428"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Reason"}}}}
+      }
+    },
+    "/merchant-applications/{applicationId}/evidence": {
+      "post": {
+        "operationId": "uploadApplicationEvidence",
+        "summary": "uploadApplicationEvidence [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"name": "applicationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "201": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"},
+              "Location": {"$ref": "#/components/headers/Location"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Evidence"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "413": {"$ref": "#/components/responses/Error413"},
+          "415": {"$ref": "#/components/responses/Error415"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {
+          "required": true,
+          "content": {"multipart/form-data": {"schema": {"$ref": "#/components/schemas/EvidenceUpload"}}}
+        }
+      }
+    },
+    "/merchant-applications/{applicationId}/evidence/{evidenceId}": {
+      "get": {
+        "operationId": "getApplicationEvidence",
+        "summary": "getApplicationEvidence [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "APPLICANT_OR_REVIEWER",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": true,
+        "x-idempotency": false,
+        "parameters": [
+          {"name": "applicationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "evidenceId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Evidence"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        }
+      },
+      "delete": {
+        "operationId": "removeDraftEvidence",
+        "summary": "removeDraftEvidence [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"name": "applicationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "evidenceId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_IfMatch"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "204": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"}
+            }
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "412": {"$ref": "#/components/responses/Error412"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "428": {"$ref": "#/components/responses/Error428"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        }
+      }
+    },
+    "/merchant-applications/{applicationId}/evidence/{evidenceId}/content": {
+      "get": {
+        "operationId": "downloadApplicationEvidence",
+        "summary": "downloadApplicationEvidence [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "APPLICANT_OR_REVIEWER",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": true,
+        "x-idempotency": false,
+        "parameters": [
+          {"name": "applicationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "evidenceId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"}
+            },
+            "content": {
+              "application/pdf": {"schema": {"type": "string", "format": "binary"}},
+              "image/png": {"schema": {"type": "string", "format": "binary"}},
+              "image/jpeg": {"schema": {"type": "string", "format": "binary"}}
+            }
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        }
+      }
+    },
+    "/business-review/applications": {
+      "get": {
+        "operationId": "listReviewApplications",
+        "summary": "listReviewApplications [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "BUSINESS_ADMIN",
+        "x-permission-candidate": "application.review",
+        "x-current-authority-required": true,
+        "x-idempotency": false,
+        "parameters": [
+          {"$ref": "#/components/parameters/query_page"},
+          {"$ref": "#/components/parameters/query_size"},
+          {"$ref": "#/components/parameters/query_search"},
+          {"$ref": "#/components/parameters/query_state"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ApplicationPage"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        }
+      }
+    },
+    "/business-review/applications/{applicationId}": {
+      "get": {
+        "operationId": "getReviewApplication",
+        "summary": "getReviewApplication [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "BUSINESS_ADMIN",
+        "x-permission-candidate": "application.review",
+        "x-current-authority-required": true,
+        "x-idempotency": false,
+        "parameters": [{"name": "applicationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Application"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        }
+      }
+    },
+    "/business-review/applications/{applicationId}/take-review": {
+      "post": {
+        "operationId": "takeApplicationReview",
+        "summary": "takeApplicationReview [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "BUSINESS_ADMIN",
+        "x-permission-candidate": "application.review",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"name": "applicationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_IfMatch"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Application"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "412": {"$ref": "#/components/responses/Error412"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "428": {"$ref": "#/components/responses/Error428"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ReviewDecision"}}}}
+      }
+    },
+    "/business-review/applications/{applicationId}/request-information": {
+      "post": {
+        "operationId": "requestApplicationInformation",
+        "summary": "requestApplicationInformation [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "BUSINESS_ADMIN",
+        "x-permission-candidate": "application.review",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"name": "applicationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_IfMatch"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Application"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "412": {"$ref": "#/components/responses/Error412"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "428": {"$ref": "#/components/responses/Error428"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ReviewDecision"}}}}
+      }
+    },
+    "/business-review/applications/{applicationId}/approval": {
+      "post": {
+        "operationId": "approveApplication",
+        "summary": "approveApplication [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "BUSINESS_ADMIN",
+        "x-permission-candidate": "application.review",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"name": "applicationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_IfMatch"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Application"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "412": {"$ref": "#/components/responses/Error412"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "428": {"$ref": "#/components/responses/Error428"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ReviewDecision"}}}}
+      }
+    },
+    "/business-review/applications/{applicationId}/rejection": {
+      "post": {
+        "operationId": "rejectApplication",
+        "summary": "rejectApplication [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "BUSINESS_ADMIN",
+        "x-permission-candidate": "application.review",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"name": "applicationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_IfMatch"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Application"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "412": {"$ref": "#/components/responses/Error412"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "428": {"$ref": "#/components/responses/Error428"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ReviewDecision"}}}}
+      }
+    },
+    "/merchant-organizations/{organizationId}": {
+      "get": {
+        "operationId": "getMerchantOrganization",
+        "summary": "getMerchantOrganization [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "org.read",
+        "x-current-authority-required": true,
+        "x-idempotency": false,
+        "parameters": [{"name": "organizationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Organization"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        }
+      }
+    },
+    "/merchant-organizations/{organizationId}/legal-profile": {
+      "put": {
+        "operationId": "updateMerchantLegalProfile",
+        "summary": "updateMerchantLegalProfile [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "org.legal.write",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"name": "organizationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_IfMatch"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "202": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/LegalProfileRevision"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "412": {"$ref": "#/components/responses/Error412"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "428": {"$ref": "#/components/responses/Error428"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {
+          "required": true,
+          "content": {"application/json": {"schema": {"$ref": "#/components/schemas/LegalProfileInput"}}}
+        }
+      }
+    },
+    "/merchant-organizations/{organizationId}/legal-profile-revisions/{revisionId}": {
+      "get": {
+        "operationId": "getMerchantLegalProfileRevision",
+        "summary": "getMerchantLegalProfileRevision [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "OWNER_OR_REVIEWER",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": true,
+        "x-idempotency": false,
+        "parameters": [
+          {"name": "organizationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "revisionId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/LegalProfileRevision"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        }
+      }
+    },
+    "/merchant-organizations/{organizationId}/legal-profile-evidence": {
+      "post": {
+        "operationId": "uploadMerchantLegalEvidence",
+        "summary": "uploadMerchantLegalEvidence [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "org.legal.write",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"name": "organizationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "201": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"},
+              "Location": {"$ref": "#/components/headers/Location"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/LegalEvidence"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "413": {"$ref": "#/components/responses/Error413"},
+          "415": {"$ref": "#/components/responses/Error415"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {
+          "required": true,
+          "content": {"multipart/form-data": {"schema": {"$ref": "#/components/schemas/EvidenceUpload"}}}
+        }
+      }
+    },
+    "/merchant-organizations/{organizationId}/legal-profile-evidence/{evidenceId}": {
+      "get": {
+        "operationId": "getMerchantLegalEvidence",
+        "summary": "getMerchantLegalEvidence [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "OWNER_OR_REVIEWER",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": true,
+        "x-idempotency": false,
+        "parameters": [
+          {"name": "organizationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "evidenceId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/LegalEvidence"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        }
+      }
+    },
+    "/merchant-organizations/{organizationId}/legal-profile-evidence/{evidenceId}/content": {
+      "get": {
+        "operationId": "downloadMerchantLegalEvidence",
+        "summary": "downloadMerchantLegalEvidence [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "OWNER_OR_REVIEWER",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": true,
+        "x-idempotency": false,
+        "parameters": [
+          {"name": "organizationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "evidenceId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"}
+            },
+            "content": {
+              "application/pdf": {"schema": {"type": "string", "format": "binary"}},
+              "image/png": {"schema": {"type": "string", "format": "binary"}},
+              "image/jpeg": {"schema": {"type": "string", "format": "binary"}}
+            }
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        }
+      }
+    },
+    "/business-review/organizations/{organizationId}/legal-profile-revisions/{revisionId}/decision": {
+      "post": {
+        "operationId": "reviewMerchantLegalProfile",
+        "summary": "reviewMerchantLegalProfile [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "BUSINESS_ADMIN",
+        "x-permission-candidate": "application.review",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"name": "organizationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "revisionId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_IfMatch"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Organization"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "412": {"$ref": "#/components/responses/Error412"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "428": {"$ref": "#/components/responses/Error428"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {
+          "required": true,
+          "content": {"application/json": {"schema": {"$ref": "#/components/schemas/LegalProfileDecision"}}}
+        }
+      }
+    },
+    "/business-review/organizations/{organizationId}/suspension": {
+      "post": {
+        "operationId": "suspendMerchantOrganization",
+        "summary": "suspendMerchantOrganization [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "BUSINESS_ADMIN",
+        "x-permission-candidate": "org.suspend",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"name": "organizationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_IfMatch"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Organization"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "412": {"$ref": "#/components/responses/Error412"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "428": {"$ref": "#/components/responses/Error428"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Reason"}}}}
+      }
+    },
+    "/business-review/organizations/{organizationId}/reinstatement": {
+      "post": {
+        "operationId": "reinstateMerchantOrganization",
+        "summary": "reinstateMerchantOrganization [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "BUSINESS_ADMIN",
+        "x-permission-candidate": "org.reinstate",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"name": "organizationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_IfMatch"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Organization"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "412": {"$ref": "#/components/responses/Error412"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "428": {"$ref": "#/components/responses/Error428"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Reason"}}}}
+      }
+    },
+    "/business-review/organizations/{organizationId}/closure": {
+      "post": {
+        "operationId": "closeMerchantOrganization",
+        "summary": "closeMerchantOrganization [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "BUSINESS_ADMIN",
+        "x-permission-candidate": "org.close",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"name": "organizationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_IfMatch"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Organization"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "412": {"$ref": "#/components/responses/Error412"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "428": {"$ref": "#/components/responses/Error428"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Reason"}}}}
+      }
+    },
+    "/merchant-organizations/{organizationId}/closure-request": {
+      "post": {
+        "operationId": "requestMerchantClosure",
+        "summary": "requestMerchantClosure [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "org.closure.request",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"name": "organizationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_IfMatch"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Organization"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "412": {"$ref": "#/components/responses/Error412"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "428": {"$ref": "#/components/responses/Error428"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Reason"}}}}
+      }
+    },
+    "/merchant-organizations/{organizationId}/members": {
+      "get": {
+        "operationId": "listMerchantMembers",
+        "summary": "listMerchantMembers [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "member.read",
+        "x-current-authority-required": true,
+        "x-idempotency": false,
+        "parameters": [
+          {"name": "organizationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/query_page"},
+          {"$ref": "#/components/parameters/query_size"},
+          {"$ref": "#/components/parameters/query_search"},
+          {"$ref": "#/components/parameters/query_state"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/MemberPage"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        }
+      }
+    },
+    "/merchant-organizations/{organizationId}/members/{membershipId}/grants": {
+      "put": {
+        "operationId": "replaceMerchantMemberGrants",
+        "summary": "replaceMerchantMemberGrants [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "member.manage",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"name": "organizationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "membershipId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_IfMatch"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Member"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "412": {"$ref": "#/components/responses/Error412"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "428": {"$ref": "#/components/responses/Error428"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/MemberInput"}}}}
+      }
+    },
+    "/merchant-organizations/{organizationId}/members/{membershipId}/suspension": {
+      "post": {
+        "operationId": "suspendMerchantMember",
+        "summary": "suspendMerchantMember [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "member.manage",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"name": "organizationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "membershipId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_IfMatch"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Member"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "412": {"$ref": "#/components/responses/Error412"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "428": {"$ref": "#/components/responses/Error428"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Reason"}}}}
+      }
+    },
+    "/merchant-organizations/{organizationId}/members/{membershipId}/reinstatement": {
+      "post": {
+        "operationId": "reinstateMerchantMember",
+        "summary": "reinstateMerchantMember [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "member.manage",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"name": "organizationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "membershipId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_IfMatch"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Member"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "412": {"$ref": "#/components/responses/Error412"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "428": {"$ref": "#/components/responses/Error428"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Reason"}}}}
+      }
+    },
+    "/merchant-organizations/{organizationId}/members/{membershipId}/revocation": {
+      "post": {
+        "operationId": "revokeMerchantMember",
+        "summary": "revokeMerchantMember [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "member.manage",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"name": "organizationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "membershipId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_IfMatch"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Member"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "412": {"$ref": "#/components/responses/Error412"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "428": {"$ref": "#/components/responses/Error428"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Reason"}}}}
+      }
+    },
+    "/merchant-organizations/{organizationId}/membership-leave": {
+      "post": {
+        "operationId": "leaveMerchantOrganization",
+        "summary": "leaveMerchantOrganization [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"name": "organizationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_IfMatch"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "204": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"}
+            }
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "412": {"$ref": "#/components/responses/Error412"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "428": {"$ref": "#/components/responses/Error428"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Reason"}}}}
+      }
+    },
+    "/merchant-organizations/{organizationId}/invitations": {
+      "get": {
+        "operationId": "listMerchantInvitations",
+        "summary": "listMerchantInvitations [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "member.read",
+        "x-current-authority-required": true,
+        "x-idempotency": false,
+        "parameters": [
+          {"name": "organizationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/query_page"},
+          {"$ref": "#/components/parameters/query_size"},
+          {"$ref": "#/components/parameters/query_search"},
+          {"$ref": "#/components/parameters/query_state"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/InvitationPage"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        }
+      },
+      "post": {
+        "operationId": "createMerchantInvitation",
+        "summary": "createMerchantInvitation [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "member.invite",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"name": "organizationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "201": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"},
+              "Location": {"$ref": "#/components/headers/Location"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Invitation"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {
+          "required": true,
+          "content": {"application/json": {"schema": {"$ref": "#/components/schemas/InvitationInput"}}}
+        }
+      }
+    },
+    "/merchant-organizations/{organizationId}/invitations/{invitationId}/resend": {
+      "post": {
+        "operationId": "resendMerchantInvitation",
+        "summary": "resendMerchantInvitation [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "member.invite",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"name": "organizationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "invitationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_IfMatch"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Invitation"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "412": {"$ref": "#/components/responses/Error412"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "428": {"$ref": "#/components/responses/Error428"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Reason"}}}}
+      }
+    },
+    "/merchant-organizations/{organizationId}/invitations/{invitationId}/revocation": {
+      "post": {
+        "operationId": "revokeMerchantInvitation",
+        "summary": "revokeMerchantInvitation [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "member.invite",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"name": "organizationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "invitationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_IfMatch"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Invitation"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "412": {"$ref": "#/components/responses/Error412"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "428": {"$ref": "#/components/responses/Error428"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Reason"}}}}
+      }
+    },
+    "/merchant-invitations/preview": {
+      "post": {
+        "operationId": "previewMerchantInvitation",
+        "summary": "previewMerchantInvitation [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": true,
+        "x-idempotency": false,
+        "parameters": [{"$ref": "#/components/parameters/header_Origin"}, {"$ref": "#/components/parameters/header_XCSRFToken"}],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/InvitationPreview"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ProofInput"}}}}
+      }
+    },
+    "/merchant-invitations/acceptance": {
+      "post": {
+        "operationId": "acceptMerchantInvitation",
+        "summary": "acceptMerchantInvitation [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Member"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ProofInput"}}}}
+      }
+    },
+    "/merchant-invitations/rejection": {
+      "post": {
+        "operationId": "rejectMerchantInvitation",
+        "summary": "rejectMerchantInvitation [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "204": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"}
+            }
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ProofInput"}}}}
+      }
+    },
+    "/merchant-organizations/{organizationId}/facilities": {
+      "get": {
+        "operationId": "listMerchantFacilities",
+        "summary": "listMerchantFacilities [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "org.read",
+        "x-current-authority-required": true,
+        "x-idempotency": false,
+        "parameters": [
+          {"name": "organizationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/query_page"},
+          {"$ref": "#/components/parameters/query_size"},
+          {"$ref": "#/components/parameters/query_search"},
+          {"$ref": "#/components/parameters/query_state"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/FacilityPage"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        }
+      },
+      "post": {
+        "operationId": "createMerchantFacility",
+        "summary": "createMerchantFacility [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "facility.write",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"name": "organizationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "201": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"},
+              "Location": {"$ref": "#/components/headers/Location"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Facility"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/FacilityInput"}}}}
+      }
+    },
+    "/merchant-organizations/{organizationId}/facilities/{facilityId}": {
+      "put": {
+        "operationId": "updateMerchantFacility",
+        "summary": "updateMerchantFacility [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "facility.write",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"name": "organizationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "facilityId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_IfMatch"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Facility"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "412": {"$ref": "#/components/responses/Error412"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "428": {"$ref": "#/components/responses/Error428"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/FacilityInput"}}}}
+      }
+    },
+    "/merchant-organizations/{organizationId}/defaults": {
+      "get": {
+        "operationId": "getMerchantDefaults",
+        "summary": "getMerchantDefaults [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "org.read",
+        "x-current-authority-required": true,
+        "x-idempotency": false,
+        "parameters": [{"name": "organizationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Defaults"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        }
+      },
+      "put": {
+        "operationId": "updateMerchantDefaults",
+        "summary": "updateMerchantDefaults [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "defaults.write",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"name": "organizationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_IfMatch"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Defaults"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "412": {"$ref": "#/components/responses/Error412"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "428": {"$ref": "#/components/responses/Error428"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/DefaultsInput"}}}}
+      }
+    },
+    "/merchant-organizations/{organizationId}/owner-transfers": {
+      "post": {
+        "operationId": "proposeMerchantOwnerTransfer",
+        "summary": "proposeMerchantOwnerTransfer [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "ownership.transfer",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"name": "organizationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_IfMatch"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "201": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"},
+              "Location": {"$ref": "#/components/headers/Location"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Ownership"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "412": {"$ref": "#/components/responses/Error412"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "428": {"$ref": "#/components/responses/Error428"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/OwnershipInput"}}}}
+      }
+    },
+    "/merchant-organizations/{organizationId}/owner-transfers/{transferId}/acceptance": {
+      "post": {
+        "operationId": "acceptMerchantOwnerTransfer",
+        "summary": "acceptMerchantOwnerTransfer [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"name": "organizationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "transferId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_IfMatch"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Ownership"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "412": {"$ref": "#/components/responses/Error412"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "428": {"$ref": "#/components/responses/Error428"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {
+          "required": true,
+          "content": {"application/json": {"schema": {"$ref": "#/components/schemas/OwnershipAcceptance"}}}
+        }
+      }
+    },
+    "/merchant-organizations/{organizationId}/owner-transfers/{transferId}/revocation": {
+      "post": {
+        "operationId": "revokeMerchantOwnerTransfer",
+        "summary": "revokeMerchantOwnerTransfer [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "ownership.transfer",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"name": "organizationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "transferId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_IfMatch"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Ownership"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "412": {"$ref": "#/components/responses/Error412"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "428": {"$ref": "#/components/responses/Error428"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Reason"}}}}
+      }
+    },
+    "/merchant-organizations/{organizationId}/owner-transfers/{transferId}": {
+      "get": {
+        "operationId": "getMerchantOwnerTransfer",
+        "summary": "getMerchantOwnerTransfer [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": true,
+        "x-idempotency": false,
+        "parameters": [
+          {"name": "organizationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "transferId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Ownership"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        }
+      }
+    },
+    "/business-review/organizations/{organizationId}/owner-recoveries": {
+      "post": {
+        "operationId": "requestMerchantOwnerRecovery",
+        "summary": "requestMerchantOwnerRecovery [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "BUSINESS_ADMIN",
+        "x-permission-candidate": "ownership.recover",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"name": "organizationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_IfMatch"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "201": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"},
+              "Location": {"$ref": "#/components/headers/Location"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Ownership"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "412": {"$ref": "#/components/responses/Error412"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "428": {"$ref": "#/components/responses/Error428"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {
+          "required": true,
+          "content": {"application/json": {"schema": {"$ref": "#/components/schemas/OwnerRecoveryInput"}}}
+        }
+      }
+    },
+    "/business-review/organizations/{organizationId}/owner-recoveries/{transferId}/approval": {
+      "post": {
+        "operationId": "approveMerchantOwnerRecovery",
+        "summary": "approveMerchantOwnerRecovery [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "BUSINESS_ADMIN",
+        "x-permission-candidate": "ownership.recover",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"name": "organizationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "transferId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_IfMatch"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Ownership"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "412": {"$ref": "#/components/responses/Error412"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "428": {"$ref": "#/components/responses/Error428"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        },
+        "requestBody": {
+          "required": true,
+          "content": {"application/json": {"schema": {"$ref": "#/components/schemas/OwnershipAcceptance"}}}
+        }
+      }
+    },
+    "/onboarding-receipts/{operationId}/{idempotencyKey}": {
+      "get": {
+        "operationId": "getOnboardingReceipt",
+        "summary": "getOnboardingReceipt [CANDIDATE]",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "CUSTOMER",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": true,
+        "x-idempotency": false,
+        "parameters": [
+          {
+            "name": "operationId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string", "minLength": 1, "maxLength": 80}
+          },
+          {"name": "idempotencyKey", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Receipt"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        }
+      }
+    },
+    "/customer-auth/legacy-links": {
+      "post": {
+        "operationId": "requestLegacyCustomerLink",
+        "summary": "requestLegacyCustomerLink [CANDIDATE]",
+        "tags": ["Customer Identity"],
+        "security": [{"systemBearerForLegacyLink": []}],
+        "x-authority": "SYSTEM_CURRENT_LINK_ONLY",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "202": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Accepted"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "404": {"$ref": "#/components/responses/Error404"}
+        },
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/EmailInput"}}}}
+      }
+    },
+    "/customer-auth/legacy-link-confirmations": {
+      "post": {
+        "operationId": "confirmLegacyCustomerLink",
+        "summary": "confirmLegacyCustomerLink [CANDIDATE]",
+        "tags": ["Customer Identity"],
+        "security": [{"systemBearerForLegacyLink": []}],
+        "x-authority": "SYSTEM_CURRENT_LINK_ONLY",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": true,
+        "x-idempotency": true,
+        "parameters": [
+          {"$ref": "#/components/parameters/header_IdempotencyKey"},
+          {"$ref": "#/components/parameters/header_Origin"},
+          {"$ref": "#/components/parameters/header_XCSRFToken"}
+        ],
+        "responses": {
+          "202": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Accepted"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "409": {"$ref": "#/components/responses/Error409"},
+          "422": {"$ref": "#/components/responses/Error422"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "404": {"$ref": "#/components/responses/Error404"}
+        },
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ProofInput"}}}}
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "customerBearer": {"type": "http", "scheme": "bearer", "bearerFormat": "JWT"},
+      "customerRefresh": {"type": "apiKey", "in": "cookie", "name": "__Host-elogistics.customer.refresh"},
+      "systemBearerForLegacyLink": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Accepted SYSTEM trust domain, only explicitly authenticated legacy linking; never a general customer/business authority."
+      }
+    },
+    "schemas": {
+      "Accepted": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {"accepted": {"const": true, "type": "boolean"}, "requestId": {"type": "string", "format": "uuid"}},
+        "required": ["accepted", "requestId"]
+      },
+      "CsrfChallenge": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {"challenge": {"type": "string", "minLength": 1, "maxLength": 512}},
+        "required": ["challenge"]
+      },
+      "EnrollmentInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "email": {"type": "string", "minLength": 1, "maxLength": 254, "format": "email"},
+          "password": {"type": "string", "minLength": 15, "maxLength": 72},
+          "displayName": {"type": "string", "minLength": 1, "maxLength": 160},
+          "consentVersion": {"type": "string", "minLength": 1, "maxLength": 64}
+        },
+        "required": ["email", "password", "displayName", "consentVersion"]
+      },
+      "EmailInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {"email": {"type": "string", "minLength": 1, "maxLength": 254, "format": "email"}},
+        "required": ["email"]
+      },
+      "ProofInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {"proofId": {"type": "string", "format": "uuid"}, "proof": {"type": "string", "minLength": 1, "maxLength": 512}},
+        "required": ["proofId", "proof"]
+      },
+      "CustomerLogin": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "email": {"type": "string", "minLength": 1, "maxLength": 254, "format": "email"},
+          "password": {"type": "string", "minLength": 1, "maxLength": 256}
+        },
+        "required": ["email", "password"]
+      },
+      "AccessSession": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "accessToken": {"type": "string", "minLength": 1, "maxLength": 8192},
+          "expiresAt": {"type": "string", "format": "date-time"},
+          "accountId": {"type": "string", "format": "uuid"}
+        },
+        "required": ["accessToken", "expiresAt", "accountId"]
+      },
+      "CustomerSubject": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "accountId": {"type": "string", "format": "uuid"},
+          "displayName": {"type": "string", "minLength": 1, "maxLength": 160},
+          "verifiedEmail": {"type": "string", "minLength": 1, "maxLength": 254, "format": "email"},
+          "securityVersion": {"type": "integer", "minimum": 1}
+        },
+        "required": ["accountId", "displayName", "verifiedEmail", "securityVersion"]
+      },
+      "RecoveryConfirm": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "proofId": {"type": "string", "format": "uuid"},
+          "proof": {"type": "string", "minLength": 1, "maxLength": 512},
+          "newPassword": {"type": "string", "minLength": 15, "maxLength": 72}
+        },
+        "required": ["proofId", "proof", "newPassword"]
+      },
+      "SecurityContactChange": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "newEmail": {"type": "string", "minLength": 1, "maxLength": 254, "format": "email"},
+          "currentPassword": {"type": "string", "minLength": 1, "maxLength": 256}
+        },
+        "required": ["newEmail", "currentPassword"]
+      },
+      "ProfileInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "displayName": {"type": "string", "minLength": 1, "maxLength": 160},
+          "preferredLanguage": {"type": "string", "enum": ["vi", "en"]},
+          "businessContactEmail": {"type": "string", "minLength": 1, "maxLength": 254, "format": "email"},
+          "businessContactPhone": {"type": "string", "minLength": 1, "maxLength": 32}
+        },
+        "required": ["displayName", "preferredLanguage"]
+      },
+      "CustomerProfile": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "accountId": {"type": "string", "format": "uuid"},
+          "displayName": {"type": "string", "minLength": 1, "maxLength": 160},
+          "preferredLanguage": {"type": "string", "enum": ["vi", "en"]},
+          "businessContactEmail": {"type": "string", "minLength": 1, "maxLength": 254, "format": "email"},
+          "businessContactPhone": {"type": "string", "minLength": 1, "maxLength": 32},
+          "version": {"type": "integer", "minimum": 1}
+        },
+        "required": ["id", "accountId", "displayName", "preferredLanguage", "version"]
+      },
+      "BusinessContactInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {"email": {"type": "string", "minLength": 1, "maxLength": 254, "format": "email"}},
+        "required": ["email"]
+      },
+      "Address": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "country": {"type": "string", "minLength": 1, "maxLength": 2, "pattern": "^[A-Z]{2}$"},
+          "administrativeArea": {"type": "string", "minLength": 1, "maxLength": 160},
+          "locality": {"type": "string", "minLength": 1, "maxLength": 160},
+          "addressLine": {"type": "string", "minLength": 1, "maxLength": 500}
+        },
+        "required": ["country", "administrativeArea", "locality", "addressLine"]
+      },
+      "Declaration": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "accuracy": {"type": "boolean", "const": true},
+          "representation": {"type": "boolean", "const": true},
+          "consentVersion": {"type": "string", "minLength": 1, "maxLength": 64}
+        },
+        "required": ["accuracy", "representation", "consentVersion"]
+      },
+      "ApplicationInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "entityType": {"type": "string", "enum": ["COMPANY", "HOUSEHOLD_BUSINESS"]},
+          "jurisdiction": {"type": "string", "minLength": 1, "maxLength": 64},
+          "registeredName": {"type": "string", "minLength": 1, "maxLength": 240},
+          "legalIdentifier": {"type": "string", "minLength": 1, "maxLength": 80},
+          "registeredAddress": {"$ref": "#/components/schemas/Address"},
+          "operatingAddress": {"$ref": "#/components/schemas/Address"},
+          "representativeName": {"type": "string", "minLength": 1, "maxLength": 160},
+          "representativeEmail": {"type": "string", "minLength": 1, "maxLength": 254, "format": "email"},
+          "representativeRelationship": {"type": "string", "minLength": 1, "maxLength": 160},
+          "businessContactAttestationId": {"type": "string", "format": "uuid"},
+          "evidenceIds": {
+            "type": "array",
+            "items": {"type": "string", "format": "uuid"},
+            "minItems": 2,
+            "maxItems": 5,
+            "uniqueItems": true
+          },
+          "declarations": {"$ref": "#/components/schemas/Declaration"}
+        },
+        "required": [
+          "entityType",
+          "jurisdiction",
+          "registeredName",
+          "legalIdentifier",
+          "registeredAddress",
+          "operatingAddress",
+          "representativeName",
+          "representativeEmail",
+          "representativeRelationship",
+          "businessContactAttestationId",
+          "evidenceIds",
+          "declarations"
+        ]
+      },
+      "ApplicationDraftInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "entityType": {"type": "string", "enum": ["COMPANY", "HOUSEHOLD_BUSINESS"]},
+          "jurisdiction": {"type": "string", "minLength": 1, "maxLength": 64},
+          "registeredName": {"type": "string", "minLength": 1, "maxLength": 240},
+          "legalIdentifier": {"type": "string", "minLength": 1, "maxLength": 80},
+          "registeredAddress": {"$ref": "#/components/schemas/Address"},
+          "operatingAddress": {"$ref": "#/components/schemas/Address"},
+          "representativeName": {"type": "string", "minLength": 1, "maxLength": 160},
+          "representativeEmail": {"type": "string", "minLength": 1, "maxLength": 254, "format": "email"},
+          "representativeRelationship": {"type": "string", "minLength": 1, "maxLength": 160},
+          "businessContactAttestationId": {"type": "string", "format": "uuid"},
+          "evidenceIds": {
+            "type": "array",
+            "items": {"type": "string", "format": "uuid"},
+            "minItems": 0,
+            "maxItems": 5,
+            "uniqueItems": true
+          },
+          "declarations": {"$ref": "#/components/schemas/Declaration"}
+        },
+        "required": []
+      },
+      "Reauthentication": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {"proofId": {"type": "string", "format": "uuid"}, "expiresAt": {"type": "string", "format": "date-time"}},
+        "required": ["proofId", "expiresAt"]
+      },
+      "BusinessContactAttestation": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "purpose": {"type": "string", "const": "BUSINESS_CONTACT"},
+          "expiresAt": {"type": "string", "format": "date-time"}
+        },
+        "required": ["id", "purpose", "expiresAt"]
+      },
+      "RecoveryConsentInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "organizationId": {"type": "string", "format": "uuid"},
+          "reauthenticationProofId": {"type": "string", "format": "uuid"}
+        },
+        "required": ["organizationId", "reauthenticationProofId"]
+      },
+      "RecoveryConsent": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "organizationId": {"type": "string", "format": "uuid"},
+          "expiresAt": {"type": "string", "format": "date-time"}
+        },
+        "required": ["id", "organizationId", "expiresAt"]
+      },
+      "OwnerRecoveryInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "targetConsentId": {"type": "string", "format": "uuid"},
+          "evidenceIds": {"type": "array", "items": {"type": "string", "format": "uuid"}, "minItems": 1, "maxItems": 5},
+          "reason": {"type": "string", "minLength": 1, "maxLength": 1000},
+          "reauthenticationProofId": {"type": "string", "format": "uuid"}
+        },
+        "required": ["targetConsentId", "evidenceIds", "reason", "reauthenticationProofId"]
+      },
+      "Application": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "applicantAccountId": {"type": "string", "format": "uuid"},
+          "state": {
+            "type": "string",
+            "enum": ["DRAFT", "SUBMITTED", "UNDER_REVIEW", "NEEDS_INFORMATION", "APPROVED", "REJECTED", "WITHDRAWN"]
+          },
+          "revision": {"type": "integer", "minimum": 1},
+          "version": {"type": "integer", "minimum": 1},
+          "submission": {"$ref": "#/components/schemas/ApplicationInput"},
+          "reviewRegionId": {"type": "string", "format": "uuid"},
+          "informationRequest": {"type": "string", "minLength": 1, "maxLength": 1000},
+          "draft": {"$ref": "#/components/schemas/ApplicationDraftInput"}
+        },
+        "required": ["id", "applicantAccountId", "state", "revision", "version"]
+      },
+      "Reason": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {"reason": {"type": "string", "minLength": 1, "maxLength": 1000}},
+        "required": ["reason"]
+      },
+      "EmptyCommand": {"type": "object", "additionalProperties": false, "properties": {}, "required": []},
+      "ReviewDecision": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "reason": {"type": "string", "minLength": 1, "maxLength": 1000},
+          "reviewedRevision": {"type": "integer", "minimum": 1}
+        },
+        "required": ["reason", "reviewedRevision"]
+      },
+      "Organization": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "state": {"type": "string", "enum": ["ACTIVATION_PENDING", "ACTIVE", "SUSPENDED", "CLOSURE_REQUESTED", "CLOSED"]},
+          "registeredName": {"type": "string", "minLength": 1, "maxLength": 240},
+          "legalIdentifier": {"type": "string", "minLength": 1, "maxLength": 80},
+          "policyVersion": {"type": "integer", "minimum": 1},
+          "version": {"type": "integer", "minimum": 1}
+        },
+        "required": ["id", "state", "registeredName", "legalIdentifier", "policyVersion", "version"]
+      },
+      "LegalProfileInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "registeredName": {"type": "string", "minLength": 1, "maxLength": 240},
+          "operatingAddress": {"$ref": "#/components/schemas/Address"},
+          "businessContactAttestationId": {"type": "string", "format": "uuid"},
+          "evidenceIds": {"type": "array", "items": {"type": "string", "format": "uuid"}, "maxItems": 5, "minItems": 1},
+          "reason": {"type": "string", "minLength": 1, "maxLength": 1000},
+          "registeredAddress": {"$ref": "#/components/schemas/Address"},
+          "jurisdiction": {"type": "string", "minLength": 1, "maxLength": 64},
+          "entityType": {"type": "string", "enum": ["COMPANY", "HOUSEHOLD_BUSINESS"]},
+          "legalIdentifier": {"type": "string", "minLength": 1, "maxLength": 80}
+        },
+        "required": [
+          "registeredName",
+          "operatingAddress",
+          "businessContactAttestationId",
+          "evidenceIds",
+          "reason",
+          "registeredAddress",
+          "jurisdiction",
+          "entityType",
+          "legalIdentifier"
+        ]
+      },
+      "LegalProfileRevision": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "organizationId": {"type": "string", "format": "uuid"},
+          "state": {"type": "string", "enum": ["SUBMITTED", "APPROVED", "REJECTED"]},
+          "submission": {"$ref": "#/components/schemas/LegalProfileInput"},
+          "version": {"type": "integer", "minimum": 1}
+        },
+        "required": ["id", "organizationId", "state", "submission", "version"]
+      },
+      "LegalProfileDecision": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "decision": {"type": "string", "enum": ["APPROVE", "REJECT"]},
+          "reason": {"type": "string", "minLength": 1, "maxLength": 1000}
+        },
+        "required": ["decision", "reason"]
+      },
+      "Context": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {"type": "string", "enum": ["PERSONAL", "MERCHANT"]},
+          "organizationId": {"type": "string", "format": "uuid"},
+          "membershipId": {"type": "string", "format": "uuid"},
+          "authorityVersion": {"type": "integer", "minimum": 1},
+          "permissions": {"type": "array", "items": {"type": "string", "minLength": 1, "maxLength": 80}, "maxItems": 100}
+        },
+        "required": ["kind", "authorityVersion", "permissions"]
+      },
+      "ContextList": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {"items": {"type": "array", "items": {"$ref": "#/components/schemas/Context"}, "maxItems": 100}},
+        "required": ["items"]
+      },
+      "ContextInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {"type": "string", "enum": ["PERSONAL", "MERCHANT"]},
+          "organizationId": {"type": "string", "format": "uuid"}
+        },
+        "required": ["kind"]
+      },
+      "ScopeGrant": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "permission": {
+            "type": "string",
+            "enum": [
+              "org.read",
+              "org.legal.write",
+              "member.read",
+              "member.invite",
+              "member.manage",
+              "facility.read",
+              "facility.write",
+              "defaults.write",
+              "ownership.transfer",
+              "org.closure.request"
+            ]
+          },
+          "branchIds": {"type": "array", "items": {"type": "string", "format": "uuid"}, "maxItems": 100, "uniqueItems": true}
+        },
+        "required": ["permission", "branchIds"]
+      },
+      "MemberInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "role": {"type": "string", "enum": ["MANAGER", "OPERATOR"]},
+          "grants": {"type": "array", "items": {"$ref": "#/components/schemas/ScopeGrant"}, "maxItems": 30}
+        },
+        "required": ["role", "grants"]
+      },
+      "Member": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "organizationId": {"type": "string", "format": "uuid"},
+          "accountId": {"type": "string", "format": "uuid"},
+          "role": {"type": "string", "enum": ["OWNER", "MANAGER", "OPERATOR"]},
+          "state": {"type": "string", "enum": ["PENDING", "ACTIVE", "SUSPENDED", "REVOKED"]},
+          "grants": {"type": "array", "items": {"$ref": "#/components/schemas/ScopeGrant"}, "maxItems": 30},
+          "version": {"type": "integer", "minimum": 1}
+        },
+        "required": ["id", "organizationId", "accountId", "role", "state", "grants", "version"]
+      },
+      "InvitationInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "recipientEmail": {"type": "string", "minLength": 1, "maxLength": 254, "format": "email"},
+          "proposedMembership": {"$ref": "#/components/schemas/MemberInput"}
+        },
+        "required": ["recipientEmail", "proposedMembership"]
+      },
+      "Invitation": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "organizationId": {"type": "string", "format": "uuid"},
+          "state": {"type": "string", "enum": ["PENDING", "ACCEPTED", "REJECTED", "EXPIRED", "REVOKED"]},
+          "expiresAt": {"type": "string", "format": "date-time"},
+          "policyVersion": {"type": "integer", "minimum": 1},
+          "version": {"type": "integer", "minimum": 1}
+        },
+        "required": ["id", "organizationId", "state", "expiresAt", "policyVersion", "version"]
+      },
+      "InvitationPreview": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "organizationId": {"type": "string", "format": "uuid"},
+          "organizationName": {"type": "string", "minLength": 1, "maxLength": 160},
+          "proposedMembership": {"$ref": "#/components/schemas/MemberInput"},
+          "expiresAt": {"type": "string", "format": "date-time"}
+        },
+        "required": ["id", "organizationId", "organizationName", "proposedMembership", "expiresAt"]
+      },
+      "FacilityInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {"type": "string", "minLength": 1, "maxLength": 160},
+          "address": {"$ref": "#/components/schemas/Address"},
+          "active": {"type": "boolean"}
+        },
+        "required": ["name", "address", "active"]
+      },
+      "Facility": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "organizationId": {"type": "string", "format": "uuid"},
+          "name": {"type": "string", "minLength": 1, "maxLength": 160},
+          "address": {"$ref": "#/components/schemas/Address"},
+          "active": {"type": "boolean"},
+          "version": {"type": "integer", "minimum": 1}
+        },
+        "required": ["id", "organizationId", "name", "address", "active", "version"]
+      },
+      "DefaultsInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "serviceId": {"type": "string", "format": "uuid"},
+          "catalogVersion": {"type": "integer", "minimum": 1},
+          "coverageVersion": {"type": "integer", "minimum": 1},
+          "policyVersion": {"type": "integer", "minimum": 1},
+          "facilityId": {"type": "string", "format": "uuid"}
+        },
+        "required": ["serviceId", "catalogVersion", "coverageVersion", "policyVersion", "facilityId"]
+      },
+      "Defaults": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "organizationId": {"type": "string", "format": "uuid"},
+          "selection": {"$ref": "#/components/schemas/DefaultsInput"},
+          "currentlyAvailable": {"type": "boolean"},
+          "version": {"type": "integer", "minimum": 1}
+        },
+        "required": ["organizationId", "selection", "currentlyAvailable", "version"]
+      },
+      "OwnershipInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "targetMembershipId": {"type": "string", "format": "uuid"},
+          "reason": {"type": "string", "minLength": 1, "maxLength": 1000},
+          "reauthenticationProofId": {"type": "string", "format": "uuid"}
+        },
+        "required": ["targetMembershipId", "reason", "reauthenticationProofId"]
+      },
+      "Ownership": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "organizationId": {"type": "string", "format": "uuid"},
+          "state": {"type": "string", "enum": ["PENDING", "ACCEPTED", "EXPIRED", "REVOKED"]},
+          "expiresAt": {"type": "string", "format": "date-time"},
+          "version": {"type": "integer", "minimum": 1}
+        },
+        "required": ["id", "organizationId", "state", "expiresAt", "version"]
+      },
+      "OwnershipAcceptance": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {"reauthenticationProofId": {"type": "string", "format": "uuid"}},
+        "required": ["reauthenticationProofId"]
+      },
+      "Evidence": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "applicationId": {"type": "string", "format": "uuid"},
+          "purpose": {"type": "string", "enum": ["REGISTRATION", "REPRESENTATIVE_AUTHORIZATION", "SUPPORTING"]},
+          "mediaType": {"type": "string", "enum": ["application/pdf", "image/png", "image/jpeg"]},
+          "sizeBytes": {"type": "integer", "minimum": 1, "maximum": 5242880},
+          "sha256": {"type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-f0-9]{64}$"},
+          "screeningState": {"type": "string", "enum": ["QUARANTINED", "CLEAN", "REJECTED", "DELETION_PENDING", "DELETED"]},
+          "version": {"type": "integer", "minimum": 1}
+        },
+        "required": ["id", "applicationId", "purpose", "mediaType", "sizeBytes", "sha256", "screeningState", "version"]
+      },
+      "EvidenceUpload": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "purpose": {"type": "string", "enum": ["REGISTRATION", "REPRESENTATIVE_AUTHORIZATION", "SUPPORTING"]},
+          "file": {"type": "string", "format": "binary"}
+        },
+        "required": ["purpose", "file"]
+      },
+      "LegalEvidence": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "purpose": {"type": "string", "enum": ["REGISTRATION", "REPRESENTATIVE_AUTHORIZATION", "SUPPORTING"]},
+          "mediaType": {"type": "string", "enum": ["application/pdf", "image/png", "image/jpeg"]},
+          "sizeBytes": {"type": "integer", "minimum": 1, "maximum": 5242880},
+          "sha256": {"type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-f0-9]{64}$"},
+          "screeningState": {"type": "string", "enum": ["QUARANTINED", "CLEAN", "REJECTED", "DELETION_PENDING", "DELETED"]},
+          "version": {"type": "integer", "minimum": 1},
+          "organizationId": {"type": "string", "format": "uuid"}
+        },
+        "required": ["id", "purpose", "mediaType", "sizeBytes", "sha256", "screeningState", "version", "organizationId"]
+      },
+      "Receipt": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "operationId": {"type": "string", "minLength": 1, "maxLength": 80},
+          "targetId": {"type": "string", "format": "uuid"},
+          "outcome": {"type": "string", "enum": ["COMMITTED", "PENDING", "UNKNOWN"]},
+          "version": {"type": "integer", "minimum": 1}
+        },
+        "required": ["operationId", "targetId", "outcome", "version"]
+      },
+      "ApplicationPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {"type": "array", "items": {"$ref": "#/components/schemas/Application"}, "maxItems": 100},
+          "page": {"type": "integer", "minimum": 0},
+          "size": {"type": "integer", "minimum": 1, "maximum": 100},
+          "hasNext": {"type": "boolean"}
+        },
+        "required": ["items", "page", "size", "hasNext"]
+      },
+      "MemberPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {"type": "array", "items": {"$ref": "#/components/schemas/Member"}, "maxItems": 100},
+          "page": {"type": "integer", "minimum": 0},
+          "size": {"type": "integer", "minimum": 1, "maximum": 100},
+          "hasNext": {"type": "boolean"}
+        },
+        "required": ["items", "page", "size", "hasNext"]
+      },
+      "InvitationPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {"type": "array", "items": {"$ref": "#/components/schemas/Invitation"}, "maxItems": 100},
+          "page": {"type": "integer", "minimum": 0},
+          "size": {"type": "integer", "minimum": 1, "maximum": 100},
+          "hasNext": {"type": "boolean"}
+        },
+        "required": ["items", "page", "size", "hasNext"]
+      },
+      "FacilityPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {"type": "array", "items": {"$ref": "#/components/schemas/Facility"}, "maxItems": 100},
+          "page": {"type": "integer", "minimum": 0},
+          "size": {"type": "integer", "minimum": 1, "maximum": 100},
+          "hasNext": {"type": "boolean"}
+        },
+        "required": ["items", "page", "size", "hasNext"]
+      }
+    },
+    "responses": {
+      "Error400": {
+        "description": "VALIDATION_FAILED; PRECONDITION_MALFORMED",
+        "headers": {
+          "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+          "X-Request-Id": {"$ref": "#/components/headers/XRequestId"}
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "code": {"type": "string", "enum": ["VALIDATION_FAILED", "PRECONDITION_MALFORMED"]},
+                "message": {"type": "string", "minLength": 1, "maxLength": 240},
+                "requestId": {"type": "string", "format": "uuid"}
+              },
+              "required": ["code", "message", "requestId"]
+            }
+          }
+        }
+      },
+      "Error403": {
+        "description": "ORIGIN_REJECTED; CSRF_REJECTED; AUTHORITY_REQUIRED",
+        "headers": {
+          "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+          "X-Request-Id": {"$ref": "#/components/headers/XRequestId"}
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "code": {"type": "string", "enum": ["ORIGIN_REJECTED", "CSRF_REJECTED", "AUTHORITY_REQUIRED"]},
+                "message": {"type": "string", "minLength": 1, "maxLength": 240},
+                "requestId": {"type": "string", "format": "uuid"}
+              },
+              "required": ["code", "message", "requestId"]
+            }
+          }
+        }
+      },
+      "Error429": {
+        "description": "RATE_LIMITED",
+        "headers": {
+          "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+          "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+          "Retry-After": {"$ref": "#/components/headers/RetryAfter"}
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "code": {"type": "string", "enum": ["RATE_LIMITED"]},
+                "message": {"type": "string", "minLength": 1, "maxLength": 240},
+                "requestId": {"type": "string", "format": "uuid"}
+              },
+              "required": ["code", "message", "requestId"]
+            }
+          }
+        }
+      },
+      "Error503": {
+        "description": "SERVICE_UNAVAILABLE; SCREENING_UNAVAILABLE; DELIVERY_UNAVAILABLE; DEPENDENCY_UNAVAILABLE",
+        "headers": {
+          "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+          "X-Request-Id": {"$ref": "#/components/headers/XRequestId"}
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "enum": ["SERVICE_UNAVAILABLE", "SCREENING_UNAVAILABLE", "DELIVERY_UNAVAILABLE", "DEPENDENCY_UNAVAILABLE"]
+                },
+                "message": {"type": "string", "minLength": 1, "maxLength": 240},
+                "requestId": {"type": "string", "format": "uuid"}
+              },
+              "required": ["code", "message", "requestId"]
+            }
+          }
+        }
+      },
+      "Error409": {
+        "description": "STATE_CONFLICT; IDEMPOTENCY_CONFLICT; PROOF_INVALID_OR_EXPIRED; DUPLICATE_BUSINESS; LAST_OWNER_PROTECTED; DEPENDENCY_STALE",
+        "headers": {
+          "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+          "X-Request-Id": {"$ref": "#/components/headers/XRequestId"}
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "enum": [
+                    "STATE_CONFLICT",
+                    "IDEMPOTENCY_CONFLICT",
+                    "PROOF_INVALID_OR_EXPIRED",
+                    "DUPLICATE_BUSINESS",
+                    "LAST_OWNER_PROTECTED",
+                    "DEPENDENCY_STALE"
+                  ]
+                },
+                "message": {"type": "string", "minLength": 1, "maxLength": 240},
+                "requestId": {"type": "string", "format": "uuid"}
+              },
+              "required": ["code", "message", "requestId"]
+            }
+          }
+        }
+      },
+      "Error422": {
+        "description": "POLICY_VALIDATION_FAILED",
+        "headers": {
+          "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+          "X-Request-Id": {"$ref": "#/components/headers/XRequestId"}
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "code": {"type": "string", "enum": ["POLICY_VALIDATION_FAILED"]},
+                "message": {"type": "string", "minLength": 1, "maxLength": 240},
+                "requestId": {"type": "string", "format": "uuid"}
+              },
+              "required": ["code", "message", "requestId"]
+            }
+          }
+        }
+      },
+      "Error401": {
+        "description": "SESSION_INVALID; INVALID_CREDENTIALS",
+        "headers": {
+          "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+          "X-Request-Id": {"$ref": "#/components/headers/XRequestId"}
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "code": {"type": "string", "enum": ["SESSION_INVALID", "INVALID_CREDENTIALS"]},
+                "message": {"type": "string", "minLength": 1, "maxLength": 240},
+                "requestId": {"type": "string", "format": "uuid"}
+              },
+              "required": ["code", "message", "requestId"]
+            }
+          }
+        }
+      },
+      "Error404": {
+        "description": "RESOURCE_NOT_ACCESSIBLE",
+        "headers": {
+          "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+          "X-Request-Id": {"$ref": "#/components/headers/XRequestId"}
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "code": {"type": "string", "enum": ["RESOURCE_NOT_ACCESSIBLE"]},
+                "message": {"type": "string", "minLength": 1, "maxLength": 240},
+                "requestId": {"type": "string", "format": "uuid"}
+              },
+              "required": ["code", "message", "requestId"]
+            }
+          }
+        }
+      },
+      "Error412": {
+        "description": "PRECONDITION_STALE",
+        "headers": {
+          "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+          "X-Request-Id": {"$ref": "#/components/headers/XRequestId"}
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "code": {"type": "string", "enum": ["PRECONDITION_STALE"]},
+                "message": {"type": "string", "minLength": 1, "maxLength": 240},
+                "requestId": {"type": "string", "format": "uuid"}
+              },
+              "required": ["code", "message", "requestId"]
+            }
+          }
+        }
+      },
+      "Error428": {
+        "description": "PRECONDITION_REQUIRED",
+        "headers": {
+          "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+          "X-Request-Id": {"$ref": "#/components/headers/XRequestId"}
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "code": {"type": "string", "enum": ["PRECONDITION_REQUIRED"]},
+                "message": {"type": "string", "minLength": 1, "maxLength": 240},
+                "requestId": {"type": "string", "format": "uuid"}
+              },
+              "required": ["code", "message", "requestId"]
+            }
+          }
+        }
+      },
+      "Error413": {
+        "description": "FILE_TOO_LARGE",
+        "headers": {
+          "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+          "X-Request-Id": {"$ref": "#/components/headers/XRequestId"}
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "code": {"type": "string", "enum": ["FILE_TOO_LARGE"]},
+                "message": {"type": "string", "minLength": 1, "maxLength": 240},
+                "requestId": {"type": "string", "format": "uuid"}
+              },
+              "required": ["code", "message", "requestId"]
+            }
+          }
+        }
+      },
+      "Error415": {
+        "description": "UNSUPPORTED_MEDIA_TYPE",
+        "headers": {
+          "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+          "X-Request-Id": {"$ref": "#/components/headers/XRequestId"}
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "code": {"type": "string", "enum": ["UNSUPPORTED_MEDIA_TYPE"]},
+                "message": {"type": "string", "minLength": 1, "maxLength": 240},
+                "requestId": {"type": "string", "format": "uuid"}
+              },
+              "required": ["code", "message", "requestId"]
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "header_IdempotencyKey": {"name": "Idempotency-Key", "in": "header", "required": true, "schema": {"type": "string", "format": "uuid"}},
+      "header_Origin": {
+        "name": "Origin",
+        "in": "header",
+        "required": true,
+        "schema": {"type": "string", "minLength": 1, "maxLength": 500}
+      },
+      "header_XCSRFToken": {
+        "name": "X-CSRF-Token",
+        "in": "header",
+        "required": true,
+        "schema": {"type": "string", "minLength": 1, "maxLength": 512}
+      },
+      "header_IfMatch": {
+        "name": "If-Match",
+        "in": "header",
+        "required": true,
+        "schema": {"type": "string", "minLength": 1, "maxLength": 32, "pattern": "^\"v[1-9][0-9]*\"$"}
+      },
+      "query_page": {"name": "page", "in": "query", "schema": {"type": "integer", "minimum": 0, "default": 0}},
+      "query_size": {"name": "size", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 100, "default": 20}},
+      "query_search": {"name": "search", "in": "query", "schema": {"type": "string", "minLength": 1, "maxLength": 160}},
+      "query_state": {"name": "state", "in": "query", "schema": {"type": "string", "minLength": 1, "maxLength": 32}}
+    },
+    "headers": {
+      "CacheControl": {"required": true, "schema": {"type": "string", "const": "no-store"}},
+      "XRequestId": {"required": true, "schema": {"type": "string", "format": "uuid"}},
+      "SetCookie": {
+        "required": true,
+        "schema": {"type": "string", "minLength": 1, "maxLength": 2048},
+        "description": "Distinct cookie fields, host-only Secure HttpOnly SameSite=Strict Path=/; never folded. Clear refresh on logout/recovery/security change."
+      },
+      "RetryAfter": {"required": true, "schema": {"type": "integer", "minimum": 1}},
+      "Location": {"required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 500}},
+      "ETag": {"required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 32, "pattern": "^\"v[1-9][0-9]*\"$"}}
+    }
+  }
+}

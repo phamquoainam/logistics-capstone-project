@@ -45,7 +45,9 @@ FAMILY_AUTHORITIES = {'identity_security':'identity','merchant_business':'mercha
 def ownership_errors(policy,declarations):
     """Return errors AND explicit unresolved decisions; docs consistency is not DoR."""
     errors=[];unresolved=set();resources={}
-    if policy.get('schema_version')!=1:errors.append('ownership policy schema')
+    if policy.get('schema_version')!=2:errors.append('ownership policy schema')
+    if policy.get('authority_modules')!={'identity':'identity','merchant':'merchant','customer_profile':'merchant','dispatch':'dispatch'}:
+        errors.append('logical authority/physical module separation')
     if policy.get('orchestrators')!={'spec003':{'canonical_spec':'L003','grants_data_authority':False}}:
         errors.append('orchestration is not data authority')
     if policy.get('capability_authorities')!={
@@ -60,9 +62,8 @@ def ownership_errors(policy,declarations):
             errors.append('undeclared resource family '+str(rid));continue
         owner=resource.get('authoritative_owner');resolution=resource.get('resolution')
         if family=='retail_business':
-            if owner is not None or resolution!='UNRESOLVED' or resource.get('decision')!='DATA-01' or resource.get('candidate_owner')!='merchant':
+            if owner!='customer_profile' or resolution!='OWNER_POLICY_ACCEPTED' or resource.get('decision')!='DATA-01' or resource.get('requires_organization') is not False or resource.get('requires_membership') is not False:
                 errors.append('unapproved Retail profile authority '+str(rid))
-            unresolved.add(str(rid)+':DATA-01')
         elif owner!=FAMILY_AUTHORITIES[family] or resolution!='DECLARED' or resource.get('decision') is not None:
             errors.append('resource authority conflict '+str(rid))
     expected=set().union(*RESOURCE_FAMILIES.values())
@@ -210,6 +211,12 @@ def run():
     rows=read_csv('capability-crosswalk.csv');cards=json.loads(body('docs/reconciliation/v3/spec-register.json'));index={c['id']:c for c in cards}
     errors=mapping_errors(rows,cards,source_rows());coverage=csv_at('docs/portal/group-ab-coverage.csv');supp=csv_at('docs/portal/supplemental-requirements.csv');journeys=csv_at('docs/portal/journeys.csv');accept=json.loads(body('docs/portal/acceptance-register.json'))
     errors+=portal_errors(coverage,supp,journeys,rows,accept)
+    import importlib.util
+    module_spec=importlib.util.spec_from_file_location('spec003_readiness',OUT/'validate_spec003.py')
+    readiness=importlib.util.module_from_spec(module_spec);module_spec.loader.exec_module(readiness)
+    errors.extend('Spec003: '+e for e in readiness.errors(*readiness.load()))
+    contract_check=subprocess.run(['node',str(OUT/'validate_spec003.mjs')],capture_output=True,text=True)
+    if contract_check.returncode:errors.append('Spec003 schema validator: '+(contract_check.stderr or contract_check.stdout)[-2000:])
     policy=json.loads(body('docs/reconciliation/v3/resource-authority-policy.json'));ownership_unresolved=set()
     if policy.get('declaration_documents')!=['specs/003-sender-merchant-onboarding/design.md','specs/003-sender-merchant-onboarding/tasks.md']:
         errors.append('ownership declaration document coverage')
@@ -227,7 +234,7 @@ def run():
     for scope,binding in policy.get('capability_authorities',{}).items():
         row=next((r for r in rows if r['capability_id']==scope),None);authority=authorities.get(binding.get('authority_resource'))
         if row is None or authority is None or binding.get('orchestrator')!='spec003':errors.append('capability authority binding '+scope);continue
-        owner=authority.get('authoritative_owner') if authority['resolution']=='DECLARED' else authority.get('candidate_owner')
+        owner=policy.get('authority_modules',{}).get(authority.get('authoritative_owner'))
         if row['primary_domain_owner']!=owner or row['primary_spec']!='L003':errors.append('capability resource authority conflict '+scope)
     tree=set(git('ls-tree','-r','--name-only',BASELINE).splitlines());changed=set(git('diff','--name-only',BASELINE).splitlines())|set(git('ls-files','--others','--exclude-standard').splitlines())
     for n in changed:

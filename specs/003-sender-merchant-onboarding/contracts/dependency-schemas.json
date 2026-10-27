@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Spec003 backend-only dependency DTO candidates",
+  "$defs": {
+    "CatalogEligibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "serviceId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "catalogVersion": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "coverageVersion": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "available": {
+          "type": "boolean"
+        },
+        "effectiveFrom": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "effectiveUntil": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "serviceId",
+        "catalogVersion",
+        "coverageVersion",
+        "available",
+        "effectiveFrom",
+        "effectiveUntil"
+      ]
+    },
+    "ServicePolicyEligibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "serviceId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "policyVersion": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "supported": {
+          "type": "boolean"
+        },
+        "eligible": {
+          "type": "boolean"
+        },
+        "effectiveFrom": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "effectiveUntil": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "serviceId",
+        "policyVersion",
+        "supported",
+        "eligible",
+        "effectiveFrom",
+        "effectiveUntil"
+      ]
+    },
+    "ClosureClearance": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "owner": {
+          "type": "string",
+          "enum": [
+            "orders",
+            "finance",
+            "pricing",
+            "claims"
+          ]
+        },
+        "organizationId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "asOf": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "clear": {
+          "type": "boolean"
+        },
+        "obligationCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "owner",
+        "organizationId",
+        "asOf",
+        "version",
+        "clear",
+        "obligationCount"
+      ]
+    }
+  }
+}

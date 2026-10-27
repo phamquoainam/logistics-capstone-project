@@ -1,0 +1,946 @@
+{
+  "status": "DECLARATIVE_NOT_RUNTIME_EXECUTED",
+  "samples": {
+    "Accepted": {
+      "accepted": true,
+      "requestId": "11111111-1111-4111-8111-111111111111"
+    },
+    "CsrfChallenge": {
+      "challenge": "synthetic"
+    },
+    "EnrollmentInput": {
+      "email": "person@example.invalid",
+      "password": "syntheticxxxxxx",
+      "displayName": "synthetic",
+      "consentVersion": "synthetic"
+    },
+    "EmailInput": {
+      "email": "person@example.invalid"
+    },
+    "ProofInput": {
+      "proofId": "11111111-1111-4111-8111-111111111111",
+      "proof": "synthetic"
+    },
+    "CustomerLogin": {
+      "email": "person@example.invalid",
+      "password": "synthetic"
+    },
+    "AccessSession": {
+      "accessToken": "synthetic",
+      "expiresAt": "2026-10-27T00:00:00Z",
+      "accountId": "11111111-1111-4111-8111-111111111111"
+    },
+    "CustomerSubject": {
+      "accountId": "11111111-1111-4111-8111-111111111111",
+      "displayName": "synthetic",
+      "verifiedEmail": "person@example.invalid",
+      "securityVersion": 1
+    },
+    "RecoveryConfirm": {
+      "proofId": "11111111-1111-4111-8111-111111111111",
+      "proof": "synthetic",
+      "newPassword": "syntheticxxxxxx"
+    },
+    "SecurityContactChange": {
+      "newEmail": "person@example.invalid",
+      "currentPassword": "synthetic"
+    },
+    "ProfileInput": {
+      "displayName": "synthetic",
+      "preferredLanguage": "vi"
+    },
+    "CustomerProfile": {
+      "id": "11111111-1111-4111-8111-111111111111",
+      "accountId": "11111111-1111-4111-8111-111111111111",
+      "displayName": "synthetic",
+      "preferredLanguage": "vi",
+      "version": 1
+    },
+    "BusinessContactInput": {
+      "email": "person@example.invalid"
+    },
+    "Address": {
+      "country": "VN",
+      "administrativeArea": "synthetic",
+      "locality": "synthetic",
+      "addressLine": "synthetic"
+    },
+    "Declaration": {
+      "accuracy": true,
+      "representation": true,
+      "consentVersion": "synthetic"
+    },
+    "ApplicationInput": {
+      "entityType": "COMPANY",
+      "jurisdiction": "synthetic",
+      "registeredName": "synthetic",
+      "legalIdentifier": "synthetic",
+      "registeredAddress": {
+        "country": "VN",
+        "administrativeArea": "synthetic",
+        "locality": "synthetic",
+        "addressLine": "synthetic"
+      },
+      "operatingAddress": {
+        "country": "VN",
+        "administrativeArea": "synthetic",
+        "locality": "synthetic",
+        "addressLine": "synthetic"
+      },
+      "representativeName": "synthetic",
+      "representativeEmail": "person@example.invalid",
+      "representativeRelationship": "synthetic",
+      "businessContactAttestationId": "11111111-1111-4111-8111-111111111111",
+      "evidenceIds": [
+        "11111111-1111-4111-8111-111111111111",
+        "22222222-2222-4222-8222-222222222222"
+      ],
+      "declarations": {
+        "accuracy": true,
+        "representation": true,
+        "consentVersion": "synthetic"
+      }
+    },
+    "ApplicationDraftInput": {},
+    "Reauthentication": {
+      "proofId": "11111111-1111-4111-8111-111111111111",
+      "expiresAt": "2026-10-27T00:00:00Z"
+    },
+    "BusinessContactAttestation": {
+      "id": "11111111-1111-4111-8111-111111111111",
+      "purpose": "BUSINESS_CONTACT",
+      "expiresAt": "2026-10-27T00:00:00Z"
+    },
+    "RecoveryConsentInput": {
+      "organizationId": "11111111-1111-4111-8111-111111111111",
+      "reauthenticationProofId": "11111111-1111-4111-8111-111111111111"
+    },
+    "RecoveryConsent": {
+      "id": "11111111-1111-4111-8111-111111111111",
+      "organizationId": "11111111-1111-4111-8111-111111111111",
+      "expiresAt": "2026-10-27T00:00:00Z"
+    },
+    "OwnerRecoveryInput": {
+      "targetConsentId": "11111111-1111-4111-8111-111111111111",
+      "evidenceIds": [
+        "11111111-1111-4111-8111-111111111111"
+      ],
+      "reason": "synthetic",
+      "reauthenticationProofId": "11111111-1111-4111-8111-111111111111"
+    },
+    "Application": {
+      "id": "11111111-1111-4111-8111-111111111111",
+      "applicantAccountId": "11111111-1111-4111-8111-111111111111",
+      "state": "DRAFT",
+      "revision": 1,
+      "version": 1
+    },
+    "Reason": {
+      "reason": "synthetic"
+    },
+    "EmptyCommand": {},
+    "ReviewDecision": {
+      "reason": "synthetic",
+      "reviewedRevision": 1
+    },
+    "Organization": {
+      "id": "11111111-1111-4111-8111-111111111111",
+      "state": "ACTIVATION_PENDING",
+      "registeredName": "synthetic",
+      "legalIdentifier": "synthetic",
+      "policyVersion": 1,
+      "version": 1
+    },
+    "LegalProfileInput": {
+      "registeredName": "synthetic",
+      "operatingAddress": {
+        "country": "VN",
+        "administrativeArea": "synthetic",
+        "locality": "synthetic",
+        "addressLine": "synthetic"
+      },
+      "businessContactAttestationId": "11111111-1111-4111-8111-111111111111",
+      "evidenceIds": [
+        "11111111-1111-4111-8111-111111111111"
+      ],
+      "reason": "synthetic",
+      "registeredAddress": {
+        "country": "VN",
+        "administrativeArea": "synthetic",
+        "locality": "synthetic",
+        "addressLine": "synthetic"
+      },
+      "jurisdiction": "synthetic",
+      "entityType": "COMPANY",
+      "legalIdentifier": "synthetic"
+    },
+    "LegalProfileRevision": {
+      "id": "11111111-1111-4111-8111-111111111111",
+      "organizationId": "11111111-1111-4111-8111-111111111111",
+      "state": "SUBMITTED",
+      "submission": {
+        "registeredName": "synthetic",
+        "operatingAddress": {
+          "country": "VN",
+          "administrativeArea": "synthetic",
+          "locality": "synthetic",
+          "addressLine": "synthetic"
+        },
+        "businessContactAttestationId": "11111111-1111-4111-8111-111111111111",
+        "evidenceIds": [
+          "11111111-1111-4111-8111-111111111111"
+        ],
+        "reason": "synthetic",
+        "registeredAddress": {
+          "country": "VN",
+          "administrativeArea": "synthetic",
+          "locality": "synthetic",
+          "addressLine": "synthetic"
+        },
+        "jurisdiction": "synthetic",
+        "entityType": "COMPANY",
+        "legalIdentifier": "synthetic"
+      },
+      "version": 1
+    },
+    "LegalProfileDecision": {
+      "decision": "APPROVE",
+      "reason": "synthetic"
+    },
+    "Context": {
+      "kind": "PERSONAL",
+      "authorityVersion": 1,
+      "permissions": []
+    },
+    "ContextList": {
+      "items": []
+    },
+    "ContextInput": {
+      "kind": "PERSONAL"
+    },
+    "ScopeGrant": {
+      "permission": "org.read",
+      "branchIds": []
+    },
+    "MemberInput": {
+      "role": "MANAGER",
+      "grants": []
+    },
+    "Member": {
+      "id": "11111111-1111-4111-8111-111111111111",
+      "organizationId": "11111111-1111-4111-8111-111111111111",
+      "accountId": "11111111-1111-4111-8111-111111111111",
+      "role": "OWNER",
+      "state": "PENDING",
+      "grants": [],
+      "version": 1
+    },
+    "InvitationInput": {
+      "recipientEmail": "person@example.invalid",
+      "proposedMembership": {
+        "role": "MANAGER",
+        "grants": []
+      }
+    },
+    "Invitation": {
+      "id": "11111111-1111-4111-8111-111111111111",
+      "organizationId": "11111111-1111-4111-8111-111111111111",
+      "state": "PENDING",
+      "expiresAt": "2026-10-27T00:00:00Z",
+      "policyVersion": 1,
+      "version": 1
+    },
+    "InvitationPreview": {
+      "id": "11111111-1111-4111-8111-111111111111",
+      "organizationId": "11111111-1111-4111-8111-111111111111",
+      "organizationName": "synthetic",
+      "proposedMembership": {
+        "role": "MANAGER",
+        "grants": []
+      },
+      "expiresAt": "2026-10-27T00:00:00Z"
+    },
+    "FacilityInput": {
+      "name": "synthetic",
+      "address": {
+        "country": "VN",
+        "administrativeArea": "synthetic",
+        "locality": "synthetic",
+        "addressLine": "synthetic"
+      },
+      "active": false
+    },
+    "Facility": {
+      "id": "11111111-1111-4111-8111-111111111111",
+      "organizationId": "11111111-1111-4111-8111-111111111111",
+      "name": "synthetic",
+      "address": {
+        "country": "VN",
+        "administrativeArea": "synthetic",
+        "locality": "synthetic",
+        "addressLine": "synthetic"
+      },
+      "active": false,
+      "version": 1
+    },
+    "DefaultsInput": {
+      "serviceId": "11111111-1111-4111-8111-111111111111",
+      "catalogVersion": 1,
+      "coverageVersion": 1,
+      "policyVersion": 1,
+      "facilityId": "11111111-1111-4111-8111-111111111111"
+    },
+    "Defaults": {
+      "organizationId": "11111111-1111-4111-8111-111111111111",
+      "selection": {
+        "serviceId": "11111111-1111-4111-8111-111111111111",
+        "catalogVersion": 1,
+        "coverageVersion": 1,
+        "policyVersion": 1,
+        "facilityId": "11111111-1111-4111-8111-111111111111"
+      },
+      "currentlyAvailable": false,
+      "version": 1
+    },
+    "OwnershipInput": {
+      "targetMembershipId": "11111111-1111-4111-8111-111111111111",
+      "reason": "synthetic",
+      "reauthenticationProofId": "11111111-1111-4111-8111-111111111111"
+    },
+    "Ownership": {
+      "id": "11111111-1111-4111-8111-111111111111",
+      "organizationId": "11111111-1111-4111-8111-111111111111",
+      "state": "PENDING",
+      "expiresAt": "2026-10-27T00:00:00Z",
+      "version": 1
+    },
+    "OwnershipAcceptance": {
+      "reauthenticationProofId": "11111111-1111-4111-8111-111111111111"
+    },
+    "Evidence": {
+      "id": "11111111-1111-4111-8111-111111111111",
+      "applicationId": "11111111-1111-4111-8111-111111111111",
+      "purpose": "REGISTRATION",
+      "mediaType": "application/pdf",
+      "sizeBytes": 1,
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "screeningState": "QUARANTINED",
+      "version": 1
+    },
+    "LegalEvidence": {
+      "id": "11111111-1111-4111-8111-111111111111",
+      "purpose": "REGISTRATION",
+      "mediaType": "application/pdf",
+      "sizeBytes": 1,
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "screeningState": "QUARANTINED",
+      "version": 1,
+      "organizationId": "11111111-1111-4111-8111-111111111111"
+    },
+    "Receipt": {
+      "operationId": "synthetic",
+      "targetId": "11111111-1111-4111-8111-111111111111",
+      "outcome": "COMMITTED",
+      "version": 1
+    },
+    "ApplicationPage": {
+      "items": [],
+      "page": 0,
+      "size": 1,
+      "hasNext": false
+    },
+    "MemberPage": {
+      "items": [],
+      "page": 0,
+      "size": 1,
+      "hasNext": false
+    },
+    "InvitationPage": {
+      "items": [],
+      "page": 0,
+      "size": 1,
+      "hasNext": false
+    },
+    "FacilityPage": {
+      "items": [],
+      "page": 0,
+      "size": 1,
+      "hasNext": false
+    },
+    "CatalogEligibility": {
+      "serviceId": "11111111-1111-4111-8111-111111111111",
+      "catalogVersion": 1,
+      "coverageVersion": 1,
+      "available": false,
+      "effectiveFrom": "2026-10-27T00:00:00Z",
+      "effectiveUntil": "2026-10-28T00:00:00Z"
+    },
+    "ServicePolicyEligibility": {
+      "serviceId": "11111111-1111-4111-8111-111111111111",
+      "policyVersion": 1,
+      "supported": false,
+      "eligible": false,
+      "effectiveFrom": "2026-10-27T00:00:00Z",
+      "effectiveUntil": "2026-10-28T00:00:00Z"
+    },
+    "ClosureClearance": {
+      "owner": "orders",
+      "organizationId": "11111111-1111-4111-8111-111111111111",
+      "asOf": "2026-10-27T00:00:00Z",
+      "version": 1,
+      "clear": false,
+      "obligationCount": 0
+    }
+  },
+  "scenarios": [
+    {
+      "id": "S003-ENROLL",
+      "operation": "enrollCustomer",
+      "given": "Guest with new email",
+      "when": "submit valid individual enrollment",
+      "expected_status": 202,
+      "expected_effect": "pending enrollment/proof/outbox only; no org/member/admin grants",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-DUPLICATE",
+      "operation": "enrollCustomer",
+      "given": "existing verified email",
+      "when": "repeat public enrollment",
+      "expected_status": 202,
+      "expected_effect": "same public shape; no takeover/second account",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-VERIFY",
+      "operation": "verifyCustomerEmail",
+      "given": "intended subject valid24h proof delivered",
+      "when": "explicit confirmation POST",
+      "expected_status": 204,
+      "expected_effect": "atomic proof consumption/account activation/verified identifier",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-PROOF-REPLAY",
+      "operation": "verifyCustomerEmail",
+      "given": "expired/revoked/replayed/wrong-purpose proof",
+      "when": "confirm",
+      "expected_status": 409,
+      "expected_effect": "zero activation/grant; safe proof error",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-PHONE",
+      "operation": "loginCustomer",
+      "given": "unverified phone contact",
+      "when": "send phone as authentication identifier",
+      "expected_status": 400,
+      "expected_effect": "schema rejects phone input; no session/recovery authority",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-LOGIN",
+      "operation": "loginCustomer",
+      "given": "verified active customer, correct password",
+      "when": "login",
+      "expected_status": 200,
+      "expected_effect": "customer session, personal default, no SYSTEM admission",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-REFRESH",
+      "operation": "refreshCustomer",
+      "given": "current family and bound CSRF",
+      "when": "single-flight refresh",
+      "expected_status": 200,
+      "expected_effect": "one new refresh; strict replay family revoke",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-LOGOUT",
+      "operation": "logoutCustomer",
+      "given": "valid CSRF and session/preauth contract",
+      "when": "logout twice",
+      "expected_status": 204,
+      "expected_effect": "no restored session; cookie absence not CSRF exemption",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-RECOVERY",
+      "operation": "confirmCustomerRecovery",
+      "given": "valid15min purpose-bound proof",
+      "when": "confirm new password",
+      "expected_status": 204,
+      "expected_effect": "one credential change/session revoke/audit/receipt atomically",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-ENUMERATION",
+      "operation": "requestCustomerRecovery",
+      "given": "known/unknown/disabled/unverified email",
+      "when": "request recovery",
+      "expected_status": 202,
+      "expected_effect": "uniform public response; delivery only stored verified email",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-EMAIL-CHANGE",
+      "operation": "confirmSecurityEmailChange",
+      "given": "reauthenticated old subject,new email proof",
+      "when": "confirm",
+      "expected_status": 204,
+      "expected_effect": "unique verified identifier switched, sessions revoked, old address notified",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-PROFILE",
+      "operation": "updateCustomerProfile",
+      "given": "personal account with no Merchant organization",
+      "when": "update display/preferences",
+      "expected_status": 200,
+      "expected_effect": "only customer_profile version changes; security fields unchanged",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-PROFILE-INJECTION",
+      "operation": "updateCustomerProfile",
+      "given": "verified personal account",
+      "when": "inject accountId/emailVerified/password/status/organizationId",
+      "expected_status": 400,
+      "expected_effect": "schema reject, no privilege/security state changes",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-CONTEXT",
+      "operation": "selectCustomerContext",
+      "given": "current orgA+orgB memberships",
+      "when": "switch A to B with late A response",
+      "expected_status": 200,
+      "expected_effect": "B scoped UI/cache; discard A response",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-REVOKE-FIRST",
+      "operation": "updateMerchantFacility",
+      "given": "membership revoked before decision point",
+      "when": "submit stale tab",
+      "expected_status": 404,
+      "expected_effect": "zero mutation/receipt disclosure; personal survives",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-MUTATION-FIRST",
+      "operation": "updateMerchantFacility",
+      "given": "valid mutation commit precedes revoke",
+      "when": "commit then revoke",
+      "expected_status": 200,
+      "expected_effect": "earlier commit preserved; later requests denied",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-APPLICATION",
+      "operation": "submitApplication",
+      "given": "own draft,entity policy/clean evidence/contact proof complete",
+      "when": "submit",
+      "expected_status": 200,
+      "expected_effect": "immutable submitted revision; no Owner",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-RESUBMIT",
+      "operation": "resubmitApplication",
+      "given": "NEEDS_INFORMATION",
+      "when": "submit changed valid evidence",
+      "expected_status": 200,
+      "expected_effect": "new immutable revision; old evidence/decision retained",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-WITHDRAW",
+      "operation": "withdrawApplication",
+      "given": "own SUBMITTED before review",
+      "when": "withdraw",
+      "expected_status": 200,
+      "expected_effect": "terminal record/history preserved",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-BUSINESS-DUPLICATE",
+      "operation": "approveApplication",
+      "given": "business key already ACTIVE",
+      "when": "approve duplicate/takeover",
+      "expected_status": 409,
+      "expected_effect": "no new org/Owner; private details hidden",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-REPRESENTATIVE",
+      "operation": "approveApplication",
+      "given": "missing/impersonated representative proof",
+      "when": "approve",
+      "expected_status": 422,
+      "expected_effect": "no activation",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-SELF-REVIEW",
+      "operation": "approveApplication",
+      "given": "reviewer equals applicant",
+      "when": "approve own application",
+      "expected_status": 404,
+      "expected_effect": "no business authority effect",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-ADMIN-DENY",
+      "operation": "approveApplication",
+      "given": "Identity Admin only/BC045",
+      "when": "invoke business approval",
+      "expected_status": 403,
+      "expected_effect": "zero business effect; no role-label privilege",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-APPROVAL-RACE",
+      "operation": "approveApplication",
+      "given": "two independent valid approvals same revision",
+      "when": "concurrent commit",
+      "expected_status": 200,
+      "expected_effect": "one org+initial Owner+outcome/audit/receipt; other409/412",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-AUDIT-FAIL",
+      "operation": "approveApplication",
+      "given": "valid review but audit persistence fails",
+      "when": "approve",
+      "expected_status": 503,
+      "expected_effect": "all activation writes rolled back",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-ACTIVATION-FAIL",
+      "operation": "approveApplication",
+      "given": "failure inserting initial Owner",
+      "when": "approve",
+      "expected_status": 503,
+      "expected_effect": "no partial ACTIVE org/member",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-INVITE",
+      "operation": "acceptMerchantInvitation",
+      "given": "valid72h invitation/current inviter/verified recipient",
+      "when": "accept",
+      "expected_status": 200,
+      "expected_effect": "one membership, no extra account/password",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-INVITE-WRONG",
+      "operation": "acceptMerchantInvitation",
+      "given": "different verified recipient account",
+      "when": "accept stolen proof",
+      "expected_status": 404,
+      "expected_effect": "no invitation information/membership",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-INVITE-EXPIRE",
+      "operation": "acceptMerchantInvitation",
+      "given": "expired/revoked/replayed proof",
+      "when": "accept",
+      "expected_status": 409,
+      "expected_effect": "no effect",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-INVITER-REVOKE",
+      "operation": "acceptMerchantInvitation",
+      "given": "inviter revoked or delegation/policy version changed",
+      "when": "accept pending invitation",
+      "expected_status": 409,
+      "expected_effect": "pending proof invalid; no authority",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-INVITE-RESEND",
+      "operation": "resendMerchantInvitation",
+      "given": "valid delegable inviter",
+      "when": "resend",
+      "expected_status": 200,
+      "expected_effect": "all old proofs revoked; one new deadline/proof",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-INVITE-RACE",
+      "operation": "acceptMerchantInvitation",
+      "given": "same invitation concurrently accepted",
+      "when": "two requests",
+      "expected_status": 200,
+      "expected_effect": "one membership/effect, safe same-key replay; other409",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-DELEGATION",
+      "operation": "replaceMerchantMemberGrants",
+      "given": "Manager scoped branchA",
+      "when": "remove branchB/add Owner/admin rights",
+      "expected_status": 403,
+      "expected_effect": "full current/requested union denies all effects",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-LAST-OWNER",
+      "operation": "revokeMerchantMember",
+      "given": "target last valid Owner",
+      "when": "revoke/suspend/leave/demote",
+      "expected_status": 409,
+      "expected_effect": "Owner population remains valid",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-TRANSFER",
+      "operation": "acceptMerchantOwnerTransfer",
+      "given": "target verified member,valid proposal+reauth",
+      "when": "accept concurrently with revoke",
+      "expected_status": 200,
+      "expected_effect": "one eligible replacement or safe409; never orphan",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-OWNER-RECOVERY",
+      "operation": "approveMerchantOwnerRecovery",
+      "given": "two independent scoped reviewers/fresh representative proof",
+      "when": "finalize recovery",
+      "expected_status": 200,
+      "expected_effect": "one eligible Owner; no unilateral bypass",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-SUSPEND",
+      "operation": "suspendMerchantOrganization",
+      "given": "scoped Business Admin",
+      "when": "suspend orgA",
+      "expected_status": 200,
+      "expected_effect": "businessA denied; valid personal/orgB survive",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-CLOSURE",
+      "operation": "closeMerchantOrganization",
+      "given": "shipments/finance/contracts/claims obligations or missing clearance",
+      "when": "close",
+      "expected_status": 409,
+      "expected_effect": "remains CLOSURE_REQUESTED; no forced settlement/deletion",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-FACILITY",
+      "operation": "createMerchantFacility",
+      "given": "Owner/Manager scoped valid business address",
+      "when": "create facility",
+      "expected_status": 201,
+      "expected_effect": "metadata only; no pickup/Station/SKU/custody master",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-DEFAULTS",
+      "operation": "updateMerchantDefaults",
+      "given": "real004/005 versions available/supported",
+      "when": "save defaults",
+      "expected_status": 200,
+      "expected_effect": "only validated references/version stored",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-CATALOG-MISSING",
+      "operation": "updateMerchantDefaults",
+      "given": "catalog/policy unavailable/stale/unsupported",
+      "when": "save defaults",
+      "expected_status": 503,
+      "expected_effect": "no fabricated service/default; stale409",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-UPLOAD",
+      "operation": "uploadApplicationEvidence",
+      "given": "authenticated applicant;valid signature PDF/PNG/JPEG within quota",
+      "when": "upload",
+      "expected_status": 201,
+      "expected_effect": "private QUARANTINED metadata; no reviewer access until CLEAN",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-OVERSIZE",
+      "operation": "uploadApplicationEvidence",
+      "given": "file larger than5MiB",
+      "when": "upload",
+      "expected_status": 413,
+      "expected_effect": "no stored accessible evidence/quota leak",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-MIME",
+      "operation": "uploadApplicationEvidence",
+      "given": "executable disguised as PDF/JPEG",
+      "when": "upload",
+      "expected_status": 415,
+      "expected_effect": "rejected by signature/parser, not extension",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-QUOTA-RACE",
+      "operation": "uploadApplicationEvidence",
+      "given": "four live files and two concurrent uploads",
+      "when": "upload",
+      "expected_status": 409,
+      "expected_effect": "at most five live/reserved files",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-SCANNER",
+      "operation": "downloadApplicationEvidence",
+      "given": "scanner unavailable/quarantine",
+      "when": "download",
+      "expected_status": 503,
+      "expected_effect": "no private bytes/URL disclosure",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-DOWNLOAD",
+      "operation": "downloadApplicationEvidence",
+      "given": "wrong tenant or revoked reviewer",
+      "when": "download clean evidence",
+      "expected_status": 404,
+      "expected_effect": "no bytes/metadata",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-DELIVERY",
+      "operation": "enrollCustomer",
+      "given": "provider accepted SMTP but no delivery proof",
+      "when": "observe intent",
+      "expected_status": 202,
+      "expected_effect": "ACCEPTED_BY_PROVIDER not DELIVERED; bounded failure/retry observable",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-RETENTION",
+      "operation": "getReviewApplication",
+      "given": "terminal evidence older90d but active org/appeal/hold/reference",
+      "when": "evaluate eligibility",
+      "expected_status": 200,
+      "expected_effect": "dry-run only/no deletion; active requirement preserved",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-PG",
+      "operation": "updateCustomerProfile",
+      "given": "empty PG18 or upgradeV1-V6",
+      "when": "apply approved future migrations/test runtime roles",
+      "expected_status": 200,
+      "expected_effect": "constraints/isolation/rollback/old-build compatibility; no existing migration edit",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-UNKNOWN",
+      "operation": "getOnboardingReceipt",
+      "given": "lost response after committed activation",
+      "when": "query current-authorized same-key receipt",
+      "expected_status": 200,
+      "expected_effect": "one original outcome; no duplicate activation",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-ABUSE",
+      "operation": "enrollCustomer",
+      "given": "distributed concurrent limiter budget exceeded",
+      "when": "reserve beyond budget",
+      "expected_status": 429,
+      "expected_effect": "Retry-After; no oversubscription or plaintext identifier logs",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-DEPENDENCY-OUTAGE",
+      "operation": "loginCustomer",
+      "given": "limiter/database outage",
+      "when": "login",
+      "expected_status": 503,
+      "expected_effect": "not INVALID_CREDENTIALS/RATE_LIMITED; no session",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-PRIVACY",
+      "operation": "getReviewApplication",
+      "given": "synthetic secret/PII canaries",
+      "when": "capture log/audit/artifact",
+      "expected_status": 200,
+      "expected_effect": "no passwords/proofs/file bytes/recipient PII in public outputs",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-DRAFT",
+      "operation": "createApplicationDraft",
+      "given": "verified customer with no application/evidence yet",
+      "when": "create empty draft",
+      "expected_status": 201,
+      "expected_effect": "server application ID permits later scoped upload; submit remains blocked until complete",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-LEGAL-REVISION",
+      "operation": "updateMerchantLegalProfile",
+      "given": "current Owner and screened org-bound evidence",
+      "when": "propose changed name/legal identifier",
+      "expected_status": 202,
+      "expected_effect": "immutable pending revision only; current approved profile unchanged",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-LEGAL-REVIEW",
+      "operation": "reviewMerchantLegalProfile",
+      "given": "independent scoped reviewer and valid changed legal key",
+      "when": "approve under old/new key locks",
+      "expected_status": 200,
+      "expected_effect": "unique new key binding and reserved history; collision409/self-review404 leaves prior profile intact",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-RECOVERY-CONSENT",
+      "operation": "createOwnerRecoveryConsent",
+      "given": "new verified personal customer with recent reauthentication",
+      "when": "consent to org-bound Owner recovery",
+      "expected_status": 201,
+      "expected_effect": "purpose/subject/org-bound15min consent; no membership/Owner grant until two independent reviewers approve",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-TRUST-DOMAIN",
+      "operation": "getCustomerSubject",
+      "given": "SYSTEM/Demo token or customer token sent to SYSTEM endpoints",
+      "when": "attempt cross-admission",
+      "expected_status": 401,
+      "expected_effect": "distinct issuer/audience/key sets and separate refresh tables deny cross-domain reuse",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-LEGACY-LINK",
+      "operation": "confirmLegacyCustomerLink",
+      "given": "current authenticated SYSTEM subject plus intended-email link proof",
+      "when": "confirm link",
+      "expected_status": 202,
+      "expected_effect": "same Identity account gets verified customer identifier; no second account/security credential/grant",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "S003-LEGACY-TAKEOVER",
+      "operation": "requestLegacyCustomerLink",
+      "given": "untrusted client accountId/email-only proof without current SYSTEM subject",
+      "when": "request link",
+      "expected_status": 401,
+      "expected_effect": "no binding/takeover; no arbitrary account selection",
+      "evidence": "PLANNED_NOT_EXECUTED"
+    }
+  ]
+}
