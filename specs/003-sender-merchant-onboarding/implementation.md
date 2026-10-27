@@ -17,7 +17,9 @@ Actual local evidence:
 
 - Maven Wrapper/JDK21 focused run:12 customer-session +24 original session cases, **36 PASS/0 fail/error/skip**.
 - Subsequent focused run including admission/architecture:12 customer-session +15 admission +24 original session +23 architecture, **74 PASS/0 fail/error/skip**. These are overlapping runs, not110 distinct tests.
-- Added8 real-PG customer application cases and4 migration/upgrade/constraint/privilege cases to existing suites and their owned container lifecycle. **Authored, not executed yet.** Exact finite report inventory extended; previous tests/skips/privacy/cleanup controls retained.
+- Added8 real-PG customer application cases and4 migration/upgrade/constraint/privilege cases to existing suites and their owned container lifecycle. Exact finite report inventory extended; previous tests/skips/privacy/cleanup controls retained.
+
+PR [33](https://github.com/phamquoainam/logistics-capstone-project/pull/33), source `83ce24ff3cb7a92ff8fa7b06ec9ea9598f27f97a`, integration `b1662f670e6cf2ff5e2b8d722a85d3029ac8a5b9`: [run40520536765](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/40520536765) completed. Architecture23 PASS; H2510 PASS/17 expected skips; PostgreSQL18 **796 PASS/1 failure/5 expected skips** (802 discovered). Owned PostgreSQL cleanup succeeded. The failed `customerRefreshReplayCommitsOnlyCustomerFamilyRevocation` used a no-write denial helper despite the required durable replay revocation/audit. Its assertion now checks committed customer revocation/audit, unchanged SYSTEM session population and denial of the successor token. Corrected revision requires a fresh actual PG result; the failed run is not PASS evidence.
 
 T003-01/02 are **IN_PROGRESS**, not DONE. No customer HTTP enrollment/verification/UI availability or complete journey is claimed by this kernel increment. All61 behavioral scenarios remain PLANNED_NOT_EXECUTED pending complete runtime assertions; existing Foundation/Identity findings and acceptance statuses remain unchanged.
 

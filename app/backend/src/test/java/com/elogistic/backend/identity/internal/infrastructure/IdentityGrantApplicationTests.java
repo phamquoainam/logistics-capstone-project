@@ -1659,10 +1659,18 @@ class IdentityGrantApplicationTests {
         try(var login=customerLogin()) {
             byte[] raw=login.refreshToken();
             try(var first=sessionToken(raw);var replay=sessionToken(raw);var next=customerSessions(NOW.plusSeconds(1)).refreshIdentity(first)) {
-                sessionDenied(REFRESH_REPLAY,()->customerSessions(NOW.plusSeconds(2)).refreshIdentity(replay));
+                var systemBefore=scalar("SELECT count(*) FROM identity.auth_session WHERE revoked_at IS NULL");
+                var denial=assertThrows(IdentityCommandFailure.class,()->customerSessions(NOW.plusSeconds(2)).refreshIdentity(replay));
+                assertEquals(REFRESH_REPLAY,denial.code());
+                assertEquals(REFRESH_REPLAY.name(),denial.getMessage());
                 assertEquals(1,scalar("SELECT count(*) FROM identity.customer_auth_session WHERE revoked_at IS NOT NULL"));
                 assertEquals(2,scalar("SELECT count(*) FROM identity.customer_refresh_token WHERE revoked_at IS NOT NULL"));
                 assertEquals(0,scalar("SELECT count(*) FROM identity.auth_session WHERE revoked_at IS NOT NULL"));
+                assertEquals(systemBefore,scalar("SELECT count(*) FROM identity.auth_session WHERE revoked_at IS NULL"));
+                assertEquals(1,scalar("SELECT count(*) FROM identity.audit_entry WHERE event_type='IDENTITY_REFRESH_REPLAY' AND actor_id='"+A+"'"));
+                try(var newest=sessionToken(next.refreshToken())) {
+                    sessionDenied(SESSION_INVALID,()->customerSessions(NOW.plusSeconds(3)).refreshIdentity(newest));
+                }
             }finally {Arrays.fill(raw,(byte)0);}
         }
     }
