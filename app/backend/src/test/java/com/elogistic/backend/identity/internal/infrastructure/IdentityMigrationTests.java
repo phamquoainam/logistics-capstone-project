@@ -37,7 +37,7 @@ class IdentityMigrationTests {
 
     private Database migrated() throws Exception {
         Database db = PostgresTestcontainersSupport.database(POSTGRES);
-        assertEquals(9, db.flyway("latest").migrate().migrationsExecuted);
+        assertEquals(10, db.flyway("latest").migrate().migrationsExecuted);
         return db;
     }
     private static String digest(int value) { return "decode('" + String.format("%064x", value) + "','hex')"; }
@@ -81,7 +81,7 @@ class IdentityMigrationTests {
         Database db = migrated(); account(db);
         var flyway = db.flyway("latest"); flyway.validate();
         var before = Arrays.stream(flyway.info().applied()).map(m -> m.getVersion() + ":" + m.getChecksum()).toList();
-        assertEquals(List.of("1","2","3","4","5","6","7","8","9"), Arrays.stream(flyway.info().applied()).map(m -> m.getVersion().toString()).toList());
+        assertEquals(List.of("1","2","3","4","5","6","7","8","9","10"), Arrays.stream(flyway.info().applied()).map(m -> m.getVersion().toString()).toList());
         var rows = snapshot(db, "identity.user_account");
         assertEquals(0, flyway.migrate().migrationsExecuted);
         assertEquals(before, Arrays.stream(flyway.info().applied()).map(m -> m.getVersion() + ":" + m.getChecksum()).toList());
@@ -100,7 +100,7 @@ class IdentityMigrationTests {
         var tables = List.of("merchant.demo_merchant", "identity.demo_account", "orders.demo_shipment", "orders.demo_event");
         Map<String,List<String>> before = new LinkedHashMap<>(); for (String table : tables) before.put(table, snapshot(db, table));
         var oldChecksums = Arrays.stream(db.flyway("2").info().applied()).map(m -> m.getChecksum()).toList();
-        assertEquals(7, db.flyway("latest").migrate().migrationsExecuted); db.flyway("latest").validate();
+        assertEquals(8, db.flyway("latest").migrate().migrationsExecuted); db.flyway("latest").validate();
         for (String table : tables) assertEquals(before.get(table), snapshot(db, table));
         assertEquals(oldChecksums, Arrays.stream(db.flyway("latest").info().applied()).limit(2).map(m -> m.getChecksum()).toList());
         try (Connection c = db.runtimeConnection(); Statement s = c.createStatement()) {
@@ -269,7 +269,7 @@ class IdentityMigrationTests {
         execute(db,"INSERT INTO identity.account_grant(account_id,role_code,scope_type,scope_id,granted_at) VALUES ("+ACCOUNT+",'IDENTITY_MANAGEMENT','IDENTITY',"+ACCOUNT+","+NOW+")");
         var before=snapshot(db,"identity.user_account");
         var checksums=Arrays.stream(db.flyway("3").info().applied()).map(m->m.getChecksum()).toList();
-        assertEquals(6,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();
+        assertEquals(7,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();
         assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);
         assertEquals(before,snapshot(db,"identity.user_account"));
         assertEquals(checksums,Arrays.stream(db.flyway("latest").info().applied()).limit(3).map(m->m.getChecksum()).toList());
@@ -332,7 +332,7 @@ class IdentityMigrationTests {
         Database db=PostgresTestcontainersSupport.database(POSTGRES);assertEquals(4,db.flyway("4").migrate().migrationsExecuted);account(db);
         execute(db,proof(PROOF,"INVITATION",501,"24 hours"));var accounts=snapshot(db,"identity.user_account");
         var checksums=Arrays.stream(db.flyway("4").info().applied()).map(m->m.getChecksum()).toList();
-        assertEquals(5,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);
+        assertEquals(6,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);
         assertEquals(checksums,Arrays.stream(db.flyway("latest").info().applied()).limit(4).map(m->m.getChecksum()).toList());assertEquals(accounts,snapshot(db,"identity.user_account"));
         try(Connection c=db.runtimeConnection();Statement s=c.createStatement();ResultSet r=s.executeQuery("SELECT account_id,purpose,token_hash,expires_at-created_at=INTERVAL '24 hours',verifier_key_id,consumed_at,revoked_at FROM identity.action_proof WHERE id="+PROOF)) {
             assertTrue(r.next());assertEquals(UUID.fromString(ACCOUNT.replace("'","")),r.getObject(1,UUID.class));assertEquals("INVITATION",r.getString(2));
@@ -446,7 +446,7 @@ class IdentityMigrationTests {
         execute(db,"INSERT INTO identity.rate_limit_attempt VALUES ("+KEY+",'LOGIN_IP',"+digest(57)+","+NOW+","+NOW+"+INTERVAL '15 minutes',"+NOW+"+INTERVAL '60 seconds','COUNTED')");
         var rows=rateAttemptSnapshot(db);var checksums=Arrays.stream(db.flyway("8").info().applied()).map(m->m.getChecksum()).toList();
         var source=new org.springframework.jdbc.datasource.DriverManagerDataSource(db.url(),db.runtime(),db.runtimePassword());assertThrows(IllegalStateException.class,()->CustomerRuntimeRequirements.verify(source));
-        assertEquals(1,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);
+        assertEquals(2,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);
         assertEquals(checksums,Arrays.stream(db.flyway("latest").info().applied()).limit(8).map(m->m.getChecksum()).toList());assertEquals(rows,rateAttemptSnapshot(db));assertDoesNotThrow(()->CustomerRuntimeRequirements.verify(source));
     }
     private List<String> rateAttemptSnapshot(Database db)throws SQLException{
@@ -460,5 +460,30 @@ class IdentityMigrationTests {
         rejects(db,"23514","INSERT INTO identity.rate_limit_attempt VALUES ("+KEY+",'CUSTOMER_ENROLL_EMAIL',"+digest(58)+","+NOW+","+NOW+"+INTERVAL '1 hour',"+NOW+"+INTERVAL '60 seconds','PENDING')");
         execute(db,"INSERT INTO identity.rate_limit_attempt VALUES ("+KEY+",'CUSTOMER_LOGIN_EMAIL',"+digest(59)+","+NOW+","+NOW+"+INTERVAL '16 minutes',"+NOW+"+INTERVAL '60 seconds','PENDING')");
         rejects(db,"23514","UPDATE identity.rate_limit_attempt SET state='BYPASS'");rejects(db,"23514","UPDATE identity.rate_limit_attempt SET expires_at=created_at+INTERVAL '2 hours'");
+    }
+    @Test void recoveryV10UpgradePreservesV9AndRevokesOnlyUnsupportedUnboundRecovery()throws Exception{
+        Database db=PostgresTestcontainersSupport.database(POSTGRES);assertEquals(9,db.flyway("9").migrate().migrationsExecuted);account(db);execute(db,proof(PROOF,"INVITATION",63,"24 hours"));
+        // Synthetic V9 schema fixture; the previous application did not expose recovery issuance.
+        execute(db,"INSERT INTO identity.customer_proof(id,subject_id,account_id,purpose,verifier,verifier_key_id,created_at,expires_at,policy_version) VALUES ("+TOKEN+","+ACCOUNT+","+ACCOUNT+",'CUSTOMER_RECOVERY',"+digest(62)+",'v1',"+NOW+","+NOW+"+INTERVAL '15 minutes','S003-2026-10-27')");
+        execute(db,"INSERT INTO identity.customer_delivery(id,proof_id,subject_id,purpose,verifier_key_id,encryption_key_id,template_version,configuration_version,created_at,expires_at,status,due_at,nonce,ciphertext,recipient_nonce,recipient_ciphertext,version) VALUES ("+OTHER_SESSION+","+TOKEN+","+ACCOUNT+",'CUSTOMER_RECOVERY','v1','e1','S003-EMAIL-1','S003-SMTP-1',"+NOW+","+NOW+"+INTERVAL '15 minutes','QUEUED',"+NOW+",decode(repeat('01',12),'hex'),decode(repeat('02',59),'hex'),decode(repeat('03',12),'hex'),decode(repeat('04',32),'hex'),1)");
+        var accounts=snapshot(db,"identity.user_account");var invitations=snapshot(db,"identity.action_proof");var checksums=Arrays.stream(db.flyway("9").info().applied()).map(m->m.getChecksum()).toList();
+        assertEquals(1,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);
+        assertEquals(checksums,Arrays.stream(db.flyway("latest").info().applied()).limit(9).map(m->m.getChecksum()).toList());assertEquals(accounts,snapshot(db,"identity.user_account"));assertEquals(invitations,snapshot(db,"identity.action_proof"));
+        try(Connection c=db.runtimeConnection();Statement s=c.createStatement();ResultSet r=s.executeQuery("SELECT p.revoked_at,p.bound_auth_version,p.verifier,d.status,d.ciphertext,d.recipient_ciphertext FROM identity.customer_proof p JOIN identity.customer_delivery d ON d.proof_id=p.id")){
+            assertTrue(r.next());assertNotNull(r.getTimestamp(1));assertNull(r.getObject(2));assertEquals(62,new java.math.BigInteger(1,r.getBytes(3)).intValueExact());assertEquals("EXPIRED",r.getString(4));assertNull(r.getBytes(5));assertNull(r.getBytes(6));assertFalse(r.next());
+        }
+    }
+    @Test void recoveryProofDatabaseRequiresSecurityVersionWithoutSession(){
+        assertDoesNotThrow(()->{
+            Database db=migrated();account(db);execute(db,session(SESSION).replace("identity.auth_session","identity.customer_auth_session"));
+            String prefix="INSERT INTO identity.customer_proof(id,subject_id,account_id,purpose,verifier,verifier_key_id,created_at,expires_at,bound_auth_version,bound_session_id,policy_version) VALUES ("+TOKEN+","+ACCOUNT+","+ACCOUNT+",'CUSTOMER_RECOVERY',"+digest(64)+",'v1',"+NOW+","+NOW+"+INTERVAL '15 minutes',";
+            rejects(db,"23514",prefix+"NULL,NULL,'S003-2026-10-27')");rejects(db,"23514",prefix+"0,NULL,'S003-2026-10-27')");rejects(db,"23514",prefix+"1,"+SESSION+",'S003-2026-10-27')");execute(db,prefix+"1,NULL,'S003-2026-10-27')");
+        });
+    }
+    @Test void proofReceiptDatabaseEnforcesPurposeRetentionAndNarrowPrivileges()throws Exception{
+        Database db=migrated();execute(db,enrollmentSql());execute(db,customerProofSql());
+        String receipt="INSERT INTO identity.customer_proof_receipt VALUES ("+TOKEN+",'CUSTOMER_ENROLLMENT',"+KEY+",'verifyCustomerEmail','v1',"+digest(65)+","+BINDING+","+NOW+","+NOW+"+INTERVAL '7 days')";
+        rejects(db,"23514",receipt.replace("'verifyCustomerEmail'","'confirmCustomerRecovery'"));rejects(db,"23503",receipt.replace("'CUSTOMER_ENROLLMENT'","'CUSTOMER_RECOVERY'").replace("'verifyCustomerEmail'","'confirmCustomerRecovery'"));rejects(db,"23514",receipt.replace("INTERVAL '7 days'","INTERVAL '6 days'"));
+        execute(db,receipt);rejects(db,"23505",receipt);rejects(db,"42501","UPDATE identity.customer_proof_receipt SET request_id="+KEY);rejects(db,"42501","DELETE FROM identity.customer_proof_receipt");rejects(db,"42501","TRUNCATE identity.customer_proof_receipt");rejects(db,"42501","ALTER TABLE identity.customer_proof_receipt ADD COLUMN injected BOOLEAN");
     }
 }

@@ -18,7 +18,7 @@ class CustomerProofProtectionTests {
     private static ProtectedCustomerProofs protection(){return new ProtectedCustomerProofs(Map.of("v1",key()),"v1",Map.of("e1",key()),"e1");}
     private static CustomerProof proof(CustomerProof.Purpose purpose){
         boolean session=purpose.customerSessionRequired() || purpose==CustomerProof.Purpose.LEGACY_CUSTOMER_LINK;
-        return CustomerProof.issue(UUID.randomUUID(),ACCOUNT,purpose,NOW,session?SESSION:null,session?3L:null,purpose==CustomerProof.Purpose.OWNER_RECOVERY_CONSENT?ORG:null);
+        return CustomerProof.issue(UUID.randomUUID(),ACCOUNT,purpose,NOW,session?SESSION:null,session || purpose==CustomerProof.Purpose.CUSTOMER_RECOVERY?3L:null,purpose==CustomerProof.Purpose.OWNER_RECOVERY_CONSENT?ORG:null);
     }
     private static CustomerProof copy(CustomerProof p,UUID id,UUID account,Instant time,UUID session,Long version){
         return CustomerProof.issue(id,account,p.purpose(),time,session,version,p.organizationId());
@@ -94,7 +94,7 @@ class CustomerProofProtectionTests {
         var crypto=protection();var p=proof(CustomerProof.Purpose.CUSTOMER_RECOVERY);
         try(var a=crypto.issue(p,DESTINATION);var opened=crypto.open(p,DESTINATION,"v1","e1",a.nonce(),a.ciphertext(),NOW)){
             byte[] token=opened.token();try{
-                var consumed=p.consume(p.purpose(),ACCOUNT,null,null,null,NOW);
+                var consumed=p.consume(p.purpose(),ACCOUNT,null,p.authVersion(),null,NOW);
                 assertFalse(crypto.matches(p,"v1",token,a.verifier(),p.expiresAt()));
                 assertFalse(crypto.matches(consumed,"v1",token,a.verifier(),NOW));
                 assertThrows(DomainViolation.class,()->crypto.open(p,DESTINATION,"v1","e1",a.nonce(),a.ciphertext(),p.expiresAt()));

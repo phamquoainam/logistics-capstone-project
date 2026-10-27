@@ -20,9 +20,10 @@ public final class ProductionCustomerEnrollmentAdmission implements CustomerEnro
     @Override public Binding admit(Operation operation,UUID request,String exactSubject){
         State state=current.get();if(state==null || operation==null || !state.request.equals(request) || state.binding!=null)throw invalid();
         UUID id=browser.requirePreauthentication(state.cookie,state.challenge);
-        var policy=switch(operation){case ENROLL->IdentityRateLimiter.Policy.CUSTOMER_ENROLL_EMAIL;case RESEND->IdentityRateLimiter.Policy.CUSTOMER_RESEND_EMAIL;case VERIFY->IdentityRateLimiter.Policy.CUSTOMER_VERIFY_PROOF;};
+        var policy=switch(operation){case ENROLL->IdentityRateLimiter.Policy.CUSTOMER_ENROLL_EMAIL;case RESEND->IdentityRateLimiter.Policy.CUSTOMER_RESEND_EMAIL;case VERIFY->IdentityRateLimiter.Policy.CUSTOMER_VERIFY_PROOF;case RECOVERY_REQUEST->IdentityRateLimiter.Policy.CUSTOMER_RECOVERY_EMAIL;case RECOVERY_CONFIRM->IdentityRateLimiter.Policy.CUSTOMER_RECOVERY_PROOF;};
         var quotas=new ArrayList<IdentityRateLimiter.Subject>();quotas.add(new IdentityRateLimiter.Subject(policy,exactSubject));
-        if(operation!=Operation.VERIFY)quotas.add(new IdentityRateLimiter.Subject(IdentityRateLimiter.Policy.CUSTOMER_ENROLL_IP,state.address));
+        if(operation==Operation.ENROLL || operation==Operation.RESEND)quotas.add(new IdentityRateLimiter.Subject(IdentityRateLimiter.Policy.CUSTOMER_ENROLL_IP,state.address));
+        if(operation==Operation.RECOVERY_REQUEST)quotas.add(new IdentityRateLimiter.Subject(IdentityRateLimiter.Policy.CUSTOMER_RECOVERY_IP,state.address));
         limiter.reserve(quotas);state.binding=new Binding(id);return state.binding;
     }
     @Override public void requireCurrent(Binding binding){

@@ -23,21 +23,23 @@ class CustomerHttpSecurityTests {
     private static KeyPair rsa;
     private final JsonMapper json=JsonMapper.builder().build();
     private IdentityBrowserState browser;private CustomerPreauthBrowserState preauth;private IdentityRateLimiter limiter;
-    private IdentitySessionCommands sessions;private CustomerEnrollmentCommands commands;private ProductionCustomerEnrollmentAdmission enrollmentAdmission;
+    private IdentitySessionCommands sessions;private CustomerEnrollmentCommands commands;private CustomerRecoveryCommands recoveries;private ProductionCustomerEnrollmentAdmission enrollmentAdmission;
     private ProductionSessionAdmission sessionAdmission;private ProductionAuthenticationHttp authentication;private ProductionCustomerEnrollmentHttp enrollment;
     @BeforeAll static void keys()throws Exception{var generator=KeyPairGenerator.getInstance("RSA");generator.initialize(3072);rsa=generator.generateKeyPair();}
     @BeforeEach void setup(){
         browser=mock(IdentityBrowserState.class);preauth=mock(CustomerPreauthBrowserState.class);limiter=mock(IdentityRateLimiter.class);
-        sessions=mock(IdentitySessionCommands.class);commands=mock(CustomerEnrollmentCommands.class);
+        sessions=mock(IdentitySessionCommands.class);commands=mock(CustomerEnrollmentCommands.class);recoveries=mock(CustomerRecoveryCommands.class);
         when(browser.issue(any(),any())).thenReturn(new IdentityBrowserState.Challenge(C,T));when(browser.rebind(any(),any())).thenReturn(new IdentityBrowserState.Challenge(C,T));
         when(preauth.requirePreauthentication(C,T)).thenReturn(BINDING);when(limiter.reserve(any())).thenReturn(success->{});
         sessionAdmission=new ProductionSessionAdmission(browser,limiter,true);enrollmentAdmission=new ProductionCustomerEnrollmentAdmission(preauth,limiter);
         var tokens=new ProductionAccessTokens("https://customer.example.invalid","customer-browser","test",(RSAPrivateKey)rsa.getPrivate(),Map.of("test",(RSAPublicKey)rsa.getPublic()),Clock.fixed(NOW,ZoneOffset.UTC));
         authentication=new ProductionAuthenticationHttp(sessions,sessionAdmission,browser,limiter,tokens,ORIGIN,Clock.fixed(NOW,ZoneOffset.UTC),ProductionAuthenticationHttp.Transport.CUSTOMER);
-        enrollment=new ProductionCustomerEnrollmentHttp(commands,enrollmentAdmission,ORIGIN);
+        enrollment=new ProductionCustomerEnrollmentHttp(commands,recoveries,enrollmentAdmission,ORIGIN);
         when(sessions.loginIdentity(any())).thenAnswer(call->sessionResult());
         when(sessions.refreshIdentity(any())).thenAnswer(call->{sessionAdmission.authorize(SessionAdmission.Operation.REFRESH,REQUEST,SESSION,true);return sessionResult();});
         when(commands.enroll(any())).thenAnswer(call->{var command=(CustomerEnrollmentCommands.Enrollment)call.getArgument(0);var binding=enrollmentAdmission.admit(CustomerEnrollmentAdmission.Operation.ENROLL,command.requestId(),command.email());enrollmentAdmission.requireCurrent(binding);return new CustomerEnrollmentCommands.Accepted(true,command.requestId());});
+        when(recoveries.request(any())).thenAnswer(call->{var command=(CustomerRecoveryCommands.Email)call.getArgument(0);var binding=enrollmentAdmission.admit(CustomerEnrollmentAdmission.Operation.RECOVERY_REQUEST,command.requestId(),command.email());enrollmentAdmission.requireCurrent(binding);return new CustomerEnrollmentCommands.Accepted(true,command.requestId());});
+        doAnswer(call->{var command=(CustomerRecoveryCommands.Confirmation)call.getArgument(0);var binding=enrollmentAdmission.admit(CustomerEnrollmentAdmission.Operation.RECOVERY_CONFIRM,command.requestId(),command.proofId().toString());enrollmentAdmission.requireCurrent(binding);return null;}).when(recoveries).confirm(any());
     }
     private IdentitySessionCommands.Result sessionResult(){return new IdentitySessionCommands.Result(new IdentitySessionCommands.AccessGrant(SESSION,ACCOUNT,1,NOW,NOW.plusSeconds(900)),new IdentityGrantCommands.Account(ACCOUNT,"synthetic","Synthetic",EMAIL,"ACTIVE",List.of(),1,true),NOW.plusSeconds(28800),R.getBytes(StandardCharsets.US_ASCII));}
     private MockHttpServletRequest request(String route){
@@ -133,5 +135,24 @@ class CustomerHttpSecurityTests {
     @Test void customerOriginConfigurationHasNoHttpWildcardOrPathFallback(){
         for(String invalid:List.of("http://portal.example.invalid","https://portal.example.invalid/","https://portal.example.invalid/path","https://user@portal.example.invalid","null","*"))
             assertThrows(IllegalArgumentException.class,()->new ProductionCustomerRequestAdmission(browser,invalid));
+    }
+    @Test void recoveryHttpBindsOnlyEmailAndDedicatedRequestQuotas()throws Exception{
+        var request=request("recovery");request.setContent(json.writeValueAsBytes(Map.of("email",EMAIL)));var response=run(request);assertEquals(202,response.getStatus());assertEquals(2,json.readTree(response.getContentAsString()).size());
+        verify(limiter).reserve(List.of(new IdentityRateLimiter.Subject(IdentityRateLimiter.Policy.CUSTOMER_RECOVERY_EMAIL,EMAIL),new IdentityRateLimiter.Subject(IdentityRateLimiter.Policy.CUSTOMER_RECOVERY_IP,"192.0.2.10")));verifyNoInteractions(commands);
+    }
+    @Test void recoveryConfirmationUsesExactInputAndClearsRefreshOnlyAfterCommit()throws Exception{
+        var request=request("recovery-confirm");request.setContent(json.writeValueAsBytes(Map.of("proofId",KEY.toString(),"proof",C,"newPassword","synthetic-new-password")));var response=run(request);assertEquals(204,response.getStatus());assertEquals("",response.getContentAsString());
+        assertEquals(1,response.getHeaders("Set-Cookie").size());var cookie=MockCookie.parse(response.getHeader("Set-Cookie"));assertEquals("__Host-elogistics.customer.refresh",cookie.getName());assertEquals(0,cookie.getMaxAge());assertTrue(cookie.getSecure());assertTrue(cookie.isHttpOnly());
+        verify(limiter).reserve(List.of(new IdentityRateLimiter.Subject(IdentityRateLimiter.Policy.CUSTOMER_RECOVERY_PROOF,KEY.toString())));
+        var captor=org.mockito.ArgumentCaptor.forClass(CustomerRecoveryCommands.Confirmation.class);verify(recoveries).confirm(captor.capture());assertEquals("CustomerRecoveryConfirmation[redacted]",captor.getValue().toString());
+    }
+    @Test void recoveryRejectsActorDestinationAndDuplicateProofFieldInjection()throws Exception{
+        var request=request("recovery");request.setContent(json.writeValueAsBytes(Map.of("email",EMAIL,"destination","other@example.invalid","accountId",ACCOUNT.toString())));rejected(run(request),400,"VALIDATION_FAILED");
+        request=request("recovery-confirm");request.setContent(("{\"proofId\":\""+KEY+"\",\"proof\":\"a\",\"proof\":\"b\",\"newPassword\":\"synthetic-new-password\"}").getBytes(StandardCharsets.UTF_8));rejected(run(request),400,"VALIDATION_FAILED");verifyNoInteractions(recoveries);
+    }
+    @Test void recoveryFailureNeverClearsCookiesOrFabricatesCredentialChange()throws Exception{
+        var request=request("recovery-confirm");request.setContent(json.writeValueAsBytes(Map.of("proofId",KEY.toString(),"proof",C,"newPassword","synthetic-new-password")));
+        doThrow(new IdentityCommandFailure(IdentityCommandFailure.Code.TOKEN_INVALID_OR_EXPIRED)).when(recoveries).confirm(any());rejected(run(request),422,"TOKEN_INVALID_OR_EXPIRED");
+        doThrow(new IllegalStateException("PRIVATE_TEST_FAILURE")).when(recoveries).confirm(any());var retry=request("recovery-confirm");retry.setContent(json.writeValueAsBytes(Map.of("proofId",KEY.toString(),"proof",C,"newPassword","synthetic-new-password")));rejected(run(retry),503,"SERVICE_UNAVAILABLE");
     }
 }

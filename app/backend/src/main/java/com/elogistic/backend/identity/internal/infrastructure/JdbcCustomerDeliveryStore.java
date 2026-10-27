@@ -10,7 +10,7 @@ import javax.sql.DataSource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-/** Enrollment delivery leases only; later account-bound purposes require their own current-authority checks. */
+/** Enrollment and version-bound recovery delivery; other purposes require their own current-authority checks. */
 public final class JdbcCustomerDeliveryStore implements CustomerDeliveryStore {
     private final JdbcIdentityGrantStore accounts;private final JdbcTemplate jdbc;
     public JdbcCustomerDeliveryStore(DataSource source){accounts=new JdbcIdentityGrantStore(Objects.requireNonNull(source));jdbc=new JdbcTemplate(source);}
@@ -40,7 +40,7 @@ public final class JdbcCustomerDeliveryStore implements CustomerDeliveryStore {
             after.status().name(),after.attempts(),stamp(after.dueAt()),after.leaseId(),stamp(after.leaseUntil()),stamp(after.finishedAt()),after.version(),clear,clear,clear,clear,
             accepted?outcome.reference():null,accepted,stamp(now),before.id(),before.version()));
     }
-    @Override public int expire(Instant now){return owned(tx->{
+    private int expireEnrollments(Instant now){return owned(tx->{
         var expired=jdbc.query("SELECT id,intended_account_id FROM identity.customer_enrollment WHERE status='PENDING' AND expires_at<=? ORDER BY id LIMIT 25 FOR UPDATE",
             (r,n)->Map.entry(r.getObject(1,UUID.class),r.getObject(2,UUID.class)),stamp(now));
         for(var e:expired){
@@ -50,15 +50,30 @@ public final class JdbcCustomerDeliveryStore implements CustomerDeliveryStore {
             audit(e.getValue(),UUID.randomUUID(),"CUSTOMER_ENROLLMENT_EXPIRED",now);
         }return expired.size();
     });}
+    @Override public int expire(Instant now){
+        int enrollments=expireEnrollments(now);
+        return enrollments+owned(tx->{
+            var candidates=jdbc.query("SELECT id,account_id FROM identity.customer_proof WHERE purpose='CUSTOMER_RECOVERY' AND consumed_at IS NULL AND revoked_at IS NULL AND expires_at<=? ORDER BY id LIMIT 25",(r,n)->Map.entry(r.getObject(1,UUID.class),r.getObject(2,UUID.class)),stamp(now));
+            var subjects=new TreeSet<UUID>();candidates.forEach(p->subjects.add(p.getValue()));subjects.forEach(tx::lockAccount);
+            for(var candidate:candidates){
+                one(jdbc.update("UPDATE identity.customer_proof SET revoked_at=? WHERE id=? AND purpose='CUSTOMER_RECOVERY' AND consumed_at IS NULL AND revoked_at IS NULL AND expires_at<=?",stamp(now),candidate.getKey(),stamp(now)));
+                jdbc.update("UPDATE identity.customer_delivery SET status='EXPIRED',lease_id=NULL,lease_until=NULL,nonce=NULL,ciphertext=NULL,recipient_nonce=NULL,recipient_ciphertext=NULL,finished_at=?,version=version+1 WHERE proof_id=? AND status NOT IN ('DELIVERED','EXPIRED')",stamp(now),candidate.getKey());
+                audit(candidate.getValue(),UUID.randomUUID(),"CUSTOMER_RECOVERY_EXPIRED",now);
+            }return candidates.size();
+        });
+    }
     private Optional<String> eligible(CustomerProof proof,Instant now){
         try{proof.requireAvailable(now);}catch(DomainViolation invalid){return Optional.empty();}
+        if(proof.purpose()==CustomerProof.Purpose.CUSTOMER_RECOVERY){
+            return jdbc.query("SELECT a.email FROM identity.user_account a JOIN identity.customer_identifier c ON c.account_id=a.id AND c.status='ACTIVE' AND c.exact_email=a.email COLLATE \"C\" WHERE a.id=? AND a.status='ACTIVE' AND a.email_verified AND a.auth_version=?",(r,n)->r.getString(1),proof.subjectId(),proof.authVersion()).stream().findFirst();
+        }
         if(proof.purpose()!=CustomerProof.Purpose.CUSTOMER_ENROLLMENT)return Optional.empty();
         return jdbc.query("SELECT e.exact_email FROM identity.customer_enrollment e JOIN identity.customer_proof p ON p.enrollment_id=e.id AND p.subject_id=e.intended_account_id WHERE p.id=? AND e.status='PENDING' AND e.expires_at>?"
             +" AND NOT EXISTS(SELECT 1 FROM identity.user_account a WHERE a.email COLLATE \"C\"=e.exact_email) AND NOT EXISTS(SELECT 1 FROM identity.customer_identifier c WHERE c.exact_email=e.exact_email AND c.status='ACTIVE')",
             (r,n)->r.getString(1),proof.id(),stamp(now)).stream().findFirst();
     }
     @Override public Optional<Lease> claim(Instant now){return owned(tx->{
-        var candidate=jdbc.query("SELECT d.id,d.proof_id,p.subject_id FROM identity.customer_delivery d JOIN identity.customer_proof p ON p.id=d.proof_id WHERE p.purpose='CUSTOMER_ENROLLMENT' AND d.status IN ('QUEUED','SENDING','RETRY_WAIT','BLOCKED') AND d.due_at<=? AND (d.status<>'SENDING' OR d.lease_until<=?) ORDER BY d.due_at,d.id LIMIT 1",
+        var candidate=jdbc.query("SELECT d.id,d.proof_id,p.subject_id FROM identity.customer_delivery d JOIN identity.customer_proof p ON p.id=d.proof_id WHERE p.purpose IN ('CUSTOMER_ENROLLMENT','CUSTOMER_RECOVERY') AND d.status IN ('QUEUED','SENDING','RETRY_WAIT','BLOCKED') AND d.due_at<=? AND (d.status<>'SENDING' OR d.lease_until<=?) ORDER BY d.due_at,d.id LIMIT 1",
             (r,n)->List.of(r.getObject(1,UUID.class),r.getObject(2,UUID.class),r.getObject(3,UUID.class)),stamp(now),stamp(now)).stream().findFirst();
         if(candidate.isEmpty())return Optional.empty();var ids=candidate.get();tx.lockAccount(ids.get(2));var proof=proof(ids.get(1));var before=delivery(ids.getFirst());
         var destination=eligible(proof,now);

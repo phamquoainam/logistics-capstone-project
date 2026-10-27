@@ -19,12 +19,15 @@ public record CustomerProof(UUID id, UUID subjectId, Purpose purpose, Instant cr
     public CustomerProof {
         if(id==null || subjectId==null || purpose==null || createdAt==null || expiresAt==null
             || !createdAt.equals(createdAt.truncatedTo(ChronoUnit.MICROS)) || !expiresAt.equals(createdAt.plusSeconds(purpose.seconds))
-            || (sessionId==null)!=(authVersion==null) || (authVersion!=null && authVersion<1)
+            || (purpose!=Purpose.CUSTOMER_RECOVERY && (sessionId==null)!=(authVersion==null)) || (authVersion!=null && authVersion<1)
             || (purpose.customerSessionRequired() && sessionId==null)
             || ((purpose==Purpose.OWNER_RECOVERY_CONSENT)!=(organizationId!=null))
             || (consumedAt!=null && (consumedAt.isBefore(createdAt) || !consumedAt.isBefore(expiresAt)))
             || (revokedAt!=null && revokedAt.isBefore(createdAt)))throw rejected();
         if((purpose==Purpose.CUSTOMER_ENROLLMENT || purpose==Purpose.CUSTOMER_RECOVERY) && sessionId!=null)throw rejected();
+        // Recovery has no session, but a live proof must bind the current security version.
+        // Closed pre-amendment rows remain readable as unusable historical evidence.
+        if(purpose==Purpose.CUSTOMER_RECOVERY && authVersion==null && consumedAt==null && revokedAt==null)throw rejected();
         if(purpose==Purpose.LEGACY_CUSTOMER_LINK && sessionId==null)throw rejected();
     }
     public static CustomerProof issue(UUID id,UUID subject,Purpose purpose,Instant time,UUID session,Long version,UUID organization) {

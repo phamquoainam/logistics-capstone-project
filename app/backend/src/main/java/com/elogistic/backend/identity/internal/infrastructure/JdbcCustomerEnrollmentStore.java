@@ -42,6 +42,16 @@ public final class JdbcCustomerEnrollmentStore implements CustomerEnrollmentStor
                 try{one(jdbc.update("INSERT INTO identity.customer_command_receipt VALUES (?,?,?,?,?,?,?,?)",binding,key,receipt.operation(),receipt.keyId(),fingerprint,receipt.requestId(),stamp(now),stamp(now.plusSeconds(604800))));}
                 finally{Arrays.fill(fingerprint,(byte)0);}
             }
+            public Optional<Receipt> proofReceipt(UUID proof,UUID key){
+                return jdbc.query("SELECT operation,fingerprint_key_id,request_fingerprint,request_id FROM identity.customer_proof_receipt WHERE proof_id=? AND operation_key=?",
+                    (r,n)->new Receipt(r.getString(1),r.getString(2),r.getBytes(3),r.getObject(4,UUID.class)),proof,key).stream().findFirst();
+            }
+            public void proofReceipt(UUID proof,UUID key,Receipt receipt,Instant now){
+                byte[] fingerprint=receipt.fingerprint();
+                String purpose=switch(receipt.operation()){case "verifyCustomerEmail"->"CUSTOMER_ENROLLMENT";case "confirmCustomerRecovery"->"CUSTOMER_RECOVERY";default->throw new IllegalArgumentException("CUSTOMER_PROOF_RECEIPT_OPERATION_INVALID");};
+                try{one(jdbc.update("INSERT INTO identity.customer_proof_receipt VALUES (?,?,?,?,?,?,?,?,?)",proof,purpose,key,receipt.operation(),receipt.keyId(),fingerprint,receipt.requestId(),stamp(now),stamp(now.plusSeconds(604800))));}
+                finally{Arrays.fill(fingerprint,(byte)0);}
+            }
             public boolean emailOccupied(String exact){
                 return Boolean.TRUE.equals(jdbc.queryForObject("SELECT EXISTS(SELECT 1 FROM identity.customer_identifier WHERE exact_email=? AND status='ACTIVE') OR EXISTS(SELECT 1 FROM identity.user_account WHERE email COLLATE \"C\"=?)",Boolean.class,exact,exact));
             }

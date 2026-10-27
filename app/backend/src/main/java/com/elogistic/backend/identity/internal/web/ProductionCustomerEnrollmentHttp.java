@@ -2,6 +2,7 @@ package com.elogistic.backend.identity.internal.web;
 
 import com.elogistic.backend.identity.api.*;
 import com.elogistic.backend.identity.api.customer.CustomerEnrollmentCommands;
+import com.elogistic.backend.identity.api.customer.CustomerRecoveryCommands;
 import com.elogistic.backend.identity.internal.application.port.IdentityRateLimiter;
 import jakarta.servlet.http.*;
 import java.io.IOException;
@@ -14,11 +15,11 @@ import tools.jackson.core.StreamReadFeature;
 public final class ProductionCustomerEnrollmentHttp {
     private static final JsonMapper JSON=JsonMapper.builder().enable(StreamReadFeature.STRICT_DUPLICATE_DETECTION).build();
     private static final String PREFIX="/api/v1/customer-auth/";
-    private final CustomerEnrollmentCommands commands;private final ProductionCustomerEnrollmentAdmission admission;private final String origin;
-    public ProductionCustomerEnrollmentHttp(CustomerEnrollmentCommands commands,ProductionCustomerEnrollmentAdmission admission,String origin){
-        this.commands=Objects.requireNonNull(commands);this.admission=Objects.requireNonNull(admission);this.origin=ProductionCustomerRequestAdmission.requireOrigin(origin);
+    private final CustomerEnrollmentCommands commands;private final CustomerRecoveryCommands recoveries;private final ProductionCustomerEnrollmentAdmission admission;private final String origin;
+    public ProductionCustomerEnrollmentHttp(CustomerEnrollmentCommands commands,CustomerRecoveryCommands recoveries,ProductionCustomerEnrollmentAdmission admission,String origin){
+        this.commands=Objects.requireNonNull(commands);this.recoveries=Objects.requireNonNull(recoveries);this.admission=Objects.requireNonNull(admission);this.origin=ProductionCustomerRequestAdmission.requireOrigin(origin);
     }
-    public boolean matches(HttpServletRequest request){String path=request.getRequestURI().substring(request.getContextPath().length());return request.getMethod().equals("POST") && Set.of(PREFIX+"enrollments",PREFIX+"verification-resend",PREFIX+"verifications").contains(path);}
+    public boolean matches(HttpServletRequest request){String path=request.getRequestURI().substring(request.getContextPath().length());return request.getMethod().equals("POST") && Set.of(PREFIX+"enrollments",PREFIX+"verification-resend",PREFIX+"verifications",PREFIX+"recovery",PREFIX+"recovery-confirm").contains(path);}
     private static IdentityCommandFailure invalid(){return new IdentityCommandFailure(IdentityCommandFailure.Code.VALIDATION_FAILED);}
     private static JsonNode body(HttpServletRequest request,Set<String> fields)throws IOException {
         try{
@@ -48,11 +49,16 @@ public final class ProductionCustomerEnrollmentHttp {
                     result=commands.enroll(new CustomerEnrollmentCommands.Enrollment(input.get("email").asString(),input.get("password").asString(),input.get("displayName").asString(),input.get("consentVersion").asString(),key,requestId));
                 }else if(path.endsWith("/verification-resend")){
                     var input=body(request,Set.of("email"));result=commands.resend(new CustomerEnrollmentCommands.Email(input.get("email").asString(),key,requestId));
+                }else if(path.endsWith("/recovery")){
+                    var input=body(request,Set.of("email"));result=recoveries.request(new CustomerRecoveryCommands.Email(input.get("email").asString(),key,requestId));
                 }else{
-                    var input=body(request,Set.of("proofId","proof"));UUID proof;
+                    boolean recovery=path.endsWith("/recovery-confirm");var input=body(request,recovery?Set.of("proofId","proof","newPassword"):Set.of("proofId","proof"));UUID proof;
                     try{proof=UUID.fromString(input.get("proofId").asString());if(!proof.toString().equals(input.get("proofId").asString()))throw invalid();}
                     catch(IllegalArgumentException invalid){throw invalid();}
-                    commands.verify(new CustomerEnrollmentCommands.Verification(proof,input.get("proof").asString(),key,requestId));response.setStatus(204);return;
+                    if(recovery){
+                        recoveries.confirm(new CustomerRecoveryCommands.Confirmation(proof,input.get("proof").asString(),input.get("newPassword").asString(),key,requestId));
+                        response.addHeader("Set-Cookie","__Host-elogistics.customer.refresh=; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=0");
+                    }else commands.verify(new CustomerEnrollmentCommands.Verification(proof,input.get("proof").asString(),key,requestId));response.setStatus(204);return;
                 }
                 response.setStatus(202);response.setContentType("application/json;charset=UTF-8");response.getWriter().write(JSON.writeValueAsString(result));
             }

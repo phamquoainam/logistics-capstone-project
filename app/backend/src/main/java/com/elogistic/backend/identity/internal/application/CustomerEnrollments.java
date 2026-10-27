@@ -5,7 +5,6 @@ import com.elogistic.backend.identity.api.customer.CustomerEnrollmentCommands;
 import com.elogistic.backend.identity.internal.application.port.*;
 import com.elogistic.backend.identity.internal.domain.*;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -27,15 +26,10 @@ public final class CustomerEnrollments implements CustomerEnrollmentCommands {
     private static CustomerEmail email(String value){try{return new CustomerEmail(value);}catch(DomainViolation invalid){throw fail(VALIDATION_FAILED);}}
     private static void text(String value,int max){if(value==null || value.isBlank() || value.codePointCount(0,value.length())>max)throw fail(VALIDATION_FAILED);}
     private CustomerEnrollmentStore.Receipt previous(CustomerEnrollmentStore.Transaction tx,CustomerEnrollmentAdmission.Binding binding,UUID key,String operation,String... fields){
-        var previous=tx.receipt(binding.id(),key).orElse(null);if(previous==null)return null;
-        byte[] fingerprint=protection.fingerprint(previous.keyId(),operation,fields),stored=previous.fingerprint();
-        try{if(!previous.operation().equals(operation) || !MessageDigest.isEqual(fingerprint,stored))throw fail(IDEMPOTENCY_CONFLICT);return previous;}
-        finally{Arrays.fill(fingerprint,(byte)0);Arrays.fill(stored,(byte)0);}
+        return CustomerReceipts.match(tx.receipt(binding.id(),key).orElse(null),protection,operation,fields);
     }
     private void receipt(CustomerEnrollmentStore.Transaction tx,CustomerEnrollmentAdmission.Binding binding,UUID key,UUID request,String operation,Instant time,String... fields){
-        byte[] fingerprint=protection.fingerprint(protection.activeVerifierKey(),operation,fields);
-        try{tx.receipt(binding.id(),key,new CustomerEnrollmentStore.Receipt(operation,protection.activeVerifierKey(),fingerprint,request),time);}
-        finally{Arrays.fill(fingerprint,(byte)0);}
+        tx.receipt(binding.id(),key,CustomerReceipts.prepare(protection,request,operation,fields),time);
     }
     private void issue(CustomerEnrollmentStore.Transaction tx,CustomerEnrollment e,Instant time){
         var proof=CustomerProof.issue(UUID.randomUUID(),e.intendedAccountId(),CustomerProof.Purpose.CUSTOMER_ENROLLMENT,time,null,null,null);
@@ -88,7 +82,10 @@ public final class CustomerEnrollments implements CustomerEnrollmentCommands {
             tx.accounts().lockAdministration();admission.requireCurrent(binding);
             // Possession is required even for a same-key replay; no receipt lookup by email/locator alone.
             var stored=tx.proof(c.proofId()).orElseThrow(()->fail(TOKEN_INVALID_OR_EXPIRED));var proof=stored.proof();
-            var previous=previous(tx,binding,c.key(),"verifyCustomerEmail",c.proofId().toString(),c.proof());
+            if(proof.purpose()!=CustomerProof.Purpose.CUSTOMER_ENROLLMENT)throw fail(TOKEN_INVALID_OR_EXPIRED);
+            var previous=CustomerReceipts.match(tx.proofReceipt(c.proofId(),c.key()).orElse(null),protection,"verifyCustomerEmail",c.proofId().toString(),c.proof());
+            // Retain exact same-binding replay of V8/V9 receipts; new confirmations are proof-scoped.
+            if(previous==null)previous=previous(tx,binding,c.key(),"verifyCustomerEmail",c.proofId().toString(),c.proof());
             Instant time=now();
             if(previous!=null){admission.requireCurrent(binding);return null;}
             byte[] verifier=stored.verifier();
@@ -98,7 +95,7 @@ public final class CustomerEnrollments implements CustomerEnrollmentCommands {
             try{e.requirePending(time);proof.consume(proof.purpose(),e.intendedAccountId(),null,null,null,time);}catch(DomainViolation invalid){throw fail(TOKEN_INVALID_OR_EXPIRED);}
             if(tx.emailOccupied(e.email().value()))throw fail(TOKEN_INVALID_OR_EXPIRED);
             tx.activate(e,proof,time);tx.update(e,e.consume(time));tx.audit(e.intendedAccountId(),c.requestId(),"CUSTOMER_EMAIL_VERIFIED",time);
-            receipt(tx,binding,c.key(),c.requestId(),"verifyCustomerEmail",time,c.proofId().toString(),c.proof());
+            tx.proofReceipt(c.proofId(),c.key(),CustomerReceipts.prepare(protection,c.requestId(),"verifyCustomerEmail",c.proofId().toString(),c.proof()),time);
             // Wall-clock expiry is re-evaluated after staged effects, immediately before owned commit.
             if(!now().isBefore(proof.expiresAt()) || !now().isBefore(e.expiresAt()))throw fail(TOKEN_INVALID_OR_EXPIRED);
             admission.requireCurrent(binding);return null;

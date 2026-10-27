@@ -22,6 +22,8 @@ public interface CustomerEnrollmentStore {
         IdentityGrantStore.Transaction accounts();
         Optional<Receipt> receipt(UUID binding,UUID key);
         void receipt(UUID binding,UUID key,Receipt receipt,Instant now);
+        Optional<Receipt> proofReceipt(UUID proof,UUID key);
+        void proofReceipt(UUID proof,UUID key,Receipt receipt,Instant now);
         boolean emailOccupied(String exactEmail);
         Optional<CustomerEnrollment> pending(String exactEmail);
         Optional<CustomerEnrollment> enrollment(UUID id);

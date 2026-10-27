@@ -40,7 +40,7 @@ class IdentityGrantApplicationTests {
 
     @BeforeEach void fixture() throws Exception {
         db = PostgresTestcontainersSupport.database(POSTGRES);
-        assertEquals(9, db.flyway("latest", SCOPE).migrate().migrationsExecuted);
+        assertEquals(10, db.flyway("latest", SCOPE).migrate().migrationsExecuted);
         account(A, "ACTIVE", List.of(ADMIN)); account(B, "ACTIVE", List.of(ADMIN)); account(T, "ACTIVE", List.of(GX));
         session(S, A); session(AS, B); session(TS, T);
         execute("INSERT INTO identity.refresh_token(id,session_id,token_hash,issued_at,expires_at) VALUES ('" + id(20) + "','" + TS + "',decode(repeat('01',32),'hex'),TIMESTAMPTZ '2026-10-21 00:00:00Z',TIMESTAMPTZ '2026-10-21 08:00:00Z')");
@@ -1961,5 +1961,90 @@ class IdentityGrantApplicationTests {
             var mvc=httpMvc(context);var pre=customerCsrf(mvc,null);failWrite("audit_entry","INSERT");assertEquals(503,customerPost(mvc,"enrollments",pre,KEY,customerRegistration()).getStatus());
             assertEquals(0,scalar("SELECT count(*) FROM identity.customer_enrollment"));assertEquals(0,scalar("SELECT count(*) FROM identity.customer_delivery"));assertEquals(0,scalar("SELECT count(*) FROM identity.customer_command_receipt"));assertEquals(1,scalar("SELECT count(*) FROM identity.rate_limit_attempt WHERE policy='CUSTOMER_ENROLL_EMAIL' AND state='COUNTED'"));
         }
+    }
+    private com.elogistic.backend.identity.api.customer.CustomerRecoveryCommands recoveryApp(Instant time){
+        return new com.elogistic.backend.identity.internal.application.CustomerRecoveries(new JdbcCustomerRecoveryStore(outboxDataSource(),enrollmentProtection()),enrollmentProtection(),
+            new com.elogistic.backend.identity.internal.application.port.CustomerEnrollmentAdmission(){public Binding admit(Operation operation,UUID request,String subject){return new Binding(ENROLLMENT_BINDING);}public void requireCurrent(Binding binding){assertEquals(ENROLLMENT_BINDING,binding.id());}},Clock.fixed(time,ZoneOffset.UTC));
+    }
+    /** Private negative-test fixture extraction, not SMTP delivery evidence. */
+    private com.elogistic.backend.identity.api.customer.CustomerRecoveryCommands.Confirmation pendingRecoveryProof()throws Exception{
+        var jdbc=new org.springframework.jdbc.core.JdbcTemplate(outboxDataSource());
+        return jdbc.queryForObject("SELECT p.*,d.encryption_key_id,d.nonce,d.ciphertext,d.recipient_nonce,d.recipient_ciphertext FROM identity.customer_proof p JOIN identity.customer_delivery d ON d.proof_id=p.id WHERE p.purpose='CUSTOMER_RECOVERY' AND p.revoked_at IS NULL AND p.consumed_at IS NULL",(r,n)->{
+            var p=new CustomerProof(r.getObject("id",UUID.class),r.getObject("subject_id",UUID.class),CustomerProof.Purpose.CUSTOMER_RECOVERY,r.getTimestamp("created_at").toInstant(),r.getTimestamp("expires_at").toInstant(),null,r.getLong("bound_auth_version"),null,null,null);
+            var crypto=enrollmentProtection();String destination=crypto.openDestination(p,r.getString("verifier_key_id"),r.getString("encryption_key_id"),r.getBytes("recipient_nonce"),r.getBytes("recipient_ciphertext"),p.createdAt());assertEquals(CUSTOMER_EMAIL,destination);
+            try(var opened=crypto.open(p,destination,r.getString("verifier_key_id"),r.getString("encryption_key_id"),r.getBytes("nonce"),r.getBytes("ciphertext"),p.createdAt())){
+                byte[] token=opened.token();try{return new com.elogistic.backend.identity.api.customer.CustomerRecoveryCommands.Confirmation(p.id(),new String(token,java.nio.charset.StandardCharsets.US_ASCII),"synthetic-recovered-password",UUID.randomUUID(),REQUEST);}finally{Arrays.fill(token,(byte)0);}
+            }
+        });
+    }
+    private com.elogistic.backend.identity.api.customer.CustomerRecoveryCommands.Email recoveryRequest(String email,UUID key){return new com.elogistic.backend.identity.api.customer.CustomerRecoveryCommands.Email(email,key,REQUEST);}
+    @Test void recoveryUniformRequestsNeverUseUnverifiedDisabledStaleOrLegacyOnlyEmail()throws Exception{
+        enrollmentBinding();customerFixture(true);var app=recoveryApp(NOW);
+        assertTrue(app.request(recoveryRequest("unknown@example.invalid",KEY)).accepted());assertEquals(0,scalar("SELECT count(*) FROM identity.customer_delivery"));
+        execute("UPDATE identity.user_account SET status='DISABLED',disabled_at=updated_at WHERE id='"+A+"'");assertTrue(app.request(recoveryRequest(CUSTOMER_EMAIL,id(920))).accepted());assertEquals(0,scalar("SELECT count(*) FROM identity.customer_delivery"));
+        execute("UPDATE identity.user_account SET status='ACTIVE',disabled_at=NULL,email='changed@example.invalid' WHERE id='"+A+"'");assertTrue(app.request(recoveryRequest(CUSTOMER_EMAIL,id(921))).accepted());assertEquals(0,scalar("SELECT count(*) FROM identity.customer_delivery"));
+        assertTrue(app.request(recoveryRequest("fixture@example.invalid",id(922))).accepted());assertEquals(0,scalar("SELECT count(*) FROM identity.customer_delivery"));
+        execute("UPDATE identity.user_account SET status='PENDING_ACTIVATION',password_hash=NULL,email_verified=FALSE,activated_at=NULL,email='unverified@example.invalid' WHERE id='"+T+"'");
+        execute("INSERT INTO identity.customer_identifier VALUES ('"+id(940)+"','"+T+"','unverified@example.invalid',TIMESTAMPTZ '2026-10-21 00:05:00Z','ACTIVE',1)");
+        assertTrue(app.request(recoveryRequest("unverified@example.invalid",id(930))).accepted());assertEquals(0,scalar("SELECT count(*) FROM identity.customer_delivery"));
+        execute("UPDATE identity.user_account SET email='"+CUSTOMER_EMAIL+"' WHERE id='"+A+"'");assertTrue(app.request(recoveryRequest(CUSTOMER_EMAIL,id(923))).accepted());assertEquals(1,scalar("SELECT count(*) FROM identity.customer_delivery"));assertEquals(3,scalar("SELECT count(*) FROM identity.user_account"));
+    }
+    @Test void recoveryHttpActualMailResetsCredentialRevokesBothFamiliesAndPreservesGrants()throws Exception{
+        customerFixture(true);var grants=snapshot().get("account_grant");
+        try(var systemLogin=sessionLogin();var customerLogin=customerLogin();var inbox=new CustomerSmtpTestInbox(1,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW))){
+            var mvc=httpMvc(context);var pre=customerCsrf(mvc,null);assertEquals(202,customerPost(mvc,"recovery",pre,KEY,Map.of("email",CUSTOMER_EMAIL)).getStatus());
+            assertTrue(context.getBean(com.elogistic.backend.identity.internal.ProductionCustomerComposition.Services.class).delivery().runOne());
+            var received=inbox.messages();assertEquals(1,received.size());var mail=new jakarta.mail.internet.MimeMessage(jakarta.mail.Session.getInstance(new Properties()),new java.io.ByteArrayInputStream(received.getFirst()));assertEquals(CUSTOMER_EMAIL,mail.getAllRecipients()[0].toString());
+            var match=java.util.regex.Pattern.compile("/recover/confirm#proofId=([0-9a-f-]{36})&proof=([A-Za-z0-9_-]{43})").matcher((String)mail.getContent());assertTrue(match.find());
+            var body=Map.of("proofId",match.group(1),"proof",match.group(2),"newPassword","synthetic-recovered-password");var reset=customerPost(mvc,"recovery-confirm",pre,id(924),body);assertEquals(204,reset.getStatus());
+            assertEquals(2,scalar("SELECT auth_version FROM identity.user_account WHERE id='"+A+"'"));assertEquals(0,scalar("SELECT count(*) FROM identity.auth_session WHERE account_id='"+A+"' AND revoked_at IS NULL"));assertEquals(0,scalar("SELECT count(*) FROM identity.customer_auth_session WHERE account_id='"+A+"' AND revoked_at IS NULL"));assertEquals(grants,snapshot().get("account_grant"));
+            assertEquals(1,scalar("SELECT count(*) FROM identity.customer_delivery WHERE status='DELIVERED' AND delivery_evidence IS NOT NULL"));
+            var rotated=customerCsrf(mvc,pre);assertEquals(204,customerPost(mvc,"recovery-confirm",rotated,id(924),body).getStatus());
+            assertEquals(401,customerPost(mvc,"login",rotated,null,Map.of("email",CUSTOMER_EMAIL,"password",SESSION_PASSWORD)).getStatus());assertEquals(200,customerPost(mvc,"login",rotated,null,Map.of("email",CUSTOMER_EMAIL,"password","synthetic-recovered-password")).getStatus());
+            assertEquals(401,httpRead(mvc,"/api/v1/customer-auth/me",customerTokens(NOW).issue(customerLogin.access())).getStatus());
+            byte[] old=systemLogin.refreshToken();try(var token=sessionToken(old)){sessionDenied(SESSION_INVALID,()->sessions(NOW).refreshIdentity(token));}finally{Arrays.fill(old,(byte)0);}
+        }
+    }
+    @Test void recoveryWrongExpiredAndReplayedProofCannotMutateCredentialOrSessions()throws Exception{
+        enrollmentBinding();customerFixture(false);recoveryApp(NOW).request(recoveryRequest(CUSTOMER_EMAIL,KEY));var proof=pendingRecoveryProof();var before=snapshot();
+        var wrong=new com.elogistic.backend.identity.api.customer.CustomerRecoveryCommands.Confirmation(proof.proofId(),"A".repeat(43),proof.newPassword(),proof.key(),REQUEST);
+        for(var entry:List.of(Map.entry(NOW,wrong),Map.entry(NOW.plusSeconds(900),proof)))assertEquals(TOKEN_INVALID_OR_EXPIRED,assertThrows(IdentityCommandFailure.class,()->recoveryApp(entry.getKey()).confirm(entry.getValue())).code());
+        assertEquals(before,snapshot());assertEquals(0,scalar("SELECT count(*) FROM identity.customer_proof_receipt"));
+        recoveryApp(NOW.plusSeconds(1)).confirm(proof);var after=snapshot();recoveryApp(NOW.plusSeconds(2)).confirm(proof);assertEquals(after,snapshot());
+        var replay=new com.elogistic.backend.identity.api.customer.CustomerRecoveryCommands.Confirmation(proof.proofId(),proof.proof(),proof.newPassword(),id(925),REQUEST);assertEquals(TOKEN_INVALID_OR_EXPIRED,assertThrows(IdentityCommandFailure.class,()->recoveryApp(NOW.plusSeconds(2)).confirm(replay)).code());
+    }
+    @Test void recoveryReplacementRevokesOnlyPreviousRecoveryAndNotPrivilegedInvitation()throws Exception{
+        enrollmentBinding();customerFixture(true);execute("INSERT INTO identity.action_proof(id,account_id,purpose,token_hash,created_at,expires_at) VALUES ('"+id(926)+"','"+A+"','INVITATION',decode(repeat('26',32),'hex'),TIMESTAMPTZ '2026-10-21 00:05:00Z',TIMESTAMPTZ '2026-10-22 00:05:00Z')");
+        recoveryApp(NOW).request(recoveryRequest(CUSTOMER_EMAIL,KEY));var old=pendingRecoveryProof();recoveryApp(NOW.plusSeconds(1)).request(recoveryRequest(CUSTOMER_EMAIL,id(927)));var next=pendingRecoveryProof();
+        assertEquals(TOKEN_INVALID_OR_EXPIRED,assertThrows(IdentityCommandFailure.class,()->recoveryApp(NOW.plusSeconds(2)).confirm(old)).code());recoveryApp(NOW.plusSeconds(2)).confirm(next);
+        assertEquals(0,scalar("SELECT count(*) FROM identity.action_proof WHERE purpose='INVITATION' AND revoked_at IS NOT NULL"));assertEquals(1,scalar("SELECT count(*) FROM identity.customer_proof WHERE purpose='CUSTOMER_RECOVERY' AND revoked_at IS NOT NULL"));
+    }
+    @Test void recoveryMandatoryAuditFailureRollsBackCredentialBothFamiliesAndProofReceipt()throws Exception{
+        enrollmentBinding();customerFixture(true);try(var customer=customerLogin();var system=sessionLogin()){
+            recoveryApp(NOW).request(recoveryRequest(CUSTOMER_EMAIL,KEY));var proof=pendingRecoveryProof();var before=snapshot();failWrite("audit_entry","INSERT");assertThrows(RuntimeException.class,()->recoveryApp(NOW.plusSeconds(1)).confirm(proof));assertEquals(before,snapshot());
+            assertEquals(1,scalar("SELECT count(*) FROM identity.customer_auth_session WHERE revoked_at IS NULL"));assertEquals(0,scalar("SELECT count(*) FROM identity.customer_proof_receipt"));assertEquals(0,scalar("SELECT count(*) FROM identity.customer_proof WHERE consumed_at IS NOT NULL"));assertEquals(1,scalar("SELECT count(*) FROM identity.customer_delivery WHERE status='QUEUED' AND ciphertext IS NOT NULL"));
+        }
+    }
+    @Test void concurrentRecoveryConfirmationHasOneSecurityVersionChangeAndOneReceipt()throws Exception{
+        enrollmentBinding();customerFixture(true);recoveryApp(NOW).request(recoveryRequest(CUSTOMER_EMAIL,KEY));var proof=pendingRecoveryProof();
+        var result=adminRace(()->{try{recoveryApp(NOW.plusSeconds(1)).confirm(proof);return "RESET";}catch(IdentityCommandFailure e){return e.code().name();}},()->{try{recoveryApp(NOW.plusSeconds(1)).confirm(new com.elogistic.backend.identity.api.customer.CustomerRecoveryCommands.Confirmation(proof.proofId(),proof.proof(),proof.newPassword(),id(928),REQUEST));return "RESET";}catch(IdentityCommandFailure e){return e.code().name();}});
+        assertEquals(1,result.stream().filter("RESET"::equals).count());assertEquals(1,result.stream().filter(TOKEN_INVALID_OR_EXPIRED.name()::equals).count());assertEquals(2,scalar("SELECT auth_version FROM identity.user_account WHERE id='"+A+"'"));assertEquals(1,scalar("SELECT count(*) FROM identity.customer_proof_receipt"));
+    }
+    @Test void recoverySecurityVersionChangeOrDisableBeforeConsumptionAlwaysDenies()throws Exception{
+        enrollmentBinding();customerFixture(true);recoveryApp(NOW).request(recoveryRequest(CUSTOMER_EMAIL,KEY));var proof=pendingRecoveryProof();execute("UPDATE identity.user_account SET version=version+1,auth_version=auth_version+1 WHERE id='"+A+"'");
+        assertEquals(TOKEN_INVALID_OR_EXPIRED,assertThrows(IdentityCommandFailure.class,()->recoveryApp(NOW.plusSeconds(1)).confirm(proof)).code());
+        execute("UPDATE identity.user_account SET status='DISABLED',disabled_at=updated_at WHERE id='"+A+"'");assertEquals(TOKEN_INVALID_OR_EXPIRED,assertThrows(IdentityCommandFailure.class,()->recoveryApp(NOW.plusSeconds(1)).confirm(proof)).code());assertEquals(0,scalar("SELECT count(*) FROM identity.customer_proof_receipt"));assertEquals(0,scalar("SELECT count(*) FROM identity.customer_proof WHERE consumed_at IS NOT NULL"));
+    }
+    @Test void enrollmentProofReceiptSurvivesCsrfRotationWithoutRepeatingAccountActivation()throws Exception{
+        try(var inbox=new CustomerSmtpTestInbox(1,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW))){
+            var mvc=httpMvc(context);var pre=customerCsrf(mvc,null);assertEquals(202,customerPost(mvc,"enrollments",pre,KEY,customerRegistration()).getStatus());assertTrue(context.getBean(com.elogistic.backend.identity.internal.ProductionCustomerComposition.Services.class).delivery().runOne());var proof=receivedVerification(inbox);
+            assertEquals(204,customerPost(mvc,"verifications",pre,id(929),proof).getStatus());var after=snapshot();var next=customerCsrf(mvc,pre);assertEquals(204,customerPost(mvc,"verifications",next,id(929),proof).getStatus());assertEquals(after,snapshot());assertEquals(1,scalar("SELECT count(*) FROM identity.customer_proof_receipt"));
+            assertEquals(409,customerPost(mvc,"verifications",next,id(929),Map.of("proofId",proof.get("proofId"),"proof","A".repeat(43))).getStatus());assertEquals(403,customerPost(mvc,"verifications",pre,id(929),proof).getStatus());assertEquals(4,scalar("SELECT count(*) FROM identity.user_account"));
+        }
+    }
+    @Test void recoveryPersistenceRejectsConstructedDomainChangeWithoutActualHmacPossession()throws Exception{
+        enrollmentBinding();customerFixture(true);var crypto=enrollmentProtection();recoveryApp(NOW).request(recoveryRequest(CUSTOMER_EMAIL,KEY));var proof=pendingRecoveryProof();var before=snapshot();var store=new JdbcCustomerRecoveryStore(outboxDataSource(),crypto);
+        assertThrows(IllegalStateException.class,()->store.transaction(tx->{tx.accounts().lockAdministration();var account=tx.accounts().lockAccount(A).orElseThrow();tx.lockSessions(A);var stored=tx.proof(proof.proofId()).orElseThrow();var change=account.resetCustomerPassword(stored.proof(),proof.newPassword(),account.version().version(),NOW);tx.reset(account,change,crypto.hashPassword(proof.newPassword()),"A".repeat(43).getBytes(java.nio.charset.StandardCharsets.US_ASCII),NOW);return null;}));
+        assertEquals(before,snapshot());assertEquals(0,scalar("SELECT count(*) FROM identity.customer_proof WHERE consumed_at IS NOT NULL"));assertEquals(0,scalar("SELECT count(*) FROM identity.customer_proof_receipt"));
     }
 }
