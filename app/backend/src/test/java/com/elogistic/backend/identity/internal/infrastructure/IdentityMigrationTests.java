@@ -444,10 +444,15 @@ class IdentityMigrationTests {
         Database db=PostgresTestcontainersSupport.database(POSTGRES);assertEquals(8,db.flyway("8").migrate().migrationsExecuted);
         execute(db,"INSERT INTO identity.rate_limit_subject(policy,subject_hash) VALUES ('LOGIN_IP',"+digest(57)+")");
         execute(db,"INSERT INTO identity.rate_limit_attempt VALUES ("+KEY+",'LOGIN_IP',"+digest(57)+","+NOW+","+NOW+"+INTERVAL '15 minutes',"+NOW+"+INTERVAL '60 seconds','COUNTED')");
-        var rows=snapshot(db,"identity.rate_limit_attempt");var checksums=Arrays.stream(db.flyway("8").info().applied()).map(m->m.getChecksum()).toList();
+        var rows=rateAttemptSnapshot(db);var checksums=Arrays.stream(db.flyway("8").info().applied()).map(m->m.getChecksum()).toList();
         var source=new org.springframework.jdbc.datasource.DriverManagerDataSource(db.url(),db.runtime(),db.runtimePassword());assertThrows(IllegalStateException.class,()->CustomerRuntimeRequirements.verify(source));
         assertEquals(1,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);
-        assertEquals(checksums,Arrays.stream(db.flyway("latest").info().applied()).limit(8).map(m->m.getChecksum()).toList());assertEquals(rows,snapshot(db,"identity.rate_limit_attempt"));assertDoesNotThrow(()->CustomerRuntimeRequirements.verify(source));
+        assertEquals(checksums,Arrays.stream(db.flyway("latest").info().applied()).limit(8).map(m->m.getChecksum()).toList());assertEquals(rows,rateAttemptSnapshot(db));assertDoesNotThrow(()->CustomerRuntimeRequirements.verify(source));
+    }
+    private List<String> rateAttemptSnapshot(Database db)throws SQLException{
+        try(Connection c=db.runtimeConnection();Statement s=c.createStatement();ResultSet rows=s.executeQuery("SELECT row_to_json(t)::text FROM identity.rate_limit_attempt t ORDER BY reservation_id,policy,subject_hash")){
+            List<String> result=new ArrayList<>();while(rows.next())result.add(rows.getString(1));return result;
+        }
     }
     @Test void customerQuotaConstraintsPreserveCountedNonPasswordAndRejectUnknownPolicies()throws Exception {
         Database db=migrated();execute(db,"INSERT INTO identity.rate_limit_subject(policy,subject_hash) VALUES ('CUSTOMER_ENROLL_EMAIL',"+digest(58)+"),('CUSTOMER_LOGIN_EMAIL',"+digest(59)+")");

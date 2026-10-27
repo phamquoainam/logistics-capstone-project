@@ -1556,7 +1556,7 @@ class IdentityGrantApplicationTests {
     private List<com.elogistic.backend.identity.internal.application.port.IdentityRateLimiter.Subject> loginQuota(String account,String ip){return List.of(quota(com.elogistic.backend.identity.internal.application.port.IdentityRateLimiter.Policy.LOGIN_ACCOUNT,account),quota(com.elogistic.backend.identity.internal.application.port.IdentityRateLimiter.Policy.LOGIN_IP,ip));}
     @Test void authRateAllSixThresholdsAreEnforcedByPostgres()throws Exception{
         for(var p:com.elogistic.backend.identity.internal.application.port.IdentityRateLimiter.Policy.values()){
-            var q=List.of(quota(p,p.name()));for(int i=0;i<p.limit;i++){var r=limiter().reserve(q);if(p==com.elogistic.backend.identity.internal.application.port.IdentityRateLimiter.Policy.LOGIN_ACCOUNT)r.finishLogin(false);}
+            var q=List.of(quota(p,p.name()));for(int i=0;i<p.limit;i++){var r=limiter().reserve(q);if(p.passwordAttempt())r.finishLogin(false);}
             var e=assertThrows(com.elogistic.backend.identity.internal.application.port.IdentityRateLimiter.Exhausted.class,()->limiter().reserve(q));assertTrue(e.retryAfter>0&&e.retryAfter<=p.seconds);
         }
     }
