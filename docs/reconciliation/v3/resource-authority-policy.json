@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "status": "DOCUMENTATION_AUTHORITY_POLICY_NOT_IMPLEMENTATION_APPROVAL",
+  "source": "OWNER_PR31_BC134_OWNERSHIP_FIX_GO_WITH_CONDITIONS",
+  "orchestrators": {
+    "spec003": {"canonical_spec": "L003", "grants_data_authority": false}
+  },
+  "resources": [
+    {"resource_id": "identity.account", "family": "identity_security", "authoritative_owner": "identity", "resolution": "DECLARED", "decision": null},
+    {"resource_id": "identity.credentials", "family": "identity_security", "authoritative_owner": "identity", "resolution": "DECLARED", "decision": null},
+    {"resource_id": "identity.verification", "family": "identity_security", "authoritative_owner": "identity", "resolution": "DECLARED", "decision": null},
+    {"resource_id": "identity.security_contact", "family": "identity_security", "authoritative_owner": "identity", "resolution": "DECLARED", "decision": null},
+    {"resource_id": "identity.session", "family": "identity_security", "authoritative_owner": "identity", "resolution": "DECLARED", "decision": null},
+    {"resource_id": "retail_sender.business_profile", "family": "retail_business", "authoritative_owner": null, "resolution": "UNRESOLVED", "decision": "DATA-01", "candidate_owner": "merchant"},
+    {"resource_id": "merchant.application", "family": "merchant_business", "authoritative_owner": "merchant", "resolution": "DECLARED", "decision": null},
+    {"resource_id": "merchant.organization", "family": "merchant_business", "authoritative_owner": "merchant", "resolution": "DECLARED", "decision": null},
+    {"resource_id": "merchant.business_profile", "family": "merchant_business", "authoritative_owner": "merchant", "resolution": "DECLARED", "decision": null},
+    {"resource_id": "merchant.membership", "family": "merchant_business", "authoritative_owner": "merchant", "resolution": "DECLARED", "decision": null},
+    {"resource_id": "merchant.delegation", "family": "merchant_business", "authoritative_owner": "merchant", "resolution": "DECLARED", "decision": null},
+    {"resource_id": "carrier.station", "family": "carrier_network", "authoritative_owner": "dispatch", "resolution": "DECLARED", "decision": null},
+    {"resource_id": "carrier.hub", "family": "carrier_network", "authoritative_owner": "dispatch", "resolution": "DECLARED", "decision": null}
+  ],
+  "document_scopes": {
+    "BC-134": ["identity.account", "identity.credentials", "identity.verification", "identity.security_contact", "identity.session"],
+    "BC-135": ["retail_sender.business_profile", "identity.security_contact"]
+  },
+  "declaration_documents": [
+    "specs/003-sender-merchant-onboarding/design.md",
+    "specs/003-sender-merchant-onboarding/tasks.md"
+  ],
+  "coverage_document": "docs/portal/group-ab-coverage.csv",
+  "capability_authorities": {
+    "BC-134": {"orchestrator": "spec003", "authority_resource": "identity.account"},
+    "BC-135": {"orchestrator": "spec003", "authority_resource": "retail_sender.business_profile"}
+  }
+}

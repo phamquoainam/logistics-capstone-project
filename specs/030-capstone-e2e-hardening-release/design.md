@@ -1,0 +1,38 @@
+# Design 030 — capstone-e2e-hardening-release
+
+DESIGN_CANDIDATE / runtime NOT_IMPLEMENTED. [Spec](spec.md), [tasks](tasks.md).
+
+## Construction
+
+BE: Regression/restore/health/load/CI evidence; reuse Research016 RQ1–4.
+
+FE: Browser J1–J9/native device; không business UI mới; source app/frontend/web, native app/frontend/shipper-mobile chỉ khi applicable.
+
+Data: Không production schema chỉ để đo; fixture backup/restore độc lập. Một artifact/chín domain; domain api/internal, workflow chỉ public API. Identity không phụ thuộc compile-time vòng sang Merchant; authority bridge phải được review trước code; không sửa ArchUnit để cho import nội bộ.
+
+## Quy tắc chung và evidence
+
+Canonical target documentation; NOT_STARTED/BLOCKED_FOR_IMPLEMENTATION. Không acceptance do promotion. Exact route/DTO/error/permission/schema: DECISION_REQUIRED trong contracts sau review; các khái niệm dưới đây không phải DDL hay wire field được tự duyệt.
+
+Authority = current account/session + explicit permission + personal/org/branch/assignment/resource scope + current state/evidence; server recheck cả list, pagination, submit, replay và async recovery. Deny trước khi tiết lộ existence/receipt; không body actor/role/owner authority. Machine principal tách human; Recipient external; Guest không tạo online Shipment.
+
+Mutation hợp lệ: scoped key + subject/operation/target + canonical payload + original version; same binding một effect, changed binding conflict, current authority recheck; read không ghi business effect. Unique/check/FK/locking theo invariant đã review, rollback khi audit bắt buộc lỗi. Source+audit/receipt/outbox atomic; external I/O ngoài TX; consumer inbox/dedup. Không đổi strict refresh thành retry/idempotency grace.
+
+UI có loading/empty/field validation/error/unauthorized/pending/conflict/unknown/revoked; giữ input an toàn, không success trước server. Search/filter/sort/paging scoped; keyboard/focus/labels/contrast/responsive; timezone/currency/unit nhất quán, private data mask. Feature chưa có không hiện nút chết/mock counter.
+
+Unit/ArchUnit/contract/HTTP real filter chain/H2 regression/PG18 empty+upgrade+privilege+constraint+rollback+races/browser E2E; native device chỉ nơi thật sự có native flow. Exact SHA/env/command/exit/pass/fail/named skips/report/artifact digest; planned IDs không receipt. V1–V6 immutable; no repair/ORM update/security allowlist bypass. Owner merge và full acceptance riêng; TASK DONE != PR MERGED != SPEC ACCEPTED != PORTAL ACCEPTED.
+
+## Responsibility từng capability
+
+## DES-L030-ENABLER
+
+Regression/restore/health/load/CI evidence; reuse Research016 RQ1–4; Không production schema chỉ để đo; fixture backup/restore độc lập; consumer chỉ API của source owner. Giữ native offline/RQ1–4 historical obligations qua legacy registry.
+
+## Legacy integration
+
+Các obligation ở spec phải có contract tests/DB assertions tương ứng; bảng ánh xạ lịch sử không tự tạo API/DDL. [Retirement](../../docs/reconciliation/v3/legacy-retirement.md).
+
+
+## DES-AB-CONTINUITY
+
+Trace REQ-AB-CONTINUITY. Cross-product acceptance evidence; BE/application: Customer requests connect carrier pickup→Station→sorting→linehaul→delivery or return→COD/Finance/support; preserve separate source facts. Data DML giữ domain owner theo từng BC và cross-module contract, không duplicate master/projection authority. Contract result/errors/paging/version/key/permission reviewed before implement; wire/DB names not invented. Tests assert J-AB-01..10 with exact revisions real BE/PG/browser+native when applicable; no fake carrier event in portal for pass; RQ1–4 and restore/load gates retained; current guard và failure/replay/recovery, no mock-only success.

@@ -1,0 +1,1304 @@
+[
+  {
+    "path": "specs/planning/v3/L003-sender-merchant-onboarding/design.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "bf7686e4d2e084ca2ea1e42fa5a33b725ec30ee22591a09d9d68187af22b5d34",
+    "successor": "specs/003-sender-merchant-onboarding",
+    "ids": [],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L003-sender-merchant-onboarding/design.md"
+  },
+  {
+    "path": "specs/planning/v3/L003-sender-merchant-onboarding/spec.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "384f2027df019fa02e95ced03b9cf059680f450aa886b593f11ec363a07f39c0",
+    "successor": "specs/003-sender-merchant-onboarding",
+    "ids": [
+      "REQ-V3-BC-007",
+      "REQ-V3-BC-008",
+      "REQ-V3-BC-009",
+      "REQ-V3-BC-020",
+      "REQ-V3-BC-021",
+      "REQ-V3-BC-032",
+      "REQ-V3-BC-045",
+      "REQ-V3-BC-132",
+      "REQ-V3-BC-133",
+      "REQ-V3-BC-134",
+      "REQ-V3-BC-135",
+      "REQ-V3-BC-157",
+      "REQ-V3-BC-158",
+      "REQ-V3-BC-159",
+      "REQ-V3-BC-166",
+      "REQ-V3-BC-167",
+      "REQ-V3-BC-230",
+      "REQ-V3-BC-329",
+      "REQ-V3-BC-330",
+      "REQ-V3-BC-331",
+      "REQ-V3-BC-335"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L003-sender-merchant-onboarding/spec.md"
+  },
+  {
+    "path": "specs/planning/v3/L003-sender-merchant-onboarding/tasks.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "dc2142cf4a7ee24e21f79015bc799787ff86df71cc6dc3508bd6df5fc1b11d06",
+    "successor": "specs/003-sender-merchant-onboarding",
+    "ids": [
+      "T-V3-L003-01",
+      "T-V3-L003-02",
+      "T-V3-L003-03",
+      "T-V3-L003-04",
+      "T-V3-L003-05",
+      "T-V3-L003-06"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L003-sender-merchant-onboarding/tasks.md"
+  },
+  {
+    "path": "specs/planning/v3/L004-address-coverage-service-catalog/design.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "db6a9528a020d226885227a71610a44c32d64eb8c786b80702b47aa999920579",
+    "successor": "specs/004-address-coverage-service-catalog",
+    "ids": [],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L004-address-coverage-service-catalog/design.md"
+  },
+  {
+    "path": "specs/planning/v3/L004-address-coverage-service-catalog/spec.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "6e0e1204e504d728e0413b869e5509d4fb979dac597af06a14d4aff63d2d4a55",
+    "successor": "specs/004-address-coverage-service-catalog",
+    "ids": [
+      "REQ-V3-BC-001",
+      "REQ-V3-BC-005",
+      "REQ-V3-BC-010",
+      "REQ-V3-BC-022",
+      "REQ-V3-BC-033",
+      "REQ-V3-BC-136",
+      "REQ-V3-BC-137",
+      "REQ-V3-BC-168",
+      "REQ-V3-BC-271",
+      "REQ-V3-BC-305"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L004-address-coverage-service-catalog/spec.md"
+  },
+  {
+    "path": "specs/planning/v3/L004-address-coverage-service-catalog/tasks.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "f84f6b07594c36ed9c78f9fd761611b977f014b97c697911b2258460f7fc9d9d",
+    "successor": "specs/004-address-coverage-service-catalog",
+    "ids": [
+      "T-V3-L004-01",
+      "T-V3-L004-02",
+      "T-V3-L004-03",
+      "T-V3-L004-04",
+      "T-V3-L004-05",
+      "T-V3-L004-06"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L004-address-coverage-service-catalog/tasks.md"
+  },
+  {
+    "path": "specs/planning/v3/L005-pricing-contracts-quotation/design.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "b5364db6c2c4e276a3b7924027c25402da5f1196629a9fb192bcb136a61359a4",
+    "successor": "specs/005-pricing-contracts-quotation",
+    "ids": [],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L005-pricing-contracts-quotation/design.md"
+  },
+  {
+    "path": "specs/planning/v3/L005-pricing-contracts-quotation/spec.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "06f80b9e227980c71f2fa7cd06ec37eaf9e24e39ecf6d2f5ccfeb2cb4762f254",
+    "successor": "specs/005-pricing-contracts-quotation",
+    "ids": [
+      "REQ-V3-BC-002",
+      "REQ-V3-BC-019",
+      "REQ-V3-BC-023",
+      "REQ-V3-BC-039",
+      "REQ-V3-BC-131",
+      "REQ-V3-BC-138",
+      "REQ-V3-BC-189",
+      "REQ-V3-BC-290",
+      "REQ-V3-BC-304",
+      "REQ-V3-BC-319",
+      "REQ-V3-BC-320",
+      "REQ-V3-BC-321",
+      "REQ-V3-BC-322",
+      "REQ-V3-BC-323",
+      "REQ-V3-BC-324",
+      "REQ-V3-BC-325",
+      "REQ-V3-BC-326",
+      "REQ-V3-BC-328",
+      "REQ-V3-BC-332",
+      "REQ-V3-BC-336"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L005-pricing-contracts-quotation/spec.md"
+  },
+  {
+    "path": "specs/planning/v3/L005-pricing-contracts-quotation/tasks.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "6925172fc3fdd28311429044b45cc1eb9486d3eef5b5cdaf03942c7ea2fcb09a",
+    "successor": "specs/005-pricing-contracts-quotation",
+    "ids": [
+      "T-V3-L005-01",
+      "T-V3-L005-02",
+      "T-V3-L005-03",
+      "T-V3-L005-04",
+      "T-V3-L005-05",
+      "T-V3-L005-06"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L005-pricing-contracts-quotation/tasks.md"
+  },
+  {
+    "path": "specs/planning/v3/L006-order-shipment-parcel-contract/design.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "f0e65d6786ae293fecdf9012286ed655b261bb0791014b5c23c76476f4f947c7",
+    "successor": "specs/006-order-shipment-parcel-contract",
+    "ids": [],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L006-order-shipment-parcel-contract/design.md"
+  },
+  {
+    "path": "specs/planning/v3/L006-order-shipment-parcel-contract/spec.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "3f9a69b172989987254809524ac1d450f43b17fabb5eadda266966b0d8863a0f",
+    "successor": "specs/006-order-shipment-parcel-contract",
+    "ids": [
+      "REQ-V3-BC-034"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L006-order-shipment-parcel-contract/spec.md"
+  },
+  {
+    "path": "specs/planning/v3/L006-order-shipment-parcel-contract/tasks.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "bdc1fef3bda29fd52c623ccd212e2b6f91f999b7505ee5d62f0341a10937df4e",
+    "successor": "specs/006-order-shipment-parcel-contract",
+    "ids": [
+      "T-V3-L006-01",
+      "T-V3-L006-02",
+      "T-V3-L006-03",
+      "T-V3-L006-04",
+      "T-V3-L006-05",
+      "T-V3-L006-06"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L006-order-shipment-parcel-contract/tasks.md"
+  },
+  {
+    "path": "specs/planning/v3/L007-shipment-booking-sender-payments/design.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "9e17e8b84e322a299ca1c16506ffcac25f4e28f891742aa92ba96d680768f2df",
+    "successor": "specs/007-shipment-booking-sender-payments",
+    "ids": [],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L007-shipment-booking-sender-payments/design.md"
+  },
+  {
+    "path": "specs/planning/v3/L007-shipment-booking-sender-payments/spec.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "b271d043d350cff937fcaa0a6fe3154ae222d3dd36b390c12b5094b61d16d744",
+    "successor": "specs/007-shipment-booking-sender-payments",
+    "ids": [
+      "REQ-V3-BC-006",
+      "REQ-V3-BC-011",
+      "REQ-V3-BC-012",
+      "REQ-V3-BC-024",
+      "REQ-V3-BC-025",
+      "REQ-V3-BC-139",
+      "REQ-V3-BC-144",
+      "REQ-V3-BC-147",
+      "REQ-V3-BC-160",
+      "REQ-V3-BC-169",
+      "REQ-V3-BC-193",
+      "REQ-V3-BC-243"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L007-shipment-booking-sender-payments/spec.md"
+  },
+  {
+    "path": "specs/planning/v3/L007-shipment-booking-sender-payments/tasks.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "0df5c486f6d0b5be36a900f26947de71a25d5d7ebbdddd2da913b78783b8adcb",
+    "successor": "specs/007-shipment-booking-sender-payments",
+    "ids": [
+      "T-V3-L007-01",
+      "T-V3-L007-02",
+      "T-V3-L007-03",
+      "T-V3-L007-04",
+      "T-V3-L007-05",
+      "T-V3-L007-06"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L007-shipment-booking-sender-payments/tasks.md"
+  },
+  {
+    "path": "specs/planning/v3/L008-parcel-label-merchant-fulfillment/design.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "3f2889aa7be89b58dc044ecaa3f58555cbe12cbf0c8cfaab14db1acaf1b1c293",
+    "successor": "specs/008-parcel-label-merchant-fulfillment",
+    "ids": [],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L008-parcel-label-merchant-fulfillment/design.md"
+  },
+  {
+    "path": "specs/planning/v3/L008-parcel-label-merchant-fulfillment/spec.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "c61ba8e1f4b2a464e48be5071b472e954d7ee49f9f13d0b2c9eb0f41469f9156",
+    "successor": "specs/008-parcel-label-merchant-fulfillment",
+    "ids": [
+      "REQ-V3-BC-026",
+      "REQ-V3-BC-064",
+      "REQ-V3-BC-140",
+      "REQ-V3-BC-150",
+      "REQ-V3-BC-176",
+      "REQ-V3-BC-179",
+      "REQ-V3-BC-180",
+      "REQ-V3-BC-181",
+      "REQ-V3-BC-182",
+      "REQ-V3-BC-183",
+      "REQ-V3-BC-184",
+      "REQ-V3-BC-185",
+      "REQ-V3-BC-212",
+      "REQ-V3-BC-213",
+      "REQ-V3-BC-218",
+      "REQ-V3-BC-253",
+      "REQ-V3-BC-258"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L008-parcel-label-merchant-fulfillment/spec.md"
+  },
+  {
+    "path": "specs/planning/v3/L008-parcel-label-merchant-fulfillment/tasks.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "fbb0d00648a96cf4d940798e5be4cd94a93732c0d990434fd398cda1ca761adf",
+    "successor": "specs/008-parcel-label-merchant-fulfillment",
+    "ids": [
+      "T-V3-L008-01",
+      "T-V3-L008-02",
+      "T-V3-L008-03",
+      "T-V3-L008-04",
+      "T-V3-L008-05",
+      "T-V3-L008-06"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L008-parcel-label-merchant-fulfillment/tasks.md"
+  },
+  {
+    "path": "specs/planning/v3/L009-tracking-event-core-public-lookup/design.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "49a942312bb2a2b63b058bf529077ed0ea954659c0970376c4ffc10c202386d1",
+    "successor": "specs/009-tracking-event-core-public-lookup",
+    "ids": [],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L009-tracking-event-core-public-lookup/design.md"
+  },
+  {
+    "path": "specs/planning/v3/L009-tracking-event-core-public-lookup/spec.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "010767d82e0a05af11a5f4db64fb77468d5865c8ec9f31346d55d68cd9e702a3",
+    "successor": "specs/009-tracking-event-core-public-lookup",
+    "ids": [
+      "REQ-V3-BC-003",
+      "REQ-V3-BC-013",
+      "REQ-V3-BC-027",
+      "REQ-V3-BC-051",
+      "REQ-V3-BC-060",
+      "REQ-V3-BC-068",
+      "REQ-V3-BC-078",
+      "REQ-V3-BC-080",
+      "REQ-V3-BC-106",
+      "REQ-V3-BC-126",
+      "REQ-V3-BC-143",
+      "REQ-V3-BC-170",
+      "REQ-V3-BC-186",
+      "REQ-V3-BC-194",
+      "REQ-V3-BC-293",
+      "REQ-V3-BC-315"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L009-tracking-event-core-public-lookup/spec.md"
+  },
+  {
+    "path": "specs/planning/v3/L009-tracking-event-core-public-lookup/tasks.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "05fea782736a23064c32b74cff64762cbb2544110c2bd71fffda9d229c702c86",
+    "successor": "specs/009-tracking-event-core-public-lookup",
+    "ids": [
+      "T-V3-L009-01",
+      "T-V3-L009-02",
+      "T-V3-L009-03",
+      "T-V3-L009-04",
+      "T-V3-L009-05",
+      "T-V3-L009-06"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L009-tracking-event-core-public-lookup/tasks.md"
+  },
+  {
+    "path": "specs/planning/v3/L010-pickup-dispatch-execution/design.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "3f21c69001e9d349d6d3fc2882a5daa883ab98fe4dd9adb71886a031fe7b9720",
+    "successor": "specs/010-pickup-dispatch-execution",
+    "ids": [],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L010-pickup-dispatch-execution/design.md"
+  },
+  {
+    "path": "specs/planning/v3/L010-pickup-dispatch-execution/spec.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "2f49695eeb35417be2fe70240cd089291f30167a899f4d5a560e3e56d5e51f2a",
+    "successor": "specs/010-pickup-dispatch-execution",
+    "ids": [
+      "REQ-V3-BC-037",
+      "REQ-V3-BC-047",
+      "REQ-V3-BC-049",
+      "REQ-V3-BC-056",
+      "REQ-V3-BC-057",
+      "REQ-V3-BC-058",
+      "REQ-V3-BC-062",
+      "REQ-V3-BC-141",
+      "REQ-V3-BC-207",
+      "REQ-V3-BC-210",
+      "REQ-V3-BC-211",
+      "REQ-V3-BC-214",
+      "REQ-V3-BC-244",
+      "REQ-V3-BC-247",
+      "REQ-V3-BC-277"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L010-pickup-dispatch-execution/spec.md"
+  },
+  {
+    "path": "specs/planning/v3/L010-pickup-dispatch-execution/tasks.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "3c0e97f7feb826677691c5b1c5d9e89db010ceeb02e20ca7e9b51397a55eae26",
+    "successor": "specs/010-pickup-dispatch-execution",
+    "ids": [
+      "T-V3-L010-01",
+      "T-V3-L010-02",
+      "T-V3-L010-03",
+      "T-V3-L010-04",
+      "T-V3-L010-05",
+      "T-V3-L010-06"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L010-pickup-dispatch-execution/tasks.md"
+  },
+  {
+    "path": "specs/planning/v3/L011-station-intake-walkin-custody/design.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "a32c371a21e084ad91c69f8f2a36bfeeafd85d9b5e4303b71777e06ab567d624",
+    "successor": "specs/011-station-intake-walkin-custody",
+    "ids": [],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L011-station-intake-walkin-custody/design.md"
+  },
+  {
+    "path": "specs/planning/v3/L011-station-intake-walkin-custody/spec.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "23454d39a05f24b9883fe9e3b1cb106ac81af50bb7b53712bc2397630b71d856",
+    "successor": "specs/011-station-intake-walkin-custody",
+    "ids": [
+      "REQ-V3-BC-055",
+      "REQ-V3-BC-059",
+      "REQ-V3-BC-063",
+      "REQ-V3-BC-065",
+      "REQ-V3-BC-066",
+      "REQ-V3-BC-069",
+      "REQ-V3-BC-118",
+      "REQ-V3-BC-123",
+      "REQ-V3-BC-149",
+      "REQ-V3-BC-152",
+      "REQ-V3-BC-216",
+      "REQ-V3-BC-217",
+      "REQ-V3-BC-219",
+      "REQ-V3-BC-220",
+      "REQ-V3-BC-228",
+      "REQ-V3-BC-232",
+      "REQ-V3-BC-250",
+      "REQ-V3-BC-251"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L011-station-intake-walkin-custody/spec.md"
+  },
+  {
+    "path": "specs/planning/v3/L011-station-intake-walkin-custody/tasks.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "5c16d186e019e4981704fb3e63350cd23ae4df19481152cb8ed4cfd5595c8b0c",
+    "successor": "specs/011-station-intake-walkin-custody",
+    "ids": [
+      "T-V3-L011-01",
+      "T-V3-L011-02",
+      "T-V3-L011-03",
+      "T-V3-L011-04",
+      "T-V3-L011-05",
+      "T-V3-L011-06"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L011-station-intake-walkin-custody/tasks.md"
+  },
+  {
+    "path": "specs/planning/v3/L012-sorting-hub-manifests/design.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "eb8121dec874eaf6f4ebd4ee8db22e9860e692c0994f83a7de4121f42f6834a9",
+    "successor": "specs/012-sorting-hub-manifests",
+    "ids": [],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L012-sorting-hub-manifests/design.md"
+  },
+  {
+    "path": "specs/planning/v3/L012-sorting-hub-manifests/spec.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "d48aef4e49708ef271acd85b36b01bc82d9417a1b82c6db0e9168ff9d8e150a0",
+    "successor": "specs/012-sorting-hub-manifests",
+    "ids": [
+      "REQ-V3-BC-254",
+      "REQ-V3-BC-255",
+      "REQ-V3-BC-256",
+      "REQ-V3-BC-257",
+      "REQ-V3-BC-259",
+      "REQ-V3-BC-260",
+      "REQ-V3-BC-261",
+      "REQ-V3-BC-262",
+      "REQ-V3-BC-263",
+      "REQ-V3-BC-265",
+      "REQ-V3-BC-269"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L012-sorting-hub-manifests/spec.md"
+  },
+  {
+    "path": "specs/planning/v3/L012-sorting-hub-manifests/tasks.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "6c37250ac6f7876c01318bed6cb5ba7a3da9f61e949fd630b68abb575cf3e04c",
+    "successor": "specs/012-sorting-hub-manifests",
+    "ids": [
+      "T-V3-L012-01",
+      "T-V3-L012-02",
+      "T-V3-L012-03",
+      "T-V3-L012-04",
+      "T-V3-L012-05",
+      "T-V3-L012-06"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L012-sorting-hub-manifests/tasks.md"
+  },
+  {
+    "path": "specs/planning/v3/L013-linehaul-trip-hub-transfer/design.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "45e7ce985b1720a911bd82cbfe0b0603a0e6ca6747fbab4113057a486f4b0574",
+    "successor": "specs/013-linehaul-trip-hub-transfer",
+    "ids": [],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L013-linehaul-trip-hub-transfer/design.md"
+  },
+  {
+    "path": "specs/planning/v3/L013-linehaul-trip-hub-transfer/spec.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "6a83a1030adeee33327b05fda9e6efeb7e426cd54cf1d4cd657b0203ef75fb43",
+    "successor": "specs/013-linehaul-trip-hub-transfer",
+    "ids": [
+      "REQ-V3-BC-070",
+      "REQ-V3-BC-221",
+      "REQ-V3-BC-231",
+      "REQ-V3-BC-234",
+      "REQ-V3-BC-235",
+      "REQ-V3-BC-236",
+      "REQ-V3-BC-237",
+      "REQ-V3-BC-238",
+      "REQ-V3-BC-239",
+      "REQ-V3-BC-240",
+      "REQ-V3-BC-241",
+      "REQ-V3-BC-242",
+      "REQ-V3-BC-264",
+      "REQ-V3-BC-267",
+      "REQ-V3-BC-270",
+      "REQ-V3-BC-272",
+      "REQ-V3-BC-273",
+      "REQ-V3-BC-276"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L013-linehaul-trip-hub-transfer/spec.md"
+  },
+  {
+    "path": "specs/planning/v3/L013-linehaul-trip-hub-transfer/tasks.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "2f047ec7d4483bc4d5233caa7424480086642a8e7710e6169b0d6eb620195fef",
+    "successor": "specs/013-linehaul-trip-hub-transfer",
+    "ids": [
+      "T-V3-L013-01",
+      "T-V3-L013-02",
+      "T-V3-L013-03",
+      "T-V3-L013-04",
+      "T-V3-L013-05",
+      "T-V3-L013-06"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L013-linehaul-trip-hub-transfer/tasks.md"
+  },
+  {
+    "path": "specs/planning/v3/L014-delivery-dispatch-and-route/design.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "563fb46d3f512e656322228ec00440e86a22c46704b723358a1436de3ac1a2ce",
+    "successor": "specs/014-delivery-dispatch-and-route",
+    "ids": [],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L014-delivery-dispatch-and-route/design.md"
+  },
+  {
+    "path": "specs/planning/v3/L014-delivery-dispatch-and-route/spec.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "2cf47cb5ed49c2a7c73c638dd524d89fabe2beb8a15e48f4837d7b2c7ce432a8",
+    "successor": "specs/014-delivery-dispatch-and-route",
+    "ids": [
+      "REQ-V3-BC-048",
+      "REQ-V3-BC-050",
+      "REQ-V3-BC-054",
+      "REQ-V3-BC-071",
+      "REQ-V3-BC-072",
+      "REQ-V3-BC-079",
+      "REQ-V3-BC-119",
+      "REQ-V3-BC-120",
+      "REQ-V3-BC-171",
+      "REQ-V3-BC-177",
+      "REQ-V3-BC-197",
+      "REQ-V3-BC-208",
+      "REQ-V3-BC-222",
+      "REQ-V3-BC-223",
+      "REQ-V3-BC-224",
+      "REQ-V3-BC-226",
+      "REQ-V3-BC-245",
+      "REQ-V3-BC-248",
+      "REQ-V3-BC-274",
+      "REQ-V3-BC-278"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L014-delivery-dispatch-and-route/spec.md"
+  },
+  {
+    "path": "specs/planning/v3/L014-delivery-dispatch-and-route/tasks.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "515c09c1ac68f4e0545a899fe4cd1ae9ee26d49223bde363e656725d70d4b534",
+    "successor": "specs/014-delivery-dispatch-and-route",
+    "ids": [
+      "T-V3-L014-01",
+      "T-V3-L014-02",
+      "T-V3-L014-03",
+      "T-V3-L014-04",
+      "T-V3-L014-05",
+      "T-V3-L014-06"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L014-delivery-dispatch-and-route/tasks.md"
+  },
+  {
+    "path": "specs/planning/v3/L015-lastmile-attempt-pod/design.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "f288a0f4347af0936ed8c75f6bc4e251b50087f12d7358b4bfdfb561673ad93e",
+    "successor": "specs/015-lastmile-attempt-pod",
+    "ids": [],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L015-lastmile-attempt-pod/design.md"
+  },
+  {
+    "path": "specs/planning/v3/L015-lastmile-attempt-pod/spec.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "d98a7bcd44cd2f8cbeedb2330938607b2f5cda3cd886a47f378ba6628e0a3704",
+    "successor": "specs/015-lastmile-attempt-pod",
+    "ids": [
+      "REQ-V3-BC-073",
+      "REQ-V3-BC-074",
+      "REQ-V3-BC-081",
+      "REQ-V3-BC-084",
+      "REQ-V3-BC-227",
+      "REQ-V3-BC-299",
+      "REQ-V3-BC-355"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L015-lastmile-attempt-pod/spec.md"
+  },
+  {
+    "path": "specs/planning/v3/L015-lastmile-attempt-pod/tasks.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "529df3f0f3c16fa34a9ce62aab435eddde77eff7bd8fe8891e6fb33cb907aaf3",
+    "successor": "specs/015-lastmile-attempt-pod",
+    "ids": [
+      "T-V3-L015-01",
+      "T-V3-L015-02",
+      "T-V3-L015-03",
+      "T-V3-L015-04",
+      "T-V3-L015-05",
+      "T-V3-L015-06"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L015-lastmile-attempt-pod/tasks.md"
+  },
+  {
+    "path": "specs/planning/v3/L016-returns-reverse-logistics/design.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "14b3abbf6c4004eddcd925bc13ff11f0c23cf9bc76070c0e44cafe860c0495f8",
+    "successor": "specs/016-returns-reverse-logistics",
+    "ids": [],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L016-returns-reverse-logistics/design.md"
+  },
+  {
+    "path": "specs/planning/v3/L016-returns-reverse-logistics/spec.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "4e8bec06993ca4fd43ab855e64f91c2c3e519e2825e5949937fc4f2a6415dcb3",
+    "successor": "specs/016-returns-reverse-logistics",
+    "ids": [
+      "REQ-V3-BC-052",
+      "REQ-V3-BC-067",
+      "REQ-V3-BC-077",
+      "REQ-V3-BC-111",
+      "REQ-V3-BC-146",
+      "REQ-V3-BC-178",
+      "REQ-V3-BC-198"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L016-returns-reverse-logistics/spec.md"
+  },
+  {
+    "path": "specs/planning/v3/L016-returns-reverse-logistics/tasks.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "d9cfdf3b58e6c90438a1fc9d531dbaddeec588a4ccbdc259d1c9fa39200d9cb5",
+    "successor": "specs/016-returns-reverse-logistics",
+    "ids": [
+      "T-V3-L016-01",
+      "T-V3-L016-02",
+      "T-V3-L016-03",
+      "T-V3-L016-04",
+      "T-V3-L016-05",
+      "T-V3-L016-06"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L016-returns-reverse-logistics/tasks.md"
+  },
+  {
+    "path": "specs/planning/v3/L017-cod-collection-cashier-remittance/design.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "1294837c4eda3617d84e95519e53041fbeecdf5af54568dca6c7a8d47a03bddc",
+    "successor": "specs/017-cod-collection-cashier-remittance",
+    "ids": [],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L017-cod-collection-cashier-remittance/design.md"
+  },
+  {
+    "path": "specs/planning/v3/L017-cod-collection-cashier-remittance/spec.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "f56d568c3cd9d6ee3589f83753dbe1ab3007eb5013457cb6f0a9b45b9bac5aa4",
+    "successor": "specs/017-cod-collection-cashier-remittance",
+    "ids": [
+      "REQ-V3-BC-014",
+      "REQ-V3-BC-028",
+      "REQ-V3-BC-040",
+      "REQ-V3-BC-046",
+      "REQ-V3-BC-075",
+      "REQ-V3-BC-076",
+      "REQ-V3-BC-082",
+      "REQ-V3-BC-086",
+      "REQ-V3-BC-092",
+      "REQ-V3-BC-093",
+      "REQ-V3-BC-094",
+      "REQ-V3-BC-095",
+      "REQ-V3-BC-096",
+      "REQ-V3-BC-097",
+      "REQ-V3-BC-098",
+      "REQ-V3-BC-121",
+      "REQ-V3-BC-127",
+      "REQ-V3-BC-161",
+      "REQ-V3-BC-187",
+      "REQ-V3-BC-225",
+      "REQ-V3-BC-233",
+      "REQ-V3-BC-280",
+      "REQ-V3-BC-281",
+      "REQ-V3-BC-282",
+      "REQ-V3-BC-283",
+      "REQ-V3-BC-284",
+      "REQ-V3-BC-285",
+      "REQ-V3-BC-295",
+      "REQ-V3-BC-317",
+      "REQ-V3-BC-354"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L017-cod-collection-cashier-remittance/spec.md"
+  },
+  {
+    "path": "specs/planning/v3/L017-cod-collection-cashier-remittance/tasks.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "3f72a0df71348291027f0572f4595fa024651f8e65788577af48788431e2078d",
+    "successor": "specs/017-cod-collection-cashier-remittance",
+    "ids": [
+      "T-V3-L017-01",
+      "T-V3-L017-02",
+      "T-V3-L017-03",
+      "T-V3-L017-04",
+      "T-V3-L017-05",
+      "T-V3-L017-06"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L017-cod-collection-cashier-remittance/tasks.md"
+  },
+  {
+    "path": "specs/planning/v3/L018-billing-ledger-fees-invoices/design.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "de2e04f701e9bfd3ae3cea0465dca77c97c23bb5c045d0843332f6555262d661",
+    "successor": "specs/018-billing-ledger-fees-invoices",
+    "ids": [],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L018-billing-ledger-fees-invoices/design.md"
+  },
+  {
+    "path": "specs/planning/v3/L018-billing-ledger-fees-invoices/spec.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "8cdb8688f1d27ad8e40628454232e8be1b1eb4535930b504d0b69a67354f152a",
+    "successor": "specs/018-billing-ledger-fees-invoices",
+    "ids": [
+      "REQ-V3-BC-088",
+      "REQ-V3-BC-101",
+      "REQ-V3-BC-102",
+      "REQ-V3-BC-103",
+      "REQ-V3-BC-104",
+      "REQ-V3-BC-116",
+      "REQ-V3-BC-142",
+      "REQ-V3-BC-148",
+      "REQ-V3-BC-151",
+      "REQ-V3-BC-286",
+      "REQ-V3-BC-288",
+      "REQ-V3-BC-289",
+      "REQ-V3-BC-303",
+      "REQ-V3-BC-316",
+      "REQ-V3-BC-327"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L018-billing-ledger-fees-invoices/spec.md"
+  },
+  {
+    "path": "specs/planning/v3/L018-billing-ledger-fees-invoices/tasks.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "3f7b11aa83bf269fa927bde3713165b4b5740e687eaa9f2c1063e7d67007a130",
+    "successor": "specs/018-billing-ledger-fees-invoices",
+    "ids": [
+      "T-V3-L018-01",
+      "T-V3-L018-02",
+      "T-V3-L018-03",
+      "T-V3-L018-04",
+      "T-V3-L018-05",
+      "T-V3-L018-06"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L018-billing-ledger-fees-invoices/tasks.md"
+  },
+  {
+    "path": "specs/planning/v3/L019-cod-reconciliation-merchant-settlement/design.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "fcaac6a4549ec0f71aa4e95c19c49982483913a135ffd1c17c6b67ae54562bdd",
+    "successor": "specs/019-cod-reconciliation-merchant-settlement",
+    "ids": [],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L019-cod-reconciliation-merchant-settlement/design.md"
+  },
+  {
+    "path": "specs/planning/v3/L019-cod-reconciliation-merchant-settlement/spec.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "515b54423bcc33853e7e853d5742334e364877e081d956122ce40c3d3b14f7ab",
+    "successor": "specs/019-cod-reconciliation-merchant-settlement",
+    "ids": [
+      "REQ-V3-BC-015",
+      "REQ-V3-BC-087",
+      "REQ-V3-BC-091",
+      "REQ-V3-BC-099",
+      "REQ-V3-BC-100",
+      "REQ-V3-BC-162",
+      "REQ-V3-BC-188",
+      "REQ-V3-BC-190",
+      "REQ-V3-BC-287"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L019-cod-reconciliation-merchant-settlement/spec.md"
+  },
+  {
+    "path": "specs/planning/v3/L019-cod-reconciliation-merchant-settlement/tasks.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "74daf8c0c80d64de9958fae110bfe80f33ec1d1066be77bc81b868704346e00b",
+    "successor": "specs/019-cod-reconciliation-merchant-settlement",
+    "ids": [
+      "T-V3-L019-01",
+      "T-V3-L019-02",
+      "T-V3-L019-03",
+      "T-V3-L019-04",
+      "T-V3-L019-05",
+      "T-V3-L019-06"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L019-cod-reconciliation-merchant-settlement/tasks.md"
+  },
+  {
+    "path": "specs/planning/v3/L020-customer-support-tickets-sla/design.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "bb891623e42128ecf7a19fb99e80c6738d67aacb164a5c347a385a34578073b0",
+    "successor": "specs/020-customer-support-tickets-sla",
+    "ids": [],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L020-customer-support-tickets-sla/design.md"
+  },
+  {
+    "path": "specs/planning/v3/L020-customer-support-tickets-sla/spec.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "fc8d8e9a2acfd6903126ae50d82f95bd312ffa09659d119ad3aa2bdd9608bce1",
+    "successor": "specs/020-customer-support-tickets-sla",
+    "ids": [
+      "REQ-V3-BC-004",
+      "REQ-V3-BC-016",
+      "REQ-V3-BC-030",
+      "REQ-V3-BC-038",
+      "REQ-V3-BC-083",
+      "REQ-V3-BC-089",
+      "REQ-V3-BC-105",
+      "REQ-V3-BC-107",
+      "REQ-V3-BC-108",
+      "REQ-V3-BC-109",
+      "REQ-V3-BC-110",
+      "REQ-V3-BC-145",
+      "REQ-V3-BC-153",
+      "REQ-V3-BC-154",
+      "REQ-V3-BC-155",
+      "REQ-V3-BC-156",
+      "REQ-V3-BC-173",
+      "REQ-V3-BC-191",
+      "REQ-V3-BC-195",
+      "REQ-V3-BC-196",
+      "REQ-V3-BC-199",
+      "REQ-V3-BC-249",
+      "REQ-V3-BC-266",
+      "REQ-V3-BC-292",
+      "REQ-V3-BC-294",
+      "REQ-V3-BC-296",
+      "REQ-V3-BC-307",
+      "REQ-V3-BC-334"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L020-customer-support-tickets-sla/spec.md"
+  },
+  {
+    "path": "specs/planning/v3/L020-customer-support-tickets-sla/tasks.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "6dd77b1c3d4424144b9efa9428d62ac98faa488da0fa6c01da3ec0dabfe237bd",
+    "successor": "specs/020-customer-support-tickets-sla",
+    "ids": [
+      "T-V3-L020-01",
+      "T-V3-L020-02",
+      "T-V3-L020-03",
+      "T-V3-L020-04",
+      "T-V3-L020-05",
+      "T-V3-L020-06"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L020-customer-support-tickets-sla/tasks.md"
+  },
+  {
+    "path": "specs/planning/v3/L021-claims-investigation-compensation/design.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "4e08ad7d65db9c716c3f6cb8b11def4547fe953e176f5f88720cab5551fe4859",
+    "successor": "specs/021-claims-investigation-compensation",
+    "ids": [],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L021-claims-investigation-compensation/design.md"
+  },
+  {
+    "path": "specs/planning/v3/L021-claims-investigation-compensation/spec.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "4bd54946d17d4f0ca35aa720462cd2489f4d2b1b5a31a33d81a5e7b03d1147ef",
+    "successor": "specs/021-claims-investigation-compensation",
+    "ids": [
+      "REQ-V3-BC-112",
+      "REQ-V3-BC-113",
+      "REQ-V3-BC-114",
+      "REQ-V3-BC-115",
+      "REQ-V3-BC-117",
+      "REQ-V3-BC-129",
+      "REQ-V3-BC-163",
+      "REQ-V3-BC-297",
+      "REQ-V3-BC-298",
+      "REQ-V3-BC-300",
+      "REQ-V3-BC-301",
+      "REQ-V3-BC-302",
+      "REQ-V3-BC-318"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L021-claims-investigation-compensation/spec.md"
+  },
+  {
+    "path": "specs/planning/v3/L021-claims-investigation-compensation/tasks.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "1172e834dfe3b9f1ded9a64a3cd8c9ae880ff241c257f220330e09511faf92e6",
+    "successor": "specs/021-claims-investigation-compensation",
+    "ids": [
+      "T-V3-L021-01",
+      "T-V3-L021-02",
+      "T-V3-L021-03",
+      "T-V3-L021-04",
+      "T-V3-L021-05",
+      "T-V3-L021-06"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L021-claims-investigation-compensation/tasks.md"
+  },
+  {
+    "path": "specs/planning/v3/L022-enterprise-api-webhooks/design.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "a349e7ad96c9d5a59e2ccce3a84af07d229b2f8dfdded4fd186be7904db0b063",
+    "successor": "specs/022-enterprise-api-webhooks",
+    "ids": [],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L022-enterprise-api-webhooks/design.md"
+  },
+  {
+    "path": "specs/planning/v3/L022-enterprise-api-webhooks/spec.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "e1e2fe76117f82733912e7f26dd0ec917e638ee356d615eaaef672621714a493",
+    "successor": "specs/022-enterprise-api-webhooks",
+    "ids": [
+      "REQ-V3-BC-018",
+      "REQ-V3-BC-164",
+      "REQ-V3-BC-175",
+      "REQ-V3-BC-200",
+      "REQ-V3-BC-201",
+      "REQ-V3-BC-202",
+      "REQ-V3-BC-203",
+      "REQ-V3-BC-204",
+      "REQ-V3-BC-205",
+      "REQ-V3-BC-206",
+      "REQ-V3-BC-357",
+      "REQ-V3-BC-358",
+      "REQ-V3-BC-360"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L022-enterprise-api-webhooks/spec.md"
+  },
+  {
+    "path": "specs/planning/v3/L022-enterprise-api-webhooks/tasks.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "e79b51ae5e96b66f7c5d4da3c9f0d7f3149f60af73f0a9b12fe60df994e7cfe7",
+    "successor": "specs/022-enterprise-api-webhooks",
+    "ids": [
+      "T-V3-L022-01",
+      "T-V3-L022-02",
+      "T-V3-L022-03",
+      "T-V3-L022-04",
+      "T-V3-L022-05",
+      "T-V3-L022-06"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L022-enterprise-api-webhooks/tasks.md"
+  },
+  {
+    "path": "specs/planning/v3/L023-bulk-shipment-import/design.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "63e50a8172a597baf93a32139410cdb72504d11e1a6f9a4908c2c3804f967d39",
+    "successor": "specs/023-bulk-shipment-import",
+    "ids": [],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L023-bulk-shipment-import/design.md"
+  },
+  {
+    "path": "specs/planning/v3/L023-bulk-shipment-import/spec.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "c4e6c0f0deeb466e45405228f6136d09593f73b1324444fd239a12dfe64ad783",
+    "successor": "specs/023-bulk-shipment-import",
+    "ids": [
+      "REQ-V3-BC-029",
+      "REQ-V3-BC-174"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L023-bulk-shipment-import/spec.md"
+  },
+  {
+    "path": "specs/planning/v3/L023-bulk-shipment-import/tasks.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "6d1093e0ab4996b03fd453b71d2c99c70a658c308cb9d37720482f8100b7dbee",
+    "successor": "specs/023-bulk-shipment-import",
+    "ids": [
+      "T-V3-L023-01",
+      "T-V3-L023-02",
+      "T-V3-L023-03",
+      "T-V3-L023-04",
+      "T-V3-L023-05",
+      "T-V3-L023-06"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L023-bulk-shipment-import/tasks.md"
+  },
+  {
+    "path": "specs/planning/v3/L024-partner-franchise-station-ops/design.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "69e12c4fa93dcdce625ca31e8e69430727a020ef549fa492514d9faa3af0309d",
+    "successor": "specs/024-partner-franchise-station-ops",
+    "ids": [],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L024-partner-franchise-station-ops/design.md"
+  },
+  {
+    "path": "specs/planning/v3/L024-partner-franchise-station-ops/spec.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "081be74bf3e780363861fd292e84ecb23fb77cf1827008af27ed8427ae1ffee2",
+    "successor": "specs/024-partner-franchise-station-ops",
+    "ids": [
+      "REQ-V3-BC-364",
+      "REQ-V3-BC-365",
+      "REQ-V3-BC-366",
+      "REQ-V3-BC-367",
+      "REQ-V3-BC-368",
+      "REQ-V3-BC-369",
+      "REQ-V3-BC-370",
+      "REQ-V3-BC-371"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L024-partner-franchise-station-ops/spec.md"
+  },
+  {
+    "path": "specs/planning/v3/L024-partner-franchise-station-ops/tasks.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "1a304e2e5ec9d9e5379c3ebaf8c8b27433ea9c01a4eed4a20ad593fad6426c46",
+    "successor": "specs/024-partner-franchise-station-ops",
+    "ids": [
+      "T-V3-L024-01",
+      "T-V3-L024-02",
+      "T-V3-L024-03",
+      "T-V3-L024-04",
+      "T-V3-L024-05",
+      "T-V3-L024-06"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L024-partner-franchise-station-ops/tasks.md"
+  },
+  {
+    "path": "specs/planning/v3/L025-network-ops-routing-optimization/design.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "25f9ae84f696225ed82882de154fe0972e694c6c3b39875f54eea545c36ed9c2",
+    "successor": "specs/025-network-ops-routing-optimization",
+    "ids": [],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L025-network-ops-routing-optimization/design.md"
+  },
+  {
+    "path": "specs/planning/v3/L025-network-ops-routing-optimization/spec.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "0bfaf0b371cce9743d60f8b8015322a99a546f91796d9916d94c8e02066ef335",
+    "successor": "specs/025-network-ops-routing-optimization",
+    "ids": [
+      "REQ-V3-BC-061",
+      "REQ-V3-BC-209",
+      "REQ-V3-BC-215",
+      "REQ-V3-BC-229",
+      "REQ-V3-BC-246",
+      "REQ-V3-BC-268",
+      "REQ-V3-BC-275"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L025-network-ops-routing-optimization/spec.md"
+  },
+  {
+    "path": "specs/planning/v3/L025-network-ops-routing-optimization/tasks.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "9f3368dce8ee115cfb2938a4942c94818455b40a12041448ffe397efdcf63cd7",
+    "successor": "specs/025-network-ops-routing-optimization",
+    "ids": [
+      "T-V3-L025-01",
+      "T-V3-L025-02",
+      "T-V3-L025-03",
+      "T-V3-L025-04",
+      "T-V3-L025-05",
+      "T-V3-L025-06"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L025-network-ops-routing-optimization/tasks.md"
+  },
+  {
+    "path": "specs/planning/v3/L026-risk-fraud-compliance/design.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "d808c96b5f0e9f4d5607441b8b789f52114640dbb2a201ff735e3015ca8d1eb0",
+    "successor": "specs/026-risk-fraud-compliance",
+    "ids": [],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L026-risk-fraud-compliance/design.md"
+  },
+  {
+    "path": "specs/planning/v3/L026-risk-fraud-compliance/spec.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "4e3467caedaa6689582ab252567b80038ed3990a467f45377a9af54e9c238c41",
+    "successor": "specs/026-risk-fraud-compliance",
+    "ids": [
+      "REQ-V3-BC-337",
+      "REQ-V3-BC-338",
+      "REQ-V3-BC-339",
+      "REQ-V3-BC-340",
+      "REQ-V3-BC-341",
+      "REQ-V3-BC-342",
+      "REQ-V3-BC-343",
+      "REQ-V3-BC-344",
+      "REQ-V3-BC-345",
+      "REQ-V3-BC-346",
+      "REQ-V3-BC-347"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L026-risk-fraud-compliance/spec.md"
+  },
+  {
+    "path": "specs/planning/v3/L026-risk-fraud-compliance/tasks.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "e5906f7eb9c7bc162e6d9cfe529c62fc06f746ad203430c0f28d0f7ba117eedb",
+    "successor": "specs/026-risk-fraud-compliance",
+    "ids": [
+      "T-V3-L026-01",
+      "T-V3-L026-02",
+      "T-V3-L026-03",
+      "T-V3-L026-04",
+      "T-V3-L026-05",
+      "T-V3-L026-06"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L026-risk-fraud-compliance/tasks.md"
+  },
+  {
+    "path": "specs/planning/v3/L027-platform-admin-audit-governance/design.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "a59197c92cbf8c44dd75543fcfa804d91373f3b92f5772474d7f31e900d80d33",
+    "successor": "specs/027-platform-admin-audit-governance",
+    "ids": [],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L027-platform-admin-audit-governance/design.md"
+  },
+  {
+    "path": "specs/planning/v3/L027-platform-admin-audit-governance/spec.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "3e966bcb51352f79c1203ea94febc7d61ef20e580c9119480e80f1bc48cdfa2d",
+    "successor": "specs/027-platform-admin-audit-governance",
+    "ids": [
+      "REQ-V3-BC-031",
+      "REQ-V3-BC-036",
+      "REQ-V3-BC-043",
+      "REQ-V3-BC-124",
+      "REQ-V3-BC-125",
+      "REQ-V3-BC-128",
+      "REQ-V3-BC-252",
+      "REQ-V3-BC-279",
+      "REQ-V3-BC-306",
+      "REQ-V3-BC-308",
+      "REQ-V3-BC-313",
+      "REQ-V3-BC-314",
+      "REQ-V3-BC-348",
+      "REQ-V3-BC-349",
+      "REQ-V3-BC-350",
+      "REQ-V3-BC-351",
+      "REQ-V3-BC-352",
+      "REQ-V3-BC-353",
+      "REQ-V3-BC-361",
+      "REQ-V3-BC-362"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L027-platform-admin-audit-governance/spec.md"
+  },
+  {
+    "path": "specs/planning/v3/L027-platform-admin-audit-governance/tasks.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "693afa996b84490820dc536f305091757c551e6ecfb5ea052ead39b79f88e759",
+    "successor": "specs/027-platform-admin-audit-governance",
+    "ids": [
+      "T-V3-L027-01",
+      "T-V3-L027-02",
+      "T-V3-L027-03",
+      "T-V3-L027-04",
+      "T-V3-L027-05",
+      "T-V3-L027-06"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L027-platform-admin-audit-governance/tasks.md"
+  },
+  {
+    "path": "specs/planning/v3/L028-notifications-analytics-sla/design.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "f0d43f1ce37a0a34b61e8e833f7201ec2c3ea36b78ee1fed8266666130eb0efe",
+    "successor": "specs/028-notifications-analytics-sla",
+    "ids": [],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L028-notifications-analytics-sla/design.md"
+  },
+  {
+    "path": "specs/planning/v3/L028-notifications-analytics-sla/spec.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "242866605014632eb828eb40dc2de776d2567209a95a7007ff76fbb7f6050058",
+    "successor": "specs/028-notifications-analytics-sla",
+    "ids": [
+      "REQ-V3-BC-017",
+      "REQ-V3-BC-035",
+      "REQ-V3-BC-053",
+      "REQ-V3-BC-090",
+      "REQ-V3-BC-122",
+      "REQ-V3-BC-130",
+      "REQ-V3-BC-165",
+      "REQ-V3-BC-172",
+      "REQ-V3-BC-192",
+      "REQ-V3-BC-291",
+      "REQ-V3-BC-333",
+      "REQ-V3-BC-356",
+      "REQ-V3-BC-359",
+      "REQ-V3-BC-363"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L028-notifications-analytics-sla/spec.md"
+  },
+  {
+    "path": "specs/planning/v3/L028-notifications-analytics-sla/tasks.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "6c8915134218a4ed0cb00395a88af0bf49fb448b7b42df0381625fc408fd41bc",
+    "successor": "specs/028-notifications-analytics-sla",
+    "ids": [
+      "T-V3-L028-01",
+      "T-V3-L028-02",
+      "T-V3-L028-03",
+      "T-V3-L028-04",
+      "T-V3-L028-05",
+      "T-V3-L028-06"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L028-notifications-analytics-sla/tasks.md"
+  },
+  {
+    "path": "specs/planning/v3/L029-courier-offline-sync/design.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "3937ab5adb48b4fcef4e061a362eb14e729a009bf0f011bd56852877a208ec50",
+    "successor": "specs/029-courier-offline-sync",
+    "ids": [],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L029-courier-offline-sync/design.md"
+  },
+  {
+    "path": "specs/planning/v3/L029-courier-offline-sync/spec.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "1fabb01f99da03944789ac99f49713ab4fbea431947a8b46783e01f7bc3478e5",
+    "successor": "specs/029-courier-offline-sync",
+    "ids": [
+      "REQ-V3-L029-ENABLER"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L029-courier-offline-sync/spec.md"
+  },
+  {
+    "path": "specs/planning/v3/L029-courier-offline-sync/tasks.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "90e0842da41be0ffbb3815f76d8b8fe71bf4174cdd5683317cb3f532af2133c5",
+    "successor": "specs/029-courier-offline-sync",
+    "ids": [
+      "T-V3-L029-01",
+      "T-V3-L029-02",
+      "T-V3-L029-03",
+      "T-V3-L029-04",
+      "T-V3-L029-05",
+      "T-V3-L029-06"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L029-courier-offline-sync/tasks.md"
+  },
+  {
+    "path": "specs/planning/v3/L030-capstone-e2e-hardening-release/design.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "1518c0500dfea2eb60175c627916221c31b720c44f06c457caad8bb51974cb6d",
+    "successor": "specs/030-capstone-e2e-hardening-release",
+    "ids": [],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L030-capstone-e2e-hardening-release/design.md"
+  },
+  {
+    "path": "specs/planning/v3/L030-capstone-e2e-hardening-release/spec.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "fe997abca953410473165e9296823ebc7f48c2412deb933f8c4392472dc86726",
+    "successor": "specs/030-capstone-e2e-hardening-release",
+    "ids": [
+      "REQ-V3-L030-ENABLER"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L030-capstone-e2e-hardening-release/spec.md"
+  },
+  {
+    "path": "specs/planning/v3/L030-capstone-e2e-hardening-release/tasks.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "362f1293fa07a4bee94a96738d362b816a561d5a1c9de7b9a370e0ed3052ae7a",
+    "successor": "specs/030-capstone-e2e-hardening-release",
+    "ids": [
+      "T-V3-L030-01",
+      "T-V3-L030-02",
+      "T-V3-L030-03",
+      "T-V3-L030-04",
+      "T-V3-L030-05",
+      "T-V3-L030-06"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/L030-capstone-e2e-hardening-release/tasks.md"
+  },
+  {
+    "path": "specs/planning/v3/first-business-slice/design.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "f233ae28c90c5b064cbe8533a56ffc586b96219d75469f5306d60a92592fa806",
+    "successor": "docs/implementation/delivery-principles-v3.md",
+    "ids": [],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/first-business-slice/design.md"
+  },
+  {
+    "path": "specs/planning/v3/first-business-slice/spec.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "4bf7ff901a2f85ff31d2fac5b2cb9605675a172c46246e76d39f610bf8d8e7d4",
+    "successor": "docs/implementation/delivery-principles-v3.md",
+    "ids": [
+      "AC-V3-FIRST-01",
+      "AC-V3-FIRST-02",
+      "AC-V3-FIRST-03",
+      "AC-V3-FIRST-04",
+      "AC-V3-FIRST-05",
+      "AC-V3-FIRST-06",
+      "AC-V3-FIRST-07",
+      "REQ-V3-BC-"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/first-business-slice/spec.md"
+  },
+  {
+    "path": "specs/planning/v3/first-business-slice/tasks.md",
+    "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+    "git_blob_sha256": "ef90d253719201c5f708d727517941a17363effec810d39f1abde489fbf35b69",
+    "successor": "docs/implementation/delivery-principles-v3.md",
+    "ids": [
+      "FIRST-01",
+      "FIRST-02",
+      "FIRST-03",
+      "FIRST-04",
+      "FIRST-05",
+      "FIRST-06",
+      "FIRST-07"
+    ],
+    "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/planning/v3/first-business-slice/tasks.md"
+  }
+]

@@ -1,3 +1,5 @@
+> Current canonical target follows [Owner account-first decision](../decisions/customer-account-merchant-admission.md). Historical statements below are source context where superseded; accepted runtime/security unchanged.
+
 # Ma trận Role × Module × Business Capability — E-Logistics Capstone
 
 > **Trạng thái:** ĐỀ XUẤT PHÂN TÍCH — chưa phải Role/Permission/Feature contract được canonical SDD phê duyệt.
@@ -257,8 +259,8 @@ Một ô có thể chứa nhiều loại năng lực: **C/E** = CORE và EXPAND.
 | BC-130 | R17 Auditor | M16 | CORE | Xuất báo cáo audit | Bảo vệ PII |
 
 | BC-131 | R01 Guest | M04 | CORE | Tra cứu danh mục dịch vụ, điều kiện gửi hàng | Catalog công khai, không lộ hợp đồng riêng |
-| BC-132 | R01 Guest | M01 | CORE | Đi đến đăng ký tài khoản Retail Sender | Account tự đăng ký; xác minh theo Identity contract |
-| BC-133 | R01 Guest | M01 | CORE | Đi đến onboarding Merchant | Tạo/đăng ký tổ chức theo workflow đã chốt |
+| BC-132 | R01 Guest | M01 | CORE | Đi đến đăng ký một tài khoản khách hàng cá nhân | Public entry; xác minh Identity; không chọn loại tài khoản, không tự cấp role/Owner |
+| BC-133 | R18 Retail Sender | M01 | CORE | Nộp và theo dõi đơn trở thành Merchant từ workspace cá nhân sau đăng nhập | Account verified và eligible hiện hành; không Guest submit, không Owner trước approval |
 | BC-134 | R18 Retail Sender | M01 | CORE | Đăng ký/đăng nhập tài khoản cá nhân | Không buộc Merchant membership; xác minh/chống giả mạo |
 | BC-135 | R18 Retail Sender | M01 | CORE | Quản lý hồ sơ, tên, liên hệ, trạng thái tài khoản | Chỉ dữ liệu bản thân; thay đổi nhạy cảm cần xác minh |
 | BC-136 | R18 Retail Sender | M03 | CORE | Lưu và quản lý địa chỉ gửi/nhận thường dùng | Chỉ sở hữu cá nhân; chuẩn hóa địa chỉ |
@@ -539,7 +541,7 @@ Không điền các cột evidence bằng suy đoán. Đặc biệt, **mã permi
 ## 8. Change log phạm vi Nhóm A — 2026-10-26
 
 - Giữ nguyên ID R01–R17 và BC-001–BC-130 để bảo toàn tham chiếu; thêm **R18 Retail Sender (P0)** và **BC-131–BC-156**.
-- Nâng BC-004, BC-005 lên CORE; BC-006 trở thành **hành vi bị cấm** thay vì tính năng đợi triển khai; thêm Guest service catalog và hai nhánh đăng ký.
+- Nâng BC-004, BC-005 lên CORE; BC-006 trở thành **hành vi bị cấm** thay vì tính năng đợi triển khai; thêm Guest service catalog và đăng ký cá nhân và application Merchant sau đăng nhập.
 - Recipient là external actor, không account/portal, khiếu nại đơn Merchant qua Merchant Support. Trường hợp đơn Retail Sender có CSKH hãng tiếp nhận, không buộc qua Merchant.
 - Ký gửi walk-in tại quầy là quy trình do Station Operator thực hiện, không phải Guest online shipment.
 - Các nhãn CORE là **phạm vi mục tiêu bắt buộc** mà Project Owner yêu cầu, không phải bằng chứng Feature đã build hoặc canonical SDD đã phê duyệt.

@@ -1,3 +1,5 @@
+> Historical reconciliation snapshot at ff3b296/b59cfc5; worktree/root protection inventory describes that run, not current root. Canonical rebuild uses eeb7833 and [new validation](canonical-validation.md); no rerun of retired live-worktree assumptions.
+
 # V3 documentation validation receipt — 2026-10-27
 
 Worktree D:/TLCN/e-logistic-sdd-v3, branch docs/business-sdd-roadmap-v3; baseline origin/develop ff3b2963ee1b165c7ade412e8b37389da65ca28e. Remote rechecked by git ls-remote origin refs/heads/develop, unchanged. [Exact manifest](change-manifest.csv):157 paths, all docs/specs; no app/infra/packages/contracts/.github changes.
@@ -18,4 +20,4 @@ Initial sandbox-only validator could not read original repository Git status due
 
 Local backend lint/typecheck/build/Maven/runtime/Flyway/PostgreSQL/browser/native/NFR tests NOT_RUN: task authorizes docs-only, production sources unchanged; no business acceptance claimed. Documentation tests/validators executed for real. Existing required Backend verification CI still runs on the actual PR (Architecture gate, Backend default/H2, Backend PostgreSQL18); its actual result and merge-readiness are reported on the PR/final publication report, not inferred from old source CI. Source baseline post-merge run40120270733 SUCCESS remains historical evidence only.
 
-Business readiness: FIXES_REQUIRED before first implementation, pending D-V3-01/02/03/05, public D06 subset/D08 and accepted contracts. Docs review readiness: READY_WITH_DECISIONS, target not canonical before Owner approval. [Summary](summary.md), [decisions](decisions.md), [first packet](../../../specs/planning/v3/first-business-slice/spec.md).
+Business readiness: FIXES_REQUIRED before first implementation, pending D-V3-01/02/03/05, public D06 subset/D08 and accepted contracts. Docs review readiness: READY_WITH_DECISIONS, target not canonical before Owner approval. [Summary](summary.md), [decisions](decisions.md), [first packet](../../implementation/delivery-principles-v3.md).

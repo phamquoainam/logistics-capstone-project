@@ -1,6 +1,6 @@
 # Demo local — Auth / Merchant / Shipment DRAFT
 
-Scope: [demo spec](../../specs/demo-001-auth-merchant-shipment/spec.md), [contract/design](../../specs/demo-001-auth-merchant-shipment/design.md), [evidence](../implementation/demo-001-evidence.md). This is not P0 or D1-03 closure.
+Scope: [demo spec](https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/demo-001-auth-merchant-shipment/spec.md), [contract/design](https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/demo-001-auth-merchant-shipment/design.md), [evidence](../implementation/demo-001-evidence.md). This is not P0 or D1-03 closure.
 
 **PostgreSQL integration 2026-10-13:** [PostgreSQL runbook](postgresql-foundation.md) adds the approved Docker/5433 backend target. Use `run-postgres-demo.ps1` for PostgreSQL; the commands below remain the preserved H2 fallback. Both targets passed runtime/regression checks; [D1-03 evidence](../implementation/d1-03-postgresql-evidence.md). Original H2 credentials/data/migration are not converted or replaced.
 

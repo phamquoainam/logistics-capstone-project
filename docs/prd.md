@@ -1,4 +1,4 @@
-> **V3 candidate để Owner review:** [Roadmap](implementation/roadmap-v3.md). Giữ accepted/runtime baseline; các mục REPORT/legacy bên dưới là lịch sử, không dùng để loại target FULL hoặc suy acceptance.
+> **Canonical V3 target:** [Roadmap](implementation/roadmap-v3.md). Giữ accepted/runtime baseline; các mục REPORT/legacy bên dưới là lịch sử, không dùng để loại target FULL hoặc suy acceptance.
 
 # Product Requirements Document — E-Logistics Prototype
 
@@ -50,19 +50,17 @@ Xem `docs/domain/requirements-catalog.md` để có đầy đủ các mã **FR-G
 Tính đúng của dữ liệu hành chính và vùng giá, thanh toán sandbox, provider định tuyến, quyền GPS/camera, lưu POD, đồng bộ offline, idempotency, dữ liệu seed và khả năng tái lập thử nghiệm.
 
 ## 9. Ràng buộc thực thi
-Nhóm ba thành viên, khoảng 14 tuần trong báo cáo; triển khai theo vertical slice ưu tiên P0. Các thành phần chưa chốt ở `docs/decisions/open-questions.md` phải ghi ADR trước khi phụ thuộc triển khai.
+Nhóm ba thành viên, khoảng 14 tuần trong báo cáo (không phải estimate FULL V3); triển khai theo từng spec end-to-end; vertical slice chỉ decomposition nội bộ. Các thành phần chưa chốt ở `docs/decisions/open-questions.md` phải ghi ADR trước khi phụ thuộc triển khai.
 
 <a id="v3-target-business-baseline"></a>
-## V3 target business baseline — PROPOSED, 2026-10-26
+## V3 target business baseline — canonical target, 2026-10-27
 
-Mục1–9 giữ nguyên REPORT/prototype. Owner VIII.8.9–8.12 bổ sung target; [conflict register](reconciliation/v3/decisions.md) ghi khác biệt. Không dùng P1/exclusion cũ để âm thầm loại CORE, không dùng proposal mới thay accepted security/cho phép tiền thật.
+Latest [Owner account-first decision](decisions/customer-account-merchant-admission.md) và [delivery principles](implementation/delivery-principles-v3.md) supersede conflicting historical REPORT/proposed account choices. Existing accepted security/architecture only changes through controlled amendment. First-party own logistics network, not aggregator;33 actors/principals,18 conceptual business modules,371 BC=366 CORE+5 DEFER/deny in nine domain modules.
 
-Vision mở rộng: codebase Modular Monolith hiện hữu phục vụ Guest, Retail Sender cá nhân, FULL Merchant, physical logistics, Finance/Support/Governance/Partner:33 roles/actors/principals,18 modules,371 BC=366 CORE+5 DEFER. [Business baseline](reconciliation/v3/business-baseline.md), [crosswalk](reconciliation/v3/capability-crosswalk.csv) là target FR bổ sung với source/guard/owner/API/DB/UI/test status; không renumber FR/BR/NFR.
+Guest public tracking/quote/coverage/Station/catalog/contact và unified personal registration/login/recovery entry; NO anonymous online Shipment. Retail Sender full eligible shipping journey without Merchant. Same verified human can apply Merchant after login; organization becomes active/initial Owner only after scoped evidence review/controlled activation. Staff personal accounts/current delegated memberships; personal remains valid after unrelated org rejection/revoke. Recipient external channels/no mandatory IAM. Machine API principal separate human credentials.
 
-[30 specs/F0–F5](implementation/roadmap-v3.md) là full inventory. Guest public tracking/quote/coverage/Station/Hub/service/contact/hai nhánh đăng ký, cấm anonymous online Shipment. Sender profile/address/quote/booking/pickup/payment/tracking/cancel/return/support/history/receipt trong account cá nhân, không ép Merchant membership. Merchant Owner/Manager/Operator/Warehouse/Finance/Support và integration principal có org/delegation/fulfillment/contracts/COD/claims/report/API đầy đủ. Recipient external không IAM/portal, đơn Merchant qua Merchant Support, đơn Sender qua Logistics CS. Walk-in staff Station/Partner có quyền tại quầy, verification/fee/receipt/custody.
+FULL Group A/B target: personal/Merchant dashboard/search/stats/notifications; single/bulk shipping, versioned addresses/service/quote/Parcel/labels/handover/tracking/return; supported payment/receipt/invoice/COD statements/disputes/claims; Merchant staff/facilities/pickup/contracts/reporting/integration. Correct owning specs in [coverage](portal/group-ab-coverage.md); unsupported international/immediate modes not promised. [Benchmark](portal/screenshot-benchmark.md) uses Owner descriptions only, not proprietary external behavior verification.
 
-Physical: pickup pool→assignment→evidence→Station→sorting/bag/manifest→line-haul/seal/trip→destination→delivery assignment→attempt/POD hoặc retry/return. Assignment/custody/tracking/money custody riêng. Finance: collected→Cashier received→reconciled→settlement proof; immutable ledger/price snapshot/adjustment. Ticket khác claim; proposer/approver/payer riêng. Business Admin/Identity Admin/Super Admin/IT/Auditor khác quyền; Partner org+Station; cấm fake POD/COD/sửa audit/closed recon.
+Retain full C–F: pickup assignment/evidence, Station/Hub custody/sort/manifests, linehaul trip/seal/arrival, delivery attempts/POD/returns, COD collection/cashier/remittance/reconciliation/simulation, CS/claims/risk/governance/audit/Partner/network/native offline/RQ/release. State vs event vs attempt vs custody vs money facts separate; Admin != Finance; business != Identity; SKU inventory != carrier custody; closed snapshots immutable. No real money/provider/security-policy expansion from docs.
 
-[J1–J9](reconciliation/v3/journeys.md) bổ sung AC-01–08; denial qua direct API/browser. Complete capability: accepted contract→migration/domain→application/HTTP auth→FE integrated→PG/security/concurrency→browser/native→source+PR CI→evidence. NFR giữ ngưỡng REPORT mục7, privacy/retention/abuse trước first use; không benchmark mới.
-
-[First BE+FE packet](../specs/planning/v3/first-business-slice/spec.md) gồm Guest paths/Sender cá nhân/Merchant membership/pickup/address; BLOCKED tới approved D01/02/03/05 và API/data contract. Không coi001/002/Demo fully accepted.
+[Roadmap](implementation/roadmap-v3.md), [371 BC](reconciliation/v3/capability-crosswalk.csv), [J-AB-01..10](portal/journeys.md), [GROUP_A_B_PORTAL_FULL_ACCEPTANCE](portal/group-ab-acceptance.md) supplement preserved FR/BR/NFR/AC-01..08, not replace them. Every CORE has owning requirement/design/task/AC; portal milestone cross-Spec,003 only customer admission/org/member/profile. Exact API/schema/permission/retention/provider pending review; no future functionality implemented claim.001/002 partial statuses and existing findings retained.

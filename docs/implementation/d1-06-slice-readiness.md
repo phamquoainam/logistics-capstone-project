@@ -32,7 +32,7 @@ dependencies. No report DOCX is tracked; no new report semantics are inferred.
 
 Evidence anchors in the current source:
 
-- [Demo-001 accepted contract](../../specs/demo-001-auth-merchant-shipment/design.md):
+- [Demo-001 accepted contract](https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/demo-001-auth-merchant-shipment/design.md):
   user authorized endpoints/DTOs and the scoped bearer-token demo, not full P0.
 - [AuthController](../../app/backend/src/main/java/com/elogistic/backend/identity/internal/web/AuthController.java),
   [MerchantController](../../app/backend/src/main/java/com/elogistic/backend/merchant/internal/web/MerchantController.java),

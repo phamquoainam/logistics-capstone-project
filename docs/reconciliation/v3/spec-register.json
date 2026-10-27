@@ -11,7 +11,7 @@
     "database_scope": "Không migration trong reconciliation",
     "workflow": "Cold-start/restore, giữ evidence và findings",
     "blockers": "AC-001-04/05 còn mở",
-    "approval_status": "PROPOSED",
+    "approval_status": "CANONICAL_DOCUMENTATION_OWNER_AUTHORIZED",
     "readiness": "PROTECTED_PARTIAL",
     "capability_ids": [],
     "role_ids": [],
@@ -44,7 +44,7 @@
     "database_scope": "V1–V6 bất biến; delta qua change control",
     "workflow": "Provision/invite/login/refresh/logout/revoke; deny external authority",
     "blockers": "D-V3-01; D-V3-02",
-    "approval_status": "PROPOSED",
+    "approval_status": "CANONICAL_DOCUMENTATION_OWNER_AUTHORIZED",
     "readiness": "PROTECTED_PARTIAL",
     "capability_ids": [
       "BC-041",
@@ -83,20 +83,18 @@
     "hard_dependencies": [
       "L002"
     ],
-    "purpose": "Khách gửi cá nhân và Merchant tổ chức",
-    "backend_scope": "Sender profile, org/membership/delegation/lifecycle; credential chỉ Identity",
-    "frontend_scope": "Public chọn đăng ký, Sender profile, Merchant staff/context",
-    "database_scope": "Personal business profile/membership dưới merchant là proposal",
-    "workflow": "Guest chọn loại→xác minh→đúng profile/org; revoke giữa form và submit phải deny",
-    "blockers": "D-V3-01; D-V3-02; D-V3-03; D-V3-05",
-    "approval_status": "PROPOSED",
-    "readiness": "BLOCKED",
+    "purpose": "Hồ sơ cá nhân, Merchant application/approval và organization/membership",
+    "backend_scope": "Customer onboarding phối hợp L002; Merchant application/legal evidence/manual review; controlled org/Owner activation; membership/delegation; pickup management consumed from L004",
+    "frontend_scope": "Personal default/profile/application/status; Merchant context/profile/facilities/staff; pickup link only when L004 delivered; no Guest type chooser",
+    "database_scope": "merchant application/org/Merchant business profile/membership/delegation; Retail Sender business profile DATA-01 UNRESOLVED (candidate Merchant, not accepted); pickup owner L004; Identity account/authoritative ID/credentials/verification/security contacts/session/security lifecycle; Spec003 orchestration only, exact schema/API pending",
+    "workflow": "Guest đăng ký cá nhân→Identity verify/login→personal workspace→Merchant apply→manual sandbox review→approval+Owner activation→context; rejection/revocation giữ personal access",
+    "blockers": "IAM-CUSTOMER-01; IAM-CONTEXT-02; IAM-INVITE-03; DATA-01; PRIVACY-01; POLICY-003-01",
+    "approval_status": "CANONICAL_DOCUMENTATION_OWNER_AUTHORIZED",
+    "readiness": "BLOCKED_FOR_IMPLEMENTATION",
     "capability_ids": [
       "BC-007",
       "BC-008",
-      "BC-009",
       "BC-020",
-      "BC-021",
       "BC-032",
       "BC-045",
       "BC-132",
@@ -107,12 +105,7 @@
       "BC-158",
       "BC-159",
       "BC-166",
-      "BC-167",
-      "BC-230",
-      "BC-329",
-      "BC-330",
-      "BC-331",
-      "BC-335"
+      "BC-167"
     ],
     "role_ids": [
       "R01",
@@ -120,27 +113,26 @@
       "R03",
       "R04",
       "R05",
-      "R16",
       "R18",
-      "R19",
-      "R29"
+      "R19"
     ],
     "excluded_scope": "Không cấp quyền từ role label; không ghi dữ liệu owner khác;5 DEFER chỉ denial. CORE wave sau vẫn trong target.",
     "soft_dependencies": [
-      "L004"
+      "L004",
+      "L005"
     ],
-    "invariants": "Guest chọn loại→xác minh→đúng profile/org; revoke giữa form và submit phải deny; giữ BR-01–21 theo applicability; xem business-baseline.md.",
+    "invariants": "Guest đăng ký cá nhân→Identity verify/login→personal→Merchant application/review/activation; revoke giữa form và submit phải deny; giữ BR-01–21 theo applicability; xem business-baseline.md.",
     "contract_scope": "Sender profile, org/membership/delegation/lifecycle; credential chỉ Identity; exact API/event/DTO/permission/schema DECISION_REQUIRED trước code; contracts/ là nguồn duy nhất.",
     "authorization": "Current account/session AND explicit permission AND authoritative membership/resource/assignment scope AND current state/evidence; actors: R01,R02,R03,R04,R05,R16,R18,R19,R29",
     "idempotency_concurrency": "Mutation: stable key+scope/canonical payload; replay một effect, khác payload conflict; DB uniqueness/locking và rollback tests. Read-only không mutation. Identity Refresh strict single-flight/no blind retry.",
     "audit_privacy": "Actor/source/reason/correlation, append-only audit/evidence; PII tối thiểu, không secrets/raw payment trong log; retention D-V3-06.",
-    "acceptance": "Guest chọn loại→xác minh→đúng profile/org; revoke giữa form và submit phải deny; mỗi REQ-V3-BC có assertion success hoặc deny theo source guard.",
+    "acceptance": "Guest đăng ký cá nhân→Identity verify/login→personal→Merchant application/review/activation; revoke giữa form và submit phải deny; mỗi REQ-V3-BC có assertion success hoặc deny theo source guard.",
     "test_evidence": "Unit guard/state; ArchUnit boundaries; contract conformance; PostgreSQL empty/upgrade/permissions/constraints/rollback; HTTP/filter-chain tenant/assignment/expiry; concurrency/replay; browser happy/deny/recovery; native device nếu applicable; cross-module regression; CI SHA/report/skips/artifact provenance.",
     "definition_of_ready": "Owner duyệt mapping/decisions, API/event/state/data owner và fixtures; không BLOCKING trong slice; positive/deny/concurrency/recovery đã thiết kế; canonical docs/codex/definition-of-ready.md.",
     "definition_of_done": "BE+HTTP+DB+FE thật, PostgreSQL invariants/guards và browser/native evidence phù hợp, source+PR CI pass; BC/test/evidence cập nhật; Owner merge/acceptance riêng.",
     "implementation_order": 3,
     "decision_owner": "Project Owner + Tech Lead; Security cho IAM/privacy; Finance cho money; Operations cho custody.",
-    "folder": "specs/planning/v3/L003-sender-merchant-onboarding"
+    "folder": "specs/003-sender-merchant-onboarding"
   },
   {
     "id": "L004",
@@ -148,27 +140,29 @@
     "domain_owner": "merchant",
     "wave": "F1",
     "hard_dependencies": [
-      "L001"
+      "L001",
+      "L003"
     ],
     "purpose": "Địa chỉ/điểm lấy và catalog public",
-    "backend_scope": "Catalog phiên bản, địa chỉ/coverage/điểm phục vụ; routing adapter theo contract",
+    "backend_scope": "Catalog phiên bản, địa chỉ/coverage/điểm phục vụ; routing adapter theo contract; one Merchant pickup command validates versioned Address/Coverage; no L003 duplicate",
     "frontend_scope": "Public coverage/Station/Hub, Sender address book, Merchant pickup",
-    "database_scope": "Catalog/address/pickup version/archive; orders giữ snapshot",
+    "database_scope": "merchant owns address/catalog/coverage AND sole pickup-point commands for Owner/Operator/Manager; dispatch owns Station master; orders owns snapshots",
     "workflow": "Validate→xác nhận tọa độ→lưu/reload; timeout/mơ hồ chưa confirmed",
     "blockers": "D-V3-03; DEC-05; DEC-06",
-    "approval_status": "PROPOSED",
-    "readiness": "BLOCKED",
+    "approval_status": "CANONICAL_DOCUMENTATION_OWNER_AUTHORIZED",
+    "readiness": "BLOCKED_FOR_IMPLEMENTATION",
     "capability_ids": [
       "BC-001",
       "BC-005",
+      "BC-009",
       "BC-010",
+      "BC-021",
       "BC-022",
       "BC-033",
       "BC-136",
       "BC-137",
       "BC-168",
-      "BC-271",
-      "BC-305"
+      "BC-271"
     ],
     "role_ids": [
       "R01",
@@ -181,7 +175,7 @@
     ],
     "excluded_scope": "Không cấp quyền từ role label; không ghi dữ liệu owner khác;5 DEFER chỉ denial. CORE wave sau vẫn trong target.",
     "soft_dependencies": [
-      "L003"
+      "L011"
     ],
     "invariants": "Validate→xác nhận tọa độ→lưu/reload; timeout/mơ hồ chưa confirmed; giữ BR-01–21 theo applicability; xem business-baseline.md.",
     "contract_scope": "Catalog phiên bản, địa chỉ/coverage/điểm phục vụ; routing adapter theo contract; exact API/event/DTO/permission/schema DECISION_REQUIRED trước code; contracts/ là nguồn duy nhất.",
@@ -194,7 +188,7 @@
     "definition_of_done": "BE+HTTP+DB+FE thật, PostgreSQL invariants/guards và browser/native evidence phù hợp, source+PR CI pass; BC/test/evidence cập nhật; Owner merge/acceptance riêng.",
     "implementation_order": 4,
     "decision_owner": "Project Owner + Tech Lead; Security cho IAM/privacy; Finance cho money; Operations cho custody.",
-    "folder": "specs/planning/v3/L004-address-coverage-service-catalog"
+    "folder": "specs/004-address-coverage-service-catalog"
   },
   {
     "id": "L005",
@@ -205,13 +199,13 @@
       "L004"
     ],
     "purpose": "Báo giá theo khách gửi/hợp đồng/thời điểm",
-    "backend_scope": "Rate/effective interval/rounding/phụ phí/Sales proposal/approval",
+    "backend_scope": "Rate/effective interval/rounding/phụ phí/Sales proposal/approval; authoritative Merchant contract versions/renewal decisions, Sales scoped proposal",
     "frontend_scope": "Public/Sender/Merchant quote; Pricing publish; Sales chỉ đề xuất",
-    "database_scope": "Pricing giữ quote/rate; orders snapshot; finance adjustment",
+    "database_scope": "Pricing giữ quote/rate; orders snapshot; finance adjustment; authoritative Merchant contract versions/renewals in pricing, no onboarding copy",
     "workflow": "Draft→duyệt/publish→quote→expiry/requote; không lộ giá tenant khác",
     "blockers": "DEC-07; DEC-08; D-V3-04",
-    "approval_status": "PROPOSED",
-    "readiness": "BLOCKED",
+    "approval_status": "CANONICAL_DOCUMENTATION_OWNER_AUTHORIZED",
+    "readiness": "BLOCKED_FOR_IMPLEMENTATION",
     "capability_ids": [
       "BC-002",
       "BC-019",
@@ -231,6 +225,7 @@
       "BC-325",
       "BC-326",
       "BC-328",
+      "BC-331",
       "BC-332",
       "BC-336"
     ],
@@ -258,7 +253,7 @@
     "definition_of_done": "BE+HTTP+DB+FE thật, PostgreSQL invariants/guards và browser/native evidence phù hợp, source+PR CI pass; BC/test/evidence cập nhật; Owner merge/acceptance riêng.",
     "implementation_order": 5,
     "decision_owner": "Project Owner + Tech Lead; Security cho IAM/privacy; Finance cho money; Operations cho custody.",
-    "folder": "specs/planning/v3/L005-pricing-contracts-quotation"
+    "folder": "specs/005-pricing-contracts-quotation"
   },
   {
     "id": "L006",
@@ -276,8 +271,8 @@
     "database_scope": "Orders giữ Shipment/Parcel/snapshot/tracking/attempt/POD",
     "workflow": "Draft→kiểm điều kiện confirm; reject illegal transition/hold/foreign object",
     "blockers": "D-V3-04; DEC-09; DEC-10",
-    "approval_status": "PROPOSED",
-    "readiness": "BLOCKED",
+    "approval_status": "CANONICAL_DOCUMENTATION_OWNER_AUTHORIZED",
+    "readiness": "BLOCKED_FOR_IMPLEMENTATION",
     "capability_ids": [
       "BC-034"
     ],
@@ -297,7 +292,7 @@
     "definition_of_done": "BE+HTTP+DB+FE thật, PostgreSQL invariants/guards và browser/native evidence phù hợp, source+PR CI pass; BC/test/evidence cập nhật; Owner merge/acceptance riêng.",
     "implementation_order": 6,
     "decision_owner": "Project Owner + Tech Lead; Security cho IAM/privacy; Finance cho money; Operations cho custody.",
-    "folder": "specs/planning/v3/L006-order-shipment-parcel-contract"
+    "folder": "specs/006-order-shipment-parcel-contract"
   },
   {
     "id": "L007",
@@ -315,8 +310,8 @@
     "database_scope": "Booking ở orders, money ở finance; không body balance",
     "workflow": "Confirm→một charge/hold/snapshot; thiếu tiền/tồn rollback; timeout tra cứu cùng key",
     "blockers": "D-V3-04; DEC-09; DEC-10; DEC-11; DEC-12",
-    "approval_status": "PROPOSED",
-    "readiness": "BLOCKED",
+    "approval_status": "CANONICAL_DOCUMENTATION_OWNER_AUTHORIZED",
+    "readiness": "BLOCKED_FOR_IMPLEMENTATION",
     "capability_ids": [
       "BC-006",
       "BC-011",
@@ -351,9 +346,9 @@
     "test_evidence": "Unit guard/state; ArchUnit boundaries; contract conformance; PostgreSQL empty/upgrade/permissions/constraints/rollback; HTTP/filter-chain tenant/assignment/expiry; concurrency/replay; browser happy/deny/recovery; native device nếu applicable; cross-module regression; CI SHA/report/skips/artifact provenance.",
     "definition_of_ready": "Owner duyệt mapping/decisions, API/event/state/data owner và fixtures; không BLOCKING trong slice; positive/deny/concurrency/recovery đã thiết kế; canonical docs/codex/definition-of-ready.md.",
     "definition_of_done": "BE+HTTP+DB+FE thật, PostgreSQL invariants/guards và browser/native evidence phù hợp, source+PR CI pass; BC/test/evidence cập nhật; Owner merge/acceptance riêng.",
-    "implementation_order": 12,
+    "implementation_order": 8,
     "decision_owner": "Project Owner + Tech Lead; Security cho IAM/privacy; Finance cho money; Operations cho custody.",
-    "folder": "specs/planning/v3/L007-shipment-booking-sender-payments"
+    "folder": "specs/007-shipment-booking-sender-payments"
   },
   {
     "id": "L008",
@@ -370,8 +365,8 @@
     "database_scope": "Stock/movement/reservation ở warehouse; Parcel identity ở orders",
     "workflow": "Reserve→pick/pack/count→label→handover; không giả Courier pickup",
     "blockers": "D-V3-05; DEC-13",
-    "approval_status": "PROPOSED",
-    "readiness": "BLOCKED",
+    "approval_status": "CANONICAL_DOCUMENTATION_OWNER_AUTHORIZED",
+    "readiness": "BLOCKED_FOR_IMPLEMENTATION",
     "capability_ids": [
       "BC-026",
       "BC-064",
@@ -410,9 +405,9 @@
     "test_evidence": "Unit guard/state; ArchUnit boundaries; contract conformance; PostgreSQL empty/upgrade/permissions/constraints/rollback; HTTP/filter-chain tenant/assignment/expiry; concurrency/replay; browser happy/deny/recovery; native device nếu applicable; cross-module regression; CI SHA/report/skips/artifact provenance.",
     "definition_of_ready": "Owner duyệt mapping/decisions, API/event/state/data owner và fixtures; không BLOCKING trong slice; positive/deny/concurrency/recovery đã thiết kế; canonical docs/codex/definition-of-ready.md.",
     "definition_of_done": "BE+HTTP+DB+FE thật, PostgreSQL invariants/guards và browser/native evidence phù hợp, source+PR CI pass; BC/test/evidence cập nhật; Owner merge/acceptance riêng.",
-    "implementation_order": 13,
+    "implementation_order": 9,
     "decision_owner": "Project Owner + Tech Lead; Security cho IAM/privacy; Finance cho money; Operations cho custody.",
-    "folder": "specs/planning/v3/L008-parcel-label-merchant-fulfillment"
+    "folder": "specs/008-parcel-label-merchant-fulfillment"
   },
   {
     "id": "L009",
@@ -428,8 +423,8 @@
     "database_scope": "Orders event nguồn; projection không ghi lại state",
     "workflow": "Source commit→timeline; đoán code/UUID không lộ PII; late/duplicate không sửa lịch sử",
     "blockers": "D-V3-06; DEC-20",
-    "approval_status": "PROPOSED",
-    "readiness": "BLOCKED",
+    "approval_status": "CANONICAL_DOCUMENTATION_OWNER_AUTHORIZED",
+    "readiness": "BLOCKED_FOR_IMPLEMENTATION",
     "capability_ids": [
       "BC-003",
       "BC-013",
@@ -477,9 +472,9 @@
     "test_evidence": "Unit guard/state; ArchUnit boundaries; contract conformance; PostgreSQL empty/upgrade/permissions/constraints/rollback; HTTP/filter-chain tenant/assignment/expiry; concurrency/replay; browser happy/deny/recovery; native device nếu applicable; cross-module regression; CI SHA/report/skips/artifact provenance.",
     "definition_of_ready": "Owner duyệt mapping/decisions, API/event/state/data owner và fixtures; không BLOCKING trong slice; positive/deny/concurrency/recovery đã thiết kế; canonical docs/codex/definition-of-ready.md.",
     "definition_of_done": "BE+HTTP+DB+FE thật, PostgreSQL invariants/guards và browser/native evidence phù hợp, source+PR CI pass; BC/test/evidence cập nhật; Owner merge/acceptance riêng.",
-    "implementation_order": 7,
+    "implementation_order": 10,
     "decision_owner": "Project Owner + Tech Lead; Security cho IAM/privacy; Finance cho money; Operations cho custody.",
-    "folder": "specs/planning/v3/L009-tracking-event-core-public-lookup"
+    "folder": "specs/009-tracking-event-core-public-lookup"
   },
   {
     "id": "L010",
@@ -497,8 +492,8 @@
     "database_scope": "Dispatch assignment/custody; orders state; workflow cùng DB khi cần",
     "workflow": "Assign→scan/count→nhận→handover; stale/reassign/double scan deny",
     "blockers": "DEC-14; D-V3-05",
-    "approval_status": "PROPOSED",
-    "readiness": "BLOCKED",
+    "approval_status": "CANONICAL_DOCUMENTATION_OWNER_AUTHORIZED",
+    "readiness": "BLOCKED_FOR_IMPLEMENTATION",
     "capability_ids": [
       "BC-037",
       "BC-047",
@@ -535,9 +530,9 @@
     "test_evidence": "Unit guard/state; ArchUnit boundaries; contract conformance; PostgreSQL empty/upgrade/permissions/constraints/rollback; HTTP/filter-chain tenant/assignment/expiry; concurrency/replay; browser happy/deny/recovery; native device nếu applicable; cross-module regression; CI SHA/report/skips/artifact provenance.",
     "definition_of_ready": "Owner duyệt mapping/decisions, API/event/state/data owner và fixtures; không BLOCKING trong slice; positive/deny/concurrency/recovery đã thiết kế; canonical docs/codex/definition-of-ready.md.",
     "definition_of_done": "BE+HTTP+DB+FE thật, PostgreSQL invariants/guards và browser/native evidence phù hợp, source+PR CI pass; BC/test/evidence cập nhật; Owner merge/acceptance riêng.",
-    "implementation_order": 14,
+    "implementation_order": 11,
     "decision_owner": "Project Owner + Tech Lead; Security cho IAM/privacy; Finance cho money; Operations cho custody.",
-    "folder": "specs/planning/v3/L010-pickup-dispatch-execution"
+    "folder": "specs/010-pickup-dispatch-execution"
   },
   {
     "id": "L011",
@@ -552,13 +547,13 @@
       "L018"
     ],
     "purpose": "Station intake và staffed walk-in",
-    "backend_scope": "Station custody/manifest/tồn kiện; counter booking/receipt/fee qua workflow",
+    "backend_scope": "Station custody/manifest/tồn kiện; counter booking/receipt/fee qua workflow; Station master và staff/shift ownership dispatch; Identity chỉ credential/security; minimum authority contract trước staff use",
     "frontend_scope": "Station intake/counter/variance; Manager tồn/ca; receipt cho khách",
-    "database_scope": "Dispatch custody, orders shipment, finance receipt; không SKU balance thay custody",
+    "database_scope": "Dispatch custody, orders shipment, finance receipt; không SKU balance thay custody; Dispatch Station master/staff/shift owner, Identity security only",
     "workflow": "Staff verify→kiểm kiện→quote/pay/receipt→intake; lệch manifest mở exception",
     "blockers": "D-V3-05; D-V3-04; DEC-14",
-    "approval_status": "PROPOSED",
-    "readiness": "BLOCKED",
+    "approval_status": "CANONICAL_DOCUMENTATION_OWNER_AUTHORIZED",
+    "readiness": "BLOCKED_FOR_IMPLEMENTATION",
     "capability_ids": [
       "BC-055",
       "BC-059",
@@ -575,11 +570,14 @@
       "BC-219",
       "BC-220",
       "BC-228",
+      "BC-230",
       "BC-232",
       "BC-250",
-      "BC-251"
+      "BC-251",
+      "BC-305"
     ],
     "role_ids": [
+      "R04",
       "R06",
       "R07",
       "R08",
@@ -598,9 +596,9 @@
     "test_evidence": "Unit guard/state; ArchUnit boundaries; contract conformance; PostgreSQL empty/upgrade/permissions/constraints/rollback; HTTP/filter-chain tenant/assignment/expiry; concurrency/replay; browser happy/deny/recovery; native device nếu applicable; cross-module regression; CI SHA/report/skips/artifact provenance.",
     "definition_of_ready": "Owner duyệt mapping/decisions, API/event/state/data owner và fixtures; không BLOCKING trong slice; positive/deny/concurrency/recovery đã thiết kế; canonical docs/codex/definition-of-ready.md.",
     "definition_of_done": "BE+HTTP+DB+FE thật, PostgreSQL invariants/guards và browser/native evidence phù hợp, source+PR CI pass; BC/test/evidence cập nhật; Owner merge/acceptance riêng.",
-    "implementation_order": 15,
+    "implementation_order": 12,
     "decision_owner": "Project Owner + Tech Lead; Security cho IAM/privacy; Finance cho money; Operations cho custody.",
-    "folder": "specs/planning/v3/L011-station-intake-walkin-custody"
+    "folder": "specs/011-station-intake-walkin-custody"
   },
   {
     "id": "L012",
@@ -616,8 +614,8 @@
     "database_scope": "Dispatch manifest/custody/handling units; orders Parcel tham chiếu",
     "workflow": "Scan→sort/bag→đối chiếu; trùng/sai tuyến/hỏng giữ evidence/escalation",
     "blockers": "D-V3-05; DEC-14",
-    "approval_status": "PROPOSED",
-    "readiness": "BLOCKED",
+    "approval_status": "CANONICAL_DOCUMENTATION_OWNER_AUTHORIZED",
+    "readiness": "BLOCKED_FOR_IMPLEMENTATION",
     "capability_ids": [
       "BC-254",
       "BC-255",
@@ -646,9 +644,9 @@
     "test_evidence": "Unit guard/state; ArchUnit boundaries; contract conformance; PostgreSQL empty/upgrade/permissions/constraints/rollback; HTTP/filter-chain tenant/assignment/expiry; concurrency/replay; browser happy/deny/recovery; native device nếu applicable; cross-module regression; CI SHA/report/skips/artifact provenance.",
     "definition_of_ready": "Owner duyệt mapping/decisions, API/event/state/data owner và fixtures; không BLOCKING trong slice; positive/deny/concurrency/recovery đã thiết kế; canonical docs/codex/definition-of-ready.md.",
     "definition_of_done": "BE+HTTP+DB+FE thật, PostgreSQL invariants/guards và browser/native evidence phù hợp, source+PR CI pass; BC/test/evidence cập nhật; Owner merge/acceptance riêng.",
-    "implementation_order": 16,
+    "implementation_order": 13,
     "decision_owner": "Project Owner + Tech Lead; Security cho IAM/privacy; Finance cho money; Operations cho custody.",
-    "folder": "specs/planning/v3/L012-sorting-hub-manifests"
+    "folder": "specs/012-sorting-hub-manifests"
   },
   {
     "id": "L013",
@@ -665,8 +663,8 @@
     "database_scope": "Dispatch trip/manifest/custody; routing chỉ đề xuất",
     "workflow": "Nhận trip→scan/seal→departure→delay/arrival→đích kiểm đếm; không fake DELIVERED",
     "blockers": "D-V3-05; DEC-14",
-    "approval_status": "PROPOSED",
-    "readiness": "BLOCKED",
+    "approval_status": "CANONICAL_DOCUMENTATION_OWNER_AUTHORIZED",
+    "readiness": "BLOCKED_FOR_IMPLEMENTATION",
     "capability_ids": [
       "BC-070",
       "BC-221",
@@ -705,9 +703,9 @@
     "test_evidence": "Unit guard/state; ArchUnit boundaries; contract conformance; PostgreSQL empty/upgrade/permissions/constraints/rollback; HTTP/filter-chain tenant/assignment/expiry; concurrency/replay; browser happy/deny/recovery; native device nếu applicable; cross-module regression; CI SHA/report/skips/artifact provenance.",
     "definition_of_ready": "Owner duyệt mapping/decisions, API/event/state/data owner và fixtures; không BLOCKING trong slice; positive/deny/concurrency/recovery đã thiết kế; canonical docs/codex/definition-of-ready.md.",
     "definition_of_done": "BE+HTTP+DB+FE thật, PostgreSQL invariants/guards và browser/native evidence phù hợp, source+PR CI pass; BC/test/evidence cập nhật; Owner merge/acceptance riêng.",
-    "implementation_order": 17,
+    "implementation_order": 14,
     "decision_owner": "Project Owner + Tech Lead; Security cho IAM/privacy; Finance cho money; Operations cho custody.",
-    "folder": "specs/planning/v3/L013-linehaul-trip-hub-transfer"
+    "folder": "specs/013-linehaul-trip-hub-transfer"
   },
   {
     "id": "L014",
@@ -724,8 +722,8 @@
     "database_scope": "Dispatch assignment duy nhất; routing route version riêng",
     "workflow": "Kiện đích hợp lệ→assign/load→route; race/revoked không tạo hai active",
     "blockers": "DEC-14; DEC-17; DEC-18",
-    "approval_status": "PROPOSED",
-    "readiness": "BLOCKED",
+    "approval_status": "CANONICAL_DOCUMENTATION_OWNER_AUTHORIZED",
+    "readiness": "BLOCKED_FOR_IMPLEMENTATION",
     "capability_ids": [
       "BC-048",
       "BC-050",
@@ -769,9 +767,9 @@
     "test_evidence": "Unit guard/state; ArchUnit boundaries; contract conformance; PostgreSQL empty/upgrade/permissions/constraints/rollback; HTTP/filter-chain tenant/assignment/expiry; concurrency/replay; browser happy/deny/recovery; native device nếu applicable; cross-module regression; CI SHA/report/skips/artifact provenance.",
     "definition_of_ready": "Owner duyệt mapping/decisions, API/event/state/data owner và fixtures; không BLOCKING trong slice; positive/deny/concurrency/recovery đã thiết kế; canonical docs/codex/definition-of-ready.md.",
     "definition_of_done": "BE+HTTP+DB+FE thật, PostgreSQL invariants/guards và browser/native evidence phù hợp, source+PR CI pass; BC/test/evidence cập nhật; Owner merge/acceptance riêng.",
-    "implementation_order": 18,
+    "implementation_order": 15,
     "decision_owner": "Project Owner + Tech Lead; Security cho IAM/privacy; Finance cho money; Operations cho custody.",
-    "folder": "specs/planning/v3/L014-delivery-dispatch-and-route"
+    "folder": "specs/014-delivery-dispatch-and-route"
   },
   {
     "id": "L015",
@@ -789,8 +787,8 @@
     "database_scope": "Orders attempt/POD metadata; finance collection; storage chưa chọn",
     "workflow": "OFD→POD hoặc failed reason; COD theo giá trị chốt; orphan upload có cleanup",
     "blockers": "DEC-15; DEC-16; D-V3-04",
-    "approval_status": "PROPOSED",
-    "readiness": "BLOCKED",
+    "approval_status": "CANONICAL_DOCUMENTATION_OWNER_AUTHORIZED",
+    "readiness": "BLOCKED_FOR_IMPLEMENTATION",
     "capability_ids": [
       "BC-073",
       "BC-074",
@@ -817,9 +815,9 @@
     "test_evidence": "Unit guard/state; ArchUnit boundaries; contract conformance; PostgreSQL empty/upgrade/permissions/constraints/rollback; HTTP/filter-chain tenant/assignment/expiry; concurrency/replay; browser happy/deny/recovery; native device nếu applicable; cross-module regression; CI SHA/report/skips/artifact provenance.",
     "definition_of_ready": "Owner duyệt mapping/decisions, API/event/state/data owner và fixtures; không BLOCKING trong slice; positive/deny/concurrency/recovery đã thiết kế; canonical docs/codex/definition-of-ready.md.",
     "definition_of_done": "BE+HTTP+DB+FE thật, PostgreSQL invariants/guards và browser/native evidence phù hợp, source+PR CI pass; BC/test/evidence cập nhật; Owner merge/acceptance riêng.",
-    "implementation_order": 26,
+    "implementation_order": 17,
     "decision_owner": "Project Owner + Tech Lead; Security cho IAM/privacy; Finance cho money; Operations cho custody.",
-    "folder": "specs/planning/v3/L015-lastmile-attempt-pod"
+    "folder": "specs/015-lastmile-attempt-pod"
   },
   {
     "id": "L016",
@@ -836,8 +834,8 @@
     "database_scope": "Return refs ở orders, custody ở dispatch, return movement ở warehouse",
     "workflow": "Failed→retry hoặc approved return→returning→handed back; không cancel sau pickup",
     "blockers": "DEC-09; DEC-16; D-V3-05",
-    "approval_status": "PROPOSED",
-    "readiness": "BLOCKED",
+    "approval_status": "CANONICAL_DOCUMENTATION_OWNER_AUTHORIZED",
+    "readiness": "BLOCKED_FOR_IMPLEMENTATION",
     "capability_ids": [
       "BC-052",
       "BC-067",
@@ -867,9 +865,9 @@
     "test_evidence": "Unit guard/state; ArchUnit boundaries; contract conformance; PostgreSQL empty/upgrade/permissions/constraints/rollback; HTTP/filter-chain tenant/assignment/expiry; concurrency/replay; browser happy/deny/recovery; native device nếu applicable; cross-module regression; CI SHA/report/skips/artifact provenance.",
     "definition_of_ready": "Owner duyệt mapping/decisions, API/event/state/data owner và fixtures; không BLOCKING trong slice; positive/deny/concurrency/recovery đã thiết kế; canonical docs/codex/definition-of-ready.md.",
     "definition_of_done": "BE+HTTP+DB+FE thật, PostgreSQL invariants/guards và browser/native evidence phù hợp, source+PR CI pass; BC/test/evidence cập nhật; Owner merge/acceptance riêng.",
-    "implementation_order": 27,
+    "implementation_order": 18,
     "decision_owner": "Project Owner + Tech Lead; Security cho IAM/privacy; Finance cho money; Operations cho custody.",
-    "folder": "specs/planning/v3/L016-returns-reverse-logistics"
+    "folder": "specs/016-returns-reverse-logistics"
   },
   {
     "id": "L017",
@@ -886,8 +884,8 @@
     "database_scope": "Finance liability/receipt/allocation/ledger",
     "workflow": "Collected→submitted→Cashier kiểm nhận; shortage giữ nghĩa vụ; courier không tự confirm",
     "blockers": "DEC-19; D-V3-04",
-    "approval_status": "PROPOSED",
-    "readiness": "BLOCKED",
+    "approval_status": "CANONICAL_DOCUMENTATION_OWNER_AUTHORIZED",
+    "readiness": "BLOCKED_FOR_IMPLEMENTATION",
     "capability_ids": [
       "BC-014",
       "BC-028",
@@ -949,9 +947,9 @@
     "test_evidence": "Unit guard/state; ArchUnit boundaries; contract conformance; PostgreSQL empty/upgrade/permissions/constraints/rollback; HTTP/filter-chain tenant/assignment/expiry; concurrency/replay; browser happy/deny/recovery; native device nếu applicable; cross-module regression; CI SHA/report/skips/artifact provenance.",
     "definition_of_ready": "Owner duyệt mapping/decisions, API/event/state/data owner và fixtures; không BLOCKING trong slice; positive/deny/concurrency/recovery đã thiết kế; canonical docs/codex/definition-of-ready.md.",
     "definition_of_done": "BE+HTTP+DB+FE thật, PostgreSQL invariants/guards và browser/native evidence phù hợp, source+PR CI pass; BC/test/evidence cập nhật; Owner merge/acceptance riêng.",
-    "implementation_order": 19,
+    "implementation_order": 16,
     "decision_owner": "Project Owner + Tech Lead; Security cho IAM/privacy; Finance cho money; Operations cho custody.",
-    "folder": "specs/planning/v3/L017-cod-collection-cashier-remittance"
+    "folder": "specs/017-cod-collection-cashier-remittance"
   },
   {
     "id": "L018",
@@ -968,8 +966,8 @@
     "database_scope": "Finance wallet/payment/ledger append-only; tổng Nợ=Có, balance không âm",
     "workflow": "Verified charge→balanced posting; duplicate callback/refund không thêm tiền; correction bằng entry mới",
     "blockers": "DEC-11; DEC-12; D-V3-04",
-    "approval_status": "PROPOSED",
-    "readiness": "BLOCKED",
+    "approval_status": "CANONICAL_DOCUMENTATION_OWNER_AUTHORIZED",
+    "readiness": "BLOCKED_FOR_IMPLEMENTATION",
     "capability_ids": [
       "BC-088",
       "BC-101",
@@ -1010,9 +1008,9 @@
     "test_evidence": "Unit guard/state; ArchUnit boundaries; contract conformance; PostgreSQL empty/upgrade/permissions/constraints/rollback; HTTP/filter-chain tenant/assignment/expiry; concurrency/replay; browser happy/deny/recovery; native device nếu applicable; cross-module regression; CI SHA/report/skips/artifact provenance.",
     "definition_of_ready": "Owner duyệt mapping/decisions, API/event/state/data owner và fixtures; không BLOCKING trong slice; positive/deny/concurrency/recovery đã thiết kế; canonical docs/codex/definition-of-ready.md.",
     "definition_of_done": "BE+HTTP+DB+FE thật, PostgreSQL invariants/guards và browser/native evidence phù hợp, source+PR CI pass; BC/test/evidence cập nhật; Owner merge/acceptance riêng.",
-    "implementation_order": 8,
+    "implementation_order": 7,
     "decision_owner": "Project Owner + Tech Lead; Security cho IAM/privacy; Finance cho money; Operations cho custody.",
-    "folder": "specs/planning/v3/L018-billing-ledger-fees-invoices"
+    "folder": "specs/018-billing-ledger-fees-invoices"
   },
   {
     "id": "L019",
@@ -1029,8 +1027,8 @@
     "database_scope": "Closed snapshot bất biến; payout/adjustment mới tham chiếu gốc",
     "workflow": "Delivered+collected+confirmed remitted→reconcile→simulated payout; late data kỳ sau",
     "blockers": "DEC-19; D-V3-04",
-    "approval_status": "PROPOSED",
-    "readiness": "BLOCKED",
+    "approval_status": "CANONICAL_DOCUMENTATION_OWNER_AUTHORIZED",
+    "readiness": "BLOCKED_FOR_IMPLEMENTATION",
     "capability_ids": [
       "BC-015",
       "BC-087",
@@ -1058,9 +1056,9 @@
     "test_evidence": "Unit guard/state; ArchUnit boundaries; contract conformance; PostgreSQL empty/upgrade/permissions/constraints/rollback; HTTP/filter-chain tenant/assignment/expiry; concurrency/replay; browser happy/deny/recovery; native device nếu applicable; cross-module regression; CI SHA/report/skips/artifact provenance.",
     "definition_of_ready": "Owner duyệt mapping/decisions, API/event/state/data owner và fixtures; không BLOCKING trong slice; positive/deny/concurrency/recovery đã thiết kế; canonical docs/codex/definition-of-ready.md.",
     "definition_of_done": "BE+HTTP+DB+FE thật, PostgreSQL invariants/guards và browser/native evidence phù hợp, source+PR CI pass; BC/test/evidence cập nhật; Owner merge/acceptance riêng.",
-    "implementation_order": 20,
+    "implementation_order": 19,
     "decision_owner": "Project Owner + Tech Lead; Security cho IAM/privacy; Finance cho money; Operations cho custody.",
-    "folder": "specs/planning/v3/L019-cod-reconciliation-merchant-settlement"
+    "folder": "specs/019-cod-reconciliation-merchant-settlement"
   },
   {
     "id": "L020",
@@ -1071,13 +1069,13 @@
       "L002"
     ],
     "purpose": "Ticket có nguồn/scope/SLA",
-    "backend_scope": "Public contact core F1; Sender direct/Merchant Support handoff; approved source-domain command",
-    "frontend_scope": "Public contact/Sender support/Merchant inbox/Logistics CS queue",
+    "backend_scope": "Public contact core F1; Sender direct/Merchant Support handoff; approved source-domain command; Merchant-owned assigned-customer relationship/interactions qua merchant API, không account/password master",
+    "frontend_scope": "Public contact/Sender support/Merchant inbox/Logistics CS queue; Sales assigned-customer relationship/interactions only via merchant owner API",
     "database_scope": "Ticket đề xuất dưới orders, không sửa Finance/Dispatch; D-V3-05",
     "workflow": "Tiếp nhận→verify→phân công→phối hợp/escalate→phản hồi; không sửa POD/COD",
     "blockers": "D-V3-05; D-V3-06; DEC-20",
-    "approval_status": "PROPOSED",
-    "readiness": "BLOCKED",
+    "approval_status": "CANONICAL_DOCUMENTATION_OWNER_AUTHORIZED",
+    "readiness": "BLOCKED_FOR_IMPLEMENTATION",
     "capability_ids": [
       "BC-004",
       "BC-016",
@@ -1106,6 +1104,8 @@
       "BC-294",
       "BC-296",
       "BC-307",
+      "BC-329",
+      "BC-330",
       "BC-334"
     ],
     "role_ids": [
@@ -1137,9 +1137,9 @@
     "test_evidence": "Unit guard/state; ArchUnit boundaries; contract conformance; PostgreSQL empty/upgrade/permissions/constraints/rollback; HTTP/filter-chain tenant/assignment/expiry; concurrency/replay; browser happy/deny/recovery; native device nếu applicable; cross-module regression; CI SHA/report/skips/artifact provenance.",
     "definition_of_ready": "Owner duyệt mapping/decisions, API/event/state/data owner và fixtures; không BLOCKING trong slice; positive/deny/concurrency/recovery đã thiết kế; canonical docs/codex/definition-of-ready.md.",
     "definition_of_done": "BE+HTTP+DB+FE thật, PostgreSQL invariants/guards và browser/native evidence phù hợp, source+PR CI pass; BC/test/evidence cập nhật; Owner merge/acceptance riêng.",
-    "implementation_order": 9,
+    "implementation_order": 20,
     "decision_owner": "Project Owner + Tech Lead; Security cho IAM/privacy; Finance cho money; Operations cho custody.",
-    "folder": "specs/planning/v3/L020-customer-support-tickets-sla"
+    "folder": "specs/020-customer-support-tickets-sla"
   },
   {
     "id": "L021",
@@ -1157,8 +1157,8 @@
     "database_scope": "Orders claim decision/evidence; finance payment refs/private evidence",
     "workflow": "Ticket→claim→evidence→đề xuất→người khác duyệt→Finance pay; chống self-approval/trùng",
     "blockers": "D-V3-05; D-V3-07; DEC-15",
-    "approval_status": "PROPOSED",
-    "readiness": "BLOCKED",
+    "approval_status": "CANONICAL_DOCUMENTATION_OWNER_AUTHORIZED",
+    "readiness": "BLOCKED_FOR_IMPLEMENTATION",
     "capability_ids": [
       "BC-112",
       "BC-113",
@@ -1192,9 +1192,9 @@
     "test_evidence": "Unit guard/state; ArchUnit boundaries; contract conformance; PostgreSQL empty/upgrade/permissions/constraints/rollback; HTTP/filter-chain tenant/assignment/expiry; concurrency/replay; browser happy/deny/recovery; native device nếu applicable; cross-module regression; CI SHA/report/skips/artifact provenance.",
     "definition_of_ready": "Owner duyệt mapping/decisions, API/event/state/data owner và fixtures; không BLOCKING trong slice; positive/deny/concurrency/recovery đã thiết kế; canonical docs/codex/definition-of-ready.md.",
     "definition_of_done": "BE+HTTP+DB+FE thật, PostgreSQL invariants/guards và browser/native evidence phù hợp, source+PR CI pass; BC/test/evidence cập nhật; Owner merge/acceptance riêng.",
-    "implementation_order": 28,
+    "implementation_order": 21,
     "decision_owner": "Project Owner + Tech Lead; Security cho IAM/privacy; Finance cho money; Operations cho custody.",
-    "folder": "specs/planning/v3/L021-claims-investigation-compensation"
+    "folder": "specs/021-claims-investigation-compensation"
   },
   {
     "id": "L022",
@@ -1210,13 +1210,13 @@
       "L009"
     ],
     "purpose": "Enterprise API principal và webhook",
-    "backend_scope": "Merchant integration/delivery; Identity credential; gọi owner APIs",
-    "frontend_scope": "Merchant configure/rotate/revoke; IT failed deliveries; machine không human portal",
+    "backend_scope": "Merchant integration/delivery; Identity credential; gọi owner APIs; Sales coordination metadata thuộc merchant; no credential disclosure; status không fake integration",
+    "frontend_scope": "Merchant configure/rotate/revoke; IT failed deliveries; machine không human portal; Sales onboarding/integration coordination no secret access",
     "database_scope": "Config ở merchant, credential ở identity; không duplicate shipment/quote",
     "workflow": "Scoped credential→quote/create/label/tracking→signed webhook/retry; revoke/cross-tenant deny",
     "blockers": "D-V3-02; D-V3-06; D-V3-08",
-    "approval_status": "PROPOSED",
-    "readiness": "BLOCKED",
+    "approval_status": "CANONICAL_DOCUMENTATION_OWNER_AUTHORIZED",
+    "readiness": "BLOCKED_FOR_IMPLEMENTATION",
     "capability_ids": [
       "BC-018",
       "BC-164",
@@ -1228,6 +1228,7 @@
       "BC-204",
       "BC-205",
       "BC-206",
+      "BC-335",
       "BC-357",
       "BC-358",
       "BC-360"
@@ -1236,6 +1237,7 @@
       "R02",
       "R03",
       "R22",
+      "R29",
       "R32"
     ],
     "excluded_scope": "Không cấp quyền từ role label; không ghi dữ liệu owner khác;5 DEFER chỉ denial. CORE wave sau vẫn trong target.",
@@ -1249,9 +1251,9 @@
     "test_evidence": "Unit guard/state; ArchUnit boundaries; contract conformance; PostgreSQL empty/upgrade/permissions/constraints/rollback; HTTP/filter-chain tenant/assignment/expiry; concurrency/replay; browser happy/deny/recovery; native device nếu applicable; cross-module regression; CI SHA/report/skips/artifact provenance.",
     "definition_of_ready": "Owner duyệt mapping/decisions, API/event/state/data owner và fixtures; không BLOCKING trong slice; positive/deny/concurrency/recovery đã thiết kế; canonical docs/codex/definition-of-ready.md.",
     "definition_of_done": "BE+HTTP+DB+FE thật, PostgreSQL invariants/guards và browser/native evidence phù hợp, source+PR CI pass; BC/test/evidence cập nhật; Owner merge/acceptance riêng.",
-    "implementation_order": 21,
+    "implementation_order": 22,
     "decision_owner": "Project Owner + Tech Lead; Security cho IAM/privacy; Finance cho money; Operations cho custody.",
-    "folder": "specs/planning/v3/L022-enterprise-api-webhooks"
+    "folder": "specs/022-enterprise-api-webhooks"
   },
   {
     "id": "L023",
@@ -1267,8 +1269,8 @@
     "database_scope": "Orders import job/row refs; private temp file retention",
     "workflow": "Mixed valid/invalid→preview→commit theo policy→sửa/retry; không auto-confirm/charge",
     "blockers": "DEC-22",
-    "approval_status": "PROPOSED",
-    "readiness": "BLOCKED",
+    "approval_status": "CANONICAL_DOCUMENTATION_OWNER_AUTHORIZED",
+    "readiness": "BLOCKED_FOR_IMPLEMENTATION",
     "capability_ids": [
       "BC-029",
       "BC-174"
@@ -1287,9 +1289,9 @@
     "test_evidence": "Unit guard/state; ArchUnit boundaries; contract conformance; PostgreSQL empty/upgrade/permissions/constraints/rollback; HTTP/filter-chain tenant/assignment/expiry; concurrency/replay; browser happy/deny/recovery; native device nếu applicable; cross-module regression; CI SHA/report/skips/artifact provenance.",
     "definition_of_ready": "Owner duyệt mapping/decisions, API/event/state/data owner và fixtures; không BLOCKING trong slice; positive/deny/concurrency/recovery đã thiết kế; canonical docs/codex/definition-of-ready.md.",
     "definition_of_done": "BE+HTTP+DB+FE thật, PostgreSQL invariants/guards và browser/native evidence phù hợp, source+PR CI pass; BC/test/evidence cập nhật; Owner merge/acceptance riêng.",
-    "implementation_order": 22,
+    "implementation_order": 23,
     "decision_owner": "Project Owner + Tech Lead; Security cho IAM/privacy; Finance cho money; Operations cho custody.",
-    "folder": "specs/planning/v3/L023-bulk-shipment-import"
+    "folder": "specs/023-bulk-shipment-import"
   },
   {
     "id": "L024",
@@ -1306,8 +1308,8 @@
     "database_scope": "Partner org ở merchant, custody ở dispatch, revenue ở finance",
     "workflow": "Assigned staff→counter/scan/count/handover; foreign Station deny",
     "blockers": "D-V3-02; D-V3-05; D-V3-08",
-    "approval_status": "PROPOSED",
-    "readiness": "BLOCKED",
+    "approval_status": "CANONICAL_DOCUMENTATION_OWNER_AUTHORIZED",
+    "readiness": "BLOCKED_FOR_IMPLEMENTATION",
     "capability_ids": [
       "BC-364",
       "BC-365",
@@ -1332,9 +1334,9 @@
     "test_evidence": "Unit guard/state; ArchUnit boundaries; contract conformance; PostgreSQL empty/upgrade/permissions/constraints/rollback; HTTP/filter-chain tenant/assignment/expiry; concurrency/replay; browser happy/deny/recovery; native device nếu applicable; cross-module regression; CI SHA/report/skips/artifact provenance.",
     "definition_of_ready": "Owner duyệt mapping/decisions, API/event/state/data owner và fixtures; không BLOCKING trong slice; positive/deny/concurrency/recovery đã thiết kế; canonical docs/codex/definition-of-ready.md.",
     "definition_of_done": "BE+HTTP+DB+FE thật, PostgreSQL invariants/guards và browser/native evidence phù hợp, source+PR CI pass; BC/test/evidence cập nhật; Owner merge/acceptance riêng.",
-    "implementation_order": 23,
+    "implementation_order": 24,
     "decision_owner": "Project Owner + Tech Lead; Security cho IAM/privacy; Finance cho money; Operations cho custody.",
-    "folder": "specs/planning/v3/L024-partner-franchise-station-ops"
+    "folder": "specs/024-partner-franchise-station-ops"
   },
   {
     "id": "L025",
@@ -1352,25 +1354,10 @@
     "database_scope": "Routing route/location, dispatch operational truth",
     "workflow": "Propose→verify constraints→approve; timeout/infeasible giữ plan cũ có nhãn",
     "blockers": "DEC-06; DEC-17; DEC-18",
-    "approval_status": "PROPOSED",
-    "readiness": "BLOCKED",
-    "capability_ids": [
-      "BC-061",
-      "BC-209",
-      "BC-215",
-      "BC-229",
-      "BC-246",
-      "BC-268",
-      "BC-275"
-    ],
-    "role_ids": [
-      "R06",
-      "R07",
-      "R09",
-      "R24",
-      "R26",
-      "R27"
-    ],
+    "approval_status": "CANONICAL_DOCUMENTATION_OWNER_AUTHORIZED",
+    "readiness": "BLOCKED_FOR_IMPLEMENTATION",
+    "capability_ids": [],
+    "role_ids": [],
     "excluded_scope": "Không cấp quyền từ role label; không ghi dữ liệu owner khác;5 DEFER chỉ denial. CORE wave sau vẫn trong target.",
     "soft_dependencies": [],
     "invariants": "Propose→verify constraints→approve; timeout/infeasible giữ plan cũ có nhãn; giữ BR-01–21 theo applicability; xem business-baseline.md.",
@@ -1382,9 +1369,9 @@
     "test_evidence": "Unit guard/state; ArchUnit boundaries; contract conformance; PostgreSQL empty/upgrade/permissions/constraints/rollback; HTTP/filter-chain tenant/assignment/expiry; concurrency/replay; browser happy/deny/recovery; native device nếu applicable; cross-module regression; CI SHA/report/skips/artifact provenance.",
     "definition_of_ready": "Owner duyệt mapping/decisions, API/event/state/data owner và fixtures; không BLOCKING trong slice; positive/deny/concurrency/recovery đã thiết kế; canonical docs/codex/definition-of-ready.md.",
     "definition_of_done": "BE+HTTP+DB+FE thật, PostgreSQL invariants/guards và browser/native evidence phù hợp, source+PR CI pass; BC/test/evidence cập nhật; Owner merge/acceptance riêng.",
-    "implementation_order": 24,
+    "implementation_order": 25,
     "decision_owner": "Project Owner + Tech Lead; Security cho IAM/privacy; Finance cho money; Operations cho custody.",
-    "folder": "specs/planning/v3/L025-network-ops-routing-optimization"
+    "folder": "specs/025-network-ops-routing-optimization"
   },
   {
     "id": "L026",
@@ -1401,8 +1388,8 @@
     "database_scope": "Orders hold/case proposal; không sửa source finance/custody/identity",
     "workflow": "Flag→investigate→propose→approve/release; replay/self-approval deny",
     "blockers": "D-V3-05; D-V3-07; D-V3-06",
-    "approval_status": "PROPOSED",
-    "readiness": "BLOCKED",
+    "approval_status": "CANONICAL_DOCUMENTATION_OWNER_AUTHORIZED",
+    "readiness": "BLOCKED_FOR_IMPLEMENTATION",
     "capability_ids": [
       "BC-337",
       "BC-338",
@@ -1433,9 +1420,9 @@
     "test_evidence": "Unit guard/state; ArchUnit boundaries; contract conformance; PostgreSQL empty/upgrade/permissions/constraints/rollback; HTTP/filter-chain tenant/assignment/expiry; concurrency/replay; browser happy/deny/recovery; native device nếu applicable; cross-module regression; CI SHA/report/skips/artifact provenance.",
     "definition_of_ready": "Owner duyệt mapping/decisions, API/event/state/data owner và fixtures; không BLOCKING trong slice; positive/deny/concurrency/recovery đã thiết kế; canonical docs/codex/definition-of-ready.md.",
     "definition_of_done": "BE+HTTP+DB+FE thật, PostgreSQL invariants/guards và browser/native evidence phù hợp, source+PR CI pass; BC/test/evidence cập nhật; Owner merge/acceptance riêng.",
-    "implementation_order": 10,
+    "implementation_order": 26,
     "decision_owner": "Project Owner + Tech Lead; Security cho IAM/privacy; Finance cho money; Operations cho custody.",
-    "folder": "specs/planning/v3/L026-risk-fraud-compliance"
+    "folder": "specs/026-risk-fraud-compliance"
   },
   {
     "id": "L027",
@@ -1452,8 +1439,8 @@
     "database_scope": "Domain giữ audit nguồn; platform không business aggregate chung",
     "workflow": "Authorized change+reason/approval→audit; deny fake POD/COD/delete audit/impersonation",
     "blockers": "D-V3-02; D-V3-06; D-V3-07; DEC-21",
-    "approval_status": "PROPOSED",
-    "readiness": "BLOCKED",
+    "approval_status": "CANONICAL_DOCUMENTATION_OWNER_AUTHORIZED",
+    "readiness": "BLOCKED_FOR_IMPLEMENTATION",
     "capability_ids": [
       "BC-031",
       "BC-036",
@@ -1500,9 +1487,9 @@
     "test_evidence": "Unit guard/state; ArchUnit boundaries; contract conformance; PostgreSQL empty/upgrade/permissions/constraints/rollback; HTTP/filter-chain tenant/assignment/expiry; concurrency/replay; browser happy/deny/recovery; native device nếu applicable; cross-module regression; CI SHA/report/skips/artifact provenance.",
     "definition_of_ready": "Owner duyệt mapping/decisions, API/event/state/data owner và fixtures; không BLOCKING trong slice; positive/deny/concurrency/recovery đã thiết kế; canonical docs/codex/definition-of-ready.md.",
     "definition_of_done": "BE+HTTP+DB+FE thật, PostgreSQL invariants/guards và browser/native evidence phù hợp, source+PR CI pass; BC/test/evidence cập nhật; Owner merge/acceptance riêng.",
-    "implementation_order": 11,
+    "implementation_order": 27,
     "decision_owner": "Project Owner + Tech Lead; Security cho IAM/privacy; Finance cho money; Operations cho custody.",
-    "folder": "specs/planning/v3/L027-platform-admin-audit-governance"
+    "folder": "specs/027-platform-admin-audit-governance"
   },
   {
     "id": "L028",
@@ -1515,23 +1502,30 @@
       "L020"
     ],
     "purpose": "Notifications/KPI/SLA từ committed facts",
-    "backend_scope": "Outbox/inbox/templates/scoped projection/retry/DLQ; minimum notification first use",
+    "backend_scope": "Outbox/inbox/templates/scoped projection/retry/DLQ; minimum notification first use; personal/Merchant/team dashboards và notifications; KPI source facts, declared freshness, no fabricated counts",
     "frontend_scope": "Role dashboards/inbox/SLA freshness/lag/export theo scope",
     "database_scope": "Notification/inbox ở notification; không duplicate source ledger/event",
     "workflow": "Commit→dedup notification→read; late/missing event đối chiếu; không success inflation",
     "blockers": "DEC-20; D-V3-06",
-    "approval_status": "PROPOSED",
-    "readiness": "BLOCKED",
+    "approval_status": "CANONICAL_DOCUMENTATION_OWNER_AUTHORIZED",
+    "readiness": "BLOCKED_FOR_IMPLEMENTATION",
     "capability_ids": [
       "BC-017",
       "BC-035",
       "BC-053",
+      "BC-061",
       "BC-090",
       "BC-122",
       "BC-130",
       "BC-165",
       "BC-172",
       "BC-192",
+      "BC-209",
+      "BC-215",
+      "BC-229",
+      "BC-246",
+      "BC-268",
+      "BC-275",
       "BC-291",
       "BC-333",
       "BC-356",
@@ -1542,11 +1536,16 @@
       "R02",
       "R04",
       "R06",
+      "R07",
+      "R09",
       "R11",
       "R13",
       "R16",
       "R17",
       "R19",
+      "R24",
+      "R26",
+      "R27",
       "R29",
       "R32"
     ],
@@ -1563,9 +1562,9 @@
     "test_evidence": "Unit guard/state; ArchUnit boundaries; contract conformance; PostgreSQL empty/upgrade/permissions/constraints/rollback; HTTP/filter-chain tenant/assignment/expiry; concurrency/replay; browser happy/deny/recovery; native device nếu applicable; cross-module regression; CI SHA/report/skips/artifact provenance.",
     "definition_of_ready": "Owner duyệt mapping/decisions, API/event/state/data owner và fixtures; không BLOCKING trong slice; positive/deny/concurrency/recovery đã thiết kế; canonical docs/codex/definition-of-ready.md.",
     "definition_of_done": "BE+HTTP+DB+FE thật, PostgreSQL invariants/guards và browser/native evidence phù hợp, source+PR CI pass; BC/test/evidence cập nhật; Owner merge/acceptance riêng.",
-    "implementation_order": 25,
+    "implementation_order": 28,
     "decision_owner": "Project Owner + Tech Lead; Security cho IAM/privacy; Finance cho money; Operations cho custody.",
-    "folder": "specs/planning/v3/L028-notifications-analytics-sla"
+    "folder": "specs/028-notifications-analytics-sla"
   },
   {
     "id": "L029",
@@ -1583,8 +1582,8 @@
     "database_scope": "SQLite không authoritative; server ownership theo domain gốc",
     "workflow": "Offline enqueue→kill/restart→reconnect→ACK/conflict; double sync không double POD/COD",
     "blockers": "DEC-02; DEC-23; D-V3-06",
-    "approval_status": "PROPOSED",
-    "readiness": "BLOCKED",
+    "approval_status": "CANONICAL_DOCUMENTATION_OWNER_AUTHORIZED",
+    "readiness": "BLOCKED_FOR_IMPLEMENTATION",
     "capability_ids": [],
     "role_ids": [],
     "excluded_scope": "Không cấp quyền từ role label; không ghi dữ liệu owner khác;5 DEFER chỉ denial. CORE wave sau vẫn trong target.",
@@ -1600,7 +1599,7 @@
     "definition_of_done": "BE+HTTP+DB+FE thật, PostgreSQL invariants/guards và browser/native evidence phù hợp, source+PR CI pass; BC/test/evidence cập nhật; Owner merge/acceptance riêng.",
     "implementation_order": 29,
     "decision_owner": "Project Owner + Tech Lead; Security cho IAM/privacy; Finance cho money; Operations cho custody.",
-    "folder": "specs/planning/v3/L029-courier-offline-sync"
+    "folder": "specs/029-courier-offline-sync"
   },
   {
     "id": "L030",
@@ -1642,8 +1641,8 @@
     "database_scope": "Không production schema chỉ để đo; fixture backup/restore độc lập",
     "workflow": "Reviewed SHA→journeys/negative/fault/load→restore→evidence→Owner release",
     "blockers": "DEC-24; unresolved release blockers",
-    "approval_status": "PROPOSED",
-    "readiness": "BLOCKED",
+    "approval_status": "CANONICAL_DOCUMENTATION_OWNER_AUTHORIZED",
+    "readiness": "BLOCKED_FOR_IMPLEMENTATION",
     "capability_ids": [],
     "role_ids": [],
     "excluded_scope": "Không cấp quyền từ role label; không ghi dữ liệu owner khác;5 DEFER chỉ denial. CORE wave sau vẫn trong target.",
@@ -1659,6 +1658,6 @@
     "definition_of_done": "BE+HTTP+DB+FE thật, PostgreSQL invariants/guards và browser/native evidence phù hợp, source+PR CI pass; BC/test/evidence cập nhật; Owner merge/acceptance riêng.",
     "implementation_order": 30,
     "decision_owner": "Project Owner + Tech Lead; Security cho IAM/privacy; Finance cho money; Operations cho custody.",
-    "folder": "specs/planning/v3/L030-capstone-e2e-hardening-release"
+    "folder": "specs/030-capstone-e2e-hardening-release"
   }
 ]

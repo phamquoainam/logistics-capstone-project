@@ -1,3 +1,5 @@
+> Current canonical target follows [Owner account-first decision](../../decisions/customer-account-merchant-admission.md). Historical statements below are source context where superseded; accepted runtime/security unchanged.
+
 # BE+FE capability delivery — V3 candidate
 
 Mỗi [BC row](capability-crosswalk.csv) là source requirement riêng; [spec cards](spec-register.json) ghi BE/FE/DB/auth/failure/test/DoR/DoD. Một logical spec có thể nhiều coherent packages, không tách Owner prompts theo controller/UI/test. Một authorization hoàn chỉnh gồm approved spec→fixtures/tests→migration/domain→application/HTTP→frontend→PG/security/concurrency/browser/native→fix defects→scoped commit/push→source CI→SDD evidence→incremental PR→PR CI→Owner merge decision.

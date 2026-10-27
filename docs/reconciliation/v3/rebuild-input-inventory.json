@@ -1,0 +1,373 @@
+{
+  "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+  "owner_direction": "OWNER_APPROVED_FULL_CANONICAL_SDD_V3_REBUILD_2026_10_27",
+  "retired_files": [
+    {
+      "path": "specs/003-merchant-address/design.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "793d20e2b497e0e1e05bf5825266ff3456625018bc325b1e827c6ab4c341e59d",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/003-merchant-address/design.md",
+      "successors": "L003;L004",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/003-merchant-address/spec.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "9ab244b76799054c8ef3de59c165e1f95f85b01a3b2b53ab65bad5c46c7cd6db",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/003-merchant-address/spec.md",
+      "successors": "L003;L004;L006",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/003-merchant-address/tasks.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "ab23cabe9bbe28ce49fb46699232f6c79509755fc0907e4a2f4b0a5a1e8d5519",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/003-merchant-address/tasks.md",
+      "successors": "L003;L004",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/004-pricing-engine/design.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "ac4e437fd58361977bf0e699836946507f19506a1f72e2870c05488037ce3267",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/004-pricing-engine/design.md",
+      "successors": "L005;L018",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/004-pricing-engine/spec.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "96fb9ead83825b093e7d588fbc28939757019067e32163fe0761d42a3e5f8e18",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/004-pricing-engine/spec.md",
+      "successors": "L005;L018",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/004-pricing-engine/tasks.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "a477a0643ed1d9a9ee8d77323dfad0d956af6689f62fef9e619987af7c71c49e",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/004-pricing-engine/tasks.md",
+      "successors": "L005;L018",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/005-shipment-lifecycle/design.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "7ea5d71558cf6bcdd72ba15b24632892a4b010657af951ef4a928ddfa66c402a",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/005-shipment-lifecycle/design.md",
+      "successors": "L006;L007;L009;L015;L016",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/005-shipment-lifecycle/spec.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "db08b44e29237c9951421a6cd4751bcd3c0d684a0a30b22bc4468f0b24e5d3f5",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/005-shipment-lifecycle/spec.md",
+      "successors": "L006;L007;L009;L015;L016",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/005-shipment-lifecycle/tasks.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "4f747cfe400c2bab39c2af93ef372c59694035a20767954df8abf3c05d9d573e",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/005-shipment-lifecycle/tasks.md",
+      "successors": "L006;L007;L009;L015;L016",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/006-wallet-payments/design.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "529ae53c436f0b4cb8c8c0ebc47686e9d45d8a868cd118ca410e80b80d034373",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/006-wallet-payments/design.md",
+      "successors": "L007;L017;L018;L019",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/006-wallet-payments/spec.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "1e0c5a0fd8e0165824608b3a87c596b51fc222bed3ab5ce9c25af12a18750fc0",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/006-wallet-payments/spec.md",
+      "successors": "L007;L017;L018;L019",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/006-wallet-payments/tasks.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "d9302143d4ff03e2ed46e971cb5bff41d3c5ef94eef394817baacbd4f2e6878f",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/006-wallet-payments/tasks.md",
+      "successors": "L007;L017;L018;L019",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/007-warehouse-wms/design.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "d677f37027d0502cc876b7ae6d1299bb466ff101f38f52faa77ad214254cdca4",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/007-warehouse-wms/design.md",
+      "successors": "L008;L016",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/007-warehouse-wms/spec.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "1a0f1a234a7a7876ed8dd6807c3ad06eb1cd7691cde2527441f0e52321344f59",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/007-warehouse-wms/spec.md",
+      "successors": "L008;L016",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/007-warehouse-wms/tasks.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "c0f88c9fc85452988985026066d184446fc5fbdc6ac87ab92c7cd8b2bdba7d26",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/007-warehouse-wms/tasks.md",
+      "successors": "L008;L016",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/008-dispatch-hub/design.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "3fb40684288c0ea04d4ae7e2ac68f1d13cc41f91f91d8bd6cc876c22dc4c8ecc",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/008-dispatch-hub/design.md",
+      "successors": "L010;L011;L012;L013;L014;L025",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/008-dispatch-hub/spec.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "39acc3b9a41ad5b2c5ab55500320a3485bdf98862f6b959cff6206c51e7a13ef",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/008-dispatch-hub/spec.md",
+      "successors": "L010;L011;L012;L013;L014;L025",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/008-dispatch-hub/tasks.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "771f2a4b25da6190d1fc9c8a778364869bd0ee15931acaafade08317dd76d31c",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/008-dispatch-hub/tasks.md",
+      "successors": "L010;L011;L012;L013;L014;L025",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/009-shipper-pod/design.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "134320ae1aa24dbef26b75b4248c4b0403f2e4fa002a82d6f451bc0f7e21d419",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/009-shipper-pod/design.md",
+      "successors": "L010;L015;L017;L029",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/009-shipper-pod/spec.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "4d261918ae207678bc4c72045c5222e9dd19fce54fd820bc115e8c0f6d9f8186",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/009-shipper-pod/spec.md",
+      "successors": "L010;L014;L015;L016;L017;L029",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/009-shipper-pod/tasks.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "974ce0daa6e3eb69a36e76d4b36a690226e393f8988501317591f25bc8de9b23",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/009-shipper-pod/tasks.md",
+      "successors": "L010;L014;L015;L017;L029",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/010-routing-location/design.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "17422c73d5b0e31e556173ab6b118e7d426bb7e471ff29a9a4b733a54390441a",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/010-routing-location/design.md",
+      "successors": "L004;L014;L025",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/010-routing-location/spec.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "6faadc3ef2921ab9f0d69c66caa8c9b642984c6c0c33eb40f9bbda8d0e6060a6",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/010-routing-location/spec.md",
+      "successors": "L004;L014;L025",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/010-routing-location/tasks.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "84eb1226df4b763d7b8401ad93535cbd27f8e6a4f14c87cc75494acb9de9b2cc",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/010-routing-location/tasks.md",
+      "successors": "L004;L014;L025",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/011-cod-reconciliation/design.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "b6787bf2265b6b9f020bc25150ad3c48bd17235b77fb517d667c95376e87e804",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/011-cod-reconciliation/design.md",
+      "successors": "L017;L018;L019",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/011-cod-reconciliation/spec.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "e6d891140aaac4ffcda073f1c6591bea889734360f1361aeea17ca287ed99a6d",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/011-cod-reconciliation/spec.md",
+      "successors": "L017;L018;L019",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/011-cod-reconciliation/tasks.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "3de89b404386ee372bcdf61ca73987e3a3b2982c06e5be438827c2a7b139f7b4",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/011-cod-reconciliation/tasks.md",
+      "successors": "L017;L018;L019",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/012-notifications-dashboard/design.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "3301500b3b861e0d828def8aab6818ab5b4c2463ddec511bd7cfe0488ef373d2",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/012-notifications-dashboard/design.md",
+      "successors": "L009;L020;L028",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/012-notifications-dashboard/spec.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "8fa5680298a5cd6f4dc9aa406af05917b66c0de5c656a2e3ea28ff23ed357650",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/012-notifications-dashboard/spec.md",
+      "successors": "L009;L020;L028",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/012-notifications-dashboard/tasks.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "cd724df59192630ae25c0d87bdc362e99308d553cf032dc67f91584b8ec91fe3",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/012-notifications-dashboard/tasks.md",
+      "successors": "L009;L020;L028",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/013-admin-audit-configuration/design.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "97204ce8d880cace3a45f66c1968adb61339e9750e235744b7b0b1a4e1eff02a",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/013-admin-audit-configuration/design.md",
+      "successors": "L026;L027",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/013-admin-audit-configuration/spec.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "83707988d69680f0f97d0f81886ebe56d928f0b77774fc93c588a2431b080eb1",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/013-admin-audit-configuration/spec.md",
+      "successors": "L026;L027",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/013-admin-audit-configuration/tasks.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "c7d74ba327b3cb8ce494e4c258bb43303dd18e03327f937bbeb2f21a6a25077b",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/013-admin-audit-configuration/tasks.md",
+      "successors": "L026;L027",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/014-bulk-shipment-import/design.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "49a44eb27b4101d93eedadb3b37ce497e971f4ba40619d3f97af49e83af5d46d",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/014-bulk-shipment-import/design.md",
+      "successors": "L023",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/014-bulk-shipment-import/spec.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "96c48851023c3a11d4993d7b6d72530ce11a625d8baa7c26a9d3be47a285566e",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/014-bulk-shipment-import/spec.md",
+      "successors": "L023",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/014-bulk-shipment-import/tasks.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "f4c2e5ad3cd3b9e747a29976bee2c43a33654c6e5780fd0d070143213b7f8b53",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/014-bulk-shipment-import/tasks.md",
+      "successors": "L023",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/015-shipper-offline-sync/design.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "9a08e389c995b7cc43b76eed7225be108933c868da2e3c46e0ebe3b08c88f028",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/015-shipper-offline-sync/design.md",
+      "successors": "L029",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/015-shipper-offline-sync/spec.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "0e483d407621c8180ef7da860d4bc32eca6a91fba65f370ae59f4db5b2aab3db",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/015-shipper-offline-sync/spec.md",
+      "successors": "L029",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/015-shipper-offline-sync/tasks.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "694573327fe1be5ac4d04f226204602aeadbe99008bd7a2fcb424aa9eac31cbc",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/015-shipper-offline-sync/tasks.md",
+      "successors": "L029",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/016-research-experiments/design.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "e9c6b6e751182896c8f0ea671d9cf215dea521029f5762fae285799613e98002",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/016-research-experiments/design.md",
+      "successors": "L030",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/016-research-experiments/spec.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "e053b946fa2c8410c6a4ca92c4a0287d05bcdbdf13ce106a2f7a10e8e6be57c8",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/016-research-experiments/spec.md",
+      "successors": "L030",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/016-research-experiments/tasks.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "641dee9ddbd10e65546288243169d1d6f69bb9a40825c548d5a47f84588314e9",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/016-research-experiments/tasks.md",
+      "successors": "L030",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/demo-001-auth-merchant-shipment/design.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "7de1b601ed446e631f466e9fdca4bf5fdf4b9fb444d002ee21ad6935e120a40f",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/demo-001-auth-merchant-shipment/design.md",
+      "successors": "L001;L002;L007;L009",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/demo-001-auth-merchant-shipment/spec.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "a14ef393bb0056bf1ba71f799ed4f3a8fa6d4eeff9dead747a945f9929c2051a",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/demo-001-auth-merchant-shipment/spec.md",
+      "successors": "L001;L002;L007;L009",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    },
+    {
+      "path": "specs/demo-001-auth-merchant-shipment/tasks.md",
+      "baseline": "eeb7833ab678240581c407ccd167d7e61ea873c6",
+      "sha256": "c4e76a2d551cbab23f110a2836ff1247b95ba4f24b8436b3e293ba726e1ce2c3",
+      "history_url": "https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/demo-001-auth-merchant-shipment/tasks.md",
+      "successors": "L001;L002;L007;L009",
+      "disposition": "RETIRED_DOC_ONLY_NOT_ACCEPTANCE_EQUIVALENCE"
+    }
+  ],
+  "group_ab_bc_count": 112,
+  "source_inputs_before_owner_override": {
+    "docs/business-references/E_Logistics_Business_Complete_GroupEF_Full.md": "3d274bd3f96c5b8fd7c2abc83dc2b836c53f6b4256981bbd5b6cf28fa0e2503c",
+    "docs/business-references/E_Logistics_Role_Module_Business_Capability_Matrix_GroupEF_Full.md": "1cd1db7d57f8736f8771b28c03f28d47aa6fe05ee341657575ac7ef2813c23c9",
+    "docs/business-references/E_Logistics_Spec_Roadmap_V2_Proposed.md": "63490d7998b322907582f47deb39229a2dd49095ef23e6f77649fc87e72469b3"
+  },
+  "note": "Input digests captured before intentional Owner-approved account-first correction. Original bytes retained in pinned Git history and original gzip provenance. Runtime/accepted source unchanged."
+}

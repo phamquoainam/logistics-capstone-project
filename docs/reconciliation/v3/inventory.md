@@ -1,3 +1,5 @@
+> Historical reconciliation snapshot at ff3b296/b59cfc5; worktree/root protection inventory describes that run, not current root. Canonical rebuild uses eeb7833 and [new validation](canonical-validation.md); no rerun of retired live-worktree assumptions.
+
 # Repository và source inventory — 2026-10-26
 
 Fetched origin/develop=`ff3b2963ee1b165c7ade412e8b37389da65ca28e`, merge [PR28](https://github.com/phamquoainam/logistics-capstone-project/pull/28), MERGED2026-10-24T18:20:43Z. [Post-merge CI40120270733](https://github.com/phamquoainam/logistics-capstone-project/actions/runs/40120270733) completed/success đúng SHA; PR checks40119118325 SUCCESS. Không biến historical CI thành candidate acceptance.
@@ -22,9 +24,9 @@ Backend app/backend/com.elogistic.backend với identity/merchant/orders/platfor
 |---|---|---|
 | Foundation | [trace](../../quality/traceability.md), [AC01](../../implementation/ac-001-01-final-acceptance.md) | Feature001/D1-08/Day1 PARTIAL; AC01 PASS_WITH_DOCUMENTED_FINDINGS; AC04/05 NOT ACCEPTED; raw-cache/privacy OPEN |
 | Identity | [tasks](../../../specs/002-identity-access/tasks.md), [trace](../../quality/feature-002-recovery-traceability.md), [auth](../../implementation/t-002-06-authentication-http-evidence.md) | T00201..04 bounded DONE; T-002-05/T-002-06 PARTIAL; Feature002/AC-002-01..05 NOT ACCEPTED; GRANT_MUTATION_FUNCTIONALITY_LIMITED |
-| Demo | [spec](../../../specs/demo-001-auth-merchant-shipment/spec.md), [evidence](../../implementation/demo-001-evidence.md) | Historical/regression, không public registration/quote/pickup/POD/settlement |
+| Demo | [spec](https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/demo-001-auth-merchant-shipment/spec.md), [evidence](../../implementation/demo-001-evidence.md) | Historical/regression, không public registration/quote/pickup/POD/settlement |
 | Future003–015 | spec/design/tasks và crosswalk | DRAFT/unaccepted, không promote BC/test/task từ planning |
-| Research016 | [spec](../../../specs/016-research-experiments/spec.md) | PRESERVE RQ1–4, không Returns hay fake benchmark |
+| Research016 | [spec](https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/016-research-experiments/spec.md) | PRESERVE RQ1–4, không Returns hay fake benchmark |
 | Contract/migration/CI | [fingerprints](protection-baseline.json) | Hai OpenAPI/13ADR/V1–V6/limiter/workflow nguyên vẹn; global DEC25/events không tự ACCEPTED |
 
 Gốc feature/002-identity-application-ci tại3d9281e; sáu Foundation hashes riêng. Gốc+năm Identity worktrees lưu HEAD/status, không pull/checkout/reset/stash/clean/merge. Đúng một worktree mới D:/TLCN/e-logistic-sdd-v3 branch docs/business-sdd-roadmap-v3 từ origin/develop. Snapshot458 files; dependency-order.md là authorized planning navigation exception, không runtime receipt. Không nhập Foundation pending vào PR.
