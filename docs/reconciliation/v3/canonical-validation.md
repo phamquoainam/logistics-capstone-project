@@ -14,6 +14,16 @@ Baseline: eeb7833ab678240581c407ccd167d7e61ea873c6; branch docs/canonical-v3-gro
 
 Initial static run identified86 IDs introduced by prior V3 overlays after the original1024-record registry; original records were retained. retirement-id-supplement.csv preserves exact pinned source statements/lines and validator verifies both sources. Missing canonical-validation link was created. Later stale register wording was corrected and a negative control added. These were documentation failures, not application test failures; final31 tests and complete static validator PASS.
 
-## Limits
+## Bounded BC134 correction — 2026-10-27
+
+The pre-correction documents failed the new semantic gate: BC134 mapped Identity security resources to Merchant, and its DB task instructed Merchant persistence. The correction separates authoritative Identity data from Spec003 workflow/UI orchestration. BC135 Retail Sender business profile remains explicitly unresolved DATA-01 (candidate Merchant, not accepted); this is not a readiness PASS.
+
+- `python -B -m unittest discover -s docs/reconciliation/v3 -p test_validate.py`:50 tests PASS, exit0 (all31 existing controls retained +19 semantic ownership controls). Tests restore the original BC134 design and DB-task sections independently and reject each; correct Identity/Merchant/Dispatch ownership is accepted, contradictory/unknown/shared ownership and silently resolved DATA-01 are rejected.
+- `python -B docs/reconciliation/v3/validate.py`: exit0/errors empty, semantic status `CONSISTENT_WITH_EXPLICIT_UNRESOLVED`, unresolved `retail_sender.business_profile:DATA-01`. All371 BC/28 new canonical triples/001–002/accepted-contract and legacy-preservation gates remain active.
+- [Resource authority policy](resource-authority-policy.json) defines stable resource IDs/families and typed bindings in the governed BC134/135 design/task sections and portal DB-owner cells. `DECLARED` records resource authority, not implementation or contract approval; source candidate ownership in the flat crosswalk never closes DATA-01. Spec003 remains BLOCKED_FOR_IMPLEMENTATION.
+- New integration CI must be verified after publishing this correction; run40460679174 belongs to the previous PR head and cannot prove this patch. Runtime/security sources, accepted contracts, SQL and CI policy are unchanged.
+- Repository-wide scan of208 active Markdown files: zero links to retired legacy/planning paths. `git diff --check`: exit0, no whitespace findings.
+
+## Limits (unchanged)
 
 Static checks prove structural preservation, traceability presence, ownership constraints, link integrity and honest planning status; they do not prove production API/DDL/security/business correctness. All future BC runtime evidence stays NOT_STARTED/NOT_VERIFIED.003 DoR remains blocked by the explicit technical Identity/data/policy/privacy contracts. Full portal acceptance remains NOT_STARTED. Existing Foundation/Identity partial status and known findings remain unchanged.

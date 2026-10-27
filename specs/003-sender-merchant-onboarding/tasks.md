@@ -62,19 +62,42 @@ NOT_STARTED; thứ tự là contract/fixture → DB → BE/HTTP → UI/channel �
 
 ## REQ-V3-BC-134 / BC-134: Đăng ký/đăng nhập tài khoản cá nhân
 
-- [ ] **T-BC-134-CONTRACT** — Chốt operation «Đăng ký/đăng nhập tài khoản cá nhân»: allowed actor R18, guard «Không buộc Merchant membership; xác minh/chống giả mạo; permission code DECISION_REQUIRED (no runtime allowlist expansion)», resource Identity customer verification/account/session; Merchant orchestrates personal onboarding, no credential copy, exact input/result/error/state/version/key/retention; viết fixtures AC-BC-134-SUCCESS/DENY/RECOVERY với expected DB changes trước code.
-- [ ] **T-BC-134-DB** — Review forward schema/index/constraint của merchant cho Identity customer verification/account/session; Merchant orchestrates personal onboarding, no credential copy nếu persistence mới; migrate empty/upgrade V1–V6, runtime DML/no DDL, rollback compatibility. Query-only phải chứng minh không cần DDL, không tạo bảng thừa.
-- [ ] **T-BC-134-BE** — Implement «Đăng ký/đăng nhập tài khoản cá nhân» qua application/public API/HTTP hoặc machine/channel đúng contract; current guard/scope, transaction/audit/receipt, fail-closed dependency, conflict/unknown/recovery; no internals access.
+- [ ] **T-BC-134-CONTRACT** — Chốt operation «Đăng ký/đăng nhập tài khoản cá nhân»: allowed actor R18, guard «Không buộc Merchant membership; xác minh/chống giả mạo; permission code DECISION_REQUIRED (no runtime allowlist expansion)», resource Identity-owned account/credentials/verification/security contacts/session; Spec003 workflow/UI orchestration only via approved Identity public API, exact input/result/error/state/version/key/retention; viết fixtures AC-BC-134-SUCCESS/DENY/RECOVERY với expected DB changes trước code.
+- [ ] **T-BC-134-DB** — Identity 002 review persistence/security delta của account/authoritative ID, credentials/passwords, verification/activation/recovery, verified contacts, session/refresh/revocation qua controlled amendment và forward migration nếu thực sự cần; V1–V6 bất biến, empty/upgrade/runtime privileges/rollback compatibility. Spec003 không tạo hoặc ghi trực tiếp Identity tables, không duplicate account/security master; Merchant DB chỉ application/org/business profile/membership/delegation đã duyệt.
+- [ ] **T-BC-134-BE** — Implement «Đăng ký/đăng nhập tài khoản cá nhân» bằng Spec003 application orchestration/UI gọi approved Identity 002 public API; Identity thực hiện security lifecycle và sở hữu transaction tương ứng; current guard/scope, transaction/audit/receipt, fail-closed dependency, conflict/unknown/recovery; no internals access.
 - [ ] **T-BC-134-UI** — Tích hợp Public registration/verification/login → Personal default; action «Đăng ký/đăng nhập tài khoản cá nhân», loading/empty/error/conflict/pending/revoked, scope-safe navigation/cache và accessibility; không mock success.
 - [ ] **T-BC-134-VERIFY** — Chạy testcase riêng TEST-V3-BC-134-FLOW và AC-BC-134-SUCCESS/DENY/RECOVERY: unit/contract/HTTP/PG/browser hoặc channel tương ứng; race/replay/fault nếu mutation; lưu exact source+integration SHA/artifacts, map REQ-V3-BC-134 trong traceability.
+
+```ownership-json
+{
+  "scope": "BC-134", "orchestrator": "spec003",
+  "resources": [
+    {"resource_id": "identity.account", "authoritative_owner": "identity", "resolution": "DECLARED", "decision": null},
+    {"resource_id": "identity.credentials", "authoritative_owner": "identity", "resolution": "DECLARED", "decision": null},
+    {"resource_id": "identity.verification", "authoritative_owner": "identity", "resolution": "DECLARED", "decision": null},
+    {"resource_id": "identity.security_contact", "authoritative_owner": "identity", "resolution": "DECLARED", "decision": null},
+    {"resource_id": "identity.session", "authoritative_owner": "identity", "resolution": "DECLARED", "decision": null}
+  ]
+}
+```
 
 ## REQ-V3-BC-135 / BC-135: Quản lý hồ sơ, tên, liên hệ, trạng thái tài khoản
 
 - [ ] **T-BC-135-CONTRACT** — Chốt operation «Quản lý hồ sơ, tên, liên hệ, trạng thái tài khoản»: allowed actor R18, guard «Chỉ dữ liệu bản thân; thay đổi nhạy cảm cần xác minh; permission code DECISION_REQUIRED (no runtime allowlist expansion)», resource self business profile/contact preferences; Identity security contacts authoritative, exact input/result/error/state/version/key/retention; viết fixtures AC-BC-135-SUCCESS/DENY/RECOVERY với expected DB changes trước code.
-- [ ] **T-BC-135-DB** — Review forward schema/index/constraint của merchant cho self business profile/contact preferences; Identity security contacts authoritative nếu persistence mới; migrate empty/upgrade V1–V6, runtime DML/no DDL, rollback compatibility. Query-only phải chứng minh không cần DDL, không tạo bảng thừa.
+- [ ] **T-BC-135-DB** — BLOCKED DATA-01: chốt đúng một business-data owner cho Retail Sender profile (candidate Merchant, chưa accepted), rồi mới review forward schema/index/constraint của owner được duyệt. Identity chỉ sở hữu verified security contacts/account security state qua public contract; không gán business profile sang Identity, không cross-module SQL. Giữ V1–V6 bất biến, empty/upgrade/runtime privileges/rollback compatibility; query-only phải chứng minh không cần DDL.
 - [ ] **T-BC-135-BE** — Implement «Quản lý hồ sơ, tên, liên hệ, trạng thái tài khoản» qua application/public API/HTTP hoặc machine/channel đúng contract; current guard/scope, transaction/audit/receipt, fail-closed dependency, conflict/unknown/recovery; no internals access.
 - [ ] **T-BC-135-UI** — Tích hợp Personal — Quản lý hồ sơ, tên, liên hệ, trạng thái tài khoản; action «Quản lý hồ sơ, tên, liên hệ, trạng thái tài khoản», loading/empty/error/conflict/pending/revoked, scope-safe navigation/cache và accessibility; không mock success.
 - [ ] **T-BC-135-VERIFY** — Chạy testcase riêng TEST-V3-BC-135-FLOW và AC-BC-135-SUCCESS/DENY/RECOVERY: unit/contract/HTTP/PG/browser hoặc channel tương ứng; race/replay/fault nếu mutation; lưu exact source+integration SHA/artifacts, map REQ-V3-BC-135 trong traceability.
+
+```ownership-json
+{
+  "scope": "BC-135", "orchestrator": "spec003",
+  "resources": [
+    {"resource_id": "retail_sender.business_profile", "authoritative_owner": null, "resolution": "UNRESOLVED", "decision": "DATA-01"},
+    {"resource_id": "identity.security_contact", "authoritative_owner": "identity", "resolution": "DECLARED", "decision": null}
+  ]
+}
+```
 
 ## REQ-V3-BC-157 / BC-157: Cập nhật thông tin pháp nhân, tên cửa hàng, mã số thuế và cấu hình Merchant
 

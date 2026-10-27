@@ -33,6 +33,89 @@ def read_csv(name):return csv_at('docs/reconciliation/v3/'+name)
 def body(name):return (ROOT/name).read_text(encoding='utf-8-sig')
 def encoding_errors(text):return '\ufffd' in text or bool(re.search(r'[\w]\?[\w]|\?\?',text))
 
+# Stable resource IDs and authority families, independent of prose or role labels.
+RESOURCE_FAMILIES = {
+    'identity_security': {'identity.account','identity.credentials','identity.verification','identity.security_contact','identity.session'},
+    'retail_business': {'retail_sender.business_profile'},
+    'merchant_business': {'merchant.application','merchant.organization','merchant.business_profile','merchant.membership','merchant.delegation'},
+    'carrier_network': {'carrier.station','carrier.hub'},
+}
+FAMILY_AUTHORITIES = {'identity_security':'identity','merchant_business':'merchant','carrier_network':'dispatch'}
+
+def ownership_errors(policy,declarations):
+    """Return errors AND explicit unresolved decisions; docs consistency is not DoR."""
+    errors=[];unresolved=set();resources={}
+    if policy.get('schema_version')!=1:errors.append('ownership policy schema')
+    if policy.get('orchestrators')!={'spec003':{'canonical_spec':'L003','grants_data_authority':False}}:
+        errors.append('orchestration is not data authority')
+    if policy.get('capability_authorities')!={
+        'BC-134':{'orchestrator':'spec003','authority_resource':'identity.account'},
+        'BC-135':{'orchestrator':'spec003','authority_resource':'retail_sender.business_profile'},
+    }:errors.append('capability authority policy coverage')
+    for resource in policy.get('resources',[]):
+        rid=resource.get('resource_id');family=resource.get('family')
+        if rid in resources:errors.append('duplicate policy resource '+str(rid))
+        resources[rid]=resource
+        if family not in RESOURCE_FAMILIES or rid not in RESOURCE_FAMILIES.get(family,set()):
+            errors.append('undeclared resource family '+str(rid));continue
+        owner=resource.get('authoritative_owner');resolution=resource.get('resolution')
+        if family=='retail_business':
+            if owner is not None or resolution!='UNRESOLVED' or resource.get('decision')!='DATA-01' or resource.get('candidate_owner')!='merchant':
+                errors.append('unapproved Retail profile authority '+str(rid))
+            unresolved.add(str(rid)+':DATA-01')
+        elif owner!=FAMILY_AUTHORITIES[family] or resolution!='DECLARED' or resource.get('decision') is not None:
+            errors.append('resource authority conflict '+str(rid))
+    expected=set().union(*RESOURCE_FAMILIES.values())
+    if set(resources)!=expected:errors.append('ownership policy resource coverage')
+    expected_scopes={'BC-134':RESOURCE_FAMILIES['identity_security'],'BC-135':{'retail_sender.business_profile','identity.security_contact'}}
+    if {k:set(v) for k,v in policy.get('document_scopes',{}).items()}!=expected_scopes:
+        errors.append('ownership scope coverage')
+    seen=set()
+    for declaration in declarations:
+        scope=declaration.get('scope');seen.add(scope)
+        if scope not in expected_scopes:errors.append('unknown ownership scope '+str(scope));continue
+        if set(declaration)!={'scope','orchestrator','resources'} or declaration.get('orchestrator')!='spec003':
+            errors.append('ownership declaration schema '+str(scope))
+        entries=declaration.get('resources',[])
+        if not isinstance(entries,list):errors.append('ownership resource list '+scope);continue
+        ids=[r.get('resource_id') for r in entries]
+        if len(ids)!=len(set(ids)) or set(ids)!=expected_scopes[scope]:errors.append('ownership declaration coverage '+scope)
+        for r in entries:
+            rid=r.get('resource_id');authority=resources.get(rid)
+            if authority is None:errors.append('undeclared authority resource '+str(rid));continue
+            if set(r)!={'resource_id','authoritative_owner','resolution','decision'}:
+                errors.append('ownership binding schema '+str(rid))
+            if any(r.get(k)!=authority.get(k) for k in ['authoritative_owner','resolution','decision']):
+                errors.append('resource authority conflict '+str(rid))
+    if seen!=set(expected_scopes):errors.append('missing ownership scope')
+    return errors,sorted(unresolved)
+
+def ownership_document_errors(policy,text):
+    """Typed fenced declarations are the only owner fields in governed sections."""
+    declarations=[];errors=[]
+    for raw in re.findall(r'^```ownership-json\s*\n(.*?)^```\s*$',text,re.M|re.S):
+        try:
+            item=json.loads(raw)
+            if not isinstance(item,dict):raise ValueError('object required')
+            declarations.append(item)
+        except (ValueError,TypeError):errors.append('invalid ownership declaration JSON')
+    scopes=[d.get('scope') for d in declarations]
+    if len(scopes)!=len(set(scopes)):errors.append('duplicate ownership scope')
+    for scope in policy.get('document_scopes',{}):
+        # Headings are stable REQ/DES identifiers, not the wording of an owner sentence.
+        section=re.search(r'^#{2,3} (?:DES-|REQ-V3-)'+re.escape(scope)+r'\b.*?(?=^#{1,3} |\Z)',text,re.M|re.S)
+        if section is None:errors.append('missing governed ownership section '+scope);continue
+        embedded=re.findall(r'^```ownership-json\s*\n(.*?)^```\s*$',section.group(),re.M|re.S)
+        if len(embedded)!=1:errors.append('missing structured owner field '+scope)
+        elif embedded:
+            try:
+                if json.loads(embedded[0]).get('scope')!=scope:errors.append('misplaced ownership scope '+scope)
+            except (ValueError,AttributeError):errors.append('invalid section ownership binding '+scope)
+        # Reject a competing legacy owner field instead of letting prose override schema.
+        if re.search(r'\bData owner\s*:',section.group(),re.I):errors.append('competing unstructured owner field '+scope)
+    semantic,unresolved=ownership_errors(policy,declarations)
+    return errors+semantic,unresolved
+
 def source_rows():
     result=[]
     for line in body('docs/business-references/E_Logistics_Role_Module_Business_Capability_Matrix_GroupEF_Full.md').splitlines():
@@ -127,6 +210,25 @@ def run():
     rows=read_csv('capability-crosswalk.csv');cards=json.loads(body('docs/reconciliation/v3/spec-register.json'));index={c['id']:c for c in cards}
     errors=mapping_errors(rows,cards,source_rows());coverage=csv_at('docs/portal/group-ab-coverage.csv');supp=csv_at('docs/portal/supplemental-requirements.csv');journeys=csv_at('docs/portal/journeys.csv');accept=json.loads(body('docs/portal/acceptance-register.json'))
     errors+=portal_errors(coverage,supp,journeys,rows,accept)
+    policy=json.loads(body('docs/reconciliation/v3/resource-authority-policy.json'));ownership_unresolved=set()
+    if policy.get('declaration_documents')!=['specs/003-sender-merchant-onboarding/design.md','specs/003-sender-merchant-onboarding/tasks.md']:
+        errors.append('ownership declaration document coverage')
+    for name in policy.get('declaration_documents',[]):
+        semantic,unresolved=ownership_document_errors(policy,body(name))
+        errors.extend(name+': '+error for error in semantic);ownership_unresolved.update(unresolved)
+    if policy.get('coverage_document')!='docs/portal/group-ab-coverage.csv':errors.append('ownership coverage document')
+    bindings=[]
+    for scope in policy.get('document_scopes',{}):
+        row=next((r for r in coverage if r['bc_id']==scope),None)
+        try:bindings.append(json.loads(row['db_owner']))
+        except (ValueError,TypeError,KeyError):errors.append('missing structured portal authority '+scope)
+    semantic,unresolved=ownership_errors(policy,bindings);errors.extend(semantic);ownership_unresolved.update(unresolved)
+    authorities={r['resource_id']:r for r in policy.get('resources',[])}
+    for scope,binding in policy.get('capability_authorities',{}).items():
+        row=next((r for r in rows if r['capability_id']==scope),None);authority=authorities.get(binding.get('authority_resource'))
+        if row is None or authority is None or binding.get('orchestrator')!='spec003':errors.append('capability authority binding '+scope);continue
+        owner=authority.get('authoritative_owner') if authority['resolution']=='DECLARED' else authority.get('candidate_owner')
+        if row['primary_domain_owner']!=owner or row['primary_spec']!='L003':errors.append('capability resource authority conflict '+scope)
     tree=set(git('ls-tree','-r','--name-only',BASELINE).splitlines());changed=set(git('diff','--name-only',BASELINE).splitlines())|set(git('ls-files','--others','--exclude-standard').splitlines())
     for n in changed:
         if n.startswith(PROTECTED):errors.append('protected source changed '+n)
@@ -194,6 +296,8 @@ def run():
             for problem in local_link_errors(ROOT/name,body(name)):
                 if any(r['path'].split('/')[1] in problem for r in retirement):errors.append('protected dangling retired link '+problem)
     summary=dict(baseline=BASELINE,capabilities=len(rows),roles=len({r['role_id'] for r in rows}),modules=len({r['module_id'] for r in rows}),core=366,defer=sorted(DEFER),logical_specs=len(cards),canonical_triples=len(cards),legacy_records=len(legacy),retirement_overlay_ids=len(overlay),retired_legacy_files=len(retirement),promoted_planning_files=len(promotion),group_ab_bc=len(coverage),group_ab_core=len(accept['core_bc_ids']),portal_supplemental=len(supp),portal_journeys=len(journeys),checked_changed_markdown=checked,protected_source_changes=[n for n in sorted(changed) if n.startswith(PROTECTED)],preexisting_broken_links=sorted(oldlinks),errors=sorted(set(errors)))
+    summary['semantic_ownership_status']='CONSISTENT_WITH_EXPLICIT_UNRESOLVED' if not errors and ownership_unresolved else 'ERROR' if errors else 'CONSISTENT'
+    summary['ownership_unresolved']=sorted(ownership_unresolved)
     return summary['errors'],summary
 
 if __name__=='__main__':

@@ -19,3 +19,4 @@ BC-335,L003,L022,merchant,merchant,OWNER_ACCOUNT_FIRST_AND_CANONICAL_OWNERSHIP_2
 BC-009,L003,L004,merchant,merchant,SINGLE_PICKUP_COMMAND_OWNER_IN_CANONICAL_004; no feature removed
 BC-021,L003,L004,merchant,merchant,SINGLE_PICKUP_COMMAND_OWNER_IN_CANONICAL_004; no feature removed
 BC-168,L004,L004,merchant,merchant,SINGLE_PICKUP_COMMAND_OWNER_IN_CANONICAL_004; no feature removed
+BC-134,L003,L003,merchant,identity,"Identity owns account/credential/verification/security-contact/session resources; Spec003 orchestrates workflow/UI only; Retail Sender business profile remains DATA-01 unresolved (candidate Merchant), not reassigned to Identity"

@@ -72,7 +72,7 @@ Source: BC-133/R18/M01, CORE; [matrix](../../docs/business-references/E_Logistic
 
 ### REQ-V3-BC-134 — Đăng ký/đăng nhập tài khoản cá nhân
 
-Source: BC-134/R18/M01, CORE; [matrix](../../docs/business-references/E_Logistics_Role_Module_Business_Capability_Matrix_GroupEF_Full.md). Guard: Không buộc Merchant membership; xác minh/chống giả mạo; permission code DECISION_REQUIRED (no runtime allowlist expansion). Scope: PERSONAL_OWNER. Owner `merchant`.
+Source: BC-134/R18/M01, CORE; [matrix](../../docs/business-references/E_Logistics_Role_Module_Business_Capability_Matrix_GroupEF_Full.md). Guard: Không buộc Merchant membership; xác minh/chống giả mạo; permission code DECISION_REQUIRED (no runtime allowlist expansion). Scope: PERSONAL_OWNER. Identity `identity` sở hữu authoritative security resources; Spec003/Merchant điều phối workflow/UI qua approved public API, không sở hữu persistence Identity.
 
 - **AC-BC-134-SUCCESS:** Given current subject và resource đúng PERSONAL_OWNER; When Đăng ký/đăng nhập tài khoản cá nhân; Then outcome lưu/đọc đúng Identity customer verification/account/session; Merchant orchestrates personal onboarding, no credential copy, giữ guard «Không buộc Merchant membership»; reload/API/PG assertion; TEST-V3-BC-134-FLOW.
 - **AC-BC-134-DENY:** Given wrong subject/tenant/assignment, expired/revoked authority hoặc illegal state; When direct API/query/submit/replay; Then no unauthorized effect, no private data/receipt disclosure, safe error và UI không báo success.
@@ -80,7 +80,7 @@ Source: BC-134/R18/M01, CORE; [matrix](../../docs/business-references/E_Logistic
 
 ### REQ-V3-BC-135 — Quản lý hồ sơ, tên, liên hệ, trạng thái tài khoản
 
-Source: BC-135/R18/M01, CORE; [matrix](../../docs/business-references/E_Logistics_Role_Module_Business_Capability_Matrix_GroupEF_Full.md). Guard: Chỉ dữ liệu bản thân; thay đổi nhạy cảm cần xác minh; permission code DECISION_REQUIRED (no runtime allowlist expansion). Scope: PERSONAL_OWNER. Owner `merchant`.
+Source: BC-135/R18/M01, CORE; [matrix](../../docs/business-references/E_Logistics_Role_Module_Business_Capability_Matrix_GroupEF_Full.md). Guard: Chỉ dữ liệu bản thân; thay đổi nhạy cảm cần xác minh; permission code DECISION_REQUIRED (no runtime allowlist expansion). Scope: PERSONAL_OWNER. Retail Sender business-data owner UNRESOLVED / DATA-01, candidate `merchant` chưa accepted; Identity giữ verified security contacts/account security state.
 
 - **AC-BC-135-SUCCESS:** Given current subject và resource đúng PERSONAL_OWNER; When Quản lý hồ sơ, tên, liên hệ, trạng thái tài khoản; Then outcome lưu/đọc đúng self business profile/contact preferences; Identity security contacts authoritative, giữ guard «Chỉ dữ liệu bản thân»; reload/API/PG assertion; TEST-V3-BC-135-FLOW.
 - **AC-BC-135-DENY:** Given wrong subject/tenant/assignment, expired/revoked authority hoặc illegal state; When direct API/query/submit/replay; Then no unauthorized effect, no private data/receipt disclosure, safe error và UI không báo success.
@@ -155,7 +155,7 @@ Mọi assigned CORE/negative/legacy obligation và supplemental portal requireme
 
 REQ-003-ACCOUNT: BC132/134 dùng normal personal enrollment qua Identity002; không account-type chooser. Verified current customer login vào personal dashboard shell/profile, Merchant application entry chỉ sau eligibility. Guest deep-link application phải login rồi server recheck; no anonymous submit. Account có từ trước chỉ reuse sau authenticated proof, không match email để takeover. Duplicate registration trả non-enumerating outcome theo Identity amendment; không tạo identity thứ hai hoặc thêm role.
 
-REQ-003-PROFILE: BC135 business display/contact preferences thuộc Merchant domain với personal account owner; Identity sở hữu verified security email/phone/password/session/account security status. Thay business contact không tự đổi recovery destination; thay security contact phải qua Identity reverify/session policy. Người dùng không patch activation/status/verified flags. Full name/contact/status hiển thị theo purpose/minimal DTO; không tự copy credential fields.
+REQ-003-PROFILE: BC135 business display/contact preferences có business-data owner UNRESOLVED / DATA-01 (candidate Merchant, chưa accepted), gắn personal account bằng authoritative Identity ID qua approved contract; Identity sở hữu verified security email/phone/password/session/account security status. Thay business contact không tự đổi recovery destination; thay security contact phải qua Identity reverify/session policy. Người dùng không patch activation/status/verified flags. Full name/contact/status hiển thị theo purpose/minimal DTO; không tự copy credential fields.
 
 AC-003-ACCOUNT: Given Guest; When đăng ký; Then chỉ có personal account/proof theo Identity, zero org/member/SYSTEM grants. Given eligible verified account; When login; Then personal default. Given suspended/rejected Merchant nhưng account còn valid; When mở personal profile; Then hợp lệ. Given unverified/disabled account; When submit Merchant application; Then deny, no org/Owner.
 

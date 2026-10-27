@@ -8,7 +8,7 @@ BE: Customer onboarding phối hợp L002; Merchant application/legal evidence/m
 
 FE: Personal default/profile/application/status; Merchant context/profile/facilities/staff; pickup navigation L004; no Guest type chooser; source app/frontend/web, native app/frontend/shipper-mobile chỉ khi applicable.
 
-Data: merchant business profile/application/org/membership/delegation; pickup data L004; Identity verified contacts/credentials; exact schema pending. Một artifact/chín domain; domain api/internal, workflow chỉ public API. Identity không phụ thuộc compile-time vòng sang Merchant; authority bridge phải được review trước code; không sửa ArchUnit để cho import nội bộ.
+Data: merchant application/org/Merchant business profile/membership/delegation; Retail Sender business profile pending DATA-01 (candidate Merchant, chưa accepted); pickup data L004; Identity verified contacts/credentials; exact schema pending. Một artifact/chín domain; domain api/internal, workflow chỉ public API. Identity không phụ thuộc compile-time vòng sang Merchant; authority bridge phải được review trước code; không sửa ArchUnit để cho import nội bộ.
 
 ## Quy tắc chung và evidence
 
@@ -82,19 +82,42 @@ UI/channel: Personal authenticated — Merchant application and application stat
 
 ### DES-BC-134
 
-REQ-V3-BC-134: Đăng ký/đăng nhập tài khoản cá nhân. Backend application boundary: merchant xử lý Identity customer verification/account/session; Merchant orchestrates personal onboarding, no credential copy; HTTP/machine/channel adapter gọi public API, không cross-module repository. Query lọc trước paging; command check current state tại commit.
+REQ-V3-BC-134: Đăng ký/đăng nhập tài khoản cá nhân. Backend application boundary: Spec003 điều phối onboarding/UI qua public API Identity 002 đã được duyệt; Identity sở hữu account/authoritative ID, credentials/passwords, verification/activation/recovery, verified security contacts, sessions/refresh/revocation và security lifecycle. Merchant không lưu bản sao security resources, không cross-module SQL/repository. Query lọc trước paging; command recheck current authority tại commit.
 
-API cần: Đăng ký/đăng nhập tài khoản cá nhân; input validation, result tối thiểu, lỗi/conditional/recovery được duyệt trước code. Data owner: merchant; resource Identity customer verification/account/session; Merchant orchestrates personal onboarding, no credential copy. DB schema/unique business key/version/transition exact cần contract review; không auto tạo bảng theo label.
+API cần: Đăng ký/đăng nhập tài khoản cá nhân; input validation, result tối thiểu, lỗi/conditional/recovery được duyệt trước code. Resource authority theo khai báo dưới đây và [policy](../../docs/reconciliation/v3/resource-authority-policy.json); đây là stable resource IDs cho tài liệu, không phải tên bảng/wire fields. Identity 002 review mọi persistence/security delta qua controlled amendment; Spec003 chỉ gọi contract, không tạo account/verification/session tables. Merchant giữ application/org/business profile/membership/delegation; orchestration không cấp data authority.
 
 UI/channel: Public registration/verification/login → Personal default; action «Đăng ký/đăng nhập tài khoản cá nhân» có success/deny/recovery states. Authorization: Không buộc Merchant membership; xác minh/chống giả mạo; permission code DECISION_REQUIRED (no runtime allowlist expansion); PERSONAL_OWNER. Test fixtures riêng: valid R18, wrong personal/tenant, revoked scope, invalid state, duplicate/conflict/race nếu mutation, unavailable dependency; assert AC-BC-134-SUCCESS/DENY/RECOVERY và no PII leak. Consumer responsibilities giữ source owner; state change chỉ khi operation đã duyệt.
 
+```ownership-json
+{
+  "scope": "BC-134", "orchestrator": "spec003",
+  "resources": [
+    {"resource_id": "identity.account", "authoritative_owner": "identity", "resolution": "DECLARED", "decision": null},
+    {"resource_id": "identity.credentials", "authoritative_owner": "identity", "resolution": "DECLARED", "decision": null},
+    {"resource_id": "identity.verification", "authoritative_owner": "identity", "resolution": "DECLARED", "decision": null},
+    {"resource_id": "identity.security_contact", "authoritative_owner": "identity", "resolution": "DECLARED", "decision": null},
+    {"resource_id": "identity.session", "authoritative_owner": "identity", "resolution": "DECLARED", "decision": null}
+  ]
+}
+```
+
 ### DES-BC-135
 
-REQ-V3-BC-135: Quản lý hồ sơ, tên, liên hệ, trạng thái tài khoản. Backend application boundary: merchant xử lý self business profile/contact preferences; Identity security contacts authoritative; HTTP/machine/channel adapter gọi public API, không cross-module repository. Query lọc trước paging; command check current state tại commit.
+REQ-V3-BC-135: Quản lý hồ sơ, tên, liên hệ, trạng thái tài khoản. Backend application boundary: Spec003 điều phối self business profile/contact preferences; Retail Sender business-data owner chưa chốt DATA-01 (candidate Merchant); Identity security contacts authoritative; HTTP/machine/channel adapter gọi public API, không cross-module repository. Query lọc trước paging; command check current state tại commit.
 
-API cần: Quản lý hồ sơ, tên, liên hệ, trạng thái tài khoản; input validation, result tối thiểu, lỗi/conditional/recovery được duyệt trước code. Data owner: merchant; resource self business profile/contact preferences; Identity security contacts authoritative. DB schema/unique business key/version/transition exact cần contract review; không auto tạo bảng theo label.
+API cần: Quản lý hồ sơ, tên, liên hệ, trạng thái tài khoản; input validation, result tối thiểu, lỗi/conditional/recovery được duyệt trước code. Resource authority theo khai báo dưới đây; Retail Sender business profile vẫn UNRESOLVED / DATA-01, candidate Merchant chưa được chấp thuận. Identity giữ verified security contacts/account status; không suy ra Identity sở hữu business profile. Chưa thiết kế persistence business profile trước khi DATA-01 và schema/API được review.
 
 UI/channel: Personal — Quản lý hồ sơ, tên, liên hệ, trạng thái tài khoản; action «Quản lý hồ sơ, tên, liên hệ, trạng thái tài khoản» có success/deny/recovery states. Authorization: Chỉ dữ liệu bản thân; thay đổi nhạy cảm cần xác minh; permission code DECISION_REQUIRED (no runtime allowlist expansion); PERSONAL_OWNER. Test fixtures riêng: valid R18, wrong personal/tenant, revoked scope, invalid state, duplicate/conflict/race nếu mutation, unavailable dependency; assert AC-BC-135-SUCCESS/DENY/RECOVERY và no PII leak. Consumer responsibilities giữ source owner; state change chỉ khi operation đã duyệt.
+
+```ownership-json
+{
+  "scope": "BC-135", "orchestrator": "spec003",
+  "resources": [
+    {"resource_id": "retail_sender.business_profile", "authoritative_owner": null, "resolution": "UNRESOLVED", "decision": "DATA-01"},
+    {"resource_id": "identity.security_contact", "authoritative_owner": "identity", "resolution": "DECLARED", "decision": null}
+  ]
+}
+```
 
 ### DES-BC-157
 

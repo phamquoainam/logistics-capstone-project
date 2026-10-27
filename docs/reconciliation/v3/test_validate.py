@@ -137,5 +137,131 @@ class PortalIntegrityTests(unittest.TestCase):
         self.assertTrue(any('portal owner mismatch' in x for x in self.errors()))
 
 
+class ResourceAuthorityTests(unittest.TestCase):
+    def setUp(self):
+        self.policy = json.loads(v.body('docs/reconciliation/v3/resource-authority-policy.json'))
+        index = {r['resource_id']: r for r in self.policy['resources']}
+        self.declarations = [dict(scope=scope, orchestrator='spec003', resources=[
+            {k:index[rid][k] for k in ['resource_id','authoritative_owner','resolution','decision']}
+            for rid in ids]) for scope, ids in self.policy['document_scopes'].items()]
+
+    def errors(self):
+        return v.ownership_errors(self.policy, self.declarations)[0]
+
+    def test_identity_account_and_session_authority_accepted(self):
+        self.assertEqual([], self.errors())
+
+    def test_bc134_merchant_security_owner_rejected(self):
+        for resource in self.declarations[0]['resources']:
+            with self.subTest(resource=resource['resource_id']):
+                resource['authoritative_owner'] = 'merchant'
+                self.assertTrue(self.errors())
+                resource['authoritative_owner'] = 'identity'
+
+    def test_merchant_application_org_membership_authority_accepted(self):
+        merchant = [r for r in self.policy['resources'] if r['family']=='merchant_business']
+        self.assertEqual(5, len(merchant))
+        self.assertTrue(all(r['authoritative_owner']=='merchant' for r in merchant))
+        self.assertEqual([], self.errors())
+
+    def test_merchant_business_cannot_move_into_identity(self):
+        for resource in self.policy['resources']:
+            if resource['family']=='merchant_business':
+                with self.subTest(resource=resource['resource_id']):
+                    resource['authoritative_owner']='identity'
+                    self.assertTrue(self.errors())
+                    resource['authoritative_owner']='merchant'
+
+    def test_retail_profile_unresolved_is_explicit(self):
+        errors, unresolved = v.ownership_errors(self.policy,self.declarations)
+        self.assertEqual([], errors)
+        self.assertEqual(['retail_sender.business_profile:DATA-01'],unresolved)
+
+    def test_retail_profile_cannot_be_silently_assigned(self):
+        resource = next(r for r in self.policy['resources'] if r['family']=='retail_business')
+        for owner in ['identity','merchant',None]:
+            with self.subTest(owner=owner):
+                resource.update(authoritative_owner=owner,resolution='DECLARED',decision=None)
+                self.assertTrue(self.errors())
+
+    def test_missing_pending_decision_rejected(self):
+        self.declarations[1]['resources'][0]['decision']=None
+        self.assertTrue(self.errors())
+
+    def test_undeclared_resource_rejected(self):
+        self.declarations[0]['resources'][0]['resource_id']='customer.account_master'
+        self.assertTrue(self.errors())
+
+    def test_contradictory_duplicate_authority_rejected(self):
+        duplicate=copy.deepcopy(self.declarations[0]['resources'][0])
+        duplicate['authoritative_owner']='merchant'
+        self.declarations[0]['resources'].append(duplicate)
+        self.assertTrue(self.errors())
+
+    def test_unknown_owner_rejected(self):
+        self.declarations[0]['resources'][0]['authoritative_owner']='customer'
+        self.assertTrue(self.errors())
+
+    def test_shared_orchestrator_grants_no_data_authority(self):
+        for owner in ['spec003',['identity','merchant']]:
+            with self.subTest(owner=owner):
+                self.declarations[0]['resources'][0]['authoritative_owner']=owner
+                self.assertTrue(self.errors())
+
+    def test_orchestrator_cannot_grant_itself_authority(self):
+        self.policy['orchestrators']['spec003']['grants_data_authority']=True
+        self.assertTrue(self.errors())
+
+    def test_station_hub_dispatch_accepted_merchant_rejected(self):
+        self.assertEqual([], self.errors())
+        for resource in self.policy['resources']:
+            if resource['family']=='carrier_network':
+                with self.subTest(resource=resource['resource_id']):
+                    resource['authoritative_owner']='merchant'
+                    self.assertTrue(self.errors())
+                    resource['authoritative_owner']='dispatch'
+
+    def test_missing_resource_scope_or_capability_policy_rejected(self):
+        for key in ['resources','document_scopes','capability_authorities']:
+            with self.subTest(key=key):
+                policy=copy.deepcopy(self.policy)
+                policy.pop(key)
+                self.assertTrue(v.ownership_errors(policy,self.declarations)[0])
+
+    def test_current_design_and_tasks_declarations_accepted(self):
+        for path in self.policy['declaration_documents']:
+            with self.subTest(path=path):
+                errors, unresolved=v.ownership_document_errors(self.policy,v.body(path))
+                self.assertEqual([],errors)
+                self.assertIn('retail_sender.business_profile:DATA-01',unresolved)
+
+    def test_original_bc134_design_and_db_task_regressions_rejected(self):
+        import re
+        for path in self.policy['declaration_documents']:
+            with self.subTest(path=path):
+                original=v.git('show','8e8327273fdcdffb3667ee0c6d15fa43f9a0eb89:'+path)
+                pattern=r'^#{2,3} (?:DES-|REQ-V3-)BC-134\b.*?(?=^#{1,3} |\Z)'
+                old_section=re.search(pattern,original,re.M|re.S).group()
+                regressed=re.sub(pattern,lambda _:old_section,v.body(path),flags=re.M|re.S)
+                self.assertTrue(v.ownership_document_errors(self.policy,regressed)[0])
+
+    def test_wording_does_not_override_typed_authority(self):
+        declaration=copy.deepcopy(self.declarations[0])
+        declaration['resources'][0]['authoritative_owner']='merchant'
+        text='### DES-BC-134\nWorkflow calls approved public interfaces.\n```ownership-json\n'+json.dumps(declaration)+'\n```\n'
+        text+='### DES-BC-135\n```ownership-json\n'+json.dumps(self.declarations[1])+'\n```\n'
+        self.assertTrue(v.ownership_document_errors(self.policy,text)[0])
+
+    def test_malformed_or_duplicate_document_binding_rejected(self):
+        text=v.body(self.policy['declaration_documents'][0])
+        self.assertTrue(v.ownership_document_errors(self.policy,text+'\n```ownership-json\n{invalid}\n```\n')[0])
+        self.assertTrue(v.ownership_document_errors(self.policy,text+'\n```ownership-json\n'+json.dumps(self.declarations[0])+'\n```\n')[0])
+
+    def test_binding_must_belong_to_its_requirement_section(self):
+        text='### DES-BC-134\n```ownership-json\n'+json.dumps(self.declarations[1])+'\n```\n'
+        text+='### DES-BC-135\n```ownership-json\n'+json.dumps(self.declarations[0])+'\n```\n'
+        self.assertTrue(v.ownership_document_errors(self.policy,text)[0])
+
+
 if __name__ == "__main__":
     unittest.main()

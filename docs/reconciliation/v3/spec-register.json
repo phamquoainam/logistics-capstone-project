@@ -86,7 +86,7 @@
     "purpose": "Hồ sơ cá nhân, Merchant application/approval và organization/membership",
     "backend_scope": "Customer onboarding phối hợp L002; Merchant application/legal evidence/manual review; controlled org/Owner activation; membership/delegation; pickup management consumed from L004",
     "frontend_scope": "Personal default/profile/application/status; Merchant context/profile/facilities/staff; pickup link only when L004 delivered; no Guest type chooser",
-    "database_scope": "merchant business profile/application/org/membership/delegation; pickup owner L004; Identity verified contacts/credentials; exact schema pending",
+    "database_scope": "merchant application/org/Merchant business profile/membership/delegation; Retail Sender business profile DATA-01 UNRESOLVED (candidate Merchant, not accepted); pickup owner L004; Identity account/authoritative ID/credentials/verification/security contacts/session/security lifecycle; Spec003 orchestration only, exact schema/API pending",
     "workflow": "Guest đăng ký cá nhân→Identity verify/login→personal workspace→Merchant apply→manual sandbox review→approval+Owner activation→context; rejection/revocation giữ personal access",
     "blockers": "IAM-CUSTOMER-01; IAM-CONTEXT-02; IAM-INVITE-03; DATA-01; PRIVACY-01; POLICY-003-01",
     "approval_status": "CANONICAL_DOCUMENTATION_OWNER_AUTHORIZED",
