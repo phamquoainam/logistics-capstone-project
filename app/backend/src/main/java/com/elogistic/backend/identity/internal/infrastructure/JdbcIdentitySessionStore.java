@@ -72,7 +72,9 @@ public final class JdbcIdentitySessionStore implements IdentitySessionStore {
             }
             public void audit(UUID account,UUID request,String event,Instant now) {
                 if(!Set.of("IDENTITY_LOGIN","IDENTITY_REFRESH","IDENTITY_REFRESH_REPLAY","IDENTITY_LOGOUT").contains(event))throw new IllegalArgumentException("SESSION_EVENT_INVALID");
-                one(jdbc.update("INSERT INTO identity.audit_entry(id,actor_id,target_id,event_type,source,reason,request_id,occurred_at) VALUES (?,?,?,?,'IDENTITY_APPLICATION','Identity session transition',?,?)",UUID.randomUUID(),account,account,event,request.toString(),stamp(now)));
+                boolean customer=storage==IdentitySessionStorage.CUSTOMER;
+                String recorded=customer?"CUSTOMER_"+event.substring("IDENTITY_".length()):event;
+                one(jdbc.update("INSERT INTO identity.audit_entry(id,actor_id,target_id,event_type,source,reason,request_id,occurred_at) VALUES (?,?,?,?,?,?,?,?)",UUID.randomUUID(),account,account,recorded,customer?"IDENTITY_CUSTOMER":"IDENTITY_APPLICATION",customer?"Customer session transition":"Identity session transition",request.toString(),stamp(now)));
             }
         }));
     }

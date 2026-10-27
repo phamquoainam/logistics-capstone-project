@@ -40,7 +40,7 @@ class IdentityGrantApplicationTests {
 
     @BeforeEach void fixture() throws Exception {
         db = PostgresTestcontainersSupport.database(POSTGRES);
-        assertEquals(7, db.flyway("latest", SCOPE).migrate().migrationsExecuted);
+        assertEquals(8, db.flyway("latest", SCOPE).migrate().migrationsExecuted);
         account(A, "ACTIVE", List.of(ADMIN)); account(B, "ACTIVE", List.of(ADMIN)); account(T, "ACTIVE", List.of(GX));
         session(S, A); session(AS, B); session(TS, T);
         execute("INSERT INTO identity.refresh_token(id,session_id,token_hash,issued_at,expires_at) VALUES ('" + id(20) + "','" + TS + "',decode(repeat('01',32),'hex'),TIMESTAMPTZ '2026-10-21 00:00:00Z',TIMESTAMPTZ '2026-10-21 08:00:00Z')");
@@ -1667,7 +1667,7 @@ class IdentityGrantApplicationTests {
                 assertEquals(2,scalar("SELECT count(*) FROM identity.customer_refresh_token WHERE revoked_at IS NOT NULL"));
                 assertEquals(0,scalar("SELECT count(*) FROM identity.auth_session WHERE revoked_at IS NOT NULL"));
                 assertEquals(systemBefore,scalar("SELECT count(*) FROM identity.auth_session WHERE revoked_at IS NULL"));
-                assertEquals(1,scalar("SELECT count(*) FROM identity.audit_entry WHERE event_type='IDENTITY_REFRESH_REPLAY' AND actor_id='"+A+"'"));
+                assertEquals(1,scalar("SELECT count(*) FROM identity.audit_entry WHERE event_type='CUSTOMER_REFRESH_REPLAY' AND source='IDENTITY_CUSTOMER' AND actor_id='"+A+"'"));
                 try(var newest=sessionToken(next.refreshToken())) {
                     sessionDenied(SESSION_INVALID,()->customerSessions(NOW.plusSeconds(3)).refreshIdentity(newest));
                 }
@@ -1725,5 +1725,118 @@ class IdentityGrantApplicationTests {
             assertEquals(1,scalar("SELECT count(*) FROM identity.customer_auth_session WHERE last_activity_at=TIMESTAMPTZ '2026-10-21 00:05:10Z'"));
             assertEquals(0,scalar("SELECT count(*) FROM identity.auth_session WHERE last_activity_at<>created_at"));
         }
+    }
+
+    // Enrollment application/PG evidence only. This fixture deliberately does not stand in for HTTP/TLS or SMTP.
+    private static final UUID ENROLLMENT_BINDING=id(902);
+    private static final String ENROLLMENT_EMAIL="new-customer@example.invalid",ENROLLMENT_PASSWORD="synthetic-enrollment-password";
+    private ProtectedCustomerProofs enrollmentProtection(){return new ProtectedCustomerProofs(Map.of("v1",keyBytes(71)),"v1",Map.of("e1",keyBytes(72)),"e1");}
+    private byte[] keyBytes(int value){byte[] bytes=new byte[32];Arrays.fill(bytes,(byte)value);return bytes;}
+    private void enrollmentBinding()throws Exception {
+        execute("INSERT INTO identity.customer_csrf_binding VALUES ('"+ENROLLMENT_BINDING+"',decode(repeat('71',32),'hex'),decode(repeat('72',32),'hex'),NULL,clock_timestamp(),clock_timestamp()+INTERVAL '15 minutes',NULL)");
+    }
+    private com.elogistic.backend.identity.api.customer.CustomerEnrollmentCommands enrollmentApp(Instant time){
+        return new com.elogistic.backend.identity.internal.application.CustomerEnrollments(new JdbcCustomerEnrollmentStore(outboxDataSource()),enrollmentProtection(),
+            new com.elogistic.backend.identity.internal.application.port.CustomerEnrollmentAdmission(){
+                public Binding admit(Operation operation,UUID request,String exact){return new Binding(ENROLLMENT_BINDING);}
+                public void requireCurrent(Binding binding){assertEquals(ENROLLMENT_BINDING,binding.id());}
+            },Clock.fixed(time,ZoneOffset.UTC));
+    }
+    private com.elogistic.backend.identity.api.customer.CustomerEnrollmentCommands.Enrollment enrollCommand(UUID key,String email){
+        return new com.elogistic.backend.identity.api.customer.CustomerEnrollmentCommands.Enrollment(email,ENROLLMENT_PASSWORD,"Synthetic Customer","S003-2026-10-27",key,REQUEST);
+    }
+    private com.elogistic.backend.identity.api.customer.CustomerEnrollmentCommands.Verification pendingEnrollmentProof()throws Exception {
+        var source=outboxDataSource();var jdbc=new org.springframework.jdbc.core.JdbcTemplate(source);
+        return jdbc.queryForObject("SELECT p.*,d.encryption_key_id,d.nonce,d.ciphertext,d.recipient_nonce,d.recipient_ciphertext FROM identity.customer_proof p JOIN identity.customer_delivery d ON d.proof_id=p.id WHERE p.purpose='CUSTOMER_ENROLLMENT' AND p.revoked_at IS NULL AND p.consumed_at IS NULL",(r,n)->{
+            var p=new CustomerProof(r.getObject("id",UUID.class),r.getObject("subject_id",UUID.class),CustomerProof.Purpose.CUSTOMER_ENROLLMENT,r.getTimestamp("created_at").toInstant(),r.getTimestamp("expires_at").toInstant(),null,null,null,null,null);
+            var crypto=enrollmentProtection();String destination=crypto.openDestination(p,r.getString("verifier_key_id"),r.getString("encryption_key_id"),r.getBytes("recipient_nonce"),r.getBytes("recipient_ciphertext"),p.createdAt());
+            assertEquals(ENROLLMENT_EMAIL,destination);
+            try(var opened=crypto.open(p,destination,r.getString("verifier_key_id"),r.getString("encryption_key_id"),r.getBytes("nonce"),r.getBytes("ciphertext"),p.createdAt())){
+                byte[] token=opened.token();try{return new com.elogistic.backend.identity.api.customer.CustomerEnrollmentCommands.Verification(p.id(),new String(token,java.nio.charset.StandardCharsets.US_ASCII),UUID.randomUUID(),REQUEST);}
+                finally{Arrays.fill(token,(byte)0);}
+            }
+        });
+    }
+    @Test void enrollmentQueuesOnlyProtectedMaterialWithoutAccountOrGrant()throws Exception {
+        enrollmentBinding();var before=snapshot();var result=enrollmentApp(NOW).enroll(enrollCommand(KEY,ENROLLMENT_EMAIL));
+        assertTrue(result.accepted());assertEquals(REQUEST,result.requestId());
+        assertEquals(3,scalar("SELECT count(*) FROM identity.user_account"));assertEquals(0,scalar("SELECT count(*) FROM identity.customer_identifier"));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.customer_enrollment WHERE status='PENDING' AND octet_length(protected_password)=60"));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.customer_proof WHERE purpose='CUSTOMER_ENROLLMENT' AND expires_at=created_at+INTERVAL '24 hours' AND octet_length(verifier)=32"));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.customer_delivery WHERE status='QUEUED' AND attempts=0 AND accepted_at IS NULL AND delivered_at IS NULL AND octet_length(ciphertext)=59 AND recipient_ciphertext IS NOT NULL"));
+        assertEquals(before.get("account_grant"),snapshot().get("account_grant"));
+        assertNotNull(pendingEnrollmentProof());
+    }
+    @Test void enrollmentUniformReceiptAndChangedBindingPreventEnumerationAndDuplicates()throws Exception {
+        enrollmentBinding();var app=enrollmentApp(NOW);var first=app.enroll(enrollCommand(KEY,ENROLLMENT_EMAIL));
+        assertEquals(first,app.enroll(enrollCommand(KEY,ENROLLMENT_EMAIL)));
+        assertTrue(app.enroll(enrollCommand(id(903),ENROLLMENT_EMAIL)).accepted());
+        assertTrue(app.enroll(enrollCommand(id(904),"fixture@example.invalid")).accepted());
+        assertEquals(IDEMPOTENCY_CONFLICT,assertThrows(IdentityCommandFailure.class,()->app.enroll(enrollCommand(KEY,"other@example.invalid"))).code());
+        assertEquals(1,scalar("SELECT count(*) FROM identity.customer_enrollment"));assertEquals(1,scalar("SELECT count(*) FROM identity.customer_delivery"));
+        assertEquals(3,scalar("SELECT count(*) FROM identity.customer_command_receipt"));
+    }
+    @Test void verificationAtomicallyCreatesVerifiedPersonalAccountWithoutSystemAuthority()throws Exception {
+        enrollmentBinding();var app=enrollmentApp(NOW);app.enroll(enrollCommand(KEY,ENROLLMENT_EMAIL));var command=pendingEnrollmentProof();
+        enrollmentApp(NOW.plusSeconds(1)).verify(command);
+        assertEquals(1,scalar("SELECT count(*) FROM identity.customer_enrollment WHERE status='CONSUMED' AND protected_password IS NULL"));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.user_account WHERE email='"+ENROLLMENT_EMAIL+"' AND status='ACTIVE' AND email_verified AND password_hash IS NOT NULL"));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.customer_identifier WHERE exact_email='"+ENROLLMENT_EMAIL+"' AND status='ACTIVE'"));
+        assertEquals(0,scalar("SELECT count(*) FROM identity.account_grant g JOIN identity.user_account a ON a.id=g.account_id WHERE a.email='"+ENROLLMENT_EMAIL+"'"));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.customer_delivery WHERE status='DELIVERED' AND delivery_evidence IS NOT NULL AND nonce IS NULL AND ciphertext IS NULL AND recipient_ciphertext IS NULL AND accepted_at IS NULL"));
+        try(var login=customerSessions(NOW.plusSeconds(2)).loginIdentity(new com.elogistic.backend.identity.api.IdentitySessionCommands.Login(ENROLLMENT_EMAIL,ENROLLMENT_PASSWORD,REQUEST))){assertTrue(login.user().grants().isEmpty());}
+        var after=snapshot();enrollmentApp(NOW.plusSeconds(3)).verify(command);assertEquals(after,snapshot());
+        var replay=new com.elogistic.backend.identity.api.customer.CustomerEnrollmentCommands.Verification(command.proofId(),command.proof(),id(905),REQUEST);
+        assertEquals(TOKEN_INVALID_OR_EXPIRED,assertThrows(IdentityCommandFailure.class,()->enrollmentApp(NOW.plusSeconds(4)).verify(replay)).code());
+    }
+    @Test void resendRevokesOldProofAndCiphertextBeforeCreatingFreshIntent()throws Exception {
+        enrollmentBinding();enrollmentApp(NOW).enroll(enrollCommand(KEY,ENROLLMENT_EMAIL));var old=pendingEnrollmentProof();
+        enrollmentApp(NOW.plusSeconds(60)).resend(new com.elogistic.backend.identity.api.customer.CustomerEnrollmentCommands.Email(ENROLLMENT_EMAIL,id(906),REQUEST));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.customer_proof WHERE revoked_at IS NOT NULL"));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.customer_delivery WHERE status='EXPIRED' AND ciphertext IS NULL AND recipient_ciphertext IS NULL"));
+        assertEquals(TOKEN_INVALID_OR_EXPIRED,assertThrows(IdentityCommandFailure.class,()->enrollmentApp(NOW.plusSeconds(61)).verify(old)).code());
+        enrollmentApp(NOW.plusSeconds(61)).verify(pendingEnrollmentProof());assertEquals(4,scalar("SELECT count(*) FROM identity.user_account"));
+    }
+    @Test void wrongFutureAndExpiredEnrollmentProofsCannotCreateAccount()throws Exception {
+        enrollmentBinding();enrollmentApp(NOW).enroll(enrollCommand(KEY,ENROLLMENT_EMAIL));var good=pendingEnrollmentProof();
+        var wrong=new com.elogistic.backend.identity.api.customer.CustomerEnrollmentCommands.Verification(good.proofId(),"A".repeat(43),id(907),REQUEST);
+        for(var pair:List.of(Map.entry(NOW,wrong),Map.entry(NOW.minusSeconds(1),good),Map.entry(NOW.plusSeconds(86400),good)))
+            assertEquals(TOKEN_INVALID_OR_EXPIRED,assertThrows(IdentityCommandFailure.class,()->enrollmentApp(pair.getKey()).verify(pair.getValue())).code());
+        assertEquals(3,scalar("SELECT count(*) FROM identity.user_account"));assertEquals(0,scalar("SELECT count(*) FROM identity.customer_identifier"));
+        assertEquals(0,scalar("SELECT count(*) FROM identity.customer_proof WHERE consumed_at IS NOT NULL"));
+        enrollmentApp(NOW.plusSeconds(86400)).enroll(enrollCommand(id(908),ENROLLMENT_EMAIL));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.customer_enrollment WHERE status='EXPIRED' AND protected_password IS NULL"));
+        enrollmentApp(NOW.plusSeconds(86401)).verify(pendingEnrollmentProof());assertEquals(4,scalar("SELECT count(*) FROM identity.user_account"));
+    }
+    @Test void verificationAuditFailureRollsBackAccountIndexProofAndReceipt()throws Exception {
+        enrollmentBinding();enrollmentApp(NOW).enroll(enrollCommand(KEY,ENROLLMENT_EMAIL));var good=pendingEnrollmentProof();var before=snapshot();
+        failWrite("audit_entry","INSERT");assertThrows(RuntimeException.class,()->enrollmentApp(NOW.plusSeconds(1)).verify(good));
+        assertEquals(before,snapshot());assertEquals(0,scalar("SELECT count(*) FROM identity.customer_identifier"));
+        assertEquals(0,scalar("SELECT count(*) FROM identity.customer_proof WHERE consumed_at IS NOT NULL"));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.customer_delivery WHERE status='QUEUED' AND ciphertext IS NOT NULL"));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.customer_command_receipt"));
+    }
+    @Test void concurrentVerificationHasOneAccountAndOneSingleUseOutcome()throws Exception {
+        enrollmentBinding();enrollmentApp(NOW).enroll(enrollCommand(KEY,ENROLLMENT_EMAIL));var proof=pendingEnrollmentProof();
+        var results=adminRace(()->{
+            try{enrollmentApp(NOW.plusSeconds(1)).verify(proof);return "VERIFIED";}
+            catch(IdentityCommandFailure failure){return failure.code().name();}
+        },()->{
+            try{enrollmentApp(NOW.plusSeconds(1)).verify(new com.elogistic.backend.identity.api.customer.CustomerEnrollmentCommands.Verification(proof.proofId(),proof.proof(),id(909),REQUEST));return "VERIFIED";}
+            catch(IdentityCommandFailure failure){return failure.code().name();}
+        });
+        // Either caller can win; both tasks report an ordinary outcome instead of throwing into the executor.
+        assertEquals(1,results.stream().filter("VERIFIED"::equals).count());
+        assertEquals(1,results.stream().filter(TOKEN_INVALID_OR_EXPIRED.name()::equals).count());
+        assertEquals(4,scalar("SELECT count(*) FROM identity.user_account"));assertEquals(1,scalar("SELECT count(*) FROM identity.customer_identifier"));
+    }
+    @Test void enrollmentStoreRejectsCallerOwnedTransactionAndResourceBindings()throws Exception {
+        var source=outboxDataSource();var store=new JdbcCustomerEnrollmentStore(source);var manager=new org.springframework.jdbc.support.JdbcTransactionManager(source);
+        new org.springframework.transaction.support.TransactionTemplate(manager).execute(status->{assertThrows(IllegalStateException.class,()->store.transaction(tx->null));return null;});
+        org.springframework.transaction.support.TransactionSynchronizationManager.initSynchronization();try{assertThrows(IllegalStateException.class,()->store.transaction(tx->null));}
+        finally{org.springframework.transaction.support.TransactionSynchronizationManager.clearSynchronization();}
+        Object resource=new Object();org.springframework.transaction.support.TransactionSynchronizationManager.bindResource(source,resource);
+        try{assertThrows(IllegalStateException.class,()->store.transaction(tx->null));assertSame(resource,org.springframework.transaction.support.TransactionSynchronizationManager.getResource(source));}
+        finally{org.springframework.transaction.support.TransactionSynchronizationManager.unbindResource(source);}
     }
 }

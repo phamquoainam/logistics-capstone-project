@@ -44,8 +44,8 @@ class PostgresFoundationTests extends DemoTestSupport {
   List<String> schemas=jdbc.queryForList("SELECT nspname FROM pg_namespace WHERE nspname IN ('identity','merchant','orders','pricing','warehouse','dispatch','finance','routing','notification') ORDER BY nspname",String.class);
   assertEquals(List.of("dispatch","finance","identity","merchant","notification","orders","pricing","routing","warehouse"),schemas);
   assertEquals(10,jdbc.queryForObject("SELECT count(*) FROM pg_namespace n JOIN pg_roles r ON r.oid=n.nspowner WHERE r.rolname=? AND n.nspname IN ('platform','identity','merchant','orders','pricing','warehouse','dispatch','finance','routing','notification')",Integer.class,requiredEnv("PG_TEST_OWNER_ROLE")));
-  // Five Demo + twelve accepted Identity + four isolated customer tables + Flyway history.
-  assertEquals(22,jdbc.queryForObject("SELECT count(*) FROM pg_tables WHERE tableowner=? AND schemaname IN ('platform','identity','merchant','orders')",Integer.class,requiredEnv("PG_TEST_OWNER_ROLE")));
+  // Five Demo + twelve accepted Identity + eight isolated customer tables + Flyway history.
+  assertEquals(26,jdbc.queryForObject("SELECT count(*) FROM pg_tables WHERE tableowner=? AND schemaname IN ('platform','identity','merchant','orders')",Integer.class,requiredEnv("PG_TEST_OWNER_ROLE")));
  }
 
  @Test void runtimeCannotDdlAssumeOwnerOrReadHistory() throws Exception {
