@@ -146,9 +146,9 @@ NOT_STARTED; thứ tự là contract/fixture → DB → BE/HTTP → UI/channel �
 - [ ] T-L003-ACCEPT: scoped PR integration PASS → Owner merge → regression trên merge SHA → Owner full-spec acceptance riêng. Chưa tick vì docs promotion.
 
 
-## Complete implementation sequence — no production work authorized yet
+## Complete implementation sequence — Owner authorization granted
 
-The focused review under Owner conditional approval has closed the planning candidate gate (contracts/technical-review.md). One subsequent complete003 production authorization covers routine implementation steps below. No task is DONE from documentation/static fixtures. Per-BC CONTRACT tasks refer to this same approval, not repeated permission requests.
+The focused review under Owner conditional approval has closed the planning candidate gate (contracts/technical-review.md). OWNER_SPEC003_FULL_IMPLEMENTATION: GO now covers all routine T003-01..12 steps below; see implementation.md for source and actual evidence. No task is DONE from documentation/static fixtures. Per-BC CONTRACT tasks refer to this same approval, not repeated permission requests.
 
 | Task | Depends on | Concrete deliverable / gate |
 |---|---|---|
@@ -165,7 +165,7 @@ The focused review under Owner conditional approval has closed the planning cand
 | T003-11 | All above | Lint/typecheck/build/contract/unit/ArchUnit/H2/PG18/HTTP/browser, migration/compatibility/privacy/report-policy gates; exact source+PR integration evidence/digests, no unreviewed skip/guard weakening. |
 | T003-12 | T003-11 | Full BC/S003/supplement/legacy-consumer traceability; required CI, Owner PR merge, merge-SHA CI, separately recorded full-Spec003 acceptance. Cross-Spec Group A–F acceptance remains separate. |
 
-- [ ] **T003-01** through **T003-12** — implementation gates above are NOT_STARTED, not checked by this docs task.
+- [ ] **T003-01** through **T003-12** — implementation gates are IN_PROGRESS where recorded in implementation.md; none is checked from source authorship alone.
 - [ ] **T-AB-ENTRY** — REQ-AB-ENTRY exact customer-auth contract, real entry/forms/verification/login/recovery; TEST-AB-ENTRY Guest no application submit, personal default, deep-link recheck, no grants; dependencies Identity customer amendment and approved delivery channel.
 - [ ] **T-AB-CONTEXT** — REQ-AB-CONTEXT exact current-subject/org authority contracts and real context UI; TEST-AB-CONTEXT A→B stale-response isolation, revoke during submit, personal unaffected; no mocked membership authority.
 

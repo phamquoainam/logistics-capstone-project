@@ -16,6 +16,32 @@ spec.loader.exec_module(reports)
 
 
 class ReportGuardTests(unittest.TestCase):
+    def test_customer_admission_unit_methods_cannot_be_missing_or_skipped(self):
+        for mode in ('h2','postgres'):
+            for suffix,methods in reports.CUSTOMER_ADMISSION_UNIT_REQUIRED.items():
+                name=reports.BASE+suffix
+                for change in ('missing','skipped'):
+                    with self.subTest(mode=mode,suite=suffix,change=change):
+                        self.fixture(mode)
+                        suite=ET.parse(self.source/('TEST-'+name+'.xml')).getroot()
+                        case=next(c for c in suite.findall('testcase') if c.get('name')==methods[0])
+                        if change=='missing':suite.remove(case);suite.set('tests',str(len(methods)-1))
+                        else:ET.SubElement(case,'skipped');suite.set('skipped','1')
+                        self.save(suite);self.assertFalse(self.check(mode))
+
+    def test_customer_pg_methods_cannot_be_omitted_or_skipped(self):
+        for name,methods in [(reports.IDENTITY_GRANTS,reports.CUSTOMER_ADMISSION_PG_REQUIRED),
+                             (reports.IDENTITY_MIGRATION,reports.CUSTOMER_MIGRATION_PG_REQUIRED)]:
+            for method in methods:
+                for change in ('missing','skipped'):
+                    with self.subTest(method=method,change=change):
+                        self.fixture('postgres')
+                        suite=ET.parse(self.source/('TEST-'+name+'.xml')).getroot()
+                        case=next(c for c in suite.findall('testcase') if c.get('name')==method)
+                        if change=='missing':suite.remove(case);suite.set('tests',str(len(suite.findall('testcase'))))
+                        else:ET.SubElement(case,'skipped');suite.set('skipped','1')
+                        self.save(suite);self.assertFalse(self.check('postgres'))
+
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
         self.addCleanup(self.directory.cleanup)
@@ -258,8 +284,8 @@ class ReportGuardTests(unittest.TestCase):
         for name, methods in reports.S2_REQUIRED.items():
             self.assertEqual(len(methods), len(set(methods)), name)
         # Prior cases retained; authority composition requires9 unit and12 PostgreSQL identities.
-        for mode, passed, skipped in [('architecture', 23, 0), ('h2', 483, 17),
-                                      ('postgres', 758, 5), ('foundation', 5, 0)]:
+        for mode, passed, skipped in [('architecture', 23, 0), ('h2', 510, 17),
+                                      ('postgres', 797, 5), ('foundation', 5, 0)]:
             with self.subTest(mode=mode):
                 self.fixture(mode)
                 self.assertTrue(self.check(mode))
@@ -654,6 +680,10 @@ IDENTITY_METHODS = (
     'invitationOutboxEnforcesProofAssociationUniquenessAndProtectedShape',
     'invitationOutboxOwnershipAndRuntimePrivilegesRemainNarrow',
     'preexistingSchemaDriftFailsWithoutBaselineOrRepair',
+    'customerV7UpgradePreservesV6DataChecksumsAndCreatesNoBindings',
+    'customerIdentifierHasExactUniqueActiveAccountBinding',
+    'customerSessionsRefreshAndCsrfEnforceOwnPurposeForeignKeys',
+    'customerTablesRemainOwnerOwnedWithoutRuntimeDdlOrAuditEscalation',
 )
 
 
@@ -682,7 +712,7 @@ class IdentityMigrationInventoryTests(unittest.TestCase):
         self.assertEqual(list(IDENTITY_METHODS), re.findall(r'@Test\s+void\s+(\w+)\s*\(', source))
         self.assertIn('package com.elogistic.backend.identity.internal.infrastructure;', source)
         self.assertEqual('com.elogistic.backend.identity.internal.infrastructure.IdentityMigrationTests', reports.IDENTITY_MIGRATION)
-        self.assertEqual(25, len(set(IDENTITY_METHODS)))
+        self.assertEqual(29, len(set(IDENTITY_METHODS)))
         self.assertEqual(list(IDENTITY_METHODS), reports.REQUIRED[reports.IDENTITY_MIGRATION])
         self.assertIn(reports.IDENTITY_MIGRATION, reports.TESTCONTAINERS_ONLY)
         self.assertNotIn(reports.IDENTITY_MIGRATION, reports.PG_ONLY)
@@ -1161,7 +1191,7 @@ class IdentityGrantApplicationInventoryTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[2]
         source = (root / 'app/backend/src/test/java/com/elogistic/backend/identity/internal/infrastructure/IdentityGrantApplicationTests.java').read_text(encoding='utf-8')
         methods = re.findall(r'@Test\s+void\s+(\w+)\s*\(', source)
-        self.assertEqual(33, len(methods) - len(reports.IDENTITY_AUTHORITY_PG_REQUIRED) - len(reports.IDENTITY_REALM_PG_REQUIRED) - len(reports.IDENTITY_PROVISION_PG_REQUIRED) - len(reports.IDENTITY_INVITATION_PG_REQUIRED) - len(reports.IDENTITY_ACTIVATION_PG_REQUIRED) - len(reports.IDENTITY_SESSION_PG_REQUIRED) - len(reports.IDENTITY_CURRENT_SESSION_PG_REQUIRED) - len(reports.IDENTITY_ADMIN_PG_REQUIRED) - len(reports.IDENTITY_HTTP_PG_REQUIRED) - len(reports.IDENTITY_AUTH_PG_REQUIRED))
+        self.assertEqual(33, len(methods) - len(reports.IDENTITY_AUTHORITY_PG_REQUIRED) - len(reports.IDENTITY_REALM_PG_REQUIRED) - len(reports.IDENTITY_PROVISION_PG_REQUIRED) - len(reports.IDENTITY_INVITATION_PG_REQUIRED) - len(reports.IDENTITY_ACTIVATION_PG_REQUIRED) - len(reports.IDENTITY_SESSION_PG_REQUIRED) - len(reports.IDENTITY_CURRENT_SESSION_PG_REQUIRED) - len(reports.IDENTITY_ADMIN_PG_REQUIRED) - len(reports.IDENTITY_HTTP_PG_REQUIRED) - len(reports.IDENTITY_AUTH_PG_REQUIRED) - len(reports.CUSTOMER_ADMISSION_PG_REQUIRED))
         self.assertEqual(12, len(reports.IDENTITY_AUTHORITY_PG_REQUIRED))
         self.assertEqual(len(methods), len(set(methods)))
         self.assertEqual(methods, reports.REQUIRED[reports.IDENTITY_GRANTS])
@@ -1508,7 +1538,7 @@ class IdentityActivationInventoryTests(unittest.TestCase):
         self.assertEqual(list(ACTIVATION_UNIT_METHODS), reports.REQUIRED[reports.IDENTITY_ACTIVATION_UNIT])
         self.assertEqual(list(ACTIVATION_PG_METHODS), reports.IDENTITY_ACTIVATION_PG_REQUIRED)
         self.assertEqual(12, len(ACTIVATION_UNIT_METHODS)); self.assertEqual(20, len(ACTIVATION_PG_METHODS))
-        self.assertEqual(225, len(reports.REQUIRED[reports.IDENTITY_GRANTS]))
+        self.assertEqual(233, len(reports.REQUIRED[reports.IDENTITY_GRANTS]))
         self.assertEqual(3, len(reports.TASK_C_SUITES))
         self.assertNotIn(reports.IDENTITY_GRANTS, reports.expected_suites('h2'))
         for mode in ('h2', 'postgres'): self.assertIn(reports.IDENTITY_ACTIVATION_UNIT, reports.expected_suites(mode))
@@ -1558,7 +1588,7 @@ class IdentitySessionInventoryTests(unittest.TestCase):
         self.assertEqual(re.findall(r'@Test\s+void\s+(session\w+)\s*\(', pg), reports.IDENTITY_SESSION_PG_REQUIRED)
         self.assertEqual(24, len(reports.IDENTITY_SESSION_UNIT_REQUIRED))
         self.assertEqual(23, len(reports.IDENTITY_SESSION_PG_REQUIRED))
-        self.assertEqual(225, len(reports.REQUIRED[reports.IDENTITY_GRANTS]))
+        self.assertEqual(233, len(reports.REQUIRED[reports.IDENTITY_GRANTS]))
         self.assertEqual(3, len(reports.TASK_C_SUITES))
         for mode in ('h2', 'postgres'): self.assertIn(reports.IDENTITY_SESSION_UNIT, reports.expected_suites(mode))
         self.assertNotIn(reports.IDENTITY_SESSION_UNIT, reports.expected_suites('architecture'))
@@ -1613,7 +1643,7 @@ class IdentityCurrentSessionInventoryTests(unittest.TestCase):
         self.assertEqual(re.findall(r'@Test\s+void\s+(currentSession\w+)\s*\(', pg), reports.IDENTITY_CURRENT_SESSION_PG_REQUIRED)
         self.assertEqual(21, len(reports.IDENTITY_CURRENT_SESSION_UNIT_REQUIRED))
         self.assertEqual(14, len(reports.IDENTITY_CURRENT_SESSION_PG_REQUIRED))
-        self.assertEqual(225, len(reports.REQUIRED[reports.IDENTITY_GRANTS]))
+        self.assertEqual(233, len(reports.REQUIRED[reports.IDENTITY_GRANTS]))
         self.assertEqual(3, len(reports.TASK_C_SUITES))
         self.assertNotIn('@Disabled', unit)
         for mode in ('h2', 'postgres'): self.assertIn(reports.IDENTITY_CURRENT_SESSION_UNIT, reports.expected_suites(mode))
@@ -1661,7 +1691,7 @@ class IdentityAdministrationInventoryTests(unittest.TestCase):
         self.assertEqual(re.findall(r'@Test\s+void\s+(admin\w+)\s*\(', pg), reports.IDENTITY_ADMIN_PG_REQUIRED)
         self.assertEqual(36, len(reports.IDENTITY_ADMIN_UNIT_REQUIRED))
         self.assertEqual(34, len(reports.IDENTITY_ADMIN_PG_REQUIRED))
-        self.assertEqual(225, len(reports.REQUIRED[reports.IDENTITY_GRANTS]))
+        self.assertEqual(233, len(reports.REQUIRED[reports.IDENTITY_GRANTS]))
         self.assertEqual(3, len(reports.TASK_C_SUITES))
         composition = (root / 'app/backend/src/main/java/com/elogistic/backend/identity/internal/infrastructure/ProductionIdentityAdministrationComposition.java').read_text(encoding='utf-8')
         self.assertNotRegex(composition, r'@(Bean|Component|Configuration|Controller|RestController)\b')
@@ -1707,7 +1737,7 @@ class ProductionIdentityHttpInventoryTests(unittest.TestCase):
         self.assertEqual(re.findall(r'@Test\s+void\s+(\w+)\s*\(',unit),reports.IDENTITY_HTTP_UNIT_REQUIRED)
         self.assertEqual(re.findall(r'@Test\s+void\s+(httpRead\w+)\s*\(',pg),reports.IDENTITY_HTTP_PG_REQUIRED)
         self.assertEqual(43,len(reports.IDENTITY_HTTP_UNIT_REQUIRED));self.assertEqual(18,len(reports.IDENTITY_HTTP_PG_REQUIRED))
-        self.assertEqual(225,len(reports.REQUIRED[reports.IDENTITY_GRANTS]));self.assertEqual(3,len(reports.TASK_C_SUITES))
+        self.assertEqual(233,len(reports.REQUIRED[reports.IDENTITY_GRANTS]));self.assertEqual(3,len(reports.TASK_C_SUITES))
         self.assertNotIn('@Disabled',unit)
 
     def test_each_http_security_case_must_execute_and_cannot_be_skipped(self):

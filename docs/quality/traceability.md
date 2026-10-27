@@ -472,3 +472,10 @@ been blocked. No production violation, acceptance change or implicit deferral.
 ## Spec003 controlled decisions and candidate readiness — 2026-10-27
 
 [Owner six decisions](../decisions/spec003-six-decisions.md) → [exact13 CORE+DENY045 coverage](../../specs/003-sender-merchant-onboarding/contracts/coverage.csv) → reviewed77 operations/55 HTTP+3 dependency schemas, business rules, data ownership, frontend routes, per-BC layer tasks and declared security/concurrency/fault scenarios. [DoR](../../specs/003-sender-merchant-onboarding/readiness.md) records completed conditional technical review, SPEC003_READY_FOR_OWNER_IMPLEMENTATION_AUTHORIZATION and the still-pending single production authorization. REQ-AB-ENTRY/CONTEXT mapped in003 tasks; legacy pickup consumer obligation stays004 command-owned. All business/runtime evidence remains PLANNED_NOT_EXECUTED; no prior Foundation/Identity acceptance evidence changed.
+
+
+## Spec003 authorized implementation — customer admission kernel,2026-10-27
+
+[Full Owner authorization and execution record](../../specs/003-sender-merchant-onboarding/implementation.md): all T003-01..12 authorized; current T003-01/02 IN_PROGRESS. Customer purpose storage and exact verified-email eligibility, owned current-subject transaction with final request/deadline checks and post-commit meaningful activity implemented. Existing SYSTEM defaults/username/session domain and V1–V6 preserved.
+
+Actual local `mvnw -o -B ... clean verify`: H2 report527 discovered/510 PASS/17 policy skips/0 failure/error; new27 customer session/admission unit cases and original regressions included. Focused Architecture23 PASS including negative fixtures. Twelve new PG migration/customer cases authored and exact inventory extended; PG runtime and current PR CI pending, no older run substituted. No customer enrollment/HTTP/browser/full journey acceptance claimed. All61 business scenarios remain PLANNED_NOT_EXECUTED until complete runtime evidence. Source manifest explicitly scopes implementation changes; `validate.py --implementation` retains canonical371-BC gates and immutable migrations/contracts/runtime cleanup/report collector protection.

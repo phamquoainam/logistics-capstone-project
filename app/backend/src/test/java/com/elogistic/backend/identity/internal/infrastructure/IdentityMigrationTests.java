@@ -37,7 +37,7 @@ class IdentityMigrationTests {
 
     private Database migrated() throws Exception {
         Database db = PostgresTestcontainersSupport.database(POSTGRES);
-        assertEquals(6, db.flyway("latest").migrate().migrationsExecuted);
+        assertEquals(7, db.flyway("latest").migrate().migrationsExecuted);
         return db;
     }
     private static String digest(int value) { return "decode('" + String.format("%064x", value) + "','hex')"; }
@@ -81,7 +81,7 @@ class IdentityMigrationTests {
         Database db = migrated(); account(db);
         var flyway = db.flyway("latest"); flyway.validate();
         var before = Arrays.stream(flyway.info().applied()).map(m -> m.getVersion() + ":" + m.getChecksum()).toList();
-        assertEquals(List.of("1","2","3","4","5","6"), Arrays.stream(flyway.info().applied()).map(m -> m.getVersion().toString()).toList());
+        assertEquals(List.of("1","2","3","4","5","6","7"), Arrays.stream(flyway.info().applied()).map(m -> m.getVersion().toString()).toList());
         var rows = snapshot(db, "identity.user_account");
         assertEquals(0, flyway.migrate().migrationsExecuted);
         assertEquals(before, Arrays.stream(flyway.info().applied()).map(m -> m.getVersion() + ":" + m.getChecksum()).toList());
@@ -100,7 +100,7 @@ class IdentityMigrationTests {
         var tables = List.of("merchant.demo_merchant", "identity.demo_account", "orders.demo_shipment", "orders.demo_event");
         Map<String,List<String>> before = new LinkedHashMap<>(); for (String table : tables) before.put(table, snapshot(db, table));
         var oldChecksums = Arrays.stream(db.flyway("2").info().applied()).map(m -> m.getChecksum()).toList();
-        assertEquals(4, db.flyway("latest").migrate().migrationsExecuted); db.flyway("latest").validate();
+        assertEquals(5, db.flyway("latest").migrate().migrationsExecuted); db.flyway("latest").validate();
         for (String table : tables) assertEquals(before.get(table), snapshot(db, table));
         assertEquals(oldChecksums, Arrays.stream(db.flyway("latest").info().applied()).limit(2).map(m -> m.getChecksum()).toList());
         try (Connection c = db.runtimeConnection(); Statement s = c.createStatement()) {
@@ -269,7 +269,7 @@ class IdentityMigrationTests {
         execute(db,"INSERT INTO identity.account_grant(account_id,role_code,scope_type,scope_id,granted_at) VALUES ("+ACCOUNT+",'IDENTITY_MANAGEMENT','IDENTITY',"+ACCOUNT+","+NOW+")");
         var before=snapshot(db,"identity.user_account");
         var checksums=Arrays.stream(db.flyway("3").info().applied()).map(m->m.getChecksum()).toList();
-        assertEquals(3,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();
+        assertEquals(4,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();
         assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);
         assertEquals(before,snapshot(db,"identity.user_account"));
         assertEquals(checksums,Arrays.stream(db.flyway("latest").info().applied()).limit(3).map(m->m.getChecksum()).toList());
@@ -332,7 +332,7 @@ class IdentityMigrationTests {
         Database db=PostgresTestcontainersSupport.database(POSTGRES);assertEquals(4,db.flyway("4").migrate().migrationsExecuted);account(db);
         execute(db,proof(PROOF,"INVITATION",501,"24 hours"));var accounts=snapshot(db,"identity.user_account");
         var checksums=Arrays.stream(db.flyway("4").info().applied()).map(m->m.getChecksum()).toList();
-        assertEquals(2,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);
+        assertEquals(3,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);
         assertEquals(checksums,Arrays.stream(db.flyway("latest").info().applied()).limit(4).map(m->m.getChecksum()).toList());assertEquals(accounts,snapshot(db,"identity.user_account"));
         try(Connection c=db.runtimeConnection();Statement s=c.createStatement();ResultSet r=s.executeQuery("SELECT account_id,purpose,token_hash,expires_at-created_at=INTERVAL '24 hours',verifier_key_id,consumed_at,revoked_at FROM identity.action_proof WHERE id="+PROOF)) {
             assertTrue(r.next());assertEquals(UUID.fromString(ACCOUNT.replace("'","")),r.getObject(1,UUID.class));assertEquals("INVITATION",r.getString(2));
@@ -374,5 +374,39 @@ class IdentityMigrationTests {
         assertThrows(FlywayException.class, () -> db.flyway("latest").migrate());
         assertEquals(List.of("1","2"), Arrays.stream(db.flyway("2").info().applied()).map(m -> m.getVersion().toString()).toList());
         try (Connection c = db.migrationConnection(); Statement s = c.createStatement(); ResultSet r = s.executeQuery("SELECT count(*) FROM information_schema.columns WHERE table_schema='identity' AND table_name='user_account' AND column_name='drift_marker'")) { assertTrue(r.next()); assertEquals(1, r.getInt(1)); }
+    }
+
+    @Test void customerV7UpgradePreservesV6DataChecksumsAndCreatesNoBindings()throws Exception {
+        Database db=PostgresTestcontainersSupport.database(POSTGRES);assertEquals(6,db.flyway("6").migrate().migrationsExecuted);account(db);
+        var checksums=Arrays.stream(db.flyway("6").info().applied()).map(m->m.getChecksum()).toList();var rows=snapshot(db,"identity.user_account");
+        assertEquals(1,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();
+        assertEquals(checksums,Arrays.stream(db.flyway("latest").info().applied()).limit(6).map(m->m.getChecksum()).toList());
+        assertEquals(rows,snapshot(db,"identity.user_account"));assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);
+        try(Connection c=db.runtimeConnection();Statement q=c.createStatement();ResultSet r=q.executeQuery("SELECT count(*) FROM identity.customer_identifier")){assertTrue(r.next());assertEquals(0,r.getInt(1));}
+    }
+    @Test void customerIdentifierHasExactUniqueActiveAccountBinding()throws Exception {
+        Database db=migrated();account(db);execute(db,account(OTHER,"'other.identity'"));
+        execute(db,"INSERT INTO identity.customer_identifier VALUES ("+PROOF+","+ACCOUNT+",'Person@example.invalid',"+NOW+",'ACTIVE',1)");
+        rejects(db,"23505","INSERT INTO identity.customer_identifier VALUES ("+NEXT+","+OTHER+",'Person@example.invalid',"+NOW+",'ACTIVE',1)");
+        rejects(db,"23505","INSERT INTO identity.customer_identifier VALUES ("+NEXT+","+ACCOUNT+",'other@example.invalid',"+NOW+",'ACTIVE',1)");
+        execute(db,"INSERT INTO identity.customer_identifier VALUES ("+NEXT+","+OTHER+",'person@example.invalid',"+NOW+",'ACTIVE',1)");
+        rejects(db,"23503","INSERT INTO identity.customer_identifier VALUES ("+TOKEN+","+BINDING+",'missing@example.invalid',"+NOW+",'ACTIVE',1)");
+    }
+    @Test void customerSessionsRefreshAndCsrfEnforceOwnPurposeForeignKeys()throws Exception {
+        Database db=migrated();account(db);execute(db,session(SESSION));
+        execute(db,session(OTHER_SESSION).replace("identity.auth_session","identity.customer_auth_session"));
+        execute(db,token(TOKEN,OTHER_SESSION,41,"NULL").replace("identity.refresh_token","identity.customer_refresh_token"));
+        rejects(db,"23503",token(NEXT,OTHER_SESSION,42,"NULL"));
+        rejects(db,"23503",token(NEXT,SESSION,42,"NULL").replace("identity.refresh_token","identity.customer_refresh_token"));
+        rejects(db,"23503","INSERT INTO identity.customer_csrf_binding VALUES ("+BINDING+","+digest(43)+","+digest(44)+","+SESSION+","+NOW+","+NOW+"+INTERVAL '15 minutes',NULL)");
+        rejects(db,"23514",session(PROOF).replace("identity.auth_session","identity.customer_auth_session").replace("INTERVAL '8 hours'","INTERVAL '9 hours'"));
+    }
+    @Test void customerTablesRemainOwnerOwnedWithoutRuntimeDdlOrAuditEscalation()throws Exception {
+        Database db=migrated();
+        for(String table:List.of("customer_identifier","customer_auth_session","customer_refresh_token","customer_csrf_binding")) {
+            rejects(db,"42501","ALTER TABLE identity."+table+" ADD COLUMN injected BOOLEAN");rejects(db,"42501","TRUNCATE identity."+table);rejects(db,"42501","DELETE FROM identity."+table);
+            try(Connection c=db.migrationConnection();Statement q=c.createStatement();ResultSet r=q.executeQuery("SELECT tableowner FROM pg_tables WHERE schemaname='identity' AND tablename='"+table+"'")){assertTrue(r.next());assertEquals(db.owner(),r.getString(1));}
+        }
+        rejects(db,"42501","UPDATE identity.audit_entry SET reason='injected'");rejects(db,"42501","DELETE FROM identity.user_account");
     }
 }

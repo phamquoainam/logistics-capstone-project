@@ -14,7 +14,11 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 public final class JdbcIdentitySessionStore implements IdentitySessionStore {
     private final JdbcIdentityGrantStore store;
     private final JdbcTemplate jdbc;
-    public JdbcIdentitySessionStore(DataSource runtime) {store=new JdbcIdentityGrantStore(runtime);jdbc=new JdbcTemplate(runtime);}
+    private final IdentitySessionStorage storage;
+    public JdbcIdentitySessionStore(DataSource runtime) {this(runtime,IdentitySessionStorage.SYSTEM);}
+    public JdbcIdentitySessionStore(DataSource runtime,IdentitySessionStorage storage) {
+        this.storage=Objects.requireNonNull(storage);store=new JdbcIdentityGrantStore(runtime,storage);jdbc=new JdbcTemplate(runtime);
+    }
     private static Timestamp stamp(Instant t) {return Timestamp.from(t);}
     private static void one(int count) {if(count!=1)throw new IllegalStateException("SESSION_WRITE_REJECTED");}
     @Override public <T>T transaction(Function<Transaction,T> work) {
@@ -28,39 +32,42 @@ public final class JdbcIdentitySessionStore implements IdentitySessionStore {
         }
         return store.transaction(a->work.apply(new Transaction() {
             public IdentityGrantStore.Transaction accounts() {return a;}
-            public Optional<UUID> findUsername(String username) {return jdbc.query("SELECT id FROM identity.user_account WHERE username=?",(r,n)->r.getObject(1,UUID.class),username).stream().findFirst();}
+            public Optional<UUID> findUsername(String username) {
+                if(storage==IdentitySessionStorage.CUSTOMER)return jdbc.query("SELECT c.account_id FROM identity.customer_identifier c JOIN identity.user_account a ON a.id=c.account_id WHERE c.exact_email=? AND c.status='ACTIVE' AND c.exact_email=a.email COLLATE \"C\" AND a.email_verified AND a.status='ACTIVE'",(r,n)->r.getObject(1,UUID.class),username).stream().findFirst();
+                return jdbc.query("SELECT id FROM identity.user_account WHERE username=?",(r,n)->r.getObject(1,UUID.class),username).stream().findFirst();}
             public String passwordVerifier(UUID account) {return jdbc.queryForObject("SELECT password_hash FROM identity.user_account WHERE id=?",String.class,account);}
             public boolean eligibleRealm(UUID account) {
+                if(storage==IdentitySessionStorage.CUSTOMER)return Boolean.TRUE.equals(jdbc.queryForObject("SELECT EXISTS(SELECT 1 FROM identity.customer_identifier c JOIN identity.user_account a ON a.id=c.account_id WHERE a.id=? AND c.status='ACTIVE' AND c.exact_email=a.email COLLATE \"C\" AND a.email_verified AND a.status='ACTIVE')",Boolean.class,account));
                 // Bounded approved Identity Management pair only; external owner authority is not invented.
                 return Boolean.TRUE.equals(jdbc.queryForObject("SELECT count(*)=1 AND COALESCE(bool_and(g.role_code='IDENTITY_MANAGEMENT' AND g.scope_type='IDENTITY' AND r.status='ACTIVE'),FALSE) FROM identity.account_grant g LEFT JOIN identity.realm r ON r.id=g.identity_realm_id WHERE g.account_id=?",Boolean.class,account));
             }
             public Optional<Refresh> findRefresh(byte[] digest) {
-                return jdbc.query("SELECT id,session_id,expires_at,consumed_at,revoked_at FROM identity.refresh_token WHERE token_hash=? FOR UPDATE",(r,n)->{
+                return jdbc.query("SELECT id,session_id,expires_at,consumed_at,revoked_at FROM "+storage.refresh+" WHERE token_hash=? FOR UPDATE",(r,n)->{
                     var consumed=r.getTimestamp(4);var revoked=r.getTimestamp(5);
                     return new Refresh(r.getObject(1,UUID.class),r.getObject(2,UUID.class),r.getTimestamp(3).toInstant(),consumed==null?null:consumed.toInstant(),revoked==null?null:revoked.toInstant());
                 },digest).stream().findFirst();
             }
             public Optional<RefreshFamily> family(IdentitySession session) {
-                var rows=jdbc.query("SELECT id,consumed_at,revoked_at,expires_at FROM identity.refresh_token WHERE session_id=?",(r,n)->new Refresh(r.getObject(1,UUID.class),session.id(),r.getTimestamp(4).toInstant(),r.getTimestamp(2)==null?null:r.getTimestamp(2).toInstant(),r.getTimestamp(3)==null?null:r.getTimestamp(3).toInstant()),session.id());
+                var rows=jdbc.query("SELECT id,consumed_at,revoked_at,expires_at FROM "+storage.refresh+" WHERE session_id=?",(r,n)->new Refresh(r.getObject(1,UUID.class),session.id(),r.getTimestamp(4).toInstant(),r.getTimestamp(2)==null?null:r.getTimestamp(2).toInstant(),r.getTimestamp(3)==null?null:r.getTimestamp(3).toInstant()),session.id());
                 var live=rows.stream().filter(r->r.consumedAt()==null && r.revokedAt()==null).toList();
                 if(live.size()!=1 || live.get(0).expiresAt().isAfter(session.absoluteExpiresAt()))return Optional.empty();
                 Set<UUID> consumed=new HashSet<>();rows.stream().filter(r->r.consumedAt()!=null).forEach(r->consumed.add(r.id()));
                 return Optional.of(new RefreshFamily(session.id(),live.get(0).id(),live.get(0).expiresAt(),consumed,RefreshFamily.State.ACTIVE));
             }
             public void insertSession(IdentitySession s) {
-                one(jdbc.update("INSERT INTO identity.auth_session(id,account_id,auth_version,created_at,absolute_expires_at,last_activity_at,idle_expires_at) VALUES (?,?,?,?,?,?,?)",s.id(),s.accountId(),s.authVersion(),stamp(s.createdAt()),stamp(s.absoluteExpiresAt()),stamp(s.lastActivityAt()),stamp(s.idleExpiresAt())));
+                one(jdbc.update("INSERT INTO "+storage.session+"(id,account_id,auth_version,created_at,absolute_expires_at,last_activity_at,idle_expires_at) VALUES (?,?,?,?,?,?,?)",s.id(),s.accountId(),s.authVersion(),stamp(s.createdAt()),stamp(s.absoluteExpiresAt()),stamp(s.lastActivityAt()),stamp(s.idleExpiresAt())));
             }
             public void insertRefresh(UUID id,UUID predecessor,IdentitySession s,byte[] hash,Instant now) {
-                one(jdbc.update("INSERT INTO identity.refresh_token(id,session_id,token_hash,predecessor_id,issued_at,expires_at) VALUES (?,?,?,?,?,?)",id,s.id(),hash,predecessor,stamp(now),stamp(s.absoluteExpiresAt())));
+                one(jdbc.update("INSERT INTO "+storage.refresh+"(id,session_id,token_hash,predecessor_id,issued_at,expires_at) VALUES (?,?,?,?,?,?)",id,s.id(),hash,predecessor,stamp(now),stamp(s.absoluteExpiresAt())));
             }
-            public void consumeRefresh(UUID id,Instant now) {one(jdbc.update("UPDATE identity.refresh_token SET consumed_at=? WHERE id=? AND consumed_at IS NULL AND revoked_at IS NULL AND expires_at>?",stamp(now),id,stamp(now)));}
+            public void consumeRefresh(UUID id,Instant now) {one(jdbc.update("UPDATE "+storage.refresh+" SET consumed_at=? WHERE id=? AND consumed_at IS NULL AND revoked_at IS NULL AND expires_at>?",stamp(now),id,stamp(now)));}
             public boolean revokeFamily(UUID id,Instant now) {
-                int session=jdbc.update("UPDATE identity.auth_session SET revoked_at=? WHERE id=? AND revoked_at IS NULL",stamp(now),id);
-                int tokens=jdbc.update("UPDATE identity.refresh_token SET revoked_at=? WHERE session_id=? AND revoked_at IS NULL",stamp(now),id);
+                int session=jdbc.update("UPDATE "+storage.session+" SET revoked_at=? WHERE id=? AND revoked_at IS NULL",stamp(now),id);
+                int tokens=jdbc.update("UPDATE "+storage.refresh+" SET revoked_at=? WHERE session_id=? AND revoked_at IS NULL",stamp(now),id);
                 return session>0 || tokens>0;
             }
             public void recordActivity(IdentitySession before,IdentitySession after) {
-                one(jdbc.update("UPDATE identity.auth_session SET last_activity_at=?,idle_expires_at=? WHERE id=? AND account_id=? AND auth_version=? AND revoked_at IS NULL AND last_activity_at=? AND idle_expires_at=? AND absolute_expires_at=?",
+                one(jdbc.update("UPDATE "+storage.session+" SET last_activity_at=?,idle_expires_at=? WHERE id=? AND account_id=? AND auth_version=? AND revoked_at IS NULL AND last_activity_at=? AND idle_expires_at=? AND absolute_expires_at=?",
                     stamp(after.lastActivityAt()),stamp(after.idleExpiresAt()),before.id(),before.accountId(),before.authVersion(),stamp(before.lastActivityAt()),stamp(before.idleExpiresAt()),stamp(before.absoluteExpiresAt())));
             }
             public void audit(UUID account,UUID request,String event,Instant now) {

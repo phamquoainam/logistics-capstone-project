@@ -40,7 +40,7 @@ class IdentityGrantApplicationTests {
 
     @BeforeEach void fixture() throws Exception {
         db = PostgresTestcontainersSupport.database(POSTGRES);
-        assertEquals(6, db.flyway("latest", SCOPE).migrate().migrationsExecuted);
+        assertEquals(7, db.flyway("latest", SCOPE).migrate().migrationsExecuted);
         account(A, "ACTIVE", List.of(ADMIN)); account(B, "ACTIVE", List.of(ADMIN)); account(T, "ACTIVE", List.of(GX));
         session(S, A); session(AS, B); session(TS, T);
         execute("INSERT INTO identity.refresh_token(id,session_id,token_hash,issued_at,expires_at) VALUES ('" + id(20) + "','" + TS + "',decode(repeat('01',32),'hex'),TIMESTAMPTZ '2026-10-21 00:00:00Z',TIMESTAMPTZ '2026-10-21 08:00:00Z')");
@@ -1575,7 +1575,7 @@ class IdentityGrantApplicationTests {
     @Test void authRateStorageFailureNeverProducesReservation()throws Exception{var source=org.mockito.Mockito.mock(javax.sql.DataSource.class);org.mockito.Mockito.when(source.getConnection()).thenThrow(new SQLException("SYNTHETIC_UNAVAILABLE","08006"));assertThrows(com.elogistic.backend.identity.internal.application.port.IdentityRateLimiter.Unavailable.class,()->new JdbcIdentityRateLimiter(source,limiterKey()).reserve(loginQuota("same","ip")));assertEquals(0,scalar("SELECT count(*) FROM identity.rate_limit_attempt"));}
     @Test void authRateRetentionRemovesOnlyExpiredOwnedRows()throws Exception{limiter().reserve(loginQuota("expired","ip-old"));execute("UPDATE identity.rate_limit_attempt SET created_at=statement_timestamp()-INTERVAL '901 seconds',lease_expires_at=statement_timestamp()-INTERVAL '841 seconds',expires_at=statement_timestamp()-INTERVAL '1 second'");assertEquals(2,limiter().cleanup());limiter().reserve(loginQuota("live","ip-new"));assertEquals(0,limiter().cleanup());assertEquals(2,scalar("SELECT count(*) FROM identity.rate_limit_attempt"));assertEquals(3,scalar("SELECT count(*) FROM identity.user_account"));}
     @Test void authRateStoredIdentifiersAreHmacNotPlainSubjects()throws Exception{var q=loginQuota("private-subject","192.0.2.20");limiter().reserve(q);try(Connection c=db.runtimeConnection();PreparedStatement s=c.prepareStatement("SELECT subject_hash FROM identity.rate_limit_subject WHERE policy='LOGIN_ACCOUNT'");ResultSet r=s.executeQuery()){assertTrue(r.next());assertArrayEquals(limiter().identifier(q.getFirst()),r.getBytes(1));assertEquals(32,r.getBytes(1).length);}assertEquals(0,scalar("SELECT count(*) FROM information_schema.columns WHERE table_schema='identity' AND table_name LIKE 'rate_limit_%' AND column_name IN ('username','password','ip','token','secret')"));}
-    @Test void authRateForwardV6PreservesEarlierMigrationChecksumsAndData()throws Exception{Database other=PostgresTestcontainersSupport.database(POSTGRES);assertEquals(5,other.flyway("5",SCOPE).migrate().migrationsExecuted);var before=Arrays.stream(other.flyway("5",SCOPE).info().applied()).map(m->m.getChecksum()).toList();assertEquals(1,other.flyway("latest",SCOPE).migrate().migrationsExecuted);other.flyway("latest",SCOPE).validate();assertEquals(0,other.flyway("latest",SCOPE).migrate().migrationsExecuted);assertEquals(before,Arrays.stream(other.flyway("latest",SCOPE).info().applied()).limit(5).map(m->m.getChecksum()).toList());}
+    @Test void authRateForwardV6PreservesEarlierMigrationChecksumsAndData()throws Exception{Database other=PostgresTestcontainersSupport.database(POSTGRES);assertEquals(5,other.flyway("5",SCOPE).migrate().migrationsExecuted);var before=Arrays.stream(other.flyway("5",SCOPE).info().applied()).map(m->m.getChecksum()).toList();assertEquals(1,other.flyway("6",SCOPE).migrate().migrationsExecuted);other.flyway("6",SCOPE).validate();assertEquals(0,other.flyway("6",SCOPE).migrate().migrationsExecuted);assertEquals(before,Arrays.stream(other.flyway("6",SCOPE).info().applied()).limit(5).map(m->m.getChecksum()).toList());}
     @Test void authBrowserBindingRejectsWrongFamilyRevocationAndExpiry()throws Exception{var browser=new JdbcIdentityBrowserState(outboxDataSource());var c=browser.rebind(null,S);browser.verify(c.cookie(),c.token(),S,false);assertThrows(IdentityCommandFailure.class,()->browser.verify(c.cookie(),c.token(),AS,false));assertThrows(IdentityCommandFailure.class,()->browser.verify(c.cookie(),"x".repeat(43),S,false));var replacement=browser.rebind(c.cookie(),null);assertThrows(IdentityCommandFailure.class,()->browser.verify(c.cookie(),c.token(),S,false));browser.verify(replacement.cookie(),replacement.token(),null,false);execute("UPDATE identity.csrf_binding SET expires_at=clock_timestamp()-INTERVAL '1 second',created_at=clock_timestamp()-INTERVAL '2 seconds'");assertThrows(IdentityCommandFailure.class,()->browser.verify(replacement.cookie(),replacement.token(),null,false));}
     @Test void authBrowserPreauthCannotBecomeSessionFamilyAuthority()throws Exception{var browser=new JdbcIdentityBrowserState(outboxDataSource());var c=browser.issue(null,null);browser.verify(c.cookie(),c.token(),null,true);assertThrows(IdentityCommandFailure.class,()->browser.verify(c.cookie(),c.token(),S,false));}
     private record BrowserFlow(jakarta.servlet.http.Cookie csrf,jakarta.servlet.http.Cookie refresh,String challenge){}
@@ -1606,5 +1606,116 @@ class IdentityGrantApplicationTests {
         for(String sql:List.of("UPDATE identity.rate_limit_attempt SET state='BYPASS'","UPDATE identity.rate_limit_attempt SET expires_at=created_at","UPDATE identity.rate_limit_attempt SET lease_expires_at=created_at+INTERVAL '61 seconds'","INSERT INTO identity.rate_limit_subject(policy,subject_hash) VALUES ('LOGIN_IP',decode('01','hex'))"))
             try(Connection c=db.runtimeConnection();Statement s=c.createStatement()){assertEquals("23514",assertThrows(SQLException.class,()->s.execute(sql)).getSQLState());}
         assertEquals(2,scalar("SELECT count(*) FROM identity.rate_limit_attempt"));
+    }
+
+    // Spec003 customer-purpose persistence/admission. Test-only admission ports here do not prove HTTP/TLS.
+    private static final String CUSTOMER_EMAIL="customer@example.invalid";
+    private void customerFixture(boolean keepSystemGrant)throws Exception {
+        sessionFixture();
+        try(Connection c=db.runtimeConnection();PreparedStatement q=c.prepareStatement("UPDATE identity.user_account SET email=? WHERE id=?")) {
+            q.setString(1,CUSTOMER_EMAIL);q.setObject(2,A);assertEquals(1,q.executeUpdate());
+        }
+        execute("INSERT INTO identity.customer_identifier VALUES ('"+id(901)+"','"+A+"','"+CUSTOMER_EMAIL+"',TIMESTAMPTZ '2026-10-21 00:00:00Z','ACTIVE',1)");
+        if(!keepSystemGrant)execute("DELETE FROM identity.account_grant WHERE account_id='"+A+"'");
+    }
+    private com.elogistic.backend.identity.api.IdentitySessionCommands customerSessions(Instant time) {
+        return com.elogistic.backend.identity.internal.application.IdentitySessions.customer(
+            new JdbcIdentitySessionStore(outboxDataSource(),IdentitySessionStorage.CUSTOMER),new ProtectedSessionCredentials(),
+            (operation,request,session,present)->{},Clock.fixed(time,ZoneOffset.UTC));
+    }
+    private com.elogistic.backend.identity.api.IdentitySessionCommands.Result customerLogin() {
+        return customerSessions(NOW).loginIdentity(new com.elogistic.backend.identity.api.IdentitySessionCommands.Login(CUSTOMER_EMAIL,SESSION_PASSWORD,REQUEST));
+    }
+    @Test void customerLoginUsesIndependentVerifiedBindingWithoutSystemGrant()throws Exception {
+        customerFixture(false);
+        try(var result=customerLogin()) {
+            assertEquals(A,result.access().accountId());assertTrue(result.user().grants().isEmpty());
+            assertEquals(1,scalar("SELECT count(*) FROM identity.customer_auth_session"));
+            assertEquals(1,scalar("SELECT count(*) FROM identity.customer_refresh_token WHERE octet_length(token_hash)=32"));
+            assertEquals(3,scalar("SELECT count(*) FROM identity.auth_session"));
+        }
+        sessionDenied(INVALID_CREDENTIALS,()->sessions(NOW).loginIdentity(new com.elogistic.backend.identity.api.IdentitySessionCommands.Login("fixture."+A,SESSION_PASSWORD,REQUEST)));
+    }
+    @Test void customerExactEmailAndCurrentSecurityMasterPreventStaleIndexAdmission()throws Exception {
+        customerFixture(false);
+        sessionDenied(INVALID_CREDENTIALS,()->customerSessions(NOW).loginIdentity(new com.elogistic.backend.identity.api.IdentitySessionCommands.Login("Customer@example.invalid",SESSION_PASSWORD,REQUEST)));
+        execute("UPDATE identity.user_account SET email='changed@example.invalid' WHERE id='"+A+"'");
+        sessionDenied(INVALID_CREDENTIALS,()->customerLogin());assertEquals(0,scalar("SELECT count(*) FROM identity.customer_auth_session"));
+    }
+    @Test void dualPurposeAccountRefreshCannotCrossCustomerAndSystemTables()throws Exception {
+        customerFixture(true);
+        try(var customer=customerLogin();var system=sessionLogin()) {
+            byte[] customerRaw=customer.refreshToken(),systemRaw=system.refreshToken();
+            try(var customerCommand=sessionToken(customerRaw);var systemCommand=sessionToken(systemRaw)) {
+                sessionDenied(SESSION_INVALID,()->sessions(NOW).refreshIdentity(customerCommand));
+                sessionDenied(SESSION_INVALID,()->customerSessions(NOW).refreshIdentity(systemCommand));
+            }finally {Arrays.fill(customerRaw,(byte)0);Arrays.fill(systemRaw,(byte)0);}
+            assertEquals(1,scalar("SELECT count(*) FROM identity.customer_auth_session WHERE revoked_at IS NULL"));
+            assertEquals(4,scalar("SELECT count(*) FROM identity.auth_session WHERE revoked_at IS NULL"));
+        }
+    }
+    @Test void customerRefreshReplayCommitsOnlyCustomerFamilyRevocation()throws Exception {
+        customerFixture(true);
+        try(var login=customerLogin()) {
+            byte[] raw=login.refreshToken();
+            try(var first=sessionToken(raw);var replay=sessionToken(raw);var next=customerSessions(NOW.plusSeconds(1)).refreshIdentity(first)) {
+                sessionDenied(REFRESH_REPLAY,()->customerSessions(NOW.plusSeconds(2)).refreshIdentity(replay));
+                assertEquals(1,scalar("SELECT count(*) FROM identity.customer_auth_session WHERE revoked_at IS NOT NULL"));
+                assertEquals(2,scalar("SELECT count(*) FROM identity.customer_refresh_token WHERE revoked_at IS NOT NULL"));
+                assertEquals(0,scalar("SELECT count(*) FROM identity.auth_session WHERE revoked_at IS NOT NULL"));
+            }finally {Arrays.fill(raw,(byte)0);}
+        }
+    }
+    @Test void identityVersionAndDisableInvalidateCustomerAdmissionImmediately()throws Exception {
+        customerFixture(false);
+        try(var login=customerLogin()) {
+            byte[] raw=login.refreshToken();try(var command=sessionToken(raw)) {
+                execute("UPDATE identity.user_account SET auth_version=auth_version+1,version=version+1 WHERE id='"+A+"'");
+                sessionDenied(SESSION_INVALID,()->customerSessions(NOW.plusSeconds(1)).refreshIdentity(command));
+            }finally {Arrays.fill(raw,(byte)0);}
+        }
+        try(var login=customerLogin()) {
+            byte[] raw=login.refreshToken();try(var command=sessionToken(raw)) {
+                execute("UPDATE identity.user_account SET status='DISABLED',disabled_at=updated_at WHERE id='"+A+"'");
+                sessionDenied(SESSION_INVALID,()->customerSessions(NOW.plusSeconds(1)).refreshIdentity(command));
+            }finally {Arrays.fill(raw,(byte)0);}
+        }
+    }
+    @Test void customerCsrfHashesAndFamilyBindingCannotCrossSystemStore()throws Exception {
+        customerFixture(true);
+        var source=outboxDataSource();var customer=new JdbcIdentityBrowserState(source,IdentitySessionStorage.CUSTOMER);var system=new JdbcIdentityBrowserState(source);
+        try(var login=customerLogin()) {
+            var challenge=customer.rebind(null,login.access().sessionId());
+            customer.verify(challenge.cookie(),challenge.token(),login.access().sessionId(),false);
+            sessionDenied(CSRF_REJECTED,()->system.verify(challenge.cookie(),challenge.token(),login.access().sessionId(),false));
+            var old=system.rebind(null,S);sessionDenied(CSRF_REJECTED,()->customer.verify(old.cookie(),old.token(),S,false));
+            assertEquals(1,scalar("SELECT count(*) FROM identity.customer_csrf_binding WHERE octet_length(cookie_hash)=32 AND octet_length(challenge_hash)=32"));
+        }
+    }
+    private com.elogistic.backend.identity.internal.application.CustomerAdmissions customerAdmission(
+        javax.sql.DataSource source,com.elogistic.backend.identity.api.IdentitySessionCommands.AccessGrant access,Clock clock) {
+        return new com.elogistic.backend.identity.internal.application.CustomerAdmissions(
+            new JdbcIdentitySessionStore(source,IdentitySessionStorage.CUSTOMER),token->new com.elogistic.backend.identity.internal.application.port.CustomerAccessVerifier.Claim(
+                access.sessionId(),access.accountId(),access.authVersion(),access.issuedAt(),access.expiresAt()),(request,session)->{},clock);
+    }
+    @Test void customerFinalDeadlineRollsBackStagedWritesInOwnedTransaction()throws Exception {
+        customerFixture(false);try(var login=customerLogin()) {
+            var time=new java.util.concurrent.atomic.AtomicReference<>(NOW);Clock clock=new Clock(){public ZoneId getZone(){return ZoneOffset.UTC;}public Clock withZone(ZoneId z){return this;}public Instant instant(){return time.get();}};
+            var source=outboxDataSource();var app=customerAdmission(source,login.access(),clock);var jdbc=new org.springframework.jdbc.core.JdbcTemplate(source);
+            sessionDenied(SESSION_INVALID,()->app.execute("synthetic-verified-claim",REQUEST,Set.of(),context->{
+                jdbc.update("INSERT INTO identity.audit_entry(id,actor_id,target_id,event_type,source,reason,request_id,occurred_at) VALUES (?,?,?,'CUSTOMER_TEST_STAGED','SPEC003_TEST','Synthetic staged effect',?,?)",UUID.randomUUID(),A,A,REQUEST.toString(),Timestamp.from(NOW));
+                time.set(NOW.plusSeconds(900));return null;
+            }));
+            assertEquals(0,scalar("SELECT count(*) FROM identity.audit_entry WHERE event_type='CUSTOMER_TEST_STAGED'"));
+        }
+    }
+    @Test void customerMeaningfulActivityCommitsAfterBusinessAndContextCannotEscape()throws Exception {
+        customerFixture(false);try(var login=customerLogin()) {
+            var source=outboxDataSource();var app=customerAdmission(source,login.access(),Clock.fixed(NOW.plusSeconds(10),ZoneOffset.UTC));
+            var captured=app.execute("synthetic-verified-claim",REQUEST,Set.of(),context->{app.requireCurrent(context);app.meaningfulAction(context);return context;});
+            sessionDenied(SESSION_INVALID,()->app.requireCurrent(captured));
+            assertEquals(1,scalar("SELECT count(*) FROM identity.customer_auth_session WHERE last_activity_at=TIMESTAMPTZ '2026-10-21 00:05:10Z'"));
+            assertEquals(0,scalar("SELECT count(*) FROM identity.auth_session WHERE last_activity_at<>created_at"));
+        }
     }
 }

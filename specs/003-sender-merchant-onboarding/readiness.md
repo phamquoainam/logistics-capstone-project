@@ -2,7 +2,7 @@
 
 Checkpoint: **SPEC003_READY_FOR_OWNER_IMPLEMENTATION_AUTHORIZATION**.
 
-Business policy OWNER_APPROVED_WITH_REFINEMENTS; technical planning baseline OWNER_REVIEWED_PLANNING_BASELINE under [Owner technical approval and focused review](contracts/technical-review.md). Production implementation NOT_AUTHORIZED / NOT_STARTED. Runtime NOT_IMPLEMENTED / NOT_ACCEPTED. All61 scenarios remain PLANNED_NOT_EXECUTED.
+Business policy OWNER_APPROVED_WITH_REFINEMENTS; technical planning baseline OWNER_REVIEWED_PLANNING_BASELINE under [Owner technical approval and focused review](contracts/technical-review.md). Production implementation OWNER_AUTHORIZED_T003_01_12 / IN_PROGRESS under [full authorization and actual execution record](implementation.md). Runtime NOT_IMPLEMENTED / NOT_ACCEPTED. All61 scenarios remain PLANNED_NOT_EXECUTED.
 
 ## Definition of Ready assessment
 
@@ -16,9 +16,9 @@ Business policy OWNER_APPROVED_WITH_REFINEMENTS; technical planning baseline OWN
 | Public dependencies and reviewed workflow | SATISFIED:minimum004/005+clearance typed contracts, no cross-module SQL | Real minimum owners before dependent acceptance; missing facts fail closed |
 | Success/invalid/expired/duplicate/concurrent/failure fixtures | SATISFIED:61 declarative scenarios plus schema/security mutation controls | Java/PG/HTTP/browser execution, source/integration/merge-SHA evidence |
 
-**Planning review complete. The only Owner authorization needed to begin production coding is the single complete T003-01..12 package below and in technical-review.md.** No further general SDD/candidate review loop. Environment credentials/provider selection are first-use configuration gates, not blanket blockers for independent account/profile implementation. Runtime acceptance remains separate and cannot be inferred from this readiness status.
+**Planning review complete; the Owner has now granted the complete T003-01..12 production authorization. Execution proceeds without routine reapproval; tasks and runtime acceptance require actual evidence.** No further general SDD/candidate review loop. Environment credentials/provider selection are first-use configuration gates, not blanket blockers for independent account/profile implementation. Runtime acceptance remains separate and cannot be inferred from this readiness status.
 
-## Full-stack sequence after explicit production authorization
+## Full-stack sequence under explicit production authorization
 
 1. **T003-01** pin the reviewed planning contracts/fixtures; add exact customer Identity amendment preserving accepted SYSTEM/username/password/session behavior and add independent public admission tests.
 2. **T003-02** forward-only migration groups and owned adapters; PG18 empty/V6 upgrade/runtime privilege/old-build compatibility/constraints/races; no V1–V6 edits.
@@ -37,4 +37,4 @@ Business policy OWNER_APPROVED_WITH_REFINEMENTS; technical planning baseline OWN
 
 CAT-004/POL-005 implementation is required for successful BC159 defaults and its complete acceptance; missing/stale/unavailable must safely reject saving unsupported references. It does not stop independent enrollment/profile/application/member development once authorized. Closure without authoritative Orders/Finance/contract/claims clearance stays pending; no invented empty obligations. Delivery/storage/screening deployment configuration is required before real email/clean-file E2E, not an excuse to pretend mock adapters are production acceptance. Verified phone remains future channel-dependent; initial email login/recovery does not claim phone authentication. Destructive purge/public Internet deployment remain explicitly out of scope.
 
-Coverage and commands/evidence: [contract package](contracts/README.md), [coverage](contracts/coverage.csv), [static receipt](../../docs/reconciliation/v3/spec003-readiness-validation.md). No actual migrations, provider setup, services, browser or production BE/FE implementation are authorized by this docs task.
+Coverage and commands/evidence: [contract package](contracts/README.md), [coverage](contracts/coverage.csv), [static receipt](../../docs/reconciliation/v3/spec003-readiness-validation.md). The earlier docs-only boundary is superseded by the full implementation authorization recorded in implementation.md; rollout/purge/future PR merges/full acceptance remain separately gated.

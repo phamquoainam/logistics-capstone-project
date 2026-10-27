@@ -24,8 +24,13 @@ public final class JdbcIdentityGrantStore implements IdentityGrantStore {
     private static final long ADMIN_LOCK = 0x4944454e54495459L;
     private final JdbcTemplate jdbc;
     private final TransactionTemplate transaction;
+    private final IdentitySessionStorage storage;
 
     public JdbcIdentityGrantStore(DataSource dataSource) {
+        this(dataSource, IdentitySessionStorage.SYSTEM);
+    }
+    JdbcIdentityGrantStore(DataSource dataSource, IdentitySessionStorage storage) {
+        this.storage = Objects.requireNonNull(storage);
         jdbc = new JdbcTemplate(Objects.requireNonNull(dataSource));
         var manager = new JdbcTransactionManager(dataSource);
         manager.setValidateExistingTransaction(true);
@@ -47,7 +52,7 @@ public final class JdbcIdentityGrantStore implements IdentityGrantStore {
             jdbc.query("SELECT pg_advisory_xact_lock(?)", (rs, row) -> 0, ADMIN_LOCK);
         }
         public Optional<UUID> sessionAccount(UUID id) {
-            return jdbc.query("SELECT account_id FROM identity.auth_session WHERE id=?",
+            return jdbc.query("SELECT account_id FROM " + storage.session + " WHERE id=?",
                 (r, n) -> r.getObject(1, UUID.class), id).stream().findFirst();
         }
         public Optional<IdentityAccount> lockAccount(UUID id) {
@@ -64,7 +69,7 @@ public final class JdbcIdentityGrantStore implements IdentityGrantStore {
                     new ResourceScope(ResourceScope.Type.valueOf(r.getString(2)), r.getObject(3, UUID.class))), id));
         }
         public Optional<IdentitySession> lockSession(UUID id) {
-            return jdbc.query("SELECT * FROM identity.auth_session WHERE id=? FOR UPDATE", (r, n) ->
+            return jdbc.query("SELECT * FROM " + storage.session + " WHERE id=? FOR UPDATE", (r, n) ->
                 new IdentitySession(r.getObject("id", UUID.class), r.getObject("account_id", UUID.class),
                     r.getLong("auth_version"), instant(r, "created_at"), instant(r, "absolute_expires_at"),
                     instant(r, "last_activity_at"), instant(r, "idle_expires_at"), instant(r, "revoked_at")), id)
@@ -90,9 +95,9 @@ public final class JdbcIdentityGrantStore implements IdentityGrantStore {
                 after.id(), g.role().value(), g.scope().type().name(), g.scope().id(), Timestamp.from(now));
         }
         public void revokeSessions(UUID id, Instant now) {
-            jdbc.update("UPDATE identity.auth_session SET revoked_at=? WHERE account_id=? AND revoked_at IS NULL", Timestamp.from(now), id);
-            jdbc.update("UPDATE identity.refresh_token SET revoked_at=? WHERE session_id IN " +
-                "(SELECT id FROM identity.auth_session WHERE account_id=?) AND revoked_at IS NULL", Timestamp.from(now), id);
+            jdbc.update("UPDATE " + storage.session + " SET revoked_at=? WHERE account_id=? AND revoked_at IS NULL", Timestamp.from(now), id);
+            jdbc.update("UPDATE " + storage.refresh + " SET revoked_at=? WHERE session_id IN " +
+                "(SELECT id FROM " + storage.session + " WHERE account_id=?) AND revoked_at IS NULL", Timestamp.from(now), id);
         }
         public void appendAudit(UUID actor, UUID target, UUID request, String reason, Instant now) {
             jdbc.update("INSERT INTO identity.audit_entry(id,actor_id,target_id,event_type,source,reason,request_id,occurred_at) VALUES (?,?,?,'IDENTITY_GRANTS_REPLACED','IDENTITY_APPLICATION',?,?,?)",

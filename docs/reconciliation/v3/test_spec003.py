@@ -45,6 +45,8 @@ class Spec003PolicyTests(unittest.TestCase):
     def test_no_internet_rollout(self):self.mutate('privacy','internet_rollout',True)
     def test_no_fake_ready(self):self.mutate('review_gates','candidate_contract_acceptance','ACCEPTED')
     def test_no_unapproved_production_authorization(self):self.mutate('review_gates','implementation_authorization','AUTHORIZED')
+    def test_production_authorization_requires_explicit_owner_source(self):
+        self.data[0]['implementation_authority']='SELF_APPROVED';self.assertTrue(v.errors(*self.data))
     def test_planning_review_requires_owner_source(self):
         self.data[0]['review_authority']='SELF_APPROVED';self.assertTrue(v.errors(*self.data))
     def test_review_cannot_drop_operation_or_tenant_guard(self):
