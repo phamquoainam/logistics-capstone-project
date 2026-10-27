@@ -8,7 +8,7 @@ import java.nio.charset.StandardCharsets;
 import javax.sql.DataSource;
 
 /** Only hashes of fresh high-entropy secrets. No browser cookie establishes a principal. */
-public final class JdbcIdentityBrowserState implements IdentityBrowserState {
+public final class JdbcIdentityBrowserState implements IdentityBrowserState,CustomerPreauthBrowserState {
     private final DataSource source;private final SecureRandom random=new SecureRandom();
     private final IdentitySessionStorage storage;
     public JdbcIdentityBrowserState(DataSource source){this(source,IdentitySessionStorage.SYSTEM);}
@@ -48,5 +48,14 @@ public final class JdbcIdentityBrowserState implements IdentityBrowserState {
             s.setQueryTimeout(2);s.setBytes(1,a);s.setBytes(2,b);
             try(ResultSet r=s.executeQuery()){if(!r.next()||(!login&&!Objects.equals(session,r.getObject(1,UUID.class))))throw invalid();}
         }catch(SQLException e){throw new IdentityRateLimiter.Unavailable();}
+    }
+    @Override public UUID requirePreauthentication(String cookie,String challenge){
+        if(storage!=IdentitySessionStorage.CUSTOMER)throw invalid();
+        byte[] a=hash(cookie),b=hash(challenge);
+        try(Connection c=source.getConnection();PreparedStatement s=c.prepareStatement("SELECT id FROM identity.customer_csrf_binding WHERE cookie_hash=? AND challenge_hash=? AND session_id IS NULL AND revoked_at IS NULL AND expires_at>clock_timestamp()")){
+            s.setQueryTimeout(2);s.setBytes(1,a);s.setBytes(2,b);
+            try(ResultSet r=s.executeQuery()){if(!r.next())throw invalid();return r.getObject(1,UUID.class);}
+        }catch(SQLException e){throw new IdentityRateLimiter.Unavailable();}
+        finally{Arrays.fill(a,(byte)0);Arrays.fill(b,(byte)0);}
     }
 }
