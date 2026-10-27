@@ -172,10 +172,14 @@ class ResourceAuthorityTests(unittest.TestCase):
                     self.assertTrue(self.errors())
                     resource['authoritative_owner']='merchant'
 
-    def test_retail_profile_unresolved_is_explicit(self):
+    def test_retail_profile_owner_refinement_is_explicit(self):
         errors, unresolved = v.ownership_errors(self.policy,self.declarations)
         self.assertEqual([], errors)
-        self.assertEqual(['retail_sender.business_profile:DATA-01'],unresolved)
+        self.assertEqual([],unresolved)
+        resource=next(r for r in self.policy['resources'] if r['family']=='retail_business')
+        self.assertEqual('customer_profile',resource['authoritative_owner'])
+        self.assertFalse(resource['requires_organization'])
+        self.assertFalse(resource['requires_membership'])
 
     def test_retail_profile_cannot_be_silently_assigned(self):
         resource = next(r for r in self.policy['resources'] if r['family']=='retail_business')
@@ -233,7 +237,15 @@ class ResourceAuthorityTests(unittest.TestCase):
             with self.subTest(path=path):
                 errors, unresolved=v.ownership_document_errors(self.policy,v.body(path))
                 self.assertEqual([],errors)
-                self.assertIn('retail_sender.business_profile:DATA-01',unresolved)
+                self.assertEqual([],unresolved)
+
+    def test_personal_profile_cannot_require_merchant_tenant(self):
+        resource=next(r for r in self.policy['resources'] if r['family']=='retail_business')
+        for field in ['requires_organization','requires_membership']:
+            with self.subTest(field=field):
+                resource[field]=True
+                self.assertTrue(self.errors())
+                resource[field]=False
 
     def test_original_bc134_design_and_db_task_regressions_rejected(self):
         import re

@@ -27,3 +27,7 @@ The pre-correction documents failed the new semantic gate: BC134 mapped Identity
 ## Limits (unchanged)
 
 Static checks prove structural preservation, traceability presence, ownership constraints, link integrity and honest planning status; they do not prove production API/DDL/security/business correctness. All future BC runtime evidence stays NOT_STARTED/NOT_VERIFIED.003 DoR remains blocked by the explicit technical Identity/data/policy/privacy contracts. Full portal acceptance remains NOT_STARTED. Existing Foundation/Identity partial status and known findings remain unchanged.
+
+## Later Owner DATA-01 refinement
+
+The BC134 correction results above describe PR31. The subsequent [six-decision Owner record](../../decisions/spec003-six-decisions.md) accepts customer_profile as the independent Retail Sender business authority, with no Merchant org/member prerequisite. The resource policy now distinguishes logical authority from physical module candidate; earlier UNRESOLVED evidence is historical, not the current policy disposition. [Current scoped validation](spec003-readiness-validation.md) records this readiness PR; accepted source protections and prior negative controls remain active.

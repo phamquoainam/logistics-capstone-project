@@ -1,6 +1,6 @@
 # Design 003 — sender-merchant-onboarding
 
-DESIGN_CANDIDATE / runtime NOT_IMPLEMENTED. [Spec](spec.md), [tasks](tasks.md).
+OWNER_REVIEWED_PLANNING_BASELINE / runtime NOT_IMPLEMENTED. See [focused technical review](contracts/technical-review.md). [Spec](spec.md), [tasks](tasks.md).
 
 ## Construction
 
@@ -8,11 +8,11 @@ BE: Customer onboarding phối hợp L002; Merchant application/legal evidence/m
 
 FE: Personal default/profile/application/status; Merchant context/profile/facilities/staff; pickup navigation L004; no Guest type chooser; source app/frontend/web, native app/frontend/shipper-mobile chỉ khi applicable.
 
-Data: merchant application/org/Merchant business profile/membership/delegation; Retail Sender business profile pending DATA-01 (candidate Merchant, chưa accepted); pickup data L004; Identity verified contacts/credentials; exact schema pending. Một artifact/chín domain; domain api/internal, workflow chỉ public API. Identity không phụ thuộc compile-time vòng sang Merchant; authority bridge phải được review trước code; không sửa ArchUnit để cho import nội bộ.
+Data: merchant application/org/Merchant business profile/membership/delegation; Retail Sender profile authority customer_profile (Owner DATA-01), independent of org/membership; physical candidate merchant module; pickup data L004; Identity verified contacts/credentials; exact schema pending. Một artifact/chín domain; domain api/internal, workflow chỉ public API. Identity không phụ thuộc compile-time vòng sang Merchant; authority bridge phải được review trước code; không sửa ArchUnit để cho import nội bộ.
 
 ## Quy tắc chung và evidence
 
-Canonical target documentation; NOT_STARTED/BLOCKED_FOR_IMPLEMENTATION. Không acceptance do promotion. Exact route/DTO/error/permission/schema: DECISION_REQUIRED trong contracts sau review; các khái niệm dưới đây không phải DDL hay wire field được tự duyệt.
+Canonical target documentation; NOT_STARTED/SPEC003_READY_FOR_OWNER_IMPLEMENTATION_AUTHORIZATION. Exact route/DTO/error/permission/schema follow the reviewed planning contracts and technical-review.md; no runtime acceptance, DDL or production authorization from documentation.
 
 Authority = current account/session + explicit permission + personal/org/branch/assignment/resource scope + current state/evidence; server recheck cả list, pagination, submit, replay và async recovery. Deny trước khi tiết lộ existence/receipt; không body actor/role/owner authority. Machine principal tách human; Recipient external; Guest không tạo online Shipment.
 
@@ -103,9 +103,9 @@ UI/channel: Public registration/verification/login → Personal default; action 
 
 ### DES-BC-135
 
-REQ-V3-BC-135: Quản lý hồ sơ, tên, liên hệ, trạng thái tài khoản. Backend application boundary: Spec003 điều phối self business profile/contact preferences; Retail Sender business-data owner chưa chốt DATA-01 (candidate Merchant); Identity security contacts authoritative; HTTP/machine/channel adapter gọi public API, không cross-module repository. Query lọc trước paging; command check current state tại commit.
+REQ-V3-BC-135: Quản lý hồ sơ, tên, liên hệ, trạng thái tài khoản. Backend application boundary: Spec003 điều phối self business profile/contact preferences; customer_profile sở hữu Retail Sender business profile độc lập org/membership theo Owner DATA-01; Identity security contacts authoritative; HTTP/machine/channel adapter gọi public API, không cross-module repository. Query lọc trước paging; command check current state tại commit.
 
-API cần: Quản lý hồ sơ, tên, liên hệ, trạng thái tài khoản; input validation, result tối thiểu, lỗi/conditional/recovery được duyệt trước code. Resource authority theo khai báo dưới đây; Retail Sender business profile vẫn UNRESOLVED / DATA-01, candidate Merchant chưa được chấp thuận. Identity giữ verified security contacts/account status; không suy ra Identity sở hữu business profile. Chưa thiết kế persistence business profile trước khi DATA-01 và schema/API được review.
+API cần: Quản lý hồ sơ, tên, liên hệ, trạng thái tài khoản; input validation, result tối thiểu, lỗi/conditional/recovery được duyệt trước code. Resource authority theo khai báo dưới đây; Retail Sender business profile authority customer_profile đã được Owner DATA-01 duyệt, không là Merchant tenant resource; physical candidate module merchant chỉ là vị trí kỹ thuật. Identity giữ verified security contacts/account status; không suy ra Identity sở hữu business profile. Schema/API candidate tại contracts/data-model.md và contracts/openapi.candidate.json cần acceptance trước code.
 
 UI/channel: Personal — Quản lý hồ sơ, tên, liên hệ, trạng thái tài khoản; action «Quản lý hồ sơ, tên, liên hệ, trạng thái tài khoản» có success/deny/recovery states. Authorization: Chỉ dữ liệu bản thân; thay đổi nhạy cảm cần xác minh; permission code DECISION_REQUIRED (no runtime allowlist expansion); PERSONAL_OWNER. Test fixtures riêng: valid R18, wrong personal/tenant, revoked scope, invalid state, duplicate/conflict/race nếu mutation, unavailable dependency; assert AC-BC-135-SUCCESS/DENY/RECOVERY và no PII leak. Consumer responsibilities giữ source owner; state change chỉ khi operation đã duyệt.
 
@@ -113,7 +113,7 @@ UI/channel: Personal — Quản lý hồ sơ, tên, liên hệ, trạng thái t�
 {
   "scope": "BC-135", "orchestrator": "spec003",
   "resources": [
-    {"resource_id": "retail_sender.business_profile", "authoritative_owner": null, "resolution": "UNRESOLVED", "decision": "DATA-01"},
+    {"resource_id": "retail_sender.business_profile", "authoritative_owner": "customer_profile", "resolution": "OWNER_POLICY_ACCEPTED", "decision": "DATA-01"},
     {"resource_id": "identity.security_contact", "authoritative_owner": "identity", "resolution": "DECLARED", "decision": null}
   ]
 }
@@ -187,3 +187,11 @@ Trace REQ-AB-ENTRY. Public/personal entry; BE/application: Public landing/regist
 ## DES-AB-CONTEXT
 
 Trace REQ-AB-CONTEXT. Context switch/profile/staff; BE/application: Accessible organizations only; active context indicator; partition/clear cache, cancel or ignore stale previous-context responses; preserve personal access after org rejection/revoke. Data DML giữ domain owner theo từng BC và cross-module contract, không duplicate master/projection authority. Contract result/errors/paging/version/key/permission reviewed before implement; wire/DB names not invented. Tests assert A→B switch cannot show A response in B; revoked org cleared and current request denied; personal still valid; current guard và failure/replay/recovery, no mock-only success.
+
+## Controlled technical design for final DoR review
+
+Owner six policies are recorded at [decision](../../docs/decisions/spec003-six-decisions.md). Use [exact API/DTO/errors](contracts/openapi.candidate.json), [authority/state/config](contracts/policy.json), [physical data candidates](contracts/data-model.md), [TX/recovery/privacy/UI contract](contracts/README.md) and [minimum owner contracts](contracts/minimum-dependencies.md). These detailed candidates supersede earlier per-capability generic “exact contract pending” placeholders; approval is still required, not another general design cycle.
+
+Physical proposal: distinct customer-profile and tenant aggregates within existing merchant.api/internal application/domain/infrastructure layers. No organization/membership FK or guard on customer_profile. Identity remains sole security master. New customer admission owns the coordinated transaction and rejects ambient callers; accepted existing session store/HTTP SYSTEM paths stay unchanged. Workflow composition only public APIs; direct Merchant→Pricing dependency and Identity→Merchant imports remain forbidden. Prototype/Demo source is not production acceptance.
+
+Typed per-capability declarations above use stable logical authority IDs. `authority_modules.customer_profile=merchant` is a physical placement candidate, not Merchant tenant authority. The exact13 CORE+DENY045 frontend/API/DB/test/task mappings are [coverage](contracts/coverage.csv). All production operation names/DTO/table/permission symbols in the candidate package await explicit acceptance; no SQL or code changed here.

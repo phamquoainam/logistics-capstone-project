@@ -1,0 +1,511 @@
+{
+  "schema_version": 1,
+  "status": "OWNER_REVIEWED_PLANNING_BASELINE",
+  "owner_policy": "OWNER-S003-SIX-2026-10-27",
+  "runtime_evidence": "NOT_IMPLEMENTED",
+  "decisions": {
+    "IAM-CUSTOMER-01": "OWNER_APPROVED_WITH_REFINEMENTS",
+    "IAM-CONTEXT-02": "OWNER_APPROVED_WITH_REFINEMENTS",
+    "IAM-INVITE-03": "OWNER_APPROVED_WITH_REFINEMENTS",
+    "POLICY-003-01": "OWNER_APPROVED_WITH_REFINEMENTS",
+    "DATA-01": "OWNER_APPROVED_WITH_REFINEMENTS",
+    "PRIVACY-01": "OWNER_APPROVED_WITH_REFINEMENTS"
+  },
+  "customer": {
+    "default_context": "PERSONAL",
+    "login_identifier": "VERIFIED_EMAIL",
+    "phone_authentication": false,
+    "phone_requirement": "FUTURE_VERIFIED_PHONE_CHANNEL_REQUIRED",
+    "public_grants": [],
+    "verification_hours": 24,
+    "recovery_minutes": 15,
+    "security_contact_reauthentication": true,
+    "security_master": "identity",
+    "session_storage": "IDENTITY_OWNED_CUSTOMER_TABLES_SEPARATE_FROM_SYSTEM",
+    "token_trust": "DISTINCT_CUSTOMER_ISSUER_AUDIENCE_KEYS",
+    "legacy_link": "AUTHENTICATED_SYSTEM_SUBJECT_AND_EMAIL_PROOF_ONLY",
+    "identifier_authority": "EXISTING_IDENTITY_ACCOUNT_VERIFIED_SECURITY_EMAIL",
+    "legacy_link_email": "EXACT_EXISTING_VERIFIED_SECURITY_EMAIL"
+  },
+  "profile": {
+    "authority": "customer_profile",
+    "physical_module_candidate": "merchant",
+    "requires_org": false,
+    "requires_membership": false,
+    "account_reference": "IMMUTABLE_IDENTITY_ACCOUNT_ID",
+    "can_change_security": false
+  },
+  "invitation": {
+    "hours": 72,
+    "single_use": true,
+    "recipient_bound": true,
+    "purpose": "MERCHANT_MEMBERSHIP",
+    "accept_identity_invitation_reuse": false,
+    "inviter_change": "INVALIDATE_PENDING",
+    "policy_change": "INVALIDATE_PENDING",
+    "resend": "REVOKE_PRIOR_PROOFS"
+  },
+  "transaction": {
+    "owner": "NEW_IDENTITY_CUSTOMER_ADMISSION",
+    "ambient_transaction": "REJECT",
+    "database": "SAME_POSTGRESQL_DATASOURCE",
+    "isolation": "READ_COMMITTED",
+    "lock_order": [
+      "IDENTITY_ADMINISTRATION",
+      "ACCOUNT_UUID_SORTED",
+      "SESSION_UUID_SORTED",
+      "MERCHANT_CONTROL",
+      "ORGANIZATION_UUID_SORTED",
+      "BUSINESS_KEY",
+      "RESOURCE_UUID_SORTED"
+    ],
+    "decision_point": "FINAL_LOCKED_AUTHORIZATION_BEFORE_COMMIT",
+    "revoke_first": "DENY_MUTATION",
+    "mutation_first": "PRESERVE_COMMIT",
+    "external_io": false,
+    "activation": "ATOMIC_OR_NO_ACTIVE_AUTHORITY",
+    "receipt_days": 7
+  },
+  "application": {
+    "entity_types": [
+      "COMPANY",
+      "HOUSEHOLD_BUSINESS"
+    ],
+    "resubmit": "NEW_IMMUTABLE_SUBMITTED_REVISION",
+    "review": "MANUAL_SANDBOX",
+    "self_review": false,
+    "owner_from": "LOCKED_VERIFIED_APPLICANT",
+    "last_owner": "ATOMIC_ELIGIBLE_REPLACEMENT_REQUIRED",
+    "recovery": "TWO_INDEPENDENT_SCOPED_BUSINESS_ADMINS",
+    "closure_missing_clearance": "KEEP_CLOSURE_REQUESTED"
+  },
+  "privacy": {
+    "max_file_bytes": 5242880,
+    "max_files": 5,
+    "media_types": [
+      "application/pdf",
+      "image/png",
+      "image/jpeg"
+    ],
+    "storage": "PRIVATE_QUARANTINE",
+    "scanner_unavailable": "DENY_ACCESS",
+    "purge_enabled": false,
+    "draft_days": 30,
+    "terminal_evidence_days": 90,
+    "audit_days": 365,
+    "retention_scope": "CAPSTONE_SANDBOX_ONLY",
+    "hold_exemptions": [
+      "ACTIVE_REVIEW",
+      "APPEAL",
+      "DISPUTE",
+      "LEGAL_HOLD",
+      "ADMIN_HOLD",
+      "ACTIVE_ORG_REFERENCE",
+      "OPEN_OBLIGATION",
+      "UNRESOLVED_RECOVERY"
+    ],
+    "delivery_success": "VERIFIED_DELIVERY_RECEIPT_OR_BOUND_PROOF",
+    "provider_accept_is_delivered": false,
+    "internet_rollout": false
+  },
+  "dependencies": {
+    "CAT-004": {
+      "owner": "L004",
+      "contract": "CatalogEligibility",
+      "fields": [
+        "serviceId",
+        "catalogVersion",
+        "coverageVersion",
+        "available",
+        "effectiveFrom",
+        "effectiveUntil"
+      ],
+      "missing": "DENY_DEFAULT_SAVE",
+      "stage": "BEFORE_BC159_FULL_ACCEPTANCE"
+    },
+    "POL-005": {
+      "owner": "L005",
+      "contract": "ServicePolicyEligibility",
+      "fields": [
+        "serviceId",
+        "policyVersion",
+        "supported",
+        "eligible",
+        "effectiveFrom",
+        "effectiveUntil"
+      ],
+      "missing": "DENY_DEFAULT_SAVE",
+      "stage": "BEFORE_BC159_FULL_ACCEPTANCE"
+    },
+    "CLOSE-OWNERS": {
+      "owner": "L006;L018;L005;L021",
+      "contract": "ClosureClearance",
+      "fields": [
+        "owner",
+        "organizationId",
+        "asOf",
+        "version",
+        "clear",
+        "obligationCount"
+      ],
+      "missing": "KEEP_CLOSURE_REQUESTED",
+      "stage": "BEFORE_SUCCESSFUL_CLOSURE_WITH_LIVE_DEPENDENCIES"
+    }
+  },
+  "states": {
+    "application": [
+      "DRAFT",
+      "SUBMITTED",
+      "UNDER_REVIEW",
+      "NEEDS_INFORMATION",
+      "APPROVED",
+      "REJECTED",
+      "WITHDRAWN"
+    ],
+    "organization": [
+      "ACTIVATION_PENDING",
+      "ACTIVE",
+      "SUSPENDED",
+      "CLOSURE_REQUESTED",
+      "CLOSED"
+    ],
+    "membership": [
+      "PENDING",
+      "ACTIVE",
+      "SUSPENDED",
+      "REVOKED"
+    ],
+    "invitation": [
+      "PENDING",
+      "ACCEPTED",
+      "REJECTED",
+      "EXPIRED",
+      "REVOKED"
+    ],
+    "ownership": [
+      "PENDING",
+      "ACCEPTED",
+      "EXPIRED",
+      "REVOKED"
+    ],
+    "evidence": [
+      "QUARANTINED",
+      "CLEAN",
+      "REJECTED",
+      "DELETION_PENDING",
+      "DELETED"
+    ],
+    "delivery": [
+      "QUEUED",
+      "SENDING",
+      "ACCEPTED_BY_PROVIDER",
+      "DELIVERED",
+      "RETRY_WAIT",
+      "FAILED",
+      "EXPIRED",
+      "BLOCKED"
+    ]
+  },
+  "transitions": {
+    "application": [
+      [
+        "DRAFT",
+        "SUBMITTED",
+        "submit"
+      ],
+      [
+        "SUBMITTED",
+        "UNDER_REVIEW",
+        "takeReview"
+      ],
+      [
+        "UNDER_REVIEW",
+        "NEEDS_INFORMATION",
+        "requestInformation"
+      ],
+      [
+        "NEEDS_INFORMATION",
+        "SUBMITTED",
+        "resubmitNewRevision"
+      ],
+      [
+        "UNDER_REVIEW",
+        "APPROVED",
+        "approveAtomicActivation"
+      ],
+      [
+        "UNDER_REVIEW",
+        "REJECTED",
+        "reject"
+      ],
+      [
+        "DRAFT",
+        "WITHDRAWN",
+        "withdraw"
+      ],
+      [
+        "SUBMITTED",
+        "WITHDRAWN",
+        "withdraw"
+      ],
+      [
+        "NEEDS_INFORMATION",
+        "WITHDRAWN",
+        "withdraw"
+      ]
+    ],
+    "organization": [
+      [
+        "ACTIVATION_PENDING",
+        "ACTIVE",
+        "finalizeConfirmedOwners"
+      ],
+      [
+        "ACTIVE",
+        "SUSPENDED",
+        "suspend"
+      ],
+      [
+        "SUSPENDED",
+        "ACTIVE",
+        "reinstate"
+      ],
+      [
+        "ACTIVE",
+        "CLOSURE_REQUESTED",
+        "requestClosure"
+      ],
+      [
+        "SUSPENDED",
+        "CLOSURE_REQUESTED",
+        "requestClosure"
+      ],
+      [
+        "CLOSURE_REQUESTED",
+        "CLOSED",
+        "closeWithClearance"
+      ]
+    ],
+    "membership": [
+      [
+        "PENDING",
+        "ACTIVE",
+        "acceptValidInvitation"
+      ],
+      [
+        "ACTIVE",
+        "SUSPENDED",
+        "suspend"
+      ],
+      [
+        "SUSPENDED",
+        "ACTIVE",
+        "reinstate"
+      ],
+      [
+        "ACTIVE",
+        "REVOKED",
+        "revokeOrLeave"
+      ],
+      [
+        "SUSPENDED",
+        "REVOKED",
+        "revokeOrLeave"
+      ]
+    ],
+    "invitation": [
+      [
+        "PENDING",
+        "ACCEPTED",
+        "accept"
+      ],
+      [
+        "PENDING",
+        "REJECTED",
+        "reject"
+      ],
+      [
+        "PENDING",
+        "EXPIRED",
+        "expire"
+      ],
+      [
+        "PENDING",
+        "REVOKED",
+        "revokeOrResendOrAuthorityChange"
+      ]
+    ],
+    "ownership": [
+      [
+        "PENDING",
+        "ACCEPTED",
+        "acceptAtomicTransferOrIndependentRecovery"
+      ],
+      [
+        "PENDING",
+        "EXPIRED",
+        "expire"
+      ],
+      [
+        "PENDING",
+        "REVOKED",
+        "revoke"
+      ]
+    ],
+    "evidence": [
+      [
+        "QUARANTINED",
+        "CLEAN",
+        "screenClean"
+      ],
+      [
+        "QUARANTINED",
+        "REJECTED",
+        "screenRejected"
+      ],
+      [
+        "CLEAN",
+        "DELETION_PENDING",
+        "approvedEligiblePurge"
+      ],
+      [
+        "REJECTED",
+        "DELETION_PENDING",
+        "approvedEligiblePurge"
+      ],
+      [
+        "DELETION_PENDING",
+        "DELETED",
+        "confirmedBlobDeletion"
+      ]
+    ],
+    "delivery": [
+      [
+        "QUEUED",
+        "SENDING",
+        "claimLease"
+      ],
+      [
+        "SENDING",
+        "ACCEPTED_BY_PROVIDER",
+        "providerAccept"
+      ],
+      [
+        "ACCEPTED_BY_PROVIDER",
+        "DELIVERED",
+        "verifiedDeliveryReceiptOrBoundProof"
+      ],
+      [
+        "SENDING",
+        "RETRY_WAIT",
+        "transientFailure"
+      ],
+      [
+        "RETRY_WAIT",
+        "SENDING",
+        "retryWithinDeadline"
+      ],
+      [
+        "SENDING",
+        "FAILED",
+        "permanentFailure"
+      ],
+      [
+        "QUEUED",
+        "EXPIRED",
+        "deadline"
+      ],
+      [
+        "RETRY_WAIT",
+        "EXPIRED",
+        "deadline"
+      ],
+      [
+        "SENDING",
+        "BLOCKED",
+        "keyOrAdapterUnavailable"
+      ],
+      [
+        "BLOCKED",
+        "RETRY_WAIT",
+        "operatorResolvedBeforeDeadline"
+      ]
+    ]
+  },
+  "roles": {
+    "PERSONAL": {
+      "permissions": [
+        "customer.profile.read",
+        "customer.profile.write",
+        "application.own"
+      ],
+      "scope": "SELF_IDENTITY_SUBJECT",
+      "assignable": []
+    },
+    "OWNER": {
+      "permissions": [
+        "org.read",
+        "org.legal.write",
+        "member.read",
+        "member.invite",
+        "member.manage",
+        "facility.write",
+        "defaults.write",
+        "ownership.transfer",
+        "org.closure.request"
+      ],
+      "scope": "CURRENT_ORG_AND_BRANCH",
+      "assignable": [
+        "MANAGER",
+        "OPERATOR"
+      ]
+    },
+    "MANAGER": {
+      "permissions": [
+        "org.read",
+        "member.read",
+        "member.invite",
+        "member.manage",
+        "facility.write",
+        "defaults.write"
+      ],
+      "scope": "EXPLICIT_DELEGATED_BRANCH_SUBSET",
+      "assignable": [
+        "OPERATOR"
+      ]
+    },
+    "OPERATOR": {
+      "permissions": [
+        "org.read",
+        "facility.read"
+      ],
+      "scope": "EXPLICIT_ASSIGNED_BRANCH",
+      "assignable": []
+    },
+    "BUSINESS_ADMIN": {
+      "permissions": [
+        "application.review",
+        "org.suspend",
+        "org.reinstate",
+        "org.close",
+        "ownership.recover"
+      ],
+      "scope": "OFFLINE_APPROVED_REVIEW_REGION",
+      "assignable": []
+    },
+    "IDENTITY_ADMIN_ONLY": {
+      "permissions": [],
+      "scope": "NO_BUSINESS_AUTHORITY",
+      "assignable": []
+    }
+  },
+  "review_gates": {
+    "candidate_contract_acceptance": "REVIEW_COMPLETE_UNDER_OWNER_CONDITIONAL_APPROVAL",
+    "implementation_authorization": "NOT_AUTHORIZED",
+    "spec_acceptance": "NOT_ACCEPTED",
+    "public_rollout": "NOT_AUTHORIZED",
+    "provider_storage_scanner_configuration": "REQUIRED_BEFORE_REAL_DELIVERY_UPLOAD_E2E",
+    "planning_gate": "SPEC003_READY_FOR_OWNER_IMPLEMENTATION_AUTHORIZATION"
+  },
+  "review_authority": "OWNER-S003-TECHNICAL-2026-10-27"
+}
