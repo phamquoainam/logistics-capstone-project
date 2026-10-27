@@ -31,6 +31,7 @@ def errors(policy,operations,fixtures,coverage):
     for group,fields in expected.items():
         for key,value in fields.items():check(policy.get(group,{}).get(key)==value,group+'.'+key)
     check(policy.get('customer',{}).get('session_storage')=='IDENTITY_OWNED_CUSTOMER_TABLES_SEPARATE_FROM_SYSTEM' and policy.get('customer',{}).get('token_trust')=='DISTINCT_CUSTOMER_ISSUER_AUDIENCE_KEYS','no customer/SYSTEM token or refresh confusion')
+    check(policy.get('customer',{}).get('identifier_authority')=='EXISTING_IDENTITY_ACCOUNT_VERIFIED_SECURITY_EMAIL' and policy.get('customer',{}).get('legacy_link_email')=='EXACT_EXISTING_VERIFIED_SECURITY_EMAIL','single authoritative security-contact master; no link-as-contact-change')
     check(policy.get('transaction',{}).get('lock_order')==['IDENTITY_ADMINISTRATION','ACCOUNT_UUID_SORTED','SESSION_UUID_SORTED','MERCHANT_CONTROL','ORGANIZATION_UUID_SORTED','BUSINESS_KEY','RESOURCE_UUID_SORTED'],'transaction.lock_order')
     check(set(policy.get('privacy',{}).get('hold_exemptions',[]))=={'ACTIVE_REVIEW','APPEAL','DISPUTE','LEGAL_HOLD','ADMIN_HOLD','ACTIVE_ORG_REFERENCE','OPEN_OBLIGATION','UNRESOLVED_RECOVERY'},'retention hold/reference safeguards')
     gates=policy.get('review_gates',{})

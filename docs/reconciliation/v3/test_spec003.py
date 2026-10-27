@@ -18,6 +18,8 @@ class Spec003PolicyTests(unittest.TestCase):
     def test_email_verification_required(self):self.mutate('customer','login_identifier','UNVERIFIED_PHONE')
     def test_no_cross_admission_via_shared_refresh_tables(self):self.mutate('customer','session_storage','SHARED_WITH_LEGACY_SYSTEM_LOOKUP')
     def test_customer_token_not_privileged_system_token(self):self.mutate('customer','token_trust','SAME_ACCEPTED_SYSTEM_AUDIENCE')
+    def test_identifier_index_not_second_verification_master(self):self.mutate('customer','identifier_authority','INDEPENDENT_IDENTIFIER_VERIFIED_FLAG')
+    def test_legacy_link_cannot_replace_security_contact(self):self.mutate('customer','legacy_link_email','ANY_NEW_EMAIL_PROOF')
     def test_recovery_deadline(self):self.mutate('customer','recovery_minutes',1440)
     def test_invitation_cannot_reuse_identity(self):self.mutate('invitation','accept_identity_invitation_reuse',True)
     def test_inviter_revoke_invalidates_pending(self):self.mutate('invitation','inviter_change','KEEP_ACTIVE')
