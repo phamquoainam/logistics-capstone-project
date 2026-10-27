@@ -8,7 +8,7 @@ Documentation baseline promoted by Owner authorization2026-10-27. Canonical targ
 |---|---|---|---|---|
 | 001 / L001 | [platform-foundation](001-platform-foundation/spec.md) | platform | none | PROTECTED_PARTIAL |
 | 002 / L002 | [identity-access](002-identity-access/spec.md) | identity | L001 | PROTECTED_PARTIAL |
-| 003 / L003 | [sender-merchant-onboarding](003-sender-merchant-onboarding/spec.md) | merchant | L002 | BLOCKED_FOR_IMPLEMENTATION |
+| 003 / L003 | [sender-merchant-onboarding](003-sender-merchant-onboarding/spec.md) | merchant | L002 | SPEC003_READY_FOR_OWNER_IMPLEMENTATION_AUTHORIZATION |
 | 004 / L004 | [address-coverage-service-catalog](004-address-coverage-service-catalog/spec.md) | merchant | L001, L003 | BLOCKED_FOR_IMPLEMENTATION |
 | 005 / L005 | [pricing-contracts-quotation](005-pricing-contracts-quotation/spec.md) | pricing | L004 | BLOCKED_FOR_IMPLEMENTATION |
 | 006 / L006 | [order-shipment-parcel-contract](006-order-shipment-parcel-contract/spec.md) | orders | L003, L004, L005 | BLOCKED_FOR_IMPLEMENTATION |

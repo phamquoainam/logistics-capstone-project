@@ -1,5 +1,6 @@
 """Mutation controls for the Owner-approved Spec003 refinements."""
 import copy
+import csv
 import unittest
 import validate_spec003 as v
 
@@ -43,6 +44,17 @@ class Spec003PolicyTests(unittest.TestCase):
     def test_smtp_acceptance_not_delivery(self):self.mutate('privacy','provider_accept_is_delivered',True)
     def test_no_internet_rollout(self):self.mutate('privacy','internet_rollout',True)
     def test_no_fake_ready(self):self.mutate('review_gates','candidate_contract_acceptance','ACCEPTED')
+    def test_no_unapproved_production_authorization(self):self.mutate('review_gates','implementation_authorization','AUTHORIZED')
+    def test_planning_review_requires_owner_source(self):
+        self.data[0]['review_authority']='SELF_APPROVED';self.assertTrue(v.errors(*self.data))
+    def test_review_cannot_drop_operation_or_tenant_guard(self):
+        with (v.PACKAGE/'operation-review.csv').open(encoding='utf-8',newline='') as f:review=list(csv.DictReader(f))
+        self.assertTrue(v.review_errors(self.data[1],self.data[3],review[:-1]))
+        next(r for r in review if r['operation_id']=='getReviewOwnerRecovery')['authorization']='SELF; assume reviewer role'
+        self.assertTrue(v.review_errors(self.data[1],self.data[3],review))
+    def test_unrelated_operation_cannot_hide_in_contract(self):
+        with (v.PACKAGE/'operation-review.csv').open(encoding='utf-8',newline='') as f:review=list(csv.DictReader(f))
+        review[0]['classification']='OUT_OF_SCOPE';self.assertTrue(v.review_errors(self.data[1],self.data[3],review))
     def test_cannot_drop_owned_core(self):
         self.data[3].pop();self.assertTrue(v.errors(*self.data))
     def test_bc045_stays_deny(self):

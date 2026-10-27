@@ -1,6 +1,6 @@
 # Spec 003 — sender-merchant-onboarding
 
-Alias lịch sử logical `L003`. CANONICAL_TARGET / NOT_STARTED / BLOCKED_FOR_IMPLEMENTATION. Owner accountable: `merchant`; từng BC giữ DML owner riêng.
+Alias lịch sử logical `L003`. CANONICAL_TARGET / NOT_STARTED / SPEC003_READY_FOR_OWNER_IMPLEMENTATION_AUTHORIZATION. Owner accountable: `merchant`; từng BC giữ DML owner riêng.
 
 ## Outcome và boundary
 
@@ -136,7 +136,7 @@ Các ID cũ là aliases nguồn, không đổi nghĩa hoặc coi mapping bằng 
 
 ## Quy tắc chung và evidence
 
-Canonical target documentation; NOT_STARTED/BLOCKED_FOR_IMPLEMENTATION. Không acceptance do promotion. Exact candidate route/DTO/error/permission/schema: contracts/openapi.candidate.json + policy.json + data-model.md; pending explicit technical acceptance, không là runtime authority.
+Canonical target documentation; NOT_STARTED/SPEC003_READY_FOR_OWNER_IMPLEMENTATION_AUTHORIZATION. Không acceptance do promotion. Exact candidate route/DTO/error/permission/schema: contracts/openapi.candidate.json + policy.json + data-model.md; reviewed planning baseline under contracts/technical-review.md, không là runtime authority; production implementation NOT_AUTHORIZED.
 
 Authority = current account/session + explicit permission + personal/org/branch/assignment/resource scope + current state/evidence; server recheck cả list, pagination, submit, replay và async recovery. Deny trước khi tiết lộ existence/receipt; không body actor/role/owner authority. Machine principal tách human; Recipient external; Guest không tạo online Shipment.
 
@@ -224,7 +224,7 @@ Required behavior: Accessible organizations only; active context indicator; part
 
 ## Owner six-decision closure and exact contract package
 
-[OWNER-S003-SIX-2026-10-27](../../docs/decisions/spec003-six-decisions.md) approves all six policy directions with refinements. [Contract package](contracts/README.md), [data model](contracts/data-model.md), [minimum dependencies](contracts/minimum-dependencies.md), [coverage](contracts/coverage.csv) and [DoR](readiness.md) are the concrete technical candidates for one scoped review. Production implementation remains NOT_AUTHORIZED/BLOCKED_FOR_IMPLEMENTATION.
+[OWNER-S003-SIX-2026-10-27](../../docs/decisions/spec003-six-decisions.md) approves all six policy directions with refinements. [Contract package](contracts/README.md), [data model](contracts/data-model.md), [minimum dependencies](contracts/minimum-dependencies.md), [coverage](contracts/coverage.csv) and [DoR](readiness.md) are the reviewed planning baseline under [focused technical review](contracts/technical-review.md). Checkpoint SPEC003_READY_FOR_OWNER_IMPLEMENTATION_AUTHORIZATION; production implementation remains NOT_AUTHORIZED and runtime NOT_IMPLEMENTED/NOT_ACCEPTED.
 
 - BR-S003-AUTH: verified email customer admission distinct SYSTEM; unverified phone never login/recovery authority; no public business/admin grants. Register→verify→activate→login→refresh→logout→recovery must be real.
 - BR-S003-SELF: customer_profile self scope is independent of organization/membership/approval; business contact updates cannot alter Identity verified security contacts/password/status/recovery destination.

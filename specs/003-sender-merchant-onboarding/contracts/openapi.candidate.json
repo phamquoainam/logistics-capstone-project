@@ -1,18 +1,18 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Spec003 controlled onboarding contract CANDIDATE",
-    "version": "0.1.0",
-    "description": "CANDIDATE_FOR_OWNER_REVIEW. No runtime/accepted-contract change. All new identifiers are proposals."
+    "title": "Spec003 controlled onboarding planning contract",
+    "version": "0.2.0",
+    "description": "Owner conditional technical approval completed by focused PR32 review. Planning baseline only; production implementation NOT_AUTHORIZED; runtime NOT_IMPLEMENTED / NOT_ACCEPTED. Existing accepted SYSTEM contracts unchanged."
   },
   "servers": [{"url": "/api/v1"}],
-  "x-status": "CANDIDATE_FOR_OWNER_REVIEW",
+  "x-status": "OWNER_REVIEWED_PLANNING_BASELINE",
   "security": [{"customerBearer": []}],
   "paths": {
     "/customer-auth/csrf": {
       "get": {
         "operationId": "getCustomerCsrf",
-        "summary": "getCustomerCsrf [CANDIDATE]",
+        "summary": "getCustomerCsrf",
         "tags": ["Customer Identity"],
         "security": [],
         "x-authority": "PREAUTH",
@@ -40,7 +40,7 @@
     "/customer-auth/enrollments": {
       "post": {
         "operationId": "enrollCustomer",
-        "summary": "enrollCustomer [CANDIDATE]",
+        "summary": "enrollCustomer",
         "tags": ["Customer Identity"],
         "security": [],
         "x-authority": "PREAUTH",
@@ -77,7 +77,7 @@
     "/customer-auth/verification-resend": {
       "post": {
         "operationId": "resendCustomerVerification",
-        "summary": "resendCustomerVerification [CANDIDATE]",
+        "summary": "resendCustomerVerification",
         "tags": ["Customer Identity"],
         "security": [],
         "x-authority": "PREAUTH",
@@ -111,7 +111,7 @@
     "/customer-auth/verifications": {
       "post": {
         "operationId": "verifyCustomerEmail",
-        "summary": "verifyCustomerEmail [CANDIDATE]",
+        "summary": "verifyCustomerEmail",
         "tags": ["Customer Identity"],
         "security": [],
         "x-authority": "PREAUTH",
@@ -144,7 +144,7 @@
     "/customer-auth/login": {
       "post": {
         "operationId": "loginCustomer",
-        "summary": "loginCustomer [CANDIDATE]",
+        "summary": "loginCustomer",
         "tags": ["Customer Identity"],
         "security": [],
         "x-authority": "PREAUTH",
@@ -176,7 +176,7 @@
     "/customer-auth/refresh": {
       "post": {
         "operationId": "refreshCustomer",
-        "summary": "refreshCustomer [CANDIDATE]",
+        "summary": "refreshCustomer",
         "tags": ["Customer Identity"],
         "security": [{"customerRefresh": []}],
         "x-authority": "REFRESH_FAMILY",
@@ -195,7 +195,7 @@
             "content": {"application/json": {"schema": {"$ref": "#/components/schemas/AccessSession"}}}
           },
           "400": {"$ref": "#/components/responses/Error400"},
-          "401": {"$ref": "#/components/responses/Error401"},
+          "401": {"$ref": "#/components/responses/RefreshError401"},
           "403": {"$ref": "#/components/responses/Error403"},
           "404": {"$ref": "#/components/responses/Error404"},
           "409": {"$ref": "#/components/responses/Error409"},
@@ -208,7 +208,7 @@
     "/customer-auth/logout": {
       "post": {
         "operationId": "logoutCustomer",
-        "summary": "logoutCustomer [CANDIDATE]",
+        "summary": "logoutCustomer",
         "tags": ["Customer Identity"],
         "security": [],
         "x-authority": "CSRF_SESSION_OR_PREAUTH",
@@ -237,7 +237,7 @@
     "/customer-auth/me": {
       "get": {
         "operationId": "getCustomerSubject",
-        "summary": "getCustomerSubject [CANDIDATE]",
+        "summary": "getCustomerSubject",
         "tags": ["Customer Identity"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -266,7 +266,7 @@
     "/customer-auth/recovery": {
       "post": {
         "operationId": "requestCustomerRecovery",
-        "summary": "requestCustomerRecovery [CANDIDATE]",
+        "summary": "requestCustomerRecovery",
         "tags": ["Customer Identity"],
         "security": [],
         "x-authority": "PREAUTH",
@@ -300,7 +300,7 @@
     "/customer-auth/recovery-confirm": {
       "post": {
         "operationId": "confirmCustomerRecovery",
-        "summary": "confirmCustomerRecovery [CANDIDATE]",
+        "summary": "confirmCustomerRecovery",
         "tags": ["Customer Identity"],
         "security": [],
         "x-authority": "PREAUTH",
@@ -337,7 +337,7 @@
     "/customer-auth/security-email-changes": {
       "post": {
         "operationId": "requestSecurityEmailChange",
-        "summary": "requestSecurityEmailChange [CANDIDATE]",
+        "summary": "requestSecurityEmailChange",
         "tags": ["Customer Identity"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -376,7 +376,7 @@
     "/customer-auth/security-email-confirmations": {
       "post": {
         "operationId": "confirmSecurityEmailChange",
-        "summary": "confirmSecurityEmailChange [CANDIDATE]",
+        "summary": "confirmSecurityEmailChange",
         "tags": ["Customer Identity"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -412,7 +412,7 @@
     "/customer-auth/reauthentication": {
       "post": {
         "operationId": "requestCustomerReauthentication",
-        "summary": "requestCustomerReauthentication [CANDIDATE]",
+        "summary": "requestCustomerReauthentication",
         "tags": ["Customer Identity"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -448,7 +448,7 @@
     "/customer-auth/owner-recovery-consents": {
       "post": {
         "operationId": "createOwnerRecoveryConsent",
-        "summary": "createOwnerRecoveryConsent [CANDIDATE]",
+        "summary": "createOwnerRecoveryConsent",
         "tags": ["Customer Identity"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -488,7 +488,7 @@
     "/customer/profile": {
       "get": {
         "operationId": "getCustomerProfile",
-        "summary": "getCustomerProfile [CANDIDATE]",
+        "summary": "getCustomerProfile",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -516,7 +516,7 @@
       },
       "put": {
         "operationId": "updateCustomerProfile",
-        "summary": "updateCustomerProfile [CANDIDATE]",
+        "summary": "updateCustomerProfile",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -556,14 +556,14 @@
     "/customer/contexts": {
       "get": {
         "operationId": "listCustomerContexts",
-        "summary": "listCustomerContexts [CANDIDATE]",
+        "summary": "listCustomerContexts",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
         "x-permission-candidate": "SELF",
         "x-current-authority-required": true,
         "x-idempotency": false,
-        "parameters": [],
+        "parameters": [{"$ref": "#/components/parameters/query_page"}, {"$ref": "#/components/parameters/query_size"}],
         "responses": {
           "200": {
             "description": "Candidate success after commit / authorized scoped read",
@@ -585,7 +585,7 @@
     "/customer/context-selection": {
       "post": {
         "operationId": "selectCustomerContext",
-        "summary": "selectCustomerContext [CANDIDATE]",
+        "summary": "selectCustomerContext",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -617,7 +617,7 @@
     "/customer/business-contact-proofs": {
       "post": {
         "operationId": "requestBusinessContactProof",
-        "summary": "requestBusinessContactProof [CANDIDATE]",
+        "summary": "requestBusinessContactProof",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -656,7 +656,7 @@
     "/customer/business-contact-confirmations": {
       "post": {
         "operationId": "confirmBusinessContactProof",
-        "summary": "confirmBusinessContactProof [CANDIDATE]",
+        "summary": "confirmBusinessContactProof",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -692,7 +692,7 @@
     "/merchant-applications": {
       "get": {
         "operationId": "listOwnApplications",
-        "summary": "listOwnApplications [CANDIDATE]",
+        "summary": "listOwnApplications",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -724,7 +724,7 @@
       },
       "post": {
         "operationId": "createApplicationDraft",
-        "summary": "createApplicationDraft [CANDIDATE]",
+        "summary": "createApplicationDraft",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -765,7 +765,7 @@
     "/merchant-applications/{applicationId}": {
       "get": {
         "operationId": "getOwnApplication",
-        "summary": "getOwnApplication [CANDIDATE]",
+        "summary": "getOwnApplication",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -793,7 +793,7 @@
       },
       "put": {
         "operationId": "updateApplicationDraft",
-        "summary": "updateApplicationDraft [CANDIDATE]",
+        "summary": "updateApplicationDraft",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -837,7 +837,7 @@
     "/merchant-applications/{applicationId}/submit": {
       "post": {
         "operationId": "submitApplication",
-        "summary": "submitApplication [CANDIDATE]",
+        "summary": "submitApplication",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -878,7 +878,7 @@
     "/merchant-applications/{applicationId}/resubmit": {
       "post": {
         "operationId": "resubmitApplication",
-        "summary": "resubmitApplication [CANDIDATE]",
+        "summary": "resubmitApplication",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -919,7 +919,7 @@
     "/merchant-applications/{applicationId}/withdrawal": {
       "post": {
         "operationId": "withdrawApplication",
-        "summary": "withdrawApplication [CANDIDATE]",
+        "summary": "withdrawApplication",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -960,7 +960,7 @@
     "/merchant-applications/{applicationId}/evidence": {
       "post": {
         "operationId": "uploadApplicationEvidence",
-        "summary": "uploadApplicationEvidence [CANDIDATE]",
+        "summary": "uploadApplicationEvidence",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -1004,7 +1004,7 @@
     "/merchant-applications/{applicationId}/evidence/{evidenceId}": {
       "get": {
         "operationId": "getApplicationEvidence",
-        "summary": "getApplicationEvidence [CANDIDATE]",
+        "summary": "getApplicationEvidence",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "APPLICANT_OR_REVIEWER",
@@ -1035,7 +1035,7 @@
       },
       "delete": {
         "operationId": "removeDraftEvidence",
-        "summary": "removeDraftEvidence [CANDIDATE]",
+        "summary": "removeDraftEvidence",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -1074,7 +1074,7 @@
     "/merchant-applications/{applicationId}/evidence/{evidenceId}/content": {
       "get": {
         "operationId": "downloadApplicationEvidence",
-        "summary": "downloadApplicationEvidence [CANDIDATE]",
+        "summary": "downloadApplicationEvidence",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "APPLICANT_OR_REVIEWER",
@@ -1110,7 +1110,7 @@
     "/business-review/applications": {
       "get": {
         "operationId": "listReviewApplications",
-        "summary": "listReviewApplications [CANDIDATE]",
+        "summary": "listReviewApplications",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "BUSINESS_ADMIN",
@@ -1144,7 +1144,7 @@
     "/business-review/applications/{applicationId}": {
       "get": {
         "operationId": "getReviewApplication",
-        "summary": "getReviewApplication [CANDIDATE]",
+        "summary": "getReviewApplication",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "BUSINESS_ADMIN",
@@ -1174,7 +1174,7 @@
     "/business-review/applications/{applicationId}/take-review": {
       "post": {
         "operationId": "takeApplicationReview",
-        "summary": "takeApplicationReview [CANDIDATE]",
+        "summary": "takeApplicationReview",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "BUSINESS_ADMIN",
@@ -1215,7 +1215,7 @@
     "/business-review/applications/{applicationId}/request-information": {
       "post": {
         "operationId": "requestApplicationInformation",
-        "summary": "requestApplicationInformation [CANDIDATE]",
+        "summary": "requestApplicationInformation",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "BUSINESS_ADMIN",
@@ -1256,7 +1256,7 @@
     "/business-review/applications/{applicationId}/approval": {
       "post": {
         "operationId": "approveApplication",
-        "summary": "approveApplication [CANDIDATE]",
+        "summary": "approveApplication",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "BUSINESS_ADMIN",
@@ -1297,7 +1297,7 @@
     "/business-review/applications/{applicationId}/rejection": {
       "post": {
         "operationId": "rejectApplication",
-        "summary": "rejectApplication [CANDIDATE]",
+        "summary": "rejectApplication",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "BUSINESS_ADMIN",
@@ -1338,7 +1338,7 @@
     "/merchant-organizations/{organizationId}": {
       "get": {
         "operationId": "getMerchantOrganization",
-        "summary": "getMerchantOrganization [CANDIDATE]",
+        "summary": "getMerchantOrganization",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -1368,7 +1368,7 @@
     "/merchant-organizations/{organizationId}/legal-profile": {
       "put": {
         "operationId": "updateMerchantLegalProfile",
-        "summary": "updateMerchantLegalProfile [CANDIDATE]",
+        "summary": "updateMerchantLegalProfile",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -1412,7 +1412,7 @@
     "/merchant-organizations/{organizationId}/legal-profile-revisions/{revisionId}": {
       "get": {
         "operationId": "getMerchantLegalProfileRevision",
-        "summary": "getMerchantLegalProfileRevision [CANDIDATE]",
+        "summary": "getMerchantLegalProfileRevision",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "OWNER_OR_REVIEWER",
@@ -1445,11 +1445,11 @@
     "/merchant-organizations/{organizationId}/legal-profile-evidence": {
       "post": {
         "operationId": "uploadMerchantLegalEvidence",
-        "summary": "uploadMerchantLegalEvidence [CANDIDATE]",
+        "summary": "uploadMerchantLegalEvidence",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
-        "x-authority": "CUSTOMER",
-        "x-permission-candidate": "org.legal.write",
+        "x-authority": "OWNER_OR_RECOVERY_REVIEWER",
+        "x-permission-candidate": "org.legal.write|ownership.recover",
         "x-current-authority-required": true,
         "x-idempotency": true,
         "parameters": [
@@ -1489,7 +1489,7 @@
     "/merchant-organizations/{organizationId}/legal-profile-evidence/{evidenceId}": {
       "get": {
         "operationId": "getMerchantLegalEvidence",
-        "summary": "getMerchantLegalEvidence [CANDIDATE]",
+        "summary": "getMerchantLegalEvidence",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "OWNER_OR_REVIEWER",
@@ -1522,7 +1522,7 @@
     "/merchant-organizations/{organizationId}/legal-profile-evidence/{evidenceId}/content": {
       "get": {
         "operationId": "downloadMerchantLegalEvidence",
-        "summary": "downloadMerchantLegalEvidence [CANDIDATE]",
+        "summary": "downloadMerchantLegalEvidence",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "OWNER_OR_REVIEWER",
@@ -1558,7 +1558,7 @@
     "/business-review/organizations/{organizationId}/legal-profile-revisions/{revisionId}/decision": {
       "post": {
         "operationId": "reviewMerchantLegalProfile",
-        "summary": "reviewMerchantLegalProfile [CANDIDATE]",
+        "summary": "reviewMerchantLegalProfile",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "BUSINESS_ADMIN",
@@ -1603,7 +1603,7 @@
     "/business-review/organizations/{organizationId}/suspension": {
       "post": {
         "operationId": "suspendMerchantOrganization",
-        "summary": "suspendMerchantOrganization [CANDIDATE]",
+        "summary": "suspendMerchantOrganization",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "BUSINESS_ADMIN",
@@ -1644,7 +1644,7 @@
     "/business-review/organizations/{organizationId}/reinstatement": {
       "post": {
         "operationId": "reinstateMerchantOrganization",
-        "summary": "reinstateMerchantOrganization [CANDIDATE]",
+        "summary": "reinstateMerchantOrganization",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "BUSINESS_ADMIN",
@@ -1685,7 +1685,7 @@
     "/business-review/organizations/{organizationId}/closure": {
       "post": {
         "operationId": "closeMerchantOrganization",
-        "summary": "closeMerchantOrganization [CANDIDATE]",
+        "summary": "closeMerchantOrganization",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "BUSINESS_ADMIN",
@@ -1726,7 +1726,7 @@
     "/merchant-organizations/{organizationId}/closure-request": {
       "post": {
         "operationId": "requestMerchantClosure",
-        "summary": "requestMerchantClosure [CANDIDATE]",
+        "summary": "requestMerchantClosure",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -1767,7 +1767,7 @@
     "/merchant-organizations/{organizationId}/members": {
       "get": {
         "operationId": "listMerchantMembers",
-        "summary": "listMerchantMembers [CANDIDATE]",
+        "summary": "listMerchantMembers",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -1802,7 +1802,7 @@
     "/merchant-organizations/{organizationId}/members/{membershipId}/grants": {
       "put": {
         "operationId": "replaceMerchantMemberGrants",
-        "summary": "replaceMerchantMemberGrants [CANDIDATE]",
+        "summary": "replaceMerchantMemberGrants",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -1844,7 +1844,7 @@
     "/merchant-organizations/{organizationId}/members/{membershipId}/suspension": {
       "post": {
         "operationId": "suspendMerchantMember",
-        "summary": "suspendMerchantMember [CANDIDATE]",
+        "summary": "suspendMerchantMember",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -1886,7 +1886,7 @@
     "/merchant-organizations/{organizationId}/members/{membershipId}/reinstatement": {
       "post": {
         "operationId": "reinstateMerchantMember",
-        "summary": "reinstateMerchantMember [CANDIDATE]",
+        "summary": "reinstateMerchantMember",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -1928,7 +1928,7 @@
     "/merchant-organizations/{organizationId}/members/{membershipId}/revocation": {
       "post": {
         "operationId": "revokeMerchantMember",
-        "summary": "revokeMerchantMember [CANDIDATE]",
+        "summary": "revokeMerchantMember",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -1970,7 +1970,7 @@
     "/merchant-organizations/{organizationId}/membership-leave": {
       "post": {
         "operationId": "leaveMerchantOrganization",
-        "summary": "leaveMerchantOrganization [CANDIDATE]",
+        "summary": "leaveMerchantOrganization",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -2009,7 +2009,7 @@
     "/merchant-organizations/{organizationId}/invitations": {
       "get": {
         "operationId": "listMerchantInvitations",
-        "summary": "listMerchantInvitations [CANDIDATE]",
+        "summary": "listMerchantInvitations",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -2042,7 +2042,7 @@
       },
       "post": {
         "operationId": "createMerchantInvitation",
-        "summary": "createMerchantInvitation [CANDIDATE]",
+        "summary": "createMerchantInvitation",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -2084,7 +2084,7 @@
     "/merchant-organizations/{organizationId}/invitations/{invitationId}/resend": {
       "post": {
         "operationId": "resendMerchantInvitation",
-        "summary": "resendMerchantInvitation [CANDIDATE]",
+        "summary": "resendMerchantInvitation",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -2126,7 +2126,7 @@
     "/merchant-organizations/{organizationId}/invitations/{invitationId}/revocation": {
       "post": {
         "operationId": "revokeMerchantInvitation",
-        "summary": "revokeMerchantInvitation [CANDIDATE]",
+        "summary": "revokeMerchantInvitation",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -2168,7 +2168,7 @@
     "/merchant-invitations/preview": {
       "post": {
         "operationId": "previewMerchantInvitation",
-        "summary": "previewMerchantInvitation [CANDIDATE]",
+        "summary": "previewMerchantInvitation",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -2200,7 +2200,7 @@
     "/merchant-invitations/acceptance": {
       "post": {
         "operationId": "acceptMerchantInvitation",
-        "summary": "acceptMerchantInvitation [CANDIDATE]",
+        "summary": "acceptMerchantInvitation",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -2237,7 +2237,7 @@
     "/merchant-invitations/rejection": {
       "post": {
         "operationId": "rejectMerchantInvitation",
-        "summary": "rejectMerchantInvitation [CANDIDATE]",
+        "summary": "rejectMerchantInvitation",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -2272,7 +2272,7 @@
     "/merchant-organizations/{organizationId}/facilities": {
       "get": {
         "operationId": "listMerchantFacilities",
-        "summary": "listMerchantFacilities [CANDIDATE]",
+        "summary": "listMerchantFacilities",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -2305,7 +2305,7 @@
       },
       "post": {
         "operationId": "createMerchantFacility",
-        "summary": "createMerchantFacility [CANDIDATE]",
+        "summary": "createMerchantFacility",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -2344,7 +2344,7 @@
     "/merchant-organizations/{organizationId}/facilities/{facilityId}": {
       "put": {
         "operationId": "updateMerchantFacility",
-        "summary": "updateMerchantFacility [CANDIDATE]",
+        "summary": "updateMerchantFacility",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -2386,7 +2386,7 @@
     "/merchant-organizations/{organizationId}/defaults": {
       "get": {
         "operationId": "getMerchantDefaults",
-        "summary": "getMerchantDefaults [CANDIDATE]",
+        "summary": "getMerchantDefaults",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -2414,7 +2414,7 @@
       },
       "put": {
         "operationId": "updateMerchantDefaults",
-        "summary": "updateMerchantDefaults [CANDIDATE]",
+        "summary": "updateMerchantDefaults",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -2455,7 +2455,7 @@
     "/merchant-organizations/{organizationId}/owner-transfers": {
       "post": {
         "operationId": "proposeMerchantOwnerTransfer",
-        "summary": "proposeMerchantOwnerTransfer [CANDIDATE]",
+        "summary": "proposeMerchantOwnerTransfer",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -2497,7 +2497,7 @@
     "/merchant-organizations/{organizationId}/owner-transfers/{transferId}/acceptance": {
       "post": {
         "operationId": "acceptMerchantOwnerTransfer",
-        "summary": "acceptMerchantOwnerTransfer [CANDIDATE]",
+        "summary": "acceptMerchantOwnerTransfer",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -2542,7 +2542,7 @@
     "/merchant-organizations/{organizationId}/owner-transfers/{transferId}/revocation": {
       "post": {
         "operationId": "revokeMerchantOwnerTransfer",
-        "summary": "revokeMerchantOwnerTransfer [CANDIDATE]",
+        "summary": "revokeMerchantOwnerTransfer",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -2584,7 +2584,7 @@
     "/merchant-organizations/{organizationId}/owner-transfers/{transferId}": {
       "get": {
         "operationId": "getMerchantOwnerTransfer",
-        "summary": "getMerchantOwnerTransfer [CANDIDATE]",
+        "summary": "getMerchantOwnerTransfer",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -2617,7 +2617,7 @@
     "/business-review/organizations/{organizationId}/owner-recoveries": {
       "post": {
         "operationId": "requestMerchantOwnerRecovery",
-        "summary": "requestMerchantOwnerRecovery [CANDIDATE]",
+        "summary": "requestMerchantOwnerRecovery",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "BUSINESS_ADMIN",
@@ -2662,7 +2662,7 @@
     "/business-review/organizations/{organizationId}/owner-recoveries/{transferId}/approval": {
       "post": {
         "operationId": "approveMerchantOwnerRecovery",
-        "summary": "approveMerchantOwnerRecovery [CANDIDATE]",
+        "summary": "approveMerchantOwnerRecovery",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "BUSINESS_ADMIN",
@@ -2707,7 +2707,7 @@
     "/onboarding-receipts/{operationId}/{idempotencyKey}": {
       "get": {
         "operationId": "getOnboardingReceipt",
-        "summary": "getOnboardingReceipt [CANDIDATE]",
+        "summary": "getOnboardingReceipt",
         "tags": ["Onboarding"],
         "security": [{"customerBearer": []}],
         "x-authority": "CUSTOMER",
@@ -2744,7 +2744,7 @@
     "/customer-auth/legacy-links": {
       "post": {
         "operationId": "requestLegacyCustomerLink",
-        "summary": "requestLegacyCustomerLink [CANDIDATE]",
+        "summary": "requestLegacyCustomerLink",
         "tags": ["Customer Identity"],
         "security": [{"systemBearerForLegacyLink": []}],
         "x-authority": "SYSTEM_CURRENT_LINK_ONLY",
@@ -2780,7 +2780,7 @@
     "/customer-auth/legacy-link-confirmations": {
       "post": {
         "operationId": "confirmLegacyCustomerLink",
-        "summary": "confirmLegacyCustomerLink [CANDIDATE]",
+        "summary": "confirmLegacyCustomerLink",
         "tags": ["Customer Identity"],
         "security": [{"systemBearerForLegacyLink": []}],
         "x-authority": "SYSTEM_CURRENT_LINK_ONLY",
@@ -2811,6 +2811,69 @@
           "404": {"$ref": "#/components/responses/Error404"}
         },
         "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ProofInput"}}}}
+      }
+    },
+    "/business-review/organizations/{organizationId}": {
+      "get": {
+        "operationId": "getReviewOrganization",
+        "summary": "getReviewOrganization",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "BUSINESS_ADMIN",
+        "x-permission-candidate": "application.review",
+        "x-current-authority-required": true,
+        "x-idempotency": false,
+        "parameters": [{"name": "organizationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Organization"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        }
+      }
+    },
+    "/business-review/organizations/{organizationId}/owner-recoveries/{transferId}": {
+      "get": {
+        "operationId": "getReviewOwnerRecovery",
+        "summary": "getReviewOwnerRecovery",
+        "tags": ["Onboarding"],
+        "security": [{"customerBearer": []}],
+        "x-authority": "BUSINESS_ADMIN",
+        "x-permission-candidate": "ownership.recover",
+        "x-current-authority-required": true,
+        "x-idempotency": false,
+        "parameters": [
+          {"name": "organizationId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "transferId", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidate success after commit / authorized scoped read",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+              "X-Request-Id": {"$ref": "#/components/headers/XRequestId"},
+              "ETag": {"$ref": "#/components/headers/ETag"}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/OwnerRecoveryReview"}}}
+          },
+          "400": {"$ref": "#/components/responses/Error400"},
+          "401": {"$ref": "#/components/responses/Error401"},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "404": {"$ref": "#/components/responses/Error404"},
+          "429": {"$ref": "#/components/responses/Error429"},
+          "503": {"$ref": "#/components/responses/Error503"}
+        }
       }
     }
   },
@@ -3086,9 +3149,20 @@
           "submission": {"$ref": "#/components/schemas/ApplicationInput"},
           "reviewRegionId": {"type": "string", "format": "uuid"},
           "informationRequest": {"type": "string", "minLength": 1, "maxLength": 1000},
-          "draft": {"$ref": "#/components/schemas/ApplicationDraftInput"}
+          "draft": {"$ref": "#/components/schemas/ApplicationDraftInput"},
+          "organizationId": {"type": "string", "format": "uuid", "readOnly": true}
         },
-        "required": ["id", "applicantAccountId", "state", "revision", "version"]
+        "required": ["id", "applicantAccountId", "state", "revision", "version"],
+        "allOf": [
+          {
+            "if": {"properties": {"state": {"const": "APPROVED"}}, "required": ["state"]},
+            "then": {
+              "required": ["organizationId"],
+              "properties": {"organizationId": {"type": "string", "format": "uuid", "readOnly": true}}
+            },
+            "else": {"properties": {"organizationId": false}}
+          }
+        ]
       },
       "Reason": {
         "type": "object",
@@ -3115,9 +3189,24 @@
           "registeredName": {"type": "string", "minLength": 1, "maxLength": 240},
           "legalIdentifier": {"type": "string", "minLength": 1, "maxLength": 80},
           "policyVersion": {"type": "integer", "minimum": 1},
-          "version": {"type": "integer", "minimum": 1}
+          "version": {"type": "integer", "minimum": 1},
+          "entityType": {"type": "string", "enum": ["COMPANY", "HOUSEHOLD_BUSINESS"]},
+          "jurisdiction": {"type": "string", "minLength": 1, "maxLength": 64},
+          "registeredAddress": {"$ref": "#/components/schemas/Address"},
+          "operatingAddress": {"$ref": "#/components/schemas/Address"}
         },
-        "required": ["id", "state", "registeredName", "legalIdentifier", "policyVersion", "version"]
+        "required": [
+          "id",
+          "state",
+          "registeredName",
+          "legalIdentifier",
+          "policyVersion",
+          "version",
+          "entityType",
+          "jurisdiction",
+          "registeredAddress",
+          "operatingAddress"
+        ]
       },
       "LegalProfileInput": {
         "type": "object",
@@ -3176,13 +3265,31 @@
           "authorityVersion": {"type": "integer", "minimum": 1},
           "permissions": {"type": "array", "items": {"type": "string", "minLength": 1, "maxLength": 80}, "maxItems": 100}
         },
-        "required": ["kind", "authorityVersion", "permissions"]
+        "required": ["kind", "authorityVersion", "permissions"],
+        "allOf": [
+          {
+            "if": {"properties": {"kind": {"const": "MERCHANT"}}, "required": ["kind"]},
+            "then": {
+              "required": ["organizationId", "membershipId"],
+              "properties": {
+                "organizationId": {"type": "string", "format": "uuid"},
+                "membershipId": {"type": "string", "format": "uuid"}
+              }
+            },
+            "else": {"properties": {"organizationId": false, "membershipId": false}}
+          }
+        ]
       },
       "ContextList": {
         "type": "object",
         "additionalProperties": false,
-        "properties": {"items": {"type": "array", "items": {"$ref": "#/components/schemas/Context"}, "maxItems": 100}},
-        "required": ["items"]
+        "properties": {
+          "items": {"type": "array", "items": {"$ref": "#/components/schemas/Context"}, "maxItems": 100},
+          "page": {"type": "integer", "minimum": 0},
+          "size": {"type": "integer", "minimum": 1, "maximum": 100},
+          "hasNext": {"type": "boolean"}
+        },
+        "required": ["items", "page", "size", "hasNext"]
       },
       "ContextInput": {
         "type": "object",
@@ -3191,7 +3298,14 @@
           "kind": {"type": "string", "enum": ["PERSONAL", "MERCHANT"]},
           "organizationId": {"type": "string", "format": "uuid"}
         },
-        "required": ["kind"]
+        "required": ["kind"],
+        "allOf": [
+          {
+            "if": {"properties": {"kind": {"const": "MERCHANT"}}, "required": ["kind"]},
+            "then": {"required": ["organizationId"], "properties": {"organizationId": {"type": "string", "format": "uuid"}}},
+            "else": {"properties": {"organizationId": false}}
+          }
+        ]
       },
       "ScopeGrant": {
         "type": "object",
@@ -3337,9 +3451,11 @@
           "organizationId": {"type": "string", "format": "uuid"},
           "state": {"type": "string", "enum": ["PENDING", "ACCEPTED", "EXPIRED", "REVOKED"]},
           "expiresAt": {"type": "string", "format": "date-time"},
-          "version": {"type": "integer", "minimum": 1}
+          "version": {"type": "integer", "minimum": 1},
+          "targetAccountId": {"type": "string", "format": "uuid", "readOnly": true},
+          "requestorAccountId": {"type": "string", "format": "uuid", "readOnly": true}
         },
-        "required": ["id", "organizationId", "state", "expiresAt", "version"]
+        "required": ["id", "organizationId", "state", "expiresAt", "version", "targetAccountId", "requestorAccountId"]
       },
       "OwnershipAcceptance": {
         "type": "object",
@@ -3440,6 +3556,15 @@
           "hasNext": {"type": "boolean"}
         },
         "required": ["items", "page", "size", "hasNext"]
+      },
+      "OwnerRecoveryReview": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "recovery": {"$ref": "#/components/schemas/Ownership"},
+          "evidenceIds": {"type": "array", "items": {"type": "string", "format": "uuid"}, "minItems": 1, "maxItems": 5}
+        },
+        "required": ["recovery", "evidenceIds"]
       }
     },
     "responses": {
@@ -3701,6 +3826,27 @@
               "additionalProperties": false,
               "properties": {
                 "code": {"type": "string", "enum": ["UNSUPPORTED_MEDIA_TYPE"]},
+                "message": {"type": "string", "minLength": 1, "maxLength": 240},
+                "requestId": {"type": "string", "format": "uuid"}
+              },
+              "required": ["code", "message", "requestId"]
+            }
+          }
+        }
+      },
+      "RefreshError401": {
+        "description": "Invalid customer session or strict refresh-family replay (family revoked; no retry grace)",
+        "headers": {
+          "Cache-Control": {"$ref": "#/components/headers/CacheControl"},
+          "X-Request-Id": {"$ref": "#/components/headers/XRequestId"}
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "code": {"type": "string", "enum": ["SESSION_INVALID", "REFRESH_REPLAY"]},
                 "message": {"type": "string", "minLength": 1, "maxLength": 240},
                 "requestId": {"type": "string", "format": "uuid"}
               },

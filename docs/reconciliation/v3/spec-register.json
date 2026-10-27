@@ -88,9 +88,9 @@
     "frontend_scope": "Personal default/profile/application/status; Merchant context/profile/facilities/staff; pickup link only when L004 delivered; no Guest type chooser",
     "database_scope": "Identity security master; independent customer_profile boundary (no org/member prerequisite), physical candidate existing merchant module; separate Merchant application/org/member/settings aggregates; candidate data-model.md before DDL",
     "workflow": "Guest đăng ký cá nhân→Identity verify/login→personal workspace→Merchant apply→manual sandbox review→approval+Owner activation→context; rejection/revocation giữ personal access",
-    "blockers": "CANDIDATE_CONTRACT_ACCEPTANCE; IMPLEMENTATION_AUTHORIZATION; first-use real delivery/storage/scanner configuration; minimum CAT-004/POL-005 before BC159 full acceptance",
+    "blockers": "IMPLEMENTATION_AUTHORIZATION only before code; email/storage/scanner first-use configuration before respective E2E; real minimum CAT-004/POL-005 before BC159 full acceptance; missing closure facts stay pending",
     "approval_status": "CANONICAL_DOCUMENTATION_OWNER_AUTHORIZED",
-    "readiness": "BLOCKED_FOR_IMPLEMENTATION",
+    "readiness": "SPEC003_READY_FOR_OWNER_IMPLEMENTATION_AUTHORIZATION",
     "capability_ids": [
       "BC-007",
       "BC-008",
@@ -122,7 +122,7 @@
       "L005"
     ],
     "invariants": "Guest đăng ký cá nhân→Identity verify/login→personal→Merchant application/review/activation; revoke giữa form và submit phải deny; giữ BR-01–21 theo applicability; xem business-baseline.md.",
-    "contract_scope": "Candidate contracts at specs/003-sender-merchant-onboarding/contracts; Owner six policy refinements recorded, exact new names pending review; accepted contracts unchanged",
+    "contract_scope": "OWNER_REVIEWED_PLANNING_BASELINE at specs/003-sender-merchant-onboarding/contracts under OWNER-S003-TECHNICAL-2026-10-27;77 operations/55 HTTP+3 dependency schemas; accepted SYSTEM contracts unchanged",
     "authorization": "Current account/session AND explicit permission AND authoritative membership/resource/assignment scope AND current state/evidence; actors: R01,R02,R03,R04,R05,R16,R18,R19,R29",
     "idempotency_concurrency": "Mutation: stable key+scope/canonical payload; replay một effect, khác payload conflict; DB uniqueness/locking và rollback tests. Read-only không mutation. Identity Refresh strict single-flight/no blind retry.",
     "audit_privacy": "Actor/source/reason/correlation, append-only audit/evidence; PII tối thiểu, không secrets/raw payment trong log; retention D-V3-06.",

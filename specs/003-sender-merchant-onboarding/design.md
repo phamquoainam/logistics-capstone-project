@@ -1,6 +1,6 @@
 # Design 003 — sender-merchant-onboarding
 
-DESIGN_CANDIDATE / runtime NOT_IMPLEMENTED. [Spec](spec.md), [tasks](tasks.md).
+OWNER_REVIEWED_PLANNING_BASELINE / runtime NOT_IMPLEMENTED. See [focused technical review](contracts/technical-review.md). [Spec](spec.md), [tasks](tasks.md).
 
 ## Construction
 
@@ -12,7 +12,7 @@ Data: merchant application/org/Merchant business profile/membership/delegation; 
 
 ## Quy tắc chung và evidence
 
-Canonical target documentation; NOT_STARTED/BLOCKED_FOR_IMPLEMENTATION. Không acceptance do promotion. Exact route/DTO/error/permission/schema: DECISION_REQUIRED trong contracts sau review; các khái niệm dưới đây không phải DDL hay wire field được tự duyệt.
+Canonical target documentation; NOT_STARTED/SPEC003_READY_FOR_OWNER_IMPLEMENTATION_AUTHORIZATION. Exact route/DTO/error/permission/schema follow the reviewed planning contracts and technical-review.md; no runtime acceptance, DDL or production authorization from documentation.
 
 Authority = current account/session + explicit permission + personal/org/branch/assignment/resource scope + current state/evidence; server recheck cả list, pagination, submit, replay và async recovery. Deny trước khi tiết lộ existence/receipt; không body actor/role/owner authority. Machine principal tách human; Recipient external; Guest không tạo online Shipment.
 

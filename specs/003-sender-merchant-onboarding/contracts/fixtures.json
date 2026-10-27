@@ -149,7 +149,21 @@
       "registeredName": "synthetic",
       "legalIdentifier": "synthetic",
       "policyVersion": 1,
-      "version": 1
+      "version": 1,
+      "entityType": "COMPANY",
+      "jurisdiction": "synthetic",
+      "registeredAddress": {
+        "country": "VN",
+        "administrativeArea": "synthetic",
+        "locality": "synthetic",
+        "addressLine": "synthetic"
+      },
+      "operatingAddress": {
+        "country": "VN",
+        "administrativeArea": "synthetic",
+        "locality": "synthetic",
+        "addressLine": "synthetic"
+      }
     },
     "LegalProfileInput": {
       "registeredName": "synthetic",
@@ -213,7 +227,10 @@
       "permissions": []
     },
     "ContextList": {
-      "items": []
+      "items": [],
+      "page": 0,
+      "size": 20,
+      "hasNext": false
     },
     "ContextInput": {
       "kind": "PERSONAL"
@@ -312,7 +329,9 @@
       "organizationId": "11111111-1111-4111-8111-111111111111",
       "state": "PENDING",
       "expiresAt": "2026-10-27T00:00:00Z",
-      "version": 1
+      "version": 1,
+      "targetAccountId": "11111111-1111-4111-8111-111111111111",
+      "requestorAccountId": "22222222-2222-4222-8222-222222222222"
     },
     "OwnershipAcceptance": {
       "reauthenticationProofId": "11111111-1111-4111-8111-111111111111"
@@ -390,6 +409,20 @@
       "version": 1,
       "clear": false,
       "obligationCount": 0
+    },
+    "OwnerRecoveryReview": {
+      "recovery": {
+        "id": "11111111-1111-4111-8111-111111111111",
+        "organizationId": "11111111-1111-4111-8111-111111111111",
+        "state": "PENDING",
+        "expiresAt": "2026-10-27T00:00:00Z",
+        "version": 1,
+        "targetAccountId": "11111111-1111-4111-8111-111111111111",
+        "requestorAccountId": "22222222-2222-4222-8222-222222222222"
+      },
+      "evidenceIds": [
+        "11111111-1111-4111-8111-111111111111"
+      ]
     }
   },
   "scenarios": [
@@ -453,7 +486,7 @@
       "given": "current family and bound CSRF",
       "when": "single-flight refresh",
       "expected_status": 200,
-      "expected_effect": "one new refresh; strict replay family revoke",
+      "expected_effect": "one new refresh; strict replay family revoke Replay returns401 REFRESH_REPLAY and revokes family; lost rotation response requires fresh login, no blind retry.",
       "evidence": "PLANNED_NOT_EXECUTED"
     },
     {
@@ -516,7 +549,7 @@
       "given": "current orgA+orgB memberships",
       "when": "switch A to B with late A response",
       "expected_status": 200,
-      "expected_effect": "B scoped UI/cache; discard A response",
+      "expected_effect": "B scoped UI/cache; discard A response Page current contexts beyond100 memberships; MERCHANT requires org+membership, PERSONAL forbids both; reject mismatched body before authority use.",
       "evidence": "PLANNED_NOT_EXECUTED"
     },
     {
@@ -606,7 +639,7 @@
       "given": "two independent valid approvals same revision",
       "when": "concurrent commit",
       "expected_status": 200,
-      "expected_effect": "one org+initial Owner+outcome/audit/receipt; other409/412",
+      "expected_effect": "one org+initial Owner+outcome/audit/receipt; other409/412 Approved application exposes server-bound organizationId for reviewer navigation; never accepts it from client.",
       "evidence": "PLANNED_NOT_EXECUTED"
     },
     {
@@ -714,7 +747,7 @@
       "given": "two independent scoped reviewers/fresh representative proof",
       "when": "finalize recovery",
       "expected_status": 200,
-      "expected_effect": "one eligible Owner; no unilateral bypass",
+      "expected_effect": "one eligible Owner; no unilateral bypass Scoped reviewer can read org ETag and recovery target/requestor/evidence/version without membership; fresh recovery-only quarantine upload never grants ownership or self-approval. Wrong region/Identity-only denied; same requestor cannot approve.",
       "evidence": "PLANNED_NOT_EXECUTED"
     },
     {
@@ -903,7 +936,7 @@
       "given": "independent scoped reviewer and valid changed legal key",
       "when": "approve under old/new key locks",
       "expected_status": 200,
-      "expected_effect": "unique new key binding and reserved history; collision409/self-review404 leaves prior profile intact",
+      "expected_effect": "unique new key binding and reserved history; collision409/self-review404 leaves prior profile intact Review If-Match binds revision; stored base organization version rechecked under lock, stale base409; readback includes current approved legal fields.",
       "evidence": "PLANNED_NOT_EXECUTED"
     },
     {

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "CANDIDATE_FOR_OWNER_REVIEW",
+  "status": "OWNER_REVIEWED_PLANNING_BASELINE",
   "owner_policy": "OWNER-S003-SIX-2026-10-27",
   "runtime_evidence": "NOT_IMPLEMENTED",
   "decisions": {
@@ -500,10 +500,12 @@
     }
   },
   "review_gates": {
-    "candidate_contract_acceptance": "PENDING_OWNER_REVIEW",
+    "candidate_contract_acceptance": "REVIEW_COMPLETE_UNDER_OWNER_CONDITIONAL_APPROVAL",
     "implementation_authorization": "NOT_AUTHORIZED",
     "spec_acceptance": "NOT_ACCEPTED",
     "public_rollout": "NOT_AUTHORIZED",
-    "provider_storage_scanner_configuration": "REQUIRED_BEFORE_REAL_DELIVERY_UPLOAD_E2E"
-  }
+    "provider_storage_scanner_configuration": "REQUIRED_BEFORE_REAL_DELIVERY_UPLOAD_E2E",
+    "planning_gate": "SPEC003_READY_FOR_OWNER_IMPLEMENTATION_AUTHORIZATION"
+  },
+  "review_authority": "OWNER-S003-TECHNICAL-2026-10-27"
 }

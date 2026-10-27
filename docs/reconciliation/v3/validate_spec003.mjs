@@ -12,7 +12,7 @@ const dir=path.join(root,'specs/003-sender-merchant-onboarding/contracts');
 const read=name=>JSON.parse(fs.readFileSync(path.join(dir,name),'utf8'));
 const expected=new Set(`requestLegacyCustomerLink confirmLegacyCustomerLink getCustomerCsrf enrollCustomer resendCustomerVerification verifyCustomerEmail loginCustomer refreshCustomer logoutCustomer getCustomerSubject requestCustomerRecovery confirmCustomerRecovery requestSecurityEmailChange confirmSecurityEmailChange requestCustomerReauthentication createOwnerRecoveryConsent getCustomerProfile updateCustomerProfile listCustomerContexts selectCustomerContext requestBusinessContactProof confirmBusinessContactProof listOwnApplications createApplicationDraft getOwnApplication updateApplicationDraft submitApplication resubmitApplication withdrawApplication uploadApplicationEvidence getApplicationEvidence downloadApplicationEvidence removeDraftEvidence listReviewApplications getReviewApplication takeApplicationReview requestApplicationInformation approveApplication rejectApplication getMerchantOrganization updateMerchantLegalProfile getMerchantLegalProfileRevision uploadMerchantLegalEvidence getMerchantLegalEvidence downloadMerchantLegalEvidence reviewMerchantLegalProfile suspendMerchantOrganization reinstateMerchantOrganization closeMerchantOrganization requestMerchantClosure listMerchantMembers replaceMerchantMemberGrants suspendMerchantMember reinstateMerchantMember revokeMerchantMember leaveMerchantOrganization listMerchantInvitations createMerchantInvitation resendMerchantInvitation revokeMerchantInvitation previewMerchantInvitation acceptMerchantInvitation rejectMerchantInvitation listMerchantFacilities createMerchantFacility updateMerchantFacility getMerchantDefaults updateMerchantDefaults proposeMerchantOwnerTransfer acceptMerchantOwnerTransfer revokeMerchantOwnerTransfer getMerchantOwnerTransfer requestMerchantOwnerRecovery approveMerchantOwnerRecovery getOnboardingReceipt`.split(' '));
 function gate(doc,index){
- assert.equal(doc.openapi,'3.1.0');assert.equal(doc['x-status'],'CANDIDATE_FOR_OWNER_REVIEW');
+ assert.equal(doc.openapi,'3.1.0');assert.equal(doc['x-status'],'OWNER_REVIEWED_PLANNING_BASELINE');
  const resolve=x=>x?.$ref?x.$ref.split('/').slice(1).reduce((o,k)=>o[k],doc):x;
  const found=new Map();
  for(const [url,item] of Object.entries(doc.paths))for(const [method,op] of Object.entries(item)){
@@ -36,13 +36,19 @@ function gate(doc,index){
    if(status==='429')assert(resolve(response.headers['Retry-After'])?.required);
   }
  }
- assert.deepEqual(new Set(found.keys()),expected,'complete independent operation inventory');assert.equal(index.length,75);
+ assert.deepEqual(new Set(found.keys()),expected,'complete independent operation inventory');assert.equal(index.length,77);
  for(const id of ['approveApplication','requestMerchantOwnerRecovery','reviewMerchantLegalProfile'])assert.equal(found.get(id)['x-authority'],'BUSINESS_ADMIN');
  assert.equal(found.get('getCustomerProfile')['x-permission-candidate'],'SELF');
  assert(![...found.keys()].includes('acceptIdentityInvitation'));
+ for(const id of ['getReviewOrganization','getReviewOwnerRecovery'])assert.equal(found.get(id)['x-authority'],'BUSINESS_ADMIN');
+ assert.equal(found.get('getReviewOwnerRecovery')['x-permission-candidate'],'ownership.recover');
+ assert.deepEqual(resolve(found.get('refreshCustomer').responses['401']).content['application/json'].schema.properties.code.enum,['SESSION_INVALID','REFRESH_REPLAY']);
+ assert.equal(found.get('uploadMerchantLegalEvidence')['x-authority'],'OWNER_OR_RECOVERY_REVIEWER');
+ assert.equal(found.get('uploadMerchantLegalEvidence')['x-permission-candidate'],'org.legal.write|ownership.recover');
  return found;
 }
 const doc=read('openapi.candidate.json'),index=read('operation-index.json'),fixtures=read('fixtures.json');
+expected.add('getReviewOrganization');expected.add('getReviewOwnerRecovery');
 const operations=gate(doc,index);
 const ajv=new Ajv({strict:true,allErrors:true});formats(ajv);ajv.addFormat('binary',true);
 const dependencySchemas=read('dependency-schemas.json').$defs;
@@ -60,6 +66,20 @@ for(const [name,value] of Object.entries(fixtures.samples)){
 assert.equal(Object.keys(fixtures.samples).length,Object.keys(schemas).length-1,'every JSON DTO sample, binary upload separate');
 assert(validators.get('ApplicationDraftInput')({}),'empty draft before upload');
 assert(!validators.get('ApplicationInput')({}),'submission cannot be empty draft');
+const uuid=fixtures.samples.CustomerSubject.accountId;
+for(const [name,value] of [
+ ['ContextInput',{kind:'MERCHANT',organizationId:uuid}],
+ ['Context',{...fixtures.samples.Context,kind:'MERCHANT',organizationId:uuid,membershipId:uuid}],
+ ['Application',{...fixtures.samples.Application,state:'APPROVED',organizationId:uuid}],
+ ['ContextList',{items:[],page:5,size:20,hasNext:true}]
+]){assert(validators.get(name)(value),'valid scoped read '+name);sampleChecks++;}
+for(const [name,value] of [
+ ['ContextInput',{kind:'MERCHANT'}],['ContextInput',{kind:'PERSONAL',organizationId:uuid}],
+ ['Context',{...fixtures.samples.Context,kind:'MERCHANT'}],['Context',{...fixtures.samples.Context,organizationId:uuid}],
+ ['Context',{...fixtures.samples.Context,kind:'MERCHANT',organizationId:uuid}],
+ ['Application',{...fixtures.samples.Application,state:'APPROVED'}],['Application',{...fixtures.samples.Application,organizationId:uuid}],
+ ['ContextList',{items:[]}]
+]){assert(!validators.get(name)(value),'invalid scope/navigation '+name);negativeChecks++;}
 for(const [name,bad] of [['ProfileInput',{...fixtures.samples.ProfileInput,accountId:'client-actor'}],['EnrollmentInput',{...fixtures.samples.EnrollmentInput,accountType:'MERCHANT'}],['CustomerLogin',{phone:'0900000000',password:'synthetic'}],['MemberInput',{role:'OWNER',grants:[]}],['ApplicationInput',{...fixtures.samples.ApplicationInput,ownerAccountId:'client-owner'}]]){assert(!validators.get(name)(bad),'security injection '+name);negativeChecks++;}
 for(const name of ['EnrollmentInput','RecoveryConfirm']){
  const field=name==='EnrollmentInput'?'password':'newPassword';
@@ -76,6 +96,9 @@ for(const mutate of [
  d=>{d['x-status']='ACCEPTED';},
  d=>{d.paths['/customer/profile'].get.security=[];},
  d=>{d.paths['/customer-auth/verifications'].post.responses['204'].content={'application/json':{}};}
+ ,d=>{d.paths['/business-review/organizations/{organizationId}/owner-recoveries/{transferId}'].get['x-authority']='CUSTOMER';}
+ ,d=>{d.components.responses.RefreshError401.content['application/json'].schema.properties.code.enum=['SESSION_INVALID'];}
+ ,d=>{d.paths['/merchant-organizations/{organizationId}/legal-profile-evidence'].post['x-permission-candidate']='org.legal.write|member.manage';}
 ]){const changed=structuredClone(doc);mutate(changed);assert.throws(()=>gate(changed,index),'contract mutation rejected');mutationChecks++;}
 const harmless=structuredClone(doc);harmless.info.description+=' Reviewed candidate.';gate(harmless,index);
 console.log(JSON.stringify({status:'PASS',operations:operations.size,wire_schemas:Object.keys(doc.components.schemas).length,dependency_schemas:Object.keys(dependencySchemas).length,sample_checks:sampleChecks,negative_schema_checks:negativeChecks,contract_mutation_checks:mutationChecks,runtime_evidence:'NOT_IMPLEMENTED'}));

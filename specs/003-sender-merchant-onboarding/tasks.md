@@ -4,7 +4,7 @@ NOT_STARTED; thứ tự là contract/fixture → DB → BE/HTTP → UI/channel �
 
 ## REQ-V3-BC-007 / BC-007: Dùng tài khoản với Merchant membership ACTIVE
 
-- [ ] **T-BC-007-CONTRACT** — Review/accept exact candidate operation/DTO/error/authority mapping ở contracts/coverage.csv row BC-007 và OpenAPI; fixtures S003-CONTEXT;S003-REVOKE-FIRST;S003-MUTATION-FIRST;S003-SUSPEND. Không thay accepted002 contract im lặng.
+- [ ] **T-BC-007-CONTRACT** — Pin reviewed operation/DTO/error/authority mapping ở contracts/coverage.csv row BC-007 và OpenAPI; fixtures S003-CONTEXT;S003-REVOKE-FIRST;S003-MUTATION-FIRST;S003-SUSPEND. Không thay accepted002 contract im lặng.
 - [ ] **T-BC-007-DB** — Implement/reuse đúng boundary merchant.membership;identity.session theo contracts/data-model.md sau acceptance; read-only chứng minh no extra DDL. Forward-only/V1–V6 immutable; PG18 empty+upgrade+privilege+constraint/rollback/races theo row; không cross-module SQL.
 - [ ] **T-BC-007-BE** — Implement exact operations getCustomerSubject;listCustomerContexts;selectCustomerContext;getMerchantOrganization trong current backend qua approved public APIs. Áp dụng contracts/README.md admission/lock/decision-point/receipt/rollback protocol và candidate permission matrix đã accepted; không body actor/Owner authority.
 - [ ] **T-BC-007-UI** — Integrate current web pages /contexts;/merchant/:orgId/profile với exact typed client sau acceptance; loading/empty/field/error/pending/conflict/unknown/revoked, keyboard/focus/responsive, no mock success. Scope/cache/context rules theo contracts/README.md.
@@ -12,7 +12,7 @@ NOT_STARTED; thứ tự là contract/fixture → DB → BE/HTTP → UI/channel �
 
 ## REQ-V3-BC-008 / BC-008: Quản lý hồ sơ và nhân viên Merchant
 
-- [ ] **T-BC-008-CONTRACT** — Review/accept exact candidate operation/DTO/error/authority mapping ở contracts/coverage.csv row BC-008 và OpenAPI; fixtures S003-CONTEXT;S003-DELEGATION;S003-DOWNLOAD. Không thay accepted002 contract im lặng.
+- [ ] **T-BC-008-CONTRACT** — Pin reviewed operation/DTO/error/authority mapping ở contracts/coverage.csv row BC-008 và OpenAPI; fixtures S003-CONTEXT;S003-DELEGATION;S003-DOWNLOAD. Không thay accepted002 contract im lặng.
 - [ ] **T-BC-008-DB** — Implement/reuse đúng boundary merchant.organization;merchant.membership theo contracts/data-model.md sau acceptance; read-only chứng minh no extra DDL. Forward-only/V1–V6 immutable; PG18 empty+upgrade+privilege+constraint/rollback/races theo row; không cross-module SQL.
 - [ ] **T-BC-008-BE** — Implement exact operations getMerchantOrganization;listMerchantMembers trong current backend qua approved public APIs. Áp dụng contracts/README.md admission/lock/decision-point/receipt/rollback protocol và candidate permission matrix đã accepted; không body actor/Owner authority.
 - [ ] **T-BC-008-UI** — Integrate current web pages /merchant/:orgId/profile;/merchant/:orgId/staff với exact typed client sau acceptance; loading/empty/field/error/pending/conflict/unknown/revoked, keyboard/focus/responsive, no mock success. Scope/cache/context rules theo contracts/README.md.
@@ -21,7 +21,7 @@ NOT_STARTED; thứ tự là contract/fixture → DB → BE/HTTP → UI/channel �
 
 ## REQ-V3-BC-020 / BC-020: Truy cập qua membership Merchant
 
-- [ ] **T-BC-020-CONTRACT** — Review/accept exact candidate operation/DTO/error/authority mapping ở contracts/coverage.csv row BC-020 và OpenAPI; fixtures S003-CONTEXT;S003-REVOKE-FIRST. Không thay accepted002 contract im lặng.
+- [ ] **T-BC-020-CONTRACT** — Pin reviewed operation/DTO/error/authority mapping ở contracts/coverage.csv row BC-020 và OpenAPI; fixtures S003-CONTEXT;S003-REVOKE-FIRST. Không thay accepted002 contract im lặng.
 - [ ] **T-BC-020-DB** — Implement/reuse đúng boundary merchant.membership;identity.session theo contracts/data-model.md sau acceptance; read-only chứng minh no extra DDL. Forward-only/V1–V6 immutable; PG18 empty+upgrade+privilege+constraint/rollback/races theo row; không cross-module SQL.
 - [ ] **T-BC-020-BE** — Implement exact operations getCustomerSubject;listCustomerContexts;selectCustomerContext;getMerchantOrganization trong current backend qua approved public APIs. Áp dụng contracts/README.md admission/lock/decision-point/receipt/rollback protocol và candidate permission matrix đã accepted; không body actor/Owner authority.
 - [ ] **T-BC-020-UI** — Integrate current web pages /contexts;/merchant/:orgId/profile với exact typed client sau acceptance; loading/empty/field/error/pending/conflict/unknown/revoked, keyboard/focus/responsive, no mock success. Scope/cache/context rules theo contracts/README.md.
@@ -30,15 +30,15 @@ NOT_STARTED; thứ tự là contract/fixture → DB → BE/HTTP → UI/channel �
 
 ## REQ-V3-BC-032 / BC-032: Duyệt/giám sát Merchant theo policy
 
-- [ ] **T-BC-032-CONTRACT** — Review/accept exact candidate operation/DTO/error/authority mapping ở contracts/coverage.csv row BC-032 và OpenAPI; fixtures S003-SELF-REVIEW;S003-REPRESENTATIVE;S003-BUSINESS-DUPLICATE;S003-APPROVAL-RACE;S003-AUDIT-FAIL;S003-ACTIVATION-FAIL;S003-OWNER-RECOVERY;S003-CLOSURE;S003-SUSPEND. Không thay accepted002 contract im lặng.
+- [ ] **T-BC-032-CONTRACT** — Pin reviewed operation/DTO/error/authority mapping ở contracts/coverage.csv row BC-032 và OpenAPI; fixtures S003-SELF-REVIEW;S003-REPRESENTATIVE;S003-BUSINESS-DUPLICATE;S003-APPROVAL-RACE;S003-AUDIT-FAIL;S003-ACTIVATION-FAIL;S003-OWNER-RECOVERY;S003-CLOSURE;S003-SUSPEND. Không thay accepted002 contract im lặng.
 - [ ] **T-BC-032-DB** — Implement/reuse đúng boundary merchant.application;merchant.organization;merchant.membership;merchant.business_audit theo contracts/data-model.md sau acceptance; read-only chứng minh no extra DDL. Forward-only/V1–V6 immutable; PG18 empty+upgrade+privilege+constraint/rollback/races theo row; không cross-module SQL.
-- [ ] **T-BC-032-BE** — Implement exact operations listReviewApplications;getReviewApplication;takeApplicationReview;requestApplicationInformation;approveApplication;rejectApplication;suspendMerchantOrganization;reinstateMerchantOrganization;closeMerchantOrganization;requestMerchantOwnerRecovery;approveMerchantOwnerRecovery;createOwnerRecoveryConsent;reviewMerchantLegalProfile;getMerchantLegalProfileRevision trong current backend qua approved public APIs. Áp dụng contracts/README.md admission/lock/decision-point/receipt/rollback protocol và candidate permission matrix đã accepted; không body actor/Owner authority.
+- [ ] **T-BC-032-BE** — Implement exact operations getReviewOrganization;getReviewOwnerRecovery;uploadMerchantLegalEvidence;listReviewApplications;getReviewApplication;takeApplicationReview;requestApplicationInformation;approveApplication;rejectApplication;suspendMerchantOrganization;reinstateMerchantOrganization;closeMerchantOrganization;requestMerchantOwnerRecovery;approveMerchantOwnerRecovery;createOwnerRecoveryConsent;reviewMerchantLegalProfile;getMerchantLegalProfileRevision trong current backend qua approved public APIs. Áp dụng contracts/README.md admission/lock/decision-point/receipt/rollback protocol và candidate permission matrix đã accepted; không body actor/Owner authority.
 - [ ] **T-BC-032-UI** — Integrate current web pages /business-review/applications;/business-review/applications/:id;/business-review/organizations/:orgId với exact typed client sau acceptance; loading/empty/field/error/pending/conflict/unknown/revoked, keyboard/focus/responsive, no mock success. Scope/cache/context rules theo contracts/README.md.
 - [ ] **T-BC-032-VERIFY** — Execute S003-SELF-REVIEW;S003-REPRESENTATIVE;S003-BUSINESS-DUPLICATE;S003-APPROVAL-RACE;S003-AUDIT-FAIL;S003-ACTIVATION-FAIL;S003-OWNER-RECOVERY;S003-CLOSURE;S003-SUSPEND cùng AC-BC-032-SUCCESS/AC-BC-032-DENY/AC-BC-032-RECOVERY qua real unit/contract/HTTP/PG/browser tương ứng; dependencies IAM-CONTEXT-02;POLICY-003-01;CLOSE-OWNERS là thực, không fake. Trace TEST-V3-BC-032-FLOW với source/integration/merge SHA, commands/reports/digests và honest skips.
 
 ## REQ-V3-BC-045 / BC-045: Sửa nội dung nghiệp vụ Merchant
 
-- [ ] **T-BC-045-CONTRACT** — Review/accept exact candidate operation/DTO/error/authority mapping ở contracts/coverage.csv row BC-045 và OpenAPI; fixtures S003-ADMIN-DENY. Không thay accepted002 contract im lặng.
+- [ ] **T-BC-045-CONTRACT** — Pin reviewed operation/DTO/error/authority mapping ở contracts/coverage.csv row BC-045 và OpenAPI; fixtures S003-ADMIN-DENY. Không thay accepted002 contract im lặng.
 - [ ] **T-BC-045-DB** — Không DDL hoặc positive Merchant write cho DENY045; PG before/after chứng minh zero business effects.
 - [ ] **T-BC-045-BE** — Deny Identity Admin-only business command bằng production HTTP/current authority; không thêm positive capability.
 - [ ] **T-BC-045-UI** — Không business-edit action cho Identity Admin-only; direct request vẫn deny.
@@ -46,7 +46,7 @@ NOT_STARTED; thứ tự là contract/fixture → DB → BE/HTTP → UI/channel �
 
 ## REQ-V3-BC-132 / BC-132: Đi đến đăng ký một tài khoản khách hàng cá nhân
 
-- [ ] **T-BC-132-CONTRACT** — Review/accept exact candidate operation/DTO/error/authority mapping ở contracts/coverage.csv row BC-132 và OpenAPI; fixtures S003-ENROLL;S003-PHONE. Không thay accepted002 contract im lặng.
+- [ ] **T-BC-132-CONTRACT** — Pin reviewed operation/DTO/error/authority mapping ở contracts/coverage.csv row BC-132 và OpenAPI; fixtures S003-ENROLL;S003-PHONE. Không thay accepted002 contract im lặng.
 - [ ] **T-BC-132-DB** — Implement/reuse đúng boundary NO_BUSINESS_WRITE theo contracts/data-model.md sau acceptance; read-only chứng minh no extra DDL. Forward-only/V1–V6 immutable; PG18 empty+upgrade+privilege+constraint/rollback/races theo row; không cross-module SQL.
 - [ ] **T-BC-132-BE** — Implement exact operations getCustomerCsrf trong current backend qua approved public APIs. Áp dụng contracts/README.md admission/lock/decision-point/receipt/rollback protocol và candidate permission matrix đã accepted; không body actor/Owner authority.
 - [ ] **T-BC-132-UI** — Integrate current web pages /register;/login;/recover với exact typed client sau acceptance; loading/empty/field/error/pending/conflict/unknown/revoked, keyboard/focus/responsive, no mock success. Scope/cache/context rules theo contracts/README.md.
@@ -54,7 +54,7 @@ NOT_STARTED; thứ tự là contract/fixture → DB → BE/HTTP → UI/channel �
 
 ## REQ-V3-BC-133 / BC-133: Nộp và theo dõi đơn trở thành Merchant từ workspace cá nhân sau đăng nhập
 
-- [ ] **T-BC-133-CONTRACT** — Review/accept exact candidate operation/DTO/error/authority mapping ở contracts/coverage.csv row BC-133 và OpenAPI; fixtures S003-APPLICATION;S003-RESUBMIT;S003-WITHDRAW;S003-UPLOAD;S003-OVERSIZE;S003-MIME;S003-QUOTA-RACE;S003-SCANNER;S003-DOWNLOAD;S003-RETENTION;S003-UNKNOWN;S003-PRIVACY. Không thay accepted002 contract im lặng.
+- [ ] **T-BC-133-CONTRACT** — Pin reviewed operation/DTO/error/authority mapping ở contracts/coverage.csv row BC-133 và OpenAPI; fixtures S003-APPLICATION;S003-RESUBMIT;S003-WITHDRAW;S003-UPLOAD;S003-OVERSIZE;S003-MIME;S003-QUOTA-RACE;S003-SCANNER;S003-DOWNLOAD;S003-RETENTION;S003-UNKNOWN;S003-PRIVACY. Không thay accepted002 contract im lặng.
 - [ ] **T-BC-133-DB** — Implement/reuse đúng boundary merchant.application;merchant.application_revision;merchant.application_evidence theo contracts/data-model.md sau acceptance; read-only chứng minh no extra DDL. Forward-only/V1–V6 immutable; PG18 empty+upgrade+privilege+constraint/rollback/races theo row; không cross-module SQL.
 - [ ] **T-BC-133-BE** — Implement exact operations createApplicationDraft;listOwnApplications;getOwnApplication;updateApplicationDraft;submitApplication;resubmitApplication;withdrawApplication;uploadApplicationEvidence;getApplicationEvidence;downloadApplicationEvidence;removeDraftEvidence;getOnboardingReceipt trong current backend qua approved public APIs. Áp dụng contracts/README.md admission/lock/decision-point/receipt/rollback protocol và candidate permission matrix đã accepted; không body actor/Owner authority.
 - [ ] **T-BC-133-UI** — Integrate current web pages /personal/applications;/personal/applications/:id với exact typed client sau acceptance; loading/empty/field/error/pending/conflict/unknown/revoked, keyboard/focus/responsive, no mock success. Scope/cache/context rules theo contracts/README.md.
@@ -62,7 +62,7 @@ NOT_STARTED; thứ tự là contract/fixture → DB → BE/HTTP → UI/channel �
 
 ## REQ-V3-BC-134 / BC-134: Đăng ký/đăng nhập tài khoản cá nhân
 
-- [ ] **T-BC-134-CONTRACT** — Review/accept exact candidate operation/DTO/error/authority mapping ở contracts/coverage.csv row BC-134 và OpenAPI; fixtures S003-ENROLL;S003-DUPLICATE;S003-VERIFY;S003-PROOF-REPLAY;S003-PHONE;S003-LOGIN;S003-REFRESH;S003-LOGOUT;S003-RECOVERY;S003-ENUMERATION;S003-DELIVERY;S003-ABUSE;S003-DEPENDENCY-OUTAGE. Không thay accepted002 contract im lặng.
+- [ ] **T-BC-134-CONTRACT** — Pin reviewed operation/DTO/error/authority mapping ở contracts/coverage.csv row BC-134 và OpenAPI; fixtures S003-ENROLL;S003-DUPLICATE;S003-VERIFY;S003-PROOF-REPLAY;S003-PHONE;S003-LOGIN;S003-REFRESH;S003-LOGOUT;S003-RECOVERY;S003-ENUMERATION;S003-DELIVERY;S003-ABUSE;S003-DEPENDENCY-OUTAGE. Không thay accepted002 contract im lặng.
 - [ ] **T-BC-134-DB** — Implement/reuse đúng boundary identity.account;identity.customer_enrollment;identity.customer_identifier;identity.customer_proof;identity.session theo contracts/data-model.md sau acceptance; read-only chứng minh no extra DDL. Forward-only/V1–V6 immutable; PG18 empty+upgrade+privilege+constraint/rollback/races theo row; không cross-module SQL.
 - [ ] **T-BC-134-BE** — Implement exact operations getCustomerCsrf;enrollCustomer;resendCustomerVerification;verifyCustomerEmail;loginCustomer;refreshCustomer;logoutCustomer;getCustomerSubject;requestCustomerRecovery;confirmCustomerRecovery;requestCustomerReauthentication;requestLegacyCustomerLink;confirmLegacyCustomerLink trong current backend qua approved public APIs. Áp dụng contracts/README.md admission/lock/decision-point/receipt/rollback protocol và candidate permission matrix đã accepted; không body actor/Owner authority.
 - [ ] **T-BC-134-UI** — Integrate current web pages /register;/verify-email;/login;/recover;/recover/confirm với exact typed client sau acceptance; loading/empty/field/error/pending/conflict/unknown/revoked, keyboard/focus/responsive, no mock success. Scope/cache/context rules theo contracts/README.md.
@@ -83,7 +83,7 @@ NOT_STARTED; thứ tự là contract/fixture → DB → BE/HTTP → UI/channel �
 
 ## REQ-V3-BC-135 / BC-135: Quản lý hồ sơ, tên, liên hệ, trạng thái tài khoản
 
-- [ ] **T-BC-135-CONTRACT** — Review/accept exact candidate operation/DTO/error/authority mapping ở contracts/coverage.csv row BC-135 và OpenAPI; fixtures S003-PROFILE;S003-PROFILE-INJECTION;S003-EMAIL-CHANGE;S003-PG. Không thay accepted002 contract im lặng.
+- [ ] **T-BC-135-CONTRACT** — Pin reviewed operation/DTO/error/authority mapping ở contracts/coverage.csv row BC-135 và OpenAPI; fixtures S003-PROFILE;S003-PROFILE-INJECTION;S003-EMAIL-CHANGE;S003-PG. Không thay accepted002 contract im lặng.
 - [ ] **T-BC-135-DB** — Implement/reuse đúng boundary customer_profile;identity.security_contact theo contracts/data-model.md sau acceptance; read-only chứng minh no extra DDL. Forward-only/V1–V6 immutable; PG18 empty+upgrade+privilege+constraint/rollback/races theo row; không cross-module SQL.
 - [ ] **T-BC-135-BE** — Implement exact operations getCustomerProfile;updateCustomerProfile;requestSecurityEmailChange;confirmSecurityEmailChange;requestBusinessContactProof;confirmBusinessContactProof trong current backend qua approved public APIs. Áp dụng contracts/README.md admission/lock/decision-point/receipt/rollback protocol và candidate permission matrix đã accepted; không body actor/Owner authority.
 - [ ] **T-BC-135-UI** — Integrate current web pages /personal/profile;/personal/security với exact typed client sau acceptance; loading/empty/field/error/pending/conflict/unknown/revoked, keyboard/focus/responsive, no mock success. Scope/cache/context rules theo contracts/README.md.
@@ -101,7 +101,7 @@ NOT_STARTED; thứ tự là contract/fixture → DB → BE/HTTP → UI/channel �
 
 ## REQ-V3-BC-157 / BC-157: Cập nhật thông tin pháp nhân, tên cửa hàng, mã số thuế và cấu hình Merchant
 
-- [ ] **T-BC-157-CONTRACT** — Review/accept exact candidate operation/DTO/error/authority mapping ở contracts/coverage.csv row BC-157 và OpenAPI; fixtures S003-TRANSFER;S003-LAST-OWNER;S003-CLOSURE;S003-BUSINESS-DUPLICATE. Không thay accepted002 contract im lặng.
+- [ ] **T-BC-157-CONTRACT** — Pin reviewed operation/DTO/error/authority mapping ở contracts/coverage.csv row BC-157 và OpenAPI; fixtures S003-TRANSFER;S003-LAST-OWNER;S003-CLOSURE;S003-BUSINESS-DUPLICATE. Không thay accepted002 contract im lặng.
 - [ ] **T-BC-157-DB** — Implement/reuse đúng boundary merchant.organization;merchant.owner_change theo contracts/data-model.md sau acceptance; read-only chứng minh no extra DDL. Forward-only/V1–V6 immutable; PG18 empty+upgrade+privilege+constraint/rollback/races theo row; không cross-module SQL.
 - [ ] **T-BC-157-BE** — Implement exact operations getMerchantOrganization;updateMerchantLegalProfile;getMerchantLegalProfileRevision;proposeMerchantOwnerTransfer;getMerchantOwnerTransfer;acceptMerchantOwnerTransfer;revokeMerchantOwnerTransfer;requestMerchantClosure;uploadMerchantLegalEvidence;getMerchantLegalEvidence;downloadMerchantLegalEvidence trong current backend qua approved public APIs. Áp dụng contracts/README.md admission/lock/decision-point/receipt/rollback protocol và candidate permission matrix đã accepted; không body actor/Owner authority.
 - [ ] **T-BC-157-UI** — Integrate current web pages /merchant/:orgId/profile;/merchant/:orgId/ownership với exact typed client sau acceptance; loading/empty/field/error/pending/conflict/unknown/revoked, keyboard/focus/responsive, no mock success. Scope/cache/context rules theo contracts/README.md.
@@ -109,7 +109,7 @@ NOT_STARTED; thứ tự là contract/fixture → DB → BE/HTTP → UI/channel �
 
 ## REQ-V3-BC-158 / BC-158: Mời/thêm/khóa nhân viên, quản lý membership và quyền tổ chức
 
-- [ ] **T-BC-158-CONTRACT** — Review/accept exact candidate operation/DTO/error/authority mapping ở contracts/coverage.csv row BC-158 và OpenAPI; fixtures S003-INVITE;S003-INVITE-WRONG;S003-INVITE-EXPIRE;S003-INVITER-REVOKE;S003-INVITE-RESEND;S003-INVITE-RACE;S003-DELEGATION;S003-LAST-OWNER. Không thay accepted002 contract im lặng.
+- [ ] **T-BC-158-CONTRACT** — Pin reviewed operation/DTO/error/authority mapping ở contracts/coverage.csv row BC-158 và OpenAPI; fixtures S003-INVITE;S003-INVITE-WRONG;S003-INVITE-EXPIRE;S003-INVITER-REVOKE;S003-INVITE-RESEND;S003-INVITE-RACE;S003-DELEGATION;S003-LAST-OWNER. Không thay accepted002 contract im lặng.
 - [ ] **T-BC-158-DB** — Implement/reuse đúng boundary merchant.membership;merchant.member_grant;merchant.membership_invitation theo contracts/data-model.md sau acceptance; read-only chứng minh no extra DDL. Forward-only/V1–V6 immutable; PG18 empty+upgrade+privilege+constraint/rollback/races theo row; không cross-module SQL.
 - [ ] **T-BC-158-BE** — Implement exact operations listMerchantMembers;replaceMerchantMemberGrants;suspendMerchantMember;reinstateMerchantMember;revokeMerchantMember;leaveMerchantOrganization;listMerchantInvitations;createMerchantInvitation;resendMerchantInvitation;revokeMerchantInvitation;previewMerchantInvitation;acceptMerchantInvitation;rejectMerchantInvitation trong current backend qua approved public APIs. Áp dụng contracts/README.md admission/lock/decision-point/receipt/rollback protocol và candidate permission matrix đã accepted; không body actor/Owner authority.
 - [ ] **T-BC-158-UI** — Integrate current web pages /merchant/:orgId/staff;/merchant/:orgId/invitations với exact typed client sau acceptance; loading/empty/field/error/pending/conflict/unknown/revoked, keyboard/focus/responsive, no mock success. Scope/cache/context rules theo contracts/README.md.
@@ -117,7 +117,7 @@ NOT_STARTED; thứ tự là contract/fixture → DB → BE/HTTP → UI/channel �
 
 ## REQ-V3-BC-159 / BC-159: Quản lý nhiều cửa hàng/kho, cấu hình dịch vụ và quy tắc mặc định
 
-- [ ] **T-BC-159-CONTRACT** — Review/accept exact candidate operation/DTO/error/authority mapping ở contracts/coverage.csv row BC-159 và OpenAPI; fixtures S003-FACILITY;S003-DEFAULTS;S003-CATALOG-MISSING. Không thay accepted002 contract im lặng.
+- [ ] **T-BC-159-CONTRACT** — Pin reviewed operation/DTO/error/authority mapping ở contracts/coverage.csv row BC-159 và OpenAPI; fixtures S003-FACILITY;S003-DEFAULTS;S003-CATALOG-MISSING. Không thay accepted002 contract im lặng.
 - [ ] **T-BC-159-DB** — Implement/reuse đúng boundary merchant.facility;merchant.organization_defaults theo contracts/data-model.md sau acceptance; read-only chứng minh no extra DDL. Forward-only/V1–V6 immutable; PG18 empty+upgrade+privilege+constraint/rollback/races theo row; không cross-module SQL.
 - [ ] **T-BC-159-BE** — Implement exact operations listMerchantFacilities;createMerchantFacility;updateMerchantFacility;getMerchantDefaults;updateMerchantDefaults trong current backend qua approved public APIs. Áp dụng contracts/README.md admission/lock/decision-point/receipt/rollback protocol và candidate permission matrix đã accepted; không body actor/Owner authority.
 - [ ] **T-BC-159-UI** — Integrate current web pages /merchant/:orgId/facilities;/merchant/:orgId/defaults với exact typed client sau acceptance; loading/empty/field/error/pending/conflict/unknown/revoked, keyboard/focus/responsive, no mock success. Scope/cache/context rules theo contracts/README.md.
@@ -125,7 +125,7 @@ NOT_STARTED; thứ tự là contract/fixture → DB → BE/HTTP → UI/channel �
 
 ## REQ-V3-BC-166 / BC-166: Quản lý nhân sự và quyền hạn được Owner ủy quyền
 
-- [ ] **T-BC-166-CONTRACT** — Review/accept exact candidate operation/DTO/error/authority mapping ở contracts/coverage.csv row BC-166 và OpenAPI; fixtures S003-DELEGATION;S003-INVITER-REVOKE;S003-REVOKE-FIRST. Không thay accepted002 contract im lặng.
+- [ ] **T-BC-166-CONTRACT** — Pin reviewed operation/DTO/error/authority mapping ở contracts/coverage.csv row BC-166 và OpenAPI; fixtures S003-DELEGATION;S003-INVITER-REVOKE;S003-REVOKE-FIRST. Không thay accepted002 contract im lặng.
 - [ ] **T-BC-166-DB** — Implement/reuse đúng boundary merchant.membership;merchant.member_grant;merchant.membership_invitation theo contracts/data-model.md sau acceptance; read-only chứng minh no extra DDL. Forward-only/V1–V6 immutable; PG18 empty+upgrade+privilege+constraint/rollback/races theo row; không cross-module SQL.
 - [ ] **T-BC-166-BE** — Implement exact operations listMerchantMembers;replaceMerchantMemberGrants;createMerchantInvitation;resendMerchantInvitation;revokeMerchantInvitation;suspendMerchantMember;reinstateMerchantMember;revokeMerchantMember trong current backend qua approved public APIs. Áp dụng contracts/README.md admission/lock/decision-point/receipt/rollback protocol và candidate permission matrix đã accepted; không body actor/Owner authority.
 - [ ] **T-BC-166-UI** — Integrate current web pages /merchant/:orgId/staff;/merchant/:orgId/invitations với exact typed client sau acceptance; loading/empty/field/error/pending/conflict/unknown/revoked, keyboard/focus/responsive, no mock success. Scope/cache/context rules theo contracts/README.md.
@@ -133,7 +133,7 @@ NOT_STARTED; thứ tự là contract/fixture → DB → BE/HTTP → UI/channel �
 
 ## REQ-V3-BC-167 / BC-167: Điều hành cửa hàng/kho và cấu hình vận hành được giao
 
-- [ ] **T-BC-167-CONTRACT** — Review/accept exact candidate operation/DTO/error/authority mapping ở contracts/coverage.csv row BC-167 và OpenAPI; fixtures S003-FACILITY;S003-CATALOG-MISSING;S003-REVOKE-FIRST. Không thay accepted002 contract im lặng.
+- [ ] **T-BC-167-CONTRACT** — Pin reviewed operation/DTO/error/authority mapping ở contracts/coverage.csv row BC-167 và OpenAPI; fixtures S003-FACILITY;S003-CATALOG-MISSING;S003-REVOKE-FIRST. Không thay accepted002 contract im lặng.
 - [ ] **T-BC-167-DB** — Implement/reuse đúng boundary merchant.facility;merchant.organization_defaults theo contracts/data-model.md sau acceptance; read-only chứng minh no extra DDL. Forward-only/V1–V6 immutable; PG18 empty+upgrade+privilege+constraint/rollback/races theo row; không cross-module SQL.
 - [ ] **T-BC-167-BE** — Implement exact operations listMerchantFacilities;createMerchantFacility;updateMerchantFacility;getMerchantDefaults;updateMerchantDefaults trong current backend qua approved public APIs. Áp dụng contracts/README.md admission/lock/decision-point/receipt/rollback protocol và candidate permission matrix đã accepted; không body actor/Owner authority.
 - [ ] **T-BC-167-UI** — Integrate current web pages /merchant/:orgId/facilities;/merchant/:orgId/defaults với exact typed client sau acceptance; loading/empty/field/error/pending/conflict/unknown/revoked, keyboard/focus/responsive, no mock success. Scope/cache/context rules theo contracts/README.md.
@@ -148,11 +148,11 @@ NOT_STARTED; thứ tự là contract/fixture → DB → BE/HTTP → UI/channel �
 
 ## Complete implementation sequence — no production work authorized yet
 
-One Owner acceptance of the bounded candidate package and subsequent complete003 production authorization cover routine implementation steps below. No task is DONE from documentation/static fixtures. Per-BC CONTRACT tasks refer to this same approval, not repeated permission requests.
+The focused review under Owner conditional approval has closed the planning candidate gate (contracts/technical-review.md). One subsequent complete003 production authorization covers routine implementation steps below. No task is DONE from documentation/static fixtures. Per-BC CONTRACT tasks refer to this same approval, not repeated permission requests.
 
 | Task | Depends on | Concrete deliverable / gate |
 |---|---|---|
-| T003-01 | Owner candidate acceptance + production authorization | Implement new Identity customer contract/admission delta; SYSTEM/RS256/username/password/session/CSRF/Origin/limiter/full-target regressions unchanged; new purpose/email/phone-negative/receipt fixtures. |
+| T003-01 | Reviewed planning baseline + one production authorization | Implement new Identity customer contract/admission delta; SYSTEM/RS256/username/password/session/CSRF/Origin/limiter/full-target regressions unchanged; new purpose/email/phone-negative/receipt fixtures. |
 | T003-02 | T003-01 exact model | Forward migration groups per data-model.md; PG18 cold/V6 upgrade/privileges/uniqueness/old-build compatibility, no V1–V6 rewrite/repair. |
 | T003-03 | T003-01/02, approved email adapter config before real delivery | Enrollment24h/resend/verify/activate/login/refresh/logout/recovery15min; secure outbox/delivery/maintenance/reauth/contact-change; proof replay/expiry/abuse/enumeration negatives and real filter-chain/browser. |
 | T003-04 | T003-02/03, approved private storage/scanning before upload E2E | Independent customer_profile; partial draft then complete submit/new revision; business-contact attestation; scoped quarantine/screened evidence; quota races/private downloads; dry-run retention/holds, purge stays off. |

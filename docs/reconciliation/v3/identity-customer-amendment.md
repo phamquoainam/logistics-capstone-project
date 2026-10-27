@@ -1,6 +1,6 @@
 # CC-V3-IDENTITY-01 — controlled customer Identity amendment candidate
 
-Policy: OWNER_APPROVED_WITH_REFINEMENTS under [six decisions](../../decisions/spec003-six-decisions.md). Technical status: CANDIDATE_FOR_OWNER_REVIEW / NOT_IMPLEMENTED. Accepted002/ADR0009–0013/OpenAPI/V1–V6 stay unchanged and effective; this proposal does not silently amend them.
+Policy: OWNER_APPROVED_WITH_REFINEMENTS under [six decisions](../../decisions/spec003-six-decisions.md). Technical status: OWNER_REVIEWED_PLANNING_BASELINE / NOT_IMPLEMENTED under [focused technical review](../../../specs/003-sender-merchant-onboarding/contracts/technical-review.md). Production implementation NOT_AUTHORIZED. Accepted002/ADR0009–0013/OpenAPI/V1–V6 stay unchanged and effective; this proposal does not silently amend them.
 
 | Area | Accepted/current behavior retained | Exact proposed delta and review gate |
 |---|---|---|

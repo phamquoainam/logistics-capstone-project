@@ -446,8 +446,8 @@
     "request": "EvidenceUpload",
     "response": "LegalEvidence",
     "success": 201,
-    "authority": "CUSTOMER",
-    "permission": "org.legal.write",
+    "authority": "OWNER_OR_RECOVERY_REVIEWER",
+    "permission": "org.legal.write|ownership.recover",
     "versioned": false
   },
   {
@@ -822,6 +822,28 @@
     "success": 202,
     "authority": "SYSTEM_CURRENT_LINK_ONLY",
     "permission": "SELF",
+    "versioned": false
+  },
+  {
+    "operation_id": "getReviewOrganization",
+    "method": "get",
+    "path": "/business-review/organizations/{organizationId}",
+    "request": null,
+    "response": "Organization",
+    "success": 200,
+    "authority": "BUSINESS_ADMIN",
+    "permission": "application.review",
+    "versioned": false
+  },
+  {
+    "operation_id": "getReviewOwnerRecovery",
+    "method": "get",
+    "path": "/business-review/organizations/{organizationId}/owner-recoveries/{transferId}",
+    "request": null,
+    "response": "OwnerRecoveryReview",
+    "success": 200,
+    "authority": "BUSINESS_ADMIN",
+    "permission": "ownership.recover",
     "versioned": false
   }
 ]

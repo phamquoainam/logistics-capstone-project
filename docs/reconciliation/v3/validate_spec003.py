@@ -19,7 +19,7 @@ def errors(policy,operations,fixtures,coverage):
     problems=[]
     def check(ok,message):
         if not ok:problems.append(message)
-    check(policy.get('status')=='CANDIDATE_FOR_OWNER_REVIEW' and policy.get('runtime_evidence')=='NOT_IMPLEMENTED','no implicit technical/runtime acceptance')
+    check(policy.get('status')=='OWNER_REVIEWED_PLANNING_BASELINE' and policy.get('review_authority')=='OWNER-S003-TECHNICAL-2026-10-27' and policy.get('runtime_evidence')=='NOT_IMPLEMENTED','controlled planning approval; no runtime acceptance')
     check(policy.get('decisions')==dict.fromkeys(DECISIONS,'OWNER_APPROVED_WITH_REFINEMENTS'),'six approved policy dispositions')
     expected={
       'customer':dict(default_context='PERSONAL',login_identifier='VERIFIED_EMAIL',phone_authentication=False,public_grants=[],verification_hours=24,recovery_minutes=15,security_contact_reauthentication=True,security_master='identity'),
@@ -35,7 +35,7 @@ def errors(policy,operations,fixtures,coverage):
     check(policy.get('transaction',{}).get('lock_order')==['IDENTITY_ADMINISTRATION','ACCOUNT_UUID_SORTED','SESSION_UUID_SORTED','MERCHANT_CONTROL','ORGANIZATION_UUID_SORTED','BUSINESS_KEY','RESOURCE_UUID_SORTED'],'transaction.lock_order')
     check(set(policy.get('privacy',{}).get('hold_exemptions',[]))=={'ACTIVE_REVIEW','APPEAL','DISPUTE','LEGAL_HOLD','ADMIN_HOLD','ACTIVE_ORG_REFERENCE','OPEN_OBLIGATION','UNRESOLVED_RECOVERY'},'retention hold/reference safeguards')
     gates=policy.get('review_gates',{})
-    check(gates.get('candidate_contract_acceptance')=='PENDING_OWNER_REVIEW' and gates.get('implementation_authorization')=='NOT_AUTHORIZED' and gates.get('spec_acceptance')=='NOT_ACCEPTED','honest DoR/authorization gates')
+    check(gates.get('candidate_contract_acceptance')=='REVIEW_COMPLETE_UNDER_OWNER_CONDITIONAL_APPROVAL' and gates.get('planning_gate')=='SPEC003_READY_FOR_OWNER_IMPLEMENTATION_AUTHORIZATION' and gates.get('implementation_authorization')=='NOT_AUTHORIZED' and gates.get('spec_acceptance')=='NOT_ACCEPTED','honest DoR/authorization gates')
     deps=policy.get('dependencies',{})
     check(set(deps)=={'CAT-004','POL-005','CLOSE-OWNERS'},'minimum owner dependencies')
     for key,owner in [('CAT-004','L004'),('POL-005','L005'),('CLOSE-OWNERS','L006;L018;L005;L021')]:
@@ -51,11 +51,12 @@ def errors(policy,operations,fixtures,coverage):
     check(not any(a=='REVOKED' and b=='ACTIVE' for a,b,_ in transitions.get('membership',[])),'revoked membership cannot revive')
     check(not any(a=='QUEUED' and b=='DELIVERED' for a,b,_ in transitions.get('delivery',[])),'queued is not delivered')
     ids={o['operation_id'] for o in operations};schemas=set(json.loads((PACKAGE/'openapi.candidate.json').read_text(encoding='utf-8'))['components']['schemas'])
-    check(len(ids)==len(operations)==75,'exact operation inventory')
+    check(len(ids)==len(operations)==77,'exact reviewed operation inventory')
+    problems.extend(review_errors(operations,coverage))
     check(len(coverage)==14 and {r['bc_id'] for r in coverage}==BCS,'complete13CORE+DENY045 coverage')
     scenario_ids={s['id'] for s in fixtures.get('scenarios',[])}
     check(fixtures.get('status')=='DECLARATIVE_NOT_RUNTIME_EXECUTED' and REQUIRED_SCENARIOS<=scenario_ids,'required negative/concurrency/failure scenarios')
-    check(len(scenario_ids)==len(fixtures.get('scenarios',[])),'unique scenario IDs')
+    check(len(scenario_ids)==len(fixtures.get('scenarios',[]))==61,'all61 unique planned scenario IDs')
     for scenario in fixtures.get('scenarios',[]):
         check(scenario.get('operation') in ids and all(scenario.get(k) for k in ['given','when','expected_effect']) and scenario.get('evidence')=='PLANNED_NOT_EXECUTED','honest executable acceptance design '+scenario.get('id','?'))
     for row in coverage:
@@ -77,5 +78,19 @@ def errors(policy,operations,fixtures,coverage):
     check({'CAT-004','POL-005'}<=set(bc159.get('dependencies','').split(';')),'BC159 minimum owner dependencies')
     return sorted(set(problems))
 
+def review_errors(operations,coverage,review=None):
+    if review is None:
+        with (PACKAGE/'operation-review.csv').open(encoding='utf-8',newline='') as f:review=list(csv.DictReader(f))
+    problems=[];ids={o['operation_id'] for o in operations};by_id={o['operation_id']:o for o in operations}
+    if len(review)!=len(ids) or {r['operation_id'] for r in review}!=ids:problems.append('complete per-operation technical review')
+    for row in review:
+        op=by_id.get(row['operation_id']);mapped=[r for r in coverage if row['operation_id'] in r['operations'].split(';')]
+        if not op or not all(row.values()) or row.get('classification') not in {'REQUIRED_FOR_SPEC003','SUPPORTING_DEPENDENCY','OUT_OF_SCOPE'} or row.get('evidence')!='PLANNED_NOT_EXECUTED':problems.append('honest scoped operation disposition '+row['operation_id']);continue
+        if set(row['canonical_requirements'].split(';'))!={r['requirement'] for r in mapped}:problems.append('operation canonical mapping '+row['operation_id'])
+        if not row['trusted_actor'].startswith(op['authority']+';') or not row['authorization'].startswith(op['permission']+';'):problems.append('operation current authority '+row['operation_id'])
+        if not all(k in row for k in ['use_case_sources','authentication','resource_scope','preconditions_transitions','request_response_errors','authoritative_owner','idempotency_concurrency','behavioral_tests','acceptance']):problems.append('operation review dimensions '+row['operation_id'])
+        if row['classification']=='OUT_OF_SCOPE':problems.append('out-of-scope operation cannot remain in delivery contract '+row['operation_id'])
+    return problems
+
 if __name__=='__main__':
-    result=errors(*load());print(json.dumps({'errors':result,'policy':'OWNER_APPROVED_WITH_REFINEMENTS','technical_contract':'CANDIDATE_FOR_OWNER_REVIEW','runtime':'NOT_IMPLEMENTED'},indent=2));raise SystemExit(bool(result))
+    result=errors(*load());print(json.dumps({'errors':result,'policy':'OWNER_APPROVED_WITH_REFINEMENTS','technical_contract':'OWNER_REVIEWED_PLANNING_BASELINE','runtime':'NOT_IMPLEMENTED'},indent=2));raise SystemExit(bool(result))

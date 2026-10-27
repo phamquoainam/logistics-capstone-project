@@ -1,26 +1,26 @@
-# Spec003 final DoR review packet
+# Spec003 final DoR disposition
 
-Checkpoint: **SPEC003_CONTROLLED_DECISIONS_AND_DOR_READY_FOR_OWNER_REVIEW**.
+Checkpoint: **SPEC003_READY_FOR_OWNER_IMPLEMENTATION_AUTHORIZATION**.
 
-Business policy: OWNER_APPROVED_WITH_REFINEMENTS. Technical package: CANDIDATE_FOR_OWNER_REVIEW. Implementation: NOT_AUTHORIZED / NOT_STARTED. Spec003 remains **BLOCKED_FOR_IMPLEMENTATION**, not ACCEPTED. Policy approval, candidate review, implementation authorization and full-spec acceptance are separate facts.
+Business policy OWNER_APPROVED_WITH_REFINEMENTS; technical planning baseline OWNER_REVIEWED_PLANNING_BASELINE under [Owner technical approval and focused review](contracts/technical-review.md). Production implementation NOT_AUTHORIZED / NOT_STARTED. Runtime NOT_IMPLEMENTED / NOT_ACCEPTED. All61 scenarios remain PLANNED_NOT_EXECUTED.
 
 ## Definition of Ready assessment
 
-| Repository DoR criterion | Documentation result | Remaining exact gate |
+| Repository DoR criterion | Planning disposition | Implementation evidence still required |
 |---|---|---|
-| Actors/scope/REQ/journeys/edge cases/Given–When–Then AC | Defined in spec,14-row coverage and synthetic scenarios | Review candidate fixtures; runtime tests intentionally not yet executed |
-| Original FR/BR/NFR/UC and latest Owner direction | Per-BC FR-A01/A02/M01/AD03, source UC aliases, BR02 and applicable NFRs mapped; new onboarding policy explicitly Owner source, no fabricated report equivalence | No new general business-model approval requested |
-| Owner/transaction/API/data/event/error/auth object | Exact candidate OpenAPI, resource policy, data-model, lock/recovery and dependency contracts | **Accept the bounded technical candidate package**, including new names and Identity delta, before code |
-| Blocking decisions resolved or independently sequenced | Six policy directions recorded; dependent defaults/closure subset and deployment conditions explicit | Candidate contract acceptance + subsequent production authorization pending; first-use deployment settings must be approved before delivery/upload E2E |
-| Executable ordered tasks/deliverables/verify gates | T003-01..12 and per-BC CONTRACT/DB/BE/UI/VERIFY mapped to exact operations/scenarios | Implementation tasks remain unchecked |
-| Public dependencies/reviewed workflow TX | CAT-004/POL-005/closure typed consumer contracts; existing module direction and session-owned TX preserved | Owner technical review of this package; actual minimum owner implementations before dependent acceptance |
-| Success/invalid/expired/duplicate/concurrent/failure fixtures | Schema samples plus named behavioral scenarios and mutation controls | Static validity is not execution of Java/PG/browser acceptance |
+| Actors/scope/REQ/journeys/Given-When-Then AC | SATISFIED:13 CORE+DENY045 and supplemental entry/context | All per-BC positive/deny/recovery AC executed |
+| Original FR/BR/NFR/UC and Owner direction | SATISFIED:exact source aliases and explicit six decisions | Applicable NFR/browser/performance/recovery results, no fabricated equivalence |
+| Owner/TX/API/data/event/error/auth | SATISFIED:77 operation review,55 HTTP+3 dependency schemas, ownership/locks | Actual filters/public APIs/database implementation and regressions |
+| Blocking decisions resolved or independently sequenced | SATISFIED:focused review corrections closed, independent code allowed after authorization | First-use email/storage/scanner deployment configuration before respective integration tests |
+| Ordered tasks/deliverables/gates | SATISFIED:T003-01..12 and five layers per BC | Every implementation task remains unchecked |
+| Public dependencies and reviewed workflow | SATISFIED:minimum004/005+clearance typed contracts, no cross-module SQL | Real minimum owners before dependent acceptance; missing facts fail closed |
+| Success/invalid/expired/duplicate/concurrent/failure fixtures | SATISFIED:61 declarative scenarios plus schema/security mutation controls | Java/PG/HTTP/browser execution, source/integration/merge-SHA evidence |
 
-**DoR is ready for a concrete Owner review, not unconditionally READY_FOR_IMPLEMENTATION.** There is no missing architecture choice requiring a new broad cycle. The exact pending review is the candidate package in this PR: new customer transport/admission; independent customer-profile physical placement; states/permissions/schema/lock protocol; SMTP/storage/scanner interfaces and first-use configuration; minimum catalog/clearance contracts. Provider credentials never belong in the PR. Once that package is explicitly accepted, a single bounded production authorization can permit the implementation sequence below without per-routine-step approvals. First-use production configuration and safe failures remain mandatory, not silently fabricated decisions.
+**Planning review complete. The only Owner authorization needed to begin production coding is the single complete T003-01..12 package below and in technical-review.md.** No further general SDD/candidate review loop. Environment credentials/provider selection are first-use configuration gates, not blanket blockers for independent account/profile implementation. Runtime acceptance remains separate and cannot be inferred from this readiness status.
 
 ## Full-stack sequence after explicit production authorization
 
-1. **T003-01** accept/pin candidate contracts/fixtures; add exact customer Identity amendment preserving accepted SYSTEM/username/password/session behavior and add independent public admission tests.
+1. **T003-01** pin the reviewed planning contracts/fixtures; add exact customer Identity amendment preserving accepted SYSTEM/username/password/session behavior and add independent public admission tests.
 2. **T003-02** forward-only migration groups and owned adapters; PG18 empty/V6 upgrade/runtime privilege/old-build compatibility/constraints/races; no V1–V6 edits.
 3. **T003-03** real customer enrollment/email verification/login/refresh/logout/recovery and bounded delivery worker; labels distinguish queued/provider-accepted/delivered. No public rollout.
 4. **T003-04** independent customer profile, application draft/submission/revision/evidence screening, private access, dry-run retention and purpose contact attestations.
