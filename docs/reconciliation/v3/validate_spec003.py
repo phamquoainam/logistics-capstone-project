@@ -1,6 +1,7 @@
 """Read-only Spec003 policy/traceability gates; no runtime acceptance."""
 import csv
 import json
+import re
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[3]
@@ -64,6 +65,10 @@ def errors(policy,operations,fixtures,coverage):
         check(row['classification']==('MANDATORY_DENY' if bc=='BC-045' else 'CORE'),'deny classification '+bc)
         check(row['positive_ac']==('DENY_ONLY' if bc=='BC-045' else 'AC-'+bc+'-SUCCESS'),'positive/deny AC '+bc)
         check(all('T-'+bc+'-'+layer in row['tasks'].split(';') for layer in ['CONTRACT','DB','BE','UI','VERIFY']),'five-layer tasks '+bc)
+        refs=row['source_refs']
+        check({'NFR-S01','NFR-S02','NFR-S03','NFR-S04','NFR-M01','NFR-M02'}<=set(re.findall(r'NFR-[A-Z]\d{2}',refs)) and bool(re.search(r'FR-[A-Z]\d{2}',refs)) and 'UC:' in refs,'FR/BR/NFR/UC source trace '+bc)
+        nfr_source=(ROOT/'docs/quality/non-functional-requirements.md').read_text(encoding='utf-8')
+        check(all(code in nfr_source for code in re.findall(r'NFR-[A-Z]\d{2}',refs)),'unknown source NFR '+bc)
     if coverage:
         check(set().union(*(set(r['operations'].split(';')) for r in coverage))==ids,'unmapped operations')
         check(set().union(*(set(r['scenarios'].split(';')) for r in coverage))==scenario_ids,'unmapped scenarios')

@@ -47,6 +47,10 @@ class Spec003PolicyTests(unittest.TestCase):
         next(r for r in self.data[3] if r['bc_id']=='BC-045')['positive_ac']='ALLOW';self.assertTrue(v.errors(*self.data))
     def test_bc159_not_fake_catalog(self):
         next(r for r in self.data[3] if r['bc_id']=='BC-159')['dependencies']='LOCAL_FAKE';self.assertTrue(v.errors(*self.data))
+    def test_source_nfr_cannot_be_omitted(self):
+        self.data[3][0]['source_refs']='FR-A02;UC:AD02';self.assertTrue(v.errors(*self.data))
+    def test_source_nfr_cannot_be_invented(self):
+        self.data[3][0]['source_refs']+=';NFR-Z99';self.assertTrue(v.errors(*self.data))
     def test_cannot_drop_revoke_race(self):
         self.data[2]['scenarios']=[s for s in self.data[2]['scenarios'] if s['id']!='S003-REVOKE-FIRST'];self.assertTrue(v.errors(*self.data))
     def test_no_fabricated_runtime_pass(self):

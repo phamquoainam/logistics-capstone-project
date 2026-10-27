@@ -9,7 +9,7 @@ Business policy: OWNER_APPROVED_WITH_REFINEMENTS. Technical package: CANDIDATE_F
 | Repository DoR criterion | Documentation result | Remaining exact gate |
 |---|---|---|
 | Actors/scope/REQ/journeys/edge cases/Given–When–Then AC | Defined in spec,14-row coverage and synthetic scenarios | Review candidate fixtures; runtime tests intentionally not yet executed |
-| Original FR/BR/UC and latest Owner direction | FR-A01/A02/M01/AD03 and BR02 applicability mapped; new onboarding policy explicitly Owner source, no fabricated report equivalence | No new general business-model approval requested |
+| Original FR/BR/NFR/UC and latest Owner direction | Per-BC FR-A01/A02/M01/AD03, source UC aliases, BR02 and applicable NFRs mapped; new onboarding policy explicitly Owner source, no fabricated report equivalence | No new general business-model approval requested |
 | Owner/transaction/API/data/event/error/auth object | Exact candidate OpenAPI, resource policy, data-model, lock/recovery and dependency contracts | **Accept the bounded technical candidate package**, including new names and Identity delta, before code |
 | Blocking decisions resolved or independently sequenced | Six policy directions recorded; dependent defaults/closure subset and deployment conditions explicit | Candidate contract acceptance + subsequent production authorization pending; first-use deployment settings must be approved before delivery/upload E2E |
 | Executable ordered tasks/deliverables/verify gates | T003-01..12 and per-BC CONTRACT/DB/BE/UI/VERIFY mapped to exact operations/scenarios | Implementation tasks remain unchecked |
