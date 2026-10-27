@@ -1,3 +1,5 @@
+> Current canonical target follows [Owner account-first decision](../../decisions/customer-account-merchant-admission.md). Historical statements below are source context where superseded; accepted runtime/security unchanged.
+
 # Business scope V3 — Reconciled Candidate
 
 PROPOSED / Owner review required. Owner VIII.8.9–8.12 định nghĩa target; accepted SDD/contracts và verified source định nghĩa hành vi hiện tại. [Conflict register](decisions.md) ghi khác biệt; chưa chốt thì dừng implementation phụ thuộc, tiếp tục docs-only. Không sửa nghĩa REPORT FR/BR/NFR.
@@ -6,7 +8,7 @@ PROPOSED / Owner review required. Owner VIII.8.9–8.12 định nghĩa target; a
 
 | Nhóm | Roles/actors/principals | Outcome bắt buộc |
 |---|---|---|
-| A | R01 Guest, R10 Recipient, R18 Retail Sender | Guest tracking/quote/coverage/Station/Hub/service/contact/hai nhánh đăng ký; Sender account cá nhân profile/address/booking/pickup/payment/tracking/cancel/return/support/receipts; Recipient external không login/portal; walk-in do staff tại quầy |
+| A | R01 Guest, R10 Recipient, R18 Retail Sender | Guest tracking/quote/coverage/Station/Hub/service/contact/đăng ký cá nhân và application Merchant sau đăng nhập; Sender account cá nhân profile/address/booking/pickup/payment/tracking/cancel/return/support/receipts; Recipient external không login/portal; walk-in do staff tại quầy |
 | B | R02 Owner, R03 Operator, R11 Finance, R19 Manager, R20 Warehouse, R21 Support, R22 API Client | Org/membership/delegation, pickup, shipment/import/fulfillment, contracts/fees/COD/settlement, ticket/claim/report, integration; Merchant A/B isolation |
 | C | R07 Pickup, R09 Delivery, R23 Line-haul, R24 Team Leader | Nhiệm vụ/scan/count/contact/evidence/attempts/POD/cash submit; trip/seal/delay/handover; leader đề xuất theo team |
 | D | R06 Dispatcher, R08 Station Operator, R16 Station Manager, R25 Sorting, R26 Hub Supervisor, R27 Network Manager | Assignment/custody/manifest/sorting/bag/trips/route/region/capacity; tồn kiện/variance/approval; staffed walk-in |

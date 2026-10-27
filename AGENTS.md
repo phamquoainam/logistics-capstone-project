@@ -29,3 +29,10 @@ Nếu mâu thuẫn, **dừng và nêu xung đột**, không sửa nghĩa báo c�
 - Không tự chọn map/payment/storage providers ngoài decision log.
 - Không tự ghi `DONE` nếu chưa chạy test thật, không bịa benchmark.
 - Kích thước thay đổi phải nhỏ và kiểm chứng được. Nếu còn `BLOCKING`, ưu tiên foundation và spike.
+
+
+## Canonical V3 — latest Owner direction, 2026-10-27
+
+Đọc [delivery principles](docs/implementation/delivery-principles-v3.md), [index](specs/INDEX.md), [account-first decision](docs/decisions/customer-account-merchant-admission.md) và [portal coverage](docs/portal/group-ab-coverage.md). Phương pháp hiện hành: Spec-first → Spec-by-Spec → Full-stack End-to-end Delivery → Full Spec Acceptance; vertical slice chỉ decomposition nội bộ, không partial feature acceptance.
+
+Explicit latest Owner business decision có precedence trước reference cũ; accepted security/architecture chỉ đổi qua controlled amendment. Canonical specs003–030 thay legacy/planning active tree;001/002 và accepted evidence giữ nguyên. Public registration chỉ personal account, Merchant application sau verified customer login, no Guest Owner/self-grant, no anonymous Shipment/no mandatory Recipient IAM. Exact schema/API/permission/provider còn proposal cần review trước code. Docs-only task không phải chỉ đạo implement vertical slice/runtime; không tự bắt đầu production coding. Menu→BC/REQ→owning spec→screen/API/data/current permission/test/delivery status; product portal acceptance cross-Spec riêng.

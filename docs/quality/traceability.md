@@ -387,7 +387,7 @@ Mốc khởi tạo trên được giữ làm lịch sử; bảng này chỉ ch�
 | DEMO-04; FR-M04/M05 | React portal with real APIs, retained failed forms | 3 Playwright tests + typecheck/build | PASS demo |
 | DEMO-05; REQ-001-02 persistence subset | isolated H2 file, Flyway demo V1 | smoke-demo.py create → backend restart → verify | PASS H2 demo; PostgreSQL foundation UNVERIFIED |
 
-Environment/commands/artifacts: [demo evidence](../implementation/demo-001-evidence.md). No commit yet. Source contract: [demo design](../../specs/demo-001-auth-merchant-shipment/design.md). Original feature tasks remain unchanged.
+Environment/commands/artifacts: [demo evidence](../implementation/demo-001-evidence.md). No commit yet. Source contract: [demo design](https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/specs/demo-001-auth-merchant-shipment/design.md). Original feature tasks remain unchanged.
 
 ## D1-03 PostgreSQL milestone — 2026-10-13
 
@@ -463,3 +463,8 @@ been blocked. No production violation, acceptance change or implicit deferral.
 ## V3 business reconciliation — planning only, 2026-10-26
 
 [371 BC](../reconciliation/v3/capability-crosswalk.csv), [legacy IDs](../reconciliation/v3/legacy-crosswalk.csv), [roadmap](../implementation/roadmap-v3.md), [validation](../reconciliation/v3/validation.md). Mapping PROPOSED, target test IDs là kế hoạch. Không thay REQ/AC acceptance/auto VERIFIED. Feature001/D1-08/Day1 PARTIAL; T-002-05/06 PARTIAL; Feature002/AC-002-01..05 NOT ACCEPTED; GRANT_MUTATION_FUNCTIONALITY_LIMITED. Sáu Foundation files gốc nguyên vẹn; append chỉ worktree mới từ origin/develop.
+
+
+## Canonical V3 rebuild — target traceability, not runtime acceptance
+
+[371 BC](../reconciliation/v3/capability-crosswalk.csv) → canonical003–030 per-BC REQ/AC/DES/T-BC tasks;002 target delta separate,001/002 actual statuses preserved. [112 A/B coverage](../portal/group-ab-coverage.csv) provides UI/API behavior/data owner/permission/dependencies/planned tests/status/gap; [23 supplemental requirements](../portal/supplemental-requirements.csv) close Owner portal scope beyond old BC labels; [J-AB-01..10](../portal/journeys.csv) → [product gates](../portal/group-ab-acceptance.md). All target evidence PLANNED_NOT_EXECUTED. History preserved in retirement/legacy crosswalk/promotion-history; no current runtime PASS inferred from old ID match or moving folders.

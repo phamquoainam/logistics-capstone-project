@@ -1,24 +1,5 @@
-# Feature Dependency Order / Release Slices
+# Canonical V3 dependency navigation
 
-Dependency ở từng feature đã liệt kê tại `spec.md`. Hướng ưu tiên:
+[Roadmap](roadmap-v3.md) and [register](../reconciliation/v3/spec-register.json) are the single current dependency source. [Delivery principles](delivery-principles-v3.md) supersede slice-first development descriptions. Legacy numeric feature order retained only in [pinned history](https://github.com/phamquoainam/logistics-capstone-project/blob/eeb7833ab678240581c407ccd167d7e61ea873c6/docs/implementation/dependency-order.md).
 
-1. Foundation `001` → Auth `002` → Merchant/address `003`.
-2. Pricing `004` → Wallet `006` → WMS `007` → Shipment confirm `005` (Shipment draft có thể phát triển sớm hơn dưới contract đã chốt).
-3. Dispatch/Hub `008` → Shipper POD/COD collection `009` → Routing/GPS `010` → COD reconciliation `011`.
-4. Notification/dashboard `012`, Admin `013`, Bulk import `014`, Offline sync `015` có thể phát triển song song sau core contracts.
-5. RQ harness `016` chuẩn bị fixture ngay từ đầu; kiểm chứng sau khi luồng P0 hoạt động.
-
-**Tránh vòng tròn module:** `005` phụ thuộc khả năng Finance/WMS thông qua `workflow` chứ `finance`/`warehouse` không được phụ thuộc ngược `order`. Khi implement, có thể tạo các API contract được chốt sớm, không gắn implementation circular imports.
-
-## MVP demo slice 1
-Auth → merchant point → versioned pricing → shipment DRAFT + show tracking, nhưng **chưa** được gọi đó là P0 end-to-end.
-
-## MVP demo slice 2
-Shipment confirm atomic ↔ fee debit ↔ reservation; tests cạnh tranh/xung đột; hoàn thành các bất biến RQ1 cơ bản.
-
-## MVP demo slice 3
-WMS outbound → hub manifest/custody → assign → route confirm → shipper POD → COD collection/remittance/closing → notification.
-
-## V3 candidate dependency delta
-
-Chuỗi P0/MVP trên giữ lịch sử. Target FULL theo [roadmap](roadmap-v3.md) sau approval: L018 minimum ledger trước fee booking, L017 collection trước POD/COD; public contact/audit/scope tại first use. Logical numbers khác physical, không đổi compile-time direction9 modules; validator kiểm DAG, contract plan không runtime evidence.
+Do not map legacy005 to canonical005; canonical003–030 IDs have retirement aliases. Minimum contract order and full feature acceptance are different; workflow calls public APIs/local DB transaction, never finance/orders internals or queue/Redis replacement for invariants.

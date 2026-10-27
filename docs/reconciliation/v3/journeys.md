@@ -1,3 +1,5 @@
+> Current canonical target follows [Owner account-first decision](../../decisions/customer-account-merchant-admission.md). Historical statements below are source context where superseded; accepted runtime/security unchanged.
+
 # J1–J9 system-wide acceptance — PROPOSED
 
 Planned scenarios, NOT_VERIFIED. Fixtures synthetic, không PII thật; UI-only state không proof custody/payment/POD.
@@ -7,7 +9,7 @@ Planned scenarios, NOT_VERIFIED. Fixtures synthetic, không PII thật; UI-only 
 Roles R01/R18/R07/R08/R09/R12/R13; specs L003–015/L018; milestone F1 core,F2 delivery,F3 closure.
 
 - Prerequisite data: S-A/S-B verified personal accounts, catalog/coverage/rate và authorized Courier/Station, không membership.
-- Happy: Guest chọn cá nhân→enrol/profile/address→quote/book/pay→pickup/custody→POD→owned tracking/receipt.
+- Happy: Guest đăng ký một tài khoản cá nhân→Identity verify/login→personal profile/address→quote/book/pay→pickup/custody→POD→owned tracking/receipt.
 - Negative/security: S-B đọc UUID A deny; Guest online create deny; Sender không đọc Merchant rate.
 - Recovery: Expired quote/requote, payment unknown/status, failed pickup/retry, delivery failure→return/support.
 - Database/events: source rows/references/versions, immutable event/audit, financial/physical totals theo owner; before/after/rollback/replay, no foreign effects; projection không là proof source.

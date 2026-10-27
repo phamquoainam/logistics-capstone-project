@@ -1,3 +1,5 @@
+> Current canonical target follows [Owner account-first decision](../decisions/customer-account-merchant-admission.md). Historical statements below are source context where superseded; accepted runtime/security unchanged.
+
 # E-Logistics Capstone — Tài liệu nghiệp vụ toàn văn
 
 > **Nguồn:** `business_logistoc.docx` — chuyển đổi nguyên văn sang Markdown để hỗ trợ AI review nghiệp vụ. Nội dung và thứ tự của tài liệu gốc được giữ nguyên; các tiêu đề dưới đây chỉ hỗ trợ điều hướng. Các tuyên bố trong tài liệu là nội dung nguồn, không mặc nhiên là thiết kế đã được phê duyệt.
@@ -72,7 +74,7 @@ Guest cần sử dụng được một số tiện ích công khai mà không b�
 | Tra cứu bưu cục         | Xem địa chỉ, giờ phục vụ, vị trí                                                        |
 | Tra cứu dịch vụ         | Xem các loại hình vận chuyển, điều kiện gửi hàng                                        |
 | Liên hệ hỗ trợ          | Gửi yêu cầu tư vấn hoặc phản ánh                                                        |
-| Đăng ký tài khoản       | Chuyển sang Retail Sender hoặc Merchant onboarding                                      |
+| Đăng ký tài khoản       | Đăng ký một tài khoản cá nhân; Merchant application chỉ sau đăng nhập                                      |
 | Tạo yêu cầu gửi lẻ      | Có thể hỗ trợ hình thức gửi không đăng ký, nhưng cần xác minh qua OTP/quy trình bưu cục |
 
 Giới hạn bảo mật: Guest không được xem đầy đủ số điện thoại, địa chỉ riêng tư, số tiền COD nhạy cảm hoặc lịch sử vận đơn của người khác chỉ bằng cách đoán mã vận đơn. Các thao tác nhạy cảm phải có thêm bằng chứng sở hữu.
@@ -776,7 +778,7 @@ Tôi chia các Role thành ba mức ưu tiên.
 
 | **Role**          | **Trách nhiệm chính**                                            | **Portal**     |
 |-------------------|------------------------------------------------------------------|----------------|
-| Guest             | Tracking giới hạn, ước tính phí, coverage, bưu cục, dịch vụ, liên hệ hỗ trợ, đăng ký Retail Sender/Merchant; **không tự tạo Shipment** | Public |
+| Guest             | Tracking giới hạn, ước tính phí, coverage, bưu cục, dịch vụ, liên hệ hỗ trợ, đăng ký tài khoản cá nhân; application Merchant sau đăng nhập; **không tự tạo Shipment** | Public |
 | Retail Sender     | Đăng ký cá nhân; hồ sơ, địa chỉ, gửi lẻ, pickup, báo giá, thanh toán, theo dõi, hủy, tra soát, hoàn và chứng từ | Sender |
 | Merchant Owner    | Quản lý tổ chức, nhân viên, điểm lấy, toàn bộ đơn thuộc Merchant | Merchant       |
 | Merchant Operator | Tạo/import/sync đơn, báo giá, xác nhận, in nhãn, bàn giao, tracking, ngoại lệ và COD trong phạm vi | Merchant |
@@ -945,7 +947,7 @@ Không nên tạo một website riêng cho mọi Role. Thay vào đó, có thể
 
 Public Portal
 
-Guest và Recipient có thể tra cứu vận đơn công khai ở mức thông tin giới hạn. **Guest** được báo giá, kiểm tra vùng phục vụ, tra cứu Station/Hub và dịch vụ, liên hệ hỗ trợ, đi đến đăng ký Retail Sender hoặc Merchant. **Recipient** không có account/Portal riêng; khiếu nại Shipment của Merchant đi qua Merchant Support; không được tự tạo/sửa Shipment.
+Guest và Recipient có thể tra cứu vận đơn công khai ở mức thông tin giới hạn. **Guest** được báo giá, kiểm tra vùng phục vụ, tra cứu Station/Hub và dịch vụ, liên hệ hỗ trợ, đăng ký tài khoản cá nhân; nộp đơn Merchant sau đăng nhập. **Recipient** không có account/Portal riêng; khiếu nại Shipment của Merchant đi qua Merchant Support; không được tự tạo/sửa Shipment.
 
 Sender Portal
 
@@ -1085,7 +1087,7 @@ Chúng ta nên chốt mô hình Role toàn hệ thống ở cấp kiến trúc t
 
 ### 8.9. Quyết định bổ sung phạm vi Nhóm A (Project Owner, 2026-10-26)
 
-1. **Guest — P0, External:** phải có tracking giới hạn; ước tính cước; coverage; tra cứu Station/Hub và giờ phục vụ; danh mục dịch vụ/điều kiện gửi; liên hệ tư vấn/phản ánh; lựa chọn đăng ký tài khoản Retail Sender hoặc Merchant. **Loại bỏ khả năng Guest gửi hàng trực tuyến không đăng ký**.
+1. **Guest — P0, External:** phải có tracking giới hạn; ước tính cước; coverage; tra cứu Station/Hub và giờ phục vụ; danh mục dịch vụ/điều kiện gửi; liên hệ tư vấn/phản ánh; đăng ký một tài khoản cá nhân; Merchant application chỉ sau đăng nhập. **Loại bỏ khả năng Guest gửi hàng trực tuyến không đăng ký**.
 2. **Retail Sender — P0, Account cá nhân:** đăng ký/đăng nhập; hồ sơ và liên hệ; tạo Shipment gửi lẻ; yêu cầu pickup tại nhà; lưu địa chỉ; báo giá/dịch vụ; thanh toán; theo dõi tất cả đơn sở hữu; hủy khi được phép; mở tra soát/khiếu nại; quản lý hoàn hàng; lịch sử và hóa đơn/biên nhận. Không ép tạo tổ chức Merchant. Đây là **capability mục tiêu bắt buộc**, có thể chia Feature/mốc triển khai có dependency.
 3. **Merchant — Account gắn Organization:** khác Retail Sender ở membership, nhân sự, pickup point, bảng giá hợp đồng, COD/đối soát, tích hợp và báo cáo theo quyền. Cùng dùng Logistics Core nhưng policy và resource scope khác nhau.
 4. **Recipient — P1, External:** không đăng ký, không đăng nhập, không Portal riêng; chỉ tra cứu công khai như Guest (bảo vệ PII). Các tương tác giao nhận do Courier ghi nhận. Khiếu nại đơn Merchant thông qua Merchant Support, Merchant chuyển ticket lên Logistics Customer Service/Claims. Đơn của Retail Sender phải có kênh Logistics Support tương ứng; không giả định tồn tại Merchant.

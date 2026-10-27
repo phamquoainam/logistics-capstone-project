@@ -1,47 +1,13 @@
-> **V3 candidate để Owner review:** [Roadmap](implementation/roadmap-v3.md). Giữ accepted/runtime baseline; các mục REPORT/legacy bên dưới là lịch sử, không dùng để loại target FULL hoặc suy acceptance.
+# E-Logistics — canonical SDD V3
 
-# E-Logistics — Bộ tài liệu phát triển theo đặc tả (SDD)
+First-party Logistics Management Platform on existing modular monolith/React/RN. **Spec-first → Spec-by-Spec → Full-stack End-to-end Delivery → Full Spec Acceptance.** Canonical target planning, no production coding authorized by this docs rebuild.
 
-**Trạng thái:** Bộ tài liệu lập kế hoạch triển khai P0, chưa phải phần mềm đã hoạt động.  
-**Căn cứ:** `CLV04_BaoCao_TLCN_04.docx`, đặc biệt phần A §5, Chương 2 (§2.1–2.7), Chương 3 (§3.1–3.7), Chương 4 (§4.1–4.3.1).  
-**Ngày biên soạn:** 2026-10-13.
+1. Read AGENTS.md, [PRD](prd.md), [principles](principles.md), accepted architecture/security and [latest account-first decision](decisions/customer-account-merchant-admission.md).
+2. Use [canonical index](../specs/INDEX.md), [roadmap](implementation/roadmap-v3.md), [delivery principles](implementation/delivery-principles-v3.md), [DoR](codex/definition-of-ready.md).001/002 retained,003–030 one active hierarchy; no duplicate planning/legacy trees.
+3. Read own spec/design/tasks,371-BC crosswalk and material blockers; accepted contracts only in contracts/. Actual source app/backend, app/frontend/web, app/frontend/shipper-mobile. Proposed names are not official wire/schema.
+4. [Portal coverage](portal/group-ab-coverage.md), [navigation](portal/navigation-permissions.md), [screenshot benchmark](portal/screenshot-benchmark.md), [journeys](portal/journeys.md), [product acceptance](portal/group-ab-acceptance.md) cover Group A/B across specs, not everything in003.
+5. [Retirement and source provenance](reconciliation/v3/legacy-retirement.md) preserve old REQ/AC/tasks/RQ/Demo history. Demo code/contracts/migrations/tests/evidence remain;001/002 accepted bounded implementations/status/findings unchanged.
 
-## Mục tiêu
+Registration: one personal account→verify/login→personal workspace→Merchant application→review→controlled organization/Owner activation. Personal remains usable after unrelated Merchant rejection/revoke. No Guest online shipment, Recipient IAM requirement, human/API credential sharing or implicit admin privileges.
 
-Xây dựng prototype E-Logistics hỗ trợ giao nhận chặng cuối với web, ứng dụng shipper và backend Modular Monolith. Bộ tài liệu được tổ chức để Codex thực thi **theo từng vertical slice**, giữ được mối liên kết `Nguồn báo cáo → BR/FR/NFR → SPEC/REQ → AC → thiết kế → TASK → TEST → bằng chứng`.
-
-## Bắt đầu trong ngày đầu
-
-1. Đọc `docs/prd.md`, `docs/principles.md`, `docs/decisions/open-questions.md`, `docs/architecture/overview.md`, `docs/architecture/module-catalog.md` và `AGENTS.md`.
-2. Chốt các quyết định có nhãn `BLOCKING` theo `docs/decisions/open-questions.md`. **Không được xem `[PROPOSED]` là quy định của báo cáo.**
-3. Chạy chuỗi công việc tại `docs/implementation/day-1-plan.md` và `specs/001-platform-foundation/`.
-4. Sau khi nền tảng build/test chạy, triển khai `002-identity-access`, `003-merchant-address`, `004-pricing`, `005-shipment-lifecycle`, rồi các vertical slice tiếp theo. Các tính năng có thứ tự ưu tiên, không có nghĩa phải làm toàn bộ trong một ngày.
-5. Trước khi code mỗi feature, kiểm tra ba file `spec.md`, `design.md`, `tasks.md`. Khi thay đổi hành vi, cập nhật chúng trước rồi mới code.
-
-## Ranh giới nguồn và mức độ quyết định
-
-- `[REPORT]`: Nội dung được mô tả trong báo cáo, giữ nguyên mã FR/BR/NFR và ngữ nghĩa.
-- `[PROPOSED]`: Lựa chọn thiết kế do bộ SDD đề xuất để tăng tính thi hành, chưa phải nội dung đã được báo cáo chốt.
-- `[BLOCKING]`: Quyết định cần được xác nhận trước khi triển khai nhánh liên quan.
-- `[CONFIG]`: Giá trị cố ý để ở cấu hình, không hardcode khi báo cáo chưa đặt ngưỡng.
-- `[OUT-OF-SCOPE]`: Không thuộc P0 hoặc đề tài.
-
-**Phạm vi tài liệu nguồn:** Bản DOCX cung cấp dừng ở phần **4.3.1**, chưa có mô tả hoàn thiện của các mục 4.3.2 trở đi hoặc kết quả Chương 5–6. Không ghi giả những phần này đã được chứng minh.
-
-## Nội dung
-
-- `docs/`: PRD, nguyên tắc, domain, kiến trúc, quy ước, quyết định, bảo mật, giao dịch và kiểm thử.
-- `specs/00X-*/`: spec, design, tasks cho từng luồng nghiệp vụ.
-- `contracts/`: quy ước OpenAPI/event/schema được đề xuất, chưa có hợp đồng được duyệt.
-- `apps/`, `packages/`, `infra/`, `quality/`, `scripts/`: hướng dẫn nơi Codex sẽ sinh source/test/config theo công nghệ đã chốt, **không chứa mã ứng dụng giả**.
-- `AGENTS.md` và `docs/codex/prompts.md`: chỉ dẫn thực thi và prompt chia giai đoạn.
-
-## Nguyên tắc kết luận
-
-Không xem việc tạo file, compile thành công hoặc demo đẹp là bằng chứng đã đạt P0; cần thêm migration, kiểm thử quyền, bất biến, end-to-end và thực nghiệm RQ1–RQ4.
-
-## V3 candidate — entrypoint cho Owner review
-
-[Roadmap](implementation/roadmap-v3.md) · [Business](reconciliation/v3/business-baseline.md) · [Inventory](reconciliation/v3/inventory.md) · [371 BC](reconciliation/v3/capability-crosswalk.csv) · [Decisions](reconciliation/v3/decisions.md) · [First BE+FE](../specs/planning/v3/first-business-slice/spec.md).
-
-PROPOSED tới Owner approval. Hướng dẫn P0/ngày đầu phía trên là lịch sử; source thật app/backend, app/frontend/web, app/frontend/shipper-mobile; hai accepted OpenAPI;001/002 PARTIAL, Demo regression. Không suy readiness từ folder/table cũ.
+Status vocabulary: CANONICAL_TARGET documentation may remain DESIGN_CANDIDATE/BLOCKED/NOT_STARTED. PLANNED != IMPLEMENTED; UI CREATED != INTEGRATED; PR MERGED != SPEC ACCEPTED != PORTAL/FULL PLATFORM ACCEPTED. No runtime/benchmark evidence is created by rebuilding docs.
