@@ -138,10 +138,10 @@ final class S003CustomerBrowserRuntime {
             if(cases.isEmpty())try{
                 Path safe=directory.resolve("safe-browser-results.json");
                 if(Files.isRegularFile(safe) && Files.size(safe)<=65536){
-                    var json=JSON.readTree(Files.readAllBytes(safe));int index=0;
+                    var json=JSON.readTree(Files.readAllBytes(safe));
                     for(var item:json.get("cases")){
                         String name=item.get("name").asString(),status=item.get("status").asString();
-                        if(index>=CASES.size() || !CASES.get(index++).equals(name) || !Set.of("passed","failed","timedOut","skipped","interrupted").contains(status))throw new IllegalStateException();
+                        if(cases.size()>CASES.size() || !CASES.contains(name) || !Set.of("passed","failed","timedOut","skipped","interrupted").contains(status))throw new IllegalStateException();
                         cases.add(Map.of("name",name,"status",status));
                     }
                 }
