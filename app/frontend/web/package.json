@@ -12,10 +12,12 @@
     "dev": "vite --host 127.0.0.1",
     "typecheck": "tsc --noEmit",
     "build": "tsc --noEmit && vite build",
+    "build:customer": "tsc --noEmit && vite build --mode customer",
     "preview": "vite preview --host 127.0.0.1",
     "test:e2e": "playwright test",
     "lint": "eslint . --max-warnings 0",
-    "test": "playwright test --config playwright-unit.config.ts"
+    "test": "playwright test --config playwright-unit.config.ts",
+    "test:customer-ui": "playwright test --config playwright-customer-ui.config.ts"
   },
   "dependencies": {
     "react": "19.2.3",

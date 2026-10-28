@@ -1,6 +1,6 @@
 # Tasks 003 — sender-merchant-onboarding
 
-NOT_STARTED; thứ tự là contract/fixture → DB → BE/HTTP → UI/channel → verification → full acceptance. Mỗi BC là gói end-to-end nội bộ, không thay phương pháp Spec-by-Spec. Không task nào DONE trong rebuild docs.
+IN_PROGRESS under the Owner full implementation authorization. Per-BC and full-spec gates remain unchecked until their complete evidence passes. See the execution checklist below for completed internal tasks.
 
 ## REQ-V3-BC-007 / BC-007: Dùng tài khoản với Merchant membership ACTIVE
 
@@ -146,9 +146,9 @@ NOT_STARTED; thứ tự là contract/fixture → DB → BE/HTTP → UI/channel �
 - [ ] T-L003-ACCEPT: scoped PR integration PASS → Owner merge → regression trên merge SHA → Owner full-spec acceptance riêng. Chưa tick vì docs promotion.
 
 
-## Complete implementation sequence — no production work authorized yet
+## Complete implementation sequence — Owner authorization granted
 
-The focused review under Owner conditional approval has closed the planning candidate gate (contracts/technical-review.md). One subsequent complete003 production authorization covers routine implementation steps below. No task is DONE from documentation/static fixtures. Per-BC CONTRACT tasks refer to this same approval, not repeated permission requests.
+The focused review under Owner conditional approval has closed the planning candidate gate (contracts/technical-review.md). OWNER_SPEC003_FULL_IMPLEMENTATION: GO now covers all routine T003-01..12 steps below; see implementation.md for source and actual evidence. No task is DONE from documentation/static fixtures. Per-BC CONTRACT tasks refer to this same approval, not repeated permission requests.
 
 | Task | Depends on | Concrete deliverable / gate |
 |---|---|---|
@@ -165,8 +165,39 @@ The focused review under Owner conditional approval has closed the planning cand
 | T003-11 | All above | Lint/typecheck/build/contract/unit/ArchUnit/H2/PG18/HTTP/browser, migration/compatibility/privacy/report-policy gates; exact source+PR integration evidence/digests, no unreviewed skip/guard weakening. |
 | T003-12 | T003-11 | Full BC/S003/supplement/legacy-consumer traceability; required CI, Owner PR merge, merge-SHA CI, separately recorded full-Spec003 acceptance. Cross-Spec Group A–F acceptance remains separate. |
 
-- [ ] **T003-01** through **T003-12** — implementation gates above are NOT_STARTED, not checked by this docs task.
+- [ ] **T003-01** - IN_PROGRESS: customer admission/session implemented; complete Identity delta remains.
+- [ ] **T003-02** - IN_PROGRESS: V7-V11 recorded CI; V12 reauthentication receipt awaits PG18.
+- [ ] **T003-03** - IN_PROGRESS: enrollment/session/SMTP verified; recovery correction, sensitive-contact/link and browser gates remain.
+- [ ] **T003-04** - IN_PROGRESS: independent profile tasks below; application/evidence journeys remain.
+- [ ] **T003-05** - NOT_STARTED: Merchant authority and contexts.
+- [ ] **T003-06** - NOT_STARTED: review and safe activation.
+- [ ] **T003-07** - NOT_STARTED: invitations and membership lifecycle.
+- [ ] **T003-08** - NOT_STARTED: legal review, ownership and closure.
+- [ ] **T003-09** - NOT_STARTED: bounded owner dependencies and defaults.
+- [ ] **T003-10** - IN_PROGRESS: customer entry/recovery/profile API UI authored; all real full-stack browser journeys and remaining Merchant routes still required.
+- [ ] **T003-11** - IN_PROGRESS: per-increment checks; complete-spec verification remains.
+- [ ] **T003-12** - NOT_STARTED: full traceability, merge-SHA gates and separate Owner acceptance.
 - [ ] **T-AB-ENTRY** — REQ-AB-ENTRY exact customer-auth contract, real entry/forms/verification/login/recovery; TEST-AB-ENTRY Guest no application submit, personal default, deep-link recheck, no grants; dependencies Identity customer amendment and approved delivery channel.
 - [ ] **T-AB-CONTEXT** — REQ-AB-CONTEXT exact current-subject/org authority contracts and real context UI; TEST-AB-CONTEXT A→B stale-response isolation, revoke during submit, personal unaffected; no mocked membership authority.
 
 Minimum dependent work and acceptance limits: contracts/minimum-dependencies.md. Complete DoR disposition: readiness.md. No requirement to complete all future logistics specs; no full003 acceptance without BC159's real minimum catalog subset and safe closure/delivery/privacy behavior.
+
+## Execution checklist - completed internal tasks, 2026-10-28
+
+Each checkbox closes only its stated deliverable. It does not imply acceptance of the enclosing T003 task, BC or full Spec003. Completed items are checked as soon as their evidence exists; outstanding required runtime gates stay open.
+
+- [x] **T003-04-PROFILE-DOMAIN** - DONE: independent business-profile domain/application, current self-admission boundary, immutable account reference, optional untrusted contact metadata, optimistic versions and read-only initial profile. `CustomerProfileTests`: nine actual unit cases PASS in the clean backend run below.
+- [x] **T003-04-PROFILE-RECEIPTS-UNIT** - DONE: exact operation/target/version/field HMAC, retained-key rotation, original-version retry, changed-body denial and redacted diagnostics; four `MerchantFingerprintTests` plus replay/conflict application cases PASS. This closes unit verification only; PG receipt/rollback/race gate remains below.
+- [x] **T003-11-PROFILE-LOCAL** - DONE: clean backend `mvnw -o -B ... clean verify`, 612 discovered / 595 PASS / 17 expected policy skips / zero failure/error. Architecture23 including negative fixtures PASS in this full run. Actual report collector returns PASS; no PostgreSQL substitute is claimed.
+- [x] **T003-04-PROFILE-PG** - DONE: all ten profile/V11 cases and required PostgreSQL18 CI PASS on source ede1e50 / integration ab498d6; run40622633558 and evidence/customer-profile-ci.json verify exact checkout, digests and cleanup. The additional receipt-lookup operation below has a separate pending gate.
+- [ ] **T003-04-PROFILE-BROWSER** - Actual customer frontend profile form and running-component browser verification remain.
+- [x] **T003-03-RECOVERY-PG-CORRECTION** - DONE: corrected fixture and all recovery negatives PASS in required run40622633558 on source ede1e50, with verified artifact digests and owned cleanup. Earlier failed/cancelled runs remain recorded.
+
+- [x] **T003-10-CUSTOMER-CLIENT-UNIT** - DONE: 12 new isolated transport/privacy/replay/receipt tests plus 28 existing frontend unit cases PASS (40 total). Both Demo and Customer builds, typecheck and current source lint PASS; build output excluded from lint just as existing dist output is excluded.
+- [x] **T003-04-PROFILE-RECEIPT-LOOKUP-PG** - DONE: current-self receipt lookup, foreign-subject/revoked/unknown/malformed denials and no-effect read PASS in required CI40624272934; source80d8a64/integrationf33d99b, verified evidence/customer-entry-profile-ci.json.
+- [x] **T003-10-ENTRY-UI-UNIT** - DONE: seven isolated Edge UI cases PASS, runner exit0 in6.8s with nonce-bound owned static-server cleanup and no remaining listener; mobile screenshot visually checked. Explicit API fixtures remain UI unit evidence only, not running-backend/PostgreSQL E2E.
+
+- [ ] **T003-10-ENTRY-REAL-RUNTIME** - Eight serial cases authored/discovered against real HTTPS production configurations, existing owned PG18 and actual SMTP; mandatory finite CI case requires all8 PASS plus DB/no-grant/one-write/revocation/owned cleanup. Local H2/compile/policy checks PASS, actual hosted runtime execution pending. This is distinct from the completed isolated UI unit gate.
+
+- [x] **T003-03-REAUTHENTICATION-UNIT** - DONE: nine new reauthentication application/persistence-boundary unit cases plus the new final proof-deadline admission case PASS. Focused36 cases PASS; actual clean backend623 discovered/606 PASS/17 expected skips, no failure/error. This closes the bounded unit gate only; full security-email/contact/link and Merchant proof consumers remain.
+- [ ] **T003-03-REAUTHENTICATION-PG** - Five actual PostgreSQL/HTTP/quota/rollback/concurrent-consumption cases and two V12 migration/privilege cases authored and compiled; await exact current CI. V1-V11 unchanged, runtime startup fails closed without V12.

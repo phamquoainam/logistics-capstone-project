@@ -207,7 +207,25 @@ def local_link_errors(path,text):
         if bad:errors.append(path.relative_to(ROOT).as_posix()+' -> '+target)
     return errors
 
-def run():
+def implementation_source_errors(changed,scope):
+    """Explicit Owner-authorized source manifest; docs-only default protection stays intact."""
+    errors=[]
+    if scope.get('authority')!='OWNER-S003-FULL-2026-10-27' or scope.get('baseline')!='715a41139f9724cbd3f20526786a61f673393564':
+        return ['Spec003 implementation source authority/baseline']
+    paths=scope.get('paths',[])
+    if len(paths)!=len(set(paths)) or any(p.startswith(('/', '../')) or '\\' in p or '/../' in p for p in paths):
+        errors.append('invalid implementation source manifest paths')
+    for name in changed:
+        if name.startswith(('docs/','specs/')) and not name.startswith(PROTECTED):continue
+        if name=='AGENTS.md':continue
+        if name not in paths:errors.append('undeclared implementation source '+name)
+        if name.startswith(('contracts/openapi/identity-access','specs/001-platform-foundation/','specs/002-identity-access/')) or re.match(r'app/backend/src/main/resources/db/migration/V[1-6]__',name):
+            errors.append('immutable accepted source '+name)
+        if name.endswith(('PostgresTestcontainersSupport.java','TestcontainersRuntimePolicy.java')) or name in {'scripts/ci/run-backend.sh','scripts/ci/prepare-postgres.py'}:
+            errors.append('runtime ownership/privacy protocol is not an inventory amendment '+name)
+    return errors
+
+def run(implementation=False):
     rows=read_csv('capability-crosswalk.csv');cards=json.loads(body('docs/reconciliation/v3/spec-register.json'));index={c['id']:c for c in cards}
     errors=mapping_errors(rows,cards,source_rows());coverage=csv_at('docs/portal/group-ab-coverage.csv');supp=csv_at('docs/portal/supplemental-requirements.csv');journeys=csv_at('docs/portal/journeys.csv');accept=json.loads(body('docs/portal/acceptance-register.json'))
     errors+=portal_errors(coverage,supp,journeys,rows,accept)
@@ -237,9 +255,19 @@ def run():
         owner=policy.get('authority_modules',{}).get(authority.get('authoritative_owner'))
         if row['primary_domain_owner']!=owner or row['primary_spec']!='L003':errors.append('capability resource authority conflict '+scope)
     tree=set(git('ls-tree','-r','--name-only',BASELINE).splitlines());changed=set(git('diff','--name-only',BASELINE).splitlines())|set(git('ls-files','--others','--exclude-standard').splitlines())
-    for n in changed:
-        if n.startswith(PROTECTED):errors.append('protected source changed '+n)
-        if not(n.startswith(('docs/','specs/')) or n=='AGENTS.md'):errors.append('non-doc change '+n)
+    if implementation:
+        errors.extend(implementation_source_errors(changed,json.loads(body('specs/003-sender-merchant-onboarding/implementation-scope.json'))))
+        # Inventory additions do not authorize weakening the accepted report/privacy collector functions.
+        import ast
+        before=ast.parse(git('show','715a41139f9724cbd3f20526786a61f673393564:scripts/ci/verify-reports.py'))
+        after=ast.parse(body('scripts/ci/verify-reports.py'))
+        functions=lambda tree:{n.name:ast.dump(n,include_attributes=False) for n in tree.body if isinstance(n,(ast.FunctionDef,ast.AsyncFunctionDef,ast.ClassDef))}
+        current=functions(after)
+        if any(current.get(k)!=v for k,v in functions(before).items()):errors.append('accepted report/privacy collector changed beyond inventory')
+    else:
+        for n in changed:
+            if n.startswith(PROTECTED):errors.append('protected source changed '+n)
+            if not(n.startswith(('docs/','specs/')) or n=='AGENTS.md'):errors.append('non-doc change '+n)
     legacy=read_csv('legacy-crosswalk.csv');oldlegacy=list(csv.DictReader(git('show',BASELINE+':docs/reconciliation/v3/legacy-crosswalk.csv').splitlines()));identities={(r['path'],r['line'],r['legacy_id']):r for r in legacy}
     if len(legacy)!=len(oldlegacy) or len(identities)!=len(legacy):errors.append('legacy record count/duplicates')
     for r in oldlegacy:
@@ -305,7 +333,8 @@ def run():
     summary=dict(baseline=BASELINE,capabilities=len(rows),roles=len({r['role_id'] for r in rows}),modules=len({r['module_id'] for r in rows}),core=366,defer=sorted(DEFER),logical_specs=len(cards),canonical_triples=len(cards),legacy_records=len(legacy),retirement_overlay_ids=len(overlay),retired_legacy_files=len(retirement),promoted_planning_files=len(promotion),group_ab_bc=len(coverage),group_ab_core=len(accept['core_bc_ids']),portal_supplemental=len(supp),portal_journeys=len(journeys),checked_changed_markdown=checked,protected_source_changes=[n for n in sorted(changed) if n.startswith(PROTECTED)],preexisting_broken_links=sorted(oldlinks),errors=sorted(set(errors)))
     summary['semantic_ownership_status']='CONSISTENT_WITH_EXPLICIT_UNRESOLVED' if not errors and ownership_unresolved else 'ERROR' if errors else 'CONSISTENT'
     summary['ownership_unresolved']=sorted(ownership_unresolved)
+    summary['source_mode']='OWNER_AUTHORIZED_SPEC003_IMPLEMENTATION' if implementation else 'DOCS_ONLY'
     return summary['errors'],summary
 
 if __name__=='__main__':
-    sys.stdout.reconfigure(encoding='utf-8');errors,summary=run();print(json.dumps(summary,ensure_ascii=False,indent=2));raise SystemExit(bool(errors))
+    sys.stdout.reconfigure(encoding='utf-8');errors,summary=run('--implementation' in sys.argv[1:]);print(json.dumps(summary,ensure_ascii=False,indent=2));raise SystemExit(bool(errors))

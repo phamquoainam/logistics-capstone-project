@@ -12,31 +12,39 @@ import tools.jackson.core.StreamReadFeature;
 
 /** Four exact accepted browser operations, isolated from Bearer-only administration. */
 public final class ProductionAuthenticationHttp {
-    private static final String CSRF="__Host-elogistics.csrf",REFRESH="__Host-elogistics.refresh";
+    public enum Transport {SYSTEM,CUSTOMER}
+    private final String csrfCookie,refreshCookie,prefix,identifierField;
+    private final boolean customer;
     private static final JsonMapper JSON=JsonMapper.builder().enable(StreamReadFeature.STRICT_DUPLICATE_DETECTION).build();
     private final IdentitySessionCommands sessions;private final ProductionSessionAdmission admission;
     private final IdentityBrowserState browser;private final IdentityRateLimiter limiter;private final ProductionAccessTokens tokens;
     private final String origin;private final Clock clock;
     public ProductionAuthenticationHttp(IdentitySessionCommands sessions,ProductionSessionAdmission admission,IdentityBrowserState browser,IdentityRateLimiter limiter,ProductionAccessTokens tokens,String origin,Clock clock){
-        this.sessions=sessions;this.admission=admission;this.browser=browser;this.limiter=limiter;this.tokens=tokens;this.origin=origin;this.clock=clock;
+        this(sessions,admission,browser,limiter,tokens,origin,clock,Transport.SYSTEM);
     }
-    public boolean matches(HttpServletRequest r){String p=r.getRequestURI().substring(r.getContextPath().length());return (r.getMethod().equals("GET")&&p.equals("/api/v1/auth/csrf"))||(r.getMethod().equals("POST")&&Set.of("/api/v1/auth/login","/api/v1/auth/refresh","/api/v1/auth/logout").contains(p));}
+    public ProductionAuthenticationHttp(IdentitySessionCommands sessions,ProductionSessionAdmission admission,IdentityBrowserState browser,IdentityRateLimiter limiter,ProductionAccessTokens tokens,String origin,Clock clock,Transport transport){
+        this.sessions=sessions;this.admission=admission;this.browser=browser;this.limiter=limiter;this.tokens=tokens;this.origin=transport==Transport.CUSTOMER?ProductionCustomerRequestAdmission.requireOrigin(origin):origin;this.clock=clock;
+        customer=Objects.requireNonNull(transport)==Transport.CUSTOMER;prefix=customer?"/api/v1/customer-auth":"/api/v1/auth";
+        csrfCookie=customer?"__Host-elogistics.customer.csrf":"__Host-elogistics.csrf";
+        refreshCookie=customer?"__Host-elogistics.customer.refresh":"__Host-elogistics.refresh";identifierField=customer?"email":"username";
+    }
+    public boolean matches(HttpServletRequest r){String p=r.getRequestURI().substring(r.getContextPath().length());return (r.getMethod().equals("GET")&&p.equals(prefix+"/csrf"))||(r.getMethod().equals("POST")&&Set.of(prefix+"/login",prefix+"/refresh",prefix+"/logout").contains(p));}
     public void handle(HttpServletRequest request,HttpServletResponse response)throws IOException {
         String path=request.getRequestURI();boolean csrf=path.endsWith("/csrf"),login=path.endsWith("/login"),logout=path.endsWith("/logout");
         try {
             var origins=Collections.list(request.getHeaders("Origin"));
             if(!request.isSecure()||origins.size()>1||(!csrf&&origins.size()!=1)||(!origins.isEmpty()&&!origin.equals(origins.getFirst()))){deny(response,403,"ORIGIN_REJECTED");return;}
             // Forwarded/X-Forwarded-* never override TLS or remote address; no proxy trust is configured.
-            String cookie=cookie(request,CSRF),refresh=cookie(request,REFRESH);
-            if(csrf){var c=browser.issue(cookie,refresh);setCookie(response,CSRF,c.cookie(),900);json(response,Map.of("csrfToken",c.token()));return;}
+            String cookie=cookie(request,csrfCookie),refresh=cookie(request,refreshCookie);
+            if(csrf){var c=browser.issue(cookie,refresh);setCookie(response,csrfCookie,c.cookie(),900);json(response,Map.of(customer?"challenge":"csrfToken",c.token()));return;}
             UUID requestId=UUID.fromString(response.getHeader("X-Request-Id"));String challenge=single(request,"X-CSRF-Token");
             try(var ignored=admission.enter(requestId,cookie,challenge)){
                 if(login){
                     admission.authorize(SessionAdmission.Operation.LOGIN,requestId,null,false);
-                    var input=credentials(request);String username=input.get("username").asString(),password=input.get("password").asString();
-                    try{new Username(username);PasswordPolicy.validateLogin(password);}catch(DomainViolation e){throw new IdentityCommandFailure(IdentityCommandFailure.Code.VALIDATION_FAILED);}
+                    var input=credentials(request);String username=input.get(identifierField).asString(),password=input.get("password").asString();
+                    try{if(customer)new CustomerEmail(username);else new Username(username);PasswordPolicy.validateLogin(password);}catch(DomainViolation e){throw new IdentityCommandFailure(IdentityCommandFailure.Code.VALIDATION_FAILED);}
                     String ip=clientAddress(request);
-                    var reservation=limiter.reserve(List.of(new IdentityRateLimiter.Subject(IdentityRateLimiter.Policy.LOGIN_ACCOUNT,username),new IdentityRateLimiter.Subject(IdentityRateLimiter.Policy.LOGIN_IP,ip)));
+                    var reservation=limiter.reserve(List.of(new IdentityRateLimiter.Subject(customer?IdentityRateLimiter.Policy.CUSTOMER_LOGIN_EMAIL:IdentityRateLimiter.Policy.LOGIN_ACCOUNT,username),new IdentityRateLimiter.Subject(customer?IdentityRateLimiter.Policy.CUSTOMER_LOGIN_IP:IdentityRateLimiter.Policy.LOGIN_IP,ip)));
                     IdentitySessionCommands.Result result;
                     try{result=sessions.loginIdentity(new IdentitySessionCommands.Login(username,password,requestId));}
                     catch(IdentityCommandFailure rejected){if(rejected.code()==IdentityCommandFailure.Code.INVALID_CREDENTIALS)reservation.finishLogin(false);throw rejected;}
@@ -44,8 +52,8 @@ public final class ProductionAuthenticationHttp {
                 }else{
                     byte[] raw=refresh==null?null:refresh.getBytes(StandardCharsets.US_ASCII);
                     try(var command=new IdentitySessionCommands.Token(raw,requestId)){
-                        if(logout){sessions.logoutIdentity(command);var c=browser.rebind(cookie,null);setCookie(response,REFRESH,"",0);setCookie(response,CSRF,c.cookie(),900);response.setStatus(204);}
-                        else{try(var result=sessions.refreshIdentity(command)){success(response,result,null);setCookie(response,CSRF,cookie,900);}}
+                        if(logout){sessions.logoutIdentity(command);var c=browser.rebind(cookie,null);setCookie(response,refreshCookie,"",0);setCookie(response,csrfCookie,c.cookie(),900);response.setStatus(204);}
+                        else{try(var result=sessions.refreshIdentity(command)){success(response,result,null);setCookie(response,csrfCookie,cookie,900);}}
                     }finally{if(raw!=null)Arrays.fill(raw,(byte)0);}
                 }
             }
@@ -61,29 +69,29 @@ public final class ProductionAuthenticationHttp {
             deny(response,status,code);
         }catch(Exception e){deny(response,503,"SERVICE_UNAVAILABLE");}
     }
-    private static tools.jackson.databind.JsonNode credentials(HttpServletRequest request)throws IOException{
+    private tools.jackson.databind.JsonNode credentials(HttpServletRequest request)throws IOException{
         try{
             if(request.getContentType()==null||!request.getContentType().split(";",2)[0].equalsIgnoreCase("application/json"))throw new IllegalArgumentException();
             byte[] bytes=request.getInputStream().readNBytes(16385);if(bytes.length>16384)throw new IllegalArgumentException();var value=JSON.readTree(bytes);
-            if(value==null||!value.isObject()||value.size()!=2||value.get("username")==null||!value.get("username").isString()||value.get("password")==null||!value.get("password").isString())throw new IllegalArgumentException();return value;
+            if(value==null||!value.isObject()||value.size()!=2||value.get(identifierField)==null||!value.get(identifierField).isString()||value.get("password")==null||!value.get("password").isString())throw new IllegalArgumentException();return value;
         }catch(Exception e){throw new IdentityCommandFailure(IdentityCommandFailure.Code.VALIDATION_FAILED);}
     }
     private void success(HttpServletResponse response,IdentitySessionCommands.Result result,IdentityBrowserState.Challenge csrf)throws IOException{
         // Construct signing/body BEFORE writing cookies. Never publish an incomplete credential pair.
         String access;try{access=tokens.issue(result.access());}catch(IdentityCommandFailure invalid){throw new IdentityRateLimiter.Unavailable();}long remaining=Duration.between(clock.instant(),result.absoluteExpiresAt()).getSeconds();if(remaining<=0)throw new IdentityRateLimiter.Unavailable();
         int seconds=(int)(result.access().expiresAt().getEpochSecond()-result.access().issuedAt().getEpochSecond());
-        String body=JSON.writeValueAsString(Map.of("accessToken",access,"tokenType","Bearer","expiresIn",seconds,"sessionExpiresAt",result.absoluteExpiresAt().toString(),"user",result.user()));
-        byte[] raw=result.refreshToken();try{setCookie(response,REFRESH,new String(raw,StandardCharsets.US_ASCII),Math.min(28800,remaining));}finally{Arrays.fill(raw,(byte)0);}
-        if(csrf!=null)setCookie(response,CSRF,csrf.cookie(),900);
+        String body=JSON.writeValueAsString(customer?Map.of("accessToken",access,"expiresAt",result.access().expiresAt().toString(),"accountId",result.access().accountId()):Map.of("accessToken",access,"tokenType","Bearer","expiresIn",seconds,"sessionExpiresAt",result.absoluteExpiresAt().toString(),"user",result.user()));
+        byte[] raw=result.refreshToken();try{setCookie(response,refreshCookie,new String(raw,StandardCharsets.US_ASCII),Math.min(28800,remaining));}finally{Arrays.fill(raw,(byte)0);}
+        if(csrf!=null)setCookie(response,csrfCookie,csrf.cookie(),900);
         response.setStatus(200);response.setContentType("application/json;charset=UTF-8");response.getWriter().write(body);
     }
-    private static String clientAddress(HttpServletRequest request){
+    static String clientAddress(HttpServletRequest request){
         String raw=request.getRemoteAddr();
         if(raw==null||raw.length()>128||!(raw.matches("[0-9]{1,3}(\\.[0-9]{1,3}){3}")||(raw.contains(":")&&raw.matches("[0-9a-fA-F:.%]+"))))throw new IdentityRateLimiter.Unavailable();
         try{return java.net.InetAddress.getByName(raw).getHostAddress();}catch(java.net.UnknownHostException invalid){throw new IdentityRateLimiter.Unavailable();}
     }
-    private static String cookie(HttpServletRequest request,String name){String found=null;int count=0;Cookie[] cookies=request.getCookies();if(cookies!=null)for(Cookie c:cookies)if(c.getName().equals(name)){found=c.getValue();count++;}if(count>1)throw new IdentityCommandFailure(IdentityCommandFailure.Code.CSRF_REJECTED);return found;}
-    private static String single(HttpServletRequest request,String name){var values=Collections.list(request.getHeaders(name));if(values.size()!=1)throw new IdentityCommandFailure(IdentityCommandFailure.Code.CSRF_REJECTED);return values.getFirst();}
+    static String cookie(HttpServletRequest request,String name){String found=null;int count=0;Cookie[] cookies=request.getCookies();if(cookies!=null)for(Cookie c:cookies)if(c.getName().equals(name)){found=c.getValue();count++;}if(count>1)throw new IdentityCommandFailure(IdentityCommandFailure.Code.CSRF_REJECTED);return found;}
+    static String single(HttpServletRequest request,String name){var values=Collections.list(request.getHeaders(name));if(values.size()!=1)throw new IdentityCommandFailure(IdentityCommandFailure.Code.CSRF_REJECTED);return values.getFirst();}
     private static void setCookie(HttpServletResponse response,String name,String value,long age){response.addHeader("Set-Cookie",name+"="+value+"; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age="+age);}
     private static void deny(HttpServletResponse r,int s,String code)throws IOException{if(!r.isCommitted())ProductionReadGuard.deny(r,s,code);}
     private static void json(HttpServletResponse response,Object value)throws IOException{response.setStatus(200);response.setContentType("application/json;charset=UTF-8");response.getWriter().write(JSON.writeValueAsString(value));}

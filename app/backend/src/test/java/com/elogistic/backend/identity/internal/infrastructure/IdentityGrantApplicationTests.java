@@ -40,7 +40,7 @@ class IdentityGrantApplicationTests {
 
     @BeforeEach void fixture() throws Exception {
         db = PostgresTestcontainersSupport.database(POSTGRES);
-        assertEquals(6, db.flyway("latest", SCOPE).migrate().migrationsExecuted);
+        assertEquals(12, db.flyway("latest", SCOPE).migrate().migrationsExecuted);
         account(A, "ACTIVE", List.of(ADMIN)); account(B, "ACTIVE", List.of(ADMIN)); account(T, "ACTIVE", List.of(GX));
         session(S, A); session(AS, B); session(TS, T);
         execute("INSERT INTO identity.refresh_token(id,session_id,token_hash,issued_at,expires_at) VALUES ('" + id(20) + "','" + TS + "',decode(repeat('01',32),'hex'),TIMESTAMPTZ '2026-10-21 00:00:00Z',TIMESTAMPTZ '2026-10-21 08:00:00Z')");
@@ -1556,7 +1556,7 @@ class IdentityGrantApplicationTests {
     private List<com.elogistic.backend.identity.internal.application.port.IdentityRateLimiter.Subject> loginQuota(String account,String ip){return List.of(quota(com.elogistic.backend.identity.internal.application.port.IdentityRateLimiter.Policy.LOGIN_ACCOUNT,account),quota(com.elogistic.backend.identity.internal.application.port.IdentityRateLimiter.Policy.LOGIN_IP,ip));}
     @Test void authRateAllSixThresholdsAreEnforcedByPostgres()throws Exception{
         for(var p:com.elogistic.backend.identity.internal.application.port.IdentityRateLimiter.Policy.values()){
-            var q=List.of(quota(p,p.name()));for(int i=0;i<p.limit;i++){var r=limiter().reserve(q);if(p==com.elogistic.backend.identity.internal.application.port.IdentityRateLimiter.Policy.LOGIN_ACCOUNT)r.finishLogin(false);}
+            var q=List.of(quota(p,p.name()));for(int i=0;i<p.limit;i++){var r=limiter().reserve(q);if(p.passwordAttempt())r.finishLogin(false);}
             var e=assertThrows(com.elogistic.backend.identity.internal.application.port.IdentityRateLimiter.Exhausted.class,()->limiter().reserve(q));assertTrue(e.retryAfter>0&&e.retryAfter<=p.seconds);
         }
     }
@@ -1575,7 +1575,7 @@ class IdentityGrantApplicationTests {
     @Test void authRateStorageFailureNeverProducesReservation()throws Exception{var source=org.mockito.Mockito.mock(javax.sql.DataSource.class);org.mockito.Mockito.when(source.getConnection()).thenThrow(new SQLException("SYNTHETIC_UNAVAILABLE","08006"));assertThrows(com.elogistic.backend.identity.internal.application.port.IdentityRateLimiter.Unavailable.class,()->new JdbcIdentityRateLimiter(source,limiterKey()).reserve(loginQuota("same","ip")));assertEquals(0,scalar("SELECT count(*) FROM identity.rate_limit_attempt"));}
     @Test void authRateRetentionRemovesOnlyExpiredOwnedRows()throws Exception{limiter().reserve(loginQuota("expired","ip-old"));execute("UPDATE identity.rate_limit_attempt SET created_at=statement_timestamp()-INTERVAL '901 seconds',lease_expires_at=statement_timestamp()-INTERVAL '841 seconds',expires_at=statement_timestamp()-INTERVAL '1 second'");assertEquals(2,limiter().cleanup());limiter().reserve(loginQuota("live","ip-new"));assertEquals(0,limiter().cleanup());assertEquals(2,scalar("SELECT count(*) FROM identity.rate_limit_attempt"));assertEquals(3,scalar("SELECT count(*) FROM identity.user_account"));}
     @Test void authRateStoredIdentifiersAreHmacNotPlainSubjects()throws Exception{var q=loginQuota("private-subject","192.0.2.20");limiter().reserve(q);try(Connection c=db.runtimeConnection();PreparedStatement s=c.prepareStatement("SELECT subject_hash FROM identity.rate_limit_subject WHERE policy='LOGIN_ACCOUNT'");ResultSet r=s.executeQuery()){assertTrue(r.next());assertArrayEquals(limiter().identifier(q.getFirst()),r.getBytes(1));assertEquals(32,r.getBytes(1).length);}assertEquals(0,scalar("SELECT count(*) FROM information_schema.columns WHERE table_schema='identity' AND table_name LIKE 'rate_limit_%' AND column_name IN ('username','password','ip','token','secret')"));}
-    @Test void authRateForwardV6PreservesEarlierMigrationChecksumsAndData()throws Exception{Database other=PostgresTestcontainersSupport.database(POSTGRES);assertEquals(5,other.flyway("5",SCOPE).migrate().migrationsExecuted);var before=Arrays.stream(other.flyway("5",SCOPE).info().applied()).map(m->m.getChecksum()).toList();assertEquals(1,other.flyway("latest",SCOPE).migrate().migrationsExecuted);other.flyway("latest",SCOPE).validate();assertEquals(0,other.flyway("latest",SCOPE).migrate().migrationsExecuted);assertEquals(before,Arrays.stream(other.flyway("latest",SCOPE).info().applied()).limit(5).map(m->m.getChecksum()).toList());}
+    @Test void authRateForwardV6PreservesEarlierMigrationChecksumsAndData()throws Exception{Database other=PostgresTestcontainersSupport.database(POSTGRES);assertEquals(5,other.flyway("5",SCOPE).migrate().migrationsExecuted);var before=Arrays.stream(other.flyway("5",SCOPE).info().applied()).map(m->m.getChecksum()).toList();assertEquals(1,other.flyway("6",SCOPE).migrate().migrationsExecuted);other.flyway("6",SCOPE).validate();assertEquals(0,other.flyway("6",SCOPE).migrate().migrationsExecuted);assertEquals(before,Arrays.stream(other.flyway("6",SCOPE).info().applied()).limit(5).map(m->m.getChecksum()).toList());}
     @Test void authBrowserBindingRejectsWrongFamilyRevocationAndExpiry()throws Exception{var browser=new JdbcIdentityBrowserState(outboxDataSource());var c=browser.rebind(null,S);browser.verify(c.cookie(),c.token(),S,false);assertThrows(IdentityCommandFailure.class,()->browser.verify(c.cookie(),c.token(),AS,false));assertThrows(IdentityCommandFailure.class,()->browser.verify(c.cookie(),"x".repeat(43),S,false));var replacement=browser.rebind(c.cookie(),null);assertThrows(IdentityCommandFailure.class,()->browser.verify(c.cookie(),c.token(),S,false));browser.verify(replacement.cookie(),replacement.token(),null,false);execute("UPDATE identity.csrf_binding SET expires_at=clock_timestamp()-INTERVAL '1 second',created_at=clock_timestamp()-INTERVAL '2 seconds'");assertThrows(IdentityCommandFailure.class,()->browser.verify(replacement.cookie(),replacement.token(),null,false));}
     @Test void authBrowserPreauthCannotBecomeSessionFamilyAuthority()throws Exception{var browser=new JdbcIdentityBrowserState(outboxDataSource());var c=browser.issue(null,null);browser.verify(c.cookie(),c.token(),null,true);assertThrows(IdentityCommandFailure.class,()->browser.verify(c.cookie(),c.token(),S,false));}
     private record BrowserFlow(jakarta.servlet.http.Cookie csrf,jakarta.servlet.http.Cookie refresh,String challenge){}
@@ -1607,4 +1607,572 @@ class IdentityGrantApplicationTests {
             try(Connection c=db.runtimeConnection();Statement s=c.createStatement()){assertEquals("23514",assertThrows(SQLException.class,()->s.execute(sql)).getSQLState());}
         assertEquals(2,scalar("SELECT count(*) FROM identity.rate_limit_attempt"));
     }
+
+    // Spec003 customer-purpose persistence/admission. Test-only admission ports here do not prove HTTP/TLS.
+    private static final String CUSTOMER_EMAIL="customer@example.invalid";
+    private void customerFixture(boolean keepSystemGrant)throws Exception {
+        sessionFixture();
+        try(Connection c=db.runtimeConnection();PreparedStatement q=c.prepareStatement("UPDATE identity.user_account SET email=? WHERE id=?")) {
+            q.setString(1,CUSTOMER_EMAIL);q.setObject(2,A);assertEquals(1,q.executeUpdate());
+        }
+        execute("INSERT INTO identity.customer_identifier VALUES ('"+id(901)+"','"+A+"','"+CUSTOMER_EMAIL+"',TIMESTAMPTZ '2026-10-21 00:00:00Z','ACTIVE',1)");
+        if(!keepSystemGrant)execute("DELETE FROM identity.account_grant WHERE account_id='"+A+"'");
+    }
+    private com.elogistic.backend.identity.api.IdentitySessionCommands customerSessions(Instant time) {
+        return com.elogistic.backend.identity.internal.application.IdentitySessions.customer(
+            new JdbcIdentitySessionStore(outboxDataSource(),IdentitySessionStorage.CUSTOMER),new ProtectedSessionCredentials(),
+            (operation,request,session,present)->{},Clock.fixed(time,ZoneOffset.UTC));
+    }
+    private com.elogistic.backend.identity.api.IdentitySessionCommands.Result customerLogin() {
+        return customerSessions(NOW).loginIdentity(new com.elogistic.backend.identity.api.IdentitySessionCommands.Login(CUSTOMER_EMAIL,SESSION_PASSWORD,REQUEST));
+    }
+    @Test void customerLoginUsesIndependentVerifiedBindingWithoutSystemGrant()throws Exception {
+        customerFixture(false);
+        try(var result=customerLogin()) {
+            assertEquals(A,result.access().accountId());assertTrue(result.user().grants().isEmpty());
+            assertEquals(1,scalar("SELECT count(*) FROM identity.customer_auth_session"));
+            assertEquals(1,scalar("SELECT count(*) FROM identity.customer_refresh_token WHERE octet_length(token_hash)=32"));
+            assertEquals(3,scalar("SELECT count(*) FROM identity.auth_session"));
+        }
+        sessionDenied(INVALID_CREDENTIALS,()->sessions(NOW).loginIdentity(new com.elogistic.backend.identity.api.IdentitySessionCommands.Login("fixture."+A,SESSION_PASSWORD,REQUEST)));
+    }
+    @Test void customerExactEmailAndCurrentSecurityMasterPreventStaleIndexAdmission()throws Exception {
+        customerFixture(false);
+        sessionDenied(INVALID_CREDENTIALS,()->customerSessions(NOW).loginIdentity(new com.elogistic.backend.identity.api.IdentitySessionCommands.Login("Customer@example.invalid",SESSION_PASSWORD,REQUEST)));
+        execute("UPDATE identity.user_account SET email='changed@example.invalid' WHERE id='"+A+"'");
+        sessionDenied(INVALID_CREDENTIALS,()->customerLogin());assertEquals(0,scalar("SELECT count(*) FROM identity.customer_auth_session"));
+    }
+    @Test void dualPurposeAccountRefreshCannotCrossCustomerAndSystemTables()throws Exception {
+        customerFixture(true);
+        try(var customer=customerLogin();var system=sessionLogin()) {
+            byte[] customerRaw=customer.refreshToken(),systemRaw=system.refreshToken();
+            try(var customerCommand=sessionToken(customerRaw);var systemCommand=sessionToken(systemRaw)) {
+                sessionDenied(SESSION_INVALID,()->sessions(NOW).refreshIdentity(customerCommand));
+                sessionDenied(SESSION_INVALID,()->customerSessions(NOW).refreshIdentity(systemCommand));
+            }finally {Arrays.fill(customerRaw,(byte)0);Arrays.fill(systemRaw,(byte)0);}
+            assertEquals(1,scalar("SELECT count(*) FROM identity.customer_auth_session WHERE revoked_at IS NULL"));
+            assertEquals(4,scalar("SELECT count(*) FROM identity.auth_session WHERE revoked_at IS NULL"));
+        }
+    }
+    @Test void customerRefreshReplayCommitsOnlyCustomerFamilyRevocation()throws Exception {
+        customerFixture(true);
+        try(var login=customerLogin()) {
+            byte[] raw=login.refreshToken();
+            try(var first=sessionToken(raw);var replay=sessionToken(raw);var next=customerSessions(NOW.plusSeconds(1)).refreshIdentity(first)) {
+                var systemBefore=scalar("SELECT count(*) FROM identity.auth_session WHERE revoked_at IS NULL");
+                var denial=assertThrows(IdentityCommandFailure.class,()->customerSessions(NOW.plusSeconds(2)).refreshIdentity(replay));
+                assertEquals(REFRESH_REPLAY,denial.code());
+                assertEquals(REFRESH_REPLAY.name(),denial.getMessage());
+                assertEquals(1,scalar("SELECT count(*) FROM identity.customer_auth_session WHERE revoked_at IS NOT NULL"));
+                assertEquals(2,scalar("SELECT count(*) FROM identity.customer_refresh_token WHERE revoked_at IS NOT NULL"));
+                assertEquals(0,scalar("SELECT count(*) FROM identity.auth_session WHERE revoked_at IS NOT NULL"));
+                assertEquals(systemBefore,scalar("SELECT count(*) FROM identity.auth_session WHERE revoked_at IS NULL"));
+                assertEquals(1,scalar("SELECT count(*) FROM identity.audit_entry WHERE event_type='CUSTOMER_REFRESH_REPLAY' AND source='IDENTITY_CUSTOMER' AND actor_id='"+A+"'"));
+                try(var newest=sessionToken(next.refreshToken())) {
+                    sessionDenied(SESSION_INVALID,()->customerSessions(NOW.plusSeconds(3)).refreshIdentity(newest));
+                }
+            }finally {Arrays.fill(raw,(byte)0);}
+        }
+    }
+    @Test void identityVersionAndDisableInvalidateCustomerAdmissionImmediately()throws Exception {
+        customerFixture(false);
+        try(var login=customerLogin()) {
+            byte[] raw=login.refreshToken();try(var command=sessionToken(raw)) {
+                execute("UPDATE identity.user_account SET auth_version=auth_version+1,version=version+1 WHERE id='"+A+"'");
+                sessionDenied(SESSION_INVALID,()->customerSessions(NOW.plusSeconds(1)).refreshIdentity(command));
+            }finally {Arrays.fill(raw,(byte)0);}
+        }
+        try(var login=customerLogin()) {
+            byte[] raw=login.refreshToken();try(var command=sessionToken(raw)) {
+                execute("UPDATE identity.user_account SET status='DISABLED',disabled_at=updated_at WHERE id='"+A+"'");
+                sessionDenied(SESSION_INVALID,()->customerSessions(NOW.plusSeconds(1)).refreshIdentity(command));
+            }finally {Arrays.fill(raw,(byte)0);}
+        }
+    }
+    @Test void customerCsrfHashesAndFamilyBindingCannotCrossSystemStore()throws Exception {
+        customerFixture(true);
+        var source=outboxDataSource();var customer=new JdbcIdentityBrowserState(source,IdentitySessionStorage.CUSTOMER);var system=new JdbcIdentityBrowserState(source);
+        try(var login=customerLogin()) {
+            var challenge=customer.rebind(null,login.access().sessionId());
+            customer.verify(challenge.cookie(),challenge.token(),login.access().sessionId(),false);
+            sessionDenied(CSRF_REJECTED,()->system.verify(challenge.cookie(),challenge.token(),login.access().sessionId(),false));
+            var old=system.rebind(null,S);sessionDenied(CSRF_REJECTED,()->customer.verify(old.cookie(),old.token(),S,false));
+            assertEquals(1,scalar("SELECT count(*) FROM identity.customer_csrf_binding WHERE octet_length(cookie_hash)=32 AND octet_length(challenge_hash)=32"));
+        }
+    }
+    private com.elogistic.backend.identity.internal.application.CustomerAdmissions customerAdmission(
+        javax.sql.DataSource source,com.elogistic.backend.identity.api.IdentitySessionCommands.AccessGrant access,Clock clock) {
+        return new com.elogistic.backend.identity.internal.application.CustomerAdmissions(
+            new JdbcIdentitySessionStore(source,IdentitySessionStorage.CUSTOMER),token->new com.elogistic.backend.identity.internal.application.port.CustomerAccessVerifier.Claim(
+                access.sessionId(),access.accountId(),access.authVersion(),access.issuedAt(),access.expiresAt()),(request,session)->{},clock);
+    }
+    @Test void customerFinalDeadlineRollsBackStagedWritesInOwnedTransaction()throws Exception {
+        customerFixture(false);try(var login=customerLogin()) {
+            var time=new java.util.concurrent.atomic.AtomicReference<>(NOW);Clock clock=new Clock(){public ZoneId getZone(){return ZoneOffset.UTC;}public Clock withZone(ZoneId z){return this;}public Instant instant(){return time.get();}};
+            var source=outboxDataSource();var app=customerAdmission(source,login.access(),clock);var jdbc=new org.springframework.jdbc.core.JdbcTemplate(source);
+            sessionDenied(SESSION_INVALID,()->app.execute("synthetic-verified-claim",REQUEST,Set.of(),context->{
+                jdbc.update("INSERT INTO identity.audit_entry(id,actor_id,target_id,event_type,source,reason,request_id,occurred_at) VALUES (?,?,?,'CUSTOMER_TEST_STAGED','SPEC003_TEST','Synthetic staged effect',?,?)",UUID.randomUUID(),A,A,REQUEST.toString(),Timestamp.from(NOW));
+                time.set(NOW.plusSeconds(900));return null;
+            }));
+            assertEquals(0,scalar("SELECT count(*) FROM identity.audit_entry WHERE event_type='CUSTOMER_TEST_STAGED'"));
+        }
+    }
+    @Test void customerMeaningfulActivityCommitsAfterBusinessAndContextCannotEscape()throws Exception {
+        customerFixture(false);try(var login=customerLogin()) {
+            var source=outboxDataSource();var app=customerAdmission(source,login.access(),Clock.fixed(NOW.plusSeconds(10),ZoneOffset.UTC));
+            var captured=app.execute("synthetic-verified-claim",REQUEST,Set.of(),context->{app.requireCurrent(context);app.meaningfulAction(context);return context;});
+            sessionDenied(SESSION_INVALID,()->app.requireCurrent(captured));
+            assertEquals(1,scalar("SELECT count(*) FROM identity.customer_auth_session WHERE last_activity_at=TIMESTAMPTZ '2026-10-21 00:05:10Z'"));
+            assertEquals(0,scalar("SELECT count(*) FROM identity.auth_session WHERE last_activity_at<>created_at"));
+        }
+    }
+
+    // Enrollment application/PG evidence only. This fixture deliberately does not stand in for HTTP/TLS or SMTP.
+    private static final UUID ENROLLMENT_BINDING=id(902);
+    private static final String ENROLLMENT_EMAIL="new-customer@example.invalid",ENROLLMENT_PASSWORD="synthetic-enrollment-password";
+    private ProtectedCustomerProofs enrollmentProtection(){return new ProtectedCustomerProofs(Map.of("v1",keyBytes(71)),"v1",Map.of("e1",keyBytes(72)),"e1");}
+    private byte[] keyBytes(int value){byte[] bytes=new byte[32];Arrays.fill(bytes,(byte)value);return bytes;}
+    private void enrollmentBinding()throws Exception {
+        execute("INSERT INTO identity.customer_csrf_binding VALUES ('"+ENROLLMENT_BINDING+"',decode(repeat('71',32),'hex'),decode(repeat('72',32),'hex'),NULL,clock_timestamp(),clock_timestamp()+INTERVAL '15 minutes',NULL)");
+    }
+    private com.elogistic.backend.identity.api.customer.CustomerEnrollmentCommands enrollmentApp(Instant time){
+        return new com.elogistic.backend.identity.internal.application.CustomerEnrollments(new JdbcCustomerEnrollmentStore(outboxDataSource()),enrollmentProtection(),
+            new com.elogistic.backend.identity.internal.application.port.CustomerEnrollmentAdmission(){
+                public Binding admit(Operation operation,UUID request,String exact){return new Binding(ENROLLMENT_BINDING);}
+                public void requireCurrent(Binding binding){assertEquals(ENROLLMENT_BINDING,binding.id());}
+            },Clock.fixed(time,ZoneOffset.UTC));
+    }
+    private com.elogistic.backend.identity.api.customer.CustomerEnrollmentCommands.Enrollment enrollCommand(UUID key,String email){
+        return new com.elogistic.backend.identity.api.customer.CustomerEnrollmentCommands.Enrollment(email,ENROLLMENT_PASSWORD,"Synthetic Customer","S003-2026-10-27",key,REQUEST);
+    }
+    private com.elogistic.backend.identity.api.customer.CustomerEnrollmentCommands.Verification pendingEnrollmentProof()throws Exception {
+        var source=outboxDataSource();var jdbc=new org.springframework.jdbc.core.JdbcTemplate(source);
+        return jdbc.queryForObject("SELECT p.*,d.encryption_key_id,d.nonce,d.ciphertext,d.recipient_nonce,d.recipient_ciphertext FROM identity.customer_proof p JOIN identity.customer_delivery d ON d.proof_id=p.id WHERE p.purpose='CUSTOMER_ENROLLMENT' AND p.revoked_at IS NULL AND p.consumed_at IS NULL",(r,n)->{
+            var p=new CustomerProof(r.getObject("id",UUID.class),r.getObject("subject_id",UUID.class),CustomerProof.Purpose.CUSTOMER_ENROLLMENT,r.getTimestamp("created_at").toInstant(),r.getTimestamp("expires_at").toInstant(),null,null,null,null,null);
+            var crypto=enrollmentProtection();String destination=crypto.openDestination(p,r.getString("verifier_key_id"),r.getString("encryption_key_id"),r.getBytes("recipient_nonce"),r.getBytes("recipient_ciphertext"),p.createdAt());
+            assertEquals(ENROLLMENT_EMAIL,destination);
+            try(var opened=crypto.open(p,destination,r.getString("verifier_key_id"),r.getString("encryption_key_id"),r.getBytes("nonce"),r.getBytes("ciphertext"),p.createdAt())){
+                byte[] token=opened.token();try{return new com.elogistic.backend.identity.api.customer.CustomerEnrollmentCommands.Verification(p.id(),new String(token,java.nio.charset.StandardCharsets.US_ASCII),UUID.randomUUID(),REQUEST);}
+                finally{Arrays.fill(token,(byte)0);}
+            }
+        });
+    }
+    @Test void enrollmentQueuesOnlyProtectedMaterialWithoutAccountOrGrant()throws Exception {
+        enrollmentBinding();var before=snapshot();var result=enrollmentApp(NOW).enroll(enrollCommand(KEY,ENROLLMENT_EMAIL));
+        assertTrue(result.accepted());assertEquals(REQUEST,result.requestId());
+        assertEquals(3,scalar("SELECT count(*) FROM identity.user_account"));assertEquals(0,scalar("SELECT count(*) FROM identity.customer_identifier"));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.customer_enrollment WHERE status='PENDING' AND octet_length(protected_password)=60"));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.customer_proof WHERE purpose='CUSTOMER_ENROLLMENT' AND expires_at=created_at+INTERVAL '24 hours' AND octet_length(verifier)=32"));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.customer_delivery WHERE status='QUEUED' AND attempts=0 AND accepted_at IS NULL AND delivered_at IS NULL AND octet_length(ciphertext)=59 AND recipient_ciphertext IS NOT NULL"));
+        assertEquals(before.get("account_grant"),snapshot().get("account_grant"));
+        assertNotNull(pendingEnrollmentProof());
+    }
+    @Test void enrollmentUniformReceiptAndChangedBindingPreventEnumerationAndDuplicates()throws Exception {
+        enrollmentBinding();var app=enrollmentApp(NOW);var first=app.enroll(enrollCommand(KEY,ENROLLMENT_EMAIL));
+        assertEquals(first,app.enroll(enrollCommand(KEY,ENROLLMENT_EMAIL)));
+        assertTrue(app.enroll(enrollCommand(id(903),ENROLLMENT_EMAIL)).accepted());
+        assertTrue(app.enroll(enrollCommand(id(904),"fixture@example.invalid")).accepted());
+        assertEquals(IDEMPOTENCY_CONFLICT,assertThrows(IdentityCommandFailure.class,()->app.enroll(enrollCommand(KEY,"other@example.invalid"))).code());
+        assertEquals(1,scalar("SELECT count(*) FROM identity.customer_enrollment"));assertEquals(1,scalar("SELECT count(*) FROM identity.customer_delivery"));
+        assertEquals(3,scalar("SELECT count(*) FROM identity.customer_command_receipt"));
+    }
+    @Test void verificationAtomicallyCreatesVerifiedPersonalAccountWithoutSystemAuthority()throws Exception {
+        enrollmentBinding();var app=enrollmentApp(NOW);app.enroll(enrollCommand(KEY,ENROLLMENT_EMAIL));var command=pendingEnrollmentProof();
+        enrollmentApp(NOW.plusSeconds(1)).verify(command);
+        assertEquals(1,scalar("SELECT count(*) FROM identity.customer_enrollment WHERE status='CONSUMED' AND protected_password IS NULL"));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.user_account WHERE email='"+ENROLLMENT_EMAIL+"' AND status='ACTIVE' AND email_verified AND password_hash IS NOT NULL"));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.customer_identifier WHERE exact_email='"+ENROLLMENT_EMAIL+"' AND status='ACTIVE'"));
+        assertEquals(0,scalar("SELECT count(*) FROM identity.account_grant g JOIN identity.user_account a ON a.id=g.account_id WHERE a.email='"+ENROLLMENT_EMAIL+"'"));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.customer_delivery WHERE status='DELIVERED' AND delivery_evidence IS NOT NULL AND nonce IS NULL AND ciphertext IS NULL AND recipient_ciphertext IS NULL AND accepted_at IS NULL"));
+        try(var login=customerSessions(NOW.plusSeconds(2)).loginIdentity(new com.elogistic.backend.identity.api.IdentitySessionCommands.Login(ENROLLMENT_EMAIL,ENROLLMENT_PASSWORD,REQUEST))){assertTrue(login.user().grants().isEmpty());}
+        var after=snapshot();enrollmentApp(NOW.plusSeconds(3)).verify(command);assertEquals(after,snapshot());
+        var replay=new com.elogistic.backend.identity.api.customer.CustomerEnrollmentCommands.Verification(command.proofId(),command.proof(),id(905),REQUEST);
+        assertEquals(TOKEN_INVALID_OR_EXPIRED,assertThrows(IdentityCommandFailure.class,()->enrollmentApp(NOW.plusSeconds(4)).verify(replay)).code());
+    }
+    @Test void resendRevokesOldProofAndCiphertextBeforeCreatingFreshIntent()throws Exception {
+        enrollmentBinding();enrollmentApp(NOW).enroll(enrollCommand(KEY,ENROLLMENT_EMAIL));var old=pendingEnrollmentProof();
+        enrollmentApp(NOW.plusSeconds(60)).resend(new com.elogistic.backend.identity.api.customer.CustomerEnrollmentCommands.Email(ENROLLMENT_EMAIL,id(906),REQUEST));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.customer_proof WHERE revoked_at IS NOT NULL"));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.customer_delivery WHERE status='EXPIRED' AND ciphertext IS NULL AND recipient_ciphertext IS NULL"));
+        assertEquals(TOKEN_INVALID_OR_EXPIRED,assertThrows(IdentityCommandFailure.class,()->enrollmentApp(NOW.plusSeconds(61)).verify(old)).code());
+        enrollmentApp(NOW.plusSeconds(61)).verify(pendingEnrollmentProof());assertEquals(4,scalar("SELECT count(*) FROM identity.user_account"));
+    }
+    @Test void wrongFutureAndExpiredEnrollmentProofsCannotCreateAccount()throws Exception {
+        enrollmentBinding();enrollmentApp(NOW).enroll(enrollCommand(KEY,ENROLLMENT_EMAIL));var good=pendingEnrollmentProof();
+        var wrong=new com.elogistic.backend.identity.api.customer.CustomerEnrollmentCommands.Verification(good.proofId(),"A".repeat(43),id(907),REQUEST);
+        for(var pair:List.of(Map.entry(NOW,wrong),Map.entry(NOW.minusSeconds(1),good),Map.entry(NOW.plusSeconds(86400),good)))
+            assertEquals(TOKEN_INVALID_OR_EXPIRED,assertThrows(IdentityCommandFailure.class,()->enrollmentApp(pair.getKey()).verify(pair.getValue())).code());
+        assertEquals(3,scalar("SELECT count(*) FROM identity.user_account"));assertEquals(0,scalar("SELECT count(*) FROM identity.customer_identifier"));
+        assertEquals(0,scalar("SELECT count(*) FROM identity.customer_proof WHERE consumed_at IS NOT NULL"));
+        enrollmentApp(NOW.plusSeconds(86400)).enroll(enrollCommand(id(908),ENROLLMENT_EMAIL));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.customer_enrollment WHERE status='EXPIRED' AND protected_password IS NULL"));
+        enrollmentApp(NOW.plusSeconds(86401)).verify(pendingEnrollmentProof());assertEquals(4,scalar("SELECT count(*) FROM identity.user_account"));
+    }
+    @Test void verificationAuditFailureRollsBackAccountIndexProofAndReceipt()throws Exception {
+        enrollmentBinding();enrollmentApp(NOW).enroll(enrollCommand(KEY,ENROLLMENT_EMAIL));var good=pendingEnrollmentProof();var before=snapshot();
+        failWrite("audit_entry","INSERT");assertThrows(RuntimeException.class,()->enrollmentApp(NOW.plusSeconds(1)).verify(good));
+        assertEquals(before,snapshot());assertEquals(0,scalar("SELECT count(*) FROM identity.customer_identifier"));
+        assertEquals(0,scalar("SELECT count(*) FROM identity.customer_proof WHERE consumed_at IS NOT NULL"));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.customer_delivery WHERE status='QUEUED' AND ciphertext IS NOT NULL"));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.customer_command_receipt"));
+    }
+    @Test void concurrentVerificationHasOneAccountAndOneSingleUseOutcome()throws Exception {
+        enrollmentBinding();enrollmentApp(NOW).enroll(enrollCommand(KEY,ENROLLMENT_EMAIL));var proof=pendingEnrollmentProof();
+        var results=adminRace(()->{
+            try{enrollmentApp(NOW.plusSeconds(1)).verify(proof);return "VERIFIED";}
+            catch(IdentityCommandFailure failure){return failure.code().name();}
+        },()->{
+            try{enrollmentApp(NOW.plusSeconds(1)).verify(new com.elogistic.backend.identity.api.customer.CustomerEnrollmentCommands.Verification(proof.proofId(),proof.proof(),id(909),REQUEST));return "VERIFIED";}
+            catch(IdentityCommandFailure failure){return failure.code().name();}
+        });
+        // Either caller can win; both tasks report an ordinary outcome instead of throwing into the executor.
+        assertEquals(1,results.stream().filter("VERIFIED"::equals).count());
+        assertEquals(1,results.stream().filter(TOKEN_INVALID_OR_EXPIRED.name()::equals).count());
+        assertEquals(4,scalar("SELECT count(*) FROM identity.user_account"));assertEquals(1,scalar("SELECT count(*) FROM identity.customer_identifier"));
+    }
+    @Test void enrollmentStoreRejectsCallerOwnedTransactionAndResourceBindings()throws Exception {
+        var source=outboxDataSource();var store=new JdbcCustomerEnrollmentStore(source);var manager=new org.springframework.jdbc.support.JdbcTransactionManager(source);
+        new org.springframework.transaction.support.TransactionTemplate(manager).execute(status->{assertThrows(IllegalStateException.class,()->store.transaction(tx->null));return null;});
+        org.springframework.transaction.support.TransactionSynchronizationManager.initSynchronization();try{assertThrows(IllegalStateException.class,()->store.transaction(tx->null));}
+        finally{org.springframework.transaction.support.TransactionSynchronizationManager.clearSynchronization();}
+        Object resource=new Object();org.springframework.transaction.support.TransactionSynchronizationManager.bindResource(source,resource);
+        try{assertThrows(IllegalStateException.class,()->store.transaction(tx->null));assertSame(resource,org.springframework.transaction.support.TransactionSynchronizationManager.getResource(source));}
+        finally{org.springframework.transaction.support.TransactionSynchronizationManager.unbindResource(source);}
+    }
+
+    private static java.security.KeyPair customerHttpKeys;
+    private static synchronized java.security.KeyPair customerHttpKeys()throws Exception{if(customerHttpKeys==null){var generator=java.security.KeyPairGenerator.getInstance("RSA");generator.initialize(3072);customerHttpKeys=generator.generateKeyPair();}return customerHttpKeys;}
+    private com.elogistic.backend.identity.internal.web.ProductionAccessTokens customerTokens(Instant time)throws Exception{
+        return new com.elogistic.backend.identity.internal.web.ProductionAccessTokens("https://customer.example.invalid","customer-browser","customer-test",(java.security.interfaces.RSAPrivateKey)customerHttpKeys().getPrivate(),Map.of("customer-test",(java.security.interfaces.RSAPublicKey)customerHttpKeys().getPublic()),Clock.fixed(time,ZoneOffset.UTC));
+    }
+    private SmtpCustomerDelivery smtp(CustomerSmtpTestInbox inbox,Instant time){
+        return new SmtpCustomerDelivery(new SmtpCustomerDelivery.Settings("127.0.0.1",inbox.port(),SmtpCustomerDelivery.Mode.TEST_LOOPBACK,null,null,"no-reply@example.invalid",Set.of("example.invalid"),"https://portal.example.invalid",true),Clock.fixed(time,ZoneOffset.UTC));
+    }
+    private org.springframework.web.context.support.AnnotationConfigWebApplicationContext customerHttpContext(Instant time,com.elogistic.backend.identity.internal.application.port.CustomerDeliveryTransport transport)throws Exception{
+        return customerHttpContext(time,transport,false);
+    }
+    private org.springframework.web.context.support.AnnotationConfigWebApplicationContext customerHttpContext(Instant time,com.elogistic.backend.identity.internal.application.port.CustomerDeliveryTransport transport,boolean profile)throws Exception{
+        HttpFixtureConfiguration.source=outboxDataSource();var source=HttpFixtureConfiguration.source;
+        var key=new com.nimbusds.jose.jwk.RSAKey.Builder((java.security.interfaces.RSAPublicKey)httpKeys().getPublic()).privateKey((java.security.interfaces.RSAPrivateKey)httpKeys().getPrivate()).keyID("http-test").keyUse(com.nimbusds.jose.jwk.KeyUse.SIGNATURE).algorithm(com.nimbusds.jose.JWSAlgorithm.RS256).build();
+        var context=new org.springframework.web.context.support.AnnotationConfigWebApplicationContext();context.setServletContext(new org.springframework.mock.web.MockServletContext());context.getEnvironment().setActiveProfiles("identity","postgres","customer");
+        context.getEnvironment().getPropertySources().addFirst(new org.springframework.core.env.MapPropertySource("isolated-customer-http-fixture",Map.of("identity.security.issuer","https://identity.example.invalid","identity.security.audience","elogistics-browser","identity.security.current-kid","http-test","identity.security.jwk-set",new com.nimbusds.jose.jwk.JWKSet(key).toString(false),"identity.security.origin","https://portal.example.invalid","identity.security.limiter-hmac",Base64.getEncoder().encodeToString(limiterKey()),"customer.rollout","SANDBOX")));
+        // Real production composition with deterministic test clock, test keys, same runtime DS and explicit manual worker tick.
+        var services=com.elogistic.backend.identity.internal.ProductionCustomerComposition.create(source,customerTokens(time),enrollmentProtection(),new JdbcIdentityRateLimiter(source,keyBytes(73)),transport,"https://portal.example.invalid",Clock.fixed(time,ZoneOffset.UTC));
+        context.addBeanFactoryPostProcessor(factory->{factory.registerSingleton("identityHttpClock",Clock.fixed(time,ZoneOffset.UTC));factory.registerSingleton("customerServices",services);});
+        context.register(HttpFixtureConfiguration.class,com.elogistic.backend.identity.internal.ProductionIdentityHttpConfiguration.class,com.elogistic.backend.identity.internal.ProductionCustomerWebConfiguration.class,com.elogistic.backend.identity.internal.web.ProductionIdentityReads.class,com.elogistic.backend.identity.internal.web.ProductionIdentityErrors.class);
+        if(profile){
+            context.getEnvironment().getPropertySources().addFirst(new org.springframework.core.env.MapPropertySource("isolated-profile-keys",Map.of("merchant.customer-profile.receipt-keys","{\"v1\":\""+Base64.getEncoder().encodeToString(keyBytes(76))+"\"}","merchant.customer-profile.current-receipt-key","v1")));
+            context.addBeanFactoryPostProcessor(factory->{factory.registerSingleton("customerAdmission",services.customers());factory.registerSingleton("customerRequestContext",services.requests());});
+            context.register(com.elogistic.backend.merchant.internal.CustomerProfileConfiguration.class,com.elogistic.backend.workflow.internal.web.CustomerProfileHttp.class,com.elogistic.backend.workflow.internal.web.OnboardingHttpErrors.class);
+        }
+        try{context.refresh();return context;}catch(Exception failure){context.close();throw failure;}
+    }
+    private BrowserFlow customerCsrf(org.springframework.test.web.servlet.MockMvc mvc,BrowserFlow old)throws Exception{
+        var request=org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/v1/customer-auth/csrf").secure(true).header("Origin","https://portal.example.invalid");if(old!=null)request.cookie(old.csrf,old.refresh);
+        var response=mvc.perform(request).andReturn().getResponse();assertEquals(200,response.getStatus());String challenge=new tools.jackson.databind.ObjectMapper().readTree(response.getContentAsString()).get("challenge").asString();
+        return new BrowserFlow(responseCookie(response,"__Host-elogistics.customer.csrf"),old==null?new jakarta.servlet.http.Cookie("__Host-elogistics.customer.refresh",""):old.refresh,challenge);
+    }
+    private org.springframework.mock.web.MockHttpServletResponse customerPost(org.springframework.test.web.servlet.MockMvc mvc,String route,BrowserFlow flow,UUID key,Object body)throws Exception{
+        var request=org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/v1/customer-auth/"+route).secure(true).header("Origin","https://portal.example.invalid").header("X-CSRF-Token",flow.challenge).cookie(flow.csrf);if(!flow.refresh.getValue().isEmpty())request.cookie(flow.refresh);if(key!=null)request.header("Idempotency-Key",key);if(body!=null)request.contentType("application/json").content(new tools.jackson.databind.ObjectMapper().writeValueAsBytes(body));return mvc.perform(request).andReturn().getResponse();
+    }
+    private Map<String,String> customerRegistration(){return Map.of("email",ENROLLMENT_EMAIL,"password",ENROLLMENT_PASSWORD,"displayName","Synthetic Customer","consentVersion","S003-2026-10-27");}
+    private Map<String,String> receivedVerification(CustomerSmtpTestInbox inbox)throws Exception{
+        var received=inbox.messages();assertEquals(1,received.size());var email=new jakarta.mail.internet.MimeMessage(jakarta.mail.Session.getInstance(new Properties()),new java.io.ByteArrayInputStream(received.getFirst()));
+        String content=(String)email.getContent();var match=java.util.regex.Pattern.compile("/verify-email#proofId=([0-9a-f-]{36})&proof=([A-Za-z0-9_-]{43})").matcher(content);assertTrue(match.find());return Map.of("proofId",match.group(1),"proof",match.group(2));
+    }
+    @Test void customerHttpEnrollmentMailVerificationLoginRefreshLogoutUseActualChains()throws Exception{
+        try(var inbox=new CustomerSmtpTestInbox(1,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW))){
+            var mvc=httpMvc(context);var pre=customerCsrf(mvc,null);var queued=customerPost(mvc,"enrollments",pre,KEY,customerRegistration());assertEquals(202,queued.getStatus());assertEquals(3,scalar("SELECT count(*) FROM identity.user_account"));
+            var services=context.getBean(com.elogistic.backend.identity.internal.ProductionCustomerComposition.Services.class);assertTrue(services.delivery().runOne());
+            assertEquals(1,scalar("SELECT count(*) FROM identity.customer_delivery WHERE status='ACCEPTED_BY_PROVIDER' AND accepted_at IS NOT NULL AND delivered_at IS NULL AND delivery_evidence IS NULL AND ciphertext IS NULL AND recipient_ciphertext IS NULL"));
+            var proof=receivedVerification(inbox);assertEquals(204,customerPost(mvc,"verifications",pre,id(910),proof).getStatus());
+            assertEquals(1,scalar("SELECT count(*) FROM identity.customer_delivery WHERE status='DELIVERED' AND delivery_evidence IS NOT NULL"));
+            var login=customerPost(mvc,"login",pre,null,Map.of("email",ENROLLMENT_EMAIL,"password",ENROLLMENT_PASSWORD));assertEquals(200,login.getStatus());
+            var accessBody=new tools.jackson.databind.ObjectMapper().readTree(login.getContentAsString());assertEquals(3,accessBody.size());String access=accessBody.get("accessToken").asString();
+            var me=httpRead(mvc,"/api/v1/customer-auth/me",access);assertEquals(200,me.getStatus());assertEquals(4,new tools.jackson.databind.ObjectMapper().readTree(me.getContentAsString()).size());
+            assertEquals(401,httpRead(mvc,"/api/v1/auth/me",access).getStatus());assertEquals(401,httpRead(mvc,"/api/v1/admin/users",access).getStatus());
+            var flow=customerCsrf(mvc,new BrowserFlow(responseCookie(login,"__Host-elogistics.customer.csrf"),responseCookie(login,"__Host-elogistics.customer.refresh"),"unused"));
+            var refreshed=customerPost(mvc,"refresh",flow,null,null);assertEquals(200,refreshed.getStatus());
+            var next=new BrowserFlow(responseCookie(refreshed,"__Host-elogistics.customer.csrf"),responseCookie(refreshed,"__Host-elogistics.customer.refresh"),flow.challenge);
+            assertEquals(204,customerPost(mvc,"logout",next,null,null).getStatus());assertEquals(401,httpRead(mvc,"/api/v1/customer-auth/me",access).getStatus());
+            assertEquals(0,scalar("SELECT count(*) FROM identity.account_grant g JOIN identity.user_account a ON a.id=g.account_id WHERE a.email='"+ENROLLMENT_EMAIL+"'"));assertEquals(3,scalar("SELECT count(*) FROM identity.auth_session"));
+        }
+    }
+    @Test void customerHttpSystemTokenAndRevokedAccountCannotBecomeCustomerAuthority()throws Exception{
+        customerFixture(true);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW))){
+            var mvc=httpMvc(context);String system=httpToken(context,S,A,1,NOW,NOW.plusSeconds(900));assertEquals(401,httpRead(mvc,"/api/v1/customer-auth/me",system).getStatus());
+            var login=customerPost(mvc,"login",customerCsrf(mvc,null),null,Map.of("email",CUSTOMER_EMAIL,"password",SESSION_PASSWORD));assertEquals(200,login.getStatus());String access=new tools.jackson.databind.ObjectMapper().readTree(login.getContentAsString()).get("accessToken").asString();
+            assertEquals(200,httpRead(mvc,"/api/v1/customer-auth/me",access).getStatus());execute("UPDATE identity.user_account SET status='DISABLED',disabled_at=updated_at WHERE id='"+A+"'");assertEquals(401,httpRead(mvc,"/api/v1/customer-auth/me",access).getStatus());
+        }
+    }
+    @Test void customerHttpRegistrationReplayAndDurableQuotaAreNotReleasedByRollback()throws Exception{
+        try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW))){
+            var mvc=httpMvc(context);var pre=customerCsrf(mvc,null);for(int i=0;i<5;i++)assertEquals(202,customerPost(mvc,"enrollments",pre,KEY,customerRegistration()).getStatus());
+            var exhausted=customerPost(mvc,"enrollments",pre,KEY,customerRegistration());assertEquals(429,exhausted.getStatus());assertNotNull(exhausted.getHeader("Retry-After"));assertEquals(1,scalar("SELECT count(*) FROM identity.customer_enrollment"));assertEquals(1,scalar("SELECT count(*) FROM identity.customer_delivery"));
+            assertEquals(5,scalar("SELECT count(*) FROM identity.rate_limit_attempt WHERE policy='CUSTOMER_ENROLL_EMAIL' AND state='COUNTED'"));
+        }
+    }
+    @Test void customerHttpQuotaStorageOutageDeniesBeforePendingAccountOrDelivery()throws Exception{
+        try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW))){
+            var mvc=httpMvc(context);var pre=customerCsrf(mvc,null);failWrite("rate_limit_attempt","INSERT");var failed=customerPost(mvc,"enrollments",pre,KEY,customerRegistration());assertEquals(503,failed.getStatus());assertEquals(0,scalar("SELECT count(*) FROM identity.customer_enrollment"));assertEquals(0,scalar("SELECT count(*) FROM identity.customer_delivery"));assertFalse(failed.getContentAsString().contains("SYNTHETIC_WRITE_FAILURE"));
+        }
+    }
+    @Test void deliveryLeaseFencingKeepsExpiredWorkerFromRecordingNewLeaseOutcome()throws Exception{
+        enrollmentBinding();enrollmentApp(NOW).enroll(enrollCommand(KEY,ENROLLMENT_EMAIL));var store=new JdbcCustomerDeliveryStore(outboxDataSource());
+        try(var first=store.claim(NOW).orElseThrow();var second=store.claim(NOW.plusSeconds(30)).orElseThrow()){
+            var accepted=new com.elogistic.backend.identity.internal.application.port.CustomerDeliveryTransport.Outcome(com.elogistic.backend.identity.internal.application.port.CustomerDeliveryTransport.Kind.ACCEPTED_BY_PROVIDER,"TEST:"+first.delivery().id(),true);
+            assertFalse(store.finish(first,accepted,NOW.plusSeconds(31)));assertTrue(store.finish(second,accepted,NOW.plusSeconds(31)));
+            assertEquals(1,scalar("SELECT count(*) FROM identity.customer_delivery WHERE status='ACCEPTED_BY_PROVIDER' AND attempts=2 AND delivered_at IS NULL"));
+        }
+    }
+    @Test void deliveryBoundedFailuresAndDeadlineScrubPendingSecretsWithoutDeletingHistory()throws Exception{
+        enrollmentBinding();enrollmentApp(NOW).enroll(enrollCommand(KEY,ENROLLMENT_EMAIL));var store=new JdbcCustomerDeliveryStore(outboxDataSource());Instant time=NOW;
+        for(int i=0;i<5;i++)try(var lease=store.claim(time).orElseThrow()){
+            assertTrue(store.finish(lease,new com.elogistic.backend.identity.internal.application.port.CustomerDeliveryTransport.Outcome(com.elogistic.backend.identity.internal.application.port.CustomerDeliveryTransport.Kind.TRANSIENT_FAILURE,null,true),time.plusSeconds(1)));time=time.plusSeconds(1+(30L<<i));
+        }
+        assertEquals(1,scalar("SELECT count(*) FROM identity.customer_delivery WHERE status='FAILED' AND attempts=5 AND ciphertext IS NULL AND recipient_ciphertext IS NULL"));assertTrue(store.claim(time).isEmpty());
+        assertEquals(1,store.expire(NOW.plusSeconds(86400)));assertEquals(1,scalar("SELECT count(*) FROM identity.customer_enrollment WHERE status='EXPIRED' AND protected_password IS NULL"));assertEquals(1,scalar("SELECT count(*) FROM identity.customer_proof"));assertEquals(1,scalar("SELECT count(*) FROM identity.customer_command_receipt"));assertEquals(3,scalar("SELECT count(*) FROM identity.user_account"));
+    }
+    @Test void deliveryAuditFailureRollsBackLeaseAndRealSmtpRunsOutsidePhysicalTransaction()throws Exception{
+        enrollmentBinding();enrollmentApp(NOW).enroll(enrollCommand(KEY,ENROLLMENT_EMAIL));failWrite("audit_entry","INSERT");var store=new JdbcCustomerDeliveryStore(outboxDataSource());assertThrows(RuntimeException.class,()->store.claim(NOW));assertEquals(1,scalar("SELECT count(*) FROM identity.customer_delivery WHERE status='QUEUED' AND attempts=0 AND lease_id IS NULL"));
+        db.ownerExecute("DROP TRIGGER synthetic_fault ON identity.audit_entry");
+        try(var inbox=new CustomerSmtpTestInbox(1,false,false,250,null)){
+            var transport=smtp(inbox,NOW);var worker=new com.elogistic.backend.identity.internal.application.CustomerDeliveryWorker(store,enrollmentProtection(),message->{assertFalse(org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive());assertTrue(org.springframework.transaction.support.TransactionSynchronizationManager.getResourceMap().isEmpty());return transport.send(message);},Clock.fixed(NOW,ZoneOffset.UTC));
+            assertTrue(worker.runOne());assertEquals(1,inbox.messages().size());assertEquals(1,scalar("SELECT count(*) FROM identity.customer_delivery WHERE status='ACCEPTED_BY_PROVIDER'"));
+        }
+    }
+    @Test void missingDeliveryKeyBlocksWithoutSendingOrClaimingProviderAcceptance()throws Exception{
+        enrollmentBinding();enrollmentApp(NOW).enroll(enrollCommand(KEY,ENROLLMENT_EMAIL));
+        try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null)){
+            var other=new ProtectedCustomerProofs(Map.of("v2",keyBytes(74)),"v2",Map.of("e2",keyBytes(75)),"e2");
+            var worker=new com.elogistic.backend.identity.internal.application.CustomerDeliveryWorker(new JdbcCustomerDeliveryStore(outboxDataSource()),other,smtp(inbox,NOW),Clock.fixed(NOW,ZoneOffset.UTC));
+            assertTrue(worker.runOne());assertTrue(inbox.messages().isEmpty());assertEquals(1,scalar("SELECT count(*) FROM identity.customer_delivery WHERE status='BLOCKED' AND attempts=1 AND accepted_at IS NULL AND delivered_at IS NULL AND ciphertext IS NOT NULL"));
+        }
+    }
+    @Test void customerPasswordQuotaReleasesOnlyItsOwnSuccessAndCannotConsumeSystemBudget()throws Exception{
+        var limiter=new JdbcIdentityRateLimiter(outboxDataSource(),keyBytes(73));var customer=com.elogistic.backend.identity.internal.application.port.IdentityRateLimiter.Policy.CUSTOMER_LOGIN_EMAIL;
+        var subject=List.of(quota(customer,"same-exact-identifier"));limiter.reserve(subject).finishLogin(true);
+        for(int i=0;i<5;i++)limiter.reserve(subject).finishLogin(false);
+        assertThrows(com.elogistic.backend.identity.internal.application.port.IdentityRateLimiter.Exhausted.class,()->limiter.reserve(subject));
+        limiter.reserve(List.of(quota(com.elogistic.backend.identity.internal.application.port.IdentityRateLimiter.Policy.LOGIN_ACCOUNT,"same-exact-identifier"))).finishLogin(false);
+        assertEquals(1,scalar("SELECT count(*) FROM identity.rate_limit_attempt WHERE policy='CUSTOMER_LOGIN_EMAIL' AND state='RELEASED'"));assertEquals(5,scalar("SELECT count(*) FROM identity.rate_limit_attempt WHERE policy='CUSTOMER_LOGIN_EMAIL' AND state='FAILED'"));assertEquals(1,scalar("SELECT count(*) FROM identity.rate_limit_attempt WHERE policy='LOGIN_ACCOUNT' AND state='FAILED'"));
+    }
+    @Test void customerPreauthCsrfMustBeUnboundCurrentAndNeverSystemPurpose()throws Exception{
+        customerFixture(false);var source=outboxDataSource();var customer=new JdbcIdentityBrowserState(source,IdentitySessionStorage.CUSTOMER);var system=new JdbcIdentityBrowserState(source);
+        var first=customer.rebind(null,null);assertNotNull(customer.requirePreauthentication(first.cookie(),first.token()));assertThrows(IdentityCommandFailure.class,()->system.requirePreauthentication(first.cookie(),first.token()));
+        try(var login=customerLogin()){
+            var bound=customer.rebind(first.cookie(),login.access().sessionId());assertThrows(IdentityCommandFailure.class,()->customer.requirePreauthentication(first.cookie(),first.token()));assertThrows(IdentityCommandFailure.class,()->customer.requirePreauthentication(bound.cookie(),bound.token()));
+        }
+    }
+    @Test void enrollmentAuditRollbackCannotReleaseDurableCustomerQuota()throws Exception{
+        try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW))){
+            var mvc=httpMvc(context);var pre=customerCsrf(mvc,null);failWrite("audit_entry","INSERT");assertEquals(503,customerPost(mvc,"enrollments",pre,KEY,customerRegistration()).getStatus());
+            assertEquals(0,scalar("SELECT count(*) FROM identity.customer_enrollment"));assertEquals(0,scalar("SELECT count(*) FROM identity.customer_delivery"));assertEquals(0,scalar("SELECT count(*) FROM identity.customer_command_receipt"));assertEquals(1,scalar("SELECT count(*) FROM identity.rate_limit_attempt WHERE policy='CUSTOMER_ENROLL_EMAIL' AND state='COUNTED'"));
+        }
+    }
+    private com.elogistic.backend.identity.api.customer.CustomerRecoveryCommands recoveryApp(Instant time){
+        return new com.elogistic.backend.identity.internal.application.CustomerRecoveries(new JdbcCustomerRecoveryStore(outboxDataSource(),enrollmentProtection()),enrollmentProtection(),
+            new com.elogistic.backend.identity.internal.application.port.CustomerEnrollmentAdmission(){public Binding admit(Operation operation,UUID request,String subject){return new Binding(ENROLLMENT_BINDING);}public void requireCurrent(Binding binding){assertEquals(ENROLLMENT_BINDING,binding.id());}},Clock.fixed(time,ZoneOffset.UTC));
+    }
+    /** Private negative-test fixture extraction, not SMTP delivery evidence. */
+    private com.elogistic.backend.identity.api.customer.CustomerRecoveryCommands.Confirmation pendingRecoveryProof()throws Exception{
+        var jdbc=new org.springframework.jdbc.core.JdbcTemplate(outboxDataSource());
+        return jdbc.queryForObject("SELECT p.*,d.encryption_key_id,d.nonce,d.ciphertext,d.recipient_nonce,d.recipient_ciphertext FROM identity.customer_proof p JOIN identity.customer_delivery d ON d.proof_id=p.id WHERE p.purpose='CUSTOMER_RECOVERY' AND p.revoked_at IS NULL AND p.consumed_at IS NULL",(r,n)->{
+            var p=new CustomerProof(r.getObject("id",UUID.class),r.getObject("subject_id",UUID.class),CustomerProof.Purpose.CUSTOMER_RECOVERY,r.getTimestamp("created_at").toInstant(),r.getTimestamp("expires_at").toInstant(),null,r.getLong("bound_auth_version"),null,null,null);
+            var crypto=enrollmentProtection();String destination=crypto.openDestination(p,r.getString("verifier_key_id"),r.getString("encryption_key_id"),r.getBytes("recipient_nonce"),r.getBytes("recipient_ciphertext"),p.createdAt());assertEquals(CUSTOMER_EMAIL,destination);
+            try(var opened=crypto.open(p,destination,r.getString("verifier_key_id"),r.getString("encryption_key_id"),r.getBytes("nonce"),r.getBytes("ciphertext"),p.createdAt())){
+                byte[] token=opened.token();try{return new com.elogistic.backend.identity.api.customer.CustomerRecoveryCommands.Confirmation(p.id(),new String(token,java.nio.charset.StandardCharsets.US_ASCII),"synthetic-recovered-password",UUID.randomUUID(),REQUEST);}finally{Arrays.fill(token,(byte)0);}
+            }
+        });
+    }
+    private com.elogistic.backend.identity.api.customer.CustomerRecoveryCommands.Email recoveryRequest(String email,UUID key){return new com.elogistic.backend.identity.api.customer.CustomerRecoveryCommands.Email(email,key,REQUEST);}
+    @Test void recoveryUniformRequestsNeverUseUnverifiedDisabledStaleOrLegacyOnlyEmail()throws Exception{
+        enrollmentBinding();customerFixture(true);long existingAccounts=scalar("SELECT count(*) FROM identity.user_account");var app=recoveryApp(NOW);
+        assertTrue(app.request(recoveryRequest("unknown@example.invalid",KEY)).accepted());assertEquals(0,scalar("SELECT count(*) FROM identity.customer_delivery"));
+        execute("UPDATE identity.user_account SET status='DISABLED',disabled_at=updated_at WHERE id='"+A+"'");assertTrue(app.request(recoveryRequest(CUSTOMER_EMAIL,id(920))).accepted());assertEquals(0,scalar("SELECT count(*) FROM identity.customer_delivery"));
+        execute("UPDATE identity.user_account SET status='ACTIVE',disabled_at=NULL,email='changed@example.invalid' WHERE id='"+A+"'");assertTrue(app.request(recoveryRequest(CUSTOMER_EMAIL,id(921))).accepted());assertEquals(0,scalar("SELECT count(*) FROM identity.customer_delivery"));
+        assertTrue(app.request(recoveryRequest("fixture@example.invalid",id(922))).accepted());assertEquals(0,scalar("SELECT count(*) FROM identity.customer_delivery"));
+        execute("UPDATE identity.user_account SET status='PENDING_ACTIVATION',password_hash=NULL,email_verified=FALSE,activated_at=NULL,email='unverified@example.invalid' WHERE id='"+T+"'");
+        execute("INSERT INTO identity.customer_identifier VALUES ('"+id(940)+"','"+T+"','unverified@example.invalid',TIMESTAMPTZ '2026-10-21 00:05:00Z','ACTIVE',1)");
+        assertTrue(app.request(recoveryRequest("unverified@example.invalid",id(930))).accepted());assertEquals(0,scalar("SELECT count(*) FROM identity.customer_delivery"));
+        execute("UPDATE identity.user_account SET email='"+CUSTOMER_EMAIL+"' WHERE id='"+A+"'");assertTrue(app.request(recoveryRequest(CUSTOMER_EMAIL,id(923))).accepted());assertEquals(1,scalar("SELECT count(*) FROM identity.customer_delivery"));assertEquals(existingAccounts,scalar("SELECT count(*) FROM identity.user_account"));
+    }
+    @Test void recoveryHttpActualMailResetsCredentialRevokesBothFamiliesAndPreservesGrants()throws Exception{
+        customerFixture(true);var grants=snapshot().get("account_grant");
+        try(var systemLogin=sessionLogin();var customerLogin=customerLogin();var inbox=new CustomerSmtpTestInbox(1,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW))){
+            var mvc=httpMvc(context);var pre=customerCsrf(mvc,null);assertEquals(202,customerPost(mvc,"recovery",pre,KEY,Map.of("email",CUSTOMER_EMAIL)).getStatus());
+            assertTrue(context.getBean(com.elogistic.backend.identity.internal.ProductionCustomerComposition.Services.class).delivery().runOne());
+            var received=inbox.messages();assertEquals(1,received.size());var mail=new jakarta.mail.internet.MimeMessage(jakarta.mail.Session.getInstance(new Properties()),new java.io.ByteArrayInputStream(received.getFirst()));assertEquals(CUSTOMER_EMAIL,mail.getAllRecipients()[0].toString());
+            var match=java.util.regex.Pattern.compile("/recover/confirm#proofId=([0-9a-f-]{36})&proof=([A-Za-z0-9_-]{43})").matcher((String)mail.getContent());assertTrue(match.find());
+            var body=Map.of("proofId",match.group(1),"proof",match.group(2),"newPassword","synthetic-recovered-password");var reset=customerPost(mvc,"recovery-confirm",pre,id(924),body);assertEquals(204,reset.getStatus());
+            assertEquals(2,scalar("SELECT auth_version FROM identity.user_account WHERE id='"+A+"'"));assertEquals(0,scalar("SELECT count(*) FROM identity.auth_session WHERE account_id='"+A+"' AND revoked_at IS NULL"));assertEquals(0,scalar("SELECT count(*) FROM identity.customer_auth_session WHERE account_id='"+A+"' AND revoked_at IS NULL"));assertEquals(grants,snapshot().get("account_grant"));
+            assertEquals(1,scalar("SELECT count(*) FROM identity.customer_delivery WHERE status='DELIVERED' AND delivery_evidence IS NOT NULL"));
+            var rotated=customerCsrf(mvc,pre);assertEquals(204,customerPost(mvc,"recovery-confirm",rotated,id(924),body).getStatus());
+            assertEquals(401,customerPost(mvc,"login",rotated,null,Map.of("email",CUSTOMER_EMAIL,"password",SESSION_PASSWORD)).getStatus());assertEquals(200,customerPost(mvc,"login",rotated,null,Map.of("email",CUSTOMER_EMAIL,"password","synthetic-recovered-password")).getStatus());
+            assertEquals(401,httpRead(mvc,"/api/v1/customer-auth/me",customerTokens(NOW).issue(customerLogin.access())).getStatus());
+            byte[] old=systemLogin.refreshToken();try(var token=sessionToken(old)){sessionDenied(SESSION_INVALID,()->sessions(NOW).refreshIdentity(token));}finally{Arrays.fill(old,(byte)0);}
+        }
+    }
+    @Test void recoveryWrongExpiredAndReplayedProofCannotMutateCredentialOrSessions()throws Exception{
+        enrollmentBinding();customerFixture(false);recoveryApp(NOW).request(recoveryRequest(CUSTOMER_EMAIL,KEY));var proof=pendingRecoveryProof();var before=snapshot();
+        var wrong=new com.elogistic.backend.identity.api.customer.CustomerRecoveryCommands.Confirmation(proof.proofId(),"A".repeat(43),proof.newPassword(),proof.key(),REQUEST);
+        for(var entry:List.of(Map.entry(NOW,wrong),Map.entry(NOW.plusSeconds(900),proof)))assertEquals(TOKEN_INVALID_OR_EXPIRED,assertThrows(IdentityCommandFailure.class,()->recoveryApp(entry.getKey()).confirm(entry.getValue())).code());
+        assertEquals(before,snapshot());assertEquals(0,scalar("SELECT count(*) FROM identity.customer_proof_receipt"));
+        recoveryApp(NOW.plusSeconds(1)).confirm(proof);var after=snapshot();recoveryApp(NOW.plusSeconds(2)).confirm(proof);assertEquals(after,snapshot());
+        var replay=new com.elogistic.backend.identity.api.customer.CustomerRecoveryCommands.Confirmation(proof.proofId(),proof.proof(),proof.newPassword(),id(925),REQUEST);assertEquals(TOKEN_INVALID_OR_EXPIRED,assertThrows(IdentityCommandFailure.class,()->recoveryApp(NOW.plusSeconds(2)).confirm(replay)).code());
+    }
+    @Test void recoveryReplacementRevokesOnlyPreviousRecoveryAndNotPrivilegedInvitation()throws Exception{
+        enrollmentBinding();customerFixture(true);execute("INSERT INTO identity.action_proof(id,account_id,purpose,token_hash,created_at,expires_at) VALUES ('"+id(926)+"','"+A+"','INVITATION',decode(repeat('26',32),'hex'),TIMESTAMPTZ '2026-10-21 00:05:00Z',TIMESTAMPTZ '2026-10-22 00:05:00Z')");
+        recoveryApp(NOW).request(recoveryRequest(CUSTOMER_EMAIL,KEY));var old=pendingRecoveryProof();recoveryApp(NOW.plusSeconds(1)).request(recoveryRequest(CUSTOMER_EMAIL,id(927)));var next=pendingRecoveryProof();
+        assertEquals(TOKEN_INVALID_OR_EXPIRED,assertThrows(IdentityCommandFailure.class,()->recoveryApp(NOW.plusSeconds(2)).confirm(old)).code());recoveryApp(NOW.plusSeconds(2)).confirm(next);
+        assertEquals(0,scalar("SELECT count(*) FROM identity.action_proof WHERE purpose='INVITATION' AND revoked_at IS NOT NULL"));assertEquals(1,scalar("SELECT count(*) FROM identity.customer_proof WHERE purpose='CUSTOMER_RECOVERY' AND revoked_at IS NOT NULL"));
+    }
+    @Test void recoveryMandatoryAuditFailureRollsBackCredentialBothFamiliesAndProofReceipt()throws Exception{
+        enrollmentBinding();customerFixture(true);try(var customer=customerLogin();var system=sessionLogin()){
+            recoveryApp(NOW).request(recoveryRequest(CUSTOMER_EMAIL,KEY));var proof=pendingRecoveryProof();var before=snapshot();failWrite("audit_entry","INSERT");assertThrows(RuntimeException.class,()->recoveryApp(NOW.plusSeconds(1)).confirm(proof));assertEquals(before,snapshot());
+            assertEquals(1,scalar("SELECT count(*) FROM identity.customer_auth_session WHERE revoked_at IS NULL"));assertEquals(0,scalar("SELECT count(*) FROM identity.customer_proof_receipt"));assertEquals(0,scalar("SELECT count(*) FROM identity.customer_proof WHERE consumed_at IS NOT NULL"));assertEquals(1,scalar("SELECT count(*) FROM identity.customer_delivery WHERE status='QUEUED' AND ciphertext IS NOT NULL"));
+        }
+    }
+    @Test void concurrentRecoveryConfirmationHasOneSecurityVersionChangeAndOneReceipt()throws Exception{
+        enrollmentBinding();customerFixture(true);recoveryApp(NOW).request(recoveryRequest(CUSTOMER_EMAIL,KEY));var proof=pendingRecoveryProof();
+        var result=adminRace(()->{try{recoveryApp(NOW.plusSeconds(1)).confirm(proof);return "RESET";}catch(IdentityCommandFailure e){return e.code().name();}},()->{try{recoveryApp(NOW.plusSeconds(1)).confirm(new com.elogistic.backend.identity.api.customer.CustomerRecoveryCommands.Confirmation(proof.proofId(),proof.proof(),proof.newPassword(),id(928),REQUEST));return "RESET";}catch(IdentityCommandFailure e){return e.code().name();}});
+        assertEquals(1,result.stream().filter("RESET"::equals).count());assertEquals(1,result.stream().filter(TOKEN_INVALID_OR_EXPIRED.name()::equals).count());assertEquals(2,scalar("SELECT auth_version FROM identity.user_account WHERE id='"+A+"'"));assertEquals(1,scalar("SELECT count(*) FROM identity.customer_proof_receipt"));
+    }
+    @Test void recoverySecurityVersionChangeOrDisableBeforeConsumptionAlwaysDenies()throws Exception{
+        enrollmentBinding();customerFixture(true);recoveryApp(NOW).request(recoveryRequest(CUSTOMER_EMAIL,KEY));var proof=pendingRecoveryProof();execute("UPDATE identity.user_account SET version=version+1,auth_version=auth_version+1 WHERE id='"+A+"'");
+        assertEquals(TOKEN_INVALID_OR_EXPIRED,assertThrows(IdentityCommandFailure.class,()->recoveryApp(NOW.plusSeconds(1)).confirm(proof)).code());
+        execute("UPDATE identity.user_account SET status='DISABLED',disabled_at=updated_at WHERE id='"+A+"'");assertEquals(TOKEN_INVALID_OR_EXPIRED,assertThrows(IdentityCommandFailure.class,()->recoveryApp(NOW.plusSeconds(1)).confirm(proof)).code());assertEquals(0,scalar("SELECT count(*) FROM identity.customer_proof_receipt"));assertEquals(0,scalar("SELECT count(*) FROM identity.customer_proof WHERE consumed_at IS NOT NULL"));
+    }
+    @Test void enrollmentProofReceiptSurvivesCsrfRotationWithoutRepeatingAccountActivation()throws Exception{
+        try(var inbox=new CustomerSmtpTestInbox(1,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW))){
+            var mvc=httpMvc(context);var pre=customerCsrf(mvc,null);assertEquals(202,customerPost(mvc,"enrollments",pre,KEY,customerRegistration()).getStatus());assertTrue(context.getBean(com.elogistic.backend.identity.internal.ProductionCustomerComposition.Services.class).delivery().runOne());var proof=receivedVerification(inbox);
+            assertEquals(204,customerPost(mvc,"verifications",pre,id(929),proof).getStatus());var after=snapshot();var next=customerCsrf(mvc,pre);assertEquals(204,customerPost(mvc,"verifications",next,id(929),proof).getStatus());assertEquals(after,snapshot());assertEquals(1,scalar("SELECT count(*) FROM identity.customer_proof_receipt"));
+            assertEquals(409,customerPost(mvc,"verifications",next,id(929),Map.of("proofId",proof.get("proofId"),"proof","A".repeat(43))).getStatus());assertEquals(403,customerPost(mvc,"verifications",pre,id(929),proof).getStatus());assertEquals(4,scalar("SELECT count(*) FROM identity.user_account"));
+        }
+    }
+    @Test void recoveryPersistenceRejectsConstructedDomainChangeWithoutActualHmacPossession()throws Exception{
+        enrollmentBinding();customerFixture(true);var crypto=enrollmentProtection();recoveryApp(NOW).request(recoveryRequest(CUSTOMER_EMAIL,KEY));var proof=pendingRecoveryProof();var before=snapshot();var store=new JdbcCustomerRecoveryStore(outboxDataSource(),crypto);
+        assertThrows(IllegalStateException.class,()->store.transaction(tx->{tx.accounts().lockAdministration();var account=tx.accounts().lockAccount(A).orElseThrow();tx.lockSessions(A);var stored=tx.proof(proof.proofId()).orElseThrow();var change=account.resetCustomerPassword(stored.proof(),proof.newPassword(),account.version().version(),NOW);tx.reset(account,change,crypto.hashPassword(proof.newPassword()),"A".repeat(43).getBytes(java.nio.charset.StandardCharsets.US_ASCII),NOW);return null;}));
+        assertEquals(before,snapshot());assertEquals(0,scalar("SELECT count(*) FROM identity.customer_proof WHERE consumed_at IS NOT NULL"));assertEquals(0,scalar("SELECT count(*) FROM identity.customer_proof_receipt"));
+    }
+
+    private record ProfileBrowser(String access,BrowserFlow flow){}
+    private ProfileBrowser profileBrowser(org.springframework.test.web.servlet.MockMvc mvc)throws Exception{
+        var login=customerPost(mvc,"login",customerCsrf(mvc,null),null,Map.of("email",CUSTOMER_EMAIL,"password",SESSION_PASSWORD));assertEquals(200,login.getStatus());
+        String token=new tools.jackson.databind.ObjectMapper().readTree(login.getContentAsString()).get("accessToken").asString();
+        return new ProfileBrowser(token,customerCsrf(mvc,new BrowserFlow(responseCookie(login,"__Host-elogistics.customer.csrf"),responseCookie(login,"__Host-elogistics.customer.refresh"),"unused")));
+    }
+    private Map<String,String> profileInput(String display){return Map.of("displayName",display,"preferredLanguage","vi","businessContactEmail","business@example.invalid","businessContactPhone","synthetic contact");}
+    private org.springframework.mock.web.MockHttpServletResponse profilePut(org.springframework.test.web.servlet.MockMvc mvc,ProfileBrowser browser,UUID key,String version,Object body)throws Exception{
+        var request=org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/v1/customer/profile").secure(true).header("Origin","https://portal.example.invalid").header("Authorization","Bearer "+browser.access()).header("X-CSRF-Token",browser.flow().challenge).cookie(browser.flow().csrf,browser.flow().refresh).contentType("application/json");
+        if(key!=null)request.header("Idempotency-Key",key);if(version!=null)request.header("If-Match",version);request.content(body instanceof String text?text:new tools.jackson.databind.ObjectMapper().writeValueAsString(body));return mvc.perform(request).andReturn().getResponse();
+    }
+    private Map<String,List<String>> profileSnapshot()throws Exception{
+        var snapshot=new TreeMap<String,List<String>>();try(var c=db.runtimeConnection();var q=c.createStatement()){
+            for(String table:List.of("customer_profile","customer_profile_version","business_audit","command_receipt"))try(var rows=q.executeQuery("SELECT row_to_json(t)::text FROM merchant."+table+" t ORDER BY row_to_json(t)::text")){var values=new ArrayList<String>();while(rows.next())values.add(rows.getString(1));snapshot.put(table,values);}
+        }return snapshot;
+    }
+    @Test void profileHttpReadIsSelfScopedReadOnlyWithoutMembershipOrIdleExtension()throws Exception{
+        customerFixture(false);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW),true)){
+            var mvc=httpMvc(context);var browser=profileBrowser(mvc);var identity=secureSnapshot();var merchant=profileSnapshot();var response=httpRead(mvc,"/api/v1/customer/profile",browser.access());assertEquals(200,response.getStatus());assertEquals("\"v1\"",response.getHeader("ETag"));var json=new tools.jackson.databind.ObjectMapper().readTree(response.getContentAsString());assertEquals(5,json.size());assertEquals(A.toString(),json.get("accountId").asString());assertFalse(json.has("businessContactEmail"));assertEquals(identity,secureSnapshot());assertEquals(merchant,profileSnapshot());
+        }
+    }
+    @Test void profileHttpUpdatePreservesIdentityAndReturnsOriginalVersionOnReceiptReplay()throws Exception{
+        customerFixture(true);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW),true)){
+            var mvc=httpMvc(context);var browser=profileBrowser(mvc);var identity=snapshot();var first=profilePut(mvc,browser,KEY,"\"v1\"",profileInput("First"));assertEquals(200,first.getStatus());assertEquals("\"v2\"",first.getHeader("ETag"));
+            assertEquals(200,profilePut(mvc,browser,id(951),"\"v2\"",profileInput("Second")).getStatus());var saved=profileSnapshot();var replay=profilePut(mvc,browser,KEY,"\"v1\"",profileInput("First"));assertEquals(200,replay.getStatus());assertEquals(first.getContentAsString(),replay.getContentAsString());assertEquals(first.getHeader("ETag"),replay.getHeader("ETag"));assertEquals(saved,profileSnapshot());assertEquals(identity,snapshot());assertEquals(2,scalar("SELECT count(*) FROM merchant.business_audit"));assertEquals(2,scalar("SELECT count(*) FROM merchant.customer_profile_version"));
+            assertEquals(409,profilePut(mvc,browser,KEY,"\"v1\"",profileInput("Changed")).getStatus());assertEquals(412,profilePut(mvc,browser,id(952),"\"v1\"",profileInput("Stale")).getStatus());assertEquals(saved,profileSnapshot());
+        }
+    }
+    @Test void profileHttpRejectsActorAuthorityDuplicateFieldAndPreconditionInjection()throws Exception{
+        customerFixture(false);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW),true)){
+            var mvc=httpMvc(context);var browser=profileBrowser(mvc);var before=profileSnapshot();
+            for(String field:List.of("accountId","organizationId","membershipId","emailVerified","status","roles","version")){var body=new HashMap<String,Object>(profileInput("Name"));body.put(field,A.toString());assertEquals(400,profilePut(mvc,browser,UUID.randomUUID(),"\"v1\"",body).getStatus());}
+            assertEquals(400,profilePut(mvc,browser,KEY,"\"v1\"","{\"displayName\":\"First\",\"displayName\":\"Second\",\"preferredLanguage\":\"vi\"}").getStatus());assertEquals(400,profilePut(mvc,browser,KEY,"W/\"v1\"",profileInput("Name")).getStatus());assertEquals(428,profilePut(mvc,browser,KEY,null,profileInput("Name")).getStatus());assertEquals(400,profilePut(mvc,browser,null,"\"v1\"",profileInput("Name")).getStatus());assertEquals(422,profilePut(mvc,browser,KEY,"\"v1\"",profileInput(" ")).getStatus());assertEquals(before,profileSnapshot());
+        }
+    }
+    @Test void profileAuditFailureRollsBackAggregateHistoryReceiptAndActivity()throws Exception{
+        customerFixture(false);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW),true)){
+            var mvc=httpMvc(context);var browser=profileBrowser(mvc);var identity=secureSnapshot();var before=profileSnapshot();db.ownerExecute("CREATE FUNCTION merchant.synthetic_profile_fault() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'SYNTHETIC_PROFILE_AUDIT_FAILURE'; END $$");db.ownerExecute("CREATE TRIGGER synthetic_profile_fault BEFORE INSERT ON merchant.business_audit FOR EACH ROW EXECUTE FUNCTION merchant.synthetic_profile_fault()");
+            var rejected=profilePut(mvc,browser,KEY,"\"v1\"",profileInput("Private"));assertEquals(503,rejected.getStatus());assertFalse(rejected.getContentAsString().contains("SYNTHETIC_PROFILE_AUDIT_FAILURE"));assertEquals(before,profileSnapshot());assertEquals(identity,secureSnapshot());
+        }
+    }
+    @Test void concurrentProfileFirstUpdateHasOneCommittedVersionAndStaleLoser()throws Exception{
+        customerFixture(false);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW),true)){
+            var mvc=httpMvc(context);var browser=profileBrowser(mvc);var outcomes=adminRace(()->profilePut(mvc,browser,KEY,"\"v1\"",profileInput("Left")).getStatus(),()->profilePut(mvc,browser,id(953),"\"v1\"",profileInput("Right")).getStatus());assertEquals(1,outcomes.stream().filter(Integer.valueOf(200)::equals).count());assertEquals(1,outcomes.stream().filter(Integer.valueOf(412)::equals).count());assertEquals(1,scalar("SELECT count(*) FROM merchant.customer_profile"));assertEquals(1,scalar("SELECT count(*) FROM merchant.customer_profile_version"));assertEquals(1,scalar("SELECT count(*) FROM merchant.business_audit"));assertEquals(1,scalar("SELECT count(*) FROM merchant.command_receipt"));
+        }
+    }
+    @Test void revokedCustomerAndSystemOnlyPrincipalCannotReadOrChangePersonalProfile()throws Exception{
+        customerFixture(true);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW),true)){
+            var mvc=httpMvc(context);var browser=profileBrowser(mvc);String system=httpToken(context,S,A,1,NOW,NOW.plusSeconds(900));assertEquals(401,httpRead(mvc,"/api/v1/customer/profile",system).getStatus());execute("UPDATE identity.customer_auth_session SET revoked_at=created_at WHERE account_id='"+A+"'");var before=profileSnapshot();assertEquals(401,httpRead(mvc,"/api/v1/customer/profile",browser.access()).getStatus());assertEquals(401,profilePut(mvc,browser,KEY,"\"v1\"",profileInput("Denied")).getStatus());assertEquals(before,profileSnapshot());
+        }
+    }
+
+    @Test void profileReceiptLookupIsCurrentSelfScopedRedactedAndNeverExtendsIdle()throws Exception{
+        customerFixture(true);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW),true)){
+            var mvc=httpMvc(context);var browser=profileBrowser(mvc);String route="/api/v1/onboarding-receipts/updateCustomerProfile/"+KEY;assertEquals(404,httpRead(mvc,route,browser.access()).getStatus());assertEquals(200,profilePut(mvc,browser,KEY,"\"v1\"",profileInput("Private")).getStatus());var identity=secureSnapshot();var merchant=profileSnapshot();var response=httpRead(mvc,route,browser.access());assertEquals(200,response.getStatus());var json=new tools.jackson.databind.ObjectMapper().readTree(response.getContentAsString());assertEquals(4,json.size());assertEquals("updateCustomerProfile",json.get("operationId").asString());assertEquals(A.toString(),json.get("targetId").asString());assertEquals("COMMITTED",json.get("outcome").asString());assertEquals(2,json.get("version").asLong());assertFalse(response.getContentAsString().contains("Private"));assertFalse(response.getContentAsString().contains("business@"));assertEquals(identity,secureSnapshot());assertEquals(merchant,profileSnapshot());
+            execute("UPDATE identity.user_account SET password_hash=(SELECT password_hash FROM identity.user_account WHERE id='"+A+"'),email='other-customer@example.invalid' WHERE id='"+T+"'");execute("INSERT INTO identity.customer_identifier VALUES ('"+id(954)+"','"+T+"','other-customer@example.invalid',TIMESTAMPTZ '2026-10-21 00:00:00Z','ACTIVE',1)");
+            var other=customerPost(mvc,"login",customerCsrf(mvc,null),null,Map.of("email","other-customer@example.invalid","password",SESSION_PASSWORD));assertEquals(200,other.getStatus());String otherAccess=new tools.jackson.databind.ObjectMapper().readTree(other.getContentAsString()).get("accessToken").asString();assertEquals(404,httpRead(mvc,route,otherAccess).getStatus());assertEquals(404,httpRead(mvc,"/api/v1/onboarding-receipts/unknownOperation/"+KEY,browser.access()).getStatus());assertEquals(400,httpRead(mvc,"/api/v1/onboarding-receipts/updateCustomerProfile/not-a-uuid",browser.access()).getStatus());
+            execute("UPDATE identity.customer_auth_session SET revoked_at=created_at WHERE account_id='"+A+"'");assertEquals(401,httpRead(mvc,route,browser.access()).getStatus());
+        }
+    }
+
+    @Test void customerEntryBrowserUsesActualHttpsPostgresAndSmtp()throws Exception{
+        long accounts=scalar("SELECT count(*) FROM identity.user_account");var before=snapshot();S003CustomerBrowserRuntime.run(outboxDataSource());
+        assertEquals(accounts+1,scalar("SELECT count(*) FROM identity.user_account"));assertEquals(1,scalar("SELECT count(*) FROM identity.user_account WHERE email='"+S003CustomerBrowserRuntime.EMAIL+"' AND status='ACTIVE' AND email_verified AND auth_version=2 AND version=2"));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.customer_identifier WHERE exact_email='"+S003CustomerBrowserRuntime.EMAIL+"' AND status='ACTIVE'"));assertEquals(0,scalar("SELECT count(*) FROM identity.account_grant WHERE account_id IN (SELECT id FROM identity.user_account WHERE email='"+S003CustomerBrowserRuntime.EMAIL+"')"));
+        assertEquals(1,scalar("SELECT count(*) FROM merchant.customer_profile WHERE version=2"));assertEquals(1,scalar("SELECT count(*) FROM merchant.customer_profile_version"));assertEquals(1,scalar("SELECT count(*) FROM merchant.business_audit"));assertEquals(1,scalar("SELECT count(*) FROM merchant.command_receipt"));
+        assertEquals(2,scalar("SELECT count(*) FROM identity.customer_proof WHERE consumed_at IS NOT NULL"));assertEquals(2,scalar("SELECT count(*) FROM identity.customer_delivery WHERE status='DELIVERED' AND delivery_evidence IS NOT NULL"));assertEquals(0,scalar("SELECT count(*) FROM identity.customer_auth_session WHERE revoked_at IS NULL"));
+        var after=snapshot();for(String table:List.of("auth_session","refresh_token","account_grant"))assertEquals(before.get(table),after.get(table));assertTrue(after.get("user_account").containsAll(before.get("user_account")));
+    }
+    private org.springframework.mock.web.MockHttpServletResponse reauthenticationPost(org.springframework.test.web.servlet.MockMvc mvc,ProfileBrowser browser,UUID key,Object body)throws Exception{
+        var q=org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/v1/customer-auth/reauthentication").secure(true).header("Origin","https://portal.example.invalid").header("Authorization","Bearer "+browser.access()).header("X-CSRF-Token",browser.flow().challenge).cookie(browser.flow().csrf,browser.flow().refresh).contentType("application/json");
+        if(key!=null)q.header("Idempotency-Key",key);q.content(body instanceof String text?text:new tools.jackson.databind.ObjectMapper().writeValueAsString(body));return mvc.perform(q).andReturn().getResponse();
+    }
+    @Test void reauthenticationHttpBindsCurrentSelfAndReplaysOnlyOriginalSafeOutcome()throws Exception{
+        customerFixture(true);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW))){
+            var mvc=httpMvc(context);var browser=profileBrowser(mvc);var before=snapshot();var body=Map.of("email",CUSTOMER_EMAIL,"password",SESSION_PASSWORD);var first=reauthenticationPost(mvc,browser,KEY,body);assertEquals(200,first.getStatus());var json=new tools.jackson.databind.ObjectMapper().readTree(first.getContentAsString());assertEquals(2,json.size());assertEquals(NOW.plusSeconds(900),Instant.parse(json.get("expiresAt").asString()));assertEquals("no-store",first.getHeader("Cache-Control"));assertFalse(first.getContentAsString().contains(SESSION_PASSWORD));
+            assertEquals(1,scalar("SELECT count(*) FROM identity.customer_proof WHERE purpose='REAUTHENTICATION' AND subject_id='"+A+"' AND bound_auth_version=1 AND verifier IS NULL AND verifier_key_id IS NULL AND expires_at=created_at+INTERVAL '15 minutes'"));assertEquals(1,scalar("SELECT count(*) FROM identity.customer_security_receipt"));
+            var retry=reauthenticationPost(mvc,browser,KEY,body);assertEquals(200,retry.getStatus());assertEquals(first.getContentAsString(),retry.getContentAsString());assertEquals(1,scalar("SELECT count(*) FROM identity.audit_entry WHERE event_type='CUSTOMER_REAUTHENTICATED'"));
+            assertEquals(409,reauthenticationPost(mvc,browser,KEY,Map.of("email",CUSTOMER_EMAIL,"password","changed-password")).getStatus());assertEquals(400,reauthenticationPost(mvc,browser,null,body).getStatus());assertEquals(400,reauthenticationPost(mvc,browser,id(960),Map.of("email",CUSTOMER_EMAIL,"password",SESSION_PASSWORD,"accountId",T.toString())).getStatus());
+            var system=new ProfileBrowser(httpToken(context,S,A,1,NOW,NOW.plusSeconds(900)),browser.flow());assertEquals(401,reauthenticationPost(mvc,system,id(963),body).getStatus());assertEquals(401,reauthenticationPost(mvc,browser,id(964),Map.of("email","other@example.invalid","password",SESSION_PASSWORD)).getStatus());
+            for(String table:List.of("auth_session","refresh_token","account_grant","user_account"))assertEquals(before.get(table),snapshot().get(table));
+            execute("UPDATE identity.customer_auth_session SET revoked_at=created_at WHERE account_id='"+A+"'");assertEquals(401,reauthenticationPost(mvc,browser,KEY,body).getStatus());assertEquals(1,scalar("SELECT count(*) FROM identity.customer_security_receipt"));
+        }
+    }
+    @Test void reauthenticationDurableQuotaAndAuditFailureCannotBeBypassedByRollback()throws Exception{
+        customerFixture(false);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW))){
+            var mvc=httpMvc(context);var browser=profileBrowser(mvc);failWrite("audit_entry","INSERT");
+            var response=reauthenticationPost(mvc,browser,KEY,Map.of("email",CUSTOMER_EMAIL,"password",SESSION_PASSWORD));assertEquals(503,response.getStatus());assertEquals(0,scalar("SELECT count(*) FROM identity.customer_proof"));assertEquals(0,scalar("SELECT count(*) FROM identity.customer_security_receipt"));
+            assertEquals(1,scalar("SELECT count(*) FROM identity.rate_limit_attempt WHERE policy='CUSTOMER_LOGIN_EMAIL' AND state='PENDING'"));
+            db.ownerExecute("DROP TRIGGER synthetic_fault ON identity.audit_entry");db.ownerExecute("DROP FUNCTION identity.synthetic_fault()");
+            for(int i=0;i<4;i++)assertEquals(401,reauthenticationPost(mvc,browser,UUID.randomUUID(),Map.of("email",CUSTOMER_EMAIL,"password","incorrect-password")).getStatus());
+            assertEquals(429,reauthenticationPost(mvc,browser,UUID.randomUUID(),Map.of("email",CUSTOMER_EMAIL,"password",SESSION_PASSWORD)).getStatus());assertEquals(0,scalar("SELECT count(*) FROM identity.customer_proof"));assertEquals(0,scalar("SELECT count(*) FROM identity.rate_limit_attempt WHERE policy='LOGIN_ACCOUNT'"));
+        }
+    }
+    private com.elogistic.backend.identity.internal.application.CustomerReauthentications reauthenticationConsumer(com.elogistic.backend.identity.api.customer.CustomerAdmission admission,javax.sql.DataSource source,Clock clock){
+        return new com.elogistic.backend.identity.internal.application.CustomerReauthentications(admission,()->{throw new IllegalStateException("NO_REQUEST_IN_CONSUMPTION_FIXTURE");},email->{throw new IllegalStateException("NO_PASSWORD_COMMAND_IN_CONSUMPTION_FIXTURE");},new JdbcCustomerReauthenticationStore(source),enrollmentProtection(),new ProtectedSessionCredentials(),clock);
+    }
+    @Test void reauthenticationConsumptionIsSessionBoundSingleUseAndRollsBackWithBusinessFailure()throws Exception{
+        customerFixture(false);try(var login=customerLogin()){
+            var source=outboxDataSource();var clock=Clock.fixed(NOW,ZoneOffset.UTC);var admission=customerAdmission(source,login.access(),clock);var store=new JdbcCustomerReauthenticationStore(source);var app=reauthenticationConsumer(admission,source,clock);var proof=CustomerProof.issue(id(961),A,CustomerProof.Purpose.REAUTHENTICATION,NOW,login.access().sessionId(),1L,null);
+            admission.execute("claim",REQUEST,Set.of(),c->{store.replace(proof,NOW);return null;});
+            assertThrows(IllegalStateException.class,()->admission.execute("claim",REQUEST,Set.of(),c->{app.consume(c,proof.id());throw new IllegalStateException("SYNTHETIC_BUSINESS_FAILURE");}));assertEquals(0,scalar("SELECT count(*) FROM identity.customer_proof WHERE consumed_at IS NOT NULL"));assertEquals(0,scalar("SELECT count(*) FROM identity.audit_entry WHERE event_type='CUSTOMER_REAUTHENTICATION_CONSUMED'"));
+            try(var other=customerLogin()){var otherAdmission=customerAdmission(source,other.access(),clock);var otherApp=reauthenticationConsumer(otherAdmission,source,clock);sessionDenied(TOKEN_INVALID_OR_EXPIRED,()->otherAdmission.execute("claim",REQUEST,Set.of(),c->{otherApp.consume(c,proof.id());return null;}));}
+            admission.execute("claim",REQUEST,Set.of(),c->{app.consume(c,proof.id());return null;});assertEquals(1,scalar("SELECT count(*) FROM identity.customer_proof WHERE consumed_at IS NOT NULL"));sessionDenied(TOKEN_INVALID_OR_EXPIRED,()->admission.execute("claim",REQUEST,Set.of(),c->{app.consume(c,proof.id());return null;}));
+        }
+    }
+    @Test void reauthenticationFinalProofDeadlineRollsBackConsumptionAndAudit()throws Exception{
+        customerFixture(false);try(var login=customerLogin()){
+            var source=outboxDataSource();var time=new java.util.concurrent.atomic.AtomicReference<>(NOW.plusSeconds(100));Clock clock=new Clock(){public ZoneId getZone(){return ZoneOffset.UTC;}public Clock withZone(ZoneId z){return this;}public Instant instant(){return time.get();}};
+            var access=new com.elogistic.backend.identity.api.IdentitySessionCommands.AccessGrant(login.access().sessionId(),A,1,NOW.plusSeconds(100),NOW.plusSeconds(1000));var admission=customerAdmission(source,access,clock);var store=new JdbcCustomerReauthenticationStore(source);var app=reauthenticationConsumer(admission,source,clock);var proof=CustomerProof.issue(id(962),A,CustomerProof.Purpose.REAUTHENTICATION,NOW,access.sessionId(),1L,null);
+            admission.execute("claim",REQUEST,Set.of(),c->{store.replace(proof,NOW);return null;});sessionDenied(TOKEN_INVALID_OR_EXPIRED,()->admission.execute("claim",REQUEST,Set.of(),c->{app.consume(c,proof.id());time.set(NOW.plusSeconds(900));return null;}));assertEquals(0,scalar("SELECT count(*) FROM identity.customer_proof WHERE consumed_at IS NOT NULL"));assertEquals(0,scalar("SELECT count(*) FROM identity.audit_entry WHERE event_type='CUSTOMER_REAUTHENTICATION_CONSUMED'"));
+        }
+    }
+    @Test void concurrentReauthenticationSameKeyCreatesOneProofReceiptAndAudit()throws Exception{
+        customerFixture(false);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW))){
+            var mvc=httpMvc(context);var browser=profileBrowser(mvc);var body=Map.of("email",CUSTOMER_EMAIL,"password",SESSION_PASSWORD);var result=adminRace(()->reauthenticationPost(mvc,browser,KEY,body).getContentAsString(),()->reauthenticationPost(mvc,browser,KEY,body).getContentAsString());assertEquals(result.getFirst(),result.getLast());assertTrue(String.valueOf(result.getFirst()).contains("proofId"));assertEquals(1,scalar("SELECT count(*) FROM identity.customer_proof"));assertEquals(1,scalar("SELECT count(*) FROM identity.customer_security_receipt"));assertEquals(1,scalar("SELECT count(*) FROM identity.audit_entry WHERE event_type='CUSTOMER_REAUTHENTICATED'"));
+        }
+    }
+
 }

@@ -35,7 +35,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup pinned contract Node
-        if: matrix.mode == 'architecture'
+        if: matrix.mode == 'architecture' || matrix.mode == 'postgres'
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # official v6 commit
         with:
           node-version: '24.13.0'
@@ -59,6 +59,21 @@ jobs:
           problem-matcher: false
       - name: Record resolved Java version
         run: java -version
+      - name: Build and verify Spec003 browser client
+        if: matrix.mode == 'postgres'
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/spec003-owned-browsers
+        run: |
+          npm --prefix packages/api-client ci --ignore-scripts --no-audit --no-fund
+          npm --prefix packages/api-client run build
+          npm --prefix app/frontend/web ci --ignore-scripts --no-audit --no-fund
+          npm --prefix app/frontend/web run typecheck
+          npm --prefix app/frontend/web run lint
+          npm --prefix app/frontend/web run test
+          npm --prefix app/frontend/web run build
+          npm --prefix app/frontend/web run build:customer
+          cd app/frontend/web
+          npx --no-install playwright install --with-deps chromium
       - name: Test fail-closed report guard
         run: python3 -B -m unittest discover -s scripts/ci -p 'test_*.py' -v
       - name: Prepare disposable PostgreSQL 18
@@ -67,6 +82,7 @@ jobs:
       - name: Clean Maven Wrapper verify and test discovery audit
         env:
           VERIFICATION_MODE: ${{ matrix.mode }}
+          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/spec003-owned-browsers
         run: bash scripts/ci/run-backend.sh "$VERIFICATION_MODE"
       - name: Upload sanitized test evidence
         if: always()
@@ -76,6 +92,7 @@ jobs:
           path: |
             ${{ runner.temp }}/d1-05-reports/summary.json
             ${{ runner.temp }}/d1-05-reports/tests.xml
+            ${{ runner.temp }}/d1-05-reports/customer-browser-results.json
           if-no-files-found: error
           include-hidden-files: false
           retention-days: 7

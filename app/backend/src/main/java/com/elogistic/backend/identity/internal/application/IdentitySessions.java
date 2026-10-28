@@ -15,16 +15,25 @@ public final class IdentitySessions implements IdentitySessionCommands {
     private final SessionCredentials credentials;
     private final SessionAdmission admission;
     private final Clock clock;
+    private final boolean customerIdentifier;
     public IdentitySessions(IdentitySessionStore store, SessionCredentials credentials, SessionAdmission admission, Clock clock) {
+        this(store, credentials, admission, clock, false);
+    }
+    private IdentitySessions(IdentitySessionStore store, SessionCredentials credentials, SessionAdmission admission, Clock clock, boolean customerIdentifier) {
         this.store=Objects.requireNonNull(store);this.credentials=Objects.requireNonNull(credentials);
         this.admission=Objects.requireNonNull(admission);this.clock=Objects.requireNonNull(clock);
+        this.customerIdentifier=customerIdentifier;
+    }
+    /** Same session state machine; composition MUST supply the isolated customer store/admission. */
+    public static IdentitySessions customer(IdentitySessionStore store, SessionCredentials credentials, SessionAdmission admission, Clock clock) {
+        return new IdentitySessions(store, credentials, admission, clock, true);
     }
     private Instant now() { return clock.instant().truncatedTo(ChronoUnit.MICROS); }
     private static IdentityCommandFailure fail(IdentityCommandFailure.Code code) { return new IdentityCommandFailure(code); }
     @Override public Result loginIdentity(Login c) {
         if(c==null || c.requestId()==null)throw fail(VALIDATION_FAILED);
         admission.authorize(LOGIN,c.requestId(),null,false);
-        try {new Username(c.username());PasswordPolicy.validateLogin(c.password());}
+        try {if(customerIdentifier)new CustomerEmail(c.username());else new Username(c.username());PasswordPolicy.validateLogin(c.password());}
         catch(DomainViolation invalid) {throw fail(VALIDATION_FAILED);}
         return safely(tx->{
             var accounts=tx.accounts();accounts.lockAdministration();

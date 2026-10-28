@@ -12,6 +12,19 @@ spec.loader.exec_module(v)
 
 
 class MappingIntegrityTests(unittest.TestCase):
+    def test_implementation_manifest_requires_owner_source_and_declared_scope(self):
+        path='app/backend/src/main/java/com/elogistic/backend/identity/internal/domain/CustomerEmail.java'
+        scope=dict(authority='OWNER-S003-FULL-2026-10-27',baseline='715a41139f9724cbd3f20526786a61f673393564',paths=[path])
+        self.assertEqual([],v.implementation_source_errors({path},scope))
+        self.assertTrue(v.implementation_source_errors({path},{**scope,'authority':'SELF_APPROVED'}))
+        self.assertTrue(v.implementation_source_errors({path+'Unexpected'},scope))
+    def test_implementation_manifest_cannot_authorize_old_migration_or_cleanup_bypass(self):
+        for path in ['app/backend/src/main/resources/db/migration/V6__identity_shared_rate_limiter.sql',
+                     'contracts/openapi/identity-access.yaml','scripts/ci/run-backend.sh',
+                     'app/backend/src/test/java/com/elogistic/backend/testsupport/TestcontainersRuntimePolicy.java']:
+            scope=dict(authority='OWNER-S003-FULL-2026-10-27',baseline='715a41139f9724cbd3f20526786a61f673393564',paths=[path])
+            self.assertTrue(v.implementation_source_errors({path},scope),path)
+
     @classmethod
     def setUpClass(cls):
         cls.rows = v.read_csv("capability-crosswalk.csv")

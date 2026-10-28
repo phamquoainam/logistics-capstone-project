@@ -83,6 +83,17 @@ public record IdentityAccount(UUID id, Username username, Status status, Activat
         return new ProofChange(new IdentityAccount(id, username, status, activation, version.next(), grants), consumed);
     }
 
+    public CustomerProofChange resetCustomerPassword(CustomerProof recovery,String password,long expected,Instant now){
+        require(recovery!=null,PROOF_INVALID);
+        var consumed=recovery.consume(CustomerProof.Purpose.CUSTOMER_RECOVERY,id,null,version.authVersion(),null,now);
+        version.requireExpected(expected);require(active() && activation==Activation.VERIFIED,INVALID_STATE);PasswordPolicy.validateNew(password);
+        return new CustomerProofChange(new IdentityAccount(id,username,status,activation,version.next(),grants),consumed);
+    }
+    public record CustomerProofChange(IdentityAccount account,CustomerProof consumedProof){
+        public CustomerProofChange{require(account!=null && consumedProof!=null && account.id().equals(consumedProof.subjectId()) && consumedProof.purpose()==CustomerProof.Purpose.CUSTOMER_RECOVERY && consumedProof.consumedAt()!=null,INVALID_STATE);}
+        @Override public String toString(){return "CustomerProofChange[redacted]";}
+    }
+
     /** Matching is a trusted backend fact against the STORED verified destination, not a client authority. */
     public boolean recoveryEligible(EmailMatch storedVerifiedEmailMatch) {
         return active() && activation == Activation.VERIFIED && storedVerifiedEmailMatch == EmailMatch.MATCH;

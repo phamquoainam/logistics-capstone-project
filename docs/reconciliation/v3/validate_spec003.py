@@ -35,7 +35,7 @@ def errors(policy,operations,fixtures,coverage):
     check(policy.get('transaction',{}).get('lock_order')==['IDENTITY_ADMINISTRATION','ACCOUNT_UUID_SORTED','SESSION_UUID_SORTED','MERCHANT_CONTROL','ORGANIZATION_UUID_SORTED','BUSINESS_KEY','RESOURCE_UUID_SORTED'],'transaction.lock_order')
     check(set(policy.get('privacy',{}).get('hold_exemptions',[]))=={'ACTIVE_REVIEW','APPEAL','DISPUTE','LEGAL_HOLD','ADMIN_HOLD','ACTIVE_ORG_REFERENCE','OPEN_OBLIGATION','UNRESOLVED_RECOVERY'},'retention hold/reference safeguards')
     gates=policy.get('review_gates',{})
-    check(gates.get('candidate_contract_acceptance')=='REVIEW_COMPLETE_UNDER_OWNER_CONDITIONAL_APPROVAL' and gates.get('planning_gate')=='SPEC003_READY_FOR_OWNER_IMPLEMENTATION_AUTHORIZATION' and gates.get('implementation_authorization')=='NOT_AUTHORIZED' and gates.get('spec_acceptance')=='NOT_ACCEPTED','honest DoR/authorization gates')
+    check(gates.get('candidate_contract_acceptance')=='REVIEW_COMPLETE_UNDER_OWNER_CONDITIONAL_APPROVAL' and gates.get('planning_gate')=='SPEC003_READY_FOR_OWNER_IMPLEMENTATION_AUTHORIZATION' and gates.get('implementation_authorization')=='OWNER_AUTHORIZED_T003_01_12' and policy.get('implementation_authority')=='OWNER-S003-FULL-2026-10-27' and gates.get('spec_acceptance')=='NOT_ACCEPTED','honest DoR/authorization gates')
     deps=policy.get('dependencies',{})
     check(set(deps)=={'CAT-004','POL-005','CLOSE-OWNERS'},'minimum owner dependencies')
     for key,owner in [('CAT-004','L004'),('POL-005','L005'),('CLOSE-OWNERS','L006;L018;L005;L021')]:

@@ -1,6 +1,6 @@
 # Spec 003 — sender-merchant-onboarding
 
-Alias lịch sử logical `L003`. CANONICAL_TARGET / NOT_STARTED / SPEC003_READY_FOR_OWNER_IMPLEMENTATION_AUTHORIZATION. Owner accountable: `merchant`; từng BC giữ DML owner riêng.
+Alias lịch sử logical `L003`. CANONICAL_TARGET / IMPLEMENTATION_IN_PROGRESS / OWNER_FULL_IMPLEMENTATION_AUTHORIZED. Owner accountable: `merchant`; từng BC giữ DML owner riêng.
 
 ## Outcome và boundary
 
@@ -233,3 +233,6 @@ Required behavior: Accessible organizations only; active context indicator; part
 - BR-S003-EVIDENCE: five retained/reserved private files/application,5MiB/file, PDF/PNG/JPEG signature/parse screening; unavailable scanner denies access. Delivery queued/provider-accepted != delivered. Sandbox30/90/365d retention with holds/references, purge disabled pending separate approval.
 
 Additional acceptance: legal-profile changes stage independent-review revisions; target-consented two-person Owner recovery can admit an eligible new personal customer without trusting supplied account IDs. Reviewer bootstrap is offline Owner-controlled and audited, not a public privilege endpoint. Closure with missing/active obligations stays pending; successful closure requires real owner clearances. See exact schema/scenario mappings, no new BC IDs.
+
+
+Latest execution authority: [OWNER_SPEC003_FULL_IMPLEMENTATION: GO](implementation.md) authorizes all T003-01..12 and supersedes prior implementation-NOT_AUTHORIZED planning statements. Runtime acceptance remains NOT_ACCEPTED; actual incremental evidence is recorded without checking incomplete tasks.

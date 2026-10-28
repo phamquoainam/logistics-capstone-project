@@ -52,14 +52,14 @@ public final class JdbcIdentityRateLimiter implements IdentityRateLimiter {
             if(retry>0)throw new Exhausted(retry);
             for(Key k:keys){
                 try(PreparedStatement s=c.prepareStatement("INSERT INTO identity.rate_limit_attempt VALUES (?,?,?,?,?,?,?)")){
-                    s.setObject(1,id);s.setString(2,k.policy.name());s.setBytes(3,k.hash);s.setTimestamp(4,Timestamp.from(time));s.setTimestamp(5,Timestamp.from(time.plusSeconds(k.policy.seconds+(k.policy==Policy.LOGIN_ACCOUNT?60:0))));s.setTimestamp(6,Timestamp.from(time.plusSeconds(60)));s.setString(7,k.policy==Policy.LOGIN_ACCOUNT?"PENDING":"COUNTED");s.executeUpdate();
+                    s.setObject(1,id);s.setString(2,k.policy.name());s.setBytes(3,k.hash);s.setTimestamp(4,Timestamp.from(time));s.setTimestamp(5,Timestamp.from(time.plusSeconds(k.policy.seconds+(k.policy.passwordAttempt()?60:0))));s.setTimestamp(6,Timestamp.from(time.plusSeconds(60)));s.setString(7,k.policy.passwordAttempt()?"PENDING":"COUNTED");s.executeUpdate();
                 }
                 try(PreparedStatement s=c.prepareStatement("UPDATE identity.rate_limit_subject SET touched_at=? WHERE policy=? AND subject_hash=?")){s.setTimestamp(1,Timestamp.from(time));s.setString(2,k.policy.name());s.setBytes(3,k.hash);s.executeUpdate();}
             }return null;
         });
         return success->tx(c->{
             for(Key k:keys)lock(c,k);Instant time=now(c);
-            for(Key k:keys)if(k.policy==Policy.LOGIN_ACCOUNT){
+            for(Key k:keys)if(k.policy.passwordAttempt()){
                 try(PreparedStatement s=c.prepareStatement("UPDATE identity.rate_limit_attempt SET state=?,expires_at=CASE WHEN ? THEN expires_at ELSE ? END WHERE reservation_id=? AND policy=? AND subject_hash=? AND state='PENDING' AND lease_expires_at>?")){
                     s.setString(1,success?"RELEASED":"FAILED");s.setBoolean(2,success);s.setTimestamp(3,Timestamp.from(time.plusSeconds(k.policy.seconds)));s.setObject(4,id);s.setString(5,k.policy.name());s.setBytes(6,k.hash);s.setTimestamp(7,Timestamp.from(time));if(s.executeUpdate()!=1)throw new Unavailable();
                 }

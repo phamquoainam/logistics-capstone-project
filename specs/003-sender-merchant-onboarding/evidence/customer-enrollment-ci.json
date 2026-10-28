@@ -1,0 +1,78 @@
+{
+  "run": "40526551675",
+  "url": "https://github.com/phamquoainam/logistics-capstone-project/actions/runs/40526551675",
+  "event": "pull_request",
+  "head": "3b1677ff485759ef2617e501de7ff4b0a2979af5",
+  "checkout": "719279dd28ccc9d08736a6f3da9097960aafe956",
+  "conclusion": "success",
+  "jobs": [
+    {
+      "job": "Backend default / H2",
+      "checkout": [
+        "719279dd28ccc9d08736a6f3da9097960aafe956"
+      ],
+      "conclusion": "success"
+    },
+    {
+      "job": "Backend PostgreSQL 18",
+      "checkout": [
+        "719279dd28ccc9d08736a6f3da9097960aafe956"
+      ],
+      "conclusion": "success"
+    },
+    {
+      "job": "Architecture gate",
+      "checkout": [
+        "719279dd28ccc9d08736a6f3da9097960aafe956"
+      ],
+      "conclusion": "success"
+    }
+  ],
+  "artifacts": [
+    {
+      "name": "backend-postgres-1",
+      "digest": "sha256:7a1b999d969f8fdbc85cc08aabc4e91aa954a7410dca8fcfb0384ae678a23b1d",
+      "summary": {
+        "mode": "postgres",
+        "status": "PASS",
+        "discovered": 836,
+        "executed": 831,
+        "passed": 831,
+        "failure": 0,
+        "error": 0,
+        "skipped": 5,
+        "problems": []
+      }
+    },
+    {
+      "name": "backend-architecture-1",
+      "digest": "sha256:283c674b5753d5a9f9d58c14f0b608b11b0bcf78e313733b0d691b3ada9167a6",
+      "summary": {
+        "mode": "architecture",
+        "status": "PASS",
+        "discovered": 23,
+        "executed": 23,
+        "passed": 23,
+        "failure": 0,
+        "error": 0,
+        "skipped": 0,
+        "problems": []
+      }
+    },
+    {
+      "name": "backend-h2-1",
+      "digest": "sha256:6f17c23c745b78e623795384bb79e2a49b7943b4b71a9d541c857e236a3baaa3",
+      "summary": {
+        "mode": "h2",
+        "status": "PASS",
+        "discovered": 550,
+        "executed": 533,
+        "passed": 533,
+        "failure": 0,
+        "error": 0,
+        "skipped": 17,
+        "problems": []
+      }
+    }
+  ]
+}
