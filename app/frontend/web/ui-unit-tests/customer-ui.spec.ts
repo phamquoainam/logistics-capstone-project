@@ -1,0 +1,73 @@
+import { test, expect } from '@playwright/test';
+import type { BrowserContext, Route } from '@playwright/test';
+
+// Explicit intercepted API fixtures: UI unit evidence only, never real BE/PG/full-Spec E2E PASS.
+const account = '10000000-0000-4000-8000-000000000001', proofId = '10000000-0000-4000-8000-000000000010';
+type Call = { path: string; method: string; key?: string; body?: Record<string, unknown> };
+async function fixture(context: BrowserContext, authenticated = false, special?: (route: Route, call: Call) => Promise<boolean>) {
+  const calls: Call[] = [];
+  await context.route('**/api/v1/**', async route => {
+    const request = route.request(), path = new URL(request.url()).pathname;
+    const call: Call = { path, method: request.method(), key: request.headers()['idempotency-key'], body: request.postData() ? request.postDataJSON() : undefined }; calls.push(call);
+    if (special && await special(route, call)) return;
+    const reply = (value: unknown, status = 200, headers: Record<string, string> = {}) => route.fulfill({ status, contentType: 'application/json', headers, body: JSON.stringify(value) });
+    if (path.endsWith('/csrf')) return reply({ challenge: 'synthetic-ui-csrf' });
+    if (path.endsWith('/refresh') || path.endsWith('/login')) return authenticated || path.endsWith('/login') ? reply({ accessToken: 'synthetic-ui-access', accountId: account, expiresAt: new Date(Date.now() + 900000).toISOString() }) : reply({ code: 'SESSION_INVALID' }, 401);
+    if (path.endsWith('/logout')) return route.fulfill({ status: 204 });
+    if (path.endsWith('/me')) return reply({ accountId: account, displayName: 'Người dùng thử', verifiedEmail: 'synthetic@example.invalid', securityVersion: 1 });
+    if (path.endsWith('/profile')) return reply({ id: account, accountId: account, displayName: 'Hồ sơ thử', preferredLanguage: 'vi', version: 1 }, 200, { ETag: '"v1"' });
+    if (path.endsWith('/verifications') || path.endsWith('/recovery-confirm')) return route.fulfill({ status: 204 });
+    if (path.endsWith('/enrollments') || path.endsWith('/recovery') || path.endsWith('/verification-resend')) return reply({ accepted: true, requestId: proofId }, 202);
+    return reply({ code: 'ISOLATED_FIXTURE_ROUTE_UNSUPPORTED' }, 503);
+  });
+  return calls;
+}
+test('registration validates password and prevents duplicate submission without claiming email delivery', async ({ page, context }) => {
+  const calls = await fixture(context); await page.goto('/register');
+  await page.getByLabel('Tên hiển thị', { exact: true }).fill('Người dùng thử'); await page.getByLabel('Email', { exact: true }).fill('synthetic@example.invalid'); await page.getByLabel('Mật khẩu', { exact: true }).fill('short'); await page.getByRole('checkbox').check();
+  await page.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click(); await expect(page.getByRole('alert')).toContainText('15 ký tự'); expect(calls.filter(c => c.path.endsWith('/enrollments'))).toHaveLength(0);
+  await page.getByLabel('Mật khẩu', { exact: true }).fill('synthetic-enrollment-password'); await page.getByRole('button', { name: 'Tạo tài khoản', exact: true }).dblclick();
+  await expect(page.getByRole('status')).toContainText('Đã tiếp nhận yêu cầu'); expect(calls.filter(c => c.path.endsWith('/enrollments'))).toHaveLength(1); await expect(page.getByRole('status')).not.toContainText('Đã gửi');
+});
+test('verification strips fragment before API calls and requires explicit confirmation', async ({ page, context }) => {
+  const calls = await fixture(context), proof = 'A'.repeat(43); const urls: string[] = []; page.on('request', request => urls.push(request.url()));
+  await page.goto('/verify-email#proofId=' + proofId + '&proof=' + proof); await expect(page.getByRole('heading', { name: 'Xác minh email', exact: true })).toBeVisible();
+  expect(new URL(page.url()).hash).toBe(''); await expect(page.locator('body')).not.toContainText(proof); expect(calls.filter(c => c.path.endsWith('/verifications'))).toHaveLength(0); expect(urls.some(url => url.includes(proof))).toBe(false);
+  await page.getByRole('button', { name: 'Xác nhận email của tôi' }).click(); await expect(page.getByRole('status')).toContainText('Email đã được xác minh'); expect(calls.filter(c => c.path.endsWith('/verifications'))).toHaveLength(1);
+  expect(await page.evaluate(() => [localStorage.length, sessionStorage.length])).toEqual([0, 0]);
+});
+test('recovery confirmation retains exact command after an unknown response without automatic retry', async ({ page, context }) => {
+  let attempts = 0; const calls = await fixture(context, false, async (route, call) => {
+    if (!call.path.endsWith('/recovery-confirm')) return false;
+    if (++attempts === 1) await route.abort('failed'); else await route.fulfill({ status: 204 }); return true;
+  });
+  await page.goto('/recover/confirm#proofId=' + proofId + '&proof=' + 'B'.repeat(43)); await page.getByLabel('Mật khẩu mới', { exact: true }).fill('synthetic-recovered-password'); await page.getByRole('button', { name: 'Xác nhận mật khẩu mới' }).click();
+  await expect(page.getByRole('alert')).toContainText('Chưa xác định'); expect(attempts).toBe(1); await expect(page.getByLabel('Mật khẩu mới', { exact: true })).toBeDisabled();
+  await page.getByRole('button', { name: 'Xác nhận mật khẩu mới' }).click(); await expect(page.getByRole('status')).toContainText('Mật khẩu đã được cập nhật');
+  const commands = calls.filter(c => c.path.endsWith('/recovery-confirm')); expect(commands).toHaveLength(2); expect(commands[0].key).toBe(commands[1].key); expect(commands[0].body).toEqual(commands[1].body); expect(new URL(page.url()).hash).toBe('');
+});
+test('profile unknown outcome stays unknown until scoped receipt GET confirms commit', async ({ page, context }) => {
+  let updated = false, receiptQueries = 0;
+  const calls = await fixture(context, true, async (route, call) => {
+    if (call.path.endsWith('/profile') && call.method === 'PUT') { updated = true; await route.abort('failed'); return true; }
+    if (call.path.includes('/onboarding-receipts/')) { receiptQueries++; await route.fulfill({ status: receiptQueries === 1 ? 404 : 200, contentType: 'application/json', body: JSON.stringify(receiptQueries === 1 ? { code: 'RESOURCE_NOT_FOUND' } : { operationId: 'updateCustomerProfile', targetId: account, outcome: 'COMMITTED', version: 2 }) }); return true; }
+    if (updated && call.path.endsWith('/profile') && call.method === 'GET') { await route.fulfill({ status: 200, contentType: 'application/json', headers: { ETag: '"v2"' }, body: JSON.stringify({ id: account, accountId: account, displayName: 'Tên đã lưu', preferredLanguage: 'vi', version: 2 }) }); return true; }
+    return false;
+  });
+  await page.goto('/personal/profile'); await page.getByLabel('Tên hiển thị trong hồ sơ').fill('Tên đã lưu'); await page.getByRole('button', { name: 'Lưu hồ sơ' }).click();
+  await expect(page.getByRole('alert')).toContainText('Chưa xác định'); await expect(page.getByLabel('Tên hiển thị trong hồ sơ')).toBeDisabled();
+  await page.getByRole('button', { name: 'Kiểm tra kết quả lưu' }).click(); await expect(page.getByRole('alert')).toContainText('vẫn đang ở trạng thái chưa xác định'); await expect(page.getByText('Đã lưu hồ sơ.', { exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Kiểm tra kết quả lưu' }).click(); await expect(page.getByText('Đã lưu hồ sơ.', { exact: true })).toBeVisible(); await expect(page.getByLabel('Tên hiển thị trong hồ sơ')).toHaveValue('Tên đã lưu'); expect(calls.filter(c => c.method === 'PUT')).toHaveLength(1);
+});
+test('cross-tab logout removes personal form data and prevents stale workspace display', async ({ page, context }) => {
+  await fixture(context, true); await page.goto('/personal/profile'); await expect(page.getByLabel('Tên hiển thị trong hồ sơ')).toHaveValue('Hồ sơ thử');
+  const other = await context.newPage(); await other.goto('/personal'); await other.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Chào mừng trở lại' })).toBeVisible(); await expect(page.getByLabel('Tên hiển thị trong hồ sơ')).toHaveCount(0); await expect(page.getByText('Hồ sơ thử', { exact: true })).toHaveCount(0); await other.close();
+});
+test('guest deep link cannot render or request a protected personal profile', async ({ page, context }) => {
+  const calls = await fixture(context); await page.goto('/personal/profile'); await expect(page.getByRole('heading', { name: 'Chào mừng trở lại' })).toBeVisible(); expect(new URL(page.url()).pathname).toBe('/login'); expect(calls.filter(c => c.path.endsWith('/profile'))).toHaveLength(0);
+});
+test('mobile labels keyboard navigation and public login layout remain usable', async ({ page, context }) => {
+  await fixture(context); await page.setViewportSize({ width: 390, height: 844 }); await page.goto('/login'); await expect(page.getByLabel('Email đã xác minh')).toBeVisible(); await expect(page.getByLabel('Mật khẩu', { exact: true })).toBeVisible(); await page.keyboard.press('Tab'); await expect(page.getByRole('link', { name: 'Đến nội dung chính' })).toBeFocused();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true); await page.getByRole('heading', { name: 'Chào mừng trở lại' }).focus(); await page.screenshot({ path: '../../../.demo/spec003-implementation/customer-login-mobile.png', fullPage: true });
+});

@@ -7,6 +7,8 @@ import java.util.UUID;
 public interface CustomerProfiles {
     Profile get(CustomerAdmission.Context context);
     Profile update(CustomerAdmission.Context context,Update command);
+    ResultReceipt receipt(CustomerAdmission.Context context,UUID key);
+    record ResultReceipt(String operationId,UUID targetId,String outcome,long version){}
     record Input(String displayName,String preferredLanguage,String businessContactEmail,String businessContactPhone){
         @Override public String toString(){return "CustomerProfileInput[redacted]";}
     }

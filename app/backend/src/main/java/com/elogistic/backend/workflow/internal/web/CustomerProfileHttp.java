@@ -20,6 +20,12 @@ public final class CustomerProfileHttp {
     @GetMapping("/api/v1/customer/profile") public ResponseEntity<Map<String,Object>> get(){
         var request=requests.current();return response(admission.execute(request.encodedAccess(),request.requestId(),Set.of(),profiles::get));
     }
+    @GetMapping("/api/v1/onboarding-receipts/{operationId}/{idempotencyKey}") public ResponseEntity<Map<String,Object>> receipt(@PathVariable String operationId,@PathVariable String idempotencyKey){
+        if(!operationId.equals("updateCustomerProfile"))throw problem(404,"RESOURCE_NOT_FOUND");
+        UUID key;try{key=UUID.fromString(idempotencyKey);if(!key.toString().equals(idempotencyKey))throw problem(400,"VALIDATION_FAILED");}catch(IllegalArgumentException invalid){throw problem(400,"VALIDATION_FAILED");}
+        var request=requests.current();var receipt=admission.execute(request.encodedAccess(),request.requestId(),Set.of(),context->profiles.receipt(context,key));
+        return ResponseEntity.ok(Map.of("operationId",receipt.operationId(),"targetId",receipt.targetId(),"outcome",receipt.outcome(),"version",receipt.version()));
+    }
     @PutMapping("/api/v1/customer/profile") public ResponseEntity<Map<String,Object>> update(HttpServletRequest http)throws IOException{
         UUID key=key(http);long version=version(http);var input=body(http);var request=requests.current();
         return response(admission.execute(request.encodedAccess(),request.requestId(),Set.of(),context->profiles.update(context,new CustomerProfiles.Update(input,version,key))));

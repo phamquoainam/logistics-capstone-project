@@ -67,4 +67,10 @@ class CustomerProfileTests {
     @Test void optionalContactsCanBeRemovedWithoutChangingImmutableAccountBinding(){
         app.update(context,update("Name",1,UUID.randomUUID()));var result=app.update(context,new CustomerProfiles.Update(new CustomerProfiles.Input("New","en",null,null),2,UUID.randomUUID()));assertNull(result.businessContactEmail());assertNull(result.businessContactPhone());assertEquals(ACCOUNT,result.accountId());assertEquals(3,result.version());
     }
+    @Test void scopedReceiptReadReportsOriginalCommittedVersionWithoutContactOrActivity(){
+        UUID key=UUID.randomUUID();assertEquals(OnboardingFailure.Code.RESOURCE_NOT_FOUND,assertThrows(OnboardingFailure.class,()->app.receipt(context,key)).code());
+        app.update(context,update("First",1,key));app.update(context,update("Later",2,UUID.randomUUID()));
+        var receipt=app.receipt(context,key);assertEquals("updateCustomerProfile",receipt.operationId());assertEquals(ACCOUNT,receipt.targetId());assertEquals("COMMITTED",receipt.outcome());assertEquals(2,receipt.version());assertFalse(receipt.toString().contains("business@"));assertEquals(2,store.audits);assertEquals(2,admission.activity);
+        admission.enabled=false;assertThrows(IllegalStateException.class,()->app.receipt(context,key));
+    }
 }

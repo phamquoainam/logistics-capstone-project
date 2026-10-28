@@ -174,7 +174,7 @@ The focused review under Owner conditional approval has closed the planning cand
 - [ ] **T003-07** - NOT_STARTED: invitations and membership lifecycle.
 - [ ] **T003-08** - NOT_STARTED: legal review, ownership and closure.
 - [ ] **T003-09** - NOT_STARTED: bounded owner dependencies and defaults.
-- [ ] **T003-10** - NOT_STARTED: all real frontend routes and browser journeys.
+- [ ] **T003-10** - IN_PROGRESS: customer entry/recovery/profile API UI authored; all real full-stack browser journeys and remaining Merchant routes still required.
 - [ ] **T003-11** - IN_PROGRESS: per-increment checks; complete-spec verification remains.
 - [ ] **T003-12** - NOT_STARTED: full traceability, merge-SHA gates and separate Owner acceptance.
 - [ ] **T-AB-ENTRY** — REQ-AB-ENTRY exact customer-auth contract, real entry/forms/verification/login/recovery; TEST-AB-ENTRY Guest no application submit, personal default, deep-link recheck, no grants; dependencies Identity customer amendment and approved delivery channel.
@@ -189,6 +189,10 @@ Each checkbox closes only its stated deliverable. It does not imply acceptance o
 - [x] **T003-04-PROFILE-DOMAIN** - DONE: independent business-profile domain/application, current self-admission boundary, immutable account reference, optional untrusted contact metadata, optimistic versions and read-only initial profile. `CustomerProfileTests`: nine actual unit cases PASS in the clean backend run below.
 - [x] **T003-04-PROFILE-RECEIPTS-UNIT** - DONE: exact operation/target/version/field HMAC, retained-key rotation, original-version retry, changed-body denial and redacted diagnostics; four `MerchantFingerprintTests` plus replay/conflict application cases PASS. This closes unit verification only; PG receipt/rollback/race gate remains below.
 - [x] **T003-11-PROFILE-LOCAL** - DONE: clean backend `mvnw -o -B ... clean verify`, 612 discovered / 595 PASS / 17 expected policy skips / zero failure/error. Architecture23 including negative fixtures PASS in this full run. Actual report collector returns PASS; no PostgreSQL substitute is claimed.
-- [ ] **T003-04-PROFILE-PG** - Six real HTTP/admission/rollback/concurrency cases and four V11 upgrade/constraint/privilege/receipt cases authored and compiled; require current PostgreSQL18 CI PASS.
+- [x] **T003-04-PROFILE-PG** - DONE: all ten profile/V11 cases and required PostgreSQL18 CI PASS on source ede1e50 / integration ab498d6; run40622633558 and evidence/customer-profile-ci.json verify exact checkout, digests and cleanup. The additional receipt-lookup operation below has a separate pending gate.
 - [ ] **T003-04-PROFILE-BROWSER** - Actual customer frontend profile form and running-component browser verification remain.
-- [ ] **T003-03-RECOVERY-PG-CORRECTION** - Fix fixture population assertion from failed run40540904665; require corrected source CI before DONE.
+- [x] **T003-03-RECOVERY-PG-CORRECTION** - DONE: corrected fixture and all recovery negatives PASS in required run40622633558 on source ede1e50, with verified artifact digests and owned cleanup. Earlier failed/cancelled runs remain recorded.
+
+- [x] **T003-10-CUSTOMER-CLIENT-UNIT** - DONE: 12 new isolated transport/privacy/replay/receipt tests plus 28 existing frontend unit cases PASS (40 total). Both Demo and Customer builds, typecheck and current source lint PASS; build output excluded from lint just as existing dist output is excluded.
+- [ ] **T003-04-PROFILE-RECEIPT-LOOKUP-PG** - Additional read-only current-self receipt GET authored; local domain test and clean H2596 PASS, new real PG HTTP isolation test pending current CI.
+- [x] **T003-10-ENTRY-UI-UNIT** - DONE: seven isolated Edge UI cases PASS, runner exit0 in6.8s with nonce-bound owned static-server cleanup and no remaining listener; mobile screenshot visually checked. Explicit API fixtures remain UI unit evidence only, not running-backend/PostgreSQL E2E.

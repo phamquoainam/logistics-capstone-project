@@ -57,3 +57,12 @@ PG18 tests use the existing owned suites/container registry. HTTP/SMTP/V9 source
 
 
 Independent customer profile runtime additionally requires forward migration V11 and external `MERCHANT_CUSTOMER_PROFILE_RECEIPT_KEYS` (JSON object of retained key IDs to canonical base64-encoded32-byte HMAC keys) plus `MERCHANT_CUSTOMER_PROFILE_CURRENT_RECEIPT_KEY`. No sample secret or generated runtime default is supplied. The profile API is GET/PUT `/api/v1/customer/profile`; PUT requires current customer access/Origin/CSRF, exact `If-Match: "vN"` and UUID Idempotency-Key. Business-contact fields do not establish login/recovery authority. Current profile increment has local unit/H2 evidence; PostgreSQL18 and browser evidence remain pending until linked in the execution record.
+
+
+## Customer web sandbox (explicit mode)
+
+Use `npm.cmd run build:customer` for the separate ignored `dist-customer/` artifact; default `build` retains Demo output. For an actual local HTTPS frontend run `npm.cmd run dev -- --mode customer` with externally provided `ELOGISTICS_CUSTOMER_DEV_API_ORIGIN` (loopback HTTPS backend origin only), `ELOGISTICS_CUSTOMER_DEV_TLS_KEY` and `ELOGISTICS_CUSTOMER_DEV_TLS_CERT`. Supply an approved test CA via the normal Node trust mechanism where required; proxy certificate verification stays enabled. Backend `CUSTOMER_SECURITY_ORIGIN` must equal the exact frontend HTTPS origin, including port. No reverse-proxy TLS/forwarded-header bypass is introduced. The static host must serve SPA routes with no-store/no-referrer protection.
+
+Implemented frontend routes in this increment: `/register`, `/verify-email`, `/login`, `/recover`, `/recover/confirm`, `/personal`, `/personal/profile`. These use the customer HTTP APIs, memory-only access and synchronous proof-fragment removal; no public Merchant Owner grant. Customer-profile UNKNOWN resolves only through current-self `GET /api/v1/onboarding-receipts/updateCustomerProfile/{idempotencyKey}`. Missing or unavailable receipt remains UNKNOWN. Other receipt operations and Merchant routes are not claimed implemented.
+
+`npm.cmd run test:customer-ui` builds the customer artifact and runs seven **isolated UI unit** cases in Edge with explicit intercepted API fixtures. Its owned loopback static server has no successful API implementation and stops via an ephemeral unlogged ownership nonce. This evidence verifies forms/navigation/privacy/cross-tab/UNKNOWN states only; it is not real backend/PostgreSQL full-stack acceptance. Real UI+backend+PG18/email E2E remains a required pending gate.

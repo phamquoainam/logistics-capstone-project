@@ -23,6 +23,12 @@ public final class CustomerProfileApplication implements CustomerProfiles {
     private static Profile view(CustomerBusinessProfile p){return new Profile(p.id(),p.accountId(),p.displayName(),p.preferredLanguage(),p.businessContactEmail(),p.businessContactPhone(),p.version());}
     private byte[] fingerprint(String key,Update command,UUID target){var input=command.input();return fingerprints.hash(key,"updateCustomerProfile",target,command.expectedVersion(),input.displayName(),input.preferredLanguage(),input.businessContactEmail(),input.businessContactPhone());}
     @Override public Profile get(CustomerAdmission.Context context){admission.requireCurrent(context);var profile=store.find(context.actor().accountId(),false).orElseGet(()->virtual(context));admission.requireCurrent(context);return view(profile);}
+    @Override public ResultReceipt receipt(CustomerAdmission.Context context,UUID key){
+        admission.requireCurrent(context);if(key==null)throw new OnboardingFailure(VALIDATION_FAILED);
+        UUID account=context.actor().accountId();var profile=store.find(account,false).orElseThrow(()->new OnboardingFailure(RESOURCE_NOT_FOUND));
+        var receipt=store.receipt(account,profile.id(),key).orElseThrow(()->new OnboardingFailure(RESOURCE_NOT_FOUND));
+        admission.requireCurrent(context);return new ResultReceipt("updateCustomerProfile",profile.id(),"COMMITTED",receipt.resultVersion());
+    }
     @Override public Profile update(CustomerAdmission.Context context,Update command){
         admission.requireCurrent(context);if(command==null || command.input()==null || command.key()==null || command.expectedVersion()<1)throw new OnboardingFailure(VALIDATION_FAILED);
         UUID account=context.actor().accountId();store.lockControl();var existing=store.find(account,true);var before=existing.orElseGet(()->virtual(context));var receipt=store.receipt(account,before.id(),command.key());
