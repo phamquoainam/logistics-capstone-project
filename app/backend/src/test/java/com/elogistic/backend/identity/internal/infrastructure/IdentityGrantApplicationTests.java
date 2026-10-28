@@ -1979,7 +1979,7 @@ class IdentityGrantApplicationTests {
     }
     private com.elogistic.backend.identity.api.customer.CustomerRecoveryCommands.Email recoveryRequest(String email,UUID key){return new com.elogistic.backend.identity.api.customer.CustomerRecoveryCommands.Email(email,key,REQUEST);}
     @Test void recoveryUniformRequestsNeverUseUnverifiedDisabledStaleOrLegacyOnlyEmail()throws Exception{
-        enrollmentBinding();customerFixture(true);var app=recoveryApp(NOW);
+        enrollmentBinding();customerFixture(true);long existingAccounts=scalar("SELECT count(*) FROM identity.user_account");var app=recoveryApp(NOW);
         assertTrue(app.request(recoveryRequest("unknown@example.invalid",KEY)).accepted());assertEquals(0,scalar("SELECT count(*) FROM identity.customer_delivery"));
         execute("UPDATE identity.user_account SET status='DISABLED',disabled_at=updated_at WHERE id='"+A+"'");assertTrue(app.request(recoveryRequest(CUSTOMER_EMAIL,id(920))).accepted());assertEquals(0,scalar("SELECT count(*) FROM identity.customer_delivery"));
         execute("UPDATE identity.user_account SET status='ACTIVE',disabled_at=NULL,email='changed@example.invalid' WHERE id='"+A+"'");assertTrue(app.request(recoveryRequest(CUSTOMER_EMAIL,id(921))).accepted());assertEquals(0,scalar("SELECT count(*) FROM identity.customer_delivery"));
@@ -1987,7 +1987,7 @@ class IdentityGrantApplicationTests {
         execute("UPDATE identity.user_account SET status='PENDING_ACTIVATION',password_hash=NULL,email_verified=FALSE,activated_at=NULL,email='unverified@example.invalid' WHERE id='"+T+"'");
         execute("INSERT INTO identity.customer_identifier VALUES ('"+id(940)+"','"+T+"','unverified@example.invalid',TIMESTAMPTZ '2026-10-21 00:05:00Z','ACTIVE',1)");
         assertTrue(app.request(recoveryRequest("unverified@example.invalid",id(930))).accepted());assertEquals(0,scalar("SELECT count(*) FROM identity.customer_delivery"));
-        execute("UPDATE identity.user_account SET email='"+CUSTOMER_EMAIL+"' WHERE id='"+A+"'");assertTrue(app.request(recoveryRequest(CUSTOMER_EMAIL,id(923))).accepted());assertEquals(1,scalar("SELECT count(*) FROM identity.customer_delivery"));assertEquals(3,scalar("SELECT count(*) FROM identity.user_account"));
+        execute("UPDATE identity.user_account SET email='"+CUSTOMER_EMAIL+"' WHERE id='"+A+"'");assertTrue(app.request(recoveryRequest(CUSTOMER_EMAIL,id(923))).accepted());assertEquals(1,scalar("SELECT count(*) FROM identity.customer_delivery"));assertEquals(existingAccounts,scalar("SELECT count(*) FROM identity.user_account"));
     }
     @Test void recoveryHttpActualMailResetsCredentialRevokesBothFamiliesAndPreservesGrants()throws Exception{
         customerFixture(true);var grants=snapshot().get("account_grant");
