@@ -4,6 +4,11 @@ export type ProfileInput = { displayName: string; preferredLanguage: 'vi' | 'en'
 export type CustomerProfile = ProfileInput & { id: string; accountId: string; version: number };
 export type VersionedProfile = { profile: CustomerProfile; etag: string };
 export type Enrollment = { email: string; password: string; displayName: string; consentVersion: string };
+export type ApplicationAddress = { country: string; administrativeArea: string; locality: string; addressLine: string };
+export type ApplicationDraft = { entityType?: 'COMPANY' | 'HOUSEHOLD_BUSINESS'; jurisdiction?: string; registeredName?: string; legalIdentifier?: string; registeredAddress?: ApplicationAddress; operatingAddress?: ApplicationAddress; representativeName?: string; representativeEmail?: string; representativeRelationship?: string; businessContactAttestationId?: string; evidenceIds?: string[]; declarations?: { accuracy: true; representation: true; consentVersion: string } };
+export type MerchantApplication = { id: string; applicantAccountId: string; state: 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'NEEDS_INFORMATION' | 'APPROVED' | 'REJECTED' | 'WITHDRAWN'; revision: number; version: number; draft?: ApplicationDraft; submission?: ApplicationDraft; reviewRegionId?: string; informationRequest?: string; organizationId?: string };
+export type VersionedApplication = { application: MerchantApplication; etag: string };
+export type ApplicationPage = { items: MerchantApplication[]; page: number; size: number; hasNext: boolean };
 export type SessionState = Readonly<{ status: 'loading' | 'guest' | 'authenticated'; subject: Subject | null; error: string | null }>;
 type Access = { accessToken: string; expiresAt: string; accountId: string };
 type Lock = <T>(work: () => Promise<T>) => Promise<T>;
@@ -35,13 +40,13 @@ export function createCustomerClient(ports: Ports = { fetch: (...args) => fetch(
   function publish(next: SessionState) { state = Object.freeze(next); listeners.forEach(f => f()); }
   function forget(error: string | null = null) { access = undefined; generation++; pending = undefined; publish({ status: 'guest', subject: null, error }); }
   if (channel) channel.onmessage = () => forget('SESSION_CHANGED');
-  async function request(path: string, method = 'GET', body?: string, headers: Record<string, string> = {}): Promise<{ value: unknown; response: Response }> {
+  async function request(path: string, method = 'GET', body?: string, headers: Record<string, string> = {}, maximum = 65536): Promise<{ value: unknown; response: Response }> {
     let response: Response;
     try { response = await ports.fetch('/api/v1/' + path, { method, body, headers: body === undefined ? headers : { ...headers, 'Content-Type': 'application/json' }, credentials: 'same-origin', mode: 'same-origin', cache: 'no-store', redirect: 'error', referrerPolicy: 'no-referrer', signal: AbortSignal.timeout(30000) }); }
     catch { throw method === 'GET' ? new CustomerApiError('NETWORK_UNAVAILABLE') : unknown(); }
     let value: unknown;
     try {
-      const raw = await response.text(); if (raw.length > 65536) malformed();
+      const raw = await response.text(); if (raw.length > maximum) malformed();
       if (response.status !== 204) { if (!response.headers.get('Content-Type')?.toLowerCase().startsWith('application/json')) malformed(); value = JSON.parse(raw); }
       else if (raw !== '') malformed();
     } catch { throw method === 'GET' ? new CustomerApiError('RESPONSE_INVALID') : unknown(); }
@@ -94,6 +99,33 @@ export function createCustomerClient(ports: Ports = { fetch: (...args) => fetch(
     if (!record(value) || !exact(value, ['id', 'accountId', 'displayName', 'preferredLanguage', 'version'], ['businessContactEmail', 'businessContactPhone']) || typeof value.id !== 'string' || !uuid.test(value.id) || value.accountId !== access?.accountId || !version(value.version) || !characters(value.displayName, 160) || !['vi', 'en'].includes(value.preferredLanguage as string) || ('businessContactEmail' in value && !text(value.businessContactEmail, 254)) || ('businessContactPhone' in value && !characters(value.businessContactPhone, 32))) malformed();
     const etag = response.headers.get('ETag'); if (etag !== '"v' + value.version + '"') malformed(); return { profile: value as CustomerProfile, etag };
   }
+  function draft(value: unknown): value is ApplicationDraft {
+    if (!record(value) || !exact(value, [], ['entityType', 'jurisdiction', 'registeredName', 'legalIdentifier', 'registeredAddress', 'operatingAddress', 'representativeName', 'representativeEmail', 'representativeRelationship', 'businessContactAttestationId', 'evidenceIds', 'declarations'])) return false;
+    if ('entityType' in value && !['COMPANY', 'HOUSEHOLD_BUSINESS'].includes(value.entityType as string)) return false;
+    for (const [name, max] of Object.entries({ jurisdiction: 64, registeredName: 240, legalIdentifier: 80, representativeName: 160, representativeEmail: 254, representativeRelationship: 160 })) if (name in value && !characters(value[name], max)) return false;
+    for (const name of ['registeredAddress', 'operatingAddress']) if (name in value) {
+      const a = value[name]; if (!record(a) || !exact(a, ['country', 'administrativeArea', 'locality', 'addressLine']) || typeof a.country !== 'string' || !/^[A-Z]{2}$/.test(a.country) || !characters(a.administrativeArea, 160) || !characters(a.locality, 160) || !characters(a.addressLine, 500)) return false;
+    }
+    if ('businessContactAttestationId' in value && (typeof value.businessContactAttestationId !== 'string' || !uuid.test(value.businessContactAttestationId))) return false;
+    if ('evidenceIds' in value && (!Array.isArray(value.evidenceIds) || value.evidenceIds.length > 5 || new Set(value.evidenceIds).size !== value.evidenceIds.length || value.evidenceIds.some(id => typeof id !== 'string' || !uuid.test(id)))) return false;
+    if ('declarations' in value) { const d = value.declarations; if (!record(d) || !exact(d, ['accuracy', 'representation', 'consentVersion']) || d.accuracy !== true || d.representation !== true || !characters(d.consentVersion, 64)) return false; }
+    return true;
+  }
+  function application(value: unknown): MerchantApplication {
+    if (!record(value) || !exact(value, ['id', 'applicantAccountId', 'state', 'revision', 'version'], ['draft', 'submission', 'reviewRegionId', 'informationRequest', 'organizationId']) || typeof value.id !== 'string' || !uuid.test(value.id) || value.applicantAccountId !== access?.accountId || !version(value.revision) || !version(value.version) || !['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'NEEDS_INFORMATION', 'APPROVED', 'REJECTED', 'WITHDRAWN'].includes(value.state as string)) malformed();
+    for (const name of ['draft', 'submission']) if (name in value && !draft(value[name])) malformed();
+    if ('reviewRegionId' in value && (typeof value.reviewRegionId !== 'string' || !uuid.test(value.reviewRegionId))) malformed();
+    if ('informationRequest' in value && !characters(value.informationRequest, 1000)) malformed();
+    if (value.state === 'APPROVED' ? typeof value.organizationId !== 'string' || !uuid.test(value.organizationId) : 'organizationId' in value) malformed();
+    return value as MerchantApplication;
+  }
+  async function applicationWrite(path: string, method: 'POST' | 'PUT', input: ApplicationDraft, key: string, etag?: string): Promise<VersionedApplication> {
+    if (!uuid.test(key) || !draft(input) || method === 'PUT' && !/^"v[1-9][0-9]*"$/.test(etag ?? '')) throw new CustomerApiError('VALIDATION_FAILED');
+    await ensureAccess(); const current = generation, challenge = await csrf();
+    const result = await request(path, method, JSON.stringify(input), { Authorization: 'Bearer ' + access!.accessToken, 'X-CSRF-Token': challenge, 'Idempotency-Key': key, ...(etag ? { 'If-Match': etag } : {}) });
+    if (current !== generation) throw new CustomerApiError('SESSION_CHANGED');
+    try { const value = application(result.value); if (result.response.status !== (method === 'POST' ? 201 : 200) || result.response.headers.get('ETag') !== '"v' + value.version + '"') malformed(); return { application: value, etag: '"v' + value.version + '"' }; } catch { throw unknown(); }
+  }
   return {
     getSnapshot: () => state,
     subscribe: (listener: () => void) => { listeners.add(listener); return () => { listeners.delete(listener); }; },
@@ -139,6 +171,30 @@ export function createCustomerClient(ports: Ports = { fetch: (...args) => fetch(
       if (current !== generation) throw new CustomerApiError('SESSION_CHANGED');
       if (!record(value) || !exact(value, ['operationId', 'targetId', 'outcome', 'version']) || value.operationId !== 'updateCustomerProfile' || typeof value.targetId !== 'string' || !uuid.test(value.targetId) || value.outcome !== 'COMMITTED' || !version(value.version)) malformed();
       return { targetId: value.targetId, version: value.version };
+    }),
+    listApplications: (page = 0, search = '', state = '') => ports.lock(async (): Promise<ApplicationPage> => {
+      if (!Number.isSafeInteger(page) || page < 0 || search.length > 160) throw new CustomerApiError('VALIDATION_FAILED');
+      await ensureAccess(); const current = generation, query = new URLSearchParams({ page: String(page), size: '20', ...(search ? { search } : {}), ...(state ? { state } : {}) });
+      const { value } = await request('merchant-applications?' + query, 'GET', undefined, { Authorization: 'Bearer ' + access!.accessToken }, 4 * 1024 * 1024);
+      if (current !== generation) throw new CustomerApiError('SESSION_CHANGED');
+      if (!record(value) || !exact(value, ['items', 'page', 'size', 'hasNext']) || !Array.isArray(value.items) || value.items.length > 20 || value.page !== page || value.size !== 20 || typeof value.hasNext !== 'boolean') malformed();
+      return { items: value.items.map(application), page, size: 20, hasNext: value.hasNext };
+    }),
+    readApplication: (id: string) => ports.lock(async (): Promise<VersionedApplication> => {
+      if (!uuid.test(id)) throw new CustomerApiError('VALIDATION_FAILED'); await ensureAccess(); const current = generation;
+      const result = await request('merchant-applications/' + id, 'GET', undefined, { Authorization: 'Bearer ' + access!.accessToken });
+      if (current !== generation) throw new CustomerApiError('SESSION_CHANGED'); const value = application(result.value), etag = result.response.headers.get('ETag'); if (value.id !== id || etag !== '"v' + value.version + '"') malformed(); return { application: value, etag };
+    }),
+    createApplication: (input: ApplicationDraft, key: string) => ports.lock(() => applicationWrite('merchant-applications', 'POST', input, key)),
+    updateApplication: (id: string, input: ApplicationDraft, etag: string, key: string) => ports.lock(() => {
+      if (!uuid.test(id)) throw new CustomerApiError('VALIDATION_FAILED'); return applicationWrite('merchant-applications/' + id, 'PUT', input, key, etag);
+    }),
+    applicationReceipt: (operation: 'createApplicationDraft' | 'updateApplicationDraft', key: string) => ports.lock(async () => {
+      if (!uuid.test(key) || !['createApplicationDraft', 'updateApplicationDraft'].includes(operation)) throw new CustomerApiError('VALIDATION_FAILED');
+      await ensureAccess(); const current = generation;
+      const { value } = await request('onboarding-receipts/' + operation + '/' + key, 'GET', undefined, { Authorization: 'Bearer ' + access!.accessToken });
+      if (current !== generation) throw new CustomerApiError('SESSION_CHANGED');
+      if (!record(value) || !exact(value, ['operationId', 'targetId', 'outcome', 'version']) || value.operationId !== operation || typeof value.targetId !== 'string' || !uuid.test(value.targetId) || value.outcome !== 'COMMITTED' || !version(value.version)) malformed(); return { targetId: value.targetId, version: value.version };
     }),
     dispose() { forget(); channel?.close(); listeners.clear(); },
   };

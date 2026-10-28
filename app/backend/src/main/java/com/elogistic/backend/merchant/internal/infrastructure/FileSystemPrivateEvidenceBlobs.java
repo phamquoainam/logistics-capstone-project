@@ -24,10 +24,11 @@ public final class FileSystemPrivateEvidenceBlobs implements PrivateEvidenceBlob
             owner=this.root.getFileSystem().getUserPrincipalLookupService().lookupPrincipalByName(ProcessHandle.current().info().user().orElseThrow());
             posix=this.root.getFileSystem().supportedFileAttributeViews().contains("posix");
             directories(this.root.getParent());
+            Path canonicalRoot=this.root.getParent().toRealPath().resolve(this.root.getFileName());
             for(Path publicRoot:publicRoots){
                 if(publicRoot==null || !publicRoot.isAbsolute())throw new IOException();
                 Path blocked=Files.exists(publicRoot)?publicRoot.toRealPath():publicRoot.normalize();
-                if(this.root.startsWith(blocked))throw new IOException();
+                if(this.root.startsWith(publicRoot.normalize()) || canonicalRoot.startsWith(blocked))throw new IOException();
             }
             boolean created=false;
             try{if(posix)Files.createDirectory(this.root,PosixFilePermissions.asFileAttribute(DIRECTORY));else Files.createDirectory(this.root);created=true;}

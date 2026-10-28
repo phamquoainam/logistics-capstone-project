@@ -39,7 +39,7 @@ class PrivateEvidenceBlobTests {
     }
     @Test void publicRelativeOrMissingParentRootCannotBeConfigured()throws Exception{
         var publicRoot=Files.createDirectory(temporary.resolve("public-root"));
-        for(Path invalid:List.of(Path.of("relative-root"),publicRoot,publicRoot.resolve("private"),temporary.resolve("missing-parent").resolve("root")))assertEquals("PRIVATE_EVIDENCE_STORAGE_CONFIGURATION_INVALID",assertThrows(IllegalStateException.class,()->new FileSystemPrivateEvidenceBlobs(invalid,List.of(publicRoot))).getMessage());
+        for(Path invalid:List.of(Path.of("relative-root"),publicRoot,publicRoot.resolve("private"),temporary.resolve("missing-parent").resolve("root")))assertEquals("PRIVATE_EVIDENCE_STORAGE_CONFIGURATION_INVALID",assertThrows(IllegalStateException.class,()->new FileSystemPrivateEvidenceBlobs(invalid,List.of(publicRoot)),invalid.toString()).getMessage());
         assertThrows(IllegalStateException.class,()->new FileSystemPrivateEvidenceBlobs(root,List.of()));assertThrows(IllegalStateException.class,()->new FileSystemPrivateEvidenceBlobs(root,List.of(Path.of("relative-public"))));assertEquals(0,count());
     }
     @Test void insecureExistingPermissionsAreRejectedWithoutRepairOrContentLoss()throws Exception{

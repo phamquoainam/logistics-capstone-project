@@ -56,6 +56,50 @@ test('profile lost response resolves through the real committed receipt', async 
   await page.getByRole('button', { name: 'Lưu hồ sơ' }).click(); await expect(page.getByRole('alert')).toContainText('Chưa xác định'); await expect(page.getByLabel('Tên hiển thị trong hồ sơ')).toBeDisabled();
   await page.getByRole('button', { name: 'Kiểm tra kết quả lưu' }).click(); await expect(page.getByText('Đã lưu hồ sơ.', { exact: true })).toBeVisible(); await expect(page.getByLabel('Tên hiển thị trong hồ sơ')).toHaveValue('Tên gửi hàng đã cập nhật'); expect(writes).toBe(1); await page.unroute('**/api/v1/customer/profile');
 });
+test('merchant draft uses the real HTTPS API and resolves one lost write', async () => {
+  await page.getByRole('link', { name: 'Merchant', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Hồ sơ đăng ký Merchant' })).toBeVisible();
+  await page.getByRole('button', { name: 'Tạo bản nháp Merchant' }).click();
+  await expect(page.getByRole('heading', { name: 'Chi tiết hồ sơ Merchant' })).toBeVisible();
+  const applicationId = new URL(page.url()).pathname.split('/').at(-1);
+  expect(applicationId).toMatch(/^[0-9a-f-]{36}$/);
+  await page.getByLabel('Tên pháp nhân đăng ký').fill('Synthetic browser merchant');
+  let writes = 0;
+  await page.route('**/api/v1/merchant-applications/*', async route => {
+    if (route.request().method() !== 'PUT') { await route.continue(); return; }
+    writes++; const committed = await route.fetch({ maxRedirects: 0, maxRetries: 0, timeout: 15000 }); expect(committed.status()).toBe(200); await route.abort('failed');
+  });
+  await page.getByRole('button', { name: 'Lưu bản nháp' }).click();
+  await expect(page.getByRole('alert')).toContainText('Chưa xác định');
+  await page.getByRole('button', { name: 'Kiểm tra kết quả lưu bản nháp' }).click();
+  await expect(page.getByText('Đã lưu bản nháp.', { exact: true })).toBeVisible();
+  await expect(page.getByLabel('Tên pháp nhân đăng ký')).toHaveValue('Synthetic browser merchant');
+  expect(writes).toBe(1); await page.unroute('**/api/v1/merchant-applications/*');
+  await page.getByRole('link', { name: 'Danh sách hồ sơ' }).click();
+  await expect(page.getByText('Synthetic browser merchant', { exact: true })).toBeVisible();
+});
+test('merchant draft uses the real HTTPS API and resolves one lost write', async () => {
+  await page.getByRole('link', { name: 'Merchant', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Hồ sơ đăng ký Merchant' })).toBeVisible();
+  await page.getByRole('button', { name: 'Tạo bản nháp Merchant' }).click();
+  await expect(page.getByRole('heading', { name: 'Chi tiết hồ sơ Merchant' })).toBeVisible();
+  const applicationId = new URL(page.url()).pathname.split('/').at(-1);
+  expect(applicationId).toMatch(/^[0-9a-f-]{36}$/);
+  await page.getByLabel('Tên pháp nhân đăng ký').fill('Synthetic browser merchant');
+  let writes = 0;
+  await page.route('**/api/v1/merchant-applications/*', async route => {
+    if (route.request().method() !== 'PUT') { await route.continue(); return; }
+    writes++; const committed = await route.fetch({ maxRedirects: 0, maxRetries: 0, timeout: 15000 }); expect(committed.status()).toBe(200); await route.abort('failed');
+  });
+  await page.getByRole('button', { name: 'Lưu bản nháp' }).click();
+  await expect(page.getByRole('alert')).toContainText('Chưa xác định');
+  await page.getByRole('button', { name: 'Kiểm tra kết quả lưu bản nháp' }).click();
+  await expect(page.getByText('Đã lưu bản nháp.', { exact: true })).toBeVisible();
+  await expect(page.getByLabel('Tên pháp nhân đăng ký')).toHaveValue('Synthetic browser merchant');
+  expect(writes).toBe(1); await page.unroute('**/api/v1/merchant-applications/*');
+  await page.getByRole('link', { name: 'Danh sách hồ sơ' }).click();
+  await expect(page.getByText('Synthetic browser merchant', { exact: true })).toBeVisible();
+});
 test('logout and recovery request use the actual verified destination', async () => {
   await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click(); await expect(page.getByRole('heading', { name: 'Chào mừng trở lại' })).toBeVisible(); await page.getByRole('link', { name: 'Quên mật khẩu?' }).click(); await page.getByLabel('Email của tài khoản').fill(email); await page.getByRole('button', { name: 'Yêu cầu khôi phục mật khẩu' }).click(); await expect(page.getByRole('status')).toContainText('Đã tiếp nhận yêu cầu');
 });
