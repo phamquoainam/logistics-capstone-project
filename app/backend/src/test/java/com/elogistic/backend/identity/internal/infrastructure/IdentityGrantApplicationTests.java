@@ -40,7 +40,7 @@ class IdentityGrantApplicationTests {
 
     @BeforeEach void fixture() throws Exception {
         db = PostgresTestcontainersSupport.database(POSTGRES);
-        assertEquals(11, db.flyway("latest", SCOPE).migrate().migrationsExecuted);
+        assertEquals(12, db.flyway("latest", SCOPE).migrate().migrationsExecuted);
         account(A, "ACTIVE", List.of(ADMIN)); account(B, "ACTIVE", List.of(ADMIN)); account(T, "ACTIVE", List.of(GX));
         session(S, A); session(AS, B); session(TS, T);
         execute("INSERT INTO identity.refresh_token(id,session_id,token_hash,issued_at,expires_at) VALUES ('" + id(20) + "','" + TS + "',decode(repeat('01',32),'hex'),TIMESTAMPTZ '2026-10-21 00:00:00Z',TIMESTAMPTZ '2026-10-21 08:00:00Z')");
@@ -2125,4 +2125,54 @@ class IdentityGrantApplicationTests {
         assertEquals(2,scalar("SELECT count(*) FROM identity.customer_proof WHERE consumed_at IS NOT NULL"));assertEquals(2,scalar("SELECT count(*) FROM identity.customer_delivery WHERE status='DELIVERED' AND delivery_evidence IS NOT NULL"));assertEquals(0,scalar("SELECT count(*) FROM identity.customer_auth_session WHERE revoked_at IS NULL"));
         var after=snapshot();for(String table:List.of("auth_session","refresh_token","account_grant"))assertEquals(before.get(table),after.get(table));assertTrue(after.get("user_account").containsAll(before.get("user_account")));
     }
+    private org.springframework.mock.web.MockHttpServletResponse reauthenticationPost(org.springframework.test.web.servlet.MockMvc mvc,ProfileBrowser browser,UUID key,Object body)throws Exception{
+        var q=org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/v1/customer-auth/reauthentication").secure(true).header("Origin","https://portal.example.invalid").header("Authorization","Bearer "+browser.access()).header("X-CSRF-Token",browser.flow().challenge).cookie(browser.flow().csrf,browser.flow().refresh).contentType("application/json");
+        if(key!=null)q.header("Idempotency-Key",key);q.content(body instanceof String text?text:new tools.jackson.databind.ObjectMapper().writeValueAsString(body));return mvc.perform(q).andReturn().getResponse();
+    }
+    @Test void reauthenticationHttpBindsCurrentSelfAndReplaysOnlyOriginalSafeOutcome()throws Exception{
+        customerFixture(true);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW))){
+            var mvc=httpMvc(context);var browser=profileBrowser(mvc);var before=snapshot();var body=Map.of("email",CUSTOMER_EMAIL,"password",SESSION_PASSWORD);var first=reauthenticationPost(mvc,browser,KEY,body);assertEquals(200,first.getStatus());var json=new tools.jackson.databind.ObjectMapper().readTree(first.getContentAsString());assertEquals(2,json.size());assertEquals(NOW.plusSeconds(900),Instant.parse(json.get("expiresAt").asString()));assertEquals("no-store",first.getHeader("Cache-Control"));assertFalse(first.getContentAsString().contains(SESSION_PASSWORD));
+            assertEquals(1,scalar("SELECT count(*) FROM identity.customer_proof WHERE purpose='REAUTHENTICATION' AND subject_id='"+A+"' AND bound_auth_version=1 AND verifier IS NULL AND verifier_key_id IS NULL AND expires_at=created_at+INTERVAL '15 minutes'"));assertEquals(1,scalar("SELECT count(*) FROM identity.customer_security_receipt"));
+            var retry=reauthenticationPost(mvc,browser,KEY,body);assertEquals(200,retry.getStatus());assertEquals(first.getContentAsString(),retry.getContentAsString());assertEquals(1,scalar("SELECT count(*) FROM identity.audit_entry WHERE event_type='CUSTOMER_REAUTHENTICATED'"));
+            assertEquals(409,reauthenticationPost(mvc,browser,KEY,Map.of("email",CUSTOMER_EMAIL,"password","changed-password")).getStatus());assertEquals(400,reauthenticationPost(mvc,browser,null,body).getStatus());assertEquals(400,reauthenticationPost(mvc,browser,id(960),Map.of("email",CUSTOMER_EMAIL,"password",SESSION_PASSWORD,"accountId",T.toString())).getStatus());
+            var system=new ProfileBrowser(httpToken(context,S,A,1,NOW,NOW.plusSeconds(900)),browser.flow());assertEquals(401,reauthenticationPost(mvc,system,id(963),body).getStatus());assertEquals(401,reauthenticationPost(mvc,browser,id(964),Map.of("email","other@example.invalid","password",SESSION_PASSWORD)).getStatus());
+            for(String table:List.of("auth_session","refresh_token","account_grant","user_account"))assertEquals(before.get(table),snapshot().get(table));
+            execute("UPDATE identity.customer_auth_session SET revoked_at=created_at WHERE account_id='"+A+"'");assertEquals(401,reauthenticationPost(mvc,browser,KEY,body).getStatus());assertEquals(1,scalar("SELECT count(*) FROM identity.customer_security_receipt"));
+        }
+    }
+    @Test void reauthenticationDurableQuotaAndAuditFailureCannotBeBypassedByRollback()throws Exception{
+        customerFixture(false);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW))){
+            var mvc=httpMvc(context);var browser=profileBrowser(mvc);failWrite("audit_entry","INSERT");
+            var response=reauthenticationPost(mvc,browser,KEY,Map.of("email",CUSTOMER_EMAIL,"password",SESSION_PASSWORD));assertEquals(503,response.getStatus());assertEquals(0,scalar("SELECT count(*) FROM identity.customer_proof"));assertEquals(0,scalar("SELECT count(*) FROM identity.customer_security_receipt"));
+            assertEquals(1,scalar("SELECT count(*) FROM identity.rate_limit_attempt WHERE policy='CUSTOMER_LOGIN_EMAIL' AND state='PENDING'"));
+            db.ownerExecute("DROP TRIGGER synthetic_fault ON identity.audit_entry");db.ownerExecute("DROP FUNCTION identity.synthetic_fault()");
+            for(int i=0;i<4;i++)assertEquals(401,reauthenticationPost(mvc,browser,UUID.randomUUID(),Map.of("email",CUSTOMER_EMAIL,"password","incorrect-password")).getStatus());
+            assertEquals(429,reauthenticationPost(mvc,browser,UUID.randomUUID(),Map.of("email",CUSTOMER_EMAIL,"password",SESSION_PASSWORD)).getStatus());assertEquals(0,scalar("SELECT count(*) FROM identity.customer_proof"));assertEquals(0,scalar("SELECT count(*) FROM identity.rate_limit_attempt WHERE policy='LOGIN_ACCOUNT'"));
+        }
+    }
+    private com.elogistic.backend.identity.internal.application.CustomerReauthentications reauthenticationConsumer(com.elogistic.backend.identity.api.customer.CustomerAdmission admission,javax.sql.DataSource source,Clock clock){
+        return new com.elogistic.backend.identity.internal.application.CustomerReauthentications(admission,()->{throw new IllegalStateException("NO_REQUEST_IN_CONSUMPTION_FIXTURE");},email->{throw new IllegalStateException("NO_PASSWORD_COMMAND_IN_CONSUMPTION_FIXTURE");},new JdbcCustomerReauthenticationStore(source),enrollmentProtection(),new ProtectedSessionCredentials(),clock);
+    }
+    @Test void reauthenticationConsumptionIsSessionBoundSingleUseAndRollsBackWithBusinessFailure()throws Exception{
+        customerFixture(false);try(var login=customerLogin()){
+            var source=outboxDataSource();var clock=Clock.fixed(NOW,ZoneOffset.UTC);var admission=customerAdmission(source,login.access(),clock);var store=new JdbcCustomerReauthenticationStore(source);var app=reauthenticationConsumer(admission,source,clock);var proof=CustomerProof.issue(id(961),A,CustomerProof.Purpose.REAUTHENTICATION,NOW,login.access().sessionId(),1L,null);
+            admission.execute("claim",REQUEST,Set.of(),c->{store.replace(proof,NOW);return null;});
+            assertThrows(IllegalStateException.class,()->admission.execute("claim",REQUEST,Set.of(),c->{app.consume(c,proof.id());throw new IllegalStateException("SYNTHETIC_BUSINESS_FAILURE");}));assertEquals(0,scalar("SELECT count(*) FROM identity.customer_proof WHERE consumed_at IS NOT NULL"));assertEquals(0,scalar("SELECT count(*) FROM identity.audit_entry WHERE event_type='CUSTOMER_REAUTHENTICATION_CONSUMED'"));
+            try(var other=customerLogin()){var otherAdmission=customerAdmission(source,other.access(),clock);var otherApp=reauthenticationConsumer(otherAdmission,source,clock);sessionDenied(TOKEN_INVALID_OR_EXPIRED,()->otherAdmission.execute("claim",REQUEST,Set.of(),c->{otherApp.consume(c,proof.id());return null;}));}
+            admission.execute("claim",REQUEST,Set.of(),c->{app.consume(c,proof.id());return null;});assertEquals(1,scalar("SELECT count(*) FROM identity.customer_proof WHERE consumed_at IS NOT NULL"));sessionDenied(TOKEN_INVALID_OR_EXPIRED,()->admission.execute("claim",REQUEST,Set.of(),c->{app.consume(c,proof.id());return null;}));
+        }
+    }
+    @Test void reauthenticationFinalProofDeadlineRollsBackConsumptionAndAudit()throws Exception{
+        customerFixture(false);try(var login=customerLogin()){
+            var source=outboxDataSource();var time=new java.util.concurrent.atomic.AtomicReference<>(NOW.plusSeconds(100));Clock clock=new Clock(){public ZoneId getZone(){return ZoneOffset.UTC;}public Clock withZone(ZoneId z){return this;}public Instant instant(){return time.get();}};
+            var access=new com.elogistic.backend.identity.api.IdentitySessionCommands.AccessGrant(login.access().sessionId(),A,1,NOW.plusSeconds(100),NOW.plusSeconds(1000));var admission=customerAdmission(source,access,clock);var store=new JdbcCustomerReauthenticationStore(source);var app=reauthenticationConsumer(admission,source,clock);var proof=CustomerProof.issue(id(962),A,CustomerProof.Purpose.REAUTHENTICATION,NOW,access.sessionId(),1L,null);
+            admission.execute("claim",REQUEST,Set.of(),c->{store.replace(proof,NOW);return null;});sessionDenied(TOKEN_INVALID_OR_EXPIRED,()->admission.execute("claim",REQUEST,Set.of(),c->{app.consume(c,proof.id());time.set(NOW.plusSeconds(900));return null;}));assertEquals(0,scalar("SELECT count(*) FROM identity.customer_proof WHERE consumed_at IS NOT NULL"));assertEquals(0,scalar("SELECT count(*) FROM identity.audit_entry WHERE event_type='CUSTOMER_REAUTHENTICATION_CONSUMED'"));
+        }
+    }
+    @Test void concurrentReauthenticationSameKeyCreatesOneProofReceiptAndAudit()throws Exception{
+        customerFixture(false);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW))){
+            var mvc=httpMvc(context);var browser=profileBrowser(mvc);var body=Map.of("email",CUSTOMER_EMAIL,"password",SESSION_PASSWORD);var result=adminRace(()->reauthenticationPost(mvc,browser,KEY,body).getContentAsString(),()->reauthenticationPost(mvc,browser,KEY,body).getContentAsString());assertEquals(result.getFirst(),result.getLast());assertTrue(String.valueOf(result.getFirst()).contains("proofId"));assertEquals(1,scalar("SELECT count(*) FROM identity.customer_proof"));assertEquals(1,scalar("SELECT count(*) FROM identity.customer_security_receipt"));assertEquals(1,scalar("SELECT count(*) FROM identity.audit_entry WHERE event_type='CUSTOMER_REAUTHENTICATED'"));
+        }
+    }
+
 }

@@ -25,6 +25,13 @@ public final class ProductionCustomerRequestAdmission implements CustomerRequest
     }
     private static IdentityCommandFailure invalid(){return new IdentityCommandFailure(IdentityCommandFailure.Code.SESSION_INVALID);}
     @Override public Request current(){State state=current.get();if(state==null)throw invalid();return state.request;}
+    public IdentityRateLimiter.Reservation reservePassword(IdentityRateLimiter limiter,String exactEmail){
+        State state=current.get();if(state==null || !state.http.getMethod().equals("POST")
+            || !state.http.getRequestURI().substring(state.http.getContextPath().length()).equals("/api/v1/customer-auth/reauthentication"))throw invalid();
+        authorize(state.request.requestId(),state.session);
+        return limiter.reserve(List.of(new IdentityRateLimiter.Subject(IdentityRateLimiter.Policy.CUSTOMER_LOGIN_EMAIL,exactEmail),
+            new IdentityRateLimiter.Subject(IdentityRateLimiter.Policy.CUSTOMER_LOGIN_IP,ProductionAuthenticationHttp.clientAddress(state.http))));
+    }
     @Override public void authorize(UUID request,UUID session){
         State state=current.get();if(state==null || !state.request.requestId().equals(request) || !state.session.equals(session))throw invalid();
         var http=state.http;boolean mutation=!http.getMethod().equals("GET");

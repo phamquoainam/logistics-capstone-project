@@ -73,6 +73,11 @@ class CustomerAdmissionTests {
         assertThrows(IdentityCommandFailure.class,()->run(c->{time.set(NOW.plusSeconds(900));return "staged-business-write";}));
         verify(tx,never()).recordActivity(any(),any());
     }
+    @Test void earliestProofDeadlineCannotBeExtendedAndIsCheckedAfterBusinessWork(){
+        var rejected=assertThrows(IdentityCommandFailure.class,()->run(c->{service.requireDeadline(c,NOW.plusSeconds(60));service.requireDeadline(c,NOW.plusSeconds(120));time.set(NOW.plusSeconds(60));return "staged";}));
+        assertEquals(IdentityCommandFailure.Code.TOKEN_INVALID_OR_EXPIRED,rejected.code());verify(tx,never()).recordActivity(any(),any());
+        Context captured=run(c->c);assertThrows(IdentityCommandFailure.class,()->service.requireDeadline(captured,NOW.plusSeconds(180)));
+    }
     @Test void csrfRevocationDuringCallbackRejectsFinalDecision() {
         doNothing().doThrow(new IdentityCommandFailure(IdentityCommandFailure.Code.CSRF_REJECTED)).when(request).authorize(R,S);
         assertThrows(IdentityCommandFailure.class,()->run(c->"staged-business-write"));

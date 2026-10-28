@@ -72,6 +72,7 @@ public class ProductionCustomerConfiguration {
     }
     @Bean CustomerAdmission customerAdmission(ProductionCustomerComposition.Services services){return services.customers();}
     @Bean CustomerRequestContext customerRequestContext(ProductionCustomerComposition.Services services){return services.requests();}
+    @Bean CustomerReauthentication customerReauthentication(ProductionCustomerComposition.Services services){return services.reauthentication();}
     @Bean CustomerDeliverySchedule customerDeliverySchedule(ProductionCustomerComposition.Services services){return new CustomerDeliverySchedule(services);}
     static final class CustomerDeliverySchedule {
         private final ProductionCustomerComposition.Services services;

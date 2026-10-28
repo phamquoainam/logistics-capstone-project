@@ -17,7 +17,7 @@ public final class CustomerAdmissions implements CustomerAdmission {
     private final Clock clock;
     private final ThreadLocal<State> current=new ThreadLocal<>();
     private static final class State {
-        final Context context;boolean meaningful;
+        final Context context;boolean meaningful;Instant deadline;
         State(Context context){this.context=context;}
     }
     public CustomerAdmissions(IdentitySessionStore store,CustomerAccessVerifier verifier,CustomerRequestAdmission requestAdmission,Clock clock) {
@@ -53,7 +53,7 @@ public final class CustomerAdmissions implements CustomerAdmission {
             try {
                 T value=work.apply(context);
                 // Locks remain held through physical commit; deadline checked after all business writes.
-                admit(claim,actor,session);requestAdmission.authorize(requestId,session.id());meaningful[0]=state.meaningful;return value;
+                admit(claim,actor,session);requestAdmission.authorize(requestId,session.id());checkDeadline(state);meaningful[0]=state.meaningful;return value;
             }finally {current.remove();}
         });
         if(meaningful[0])recordActivity(claim);
@@ -73,6 +73,11 @@ public final class CustomerAdmissions implements CustomerAdmission {
         State state=current.get();if(state==null || state.context!=context)throw invalid();
     }
     @Override public void meaningfulAction(Context context) {requireCurrent(context);current.get().meaningful=true;}
+    @Override public void requireDeadline(Context context,Instant deadline){
+        requireCurrent(context);if(deadline==null)throw invalid();State state=current.get();
+        if(state.deadline==null || deadline.isBefore(state.deadline))state.deadline=deadline;checkDeadline(state);
+    }
+    private void checkDeadline(State state){if(state.deadline!=null && !clock.instant().isBefore(state.deadline))throw new IdentityCommandFailure(IdentityCommandFailure.Code.TOKEN_INVALID_OR_EXPIRED);}
     private void recordActivity(CustomerAccessVerifier.Claim claim) {
         // Separate post-commit owned transaction. Failure cannot pretend the business write rolled back.
         store.transaction(tx->{

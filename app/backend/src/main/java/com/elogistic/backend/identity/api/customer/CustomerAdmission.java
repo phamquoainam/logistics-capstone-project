@@ -10,6 +10,8 @@ public interface CustomerAdmission {
     void requireCurrent(Context context);
     /** Only a newly committed successful business command qualifies, never receipt replay/read/poll. */
     void meaningfulAction(Context context);
+    /** Earliest consumed-proof deadline must still hold at the final locked decision point. */
+    default void requireDeadline(Context context,java.time.Instant deadline){throw new IllegalStateException("CUSTOMER_PROOF_DEADLINE_ADMISSION_REQUIRED");}
 
     record Subject(UUID accountId, String displayName, String verifiedEmail, long securityVersion, boolean eligible) {
         @Override public String toString() {return "CustomerSubject[redacted]";}

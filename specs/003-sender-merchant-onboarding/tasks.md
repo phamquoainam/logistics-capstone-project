@@ -166,7 +166,7 @@ The focused review under Owner conditional approval has closed the planning cand
 | T003-12 | T003-11 | Full BC/S003/supplement/legacy-consumer traceability; required CI, Owner PR merge, merge-SHA CI, separately recorded full-Spec003 acceptance. Cross-Spec Group A–F acceptance remains separate. |
 
 - [ ] **T003-01** - IN_PROGRESS: customer admission/session implemented; complete Identity delta remains.
-- [ ] **T003-02** - IN_PROGRESS: V7-V10 recorded CI; V11 awaits PG18.
+- [ ] **T003-02** - IN_PROGRESS: V7-V11 recorded CI; V12 reauthentication receipt awaits PG18.
 - [ ] **T003-03** - IN_PROGRESS: enrollment/session/SMTP verified; recovery correction, sensitive-contact/link and browser gates remain.
 - [ ] **T003-04** - IN_PROGRESS: independent profile tasks below; application/evidence journeys remain.
 - [ ] **T003-05** - NOT_STARTED: Merchant authority and contexts.
@@ -198,3 +198,6 @@ Each checkbox closes only its stated deliverable. It does not imply acceptance o
 - [x] **T003-10-ENTRY-UI-UNIT** - DONE: seven isolated Edge UI cases PASS, runner exit0 in6.8s with nonce-bound owned static-server cleanup and no remaining listener; mobile screenshot visually checked. Explicit API fixtures remain UI unit evidence only, not running-backend/PostgreSQL E2E.
 
 - [ ] **T003-10-ENTRY-REAL-RUNTIME** - Eight serial cases authored/discovered against real HTTPS production configurations, existing owned PG18 and actual SMTP; mandatory finite CI case requires all8 PASS plus DB/no-grant/one-write/revocation/owned cleanup. Local H2/compile/policy checks PASS, actual hosted runtime execution pending. This is distinct from the completed isolated UI unit gate.
+
+- [x] **T003-03-REAUTHENTICATION-UNIT** - DONE: nine new reauthentication application/persistence-boundary unit cases plus the new final proof-deadline admission case PASS. Focused36 cases PASS; actual clean backend623 discovered/606 PASS/17 expected skips, no failure/error. This closes the bounded unit gate only; full security-email/contact/link and Merchant proof consumers remain.
+- [ ] **T003-03-REAUTHENTICATION-PG** - Five actual PostgreSQL/HTTP/quota/rollback/concurrent-consumption cases and two V12 migration/privilege cases authored and compiled; await exact current CI. V1-V11 unchanged, runtime startup fails closed without V12.
