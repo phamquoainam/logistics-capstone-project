@@ -285,7 +285,7 @@ class ReportGuardTests(unittest.TestCase):
             self.assertEqual(len(methods), len(set(methods)), name)
         # Prior cases retained; authority composition requires9 unit and12 PostgreSQL identities.
         for mode, passed, skipped in [('architecture', 23, 0), ('h2', 596, 17),
-                                      ('postgres', 930, 5), ('foundation', 5, 0)]:
+                                      ('postgres', 931, 5), ('foundation', 5, 0)]:
             with self.subTest(mode=mode):
                 self.fixture(mode)
                 self.assertTrue(self.check(mode))
@@ -1550,7 +1550,7 @@ class IdentityActivationInventoryTests(unittest.TestCase):
         self.assertEqual(list(ACTIVATION_UNIT_METHODS), reports.REQUIRED[reports.IDENTITY_ACTIVATION_UNIT])
         self.assertEqual(list(ACTIVATION_PG_METHODS), reports.IDENTITY_ACTIVATION_PG_REQUIRED)
         self.assertEqual(12, len(ACTIVATION_UNIT_METHODS)); self.assertEqual(20, len(ACTIVATION_PG_METHODS))
-        self.assertEqual(268, len(reports.REQUIRED[reports.IDENTITY_GRANTS]))
+        self.assertEqual(269, len(reports.REQUIRED[reports.IDENTITY_GRANTS]))
         self.assertEqual(3, len(reports.TASK_C_SUITES))
         self.assertNotIn(reports.IDENTITY_GRANTS, reports.expected_suites('h2'))
         for mode in ('h2', 'postgres'): self.assertIn(reports.IDENTITY_ACTIVATION_UNIT, reports.expected_suites(mode))
@@ -1600,7 +1600,7 @@ class IdentitySessionInventoryTests(unittest.TestCase):
         self.assertEqual(re.findall(r'@Test\s+void\s+(session\w+)\s*\(', pg), reports.IDENTITY_SESSION_PG_REQUIRED)
         self.assertEqual(24, len(reports.IDENTITY_SESSION_UNIT_REQUIRED))
         self.assertEqual(23, len(reports.IDENTITY_SESSION_PG_REQUIRED))
-        self.assertEqual(268, len(reports.REQUIRED[reports.IDENTITY_GRANTS]))
+        self.assertEqual(269, len(reports.REQUIRED[reports.IDENTITY_GRANTS]))
         self.assertEqual(3, len(reports.TASK_C_SUITES))
         for mode in ('h2', 'postgres'): self.assertIn(reports.IDENTITY_SESSION_UNIT, reports.expected_suites(mode))
         self.assertNotIn(reports.IDENTITY_SESSION_UNIT, reports.expected_suites('architecture'))
@@ -1655,7 +1655,7 @@ class IdentityCurrentSessionInventoryTests(unittest.TestCase):
         self.assertEqual(re.findall(r'@Test\s+void\s+(currentSession\w+)\s*\(', pg), reports.IDENTITY_CURRENT_SESSION_PG_REQUIRED)
         self.assertEqual(21, len(reports.IDENTITY_CURRENT_SESSION_UNIT_REQUIRED))
         self.assertEqual(14, len(reports.IDENTITY_CURRENT_SESSION_PG_REQUIRED))
-        self.assertEqual(268, len(reports.REQUIRED[reports.IDENTITY_GRANTS]))
+        self.assertEqual(269, len(reports.REQUIRED[reports.IDENTITY_GRANTS]))
         self.assertEqual(3, len(reports.TASK_C_SUITES))
         self.assertNotIn('@Disabled', unit)
         for mode in ('h2', 'postgres'): self.assertIn(reports.IDENTITY_CURRENT_SESSION_UNIT, reports.expected_suites(mode))
@@ -1703,7 +1703,7 @@ class IdentityAdministrationInventoryTests(unittest.TestCase):
         self.assertEqual(re.findall(r'@Test\s+void\s+(admin\w+)\s*\(', pg), reports.IDENTITY_ADMIN_PG_REQUIRED)
         self.assertEqual(36, len(reports.IDENTITY_ADMIN_UNIT_REQUIRED))
         self.assertEqual(34, len(reports.IDENTITY_ADMIN_PG_REQUIRED))
-        self.assertEqual(268, len(reports.REQUIRED[reports.IDENTITY_GRANTS]))
+        self.assertEqual(269, len(reports.REQUIRED[reports.IDENTITY_GRANTS]))
         self.assertEqual(3, len(reports.TASK_C_SUITES))
         composition = (root / 'app/backend/src/main/java/com/elogistic/backend/identity/internal/infrastructure/ProductionIdentityAdministrationComposition.java').read_text(encoding='utf-8')
         self.assertNotRegex(composition, r'@(Bean|Component|Configuration|Controller|RestController)\b')
@@ -1749,7 +1749,7 @@ class ProductionIdentityHttpInventoryTests(unittest.TestCase):
         self.assertEqual(re.findall(r'@Test\s+void\s+(\w+)\s*\(',unit),reports.IDENTITY_HTTP_UNIT_REQUIRED)
         self.assertEqual(re.findall(r'@Test\s+void\s+(httpRead\w+)\s*\(',pg),reports.IDENTITY_HTTP_PG_REQUIRED)
         self.assertEqual(43,len(reports.IDENTITY_HTTP_UNIT_REQUIRED));self.assertEqual(18,len(reports.IDENTITY_HTTP_PG_REQUIRED))
-        self.assertEqual(268,len(reports.REQUIRED[reports.IDENTITY_GRANTS]));self.assertEqual(3,len(reports.TASK_C_SUITES))
+        self.assertEqual(269,len(reports.REQUIRED[reports.IDENTITY_GRANTS]));self.assertEqual(3,len(reports.TASK_C_SUITES))
         self.assertNotIn('@Disabled',unit)
 
     def test_each_http_security_case_must_execute_and_cannot_be_skipped(self):

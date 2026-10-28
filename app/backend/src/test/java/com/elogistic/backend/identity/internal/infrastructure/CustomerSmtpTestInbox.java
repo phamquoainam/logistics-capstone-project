@@ -15,7 +15,11 @@ final class CustomerSmtpTestInbox implements AutoCloseable {
         private final SSLContext serverTls;private final ServerSocket listener;private final ExecutorService executor=Executors.newSingleThreadExecutor();private final Future<?> task;
         private final List<byte[]> inbox=Collections.synchronizedList(new ArrayList<>());
         CustomerSmtpTestInbox(int connections,boolean starttls,boolean implicit,int recipientCode,SSLContext serverTls)throws Exception{
-            this.serverTls=serverTls;listener=implicit?serverTls.getServerSocketFactory().createServerSocket():new ServerSocket();listener.bind(new InetSocketAddress(InetAddress.getByName("127.0.0.1"),0));listener.setSoTimeout(5000);
+            this(connections,starttls,implicit,recipientCode,serverTls,5000);
+        }
+        CustomerSmtpTestInbox(int connections,boolean starttls,boolean implicit,int recipientCode,SSLContext serverTls,int acceptTimeout)throws Exception{
+            if(acceptTimeout<5000 || acceptTimeout>120000)throw new IllegalArgumentException("SMTP_TEST_ACCEPT_TIMEOUT_INVALID");
+            this.serverTls=serverTls;listener=implicit?serverTls.getServerSocketFactory().createServerSocket():new ServerSocket();listener.bind(new InetSocketAddress(InetAddress.getByName("127.0.0.1"),0));listener.setSoTimeout(acceptTimeout);
             task=executor.submit(()->{for(int i=0;i<connections;i++)try(Socket socket=listener.accept()){socket.setSoTimeout(5000);serve(socket,starttls,implicit,recipientCode);}catch(SSLException|SocketException expectedDisconnect){}catch(Exception failure){throw new IllegalStateException("SMTP_TEST_INBOX_FAILED");}});
         }
         int port(){return listener.getLocalPort();}
@@ -42,5 +46,6 @@ final class CustomerSmtpTestInbox implements AutoCloseable {
         }
         private static void reply(BufferedWriter writer,String response)throws IOException{writer.write(response);writer.write("\r\n");writer.flush();}
         List<byte[]> messages()throws Exception{task.get(10,TimeUnit.SECONDS);return List.copyOf(inbox);}
+        Optional<byte[]> message(int index){synchronized(inbox){return index>=0 && index<inbox.size()?Optional.of(inbox.get(index).clone()):Optional.empty();}}
         @Override public void close()throws Exception{listener.close();executor.shutdownNow();assertTrue(executor.awaitTermination(6,TimeUnit.SECONDS));for(byte[] bytes:inbox)Arrays.fill(bytes,(byte)0);}
     }

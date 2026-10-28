@@ -194,5 +194,7 @@ Each checkbox closes only its stated deliverable. It does not imply acceptance o
 - [x] **T003-03-RECOVERY-PG-CORRECTION** - DONE: corrected fixture and all recovery negatives PASS in required run40622633558 on source ede1e50, with verified artifact digests and owned cleanup. Earlier failed/cancelled runs remain recorded.
 
 - [x] **T003-10-CUSTOMER-CLIENT-UNIT** - DONE: 12 new isolated transport/privacy/replay/receipt tests plus 28 existing frontend unit cases PASS (40 total). Both Demo and Customer builds, typecheck and current source lint PASS; build output excluded from lint just as existing dist output is excluded.
-- [ ] **T003-04-PROFILE-RECEIPT-LOOKUP-PG** - Additional read-only current-self receipt GET authored; local domain test and clean H2596 PASS, new real PG HTTP isolation test pending current CI.
+- [x] **T003-04-PROFILE-RECEIPT-LOOKUP-PG** - DONE: current-self receipt lookup, foreign-subject/revoked/unknown/malformed denials and no-effect read PASS in required CI40624272934; source80d8a64/integrationf33d99b, verified evidence/customer-entry-profile-ci.json.
 - [x] **T003-10-ENTRY-UI-UNIT** - DONE: seven isolated Edge UI cases PASS, runner exit0 in6.8s with nonce-bound owned static-server cleanup and no remaining listener; mobile screenshot visually checked. Explicit API fixtures remain UI unit evidence only, not running-backend/PostgreSQL E2E.
+
+- [ ] **T003-10-ENTRY-REAL-RUNTIME** - Eight serial cases authored/discovered against real HTTPS production configurations, existing owned PG18 and actual SMTP; mandatory finite CI case requires all8 PASS plus DB/no-grant/one-write/revocation/owned cleanup. Local H2/compile/policy checks PASS, actual hosted runtime execution pending. This is distinct from the completed isolated UI unit gate.
