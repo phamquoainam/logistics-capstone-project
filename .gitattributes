@@ -1,0 +1,2 @@
+scripts/ci/test_verify_reports.py -text
+scripts/ci/verify-reports.py -text

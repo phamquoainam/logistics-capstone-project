@@ -34,13 +34,13 @@ import static org.junit.jupiter.api.Assertions.*;
 final class S003CustomerBrowserRuntime {
     static final String EMAIL="browser-customer@example.invalid";
     private static final JsonMapper JSON=JsonMapper.builder().build();
-    private static final List<String> CASES=List.of("retail guest registration uses the real HTTPS API", "verification consumes the actual SMTP message only after confirmation", "verified login has isolated customer cookies and no SYSTEM authority", "profile lost response resolves through the real committed receipt", "logout and recovery request use the actual verified destination", "recovery confirmation changes the credential with the actual second message", "fresh login rejects the old credential and revoked browser loses its workspace", "unknown email and invalid proof do not fabricate account activation");
+    private static final List<String> CASES=List.of("retail guest registration uses the real HTTPS API", "verification consumes the actual SMTP message only after confirmation", "verified login has isolated customer cookies and no SYSTEM authority", "profile lost response resolves through the real committed receipt", "merchant draft uses the real HTTPS API and resolves one lost write", "logout and recovery request use the actual verified destination", "recovery confirmation changes the credential with the actual second message", "fresh login rejects the old credential and revoked browser loses its workspace", "unknown email and invalid proof do not fabricate account activation");
 
     @TestConfiguration(proxyBeanMethods=false) @EnableAutoConfiguration
-    @Import({ProductionIdentityHttpConfiguration.class,ProductionCustomerConfiguration.class,CustomerProfileConfiguration.class,CustomerProfileHttp.class,OnboardingHttpErrors.class})
+    @Import({ProductionIdentityHttpConfiguration.class,ProductionCustomerConfiguration.class,CustomerProfileConfiguration.class,CustomerProfileHttp.class,MerchantApplicationHttp.class,OnboardingHttpErrors.class})
     static class Host {
         @Bean WebMvcConfigurer customerAssets(){return new WebMvcConfigurer(){
-            public void addViewControllers(ViewControllerRegistry routes){for(String path:List.of("/","/login","/register","/verify-email","/recover","/recover/confirm","/personal","/personal/profile"))routes.addViewController(path).setViewName("forward:/index.html");}
+            public void addViewControllers(ViewControllerRegistry routes){for(String path:List.of("/","/login","/register","/verify-email","/recover","/recover/confirm","/personal","/personal/profile","/personal/applications","/personal/applications/{id}"))routes.addViewController(path).setViewName("forward:/index.html");}
             public void addInterceptors(InterceptorRegistry interceptors){interceptors.addInterceptor(new HandlerInterceptor(){
                 public boolean preHandle(jakarta.servlet.http.HttpServletRequest request,jakarta.servlet.http.HttpServletResponse response,Object handler){response.setHeader("Cache-Control","no-store");response.setHeader("Referrer-Policy","no-referrer");response.setHeader("X-Content-Type-Options","nosniff");return true;}
             });}
@@ -122,7 +122,7 @@ final class S003CustomerBrowserRuntime {
             try(var smtp=new CustomerSmtpTestInbox(2,false,false,250,null,120000);var control=new InboxControl(smtp,origin)){
                 settings=properties(web,directory,password,origin,port,smtp.port());phase="BOOT";
                 try(var context=host(source,settings)){
-                    phase="BROWSER";node(web,directory,origin,control,pin);phase="RECEIPT";Path result=directory.resolve("safe-browser-results.json");assertTrue(Files.size(result)<=65536);var json=JSON.readTree(Files.readAllBytes(result));assertEquals("passed",json.get("status").asString());assertEquals(8,json.get("passed").asInt());assertEquals(0,json.get("failed").asInt());assertEquals(8,json.get("cases").size());
+                    phase="BROWSER";node(web,directory,origin,control,pin);phase="RECEIPT";Path result=directory.resolve("safe-browser-results.json");assertTrue(Files.size(result)<=65536);var json=JSON.readTree(Files.readAllBytes(result));assertEquals("passed",json.get("status").asString());assertEquals(9,json.get("passed").asInt());assertEquals(0,json.get("failed").asInt());assertEquals(9,json.get("cases").size());
                     int i=0;for(var item:json.get("cases")){assertEquals(CASES.get(i++),item.get("name").asString());assertEquals("passed",item.get("status").asString());assertEquals(0,item.get("errors").asInt());cases.add(Map.of("name",item.get("name").asString(),"status","passed"));}
                     phase="CLEANUP";
                 }
@@ -138,10 +138,10 @@ final class S003CustomerBrowserRuntime {
             if(cases.isEmpty())try{
                 Path safe=directory.resolve("safe-browser-results.json");
                 if(Files.isRegularFile(safe) && Files.size(safe)<=65536){
-                    var json=JSON.readTree(Files.readAllBytes(safe));int index=0;
+                    var json=JSON.readTree(Files.readAllBytes(safe));
                     for(var item:json.get("cases")){
                         String name=item.get("name").asString(),status=item.get("status").asString();
-                        if(index>=CASES.size() || !CASES.get(index++).equals(name) || !Set.of("passed","failed","timedOut","skipped","interrupted").contains(status))throw new IllegalStateException();
+                        if(cases.size()>CASES.size() || !CASES.contains(name) || !Set.of("passed","failed","timedOut","skipped","interrupted").contains(status))throw new IllegalStateException();
                         cases.add(Map.of("name",name,"status",status));
                     }
                 }

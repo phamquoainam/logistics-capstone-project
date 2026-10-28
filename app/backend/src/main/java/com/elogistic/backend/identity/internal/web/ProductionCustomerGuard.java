@@ -15,11 +15,12 @@ import tools.jackson.databind.json.JsonMapper;
 public final class ProductionCustomerGuard extends OncePerRequestFilter {
     private static final JsonMapper JSON=JsonMapper.builder().build();
     private final ProductionAccessTokens tokens;private final ProductionCustomerRequestAdmission admission;
-    private final CustomerAdmission customers;private final ProductionAuthenticationHttp authentication;private final ProductionCustomerEnrollmentHttp enrollments;private final ProductionCustomerReauthenticationHttp reauthentication;
+    private final CustomerAdmission customers;private final ProductionAuthenticationHttp authentication;private final ProductionCustomerEnrollmentHttp enrollments;private final ProductionCustomerReauthenticationHttp reauthentication;private final ProductionCustomerConsentHttp consents;
     public ProductionCustomerGuard(ProductionAccessTokens tokens,ProductionCustomerRequestAdmission admission,CustomerAdmission customers,
-                                   ProductionAuthenticationHttp authentication,ProductionCustomerEnrollmentHttp enrollments,ProductionCustomerReauthenticationHttp reauthentication){
+                                   ProductionAuthenticationHttp authentication,ProductionCustomerEnrollmentHttp enrollments,ProductionCustomerReauthenticationHttp reauthentication,ProductionCustomerConsentHttp consents){
         this.tokens=Objects.requireNonNull(tokens);this.admission=Objects.requireNonNull(admission);this.customers=Objects.requireNonNull(customers);
         this.authentication=Objects.requireNonNull(authentication);this.enrollments=Objects.requireNonNull(enrollments);this.reauthentication=Objects.requireNonNull(reauthentication);
+        this.consents=Objects.requireNonNull(consents);
     }
     @Override protected void doFilterInternal(HttpServletRequest request,HttpServletResponse response,FilterChain chain)throws ServletException,IOException {
         UUID requestId=UUID.randomUUID();response.setHeader("Cache-Control","no-store");response.setHeader("X-Request-Id",requestId.toString());
@@ -33,6 +34,7 @@ public final class ProductionCustomerGuard extends OncePerRequestFilter {
             try(var scope=admission.enter(requestId,access,verified.sessionId(),request)){
                 admission.authorize(requestId,verified.sessionId());String path=request.getRequestURI().substring(request.getContextPath().length());
                 if(reauthentication.matches(request)){reauthentication.handle(request,response);return;}
+                if(consents.matches(request)){consents.handle(request,response);return;}
                 if(request.getMethod().equals("GET") && path.equals("/api/v1/customer-auth/me")){
                     var result=customers.execute(access,requestId,Set.of(),context->{
                         var actor=context.actor();return Map.of("accountId",actor.accountId(),"displayName",actor.displayName(),"verifiedEmail",actor.verifiedEmail(),"securityVersion",actor.securityVersion());

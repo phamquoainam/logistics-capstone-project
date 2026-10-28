@@ -2,6 +2,7 @@ package com.elogistic.backend.workflow.internal.web;
 
 import com.elogistic.backend.identity.api.customer.*;
 import com.elogistic.backend.merchant.api.customer.CustomerProfiles;
+import com.elogistic.backend.merchant.api.customer.MerchantApplications;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.*;
@@ -15,15 +16,20 @@ import tools.jackson.core.StreamReadFeature;
 @RestController @Profile("customer")
 public final class CustomerProfileHttp {
     private static final JsonMapper JSON=JsonMapper.builder().enable(StreamReadFeature.STRICT_DUPLICATE_DETECTION).build();
-    private final CustomerAdmission admission;private final CustomerRequestContext requests;private final CustomerProfiles profiles;
-    public CustomerProfileHttp(CustomerAdmission admission,CustomerRequestContext requests,CustomerProfiles profiles){this.admission=Objects.requireNonNull(admission);this.requests=Objects.requireNonNull(requests);this.profiles=Objects.requireNonNull(profiles);}
+    private final CustomerAdmission admission;private final CustomerRequestContext requests;private final CustomerProfiles profiles;private final MerchantApplications applications;
+    public CustomerProfileHttp(CustomerAdmission admission,CustomerRequestContext requests,CustomerProfiles profiles,MerchantApplications applications){this.admission=Objects.requireNonNull(admission);this.requests=Objects.requireNonNull(requests);this.profiles=Objects.requireNonNull(profiles);this.applications=Objects.requireNonNull(applications);}
     @GetMapping("/api/v1/customer/profile") public ResponseEntity<Map<String,Object>> get(){
         var request=requests.current();return response(admission.execute(request.encodedAccess(),request.requestId(),Set.of(),profiles::get));
     }
     @GetMapping("/api/v1/onboarding-receipts/{operationId}/{idempotencyKey}") public ResponseEntity<Map<String,Object>> receipt(@PathVariable String operationId,@PathVariable String idempotencyKey){
-        if(!operationId.equals("updateCustomerProfile"))throw problem(404,"RESOURCE_NOT_FOUND");
+        if(!Set.of("updateCustomerProfile","createApplicationDraft","updateApplicationDraft").contains(operationId))throw problem(404,"RESOURCE_NOT_FOUND");
         UUID key;try{key=UUID.fromString(idempotencyKey);if(!key.toString().equals(idempotencyKey))throw problem(400,"VALIDATION_FAILED");}catch(IllegalArgumentException invalid){throw problem(400,"VALIDATION_FAILED");}
-        var request=requests.current();var receipt=admission.execute(request.encodedAccess(),request.requestId(),Set.of(),context->profiles.receipt(context,key));
+        var request=requests.current();
+        if(!operationId.equals("updateCustomerProfile")){
+            var receipt=admission.execute(request.encodedAccess(),request.requestId(),Set.of(),context->applications.receipt(context,operationId,key));
+            return ResponseEntity.ok(Map.of("operationId",receipt.operationId(),"targetId",receipt.targetId(),"outcome",receipt.outcome(),"version",receipt.version()));
+        }
+        var receipt=admission.execute(request.encodedAccess(),request.requestId(),Set.of(),context->profiles.receipt(context,key));
         return ResponseEntity.ok(Map.of("operationId",receipt.operationId(),"targetId",receipt.targetId(),"outcome",receipt.outcome(),"version",receipt.version()));
     }
     @PutMapping("/api/v1/customer/profile") public ResponseEntity<Map<String,Object>> update(HttpServletRequest http)throws IOException{

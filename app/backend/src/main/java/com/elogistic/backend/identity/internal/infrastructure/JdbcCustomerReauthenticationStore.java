@@ -33,7 +33,7 @@ public final class JdbcCustomerReauthenticationStore implements CustomerReauthen
         one(jdbc.update("UPDATE identity.customer_proof SET consumed_at=? WHERE id=? AND purpose='REAUTHENTICATION' AND consumed_at IS NULL AND revoked_at IS NULL AND created_at<=? AND expires_at>?",stamp(after.consumedAt()),before.id(),stamp(after.consumedAt()),stamp(after.consumedAt())));
     }
     @Override public void receipt(UUID account,UUID key,Receipt receipt,Instant now){
-        joined();byte[] hash=receipt.binding().fingerprint();try{one(jdbc.update("INSERT INTO identity.customer_security_receipt VALUES (?,?,?,?,?,?,'REAUTHENTICATION',?,?,?,?,?)",account,key,receipt.binding().operation(),receipt.sessionId(),receipt.authVersion(),receipt.proof().id(),receipt.binding().keyId(),hash,receipt.binding().requestId(),stamp(now),stamp(now.plusSeconds(604800))));}finally{Arrays.fill(hash,(byte)0);}
+        joined();byte[] hash=receipt.binding().fingerprint();try{one(jdbc.update("INSERT INTO identity.customer_security_receipt(account_id,operation_key,operation,bound_session_id,bound_auth_version,proof_id,proof_purpose,fingerprint_key_id,request_fingerprint,request_id,created_at,expires_at) VALUES (?,?,?,?,?,?,'REAUTHENTICATION',?,?,?,?,?)",account,key,receipt.binding().operation(),receipt.sessionId(),receipt.authVersion(),receipt.proof().id(),receipt.binding().keyId(),hash,receipt.binding().requestId(),stamp(now),stamp(now.plusSeconds(604800))));}finally{Arrays.fill(hash,(byte)0);}
     }
     @Override public void audit(UUID account,UUID request,String event,Instant now){
         joined();if(!Set.of("CUSTOMER_REAUTHENTICATED","CUSTOMER_REAUTHENTICATION_CONSUMED").contains(event))throw new IllegalArgumentException();

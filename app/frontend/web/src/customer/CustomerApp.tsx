@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import type { FormEvent, ReactNode } from 'react';
-import { Link, NavLink, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
+import { Link, NavLink, Navigate, Outlet, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { customerClient, CustomerApiError } from './client';
-import type { Enrollment, ProfileInput, VersionedProfile } from './client';
+import type { Enrollment, ProfileInput, VersionedProfile, ApplicationAddress, ApplicationDraft, ApplicationPage, VersionedApplication } from './client';
 import { clearEntryProof, hasEntryProof } from './entry-proof';
 import './customer.css';
 
@@ -18,6 +18,8 @@ function message(error: unknown): string {
     TOKEN_INVALID_OR_EXPIRED: 'Liên kết không còn hiệu lực hoặc đã được sử dụng. Vui lòng yêu cầu hướng dẫn mới.',
     VALIDATION_FAILED: 'Thông tin chưa hợp lệ. Vui lòng kiểm tra các trường đã nhập.',
     PRECONDITION_STALE: 'Hồ sơ đã thay đổi. Hãy tải bản mới nhất trước khi chỉnh sửa tiếp.',
+    RESOURCE_NOT_FOUND: 'Không tìm thấy hồ sơ trong tài khoản hiện tại.',
+    BUSINESS_CONFLICT: 'Thông tin pháp nhân trùng với hồ sơ đang xử lý. Vui lòng kiểm tra các hồ sơ hiện có hoặc liên hệ hỗ trợ.',
     IDEMPOTENCY_CONFLICT: 'Nội dung khác với yêu cầu trước đó. Vui lòng kiểm tra kết quả của yêu cầu cũ.',
     RESPONSE_INVALID: 'Không xác thực được phản hồi. Vui lòng thử lại sau.',
     UNSUPPORTED_BROWSER: 'Vui lòng dùng trình duyệt hỗ trợ phiên đăng nhập an toàn, như phiên bản Chrome hoặc Edge hiện hành.',
@@ -57,7 +59,7 @@ function passwordValid(value: string) { return [...value].length >= 15 && new Te
 const emailProps = { type: 'text', inputMode: 'email', autoCapitalize: 'none', autoCorrect: 'off', spellCheck: false, maxLength: 254, pattern: '[^\\s@]+@[^\\s@]+', required: true } as const;
 function Page({ title, description, children }: { title: string; description?: string; children: ReactNode }) { return <section className="cp-page"><p className="cp-eyebrow">E-LOGISTICS · TÀI KHOẢN CÁ NHÂN</p><h1 tabIndex={-1}>{title}</h1>{description && <p className="cp-description">{description}</p>}{children}</section>; }
 function Guest({ children }: { children: ReactNode }) { const session = useSession(); return session.status === 'authenticated' ? <Navigate to="/personal" replace /> : children; }
-function Protected() { const session = useSession(); return session.status === 'authenticated' ? <Outlet /> : <Navigate to="/login" replace />; }
+function Protected() { const session = useSession(); return session.status === 'authenticated' ? <Outlet key={`${session.subject?.accountId}:${session.subject?.securityVersion}`} /> : <Navigate to="/login" replace />; }
 function Login() {
   const session = useSession(), [email, setEmail] = useState(''), [password, setPassword] = useState('');
   const action = useCommand<{ email: string; password: string }>(async input => { try { await customerClient.login(input.email, input.password); } finally { setPassword(''); } });
@@ -122,6 +124,7 @@ function Personal() {
   const session = useSession(); return <Page title={`Xin chào, ${session.subject?.displayName ?? 'bạn'}`} description="Không gian gửi hàng cá nhân của bạn.">
     <div className="cp-summary"><span className="cp-avatar" aria-hidden="true">CN</span><div><strong>Tài khoản cá nhân</strong><p>Email đăng nhập: {session.subject?.verifiedEmail}</p><span className="cp-verified">Email đã xác minh</span></div></div>
     <Link className="cp-feature" to="/personal/profile"><span><strong>Hồ sơ cá nhân</strong><small>Cập nhật tên hiển thị và thông tin liên hệ dùng cho công việc.</small></span><span aria-hidden="true">→</span></Link>
+    <Link className="cp-feature" to="/personal/applications"><span><strong>Đăng ký trở thành Merchant</strong><small>Chuẩn bị hồ sơ doanh nghiệp và theo dõi tiến trình xét duyệt.</small></span><span aria-hidden="true">→</span></Link>
   </Page>;
 }
 function ProfileEditor({ original, saved, reload }: { original: VersionedProfile; saved: (value: VersionedProfile) => void; reload: () => void }) {
@@ -144,14 +147,51 @@ function ProfilePage() {
   useEffect(() => { let active = true; setLoading(true); setError(''); setSuccess(false); customerClient.readProfile().then(value => { if (active) setData(value); }).catch(e => { if (active) setError(message(e)); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [revision]);
   return <Page title="Hồ sơ cá nhân" description="Quản lý tên và thông tin liên hệ dùng cho công việc.">{loading ? <Loading /> : error ? <><Notice error>{error}</Notice><button className="cp-secondary" onClick={() => setRevision(v => v + 1)}>Tải lại hồ sơ</button></> : data && <>{success && <Notice>Đã lưu hồ sơ.</Notice>}<ProfileEditor key={`${data.profile.id}:${data.profile.version}:${revision}`} original={data} saved={value => { setData(value); setSuccess(true); }} reload={() => setRevision(v => v + 1)} /></>}</Page>;
 }
+const applicationStates = { DRAFT: 'Bản nháp', SUBMITTED: 'Đã nộp', UNDER_REVIEW: 'Đang xét duyệt', NEEDS_INFORMATION: 'Cần bổ sung', APPROVED: 'Đã duyệt', REJECTED: 'Đã từ chối', WITHDRAWN: 'Đã rút' } as const;
+function ApplicationList() {
+  const navigate = useNavigate(), [data, setData] = useState<ApplicationPage>(), [error, setError] = useState(''), [loading, setLoading] = useState(true), [page, setPage] = useState(0), [query, setQuery] = useState({ search: '', state: '' }), [search, setSearch] = useState(''), [state, setState] = useState(''), [revision, setRevision] = useState(0);
+  const action = useCommand<null>(async (_, key) => { const result = await customerClient.createApplication({}, key); navigate('/personal/applications/' + result.application.id); });
+  useEffect(() => { let active = true; setLoading(true); setError(''); customerClient.listApplications(page, query.search, query.state).then(value => { if (active) setData(value); }).catch(e => { if (active) setError(message(e)); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [page, query, revision]);
+  return <Page title="Hồ sơ đăng ký Merchant" description="Chuẩn bị thông tin pháp nhân trong bản nháp. Tài khoản cá nhân vẫn sử dụng bình thường trong quá trình xét duyệt.">
+    {action.error && <Notice error>{action.error}</Notice>}
+    {action.uncertain ? <><Notice>Chưa xác nhận được kết quả tạo hồ sơ. Hãy kiểm tra trước khi tạo yêu cầu mới.</Notice><button className="cp-primary" disabled={action.busy} onClick={() => { void action.resolve(async key => { const result = await customerClient.applicationReceipt('createApplicationDraft', key); navigate('/personal/applications/' + result.targetId); }); }}>Kiểm tra kết quả tạo hồ sơ</button></> : <button className="cp-primary" disabled={action.busy} onClick={() => { void action.submit(null); }}>{action.busy ? 'Đang tạo…' : 'Tạo bản nháp Merchant'}</button>}
+    <form className="cp-search" onSubmit={event => { event.preventDefault(); setPage(0); setQuery({ search, state }); }}><label htmlFor="application-search">Tìm tên pháp nhân hoặc mã đăng ký</label><input id="application-search" maxLength={160} value={search} onChange={e => setSearch(e.target.value)} /><label htmlFor="application-state">Trạng thái</label><select id="application-state" value={state} onChange={e => setState(e.target.value)}><option value="">Tất cả trạng thái</option>{Object.entries(applicationStates).map(([code, label]) => <option key={code} value={code}>{label}</option>)}</select><button className="cp-secondary" type="submit">Tìm hồ sơ</button></form>
+    {loading ? <Loading /> : error ? <><Notice error>{error}</Notice><button className="cp-secondary" onClick={() => setRevision(v => v + 1)}>Tải lại danh sách</button></> : data && <>{data.items.length === 0 ? <Notice>Chưa có hồ sơ phù hợp. Bạn có thể tạo bản nháp mới.</Notice> : <ul className="cp-applications">{data.items.map(item => <li key={item.id}><Link className="cp-feature" to={'/personal/applications/' + item.id}><span><strong>{item.draft?.registeredName ?? item.submission?.registeredName ?? 'Hồ sơ chưa đặt tên'}</strong><small>{applicationStates[item.state]} · phiên bản {item.version}</small></span><span aria-hidden="true">→</span></Link></li>)}</ul>}
+      <nav aria-label="Phân trang hồ sơ"><button className="cp-secondary" disabled={page === 0} onClick={() => setPage(v => v - 1)}>Trang trước</button><span aria-live="polite"> Trang {page + 1} </span><button className="cp-secondary" disabled={!data.hasNext} onClick={() => setPage(v => v + 1)}>Trang sau</button></nav></>}
+  </Page>;
+}
+function DraftAddress({ name, title, value, change }: { name: string; title: string; value?: ApplicationAddress; change: (address: ApplicationAddress | undefined) => void }) {
+  return <div className="cp-address"><label className="cp-checkbox"><input type="checkbox" checked={!!value} onChange={e => change(e.target.checked ? { country: 'VN', administrativeArea: '', locality: '', addressLine: '' } : undefined)} />Bổ sung {title.toLowerCase()}</label>{value && <fieldset><legend>{title}</legend>{([['country', 'Mã quốc gia', 2], ['administrativeArea', 'Tỉnh / thành phố', 160], ['locality', 'Quận / huyện / địa phương', 160], ['addressLine', 'Địa chỉ chi tiết', 500]] as const).map(([key, label, max]) => <div key={key}><label htmlFor={`${name}-${key}`}>{label}</label><input id={`${name}-${key}`} required maxLength={max} pattern={key === 'country' ? '[A-Z]{2}' : undefined} value={value[key]} onChange={e => change({ ...value, [key]: e.target.value })} /></div>)}</fieldset>}</div>;
+}
+function ApplicationEditor({ original, saved, reload }: { original: VersionedApplication; saved: (value: VersionedApplication) => void; reload: () => void }) {
+  const [input, setInput] = useState<ApplicationDraft>(original.application.draft ?? {});
+  const action = useCommand<ApplicationDraft>(async (value, key) => { saved(await customerClient.updateApplication(original.application.id, value, original.etag, key)); });
+  const dirty = JSON.stringify(input) !== JSON.stringify(original.application.draft ?? {});
+  useEffect(() => { if (!dirty) return; const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); }; window.addEventListener('beforeunload', warn); return () => window.removeEventListener('beforeunload', warn); }, [dirty]);
+  function field<K extends keyof ApplicationDraft>(key: K, value: ApplicationDraft[K]) { setInput(previous => { const next = { ...previous }; if (value === undefined || value === '') delete next[key]; else next[key] = value; return next; }); }
+  return <form onSubmit={event => { event.preventDefault(); void action.submit(input); }}><fieldset disabled={action.busy || action.uncertain}>
+    <label htmlFor="application-entity">Loại hình pháp nhân</label><select id="application-entity" value={input.entityType ?? ''} onChange={e => field('entityType', e.target.value ? e.target.value as ApplicationDraft['entityType'] : undefined)}><option value="">Chọn khi đã có thông tin</option><option value="COMPANY">Doanh nghiệp</option><option value="HOUSEHOLD_BUSINESS">Hộ kinh doanh</option></select>
+    {([['registeredName', 'Tên pháp nhân đăng ký', 240], ['jurisdiction', 'Nơi cấp đăng ký', 64], ['legalIdentifier', 'Mã đăng ký / mã số thuế', 80], ['representativeName', 'Họ tên người đại diện', 160], ['representativeEmail', 'Email người đại diện', 254], ['representativeRelationship', 'Quan hệ / thẩm quyền đại diện', 160]] as const).map(([key, label, max]) => <div key={key}><label htmlFor={'application-' + key}>{label}</label><input id={'application-' + key} type={key === 'representativeEmail' ? 'email' : 'text'} maxLength={max} value={input[key] ?? ''} onChange={e => field(key, e.target.value)} /></div>)}
+    <DraftAddress name="registered" title="Địa chỉ đăng ký" value={input.registeredAddress} change={value => field('registeredAddress', value)} /><DraftAddress name="operating" title="Địa chỉ hoạt động" value={input.operatingAddress} change={value => field('operatingAddress', value)} />
+    <p className="cp-hint">Bạn có thể lưu khi chưa nhập đủ thông tin. Bản nháp chưa được nộp xét duyệt.</p></fieldset>
+    {action.error && <Notice error>{action.error}</Notice>}
+    {action.uncertain ? <><Notice>Kết quả lưu chưa xác định. Nội dung được giữ trên trang này để bạn kiểm tra.</Notice><button className="cp-primary" type="button" disabled={action.busy} onClick={() => { void action.resolve(async key => { const receipt = await customerClient.applicationReceipt('updateApplicationDraft', key); if (receipt.targetId !== original.application.id) throw new CustomerApiError('RESPONSE_INVALID'); saved(await customerClient.readApplication(receipt.targetId)); }); }}>Kiểm tra kết quả lưu bản nháp</button></> : <button className="cp-primary" type="submit" disabled={action.busy}>{action.busy ? 'Đang lưu…' : 'Lưu bản nháp'}</button>}
+    {action.error && !action.uncertain && <button className="cp-secondary" type="button" onClick={() => { if (!dirty || window.confirm('Tải lại sẽ thay nội dung chưa lưu bằng dữ liệu hiện tại. Tiếp tục?')) reload(); }}>Xem bản hiện tại</button>}
+  </form>;
+}
+function ApplicationDetail() {
+  const { id = '' } = useParams(), [data, setData] = useState<VersionedApplication>(), [error, setError] = useState(''), [loading, setLoading] = useState(true), [revision, setRevision] = useState(0), [success, setSuccess] = useState(false);
+  useEffect(() => { let active = true; setLoading(true); setError(''); setSuccess(false); customerClient.readApplication(id).then(value => { if (active) setData(value); }).catch(e => { if (active) setError(message(e)); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [id, revision]);
+  return <Page title="Chi tiết hồ sơ Merchant"><Link to="/personal/applications">← Danh sách hồ sơ</Link>{loading ? <Loading /> : error ? <><Notice error>{error}</Notice><button className="cp-secondary" onClick={() => setRevision(v => v + 1)}>Tải lại hồ sơ Merchant</button></> : data && <><p>Trạng thái: <strong>{applicationStates[data.application.state]}</strong> · phiên bản {data.application.version}</p>{success && <Notice>Đã lưu bản nháp.</Notice>}{data.application.informationRequest && <Notice>{data.application.informationRequest}</Notice>}{data.application.state === 'DRAFT' ? <ApplicationEditor key={`${id}:${data.application.version}:${revision}`} original={data} saved={value => { setData(value); setSuccess(true); }} reload={() => setRevision(v => v + 1)} /> : <Notice>Hồ sơ đã được ghi nhận. Thông tin đã nộp được lưu theo từng lần xét duyệt.</Notice>}</>}</Page>;
+}
 export default function CustomerApp() {
   const session = useSession(), location = useLocation();
   useEffect(() => { if (!['/verify-email', '/recover/confirm'].includes(location.pathname)) clearEntryProof(); document.querySelector<HTMLElement>('main h1')?.focus(); }, [location.pathname]);
   return <div className="customer-portal"><a className="cp-skip" href="#main-content">Đến nội dung chính</a><header className="cp-header"><Link className="cp-brand" to="/">E<span>↗</span> Logistics</Link><nav aria-label="Điều hướng tài khoản">
-    {session.status === 'authenticated' ? <><NavLink to="/personal" end>Cá nhân</NavLink><NavLink to="/personal/profile">Hồ sơ</NavLink><button className="cp-logout" onClick={() => { void customerClient.logout().catch(() => {}); }}>Đăng xuất</button></> : <><NavLink to="/login">Đăng nhập</NavLink><NavLink to="/register">Đăng ký</NavLink></>}
+    {session.status === 'authenticated' ? <><NavLink to="/personal" end>Cá nhân</NavLink><NavLink to="/personal/profile">Hồ sơ</NavLink><NavLink to="/personal/applications">Merchant</NavLink><button className="cp-logout" onClick={() => { void customerClient.logout().catch(() => {}); }}>Đăng xuất</button></> : <><NavLink to="/login">Đăng nhập</NavLink><NavLink to="/register">Đăng ký</NavLink></>}
   </nav></header><main id="main-content">{session.status === 'loading' ? <Loading /> : <Routes>
     <Route path="/" element={<Navigate to={session.status === 'authenticated' ? '/personal' : '/login'} replace />} /><Route path="/login" element={<Login />} /><Route path="/register" element={<Register />} /><Route path="/verify-email" element={<Verify />} /><Route path="/recover" element={<Recover />} /><Route path="/recover/confirm" element={<ConfirmRecovery />} />
-    <Route element={<Protected />}><Route path="/personal" element={<Personal />} /><Route path="/personal/profile" element={<ProfilePage />} /></Route>
+    <Route element={<Protected />}><Route path="/personal" element={<Personal />} /><Route path="/personal/profile" element={<ProfilePage />} /><Route path="/personal/applications" element={<ApplicationList />} /><Route path="/personal/applications/:id" element={<ApplicationDetail />} /></Route>
     <Route path="*" element={<Page title="Không tìm thấy trang"><Link to="/">Về tài khoản cá nhân</Link></Page>} />
   </Routes>}</main><footer className="cp-footer">E-Logistics · Kết nối hành trình của bạn</footer></div>;
 }

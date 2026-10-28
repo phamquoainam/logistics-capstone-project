@@ -10,9 +10,9 @@ public final class CustomerRuntimeRequirements {
         try(Connection connection=source.getConnection();Statement query=connection.createStatement()){
             if(!connection.getMetaData().getDatabaseProductName().equals("PostgreSQL") || connection.getMetaData().getDatabaseMajorVersion()!=18)throw new IllegalStateException();
             query.setQueryTimeout(3);
-            try(ResultSet row=query.executeQuery("SELECT to_regclass('identity.customer_enrollment') IS NOT NULL AND to_regclass('identity.customer_proof') IS NOT NULL AND to_regclass('identity.customer_delivery') IS NOT NULL AND to_regclass('identity.customer_command_receipt') IS NOT NULL AND to_regclass('identity.customer_proof_receipt') IS NOT NULL AND to_regclass('identity.customer_security_receipt') IS NOT NULL AND EXISTS(SELECT 1 FROM pg_constraint WHERE conrelid='identity.rate_limit_attempt'::regclass AND conname='rate_limit_attempt_password_state') AND EXISTS(SELECT 1 FROM pg_constraint WHERE conrelid='identity.customer_proof'::regclass AND conname='ck_customer_proof_subject_session_version')")){
+            try(ResultSet row=query.executeQuery("SELECT to_regclass('identity.customer_enrollment') IS NOT NULL AND to_regclass('identity.customer_proof') IS NOT NULL AND to_regclass('identity.customer_delivery') IS NOT NULL AND to_regclass('identity.customer_command_receipt') IS NOT NULL AND to_regclass('identity.customer_proof_receipt') IS NOT NULL AND to_regclass('identity.customer_security_receipt') IS NOT NULL AND to_regclass('identity.customer_owner_consent_receipt') IS NOT NULL AND EXISTS(SELECT 1 FROM pg_constraint WHERE conrelid='identity.customer_owner_consent_receipt'::regclass AND conname='ck_customer_owner_consent_binding') AND EXISTS(SELECT 1 FROM pg_constraint WHERE conrelid='identity.rate_limit_attempt'::regclass AND conname='rate_limit_attempt_password_state') AND EXISTS(SELECT 1 FROM pg_constraint WHERE conrelid='identity.customer_proof'::regclass AND conname='ck_customer_proof_subject_session_version')")){
                 if(!row.next() || !row.getBoolean(1))throw new IllegalStateException();
             }
-        }catch(Exception unavailable){throw new IllegalStateException("CUSTOMER_POSTGRES18_SCHEMA_V12_REQUIRED");}
+        }catch(Exception unavailable){throw new IllegalStateException("CUSTOMER_POSTGRES18_SCHEMA_V13_REQUIRED");}
     }
 }
