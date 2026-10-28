@@ -2121,7 +2121,13 @@ class IdentityGrantApplicationTests {
         long accounts=scalar("SELECT count(*) FROM identity.user_account");var before=snapshot();S003CustomerBrowserRuntime.run(outboxDataSource());
         assertEquals(accounts+1,scalar("SELECT count(*) FROM identity.user_account"));assertEquals(1,scalar("SELECT count(*) FROM identity.user_account WHERE email='"+S003CustomerBrowserRuntime.EMAIL+"' AND status='ACTIVE' AND email_verified AND auth_version=2 AND version=2"));
         assertEquals(1,scalar("SELECT count(*) FROM identity.customer_identifier WHERE exact_email='"+S003CustomerBrowserRuntime.EMAIL+"' AND status='ACTIVE'"));assertEquals(0,scalar("SELECT count(*) FROM identity.account_grant WHERE account_id IN (SELECT id FROM identity.user_account WHERE email='"+S003CustomerBrowserRuntime.EMAIL+"')"));
-        assertEquals(1,scalar("SELECT count(*) FROM merchant.customer_profile WHERE version=2"));assertEquals(1,scalar("SELECT count(*) FROM merchant.customer_profile_version"));assertEquals(1,scalar("SELECT count(*) FROM merchant.business_audit"));assertEquals(1,scalar("SELECT count(*) FROM merchant.command_receipt"));
+        assertEquals(1,scalar("SELECT count(*) FROM merchant.customer_profile WHERE version=2"));assertEquals(1,scalar("SELECT count(*) FROM merchant.customer_profile_version"));
+        assertEquals(1,scalar("SELECT count(*) FROM merchant.business_audit WHERE target_type='CUSTOMER_PROFILE' AND operation='updateCustomerProfile'"));assertEquals(1,scalar("SELECT count(*) FROM merchant.command_receipt WHERE target_type='CUSTOMER_PROFILE' AND operation='updateCustomerProfile'"));
+        assertEquals(1,scalar("SELECT count(*) FROM merchant.application WHERE state='DRAFT' AND version=2"));assertEquals(2,scalar("SELECT count(*) FROM merchant.application_draft_version"));
+        for(String operation:List.of("createApplicationDraft","updateApplicationDraft")){
+            assertEquals(1,scalar("SELECT count(*) FROM merchant.business_audit WHERE target_type='APPLICATION' AND operation='"+operation+"'"));
+            assertEquals(1,scalar("SELECT count(*) FROM merchant.command_receipt WHERE target_type='APPLICATION' AND operation='"+operation+"'"));
+        }
         assertEquals(2,scalar("SELECT count(*) FROM identity.customer_proof WHERE consumed_at IS NOT NULL"));assertEquals(2,scalar("SELECT count(*) FROM identity.customer_delivery WHERE status='DELIVERED' AND delivery_evidence IS NOT NULL"));assertEquals(0,scalar("SELECT count(*) FROM identity.customer_auth_session WHERE revoked_at IS NULL"));
         var after=snapshot();for(String table:List.of("auth_session","refresh_token","account_grant"))assertEquals(before.get(table),after.get(table));assertTrue(after.get("user_account").containsAll(before.get("user_account")));
     }
