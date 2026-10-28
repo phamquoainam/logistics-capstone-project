@@ -1,6 +1,6 @@
 # Tasks 003 — sender-merchant-onboarding
 
-NOT_STARTED; thứ tự là contract/fixture → DB → BE/HTTP → UI/channel → verification → full acceptance. Mỗi BC là gói end-to-end nội bộ, không thay phương pháp Spec-by-Spec. Không task nào DONE trong rebuild docs.
+IN_PROGRESS under the Owner full implementation authorization. Per-BC and full-spec gates remain unchecked until their complete evidence passes. See the execution checklist below for completed internal tasks.
 
 ## REQ-V3-BC-007 / BC-007: Dùng tài khoản với Merchant membership ACTIVE
 
@@ -165,8 +165,30 @@ The focused review under Owner conditional approval has closed the planning cand
 | T003-11 | All above | Lint/typecheck/build/contract/unit/ArchUnit/H2/PG18/HTTP/browser, migration/compatibility/privacy/report-policy gates; exact source+PR integration evidence/digests, no unreviewed skip/guard weakening. |
 | T003-12 | T003-11 | Full BC/S003/supplement/legacy-consumer traceability; required CI, Owner PR merge, merge-SHA CI, separately recorded full-Spec003 acceptance. Cross-Spec Group A–F acceptance remains separate. |
 
-- [ ] **T003-01** through **T003-12** — implementation gates are IN_PROGRESS where recorded in implementation.md; none is checked from source authorship alone.
+- [ ] **T003-01** - IN_PROGRESS: customer admission/session implemented; complete Identity delta remains.
+- [ ] **T003-02** - IN_PROGRESS: V7-V10 recorded CI; V11 awaits PG18.
+- [ ] **T003-03** - IN_PROGRESS: enrollment/session/SMTP verified; recovery correction, sensitive-contact/link and browser gates remain.
+- [ ] **T003-04** - IN_PROGRESS: independent profile tasks below; application/evidence journeys remain.
+- [ ] **T003-05** - NOT_STARTED: Merchant authority and contexts.
+- [ ] **T003-06** - NOT_STARTED: review and safe activation.
+- [ ] **T003-07** - NOT_STARTED: invitations and membership lifecycle.
+- [ ] **T003-08** - NOT_STARTED: legal review, ownership and closure.
+- [ ] **T003-09** - NOT_STARTED: bounded owner dependencies and defaults.
+- [ ] **T003-10** - NOT_STARTED: all real frontend routes and browser journeys.
+- [ ] **T003-11** - IN_PROGRESS: per-increment checks; complete-spec verification remains.
+- [ ] **T003-12** - NOT_STARTED: full traceability, merge-SHA gates and separate Owner acceptance.
 - [ ] **T-AB-ENTRY** — REQ-AB-ENTRY exact customer-auth contract, real entry/forms/verification/login/recovery; TEST-AB-ENTRY Guest no application submit, personal default, deep-link recheck, no grants; dependencies Identity customer amendment and approved delivery channel.
 - [ ] **T-AB-CONTEXT** — REQ-AB-CONTEXT exact current-subject/org authority contracts and real context UI; TEST-AB-CONTEXT A→B stale-response isolation, revoke during submit, personal unaffected; no mocked membership authority.
 
 Minimum dependent work and acceptance limits: contracts/minimum-dependencies.md. Complete DoR disposition: readiness.md. No requirement to complete all future logistics specs; no full003 acceptance without BC159's real minimum catalog subset and safe closure/delivery/privacy behavior.
+
+## Execution checklist - completed internal tasks, 2026-10-28
+
+Each checkbox closes only its stated deliverable. It does not imply acceptance of the enclosing T003 task, BC or full Spec003. Completed items are checked as soon as their evidence exists; outstanding required runtime gates stay open.
+
+- [x] **T003-04-PROFILE-DOMAIN** - DONE: independent business-profile domain/application, current self-admission boundary, immutable account reference, optional untrusted contact metadata, optimistic versions and read-only initial profile. `CustomerProfileTests`: nine actual unit cases PASS in the clean backend run below.
+- [x] **T003-04-PROFILE-RECEIPTS-UNIT** - DONE: exact operation/target/version/field HMAC, retained-key rotation, original-version retry, changed-body denial and redacted diagnostics; four `MerchantFingerprintTests` plus replay/conflict application cases PASS. This closes unit verification only; PG receipt/rollback/race gate remains below.
+- [x] **T003-11-PROFILE-LOCAL** - DONE: clean backend `mvnw -o -B ... clean verify`, 612 discovered / 595 PASS / 17 expected policy skips / zero failure/error. Architecture23 including negative fixtures PASS in this full run. Actual report collector returns PASS; no PostgreSQL substitute is claimed.
+- [ ] **T003-04-PROFILE-PG** - Six real HTTP/admission/rollback/concurrency cases and four V11 upgrade/constraint/privilege/receipt cases authored and compiled; require current PostgreSQL18 CI PASS.
+- [ ] **T003-04-PROFILE-BROWSER** - Actual customer frontend profile form and running-component browser verification remain.
+- [ ] **T003-03-RECOVERY-PG-CORRECTION** - Fix fixture population assertion from failed run40540904665; require corrected source CI before DONE.

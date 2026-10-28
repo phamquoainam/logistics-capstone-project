@@ -40,7 +40,7 @@ class IdentityGrantApplicationTests {
 
     @BeforeEach void fixture() throws Exception {
         db = PostgresTestcontainersSupport.database(POSTGRES);
-        assertEquals(10, db.flyway("latest", SCOPE).migrate().migrationsExecuted);
+        assertEquals(11, db.flyway("latest", SCOPE).migrate().migrationsExecuted);
         account(A, "ACTIVE", List.of(ADMIN)); account(B, "ACTIVE", List.of(ADMIN)); account(T, "ACTIVE", List.of(GX));
         session(S, A); session(AS, B); session(TS, T);
         execute("INSERT INTO identity.refresh_token(id,session_id,token_hash,issued_at,expires_at) VALUES ('" + id(20) + "','" + TS + "',decode(repeat('01',32),'hex'),TIMESTAMPTZ '2026-10-21 00:00:00Z',TIMESTAMPTZ '2026-10-21 08:00:00Z')");
@@ -1849,6 +1849,9 @@ class IdentityGrantApplicationTests {
         return new SmtpCustomerDelivery(new SmtpCustomerDelivery.Settings("127.0.0.1",inbox.port(),SmtpCustomerDelivery.Mode.TEST_LOOPBACK,null,null,"no-reply@example.invalid",Set.of("example.invalid"),"https://portal.example.invalid",true),Clock.fixed(time,ZoneOffset.UTC));
     }
     private org.springframework.web.context.support.AnnotationConfigWebApplicationContext customerHttpContext(Instant time,com.elogistic.backend.identity.internal.application.port.CustomerDeliveryTransport transport)throws Exception{
+        return customerHttpContext(time,transport,false);
+    }
+    private org.springframework.web.context.support.AnnotationConfigWebApplicationContext customerHttpContext(Instant time,com.elogistic.backend.identity.internal.application.port.CustomerDeliveryTransport transport,boolean profile)throws Exception{
         HttpFixtureConfiguration.source=outboxDataSource();var source=HttpFixtureConfiguration.source;
         var key=new com.nimbusds.jose.jwk.RSAKey.Builder((java.security.interfaces.RSAPublicKey)httpKeys().getPublic()).privateKey((java.security.interfaces.RSAPrivateKey)httpKeys().getPrivate()).keyID("http-test").keyUse(com.nimbusds.jose.jwk.KeyUse.SIGNATURE).algorithm(com.nimbusds.jose.JWSAlgorithm.RS256).build();
         var context=new org.springframework.web.context.support.AnnotationConfigWebApplicationContext();context.setServletContext(new org.springframework.mock.web.MockServletContext());context.getEnvironment().setActiveProfiles("identity","postgres","customer");
@@ -1857,6 +1860,11 @@ class IdentityGrantApplicationTests {
         var services=com.elogistic.backend.identity.internal.ProductionCustomerComposition.create(source,customerTokens(time),enrollmentProtection(),new JdbcIdentityRateLimiter(source,keyBytes(73)),transport,"https://portal.example.invalid",Clock.fixed(time,ZoneOffset.UTC));
         context.addBeanFactoryPostProcessor(factory->{factory.registerSingleton("identityHttpClock",Clock.fixed(time,ZoneOffset.UTC));factory.registerSingleton("customerServices",services);});
         context.register(HttpFixtureConfiguration.class,com.elogistic.backend.identity.internal.ProductionIdentityHttpConfiguration.class,com.elogistic.backend.identity.internal.ProductionCustomerWebConfiguration.class,com.elogistic.backend.identity.internal.web.ProductionIdentityReads.class,com.elogistic.backend.identity.internal.web.ProductionIdentityErrors.class);
+        if(profile){
+            context.getEnvironment().getPropertySources().addFirst(new org.springframework.core.env.MapPropertySource("isolated-profile-keys",Map.of("merchant.customer-profile.receipt-keys","{\"v1\":\""+Base64.getEncoder().encodeToString(keyBytes(76))+"\"}","merchant.customer-profile.current-receipt-key","v1")));
+            context.addBeanFactoryPostProcessor(factory->{factory.registerSingleton("customerAdmission",services.customers());factory.registerSingleton("customerRequestContext",services.requests());});
+            context.register(com.elogistic.backend.merchant.internal.CustomerProfileConfiguration.class,com.elogistic.backend.workflow.internal.web.CustomerProfileHttp.class,com.elogistic.backend.workflow.internal.web.OnboardingHttpErrors.class);
+        }
         try{context.refresh();return context;}catch(Exception failure){context.close();throw failure;}
     }
     private BrowserFlow customerCsrf(org.springframework.test.web.servlet.MockMvc mvc,BrowserFlow old)throws Exception{
@@ -2046,5 +2054,57 @@ class IdentityGrantApplicationTests {
         enrollmentBinding();customerFixture(true);var crypto=enrollmentProtection();recoveryApp(NOW).request(recoveryRequest(CUSTOMER_EMAIL,KEY));var proof=pendingRecoveryProof();var before=snapshot();var store=new JdbcCustomerRecoveryStore(outboxDataSource(),crypto);
         assertThrows(IllegalStateException.class,()->store.transaction(tx->{tx.accounts().lockAdministration();var account=tx.accounts().lockAccount(A).orElseThrow();tx.lockSessions(A);var stored=tx.proof(proof.proofId()).orElseThrow();var change=account.resetCustomerPassword(stored.proof(),proof.newPassword(),account.version().version(),NOW);tx.reset(account,change,crypto.hashPassword(proof.newPassword()),"A".repeat(43).getBytes(java.nio.charset.StandardCharsets.US_ASCII),NOW);return null;}));
         assertEquals(before,snapshot());assertEquals(0,scalar("SELECT count(*) FROM identity.customer_proof WHERE consumed_at IS NOT NULL"));assertEquals(0,scalar("SELECT count(*) FROM identity.customer_proof_receipt"));
+    }
+
+    private record ProfileBrowser(String access,BrowserFlow flow){}
+    private ProfileBrowser profileBrowser(org.springframework.test.web.servlet.MockMvc mvc)throws Exception{
+        var login=customerPost(mvc,"login",customerCsrf(mvc,null),null,Map.of("email",CUSTOMER_EMAIL,"password",SESSION_PASSWORD));assertEquals(200,login.getStatus());
+        String token=new tools.jackson.databind.ObjectMapper().readTree(login.getContentAsString()).get("accessToken").asString();
+        return new ProfileBrowser(token,customerCsrf(mvc,new BrowserFlow(responseCookie(login,"__Host-elogistics.customer.csrf"),responseCookie(login,"__Host-elogistics.customer.refresh"),"unused")));
+    }
+    private Map<String,String> profileInput(String display){return Map.of("displayName",display,"preferredLanguage","vi","businessContactEmail","business@example.invalid","businessContactPhone","synthetic contact");}
+    private org.springframework.mock.web.MockHttpServletResponse profilePut(org.springframework.test.web.servlet.MockMvc mvc,ProfileBrowser browser,UUID key,String version,Object body)throws Exception{
+        var request=org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/v1/customer/profile").secure(true).header("Origin","https://portal.example.invalid").header("Authorization","Bearer "+browser.access()).header("X-CSRF-Token",browser.flow().challenge).cookie(browser.flow().csrf,browser.flow().refresh).contentType("application/json");
+        if(key!=null)request.header("Idempotency-Key",key);if(version!=null)request.header("If-Match",version);request.content(body instanceof String text?text:new tools.jackson.databind.ObjectMapper().writeValueAsString(body));return mvc.perform(request).andReturn().getResponse();
+    }
+    private Map<String,List<String>> profileSnapshot()throws Exception{
+        var snapshot=new TreeMap<String,List<String>>();try(var c=db.runtimeConnection();var q=c.createStatement()){
+            for(String table:List.of("customer_profile","customer_profile_version","business_audit","command_receipt"))try(var rows=q.executeQuery("SELECT row_to_json(t)::text FROM merchant."+table+" t ORDER BY row_to_json(t)::text")){var values=new ArrayList<String>();while(rows.next())values.add(rows.getString(1));snapshot.put(table,values);}
+        }return snapshot;
+    }
+    @Test void profileHttpReadIsSelfScopedReadOnlyWithoutMembershipOrIdleExtension()throws Exception{
+        customerFixture(false);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW),true)){
+            var mvc=httpMvc(context);var browser=profileBrowser(mvc);var identity=secureSnapshot();var merchant=profileSnapshot();var response=httpRead(mvc,"/api/v1/customer/profile",browser.access());assertEquals(200,response.getStatus());assertEquals("\"v1\"",response.getHeader("ETag"));var json=new tools.jackson.databind.ObjectMapper().readTree(response.getContentAsString());assertEquals(5,json.size());assertEquals(A.toString(),json.get("accountId").asString());assertFalse(json.has("businessContactEmail"));assertEquals(identity,secureSnapshot());assertEquals(merchant,profileSnapshot());
+        }
+    }
+    @Test void profileHttpUpdatePreservesIdentityAndReturnsOriginalVersionOnReceiptReplay()throws Exception{
+        customerFixture(true);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW),true)){
+            var mvc=httpMvc(context);var browser=profileBrowser(mvc);var identity=snapshot();var first=profilePut(mvc,browser,KEY,"\"v1\"",profileInput("First"));assertEquals(200,first.getStatus());assertEquals("\"v2\"",first.getHeader("ETag"));
+            assertEquals(200,profilePut(mvc,browser,id(951),"\"v2\"",profileInput("Second")).getStatus());var saved=profileSnapshot();var replay=profilePut(mvc,browser,KEY,"\"v1\"",profileInput("First"));assertEquals(200,replay.getStatus());assertEquals(first.getContentAsString(),replay.getContentAsString());assertEquals(first.getHeader("ETag"),replay.getHeader("ETag"));assertEquals(saved,profileSnapshot());assertEquals(identity,snapshot());assertEquals(2,scalar("SELECT count(*) FROM merchant.business_audit"));assertEquals(2,scalar("SELECT count(*) FROM merchant.customer_profile_version"));
+            assertEquals(409,profilePut(mvc,browser,KEY,"\"v1\"",profileInput("Changed")).getStatus());assertEquals(412,profilePut(mvc,browser,id(952),"\"v1\"",profileInput("Stale")).getStatus());assertEquals(saved,profileSnapshot());
+        }
+    }
+    @Test void profileHttpRejectsActorAuthorityDuplicateFieldAndPreconditionInjection()throws Exception{
+        customerFixture(false);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW),true)){
+            var mvc=httpMvc(context);var browser=profileBrowser(mvc);var before=profileSnapshot();
+            for(String field:List.of("accountId","organizationId","membershipId","emailVerified","status","roles","version")){var body=new HashMap<String,Object>(profileInput("Name"));body.put(field,A.toString());assertEquals(400,profilePut(mvc,browser,UUID.randomUUID(),"\"v1\"",body).getStatus());}
+            assertEquals(400,profilePut(mvc,browser,KEY,"\"v1\"","{\"displayName\":\"First\",\"displayName\":\"Second\",\"preferredLanguage\":\"vi\"}").getStatus());assertEquals(400,profilePut(mvc,browser,KEY,"W/\"v1\"",profileInput("Name")).getStatus());assertEquals(428,profilePut(mvc,browser,KEY,null,profileInput("Name")).getStatus());assertEquals(400,profilePut(mvc,browser,null,"\"v1\"",profileInput("Name")).getStatus());assertEquals(422,profilePut(mvc,browser,KEY,"\"v1\"",profileInput(" ")).getStatus());assertEquals(before,profileSnapshot());
+        }
+    }
+    @Test void profileAuditFailureRollsBackAggregateHistoryReceiptAndActivity()throws Exception{
+        customerFixture(false);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW),true)){
+            var mvc=httpMvc(context);var browser=profileBrowser(mvc);var identity=secureSnapshot();var before=profileSnapshot();db.ownerExecute("CREATE FUNCTION merchant.synthetic_profile_fault() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'SYNTHETIC_PROFILE_AUDIT_FAILURE'; END $$");db.ownerExecute("CREATE TRIGGER synthetic_profile_fault BEFORE INSERT ON merchant.business_audit FOR EACH ROW EXECUTE FUNCTION merchant.synthetic_profile_fault()");
+            var rejected=profilePut(mvc,browser,KEY,"\"v1\"",profileInput("Private"));assertEquals(503,rejected.getStatus());assertFalse(rejected.getContentAsString().contains("SYNTHETIC_PROFILE_AUDIT_FAILURE"));assertEquals(before,profileSnapshot());assertEquals(identity,secureSnapshot());
+        }
+    }
+    @Test void concurrentProfileFirstUpdateHasOneCommittedVersionAndStaleLoser()throws Exception{
+        customerFixture(false);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW),true)){
+            var mvc=httpMvc(context);var browser=profileBrowser(mvc);var outcomes=adminRace(()->profilePut(mvc,browser,KEY,"\"v1\"",profileInput("Left")).getStatus(),()->profilePut(mvc,browser,id(953),"\"v1\"",profileInput("Right")).getStatus());assertEquals(1,outcomes.stream().filter(Integer.valueOf(200)::equals).count());assertEquals(1,outcomes.stream().filter(Integer.valueOf(412)::equals).count());assertEquals(1,scalar("SELECT count(*) FROM merchant.customer_profile"));assertEquals(1,scalar("SELECT count(*) FROM merchant.customer_profile_version"));assertEquals(1,scalar("SELECT count(*) FROM merchant.business_audit"));assertEquals(1,scalar("SELECT count(*) FROM merchant.command_receipt"));
+        }
+    }
+    @Test void revokedCustomerAndSystemOnlyPrincipalCannotReadOrChangePersonalProfile()throws Exception{
+        customerFixture(true);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW),true)){
+            var mvc=httpMvc(context);var browser=profileBrowser(mvc);String system=httpToken(context,S,A,1,NOW,NOW.plusSeconds(900));assertEquals(401,httpRead(mvc,"/api/v1/customer/profile",system).getStatus());execute("UPDATE identity.customer_auth_session SET revoked_at=created_at WHERE account_id='"+A+"'");var before=profileSnapshot();assertEquals(401,httpRead(mvc,"/api/v1/customer/profile",browser.access()).getStatus());assertEquals(401,profilePut(mvc,browser,KEY,"\"v1\"",profileInput("Denied")).getStatus());assertEquals(before,profileSnapshot());
+        }
     }
 }

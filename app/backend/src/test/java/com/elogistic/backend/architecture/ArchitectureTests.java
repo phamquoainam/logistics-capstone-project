@@ -18,7 +18,7 @@ class ArchitectureTests {
     @Test void productionScopeIsRealAndExcludesNegativeFixtures() {
         Set<String> modules = PRODUCTION.stream().map(ArchitectureRules::packageModule)
             .filter(name -> !name.isEmpty()).collect(Collectors.toSet());
-        assertEquals(Set.of("identity", "merchant", "orders", "platform"), modules,
+        assertEquals(Set.of("identity", "merchant", "orders", "platform", "workflow"), modules,
             "Update the evidence and implemented-module coverage when real modules are added");
         for (String module : modules) {
             assertTrue(PRODUCTION.stream().anyMatch(type -> ArchitectureRules.packageModule(type).equals(module)));

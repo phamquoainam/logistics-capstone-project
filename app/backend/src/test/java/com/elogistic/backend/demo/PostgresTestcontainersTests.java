@@ -32,8 +32,8 @@ class PostgresTestcontainersTests {
         Database db=PostgresTestcontainersSupport.database(POSTGRES);
         Flyway flyway=db.flyway("latest");assertEquals(0,flyway.info().applied().length);
         // Retain the report-policy method identity and assert the complete current stream.
-        assertEquals(10,flyway.migrate().migrationsExecuted);assertTrue(flyway.validateWithResult().validationSuccessful);
-        assertEquals(List.of("1","2","3","4","5","6","7","8","9","10"),Arrays.stream(flyway.info().applied()).map(m->m.getVersion().toString()).toList());
+        assertEquals(11,flyway.migrate().migrationsExecuted);assertTrue(flyway.validateWithResult().validationSuccessful);
+        assertEquals(List.of("1","2","3","4","5","6","7","8","9","10","11"),Arrays.stream(flyway.info().applied()).map(m->m.getVersion().toString()).toList());
     }
 
     private List<String> checksums(Flyway flyway) { return Arrays.stream(flyway.info().applied()).map(m->m.getVersion()+":"+m.getChecksum()).toList(); }
@@ -69,7 +69,7 @@ class PostgresTestcontainersTests {
             try(ResultSet r=s.executeQuery("SELECT current_user")) { assertTrue(r.next());assertEquals(db.owner(),r.getString(1)); }
             try(ResultSet r=s.executeQuery("SELECT count(*) FROM pg_namespace WHERE nspowner=(SELECT oid FROM pg_roles WHERE rolname='"+db.owner()+"') AND nspname IN ('platform','identity','merchant','orders','pricing','warehouse','dispatch','finance','routing','notification')")) { assertTrue(r.next());assertEquals(10,r.getInt(1)); }
             // Five Demo tables + eight V3 Identity tables + V4 Realm + V5 outbox + two V6 limiter tables + four V7 customer tables + Flyway history.
-            try(ResultSet r=s.executeQuery("SELECT count(*) FROM pg_tables WHERE tableowner='"+db.owner()+"' AND schemaname IN ('platform','identity','merchant','orders')")) { assertTrue(r.next());assertEquals(27,r.getInt(1)); }
+            try(ResultSet r=s.executeQuery("SELECT count(*) FROM pg_tables WHERE tableowner='"+db.owner()+"' AND schemaname IN ('platform','identity','merchant','orders')")) { assertTrue(r.next());assertEquals(31,r.getInt(1)); }
             Set<String> expectedTables=Set.of("platform.flyway_schema_history", "identity.demo_account",
                 "merchant.demo_merchant", "orders.demo_shipment", "orders.demo_event", "orders.demo_operation",
                 "identity.user_account", "identity.account_grant", "identity.auth_session", "identity.refresh_token",
