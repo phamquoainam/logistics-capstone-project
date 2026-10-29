@@ -12,10 +12,12 @@ import javax.net.ssl.*;
 import java.util.*;
 import java.util.logging.*;
 import org.eclipse.angus.mail.smtp.*;
+import org.springframework.mail.*;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 
-/** Explicit configured SMTP. No Spring auto-mail, default credentials, raw wire logging or TLS fallback. */
+/** Explicit configured JavaMailSender transport. No default credentials, raw wire logging or TLS fallback. */
 public final class SmtpCustomerDelivery implements CustomerDeliveryTransport {
-    public enum Mode {STARTTLS,IMPLICIT_TLS,TEST_LOOPBACK}
+    public enum Mode {STARTTLS,IMPLICIT_TLS,TEST_LOOPBACK,LOCAL_REAL_SMTP}
     public record Settings(String host,int port,Mode mode,String username,String password,String sender,Set<String> approvedSenderDomains,String portalOrigin,boolean sandbox){
         public Settings{
             if(host==null || !host.matches("[A-Za-z0-9.:-]{1,253}") || port<1 || port>65535 || mode==null
@@ -25,6 +27,7 @@ public final class SmtpCustomerDelivery implements CustomerDeliveryTransport {
             if(!approvedSenderDomains.contains(domain))throw configuration();
             if(mode==Mode.TEST_LOOPBACK){if(!sandbox || !Set.of("127.0.0.1","::1").contains(host) || username!=null || password!=null)throw configuration();}
             else if(username==null || username.isBlank() || password==null || password.isEmpty())throw configuration();
+            if(mode==Mode.LOCAL_REAL_SMTP && (!sandbox || !"smtp.gmail.com".equals(host) || port!=587 || !username.equalsIgnoreCase(sender)))throw configuration();
             try{var uri=java.net.URI.create(portalOrigin);if(!"https".equals(uri.getScheme()) || uri.getHost()==null || uri.getRawUserInfo()!=null
                 || uri.getRawQuery()!=null || uri.getRawFragment()!=null || !(uri.getRawPath()==null || uri.getRawPath().isEmpty()))throw configuration();}
             catch(Exception invalid){throw configuration();}
@@ -40,15 +43,29 @@ public final class SmtpCustomerDelivery implements CustomerDeliveryTransport {
         catch(Exception invalid){throw configuration();}
     }
     private static IllegalArgumentException configuration(){return new IllegalArgumentException("CUSTOMER_SMTP_CONFIGURATION_INVALID");}
-    private Outcome outcome(Kind kind){return new Outcome(kind,null,settings.sandbox());}
+    private boolean testTransport(){return settings.mode()==Mode.TEST_LOOPBACK;}
+    private Outcome outcome(Kind kind){return new Outcome(kind,null,testTransport());}
     private static boolean wireLoggingEnabled(){
         return Logger.getLogger("org.eclipse.angus.mail.smtp.protocol").isLoggable(Level.FINEST)
             || Logger.getLogger("jakarta.mail").isLoggable(Level.FINEST);
     }
+    private static Kind failureKind(Throwable failure){
+        var pending=new ArrayDeque<Throwable>();var seen=Collections.newSetFromMap(new IdentityHashMap<Throwable,Boolean>());pending.add(failure);
+        for(int examined=0;!pending.isEmpty() && examined<32;examined++){
+            Throwable current=pending.removeFirst();if(!seen.add(current))continue;
+            int code=current instanceof SMTPSendFailedException smtp?smtp.getReturnCode():current instanceof SMTPAddressFailedException address?address.getReturnCode():0;
+            if(code>=500)return Kind.PERMANENT_FAILURE;if(code>=400)return Kind.TRANSIENT_FAILURE;
+            if(current instanceof java.net.SocketTimeoutException || current instanceof java.net.ConnectException)return Kind.TRANSIENT_FAILURE;
+            if(current instanceof MailSendException mail)for(Exception nested:mail.getMessageExceptions())if(nested!=null)pending.add(nested);
+            if(current instanceof MessagingException mail && mail.getNextException()!=null)pending.add(mail.getNextException());
+            if(current.getCause()!=null)pending.add(current.getCause());
+        }
+        return Kind.BLOCKED;
+    }
     @Override public Outcome send(Message intent){
         // A process configured to trace protocol bodies cannot handle customer secrets.
         if(wireLoggingEnabled())return outcome(Kind.BLOCKED);
-        Transport transport=null;byte[] token=null;
+        byte[] token=null;
         try{
             intent.proof().requireAvailable(clock.instant());token=intent.token();
             byte[] decoded=Base64.getUrlDecoder().decode(token);
@@ -59,36 +76,33 @@ public final class SmtpCustomerDelivery implements CustomerDeliveryTransport {
             properties.setProperty("mail.smtp.ssl.checkserveridentity","true");properties.setProperty("mail.smtp.ssl.protocols","TLSv1.3 TLSv1.2");
             properties.put("mail.smtp.ssl.socketFactory",tls);properties.setProperty("mail.smtp.ssl.socketFactory.fallback","false");
             properties.setProperty("mail.smtp.auth",Boolean.toString(settings.mode()!=Mode.TEST_LOOPBACK));properties.setProperty("mail.smtp.auth.mechanisms","LOGIN PLAIN");
-            properties.setProperty("mail.smtp.starttls.enable",Boolean.toString(settings.mode()==Mode.STARTTLS));properties.setProperty("mail.smtp.starttls.required",Boolean.toString(settings.mode()==Mode.STARTTLS));
+            boolean starttls=settings.mode()==Mode.STARTTLS || settings.mode()==Mode.LOCAL_REAL_SMTP;
+            properties.setProperty("mail.smtp.starttls.enable",Boolean.toString(starttls));properties.setProperty("mail.smtp.starttls.required",Boolean.toString(starttls));
             properties.setProperty("mail.smtp.ssl.enable",Boolean.toString(settings.mode()==Mode.IMPLICIT_TLS));properties.setProperty("mail.smtp.sendpartial","false");
             properties.setProperty("mail.smtp.localhost","customer-delivery.invalid");properties.setProperty("mail.debug","false");properties.setProperty("mail.debug.auth","false");properties.setProperty("mail.debug.auth.username","false");properties.setProperty("mail.debug.auth.password","false");
-            Session session=Session.getInstance(properties);session.setDebug(false);session.setDebugOut(new PrintStream(OutputStream.nullOutputStream()));
+            var sender=new JavaMailSenderImpl();sender.setHost(settings.host());sender.setPort(settings.port());
+            if(settings.mode()!=Mode.TEST_LOOPBACK){sender.setUsername(settings.username());sender.setPassword(settings.password());}
+            sender.setJavaMailProperties(properties);
+            Session session=sender.getSession();session.setDebug(false);session.setDebugOut(new PrintStream(OutputStream.nullOutputStream()));
             String domain=settings.sender().substring(settings.sender().lastIndexOf('@')+1),messageId="<"+intent.id()+"@"+domain+">";
             MimeMessage message=new MimeMessage(session){@Override protected void updateMessageID()throws MessagingException{setHeader("Message-ID",messageId);}};
             message.setFrom(new InternetAddress(settings.sender(),true));message.setRecipient(jakarta.mail.Message.RecipientType.TO,new InternetAddress(intent.destination(),true));
-            message.setSubject("E-Logistics - Xac nhan yeu cau tai khoan","UTF-8");message.setSentDate(Date.from(clock.instant()));
+            boolean recovery=intent.proof().purpose()==CustomerProof.Purpose.CUSTOMER_RECOVERY;
+            message.setSubject(recovery?"E-Logistics - Đặt lại mật khẩu":"E-Logistics - Xác minh tài khoản","UTF-8");message.setSentDate(Date.from(clock.instant()));
             String path=switch(intent.proof().purpose()){
                 case CUSTOMER_ENROLLMENT->"/verify-email";case CUSTOMER_RECOVERY->"/recover/confirm";
                 case SECURITY_EMAIL_CHANGE->"/personal/security";case BUSINESS_CONTACT->"/personal/profile";case LEGACY_CUSTOMER_LINK->"/personal/security/link-customer";
                 default->throw configuration();
             };
             String link=settings.portalOrigin()+path+"#proofId="+intent.proof().id()+"&proof="+new String(token,StandardCharsets.US_ASCII);
-            message.setText("Yêu cầu xác nhận tài khoản E-Logistics.\nMở liên kết và chọn xác nhận; liên kết không tự kích hoạt tài khoản.\n"+link+"\nHết hạn: "+intent.proof().expiresAt()+"\nNếu bạn không thực hiện yêu cầu, hãy bỏ qua thư này.","UTF-8");message.saveChanges();
-            transport=session.getTransport("smtp");transport.connect(settings.host(),settings.port(),settings.username(),settings.password());
-            transport.sendMessage(message,message.getAllRecipients());
-            return new Outcome(Kind.ACCEPTED_BY_PROVIDER,(settings.sandbox()?"TEST:":"SMTP:")+intent.id(),settings.sandbox());
-        }catch(AuthenticationFailedException blocked){return outcome(Kind.BLOCKED);}
-        catch(MessagingException failed){
-            Exception cursor=failed;
-            for(int depth=0;cursor!=null && depth<8;depth++){
-                int code=cursor instanceof SMTPSendFailedException smtp?smtp.getReturnCode():cursor instanceof SMTPAddressFailedException address?address.getReturnCode():0;
-                if(code>=500)return outcome(Kind.PERMANENT_FAILURE);if(code>=400)return outcome(Kind.TRANSIENT_FAILURE);
-                if(cursor instanceof java.net.SocketTimeoutException || cursor instanceof java.net.ConnectException)return outcome(Kind.TRANSIENT_FAILURE);
-                cursor=cursor instanceof MessagingException mail?mail.getNextException():cursor.getCause() instanceof Exception cause?cause:null;
-            }
-            return outcome(Kind.BLOCKED);
-        }catch(RuntimeException blocked){return outcome(Kind.BLOCKED);}
-        finally{if(token!=null)Arrays.fill(token,(byte)0);if(transport!=null)try{transport.close();}catch(MessagingException ignored){/* SMTP acceptance already has its own outcome. */}}
+            String introduction=recovery?"Bạn đã yêu cầu đặt lại mật khẩu E-Logistics.":"Bạn đã yêu cầu tạo tài khoản E-Logistics.";
+            message.setText(introduction+"\nMở liên kết và chọn xác nhận. Chỉ mở liên kết trên máy chạy E-Logistics local; liên kết không tự thay đổi tài khoản.\n"+link+"\nHết hạn: "+intent.proof().expiresAt()+"\nNếu bạn không thực hiện yêu cầu, hãy bỏ qua thư này.","UTF-8");message.saveChanges();
+            sender.send(message);
+            return new Outcome(Kind.ACCEPTED_BY_PROVIDER,(testTransport()?"TEST:":"SMTP:")+intent.id(),testTransport());
+        }catch(MailAuthenticationException blocked){return outcome(Kind.BLOCKED);}
+        catch(MailException failed){return outcome(failureKind(failed));}
+        catch(MessagingException | RuntimeException blocked){return outcome(Kind.BLOCKED);}
+        finally{if(token!=null)Arrays.fill(token,(byte)0);}
     }
     @Override public String toString(){return "SmtpCustomerDelivery[redacted]";}
 }

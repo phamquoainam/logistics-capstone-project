@@ -11,8 +11,12 @@ export default defineConfig(({ command, mode }) => {
   // Explicit local sandbox TLS. No insecure backend proxy, generated key or trust-all fallback.
   const target = new URL(env.ELOGISTICS_CUSTOMER_DEV_API_ORIGIN ?? '');
   if (target.protocol !== 'https:' || !['localhost', '127.0.0.1', '[::1]'].includes(target.hostname) || target.pathname !== '/' || target.username || target.password || target.search || target.hash) throw new Error('CUSTOMER_SANDBOX_API_ORIGIN_REQUIRED');
-  if (!env.ELOGISTICS_CUSTOMER_DEV_TLS_KEY || !env.ELOGISTICS_CUSTOMER_DEV_TLS_CERT) throw new Error('CUSTOMER_SANDBOX_TLS_REQUIRED');
-  const https = { key: readFileSync(env.ELOGISTICS_CUSTOMER_DEV_TLS_KEY), cert: readFileSync(env.ELOGISTICS_CUSTOMER_DEV_TLS_CERT) };
+  const hasPem = !!env.ELOGISTICS_CUSTOMER_DEV_TLS_KEY && !!env.ELOGISTICS_CUSTOMER_DEV_TLS_CERT;
+  const hasPfx = !!env.ELOGISTICS_CUSTOMER_DEV_TLS_PFX && !!env.ELOGISTICS_CUSTOMER_DEV_TLS_PFX_PASSWORD;
+  if (hasPem === hasPfx) throw new Error('CUSTOMER_SANDBOX_TLS_REQUIRED');
+  const https = hasPfx
+    ? { pfx: readFileSync(env.ELOGISTICS_CUSTOMER_DEV_TLS_PFX), passphrase: env.ELOGISTICS_CUSTOMER_DEV_TLS_PFX_PASSWORD }
+    : { key: readFileSync(env.ELOGISTICS_CUSTOMER_DEV_TLS_KEY), cert: readFileSync(env.ELOGISTICS_CUSTOMER_DEV_TLS_CERT) };
   const customerProxy = { '/api': { target: target.origin, changeOrigin: false, secure: true } };
   const headers = { 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer', 'X-Content-Type-Options': 'nosniff' };
   return { ...common, server: { host: '127.0.0.1', port: 5173, strictPort: true, https, headers, proxy: customerProxy }, preview: { host: '127.0.0.1', port: 4173, strictPort: true, https, headers, proxy: customerProxy } };
