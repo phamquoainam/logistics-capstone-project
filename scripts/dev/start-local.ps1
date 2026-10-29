@@ -42,16 +42,45 @@ function Test-Https([string]$url) {
     & node (Join-Path $PSScriptRoot 'check-https.mjs') $url 2>$null
     return $LASTEXITCODE -eq 0
 }
+function Process-Record($process, [string]$role) {
+    if ($null -eq $process) { throw "${role}_PROCESS_NOT_CREATED" }
+    try {
+        # Pin the original OS process handle before recording its identity.
+        $handle = $process.Handle
+        if ($null -eq $handle -or $handle -eq [IntPtr]::Zero) { throw "${role}_HANDLE_UNAVAILABLE" }
+        if ($process.HasExited) { throw "${role}_EXITED_BEFORE_OWNERSHIP" }
+        $started = $process.StartTime
+        if ($null -eq $started) { throw "${role}_START_TIME_UNAVAILABLE" }
+        if ([int]$process.Id -le 0) { throw "${role}_PID_INVALID" }
+        $record = @{ pid=[int]$process.Id; startTicks=$started.ToUniversalTime().Ticks.ToString() }
+        if ($process.HasExited) { throw "${role}_EXITED_BEFORE_OWNERSHIP" }
+        return $record
+    } catch [System.InvalidOperationException] { throw "${role}_EXITED_BEFORE_OWNERSHIP" }
+}
 function Owned-Process($record) {
-    if (!$record) { return $null }
+    if ($null -eq $record -or [string]$record.pid -notmatch '^[1-9][0-9]*$' -or [string]$record.startTicks -notmatch '^[1-9][0-9]*$') { return $null }
     $process = Get-Process -Id ([int]$record.pid) -ErrorAction SilentlyContinue
-    if ($process -and $process.StartTime.ToUniversalTime().Ticks.ToString() -eq [string]$record.startTicks) { return $process }
+    if ($null -eq $process) { return $null }
+    try {
+        $handle = $process.Handle
+        if ($null -eq $handle -or $handle -eq [IntPtr]::Zero -or $process.HasExited -or $process.Id -ne [int]$record.pid) { return $null }
+        $started = $process.StartTime
+        if ($null -ne $started -and $started.ToUniversalTime().Ticks.ToString() -eq [string]$record.startTicks) { return $process }
+    } catch [System.InvalidOperationException] { return $null }
+    catch [System.ComponentModel.Win32Exception] { return $null }
     return $null
 }
-function Save-Process($backendProcess, $frontendProcess) {
+function Stop-OwnedProcess($record) {
+    $owned = Owned-Process $record
+    if ($null -eq $owned) { return $false }
+    try { $owned.Kill(); if (!$owned.WaitForExit(5000)) { throw 'OWNED_PROCESS_STOP_TIMEOUT' }; return $true }
+    catch [System.InvalidOperationException] { return $false }
+}
+function Save-Process($backendRecord, $frontendRecord) {
+    if ($null -eq (Owned-Process $backendRecord) -or $null -eq (Owned-Process $frontendRecord)) { throw 'LOCAL_PROCESS_EXITED_BEFORE_REGISTRATION' }
     [ordered]@{
-        backend=@{ pid=$backendProcess.Id; startTicks=$backendProcess.StartTime.ToUniversalTime().Ticks.ToString() }
-        frontend=@{ pid=$frontendProcess.Id; startTicks=$frontendProcess.StartTime.ToUniversalTime().Ticks.ToString() }
+        backend=$backendRecord
+        frontend=$frontendRecord
     } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $statePath -Encoding UTF8
 }
 function Doctor {
@@ -114,9 +143,10 @@ switch ($Action) {
     'stop' {
         if (!(Test-Path -LiteralPath $statePath)) { Write-Output 'LOCAL_RUNTIME_STOPPED'; break }
         $state = Get-Content -LiteralPath $statePath -Raw | ConvertFrom-Json
-        foreach ($record in @($state.frontend,$state.backend)) { $owned = Owned-Process $record; if ($owned) { Stop-Process -Id $owned.Id } }
+        $stopped = 0
+        foreach ($record in @($state.frontend,$state.backend)) { if (Stop-OwnedProcess $record) { $stopped++ } }
         Remove-Item -LiteralPath $statePath
-        Write-Output 'OWNED_LOCAL_PROCESSES_STOPPED; PostgreSQL and data preserved.'
+        Write-Output ("OWNED_LOCAL_PROCESSES_STOPPED=$stopped; PostgreSQL and data preserved.")
         break
     }
     'start' {
@@ -125,6 +155,7 @@ switch ($Action) {
         if (Test-Path -LiteralPath $statePath) { throw 'LOCAL_STATE_EXISTS; inspect status or stop before restart.' }
         $settings = Read-Settings
         Prepare-Database $settings
+        $env:PG_MIGRATION_ENABLED = 'false'
         $gmail = Get-Content -LiteralPath $gmailPath -Raw | ConvertFrom-Json
         $secure = ConvertTo-SecureString -String $gmail.dpapi
         $credential = [System.Management.Automation.PSCredential]::new($gmail.sender, $secure)
@@ -132,29 +163,35 @@ switch ($Action) {
         $env:CUSTOMER_SMTP_SENDER = $gmail.sender
         $env:CUSTOMER_SMTP_APPROVED_SENDER_DOMAINS = ($gmail.sender -split '@')[-1]
         $env:CUSTOMER_SMTP_PASSWORD = $credential.GetNetworkCredential().Password
-        $backendProcess = $null; $frontendProcess = $null
+        $backendRecord = $null; $frontendRecord = $null
         try {
             $backendProcess = Start-Process -FilePath (Get-Command java).Source -ArgumentList @('-jar',('"'+$jar+'"'),'--spring.profiles.active=identity,customer,postgres','--debug=false','--trace=false') -PassThru -WindowStyle Hidden -RedirectStandardOutput (Join-Path $privateRoot 'backend.out.log') -RedirectStandardError (Join-Path $privateRoot 'backend.err.log')
+            $backendRecord = Process-Record $backendProcess 'BACKEND'
             $env:CUSTOMER_SMTP_PASSWORD = $null
-            for ($attempt=0; $attempt -lt 60; $attempt++) { if (!(Owned-Process @{pid=$backendProcess.Id;startTicks=$backendProcess.StartTime.ToUniversalTime().Ticks.ToString()})) { throw 'BACKEND_EXITED' }; if (Test-Https 'https://127.0.0.1:8443/api/v1/public-media/hero-network.svg') { break }; Start-Sleep -Seconds 2 }
+            for ($attempt=0; $attempt -lt 60; $attempt++) { if ($null -eq (Owned-Process $backendRecord)) { throw 'BACKEND_EXITED_BEFORE_READY' }; if (Test-Https 'https://127.0.0.1:8443/api/v1/public-media/hero-network.svg') { break }; Start-Sleep -Seconds 2 }
             if (!(Test-Https 'https://127.0.0.1:8443/api/v1/public-media/hero-network.svg')) { throw 'BACKEND_READINESS_TIMEOUT' }
             # The frontend child must never inherit database, AWS profile, SMTP or signing material.
             foreach ($property in $settings.PSObject.Properties) { [Environment]::SetEnvironmentVariable($property.Name,$null,'Process') }
-            foreach ($name in @('PG_DB_URL','PG_RUNTIME_USER','PG_RUNTIME_PASSWORD','PG_OWNER_ROLE','PG_MIGRATOR_USER','PG_MIGRATOR_PASSWORD','CUSTOMER_SMTP_USERNAME','CUSTOMER_SMTP_SENDER','CUSTOMER_SMTP_APPROVED_SENDER_DOMAINS','CUSTOMER_SMTP_PASSWORD','PUBLIC_MEDIA_LOCAL_ROOT')) { [Environment]::SetEnvironmentVariable($name,$null,'Process') }
+            foreach ($name in @('PG_DB_URL','PG_RUNTIME_USER','PG_RUNTIME_PASSWORD','PG_MIGRATION_ENABLED','PG_OWNER_ROLE','PG_MIGRATOR_USER','PG_MIGRATOR_PASSWORD','CUSTOMER_SMTP_USERNAME','CUSTOMER_SMTP_SENDER','CUSTOMER_SMTP_APPROVED_SENDER_DOMAINS','CUSTOMER_SMTP_PASSWORD','PUBLIC_MEDIA_LOCAL_ROOT')) { [Environment]::SetEnvironmentVariable($name,$null,'Process') }
             $vite = Join-Path $frontend 'node_modules/vite/bin/vite.js'
             $frontendProcess = Start-Process -FilePath (Get-Command node).Source -ArgumentList @(('"'+$vite+'"'),'--host','127.0.0.1','--mode','customer') -WorkingDirectory $frontend -PassThru -WindowStyle Hidden -RedirectStandardOutput (Join-Path $privateRoot 'frontend.out.log') -RedirectStandardError (Join-Path $privateRoot 'frontend.err.log')
-            for ($attempt=0; $attempt -lt 30; $attempt++) { if (!(Owned-Process @{pid=$frontendProcess.Id;startTicks=$frontendProcess.StartTime.ToUniversalTime().Ticks.ToString()})) { throw 'FRONTEND_EXITED' }; if (Test-Https 'https://127.0.0.1:5173/') { break }; Start-Sleep -Seconds 2 }
+            $frontendRecord = Process-Record $frontendProcess 'FRONTEND'
+            for ($attempt=0; $attempt -lt 30; $attempt++) { if ($null -eq (Owned-Process $frontendRecord)) { throw 'FRONTEND_EXITED_BEFORE_READY' }; if (Test-Https 'https://127.0.0.1:5173/') { break }; Start-Sleep -Seconds 2 }
             if (!(Test-Https 'https://127.0.0.1:5173/')) { throw 'FRONTEND_READINESS_TIMEOUT' }
-            Save-Process $backendProcess $frontendProcess
+            Save-Process $backendRecord $frontendRecord
             Write-Output 'LOCAL_FULL_STACK_HTTP_READY; Gmail real delivery requires an Owner-controlled inbox test.'
             Write-Output 'Public Website: https://127.0.0.1:5173/'
             Write-Output 'Registration: https://127.0.0.1:5173/register'
             Write-Output 'Login: https://127.0.0.1:5173/login'
             Write-Output 'Recovery: https://127.0.0.1:5173/recover'
         } catch {
-            if ($frontendProcess) { $owned=Owned-Process @{pid=$frontendProcess.Id;startTicks=$frontendProcess.StartTime.ToUniversalTime().Ticks.ToString()}; if ($owned) { Stop-Process -Id $owned.Id } }
-            if ($backendProcess) { $owned=Owned-Process @{pid=$backendProcess.Id;startTicks=$backendProcess.StartTime.ToUniversalTime().Ticks.ToString()}; if ($owned) { Stop-Process -Id $owned.Id } }
-            throw
+            $startupFailure = $_
+            $cleanupErrors = @()
+            foreach ($record in @($frontendRecord,$backendRecord)) {
+                if ($null -ne $record) { try { $null = Stop-OwnedProcess $record } catch { $cleanupErrors += $_.Exception } }
+            }
+            if ($cleanupErrors.Count -gt 0) { throw [AggregateException]::new('LOCAL_STARTUP_AND_CLEANUP_FAILED', [Exception[]](@($startupFailure.Exception) + $cleanupErrors)) }
+            throw $startupFailure
         } finally { $env:CUSTOMER_SMTP_PASSWORD=$null; $env:PG_RUNTIME_PASSWORD=$null; $env:ELOGISTICS_CUSTOMER_DEV_TLS_PFX_PASSWORD=$null }
         break
     }
