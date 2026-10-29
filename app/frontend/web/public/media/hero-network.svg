@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 520" role="img" aria-labelledby="title desc">
+  <title id="title">Mạng lưới chuyển phát E-Logistics</title>
+  <desc id="desc">Minh họa kiện hàng đi qua trạm phân loại, tuyến vận chuyển và điểm giao nhận</desc>
+  <defs>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f9fffb"/><stop offset="1" stop-color="#d8efe6"/></linearGradient>
+    <linearGradient id="parcel" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d9aa6e"/><stop offset="1" stop-color="#9e6f47"/></linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="180%"><feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#02242e" flood-opacity=".32"/></filter>
+  </defs>
+  <g opacity=".28" stroke="#a9dfd5" fill="none" stroke-width="1"><path d="M30 72h570M65 135h590M5 202h625M42 272h605M8 343h650M50 412h550"/><path d="M95 30v420M175 18v470M255 20v460M335 12v490M415 20v475M495 19v470M575 30v440"/></g>
+  <path d="M88 360C180 256 235 382 322 283S502 176 598 240" stroke="#97e8c4" stroke-width="3" stroke-dasharray="8 12" fill="none" opacity=".75"/>
+  <path d="M102 373c54-51 105-68 152-24s119 33 173-72 117-112 167-50" stroke="#dcfff0" stroke-width="1" fill="none" opacity=".5"/>
+  <g filter="url(#shadow)">
+    <rect x="132" y="162" width="395" height="237" rx="22" fill="url(#panel)" stroke="#c8ece0" stroke-width="2"/>
+    <rect x="156" y="188" width="348" height="31" rx="8" fill="#e8f4ef"/>
+    <circle cx="178" cy="204" r="5" fill="#13a28b"/><rect x="195" y="200" width="90" height="8" rx="4" fill="#94bdb6"/><rect x="462" y="200" width="23" height="8" rx="4" fill="#c2d9d2"/>
+    <path d="M177 301c54-45 83-20 122-45s56-13 88 19 56 39 88-5" stroke="#0d8d7d" stroke-width="5" stroke-linecap="round" fill="none" stroke-dasharray="3 12"/>
+    <circle cx="178" cy="301" r="13" fill="#e3f6ed" stroke="#0e907e" stroke-width="4"/><circle cx="300" cy="257" r="13" fill="#e3f6ed" stroke="#0e907e" stroke-width="4"/><circle cx="388" cy="275" r="13" fill="#e3f6ed" stroke="#0e907e" stroke-width="4"/><circle cx="474" cy="270" r="13" fill="#0f9c86" stroke="#e3f6ed" stroke-width="4"/>
+    <rect x="158" y="344" width="100" height="31" rx="7" fill="#d8efe4"/><rect x="274" y="344" width="100" height="31" rx="7" fill="#d8efe4"/><rect x="390" y="344" width="110" height="31" rx="7" fill="#d8efe4"/>
+    <rect x="172" y="355" width="71" height="8" rx="4" fill="#82b9a9"/><rect x="287" y="355" width="71" height="8" rx="4" fill="#82b9a9"/><rect x="404" y="355" width="80" height="8" rx="4" fill="#82b9a9"/>
+  </g>
+  <g filter="url(#shadow)" transform="translate(24 48)"><rect x="13" y="278" width="116" height="90" rx="12" fill="#fffcf4"/><path d="m13 296 58-24 58 24-58 25z" fill="#e9c397"/><path d="M13 296v65l58 25v-65z" fill="url(#parcel)"/><path d="M129 296v65l-58 25v-65z" fill="#c08958"/><path d="m55 278 58 24-15 6-58-25z" fill="#f7e0b9"/><path d="m71 321 20-9v18l-20 9z" fill="#f9e8c7"/></g>
+  <g filter="url(#shadow)" transform="translate(526 73)"><rect width="106" height="105" rx="21" fill="#e9fff1"/><path d="M53 17a27 27 0 0 0-27 27c0 23 27 47 27 47s27-24 27-47a27 27 0 0 0-27-27Z" fill="#0d987e"/><circle cx="53" cy="44" r="10" fill="#d8f8e8"/></g>
+  <g filter="url(#shadow)" transform="translate(499 375)"><rect width="150" height="72" rx="14" fill="#fff"/><path d="M18 40h25l12-16h33l15 16h29v17H18z" fill="#0c716f"/><path d="M67 28h20l9 12H58z" fill="#9bdcc7"/><circle cx="49" cy="57" r="10" fill="#133d4a"/><circle cx="112" cy="57" r="10" fill="#133d4a"/></g>
+  <g fill="#b4f0d2"><circle cx="83" cy="112" r="4"/><circle cx="591" cy="320" r="5"/><circle cx="445" cy="89" r="3"/></g>
+</svg>

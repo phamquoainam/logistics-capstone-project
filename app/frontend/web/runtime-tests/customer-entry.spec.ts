@@ -29,8 +29,12 @@ async function login(target: Page, password: string) {
 }
 
 test('retail guest registration uses the real HTTPS API', async () => {
+  await page.goto('/'); await expect(page.getByRole('heading', { name: /Chuyển phát rõ từng chặng/ })).toBeVisible();
+  const media = await page.request.get('/api/v1/public-media/hero-network.svg'); expect(media.status()).toBe(200);
+  expect(media.headers()['content-type']).toContain('image/svg+xml');
+  const denied = await page.request.post('/api/v1/public-media/hero-network.svg'); expect(denied.status()).toBe(403);
   await page.goto('/register'); await expect(page.getByRole('heading', { name: 'Tạo tài khoản cá nhân' })).toBeVisible();
-  await page.getByLabel('Tên hiển thị', { exact: true }).fill('Người gửi hàng thử'); await page.getByLabel('Email', { exact: true }).fill(email); await page.getByLabel('Mật khẩu', { exact: true }).fill(originalPassword); await page.getByRole('checkbox').check(); await page.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click();
+  await page.getByLabel('Tên hiển thị', { exact: true }).fill('Người gửi hàng thử'); await page.getByLabel('Email', { exact: true }).fill(email); await page.getByLabel('Số điện thoại liên hệ').fill('+84901234567'); await page.getByLabel('Mật khẩu', { exact: true }).fill(originalPassword); await page.getByLabel('Nhập lại mật khẩu').fill(originalPassword); await page.getByRole('checkbox').check(); await page.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Đã tiếp nhận yêu cầu');
 });
 test('verification consumes the actual SMTP message only after confirmation', async () => {
@@ -40,6 +44,8 @@ test('verification consumes the actual SMTP message only after confirmation', as
 test('verified login has isolated customer cookies and no SYSTEM authority', async ({ browser }) => {
   const response = page.waitForResponse(r => new URL(r.url()).pathname === '/api/v1/customer-auth/login' && r.request().method() === 'POST'); await login(page, originalPassword); const received = await response; expect(received.status()).toBe(200); const body = await received.json(); if (typeof body.accessToken !== 'string') throw new Error('CUSTOMER_ACCESS_RESPONSE_INVALID'); capturedAccess = body.accessToken;
   await expect(page.getByRole('heading', { name: 'Xin chào, Người gửi hàng thử' })).toBeVisible();
+  await page.goto('/merchant'); await expect(page.getByRole('heading', { name: 'Không gian Merchant chưa khả dụng' })).toBeVisible();
+  await expect(page.getByRole('alert')).toContainText('không hiển thị dữ liệu Merchant'); await page.goto('/personal');
   const cookies = await context.cookies(); expect(cookies.some(c => c.name === '__Host-elogistics.customer.refresh' && c.httpOnly && c.secure && c.sameSite === 'Strict' && c.path === '/')).toBe(true); expect(cookies.some(c => c.name === '__Host-elogistics.refresh')).toBe(false);
   expect(await page.evaluate(async token => (await fetch('/api/v1/auth/me', { headers: { Authorization: 'Bearer ' + token }, cache: 'no-store' })).status, capturedAccess)).toBe(401);
   expect(await page.evaluate(() => [localStorage.length, sessionStorage.length])).toEqual([0, 0]);
@@ -82,7 +88,7 @@ test('logout and recovery request use the actual verified destination', async ()
   await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click(); await expect(page.getByRole('heading', { name: 'Chào mừng trở lại' })).toBeVisible(); await page.getByRole('link', { name: 'Quên mật khẩu?' }).click(); await page.getByLabel('Email của tài khoản').fill(email); await page.getByRole('button', { name: 'Yêu cầu khôi phục mật khẩu' }).click(); await expect(page.getByRole('status')).toContainText('Đã tiếp nhận yêu cầu');
 });
 test('recovery confirmation changes the credential with the actual second message', async () => {
-  await page.goto(await mail(1)); await expect(page.getByLabel('Mật khẩu mới', { exact: true })).toBeVisible(); expect(new URL(page.url()).hash).toBe(''); await page.getByLabel('Mật khẩu mới', { exact: true }).fill(newPassword); await page.getByRole('button', { name: 'Xác nhận mật khẩu mới' }).click(); await expect(page.getByRole('status')).toContainText('Mật khẩu đã được cập nhật');
+  await page.goto(await mail(1)); await expect(page.getByLabel('Mật khẩu mới', { exact: true })).toBeVisible(); expect(new URL(page.url()).hash).toBe(''); await page.getByLabel('Mật khẩu mới', { exact: true }).fill(newPassword); await page.getByLabel('Nhập lại mật khẩu mới').fill(newPassword); await page.getByRole('button', { name: 'Xác nhận mật khẩu mới' }).click(); await expect(page.getByRole('status')).toContainText('Mật khẩu đã được cập nhật');
 });
 test('fresh login rejects the old credential and revoked browser loses its workspace', async () => {
   await secondaryPage.getByRole('link', { name: 'Hồ sơ', exact: true }).click(); await expect(secondaryPage.getByRole('heading', { name: 'Chào mừng trở lại' })).toBeVisible(); await expect(secondaryPage.getByLabel('Tên hiển thị trong hồ sơ')).toHaveCount(0);

@@ -4,6 +4,7 @@ import { Link, NavLink, Navigate, Outlet, Route, Routes, useLocation, useNavigat
 import { customerClient, CustomerApiError } from './client';
 import type { Enrollment, ProfileInput, VersionedProfile, ApplicationAddress, ApplicationDraft, ApplicationPage, VersionedApplication } from './client';
 import { clearEntryProof, hasEntryProof } from './entry-proof';
+import PublicWebsite, { PublicFooter, PublicHeader } from './PublicWebsite';
 import './customer.css';
 
 function message(error: unknown): string {
@@ -75,14 +76,16 @@ function Login() {
   </Page>;
 }
 function Register() {
-  const [email, setEmail] = useState(''), [name, setName] = useState(''), [password, setPassword] = useState(''), [validation, setValidation] = useState('');
-  const action = useCommand<Enrollment>(async (input, key) => { await customerClient.enroll(input, key); setPassword(''); });
-  function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); if (!passwordValid(password) && !action.uncertain) { setValidation('Mật khẩu cần ít nhất 15 ký tự và không quá 72 byte UTF-8.'); return; } setValidation(''); void action.submit({ email, displayName: name, password, consentVersion: 'S003-2026-10-27' }); }
+  const [email, setEmail] = useState(''), [name, setName] = useState(''), [phone, setPhone] = useState(''), [password, setPassword] = useState(''), [confirmation, setConfirmation] = useState(''), [validation, setValidation] = useState('');
+  const action = useCommand<Enrollment>(async (input, key) => { await customerClient.enroll(input, key); setPassword(''); setConfirmation(''); });
+  function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); if (!action.uncertain && !/^\+[1-9][0-9]{7,14}$/.test(phone.replace(/[\s()-]/g, ''))) { setValidation('Số điện thoại cần có mã quốc gia, ví dụ +84901234567.'); return; } if (!action.uncertain && !passwordValid(password)) { setValidation('Mật khẩu cần ít nhất 15 ký tự và không quá 72 byte UTF-8.'); return; } if (!action.uncertain && password !== confirmation) { setValidation('Mật khẩu nhập lại chưa khớp.'); return; } setValidation(''); void action.submit({ email, displayName: name, phone: phone.replace(/[\s()-]/g, ''), password, consentVersion: 'S003-2026-10-27' }); }
   return <Guest><Page title="Tạo tài khoản cá nhân" description="Bắt đầu với tài khoản riêng của bạn. Bạn có thể đăng ký trở thành Merchant sau khi đăng nhập.">
     {action.done ? <><Notice>Đã tiếp nhận yêu cầu. Nếu email đủ điều kiện, bạn sẽ nhận được hướng dẫn xác minh. Vui lòng kiểm tra cả thư rác.</Notice><Link className="cp-primary cp-button" to="/verify-email">Tôi cần xác minh email</Link></> : <form onSubmit={submit}>
       <fieldset disabled={action.busy || action.uncertain}><label htmlFor="register-name">Tên hiển thị</label><input id="register-name" autoComplete="name" required maxLength={160} value={name} onChange={e => setName(e.target.value)} />
         <label htmlFor="register-email">Email</label><input id="register-email" {...emailProps} autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} />
+        <label htmlFor="register-phone">Số điện thoại liên hệ</label><input id="register-phone" type="tel" inputMode="tel" autoComplete="tel" required maxLength={32} placeholder="+84901234567" value={phone} onChange={e => setPhone(e.target.value)} /><p className="cp-hint">Dùng mã quốc gia. Số điện thoại chưa được xác minh và không dùng để đăng nhập hoặc khôi phục mật khẩu.</p>
         <label htmlFor="register-password">Mật khẩu</label><input id="register-password" type="password" autoComplete="new-password" required maxLength={72} aria-describedby="password-rule" value={password} onChange={e => setPassword(e.target.value)} /><p id="password-rule" className="cp-hint">Ít nhất 15 ký tự, tối đa 72 byte UTF-8. Giữ nguyên dấu cách và chữ hoa khi đăng nhập.</p>
+        <label htmlFor="register-confirmation">Nhập lại mật khẩu</label><input id="register-confirmation" type="password" autoComplete="new-password" required maxLength={72} value={confirmation} onChange={e => setConfirmation(e.target.value)} />
         <label className="cp-checkbox"><input type="checkbox" required />Tôi xác nhận thông tin và đồng ý tạo tài khoản cá nhân.</label></fieldset>
       {(validation || action.error) && <Notice error>{validation || action.error}</Notice>}<button className="cp-primary" disabled={action.busy} type="submit">{action.busy ? 'Đang tiếp nhận…' : action.uncertain ? 'Gửi lại đúng yêu cầu vừa rồi' : 'Tạo tài khoản'}</button>
     </form>}<p className="cp-footer-link">Đã có tài khoản? <Link to="/login">Đăng nhập</Link></p>
@@ -110,12 +113,12 @@ function Verify() {
 }
 function Recover() { return <Guest><Page title="Khôi phục mật khẩu" description="Nhập email đã xác minh của bạn. Hướng dẫn sẽ được chuyển tới địa chỉ đủ điều kiện."><EmailRequest kind="recover" /><p className="cp-footer-link"><Link to="/login">Quay lại đăng nhập</Link></p></Page></Guest>; }
 function ConfirmRecovery() {
-  const session = useSession(), [password, setPassword] = useState(''), [validation, setValidation] = useState('');
-  const action = useCommand<string>(async (value, key) => { await customerClient.confirmRecovery(value, key); setPassword(''); });
-  function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); if (!action.uncertain && !passwordValid(password)) { setValidation('Mật khẩu cần ít nhất 15 ký tự và không quá 72 byte UTF-8.'); return; } setValidation(''); void action.submit(password); }
+  const session = useSession(), [password, setPassword] = useState(''), [confirmation, setConfirmation] = useState(''), [validation, setValidation] = useState('');
+  const action = useCommand<string>(async (value, key) => { await customerClient.confirmRecovery(value, key); setPassword(''); setConfirmation(''); });
+  function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); if (!action.uncertain && !passwordValid(password)) { setValidation('Mật khẩu cần ít nhất 15 ký tự và không quá 72 byte UTF-8.'); return; } if (!action.uncertain && password !== confirmation) { setValidation('Mật khẩu nhập lại chưa khớp.'); return; } setValidation(''); void action.submit(password); }
   return <Page title="Đặt mật khẩu mới">
     {session.status === 'authenticated' ? <EndSessionBeforeProof /> : action.done ? <><Notice>Mật khẩu đã được cập nhật. Vui lòng đăng nhập lại.</Notice><Link className="cp-primary cp-button" to="/login">Đăng nhập</Link></> : !hasEntryProof('recovery') ? <><Notice>Liên kết khôi phục chưa hợp lệ hoặc không còn trên trang này.</Notice><Link to="/recover">Yêu cầu hướng dẫn mới</Link></> : <form onSubmit={submit}>
-      <fieldset disabled={action.busy || action.uncertain}><label htmlFor="recovery-password">Mật khẩu mới</label><input id="recovery-password" type="password" autoComplete="new-password" required maxLength={72} aria-describedby="recovery-rule" value={password} onChange={e => setPassword(e.target.value)} /><p id="recovery-rule" className="cp-hint">Ít nhất 15 ký tự, tối đa 72 byte UTF-8.</p></fieldset>
+      <fieldset disabled={action.busy || action.uncertain}><label htmlFor="recovery-password">Mật khẩu mới</label><input id="recovery-password" type="password" autoComplete="new-password" required maxLength={72} aria-describedby="recovery-rule" value={password} onChange={e => setPassword(e.target.value)} /><p id="recovery-rule" className="cp-hint">Ít nhất 15 ký tự, tối đa 72 byte UTF-8.</p><label htmlFor="recovery-confirmation">Nhập lại mật khẩu mới</label><input id="recovery-confirmation" type="password" autoComplete="new-password" required maxLength={72} value={confirmation} onChange={e => setConfirmation(e.target.value)} /></fieldset>
       {(validation || action.error) && <Notice error>{validation || action.error}</Notice>}<button className="cp-primary" type="submit" disabled={action.busy}>{action.busy ? 'Đang cập nhật…' : 'Xác nhận mật khẩu mới'}</button>
     </form>}
   </Page>;
@@ -125,6 +128,12 @@ function Personal() {
     <div className="cp-summary"><span className="cp-avatar" aria-hidden="true">CN</span><div><strong>Tài khoản cá nhân</strong><p>Email đăng nhập: {session.subject?.verifiedEmail}</p><span className="cp-verified">Email đã xác minh</span></div></div>
     <Link className="cp-feature" to="/personal/profile"><span><strong>Hồ sơ cá nhân</strong><small>Cập nhật tên hiển thị và thông tin liên hệ dùng cho công việc.</small></span><span aria-hidden="true">→</span></Link>
     <Link className="cp-feature" to="/personal/applications"><span><strong>Đăng ký trở thành Merchant</strong><small>Chuẩn bị hồ sơ doanh nghiệp và theo dõi tiến trình xét duyệt.</small></span><span aria-hidden="true">→</span></Link>
+  </Page>;
+}
+function MerchantEntry() {
+  return <Page title="Không gian Merchant chưa khả dụng" description="Quyền truy cập tổ chức cần ACTIVE membership được backend xác nhận cho từng yêu cầu.">
+    <Notice error>Hệ thống chưa cung cấp API membership và ngữ cảnh tổ chức đã được nghiệm thu. Trang này không hiển thị dữ liệu Merchant hoặc cấp quyền từ đường dẫn.</Notice>
+    <Link className="cp-secondary" to="/personal/applications">Xem hồ sơ đăng ký Merchant</Link>
   </Page>;
 }
 function ProfileEditor({ original, saved, reload }: { original: VersionedProfile; saved: (value: VersionedProfile) => void; reload: () => void }) {
@@ -187,11 +196,14 @@ function ApplicationDetail() {
 export default function CustomerApp() {
   const session = useSession(), location = useLocation();
   useEffect(() => { if (!['/verify-email', '/recover/confirm'].includes(location.pathname)) clearEntryProof(); document.querySelector<HTMLElement>('main h1')?.focus(); }, [location.pathname]);
-  return <div className="customer-portal"><a className="cp-skip" href="#main-content">Đến nội dung chính</a><header className="cp-header"><Link className="cp-brand" to="/">E<span>↗</span> Logistics</Link><nav aria-label="Điều hướng tài khoản">
+  const accountRoute = /^\/(login|register|verify-email|recover|personal|merchant)(\/|$)/.test(location.pathname);
+  const authRoute = /^\/(login|register|verify-email|recover)(\/|$)/.test(location.pathname);
+  if (!accountRoute) return <PublicWebsite />;
+  return <div className={`customer-portal ${authRoute ? 'cp-auth-portal' : 'cp-workspace-portal'}`}><a className="cp-skip" href="#main-content">Đến nội dung chính</a>{authRoute ? <PublicHeader compact /> : <header className="cp-header"><Link className="cp-brand" to="/">E<span>↗</span> Logistics</Link><nav aria-label="Điều hướng tài khoản">
     {session.status === 'authenticated' ? <><NavLink to="/personal" end>Cá nhân</NavLink><NavLink to="/personal/profile">Hồ sơ</NavLink><NavLink to="/personal/applications">Merchant</NavLink><button className="cp-logout" onClick={() => { void customerClient.logout().catch(() => {}); }}>Đăng xuất</button></> : <><NavLink to="/login">Đăng nhập</NavLink><NavLink to="/register">Đăng ký</NavLink></>}
-  </nav></header><main id="main-content">{session.status === 'loading' ? <Loading /> : <Routes>
-    <Route path="/" element={<Navigate to={session.status === 'authenticated' ? '/personal' : '/login'} replace />} /><Route path="/login" element={<Login />} /><Route path="/register" element={<Register />} /><Route path="/verify-email" element={<Verify />} /><Route path="/recover" element={<Recover />} /><Route path="/recover/confirm" element={<ConfirmRecovery />} />
-    <Route element={<Protected />}><Route path="/personal" element={<Personal />} /><Route path="/personal/profile" element={<ProfilePage />} /><Route path="/personal/applications" element={<ApplicationList />} /><Route path="/personal/applications/:id" element={<ApplicationDetail />} /></Route>
-    <Route path="*" element={<Page title="Không tìm thấy trang"><Link to="/">Về tài khoản cá nhân</Link></Page>} />
-  </Routes>}</main><footer className="cp-footer">E-Logistics · Kết nối hành trình của bạn</footer></div>;
+  </nav></header>}<main id="main-content">{session.status === 'loading' ? <Loading /> : <Routes>
+    <Route path="/login" element={<Login />} /><Route path="/register" element={<Register />} /><Route path="/verify-email" element={<Verify />} /><Route path="/recover" element={<Recover />} /><Route path="/recover/confirm" element={<ConfirmRecovery />} />
+    <Route element={<Protected />}><Route path="/personal" element={<Personal />} /><Route path="/personal/profile" element={<ProfilePage />} /><Route path="/personal/applications" element={<ApplicationList />} /><Route path="/personal/applications/:id" element={<ApplicationDetail />} /><Route path="/merchant" element={<MerchantEntry />} /></Route>
+    <Route path="*" element={<Page title="Không tìm thấy trang"><Link to="/">Về trang chủ</Link></Page>} />
+  </Routes>}</main>{authRoute ? <PublicFooter /> : <footer className="cp-footer">E-Logistics · Kết nối hành trình của bạn</footer>}</div>;
 }

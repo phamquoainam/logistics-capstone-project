@@ -33,6 +33,7 @@
 		<task.c.enabled>false</task.c.enabled>
 	</properties>
 	<dependencies>
+		<dependency><groupId>software.amazon.awssdk</groupId><artifactId>s3</artifactId><version>2.57.3</version></dependency>
 		<!-- Explicit customer SMTP adapter; versions managed by the existing Boot BOM. -->
 		<dependency><groupId>jakarta.mail</groupId><artifactId>jakarta.mail-api</artifactId></dependency>
 		<dependency><groupId>org.eclipse.angus</groupId><artifactId>angus-mail</artifactId></dependency>

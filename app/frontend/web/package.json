@@ -10,6 +10,7 @@
   "packageManager": "npm@11.6.2",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
+    "dev:customer": "vite --host 127.0.0.1 --mode customer",
     "typecheck": "tsc --noEmit",
     "build": "tsc --noEmit && vite build",
     "build:customer": "tsc --noEmit && vite build --mode customer",

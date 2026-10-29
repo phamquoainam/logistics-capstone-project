@@ -40,7 +40,7 @@ class IdentityGrantApplicationTests {
 
     @BeforeEach void fixture() throws Exception {
         db = PostgresTestcontainersSupport.database(POSTGRES);
-        assertEquals(14, db.flyway("latest", SCOPE).migrate().migrationsExecuted);
+        assertEquals(15, db.flyway("latest", SCOPE).migrate().migrationsExecuted);
         account(A, "ACTIVE", List.of(ADMIN)); account(B, "ACTIVE", List.of(ADMIN)); account(T, "ACTIVE", List.of(GX));
         session(S, A); session(AS, B); session(TS, T);
         execute("INSERT INTO identity.refresh_token(id,session_id,token_hash,issued_at,expires_at) VALUES ('" + id(20) + "','" + TS + "',decode(repeat('01',32),'hex'),TIMESTAMPTZ '2026-10-21 00:00:00Z',TIMESTAMPTZ '2026-10-21 08:00:00Z')");
@@ -1875,7 +1875,7 @@ class IdentityGrantApplicationTests {
     private org.springframework.mock.web.MockHttpServletResponse customerPost(org.springframework.test.web.servlet.MockMvc mvc,String route,BrowserFlow flow,UUID key,Object body)throws Exception{
         var request=org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/v1/customer-auth/"+route).secure(true).header("Origin","https://portal.example.invalid").header("X-CSRF-Token",flow.challenge).cookie(flow.csrf);if(!flow.refresh.getValue().isEmpty())request.cookie(flow.refresh);if(key!=null)request.header("Idempotency-Key",key);if(body!=null)request.contentType("application/json").content(new tools.jackson.databind.ObjectMapper().writeValueAsBytes(body));return mvc.perform(request).andReturn().getResponse();
     }
-    private Map<String,String> customerRegistration(){return Map.of("email",ENROLLMENT_EMAIL,"password",ENROLLMENT_PASSWORD,"displayName","Synthetic Customer","consentVersion","S003-2026-10-27");}
+    private Map<String,String> customerRegistration(){return Map.of("email",ENROLLMENT_EMAIL,"password",ENROLLMENT_PASSWORD,"displayName","Synthetic Customer","phone","+84 901-234-567","consentVersion","S003-2026-10-27");}
     private Map<String,String> receivedVerification(CustomerSmtpTestInbox inbox)throws Exception{
         var received=inbox.messages();assertEquals(1,received.size());var email=new jakarta.mail.internet.MimeMessage(jakarta.mail.Session.getInstance(new Properties()),new java.io.ByteArrayInputStream(received.getFirst()));
         String content=(String)email.getContent();var match=java.util.regex.Pattern.compile("/verify-email#proofId=([0-9a-f-]{36})&proof=([A-Za-z0-9_-]{43})").matcher(content);assertTrue(match.find());return Map.of("proofId",match.group(1),"proof",match.group(2));
@@ -1883,9 +1883,11 @@ class IdentityGrantApplicationTests {
     @Test void customerHttpEnrollmentMailVerificationLoginRefreshLogoutUseActualChains()throws Exception{
         try(var inbox=new CustomerSmtpTestInbox(1,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW))){
             var mvc=httpMvc(context);var pre=customerCsrf(mvc,null);var queued=customerPost(mvc,"enrollments",pre,KEY,customerRegistration());assertEquals(202,queued.getStatus());assertEquals(3,scalar("SELECT count(*) FROM identity.user_account"));
+            assertEquals(1,scalar("SELECT count(*) FROM identity.customer_enrollment WHERE unverified_phone='+84901234567'"));
             var services=context.getBean(com.elogistic.backend.identity.internal.ProductionCustomerComposition.Services.class);assertTrue(services.delivery().runOne());
             assertEquals(1,scalar("SELECT count(*) FROM identity.customer_delivery WHERE status='ACCEPTED_BY_PROVIDER' AND accepted_at IS NOT NULL AND delivered_at IS NULL AND delivery_evidence IS NULL AND ciphertext IS NULL AND recipient_ciphertext IS NULL"));
             var proof=receivedVerification(inbox);assertEquals(204,customerPost(mvc,"verifications",pre,id(910),proof).getStatus());
+            assertEquals(1,scalar("SELECT count(*) FROM identity.customer_phone_contact WHERE canonical_phone='+84901234567' AND verification_status='UNVERIFIED'"));
             assertEquals(1,scalar("SELECT count(*) FROM identity.customer_delivery WHERE status='DELIVERED' AND delivery_evidence IS NOT NULL"));
             var login=customerPost(mvc,"login",pre,null,Map.of("email",ENROLLMENT_EMAIL,"password",ENROLLMENT_PASSWORD));assertEquals(200,login.getStatus());
             var accessBody=new tools.jackson.databind.ObjectMapper().readTree(login.getContentAsString());assertEquals(3,accessBody.size());String access=accessBody.get("accessToken").asString();

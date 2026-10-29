@@ -25,6 +25,16 @@ public final class CustomerEnrollments implements CustomerEnrollmentCommands {
     private static void ids(UUID key,UUID request){if(key==null || request==null)throw fail(VALIDATION_FAILED);}
     private static CustomerEmail email(String value){try{return new CustomerEmail(value);}catch(DomainViolation invalid){throw fail(VALIDATION_FAILED);}}
     private static void text(String value,int max){if(value==null || value.isBlank() || value.codePointCount(0,value.length())>max)throw fail(VALIDATION_FAILED);}
+    private static String phone(String value){
+        if(value==null)return null; // Reviewed legacy enrollment remains accepted for backward compatibility.
+        String canonical=value.replaceAll("[\\s()-]","");
+        if(!canonical.matches("\\+[1-9][0-9]{7,14}"))throw fail(VALIDATION_FAILED);
+        return canonical;
+    }
+    private static String[] enrollmentFingerprint(Enrollment c,String canonicalPhone){
+        return canonicalPhone==null?new String[]{c.email(),c.password(),c.displayName(),c.consentVersion()}
+            :new String[]{c.email(),c.password(),c.displayName(),canonicalPhone,c.consentVersion()};
+    }
     private CustomerEnrollmentStore.Receipt previous(CustomerEnrollmentStore.Transaction tx,CustomerEnrollmentAdmission.Binding binding,UUID key,String operation,String... fields){
         return CustomerReceipts.match(tx.receipt(binding.id(),key).orElse(null),protection,operation,fields);
     }
@@ -36,14 +46,14 @@ public final class CustomerEnrollments implements CustomerEnrollmentCommands {
         try(var sealed=protection.issue(proof,e.email().value())){tx.issue(e,proof,sealed,time);}
     }
     @Override public Accepted enroll(Enrollment c){
-        if(c==null)throw fail(VALIDATION_FAILED);ids(c.key(),c.requestId());var email=email(c.email());text(c.displayName(),160);text(c.consentVersion(),64);
+        if(c==null)throw fail(VALIDATION_FAILED);ids(c.key(),c.requestId());var email=email(c.email());text(c.displayName(),160);text(c.consentVersion(),64);String phone=phone(c.phone());
         try{PasswordPolicy.validateNew(c.password());}catch(DomainViolation invalid){throw fail(VALIDATION_FAILED);}
         var binding=Objects.requireNonNull(admission.admit(ENROLL,c.requestId(),email.value()));
         // Same accepted password work for known/unknown addresses; no credential-derived identifier or email takeover.
         String material=protection.hashPassword(c.password());
         return store.transaction(tx->{
             tx.accounts().lockAdministration();admission.requireCurrent(binding);
-            var previous=previous(tx,binding,c.key(),"enrollCustomer",c.email(),c.password(),c.displayName(),c.consentVersion());
+            var previous=previous(tx,binding,c.key(),"enrollCustomer",enrollmentFingerprint(c,phone));
             if(previous!=null){admission.requireCurrent(binding);return new Accepted(true,previous.requestId());}
             Instant time=now();
             var pending=tx.pending(email.value());
@@ -52,10 +62,10 @@ public final class CustomerEnrollments implements CustomerEnrollmentCommands {
                 tx.audit(expired.intendedAccountId(),c.requestId(),"CUSTOMER_ENROLLMENT_EXPIRED",time);pending=Optional.empty();
             }
             if(!tx.emailOccupied(email.value()) && pending.isEmpty()){
-                var enrollment=new CustomerEnrollment(UUID.randomUUID(),UUID.randomUUID(),email,c.displayName(),material,c.consentVersion(),time,time.plusSeconds(86400),CustomerEnrollment.Status.PENDING,1);
+                var enrollment=new CustomerEnrollment(UUID.randomUUID(),UUID.randomUUID(),email,c.displayName(),phone,material,c.consentVersion(),time,time.plusSeconds(86400),CustomerEnrollment.Status.PENDING,1);
                 tx.insert(enrollment);issue(tx,enrollment,time);tx.audit(enrollment.intendedAccountId(),c.requestId(),"CUSTOMER_ENROLLMENT_QUEUED",time);
             }
-            receipt(tx,binding,c.key(),c.requestId(),"enrollCustomer",time,c.email(),c.password(),c.displayName(),c.consentVersion());
+            receipt(tx,binding,c.key(),c.requestId(),"enrollCustomer",time,enrollmentFingerprint(c,phone));
             admission.requireCurrent(binding);return new Accepted(true,c.requestId());
         });
     }

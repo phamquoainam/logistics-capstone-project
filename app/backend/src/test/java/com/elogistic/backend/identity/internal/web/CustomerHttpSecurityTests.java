@@ -51,7 +51,7 @@ class CustomerHttpSecurityTests {
         var response=new MockHttpServletResponse();response.setHeader("X-Request-Id",REQUEST.toString());response.setHeader("Cache-Control","no-store");
         if(authentication.matches(request))authentication.handle(request,response);else enrollment.handle(request,response);return response;
     }
-    private MockHttpServletRequest registration()throws Exception{var request=request("enrollments");request.setContent(json.writeValueAsBytes(Map.of("email",EMAIL,"password","synthetic-customer-password","displayName","Synthetic Customer","consentVersion","S003-2026-10-27")));return request;}
+    private MockHttpServletRequest registration()throws Exception{var request=request("enrollments");request.setContent(json.writeValueAsBytes(Map.of("email",EMAIL,"password","synthetic-customer-password","displayName","Synthetic Customer","phone","+84901234567","consentVersion","S003-2026-10-27")));return request;}
     private void rejected(MockHttpServletResponse response,int status,String code)throws Exception{assertEquals(status,response.getStatus());assertEquals(code,json.readTree(response.getContentAsString()).get("code").asString());assertTrue(response.getHeaders("Set-Cookie").isEmpty());assertFalse(response.getContentAsString().contains(EMAIL));assertFalse(response.getContentAsString().contains("synthetic-customer-password"));}
     @Test void customerCsrfHasExactChallengeAndOnlyCustomerCookie()throws Exception{
         var response=run(request("csrf"));assertEquals(200,response.getStatus());var body=json.readTree(response.getContentAsString());assertEquals(1,body.size());assertEquals(T,body.get("challenge").asString());
@@ -72,8 +72,13 @@ class CustomerHttpSecurityTests {
     }
     @Test void enrollmentUsesServerCsrfBindingAndIgnoresForwardedClientAddress()throws Exception{
         var request=registration();request.addHeader("X-Forwarded-For","198.51.100.10");var response=run(request);assertEquals(202,response.getStatus());assertTrue(json.readTree(response.getContentAsString()).get("accepted").asBoolean());
+        var captured=org.mockito.ArgumentCaptor.forClass(CustomerEnrollmentCommands.Enrollment.class);verify(commands).enroll(captured.capture());assertEquals("+84901234567",captured.getValue().phone());
         verify(limiter).reserve(List.of(new IdentityRateLimiter.Subject(IdentityRateLimiter.Policy.CUSTOMER_ENROLL_EMAIL,EMAIL),new IdentityRateLimiter.Subject(IdentityRateLimiter.Policy.CUSTOMER_ENROLL_IP,"192.0.2.10")));
         verify(preauth,atLeast(2)).requirePreauthentication(C,T);
+    }
+    @Test void legacyEnrollmentBodyRemainsAcceptedWithoutInventingVerifiedPhone()throws Exception{
+        var request=request("enrollments");request.setContent(json.writeValueAsBytes(Map.of("email",EMAIL,"password","synthetic-customer-password","displayName","Synthetic Customer","consentVersion","S003-2026-10-27")));
+        assertEquals(202,run(request).getStatus());var captured=org.mockito.ArgumentCaptor.forClass(CustomerEnrollmentCommands.Enrollment.class);verify(commands).enroll(captured.capture());assertNull(captured.getValue().phone());
     }
     @Test void insecureMissingDuplicateAndForeignOriginsDenyBeforeApplication()throws Exception{
         var insecure=registration();insecure.setSecure(false);insecure.addHeader("X-Forwarded-Proto","https");rejected(run(insecure),403,"ORIGIN_REJECTED");

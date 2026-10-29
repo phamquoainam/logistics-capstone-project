@@ -17,6 +17,11 @@ class CustomerEnrollmentTests {
         assertThrows(DomainViolation.class,()->new CustomerEnrollment(e.id(),e.intendedAccountId(),e.email(),e.displayName(),null,e.consentVersion(),NOW,e.expiresAt(),e.status(),1));
         assertThrows(DomainViolation.class,()->new CustomerEnrollment(e.id(),e.intendedAccountId(),e.email(),e.displayName(),HASH,e.consentVersion(),NOW,e.expiresAt(),CustomerEnrollment.Status.CONSUMED,2));
     }
+    @Test void onlyCanonicalUnverifiedInternationalPhoneCanEnterEnrollment(){
+        var e=pending();var valid=new CustomerEnrollment(e.id(),e.intendedAccountId(),e.email(),e.displayName(),"+84901234567",HASH,e.consentVersion(),NOW,e.expiresAt(),e.status(),1);
+        assertEquals("+84901234567",valid.resend(NOW.plusSeconds(1)).unverifiedPhone());
+        assertThrows(DomainViolation.class,()->new CustomerEnrollment(e.id(),e.intendedAccountId(),e.email(),e.displayName(),"0901234567",HASH,e.consentVersion(),NOW,e.expiresAt(),e.status(),1));
+    }
     @Test void consumingEnrollmentDestroysProtectedMaterialAndCannotReplay(){
         var e=pending();var consumed=e.consume(NOW);assertNull(consumed.protectedPassword());assertEquals(2,consumed.version());assertEquals(CustomerEnrollment.Status.CONSUMED,consumed.status());
         assertEquals(e.intendedAccountId(),consumed.intendedAccountId());assertThrows(DomainViolation.class,()->consumed.consume(NOW));

@@ -24,7 +24,7 @@ public final class JdbcCustomerEnrollmentStore implements CustomerEnrollmentStor
     private static CustomerEnrollment enrollment(ResultSet r)throws SQLException{
         byte[] material=r.getBytes("protected_password");
         try{return new CustomerEnrollment(r.getObject("id",UUID.class),r.getObject("intended_account_id",UUID.class),new CustomerEmail(r.getString("exact_email")),
-            r.getString("display_name"),material==null?null:new String(material,StandardCharsets.US_ASCII),r.getString("consent_version"),
+            r.getString("display_name"),r.getString("unverified_phone"),material==null?null:new String(material,StandardCharsets.US_ASCII),r.getString("consent_version"),
             instant(r,"created_at"),instant(r,"expires_at"),CustomerEnrollment.Status.valueOf(r.getString("status")),r.getLong("version"));}
         finally{if(material!=null)Arrays.fill(material,(byte)0);}
     }
@@ -68,7 +68,7 @@ public final class JdbcCustomerEnrollmentStore implements CustomerEnrollmentStor
             }
             public void insert(CustomerEnrollment e){
                 byte[] material=e.protectedPassword().getBytes(StandardCharsets.US_ASCII);
-                try{one(jdbc.update("INSERT INTO identity.customer_enrollment VALUES (?,?,?,?,?,?,?,?,?,?)",e.id(),e.intendedAccountId(),e.email().value(),e.displayName(),material,e.consentVersion(),stamp(e.createdAt()),stamp(e.expiresAt()),e.status().name(),e.version()));}
+                try{one(jdbc.update("INSERT INTO identity.customer_enrollment(id,intended_account_id,exact_email,display_name,protected_password,consent_version,created_at,expires_at,status,version,unverified_phone) VALUES (?,?,?,?,?,?,?,?,?,?,?)",e.id(),e.intendedAccountId(),e.email().value(),e.displayName(),material,e.consentVersion(),stamp(e.createdAt()),stamp(e.expiresAt()),e.status().name(),e.version(),e.unverifiedPhone()));}
                 finally{Arrays.fill(material,(byte)0);}
             }
             public void update(CustomerEnrollment before,CustomerEnrollment after){
@@ -90,6 +90,7 @@ public final class JdbcCustomerEnrollmentStore implements CustomerEnrollmentStor
             public void activate(CustomerEnrollment e,CustomerProof p,Instant now){
                 one(jdbc.update("INSERT INTO identity.user_account(id,username,display_name,email,password_hash,status,email_verified,version,auth_version,created_at,updated_at,activated_at) VALUES (?,?,?,?,?,'ACTIVE',TRUE,1,1,?,?,?)",e.intendedAccountId(),"customer."+e.intendedAccountId(),e.displayName(),e.email().value(),e.protectedPassword(),stamp(now),stamp(now),stamp(now)));
                 one(jdbc.update("INSERT INTO identity.customer_identifier VALUES (?,?,?,?,'ACTIVE',1)",UUID.randomUUID(),e.intendedAccountId(),e.email().value(),stamp(now)));
+                if(e.unverifiedPhone()!=null)one(jdbc.update("INSERT INTO identity.customer_phone_contact(account_id,canonical_phone,verification_status,created_at,updated_at) VALUES (?,?,'UNVERIFIED',?,?)",e.intendedAccountId(),e.unverifiedPhone(),stamp(now),stamp(now)));
                 one(jdbc.update("UPDATE identity.customer_proof SET consumed_at=? WHERE id=? AND consumed_at IS NULL AND revoked_at IS NULL AND expires_at>?",stamp(now),p.id(),stamp(now)));
                 byte[] evidence;
                 try{evidence=MessageDigest.getInstance("SHA-256").digest(("RECIPIENT_PROOF_CONSUMED:"+p.id()).getBytes(StandardCharsets.US_ASCII));}

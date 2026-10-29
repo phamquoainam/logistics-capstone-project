@@ -32,7 +32,7 @@ class PostgresTestcontainersTests {
         Database db=PostgresTestcontainersSupport.database(POSTGRES);
         Flyway flyway=db.flyway("latest");assertEquals(0,flyway.info().applied().length);
         // Retain the report-policy method identity and assert the complete current stream.
-        assertEquals(14,flyway.migrate().migrationsExecuted);assertTrue(flyway.validateWithResult().validationSuccessful);
+        assertEquals(15,flyway.migrate().migrationsExecuted);assertTrue(flyway.validateWithResult().validationSuccessful);
         assertEquals(List.of("1","2","3","4","5","6","7","8","9","10","11","12","13","14"),Arrays.stream(flyway.info().applied()).map(m->m.getVersion().toString()).toList());
     }
 

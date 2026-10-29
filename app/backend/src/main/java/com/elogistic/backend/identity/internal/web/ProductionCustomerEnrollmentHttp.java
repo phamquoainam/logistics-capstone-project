@@ -21,13 +21,16 @@ public final class ProductionCustomerEnrollmentHttp {
     }
     public boolean matches(HttpServletRequest request){String path=request.getRequestURI().substring(request.getContextPath().length());return request.getMethod().equals("POST") && Set.of(PREFIX+"enrollments",PREFIX+"verification-resend",PREFIX+"verifications",PREFIX+"recovery",PREFIX+"recovery-confirm").contains(path);}
     private static IdentityCommandFailure invalid(){return new IdentityCommandFailure(IdentityCommandFailure.Code.VALIDATION_FAILED);}
-    private static JsonNode body(HttpServletRequest request,Set<String> fields)throws IOException {
+    private static JsonNode body(HttpServletRequest request,Set<String> fields)throws IOException {return body(request,fields,Set.of());}
+    private static JsonNode body(HttpServletRequest request,Set<String> fields,Set<String> optional)throws IOException {
         try{
             if(request.getContentType()==null || !request.getContentType().split(";",2)[0].equalsIgnoreCase("application/json"))throw invalid();
             byte[] bytes=request.getInputStream().readNBytes(16385);try{
                 if(bytes.length>16384)throw invalid();JsonNode value=JSON.readTree(bytes);
-                if(value==null || !value.isObject() || value.size()!=fields.size())throw invalid();
-                for(String field:fields)if(value.get(field)==null || !value.get(field).isString())throw invalid();return value;
+                if(value==null || !value.isObject() || value.size()<fields.size() || value.size()>fields.size()+optional.size())throw invalid();
+                for(String field:fields)if(value.get(field)==null || !value.get(field).isString())throw invalid();
+                for(var entry:value.properties())if(!fields.contains(entry.getKey()) && !optional.contains(entry.getKey()) || !entry.getValue().isString())throw invalid();
+                return value;
             }finally{Arrays.fill(bytes,(byte)0);}
         }catch(IdentityCommandFailure rejected){throw rejected;}catch(Exception rejected){throw invalid();}
     }
@@ -45,8 +48,8 @@ public final class ProductionCustomerEnrollmentHttp {
             try(var scope=admission.enter(requestId,cookie,challenge,ProductionAuthenticationHttp.clientAddress(request))){
                 String path=request.getRequestURI();CustomerEnrollmentCommands.Accepted result;
                 if(path.endsWith("/enrollments")){
-                    var input=body(request,Set.of("email","password","displayName","consentVersion"));
-                    result=commands.enroll(new CustomerEnrollmentCommands.Enrollment(input.get("email").asString(),input.get("password").asString(),input.get("displayName").asString(),input.get("consentVersion").asString(),key,requestId));
+                    var input=body(request,Set.of("email","password","displayName","consentVersion"),Set.of("phone"));
+                    result=commands.enroll(new CustomerEnrollmentCommands.Enrollment(input.get("email").asString(),input.get("password").asString(),input.get("displayName").asString(),input.has("phone")?input.get("phone").asString():null,input.get("consentVersion").asString(),key,requestId));
                 }else if(path.endsWith("/verification-resend")){
                     var input=body(request,Set.of("email"));result=commands.resend(new CustomerEnrollmentCommands.Email(input.get("email").asString(),key,requestId));
                 }else if(path.endsWith("/recovery")){
