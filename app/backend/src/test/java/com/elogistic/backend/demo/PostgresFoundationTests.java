@@ -45,7 +45,7 @@ class PostgresFoundationTests extends DemoTestSupport {
   assertEquals(List.of("dispatch","finance","identity","merchant","notification","orders","pricing","routing","warehouse"),schemas);
   assertEquals(10,jdbc.queryForObject("SELECT count(*) FROM pg_namespace n JOIN pg_roles r ON r.oid=n.nspowner WHERE r.rolname=? AND n.nspname IN ('platform','identity','merchant','orders','pricing','warehouse','dispatch','finance','routing','notification')",Integer.class,requiredEnv("PG_TEST_OWNER_ROLE")));
   // Five Demo + twelve accepted Identity + ten isolated customer tables + four personal-profile tables + Flyway history.
-  assertEquals(35,jdbc.queryForObject("SELECT count(*) FROM pg_tables WHERE tableowner=? AND schemaname IN ('platform','identity','merchant','orders')",Integer.class,requiredEnv("PG_TEST_OWNER_ROLE")));
+  assertEquals(36,jdbc.queryForObject("SELECT count(*) FROM pg_tables WHERE tableowner=? AND schemaname IN ('platform','identity','merchant','orders')",Integer.class,requiredEnv("PG_TEST_OWNER_ROLE")));
  }
 
  @Test void runtimeCannotDdlAssumeOwnerOrReadHistory() throws Exception {
@@ -71,7 +71,7 @@ class PostgresFoundationTests extends DemoTestSupport {
  @Test void validateAndRerunPreserveDataAndChecksums() {
   long before=jdbc.queryForObject("SELECT COUNT(*) FROM identity.demo_account",Long.class);
   var applied=Arrays.stream(flyway.info().applied()).map(m->m.getVersion()+":"+m.getChecksum()).toList();
-  assertEquals(List.of("1","2","3","4","5","6","7","8","9","10","11","12","13","14"),Arrays.stream(flyway.info().applied()).map(m->m.getVersion().toString()).toList());assertTrue(flyway.validateWithResult().validationSuccessful);
+  assertEquals(List.of("1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"),Arrays.stream(flyway.info().applied()).map(m->m.getVersion().toString()).toList());assertTrue(flyway.validateWithResult().validationSuccessful);
   assertEquals(0,flyway.migrate().migrationsExecuted);
   assertEquals(applied,Arrays.stream(flyway.info().applied()).map(m->m.getVersion()+":"+m.getChecksum()).toList());
   assertEquals(before,jdbc.queryForObject("SELECT COUNT(*) FROM identity.demo_account",Long.class));
