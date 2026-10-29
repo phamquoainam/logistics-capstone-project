@@ -127,7 +127,7 @@ switch ($Action) {
         Prepare-Database $settings
         $gmail = Get-Content -LiteralPath $gmailPath -Raw | ConvertFrom-Json
         $secure = ConvertTo-SecureString -String $gmail.dpapi
-        $credential = New-Object Security.Management.Automation.PSCredential($gmail.sender, $secure)
+        $credential = [System.Management.Automation.PSCredential]::new($gmail.sender, $secure)
         $env:CUSTOMER_SMTP_USERNAME = $gmail.sender
         $env:CUSTOMER_SMTP_SENDER = $gmail.sender
         $env:CUSTOMER_SMTP_APPROVED_SENDER_DOMAINS = ($gmail.sender -split '@')[-1]

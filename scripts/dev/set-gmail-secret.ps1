@@ -5,7 +5,7 @@ if (!(Test-Path -LiteralPath (Join-Path $privateRoot 'runtime.json'))) { throw '
 $sender = Read-Host 'Gmail sender address'
 if ($sender -notmatch '^[^@\s]+@gmail\.com$') { throw 'GMAIL_SENDER_INVALID' }
 $password = Read-Host 'Google App Password (hidden; spaces may be pasted)' -AsSecureString
-$credential = New-Object Security.Management.Automation.PSCredential($sender, $password)
+$credential = [System.Management.Automation.PSCredential]::new($sender, $password)
 $normalized = $credential.GetNetworkCredential().Password -replace '\s',''
 if ($normalized.Length -ne 16) { throw 'GMAIL_APP_PASSWORD_LENGTH_INVALID' }
 $sealed = ConvertFrom-SecureString -SecureString (ConvertTo-SecureString -String $normalized -AsPlainText -Force)
