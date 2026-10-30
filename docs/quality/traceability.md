@@ -1,5 +1,14 @@
 # Traceability Matrix (living document)
 
+## Owner-directed mobile directory rename — 2026-10-30
+
+| Scope | Evidence | Disposition |
+|---|---|---|
+| `app/frontend/shipper-mobile` → `app/frontend/mobile` | All 37 tracked file blobs unchanged; API-client consumer checker uses the new path; relative dependency depth unchanged | Directory rename only; no API, migration or security-contract change |
+| Mobile regression | Lint/typecheck PASS; Jest 1/1 PASS; actual Expo/RN compiler, four negative controls and Metro/Hermes SDK-entry bundle PASS (23 modules/14 SDK modules) | DONE for local rename verification; required PR integration CI remains a separate merge gate |
+
+[Current commands and historical-path handling](../runbooks/local-development.md#mobile-directory-rename--2026-10-30).
+
 ## Foundation pending changes — reconciliation 2026-10-27
 
 | Trace / gate | Evidence | Disposition |
