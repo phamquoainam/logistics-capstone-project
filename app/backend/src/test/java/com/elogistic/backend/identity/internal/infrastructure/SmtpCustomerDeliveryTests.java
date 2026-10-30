@@ -40,6 +40,7 @@ class SmtpCustomerDeliveryTests {
     private static CustomerDeliveryTransport.Message message(UUID id){return message(id,CustomerProof.Purpose.CUSTOMER_ENROLLMENT);}
     private static CustomerDeliveryTransport.Message message(UUID id,CustomerProof.Purpose purpose){
         var proof=CustomerProof.issue(UUID.randomUUID(),UUID.randomUUID(),purpose,NOW,null,purpose==CustomerProof.Purpose.CUSTOMER_RECOVERY?1L:null,null);byte[] raw=new byte[32];new SecureRandom().nextBytes(raw);byte[] token=Base64.getUrlEncoder().withoutPadding().encode(raw);
+        if(proof.enrollmentOtp())System.arraycopy("123456".getBytes(StandardCharsets.US_ASCII),0,token,0,6);
         try{return new CustomerDeliveryTransport.Message(id,proof,DESTINATION,token);}finally{Arrays.fill(raw,(byte)0);Arrays.fill(token,(byte)0);}
     }
     private SmtpCustomerDelivery adapter(CustomerSmtpTestInbox inbox,SmtpCustomerDelivery.Mode mode,KeyStore roots){
@@ -51,8 +52,8 @@ class SmtpCustomerDeliveryTests {
             var outcome=adapter(inbox,SmtpCustomerDelivery.Mode.TEST_LOOPBACK,null).send(intent);assertEquals(CustomerDeliveryTransport.Kind.ACCEPTED_BY_PROVIDER,outcome.kind());assertTrue(outcome.sandbox());
             var received=inbox.messages();assertEquals(1,received.size());var mail=new MimeMessage(Session.getInstance(new Properties()),new ByteArrayInputStream(received.getFirst()));
             assertEquals("<"+intent.id()+"@example.invalid>",mail.getMessageID());assertEquals(DESTINATION,mail.getAllRecipients()[0].toString());
-            String content=(String)mail.getContent();assertTrue(content.contains(ORIGIN+"/verify-email#proofId="+intent.proof().id()+"&proof="));assertFalse(content.contains("/verify-email?"));
-            byte[] token=intent.token();try{assertTrue(content.contains(new String(token,StandardCharsets.US_ASCII)));}finally{Arrays.fill(token,(byte)0);}
+            String content=(String)mail.getContent();assertTrue(content.contains(ORIGIN+"/verify-email#proofId="+intent.proof().id()+"&expiresAt="));assertFalse(content.contains("/verify-email?"));
+            byte[] token=intent.token();try{assertTrue(content.contains("123456"));assertFalse(content.contains(new String(token,StandardCharsets.US_ASCII)));}finally{Arrays.fill(token,(byte)0);}
             assertEquals(0,inbox.authentications.get());assertEquals("CustomerDeliveryOutcome[redacted]",outcome.toString());assertEquals("CustomerDeliveryMessage[redacted]",intent.toString());
         }
     }

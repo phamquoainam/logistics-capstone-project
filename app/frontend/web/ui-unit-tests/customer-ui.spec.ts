@@ -24,11 +24,13 @@ async function fixture(context: BrowserContext, authenticated = false, special?:
 }
 test('registration validates password and prevents duplicate submission without claiming email delivery', async ({ page, context }) => {
   const calls = await fixture(context); await page.goto('/register');
-  await page.getByLabel('Tên hiển thị', { exact: true }).fill('Người dùng thử'); await page.getByLabel('Email', { exact: true }).fill('synthetic@example.invalid'); await page.getByLabel('Số điện thoại liên hệ').fill('+84 901-234-567'); await page.getByLabel('Mật khẩu', { exact: true }).fill('short'); await page.getByLabel('Nhập lại mật khẩu').fill('short'); await page.getByRole('checkbox').check();
-  await page.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click(); await expect(page.getByRole('alert')).toContainText('15 ký tự'); expect(calls.filter(c => c.path.endsWith('/enrollments'))).toHaveLength(0);
-  await page.getByLabel('Mật khẩu', { exact: true }).fill('synthetic-enrollment-password'); await page.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click(); await expect(page.getByRole('alert')).toContainText('chưa khớp'); expect(calls.filter(c => c.path.endsWith('/enrollments'))).toHaveLength(0);
-  await page.getByLabel('Nhập lại mật khẩu').fill('synthetic-enrollment-password'); await page.getByRole('button', { name: 'Tạo tài khoản', exact: true }).dblclick();
-  await expect(page.getByRole('status')).toContainText('Đã tiếp nhận yêu cầu'); expect(calls.filter(c => c.path.endsWith('/enrollments'))).toHaveLength(1); expect(calls.find(c => c.path.endsWith('/enrollments'))?.body?.phone).toBe('+84901234567'); await expect(page.getByRole('status')).not.toContainText('Đã gửi');
+  expect(await page.getByRole('checkbox').locator('..').evaluate(element => getComputedStyle(element).display)).toBe('flex');
+  await page.screenshot({ path: '../../../.demo/spec003-implementation/customer-register-desktop.png', fullPage: true });
+  await page.getByLabel('Họ và tên', { exact: true }).fill('Người dùng thử'); await page.getByLabel('Email', { exact: true }).fill('synthetic@example.invalid'); await page.getByLabel('Số điện thoại liên hệ').fill('0901-234-567'); await page.getByLabel('Mật khẩu', { exact: true }).fill('short'); await page.getByLabel('Nhập lại mật khẩu').fill('short'); await page.getByRole('checkbox').check();
+  await page.getByRole('button', { name: 'Đăng ký ngay', exact: true }).click(); await expect(page.getByRole('alert')).toContainText('15 ký tự'); expect(calls.filter(c => c.path.endsWith('/enrollments'))).toHaveLength(0);
+  await page.getByLabel('Mật khẩu', { exact: true }).fill('synthetic-enrollment-password'); await page.getByRole('button', { name: 'Đăng ký ngay', exact: true }).click(); await expect(page.getByRole('alert')).toContainText('chưa khớp'); expect(calls.filter(c => c.path.endsWith('/enrollments'))).toHaveLength(0);
+  await page.getByLabel('Nhập lại mật khẩu').fill('synthetic-enrollment-password'); await page.getByRole('button', { name: 'Đăng ký ngay', exact: true }).dblclick();
+  await expect(page.getByRole('status')).toContainText('Yêu cầu đã được tiếp nhận'); expect(calls.filter(c => c.path.endsWith('/enrollments'))).toHaveLength(1); expect(calls.find(c => c.path.endsWith('/enrollments'))?.body?.phone).toBe('+84901234567'); await expect(page.getByRole('status')).not.toContainText('Đã gửi');
 });
 test('verification strips fragment before API calls and requires explicit confirmation', async ({ page, context }) => {
   const calls = await fixture(context), proof = 'A'.repeat(43); const urls: string[] = []; page.on('request', request => urls.push(request.url()));
@@ -36,6 +38,24 @@ test('verification strips fragment before API calls and requires explicit confir
   expect(new URL(page.url()).hash).toBe(''); await expect(page.locator('body')).not.toContainText(proof); expect(calls.filter(c => c.path.endsWith('/verifications'))).toHaveLength(0); expect(urls.some(url => url.includes(proof))).toBe(false);
   await page.getByRole('button', { name: 'Xác nhận email của tôi' }).click(); await expect(page.getByRole('status')).toContainText('Email đã được xác minh'); expect(calls.filter(c => c.path.endsWith('/verifications'))).toHaveLength(1);
   expect(await page.evaluate(() => [localStorage.length, sessionStorage.length])).toEqual([0, 0]);
+});
+test('registration OTP requires typed code and expires after two minutes', async ({ page, context }) => {
+  const calls = await fixture(context);
+  const start = new Date('2026-10-30T10:00:00Z'); await page.clock.install({ time: start });
+  await page.goto(`/verify-email#proofId=${proofId}&expiresAt=2026-10-30T10:02:00Z`);
+  expect(new URL(page.url()).hash).toBe('');
+  await expect(page.getByRole('timer')).toContainText('02:00');
+  await page.getByLabel('Mã xác minh 6 chữ số').fill('123456');
+  await page.getByRole('button', { name: 'Xác minh tài khoản' }).click();
+  await expect.poll(() => calls.filter(call => call.path.endsWith('/verifications')).length).toBe(1);
+  expect(calls.find(call => call.path.endsWith('/verifications'))?.body).toEqual({proofId,proof:'123456'});
+  await page.goto('/login');
+  await page.goto(`/verify-email#proofId=${proofId}&expiresAt=2026-10-30T10:02:00Z`);
+  await expect(page.getByRole('timer')).toContainText('02:00');
+  await page.clock.fastForward(120000);
+  await expect(page.getByRole('timer')).toContainText('Mã đã hết hạn');
+  await expect(page.getByLabel('Mã xác minh 6 chữ số')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Yêu cầu hướng dẫn xác minh' })).toBeVisible();
 });
 test('recovery confirmation retains exact command after an unknown response without automatic retry', async ({ page, context }) => {
   let attempts = 0; const calls = await fixture(context, false, async (route, call) => {
@@ -63,10 +83,10 @@ test('profile unknown outcome stays unknown until scoped receipt GET confirms co
 test('cross-tab logout removes personal form data and prevents stale workspace display', async ({ page, context }) => {
   await fixture(context, true); await page.goto('/personal/profile'); await expect(page.getByLabel('Tên hiển thị trong hồ sơ')).toHaveValue('Hồ sơ thử');
   const other = await context.newPage(); await other.goto('/personal'); await other.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Chào mừng trở lại' })).toBeVisible(); await expect(page.getByLabel('Tên hiển thị trong hồ sơ')).toHaveCount(0); await expect(page.getByText('Hồ sơ thử', { exact: true })).toHaveCount(0); await other.close();
+  await expect(page.getByRole('heading', { name: 'Đăng nhập bằng mật khẩu' })).toBeVisible(); await expect(page.getByLabel('Tên hiển thị trong hồ sơ')).toHaveCount(0); await expect(page.getByText('Hồ sơ thử', { exact: true })).toHaveCount(0); await other.close();
 });
 test('guest deep link cannot render or request a protected personal profile', async ({ page, context }) => {
-  const calls = await fixture(context); await page.goto('/personal/profile'); await expect(page.getByRole('heading', { name: 'Chào mừng trở lại' })).toBeVisible(); expect(new URL(page.url()).pathname).toBe('/login'); expect(calls.filter(c => c.path.endsWith('/profile'))).toHaveLength(0);
+  const calls = await fixture(context); await page.goto('/personal/profile'); await expect(page.getByRole('heading', { name: 'Đăng nhập bằng mật khẩu' })).toBeVisible(); expect(new URL(page.url()).pathname).toBe('/login'); expect(calls.filter(c => c.path.endsWith('/profile'))).toHaveLength(0);
 });
 test('merchant route fails closed without an authoritative active membership', async ({ page, context }) => {
   const calls = await fixture(context, true); await page.goto('/merchant');
@@ -76,7 +96,7 @@ test('merchant route fails closed without an authoritative active membership', a
 });
 test('mobile labels keyboard navigation and public login layout remain usable', async ({ page, context }) => {
   await fixture(context); await page.setViewportSize({ width: 390, height: 844 }); await page.goto('/login'); await expect(page.getByLabel('Email đã xác minh')).toBeVisible(); await expect(page.getByLabel('Mật khẩu', { exact: true })).toBeVisible(); await page.keyboard.press('Tab'); await expect(page.getByRole('link', { name: 'Đến nội dung chính' })).toBeFocused();
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true); await page.getByRole('heading', { name: 'Chào mừng trở lại' }).focus(); await page.screenshot({ path: '../../../.demo/spec003-implementation/customer-login-mobile.png', fullPage: true });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true); await page.getByRole('heading', { name: 'Đăng nhập bằng mật khẩu' }).focus(); await page.screenshot({ path: '../../../.demo/spec003-implementation/customer-login-mobile.png', fullPage: true });
 });
 
 test('public website routes, utilities and mobile navigation disclose pending services', async ({ page, context }) => {

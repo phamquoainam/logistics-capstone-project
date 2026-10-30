@@ -1,4 +1,4 @@
-import { clearEntryProof, withEntryProof } from './entry-proof';
+import { clearEntryProof, getVerificationLocator, withEntryProof } from './entry-proof';
 export type Subject = { accountId: string; displayName: string; verifiedEmail: string; securityVersion: number };
 export type ProfileInput = { displayName: string; preferredLanguage: 'vi' | 'en'; businessContactEmail?: string; businessContactPhone?: string };
 export type CustomerProfile = ProfileInput & { id: string; accountId: string; version: number };
@@ -152,7 +152,14 @@ export function createCustomerClient(ports: Ports = { fetch: (...args) => fetch(
     enroll: (input: Enrollment, key: string) => preauth('enrollments', input, key, false),
     resend: (email: string, key: string) => preauth('verification-resend', { email }, key, false),
     recover: (email: string, key: string) => preauth('recovery', { email }, key, false),
-    async verify(key: string): Promise<void> { await withEntryProof('verification', proof => preauth('verifications', proof, key, true)); clearEntryProof(); },
+    async verify(key: string, code?: string): Promise<void> {
+      const locator = getVerificationLocator();
+      if (locator) {
+        if (!code || !/^\d{6}$/.test(code)) throw new CustomerApiError('VALIDATION_FAILED');
+        await preauth('verifications', { proofId: locator.proofId, proof: code }, key, true);
+      } else await withEntryProof('verification', proof => preauth('verifications', proof, key, true));
+      clearEntryProof();
+    },
     async confirmRecovery(newPassword: string, key: string): Promise<void> { await withEntryProof('recovery', proof => preauth('recovery-confirm', { ...proof, newPassword }, key, true)); clearEntryProof(); },
     readProfile: () => ports.lock(async () => {
       await ensureAccess(); const current = generation, result = await request('customer/profile', 'GET', undefined, { Authorization: 'Bearer ' + access!.accessToken });

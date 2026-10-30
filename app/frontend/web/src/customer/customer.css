@@ -4,3 +4,38 @@
 
 .cp-auth-portal{background:#edf4f2}.cp-auth-portal main{background:radial-gradient(circle at 10% 15%,#d9eee6 0,transparent 28%),radial-gradient(circle at 90% 84%,#d9eae9 0,transparent 26%),#f2f7f5;padding:30px 16px 75px}.cp-auth-portal .cp-page{max-width:610px;margin:35px auto;padding:39px 45px 44px;border:1px solid #d8e8e3;border-radius:15px;box-shadow:0 22px 58px #163f4614}.cp-auth-portal .cp-page h1{font-size:32px;letter-spacing:-.045em}.cp-auth-portal .cp-eyebrow{color:#0b897a}.cp-auth-portal .cp-description{line-height:1.7}.cp-auth-portal .cp-primary{background:#087e75;border-color:#087e75}.cp-auth-portal .cp-primary:hover{background:#07665f}.cp-auth-portal .cp-form-links a,.cp-auth-portal .cp-footer-link a{color:#087e75;font-weight:700}.cp-auth-portal .cp-page input:not([type=checkbox]):focus{border-color:#0a8c7d}.cp-auth-portal .cp-page label{color:#193d48}.cp-auth-portal .cp-page .cp-checkbox{margin-top:25px;padding:13px;background:#f4faf7;border:1px solid #dcece4;border-radius:8px}.cp-auth-portal .cp-page .cp-checkbox input{accent-color:#087e75}.cp-auth-portal .ps-footer{flex:none}.cp-workspace-portal .cp-header{position:sticky;top:0;z-index:20}.cp-workspace-portal .cp-page{max-width:760px}.cp-workspace-portal .cp-page:has(.cp-applications){max-width:960px}
 @media(max-width:700px){.cp-auth-portal main{padding:15px 0 45px}.cp-auth-portal .cp-page{margin:15px 16px;padding:29px 25px}.cp-auth-portal .cp-page h1{font-size:27px}}
+
+/* Customer entry follows the compact, centered ViettelPost reference layout using E-Logistics branding. */
+.cp-auth-portal{background:#e9edf3;color:#101820;font-family:Arial,Segoe UI,sans-serif}
+.cp-auth-portal main{display:flex;align-items:center;justify-content:center;background:#e9edf3;padding:64px 20px 120px}
+.cp-auth-portal .cp-page{width:min(100%,664px);max-width:664px;margin:0 auto;padding:38px 38px 43px;border:0;border-radius:8px;box-shadow:0 14px 32px #23313f12}
+.cp-auth-portal .cp-eyebrow{display:none}
+.cp-auth-portal .cp-page h1{margin:0 0 24px;color:#f00038;text-align:center;font-size:23px;font-weight:500;letter-spacing:0;line-height:1.35}
+.cp-auth-portal .cp-page .cp-description{margin:-12px 0 25px;color:#161616;text-align:center;font-size:16px;line-height:1.45}
+.cp-auth-portal .cp-page form{margin:0}
+.cp-auth-portal .cp-page label{color:#090909;font-size:16px;font-weight:600;margin:17px 0 8px}
+.cp-auth-portal .cp-page label:first-child{margin-top:0}
+.cp-auth-portal .cp-page input:not([type=checkbox]){height:50px;padding:11px 15px;border:1px solid #cbd3dc;border-radius:4px;color:#151515;font-size:16px}
+.cp-auth-portal .cp-page input::placeholder{color:#9ba3ac}
+.cp-auth-portal .cp-page input:not([type=checkbox]):focus{border-color:#f00038}
+.cp-auth-portal .cp-primary{min-height:50px;margin-top:28px;border:1px solid #ed0038;border-radius:4px;background:#ed0038;color:#fff;font-size:17px;font-weight:700;text-transform:uppercase}
+.cp-auth-portal .cp-primary:hover{background:#d90032}
+.cp-auth-portal .cp-form-links{justify-content:flex-end;margin-top:12px}
+.cp-auth-portal .cp-form-links a{color:#ef0036;font-size:15px;font-weight:400}
+.cp-auth-portal .cp-auth-switch{text-align:center;margin:30px 0 5px;color:#111;font-size:16px}
+.cp-auth-portal .cp-auth-switch a,.cp-auth-portal .cp-footer-link a{color:#0876ec;font-weight:400}
+.cp-auth-portal .cp-register-intro{text-align:center;margin:-14px 0 20px;color:#111;font-size:16px}
+.cp-auth-portal .cp-register-intro a{color:#0876ec;text-decoration:none}
+.cp-auth-portal .cp-footer-link{text-align:center;color:#111}
+.cp-auth-portal .cp-page .cp-checkbox{display:flex;background:none;border:0;padding:0;font-size:15px;font-weight:400;align-items:center;margin:19px 0 0}
+.cp-auth-portal .cp-checkbox input{accent-color:#ed0038}
+.cp-auth-portal .cp-hint{color:#687582;font-size:12px;margin:7px 0 11px}
+.cp-password-field{position:relative}
+.cp-password-field input{padding-right:52px!important}
+.cp-password-field button{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:0;background:transparent;color:#9ba3ac;cursor:pointer;font-size:22px;width:42px;height:40px}
+.cp-otp-timer{text-align:center;color:#ed0038;font-size:18px;font-weight:700;margin:8px 0 20px;font-variant-numeric:tabular-nums}
+.cp-otp-resend-title{margin:26px 0 12px;text-align:center;color:#4f5b66;font-size:14px}
+.cp-auth-portal .cp-notice{border-radius:4px}
+.ps-compact-links{display:flex;align-items:center;gap:42px}
+.ps-compact-links a{color:#182029;text-decoration:none;font-size:16px}
+@media(max-width:700px){.cp-auth-portal main{padding:38px 14px 72px}.cp-auth-portal .cp-page{margin:0;padding:30px 22px}.cp-auth-portal .cp-page h1{font-size:22px}.cp-auth-portal .cp-form-links{flex-direction:row;justify-content:flex-end}.ps-compact-links{gap:15px}.ps-compact-links a{font-size:13px}}

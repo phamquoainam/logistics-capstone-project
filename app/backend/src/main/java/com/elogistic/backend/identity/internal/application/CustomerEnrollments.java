@@ -28,6 +28,8 @@ public final class CustomerEnrollments implements CustomerEnrollmentCommands {
     private static String phone(String value){
         if(value==null)return null; // Reviewed legacy enrollment remains accepted for backward compatibility.
         String canonical=value.replaceAll("[\\s()-]","");
+        if(canonical.matches("0[35789][0-9]{8}"))canonical="+84"+canonical.substring(1);
+        else if(canonical.matches("84[35789][0-9]{8}"))canonical="+"+canonical;
         if(!canonical.matches("\\+[1-9][0-9]{7,14}"))throw fail(VALIDATION_FAILED);
         return canonical;
     }

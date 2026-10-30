@@ -68,9 +68,14 @@ public final class SmtpCustomerDelivery implements CustomerDeliveryTransport {
         byte[] token=null;
         try{
             intent.proof().requireAvailable(clock.instant());token=intent.token();
-            byte[] decoded=Base64.getUrlDecoder().decode(token);
-            try{if(decoded.length!=32 || !Arrays.equals(token,Base64.getUrlEncoder().withoutPadding().encode(decoded)))return outcome(Kind.BLOCKED);}
-            finally{Arrays.fill(decoded,(byte)0);}
+            if(intent.proof().enrollmentOtp()){
+                if(token.length!=43)return outcome(Kind.BLOCKED);
+                for(int index=0;index<6;index++)if(token[index]<'0' || token[index]>'9')return outcome(Kind.BLOCKED);
+            }else{
+                byte[] decoded=Base64.getUrlDecoder().decode(token);
+                try{if(decoded.length!=32 || !Arrays.equals(token,Base64.getUrlEncoder().withoutPadding().encode(decoded)))return outcome(Kind.BLOCKED);}
+                finally{Arrays.fill(decoded,(byte)0);}
+            }
             Properties properties=new Properties();
             properties.setProperty("mail.smtp.connectiontimeout","3000");properties.setProperty("mail.smtp.timeout","3000");properties.setProperty("mail.smtp.writetimeout","3000");
             properties.setProperty("mail.smtp.ssl.checkserveridentity","true");properties.setProperty("mail.smtp.ssl.protocols","TLSv1.3 TLSv1.2");
@@ -94,9 +99,18 @@ public final class SmtpCustomerDelivery implements CustomerDeliveryTransport {
                 case SECURITY_EMAIL_CHANGE->"/personal/security";case BUSINESS_CONTACT->"/personal/profile";case LEGACY_CUSTOMER_LINK->"/personal/security/link-customer";
                 default->throw configuration();
             };
-            String link=settings.portalOrigin()+path+"#proofId="+intent.proof().id()+"&proof="+new String(token,StandardCharsets.US_ASCII);
-            String introduction=recovery?"Bạn đã yêu cầu đặt lại mật khẩu E-Logistics.":"Bạn đã yêu cầu tạo tài khoản E-Logistics.";
-            message.setText(introduction+"\nMở liên kết và chọn xác nhận. Chỉ mở liên kết trên máy chạy E-Logistics local; liên kết không tự thay đổi tài khoản.\n"+link+"\nHết hạn: "+intent.proof().expiresAt()+"\nNếu bạn không thực hiện yêu cầu, hãy bỏ qua thư này.","UTF-8");message.saveChanges();
+            String link=settings.portalOrigin()+path+"#proofId="+intent.proof().id()
+                +(intent.proof().enrollmentOtp()?"&expiresAt="+intent.proof().expiresAt():"&proof="+new String(token,StandardCharsets.US_ASCII));
+            String content=intent.proof().enrollmentOtp()
+                ?"Mã xác minh E-Logistics: "+new String(token,0,6,StandardCharsets.US_ASCII)
+                    +"\nMã có hiệu lực trong 2 phút. Mở trang sau và nhập mã:\n"+link
+                    +"\nNếu bạn không đăng ký, hãy bỏ qua email này."
+                :recovery
+                    ?"Bạn đã yêu cầu đặt lại mật khẩu E-Logistics. Nhấp vào liên kết sau để tạo mật khẩu mới:\n"+link
+                        +"\nLiên kết có hiệu lực trong 15 phút. Nếu bạn không yêu cầu, hãy bỏ qua email này."
+                    :"Xác minh tài khoản E-Logistics qua liên kết:\n"+link
+                        +"\nNếu bạn không yêu cầu, hãy bỏ qua email này.";
+            message.setText(content,"UTF-8");message.saveChanges();
             sender.send(message);
             return new Outcome(Kind.ACCEPTED_BY_PROVIDER,(testTransport()?"TEST:":"SMTP:")+intent.id(),testTransport());
         }catch(MailAuthenticationException blocked){return outcome(Kind.BLOCKED);}

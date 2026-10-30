@@ -3,7 +3,7 @@ import type { FormEvent, ReactNode } from 'react';
 import { Link, NavLink, Navigate, Outlet, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { customerClient, CustomerApiError } from './client';
 import type { Enrollment, ProfileInput, VersionedProfile, ApplicationAddress, ApplicationDraft, ApplicationPage, VersionedApplication } from './client';
-import { clearEntryProof, hasEntryProof } from './entry-proof';
+import { clearEntryProof, getVerificationLocator, hasEntryProof } from './entry-proof';
 import PublicWebsite, { PublicFooter, PublicHeader } from './PublicWebsite';
 import './customer.css';
 
@@ -57,38 +57,49 @@ function useCommand<T>(work: (input: T, key: string) => Promise<void>) {
   return { submit, resolve, busy, error, uncertain, done };
 }
 function passwordValid(value: string) { return [...value].length >= 15 && new TextEncoder().encode(value).length <= 72; }
+function canonicalPhone(value: string) {
+  const compact = value.replace(/[\s()-]/g, '');
+  if (/^0[35789]\d{8}$/.test(compact)) return '+84' + compact.slice(1);
+  if (/^84[35789]\d{8}$/.test(compact)) return '+' + compact;
+  return compact;
+}
 const emailProps = { type: 'text', inputMode: 'email', autoCapitalize: 'none', autoCorrect: 'off', spellCheck: false, maxLength: 254, pattern: '[^\\s@]+@[^\\s@]+', required: true } as const;
 function Page({ title, description, children }: { title: string; description?: string; children: ReactNode }) { return <section className="cp-page"><p className="cp-eyebrow">E-LOGISTICS · TÀI KHOẢN CÁ NHÂN</p><h1 tabIndex={-1}>{title}</h1>{description && <p className="cp-description">{description}</p>}{children}</section>; }
+function PasswordField({ id, label, value, change, complete }: { id: string; label: string; value: string; change: (value: string) => void; complete: 'current-password' | 'new-password' }) {
+  const [visible, setVisible] = useState(false);
+  return <><label htmlFor={id}>{label}</label><div className="cp-password-field"><input id={id} type={visible ? 'text' : 'password'} autoComplete={complete} required maxLength={complete === 'new-password' ? 72 : 256} value={value} onChange={event => change(event.target.value)} /><button type="button" aria-label={`${visible ? 'Ẩn' : 'Hiện'} nội dung trường ${id === 'register-confirmation' ? 'xác nhận' : 'mật khẩu'}`} aria-pressed={visible} onClick={() => setVisible(current => !current)}>{visible ? '◉' : '◎'}</button></div></>;
+}
 function Guest({ children }: { children: ReactNode }) { const session = useSession(); return session.status === 'authenticated' ? <Navigate to="/personal" replace /> : children; }
 function Protected() { const session = useSession(); return session.status === 'authenticated' ? <Outlet key={`${session.subject?.accountId}:${session.subject?.securityVersion}`} /> : <Navigate to="/login" replace />; }
 function Login() {
   const session = useSession(), [email, setEmail] = useState(''), [password, setPassword] = useState('');
   const action = useCommand<{ email: string; password: string }>(async input => { try { await customerClient.login(input.email, input.password); } finally { setPassword(''); } });
   if (session.status === 'authenticated') return <Navigate to="/personal" replace />;
-  return <Page title="Chào mừng trở lại" description="Đăng nhập để sử dụng không gian gửi hàng cá nhân của bạn.">
+  return <Page title="Đăng nhập bằng mật khẩu">
     {session.error && !action.error && session.error !== 'SESSION_INVALID' && <Notice error>{message(new CustomerApiError(session.error))}</Notice>}
     <form onSubmit={event => { event.preventDefault(); void action.submit({ email, password }); }}>
-      <fieldset disabled={action.busy || action.uncertain}><label htmlFor="login-email">Email đã xác minh</label><input id="login-email" {...emailProps} autoComplete="username" value={email} onChange={e => setEmail(e.target.value)} />
-        <label htmlFor="login-password">Mật khẩu</label><input id="login-password" type="password" autoComplete="current-password" required maxLength={256} value={password} onChange={e => setPassword(e.target.value)} /></fieldset>
+      <fieldset disabled={action.busy || action.uncertain}><label htmlFor="login-email">Email đã xác minh</label><input id="login-email" {...emailProps} autoComplete="username" placeholder="Nhập email đã xác minh" value={email} onChange={e => setEmail(e.target.value)} />
+        <PasswordField id="login-password" label="Mật khẩu" complete="current-password" value={password} change={setPassword} /></fieldset>
       {action.error && <Notice error>{action.error}</Notice>}
       <button className="cp-primary" type="submit" disabled={action.busy}>{action.busy ? 'Đang đăng nhập…' : action.uncertain ? 'Đăng nhập lại với thông tin vừa gửi' : 'Đăng nhập'}</button>
-    </form><div className="cp-form-links"><Link to="/recover">Quên mật khẩu?</Link><Link to="/register">Tạo tài khoản cá nhân</Link></div>
+    </form><div className="cp-form-links"><Link to="/recover">Quên mật khẩu?</Link></div><p className="cp-auth-switch">Bạn chưa có tài khoản? <Link to="/register">Đăng ký ngay</Link></p>
   </Page>;
 }
 function Register() {
   const [email, setEmail] = useState(''), [name, setName] = useState(''), [phone, setPhone] = useState(''), [password, setPassword] = useState(''), [confirmation, setConfirmation] = useState(''), [validation, setValidation] = useState('');
   const action = useCommand<Enrollment>(async (input, key) => { await customerClient.enroll(input, key); setPassword(''); setConfirmation(''); });
-  function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); if (!action.uncertain && !/^\+[1-9][0-9]{7,14}$/.test(phone.replace(/[\s()-]/g, ''))) { setValidation('Số điện thoại cần có mã quốc gia, ví dụ +84901234567.'); return; } if (!action.uncertain && !passwordValid(password)) { setValidation('Mật khẩu cần ít nhất 15 ký tự và không quá 72 byte UTF-8.'); return; } if (!action.uncertain && password !== confirmation) { setValidation('Mật khẩu nhập lại chưa khớp.'); return; } setValidation(''); void action.submit({ email, displayName: name, phone: phone.replace(/[\s()-]/g, ''), password, consentVersion: 'S003-2026-10-27' }); }
-  return <Guest><Page title="Tạo tài khoản cá nhân" description="Bắt đầu với tài khoản riêng của bạn. Bạn có thể đăng ký trở thành Merchant sau khi đăng nhập.">
-    {action.done ? <><Notice>Đã tiếp nhận yêu cầu. Nếu email đủ điều kiện, bạn sẽ nhận được hướng dẫn xác minh. Vui lòng kiểm tra cả thư rác.</Notice><Link className="cp-primary cp-button" to="/verify-email">Tôi cần xác minh email</Link></> : <form onSubmit={submit}>
-      <fieldset disabled={action.busy || action.uncertain}><label htmlFor="register-name">Tên hiển thị</label><input id="register-name" autoComplete="name" required maxLength={160} value={name} onChange={e => setName(e.target.value)} />
-        <label htmlFor="register-email">Email</label><input id="register-email" {...emailProps} autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} />
-        <label htmlFor="register-phone">Số điện thoại liên hệ</label><input id="register-phone" type="tel" inputMode="tel" autoComplete="tel" required maxLength={32} placeholder="+84901234567" value={phone} onChange={e => setPhone(e.target.value)} /><p className="cp-hint">Dùng mã quốc gia. Số điện thoại chưa được xác minh và không dùng để đăng nhập hoặc khôi phục mật khẩu.</p>
-        <label htmlFor="register-password">Mật khẩu</label><input id="register-password" type="password" autoComplete="new-password" required maxLength={72} aria-describedby="password-rule" value={password} onChange={e => setPassword(e.target.value)} /><p id="password-rule" className="cp-hint">Ít nhất 15 ký tự, tối đa 72 byte UTF-8. Giữ nguyên dấu cách và chữ hoa khi đăng nhập.</p>
-        <label htmlFor="register-confirmation">Nhập lại mật khẩu</label><input id="register-confirmation" type="password" autoComplete="new-password" required maxLength={72} value={confirmation} onChange={e => setConfirmation(e.target.value)} />
+  function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); const normalized = canonicalPhone(phone); if (!action.uncertain && !/^\+[1-9][0-9]{7,14}$/.test(normalized)) { setValidation('Nhập số di động Việt Nam bắt đầu bằng 0 hoặc số quốc tế có mã quốc gia.'); return; } if (!action.uncertain && !passwordValid(password)) { setValidation('Mật khẩu cần ít nhất 15 ký tự và không quá 72 byte UTF-8.'); return; } if (!action.uncertain && password !== confirmation) { setValidation('Mật khẩu nhập lại chưa khớp.'); return; } setValidation(''); void action.submit({ email, displayName: name, phone: normalized, password, consentVersion: 'S003-2026-10-27' }); }
+  return <Guest><Page title="Tạo tài khoản mới">
+    <p className="cp-register-intro">Bạn đã có tài khoản? <Link to="/login">Đăng nhập ngay</Link></p>
+    {action.done ? <><Notice>Yêu cầu đã được tiếp nhận. Tài khoản chỉ được tạo khi bạn nhập đúng mã xác minh trong 2 phút. Hãy mở email và nhấp vào trang nhập mã.</Notice><Link className="cp-primary cp-button" to="/verify-email">Hướng dẫn nhập mã xác minh</Link></> : <form onSubmit={submit}>
+      <fieldset disabled={action.busy || action.uncertain}><label htmlFor="register-name">Họ và tên</label><input id="register-name" autoComplete="name" required maxLength={160} placeholder="Nhập họ và tên" value={name} onChange={e => setName(e.target.value)} />
+        <label htmlFor="register-email">Email</label><input id="register-email" {...emailProps} autoComplete="email" placeholder="Nhập email" value={email} onChange={e => setEmail(e.target.value)} />
+        <label htmlFor="register-phone">Số điện thoại liên hệ</label><input id="register-phone" type="tel" inputMode="tel" autoComplete="tel" required maxLength={32} placeholder="0901234567" value={phone} onChange={e => setPhone(e.target.value)} /><p className="cp-hint">Có thể nhập 0901234567; hệ thống lưu thành +84901234567. Số này chưa dùng để đăng nhập hoặc khôi phục mật khẩu.</p>
+        <PasswordField id="register-password" label="Mật khẩu" complete="new-password" value={password} change={setPassword} /><p id="password-rule" className="cp-hint">Ít nhất 15 ký tự, tối đa 72 byte UTF-8.</p>
+        <PasswordField id="register-confirmation" label="Nhập lại mật khẩu" complete="new-password" value={confirmation} change={setConfirmation} />
         <label className="cp-checkbox"><input type="checkbox" required />Tôi xác nhận thông tin và đồng ý tạo tài khoản cá nhân.</label></fieldset>
-      {(validation || action.error) && <Notice error>{validation || action.error}</Notice>}<button className="cp-primary" disabled={action.busy} type="submit">{action.busy ? 'Đang tiếp nhận…' : action.uncertain ? 'Gửi lại đúng yêu cầu vừa rồi' : 'Tạo tài khoản'}</button>
-    </form>}<p className="cp-footer-link">Đã có tài khoản? <Link to="/login">Đăng nhập</Link></p>
+      {(validation || action.error) && <Notice error>{validation || action.error}</Notice>}<button className="cp-primary" disabled={action.busy} type="submit">{action.busy ? 'Đang tiếp nhận…' : action.uncertain ? 'Gửi lại đúng yêu cầu vừa rồi' : 'Đăng ký ngay'}</button>
+    </form>}
   </Page></Guest>;
 }
 function EmailRequest({ kind }: { kind: 'resend' | 'recover' }) {
@@ -103,11 +114,18 @@ function EndSessionBeforeProof() {
   return <><Notice>Bạn đang đăng nhập. Hãy kết thúc phiên hiện tại trước khi xác nhận liên kết này.</Notice>{error && <Notice error>{error}</Notice>}<button className="cp-primary" disabled={busy} onClick={() => { setBusy(true); void customerClient.logout().catch(e => setError(message(e))).finally(() => setBusy(false)); }}>Đăng xuất và tiếp tục</button></>;
 }
 function Verify() {
-  const session = useSession(); const action = useCommand<null>(async (_input, key) => { await customerClient.verify(key); });
+  const session = useSession(), [locator] = useState(getVerificationLocator);
+  const [code, setCode] = useState(''), [now, setNow] = useState(Date.now());
+  const action = useCommand<string>(async (value, key) => { await customerClient.verify(key, value); setCode(''); });
+  useEffect(() => { if (!locator) return; const timer = window.setInterval(() => setNow(Date.now()), 1000); return () => window.clearInterval(timer); }, [locator]);
+  const remaining = locator ? Math.max(0, Math.ceil((locator.expiresAt - now) / 1000)) : 0;
   return <Page title="Xác minh email" description="Chỉ xác nhận khi bạn đã yêu cầu tạo tài khoản này.">
-    {session.status === 'authenticated' ? <EndSessionBeforeProof /> : action.done ? <><Notice>Email đã được xác minh. Bạn có thể đăng nhập bằng thông tin đã đăng ký.</Notice><Link className="cp-primary cp-button" to="/login">Đăng nhập</Link></> : hasEntryProof('verification') ? <>
-      {action.error && <Notice error>{action.error}</Notice>}<button className="cp-primary" disabled={action.busy} onClick={() => { void action.submit(null); }}>{action.busy ? 'Đang xác minh…' : 'Xác nhận email của tôi'}</button>
-    </> : <><Notice>Mở liên kết xác minh trong email để tiếp tục. Nếu chưa nhận được hướng dẫn hoặc liên kết đã hết hạn, bạn có thể yêu cầu lại.</Notice><EmailRequest kind="resend" /></>}
+    {session.status === 'authenticated' ? <EndSessionBeforeProof /> : action.done ? <><Notice>Email đã được xác minh và tài khoản đã được tạo. Bạn có thể đăng nhập.</Notice><Link className="cp-primary cp-button" to="/login">Đăng nhập</Link></> : locator ? <>
+      <p className="cp-otp-timer" role="timer" aria-live="off">{remaining > 0 ? `Mã hết hạn sau ${String(Math.floor(remaining / 60)).padStart(2, '0')}:${String(remaining % 60).padStart(2, '0')}` : 'Mã đã hết hạn'}</p>
+      {remaining > 0 && <form onSubmit={event => { event.preventDefault(); void action.submit(code); }}><fieldset disabled={action.busy || action.uncertain}><label htmlFor="verification-code">Mã xác minh 6 chữ số</label><input id="verification-code" type="text" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required value={code} onChange={event => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))} /></fieldset>{action.error && <Notice error>{action.error}</Notice>}<button className="cp-primary" type="submit" disabled={action.busy || code.length !== 6}>{action.busy ? 'Đang xác minh…' : 'Xác minh tài khoản'}</button></form>}
+      {remaining === 0 && <Notice error>Mã không còn hiệu lực. Tài khoản chưa được tạo. Bạn có thể yêu cầu mã mới.</Notice>}
+      <p className="cp-otp-resend-title">Chưa nhận được mã? Gửi lại mã xác minh</p><EmailRequest kind="resend" />
+    </> : hasEntryProof('verification') ? <>{action.error && <Notice error>{action.error}</Notice>}<button className="cp-primary" disabled={action.busy} onClick={() => { void action.submit(''); }}>{action.busy ? 'Đang xác minh…' : 'Xác nhận email của tôi'}</button></> : <><Notice>Mở liên kết trong email để nhập mã xác minh. Nếu mã hết hạn, bạn có thể yêu cầu gửi lại.</Notice><EmailRequest kind="resend" /></>}
     <p className="cp-footer-link"><Link to="/login">Quay lại đăng nhập</Link></p>
   </Page>;
 }

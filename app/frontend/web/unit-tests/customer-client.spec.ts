@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { createCustomerClient } from '../src/customer/client';
-import { captureEntryProof, hasEntryProof, withEntryProof, clearEntryProof } from '../src/customer/entry-proof';
+import { captureEntryProof, getVerificationLocator, hasEntryProof, withEntryProof, clearEntryProof } from '../src/customer/entry-proof';
 
 const account='10000000-0000-4000-8000-000000000001', other='10000000-0000-4000-8000-000000000002', key='10000000-0000-4000-8000-000000000010';
 const subject={accountId:account,displayName:'Synthetic Customer',verifiedEmail:'synthetic@example.invalid',securityVersion:1};
@@ -75,6 +75,15 @@ test('proof fragment is removed synchronously and only explicit POST can consume
   const removed:string[]=[];captureEntryProof({href:'https://portal.example.invalid/verify-email#proofId='+key+'&proof='+'A'.repeat(43)},{replaceState:(_state,_unused,url)=>{removed.push(String(url));}});
   expect(removed).toEqual(['/verify-email']);expect(hasEntryProof('verification')).toBe(true);expect(hasEntryProof('recovery')).toBe(false);
   const {client,calls}=fixture(call=>call.path.endsWith('/csrf')?Response.json({challenge:'challenge'}):new Response(null,{status:204}));expect(calls).toHaveLength(0);await client.verify(account);expect(calls[1].path).toBe('/api/v1/customer-auth/verifications');expect(calls[1].init.method).toBe('POST');expect(JSON.parse(String(calls[1].init.body))).toEqual({proofId:key,proof:'A'.repeat(43)});expect(hasEntryProof('verification')).toBe(false);client.dispose();
+});
+
+test('OTP locator strips the fragment and submits only six typed digits',async()=>{
+  const expiry='2026-10-30T10:02:00Z',removed:string[]=[];
+  captureEntryProof({href:`https://portal.example.invalid/verify-email#proofId=${key}&expiresAt=${expiry}`},{replaceState:(_state,_unused,url)=>{removed.push(String(url));}});
+  expect(removed).toEqual(['/verify-email']);expect(getVerificationLocator()).toEqual({proofId:key,expiresAt:Date.parse(expiry)});
+  const {client,calls}=fixture(call=>call.path.endsWith('/csrf')?Response.json({challenge:'challenge'}):new Response(null,{status:204}));
+  await expect(client.verify(account,'not-otp')).rejects.toMatchObject({code:'VALIDATION_FAILED'});
+  await client.verify(account,'123456');expect(JSON.parse(String(calls[1].init.body))).toEqual({proofId:key,proof:'123456'});expect(getVerificationLocator()).toBeUndefined();client.dispose();
 });
 test('query duplicate wrong-route and oversized proofs never become possession authority',()=>{
   for(const href of ['https://portal.example.invalid/verify-email?proof=bad#proofId='+key+'&proof='+'A'.repeat(43),'https://portal.example.invalid/verify-email#proofId='+key+'&proof='+'A'.repeat(43)+'&proof=bad','https://portal.example.invalid/login#proofId='+key+'&proof='+'A'.repeat(43),'https://portal.example.invalid/recover/confirm#proofId='+key+'&proof='+'A'.repeat(500)]){

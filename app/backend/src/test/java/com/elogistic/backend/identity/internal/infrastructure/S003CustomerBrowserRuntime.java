@@ -92,13 +92,17 @@ final class S003CustomerBrowserRuntime {
                 try{
                     if(!exchange.getRequestMethod().equals("GET") || !nonce.equals(exchange.getRequestHeaders().getFirst("X-Owned-Inbox-Nonce")) || !Set.of("/mail/0","/mail/1").contains(exchange.getRequestURI().toString())){exchange.sendResponseHeaders(404,-1);return;}
                     int index=Integer.parseInt(exchange.getRequestURI().getPath().substring(6));var message=inbox.message(index);if(message.isEmpty()){exchange.sendResponseHeaders(202,-1);return;}
-                    byte[] bytes=message.get();String link;
+                    byte[] bytes=message.get();String link,code=null;
                     try{
                         var mime=new jakarta.mail.internet.MimeMessage(jakarta.mail.Session.getInstance(new Properties()),new ByteArrayInputStream(bytes));
                         if(mime.getAllRecipients().length!=1 || !EMAIL.equals(mime.getAllRecipients()[0].toString()))throw new IllegalStateException();
-                        String path=index==0?"/verify-email":"/recover/confirm";var match=java.util.regex.Pattern.compile(java.util.regex.Pattern.quote(origin+path)+"#proofId=[0-9a-f-]{36}&proof=[A-Za-z0-9_-]{43}").matcher((String)mime.getContent());if(!match.find())throw new IllegalStateException();link=match.group();
+                        String path=index==0?"/verify-email":"/recover/confirm";
+                        var content=(String)mime.getContent();
+                        var match=java.util.regex.Pattern.compile(java.util.regex.Pattern.quote(origin+path)+(index==0?"#proofId=[0-9a-f-]{36}&expiresAt=[0-9:.TZ-]+":"#proofId=[0-9a-f-]{36}&proof=[A-Za-z0-9_-]{43}")).matcher(content);
+                        if(!match.find())throw new IllegalStateException();link=match.group();
+                        if(index==0){var otp=java.util.regex.Pattern.compile("Mã xác minh E-Logistics: ([0-9]{6})").matcher(content);if(!otp.find())throw new IllegalStateException();code=otp.group(1);}
                     }finally{Arrays.fill(bytes,(byte)0);}
-                    byte[] response=JSON.writeValueAsBytes(Map.of("link",link));exchange.getResponseHeaders().set("Content-Type","application/json");exchange.getResponseHeaders().set("Cache-Control","no-store");exchange.sendResponseHeaders(200,response.length);exchange.getResponseBody().write(response);Arrays.fill(response,(byte)0);
+                    byte[] response=JSON.writeValueAsBytes(code==null?Map.of("link",link):Map.of("link",link,"code",code));exchange.getResponseHeaders().set("Content-Type","application/json");exchange.getResponseHeaders().set("Cache-Control","no-store");exchange.sendResponseHeaders(200,response.length);exchange.getResponseBody().write(response);Arrays.fill(response,(byte)0);
                 }catch(Exception invalid){exchange.sendResponseHeaders(503,-1);}finally{exchange.close();}
             });server.start();
         }

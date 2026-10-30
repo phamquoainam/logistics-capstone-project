@@ -25,7 +25,7 @@ class CustomerProofProtectionTests {
     }
     @Test void purposeDeadlinesAndRequiredBindingsAreExact(){
         for(var purpose:CustomerProof.Purpose.values()){
-            var p=proof(purpose);assertEquals(NOW.plusSeconds(purpose==CustomerProof.Purpose.CUSTOMER_ENROLLMENT?86400:900),p.expiresAt());
+            var p=proof(purpose);assertEquals(NOW.plusSeconds(purpose==CustomerProof.Purpose.CUSTOMER_ENROLLMENT?120:900),p.expiresAt());
             if(purpose.customerSessionRequired() || purpose==CustomerProof.Purpose.LEGACY_CUSTOMER_LINK)
                 assertThrows(DomainViolation.class,()->CustomerProof.issue(p.id(),ACCOUNT,purpose,NOW,null,null,p.organizationId()));
         }
@@ -61,11 +61,25 @@ class CustomerProofProtectionTests {
             var x=crypto.open(p,DESTINATION,a.verifierKey(),a.encryptionKey(),a.nonce(),a.ciphertext(),NOW);
             var y=crypto.open(p,DESTINATION,b.verifierKey(),b.encryptionKey(),b.nonce(),b.ciphertext(),NOW)){
             byte[] first=x.token(),second=y.token();try{
-                assertEquals(43,first.length);assertEquals(32,Base64.getUrlDecoder().decode(first).length);
-                assertFalse(Arrays.equals(first,second));assertFalse(Arrays.equals(a.nonce(),b.nonce()));assertFalse(Arrays.equals(a.verifier(),b.verifier()));
+                assertEquals(43,first.length);assertTrue(new String(first,0,6,StandardCharsets.US_ASCII).matches("[0-9]{6}"));
+                assertFalse(Arrays.equals(first,second));assertFalse(Arrays.equals(a.nonce(),b.nonce()));
+                if(!Arrays.equals(Arrays.copyOf(first,6),Arrays.copyOf(second,6)))assertFalse(Arrays.equals(a.verifier(),b.verifier()));
                 assertEquals(59,a.ciphertext().length);assertEquals(12,a.nonce().length);
-                assertTrue(crypto.matches(p,"v1",first,a.verifier(),NOW));
+                assertTrue(crypto.matches(p,"v1",Arrays.copyOf(first,6),a.verifier(),NOW));
+                assertFalse(crypto.matches(p,"v1",first,a.verifier(),NOW));
+                assertFalse(crypto.matches(p,"v1",Arrays.copyOf(first,6),a.verifier(),p.expiresAt()));
             }finally{Arrays.fill(first,(byte)0);Arrays.fill(second,(byte)0);}
+        }
+    }
+    @Test void existingTwentyFourHourEnrollmentLinksRemainReadableWithoutBecomingOtp(){
+        var legacy=new CustomerProof(UUID.randomUUID(),ACCOUNT,CustomerProof.Purpose.CUSTOMER_ENROLLMENT,NOW,NOW.plusSeconds(86400),null,null,null,null,null);
+        var crypto=protection();
+        try(var sealed=crypto.issue(legacy,DESTINATION);var opened=crypto.open(legacy,DESTINATION,"v1","e1",sealed.nonce(),sealed.ciphertext(),NOW)){
+            byte[] token=opened.token();try{
+                assertEquals(32,Base64.getUrlDecoder().decode(token).length);
+                assertTrue(crypto.matches(legacy,"v1",token,sealed.verifier(),NOW));
+                assertFalse(crypto.matches(legacy,"v1",Arrays.copyOf(token,6),sealed.verifier(),NOW));
+            }finally{Arrays.fill(token,(byte)0);}
         }
     }
     @Test void verifierBindsLocatorSubjectPurposeTimeSessionAndVersion(){
@@ -110,8 +124,9 @@ class CustomerProofProtectionTests {
         var p=proof(CustomerProof.Purpose.CUSTOMER_ENROLLMENT);
         try(var a=old.issue(p,DESTINATION);var opened=rotated.open(p,DESTINATION,"v1","e1",a.nonce(),a.ciphertext(),NOW)){
             byte[] token=opened.token();try{
-                assertTrue(rotated.matches(p,"v1",token,a.verifier(),NOW));assertFalse(rotated.matches(p,"v2",token,a.verifier(),NOW));
-                assertFalse(removed.matches(p,"v1",token,a.verifier(),NOW));
+                byte[] code=Arrays.copyOf(token,6);
+                assertTrue(rotated.matches(p,"v1",code,a.verifier(),NOW));assertFalse(rotated.matches(p,"v2",code,a.verifier(),NOW));
+                assertFalse(removed.matches(p,"v1",code,a.verifier(),NOW));
                 assertThrows(IllegalStateException.class,()->removed.open(p,DESTINATION,"v1","e1",a.nonce(),a.ciphertext(),NOW));
             }finally{Arrays.fill(token,(byte)0);}
         }
@@ -150,7 +165,7 @@ class CustomerProofProtectionTests {
         var crypto=protection();var p=proof(CustomerProof.Purpose.CUSTOMER_ENROLLMENT);var a=crypto.issue(p,DESTINATION);
         byte[] changed=a.ciphertext();changed[0]^=1;
         var opened=crypto.open(p,DESTINATION,"v1","e1",a.nonce(),a.ciphertext(),NOW);
-        byte[] token=opened.token();Arrays.fill(token,(byte)0);assertTrue(crypto.matches(p,"v1",opened.token(),a.verifier(),NOW));
+        byte[] token=opened.token();Arrays.fill(token,(byte)0);assertTrue(crypto.matches(p,"v1",Arrays.copyOf(opened.token(),6),a.verifier(),NOW));
         assertEquals("CustomerProof[redacted]",p.toString());assertEquals("ProtectedCustomerProof[redacted]",a.toString());
         assertEquals("OpenedCustomerProof[redacted]",opened.toString());assertEquals("ProtectedCustomerProofs[keys redacted]",crypto.toString());
         opened.close();a.close();assertThrows(IllegalStateException.class,opened::token);assertThrows(IllegalStateException.class,a::ciphertext);
