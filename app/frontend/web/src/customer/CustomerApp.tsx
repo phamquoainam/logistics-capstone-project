@@ -30,6 +30,14 @@ function message(error: unknown): string {
   return messages[error.code] ?? 'Không thể hoàn tất yêu cầu. Vui lòng kiểm tra thông tin và thử lại sau.';
 }
 function Notice({ children, error = false }: { children: ReactNode; error?: boolean }) { return <div className={`cp-notice ${error ? 'cp-error' : ''}`} role={error ? 'alert' : 'status'}>{children}</div>; }
+type AuthSuccess = 'registered' | 'password-reset';
+function SuccessPopup({ kind, dismiss }: { kind: AuthSuccess; dismiss: () => void }) {
+  return <div className="cp-success-popup" role="status" aria-live="polite" aria-atomic="true">
+    <span className="cp-success-popup-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m5 12 4 4L19 6" /></svg></span>
+    <div><strong>{kind === 'registered' ? 'Bạn đã đăng ký thành công!' : 'Bạn đã đổi mật khẩu thành công!'}</strong><p>{kind === 'registered' ? 'Chào mừng bạn đến với movapost. Đăng nhập để bắt đầu hành trình của bạn.' : 'Hãy đăng nhập bằng mật khẩu mới của bạn.'}</p></div>
+    <button type="button" aria-label="Đóng thông báo thành công" onClick={dismiss}><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="m6 6 12 12M18 6 6 18" /></svg></button>
+  </div>;
+}
 function Loading() { return <p className="cp-loading" role="status">Đang kiểm tra phiên và tải dữ liệu…</p>; }
 function useSession() { return useSyncExternalStore(customerClient.subscribe, customerClient.getSnapshot, customerClient.getSnapshot); }
 function useCommand<T>(work: (input: T, key: string) => Promise<void>) {
@@ -115,7 +123,7 @@ function EndSessionBeforeProof() {
   const [error, setError] = useState(''), [busy, setBusy] = useState(false);
   return <><Notice>Bạn đang đăng nhập. Hãy kết thúc phiên hiện tại trước khi xác nhận liên kết này.</Notice>{error && <Notice error>{error}</Notice>}<button className="cp-primary" disabled={busy} onClick={() => { setBusy(true); void customerClient.logout().catch(e => setError(message(e))).finally(() => setBusy(false)); }}>Đăng xuất và tiếp tục</button></>;
 }
-function Verify({ recovery = false }: { recovery?: boolean }) {
+function Verify({ recovery = false, onRegistered }: { recovery?: boolean; onRegistered: () => void }) {
   const session = useSession(), navigate = useNavigate();
   const purpose = recovery ? 'recovery' : 'verification';
   const [context, setContext] = useState(() => getOtpChallenge(purpose));
@@ -124,7 +132,7 @@ function Verify({ recovery = false }: { recovery?: boolean }) {
   const [code, setCode] = useState(''), [now, setNow] = useState(Date.now());
   const action = useCommand<string>(async (value, key) => {
     if (recovery) { await customerClient.verifyRecovery(value, key); setCode(''); navigate('/recover/confirm'); }
-    else { await customerClient.verify(key, value); setCode(''); }
+    else { await customerClient.verify(key, value); setCode(''); onRegistered(); }
   });
   const resend = useCommand<string>(async (email, key) => {
     await (recovery ? customerClient.recover(email, key) : customerClient.resend(email, key));
@@ -135,7 +143,7 @@ function Verify({ recovery = false }: { recovery?: boolean }) {
   const cooldown = locator ? Math.max(0, Math.ceil((locator.expiresAt - 90000 - now) / 1000)) : 0;
   const time = (value: number) => `${String(Math.floor(value / 60)).padStart(2, '0')}:${String(value % 60).padStart(2, '0')}`;
   return <Page otp title={recovery ? 'Xác minh khôi phục mật khẩu' : 'Xác minh email'}>
-    {session.status === 'authenticated' ? <EndSessionBeforeProof /> : action.done && !recovery ? <><Notice>Email đã được xác minh và tài khoản đã được tạo. Bạn có thể đăng nhập.</Notice><Link className="cp-primary cp-button" to="/login">Đăng nhập</Link></> : locator ? <>
+    {session.status === 'authenticated' ? <EndSessionBeforeProof /> : locator ? <>
       <div className="cp-otp-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="3" y="5" width="18" height="14" rx="3" /><path d="m4 7 8 6 8-6" /></svg></div>
       <p className="cp-otp-intro">Nhập mã 6 số từ email{context ? <> <strong>{context.email}</strong></> : ''}<span>Nếu email đủ điều kiện, mã có hiệu lực trong 2 phút. Kiểm tra cả thư rác.</span></p>
       <form onSubmit={event => { event.preventDefault(); void action.submit(code); }}>
@@ -151,12 +159,12 @@ function Verify({ recovery = false }: { recovery?: boolean }) {
   </Page>;
 }
 function Recover() { return <Guest><Page title="Quên mật khẩu?" description="Nhập email đã xác minh để nhận mã khôi phục mật khẩu."><EmailRequest kind="recover" /><p className="cp-footer-link"><Link to="/login">Quay lại đăng nhập</Link></p></Page></Guest>; }
-function ConfirmRecovery() {
+function ConfirmRecovery({ onRecovered }: { onRecovered: () => void }) {
   const session = useSession(), [password, setPassword] = useState(''), [confirmation, setConfirmation] = useState(''), [validation, setValidation] = useState('');
-  const action = useCommand<string>(async (value, key) => { await customerClient.confirmRecovery(value, key); setPassword(''); setConfirmation(''); });
+  const action = useCommand<string>(async (value, key) => { await customerClient.confirmRecovery(value, key); setPassword(''); setConfirmation(''); onRecovered(); });
   function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); if (!action.uncertain && !passwordValid(password)) { setValidation('Mật khẩu cần ít nhất 15 ký tự và không quá 72 byte UTF-8.'); return; } if (!action.uncertain && password !== confirmation) { setValidation('Mật khẩu nhập lại chưa khớp.'); return; } setValidation(''); void action.submit(password); }
   return <Page title="Đặt mật khẩu mới">
-    {session.status === 'authenticated' ? <EndSessionBeforeProof /> : action.done ? <><Notice>Mật khẩu đã được cập nhật. Vui lòng đăng nhập lại.</Notice><Link className="cp-primary cp-button" to="/login">Đăng nhập</Link></> : !hasEntryProof('recovery') ? <><Notice>Phiên khôi phục chưa hợp lệ hoặc không còn trên trang này.</Notice><Link to="/recover">Yêu cầu mã mới</Link></> : <form onSubmit={submit}>
+    {session.status === 'authenticated' ? <EndSessionBeforeProof /> : !hasEntryProof('recovery') ? <><Notice>Phiên khôi phục chưa hợp lệ hoặc không còn trên trang này.</Notice><Link to="/recover">Yêu cầu mã mới</Link></> : <form onSubmit={submit}>
       <fieldset disabled={action.busy || action.uncertain}><label htmlFor="recovery-password">Mật khẩu mới</label><input id="recovery-password" type="password" autoComplete="new-password" required maxLength={72} aria-describedby="recovery-rule" value={password} onChange={e => setPassword(e.target.value)} /><p id="recovery-rule" className="cp-hint">Ít nhất 15 ký tự, tối đa 72 byte UTF-8.</p><label htmlFor="recovery-confirmation">Nhập lại mật khẩu mới</label><input id="recovery-confirmation" type="password" autoComplete="new-password" required maxLength={72} value={confirmation} onChange={e => setConfirmation(e.target.value)} /></fieldset>
       {(validation || action.error) && <Notice error>{validation || action.error}</Notice>}<button className="cp-primary" type="submit" disabled={action.busy}>{action.busy ? 'Đang cập nhật…' : 'Xác nhận mật khẩu mới'}</button>
     </form>}
@@ -233,15 +241,18 @@ function ApplicationDetail() {
   return <Page title="Chi tiết hồ sơ Merchant"><Link to="/personal/applications">← Danh sách hồ sơ</Link>{loading ? <Loading /> : error ? <><Notice error>{error}</Notice><button className="cp-secondary" onClick={() => setRevision(v => v + 1)}>Tải lại hồ sơ Merchant</button></> : data && <><p>Trạng thái: <strong>{applicationStates[data.application.state]}</strong> · phiên bản {data.application.version}</p>{success && <Notice>Đã lưu bản nháp.</Notice>}{data.application.informationRequest && <Notice>{data.application.informationRequest}</Notice>}{data.application.state === 'DRAFT' ? <ApplicationEditor key={`${id}:${data.application.version}:${revision}`} original={data} saved={value => { setData(value); setSuccess(true); }} reload={() => setRevision(v => v + 1)} /> : <Notice>Hồ sơ đã được ghi nhận. Thông tin đã nộp được lưu theo từng lần xét duyệt.</Notice>}</>}</Page>;
 }
 export default function CustomerApp() {
-  const session = useSession(), location = useLocation();
+  const session = useSession(), location = useLocation(), navigate = useNavigate();
+  const [success, setSuccess] = useState<{ kind: AuthSuccess; id: string }>();
+  useEffect(() => { if (!success) return; const timer = window.setTimeout(() => setSuccess(undefined), 10000); return () => window.clearTimeout(timer); }, [success]);
+  function complete(kind: AuthSuccess) { setSuccess({ kind, id: crypto.randomUUID() }); navigate('/login', { replace: true }); }
   useEffect(() => { if (!['/verify-email', '/recover/otp', '/recover/confirm'].includes(location.pathname)) clearEntryProof(); document.title = 'movapost. | Gửi niềm tin, nối hành trình'; window.scrollTo(0, 0); document.querySelector<HTMLElement>('main h1')?.focus(); }, [location.pathname]);
   const accountRoute = /^\/(login|register|verify-email|recover|personal|merchant)(\/|$)/.test(location.pathname);
   const authRoute = /^\/(login|register|verify-email|recover)(\/|$)/.test(location.pathname);
   if (!accountRoute) return <PublicWebsite />;
-  return <div className={`customer-portal ${authRoute ? 'cp-auth-portal' : 'cp-workspace-portal'}`}><a className="cp-skip" href="#main-content">Đến nội dung chính</a>{authRoute ? <PublicHeader compact /> : <header className="cp-header"><PublicBrand /><nav aria-label="Điều hướng tài khoản">
+  return <div className={`customer-portal ${authRoute ? 'cp-auth-portal' : 'cp-workspace-portal'}`}><a className="cp-skip" href="#main-content">Đến nội dung chính</a>{success && <SuccessPopup key={success.id} kind={success.kind} dismiss={() => setSuccess(undefined)} />}{authRoute ? <PublicHeader compact /> : <header className="cp-header"><PublicBrand /><nav aria-label="Điều hướng tài khoản">
     {session.status === 'authenticated' ? <><NavLink to="/personal" end>Cá nhân</NavLink><NavLink to="/personal/profile">Hồ sơ</NavLink><NavLink to="/personal/applications">Merchant</NavLink><button className="cp-logout" onClick={() => { void customerClient.logout().catch(() => {}); }}>Đăng xuất</button></> : <><NavLink to="/login">Đăng nhập</NavLink><NavLink to="/register">Đăng ký</NavLink></>}
   </nav></header>}<main id="main-content" key={location.pathname}>{session.status === 'loading' ? <Loading /> : <Routes>
-    <Route path="/login" element={<Login />} /><Route path="/register" element={<Register />} /><Route path="/verify-email" element={<Verify />} /><Route path="/recover" element={<Recover />} /><Route path="/recover/otp" element={<Verify recovery />} /><Route path="/recover/confirm" element={<ConfirmRecovery />} />
+    <Route path="/login" element={<Login />} /><Route path="/register" element={<Register />} /><Route path="/verify-email" element={<Verify onRegistered={() => complete('registered')} />} /><Route path="/recover" element={<Recover />} /><Route path="/recover/otp" element={<Verify recovery onRegistered={() => complete('registered')} />} /><Route path="/recover/confirm" element={<ConfirmRecovery onRecovered={() => complete('password-reset')} />} />
     <Route element={<Protected />}><Route path="/personal" element={<Personal />} /><Route path="/personal/profile" element={<ProfilePage />} /><Route path="/personal/applications" element={<ApplicationList />} /><Route path="/personal/applications/:id" element={<ApplicationDetail />} /><Route path="/merchant" element={<MerchantEntry />} /></Route>
     <Route path="*" element={<Page title="Không tìm thấy trang"><Link to="/">Về trang chủ</Link></Page>} />
   </Routes>}</main>{authRoute ? <PublicFooter /> : <footer className="cp-footer">movapost. · Gửi niềm tin, nối hành trình.</footer>}</div>;

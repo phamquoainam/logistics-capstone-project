@@ -38,7 +38,7 @@ test('verification strips fragment before API calls and requires explicit confir
   const calls = await fixture(context), proof = 'A'.repeat(43); const urls: string[] = []; page.on('request', request => urls.push(request.url()));
   await page.goto('/verify-email#proofId=' + proofId + '&proof=' + proof); await expect(page.getByRole('heading', { name: 'Xác minh email', exact: true })).toBeVisible();
   expect(new URL(page.url()).hash).toBe(''); await expect(page.locator('body')).not.toContainText(proof); expect(calls.filter(c => c.path.endsWith('/verifications'))).toHaveLength(0); expect(urls.some(url => url.includes(proof))).toBe(false);
-  await page.getByRole('button', { name: 'Xác nhận email của tôi' }).click(); await expect(page.getByRole('status')).toContainText('Email đã được xác minh'); expect(calls.filter(c => c.path.endsWith('/verifications'))).toHaveLength(1);
+  await page.getByRole('button', { name: 'Xác nhận email của tôi' }).click(); await expect(page.getByRole('status')).toContainText('Bạn đã đăng ký thành công!'); expect(calls.filter(c => c.path.endsWith('/verifications'))).toHaveLength(1);
   expect(await page.evaluate(() => [localStorage.length, sessionStorage.length])).toEqual([0, 0]);
 });
 test('registration OTP requires typed code and expires after two minutes', async ({ page, context }) => {
@@ -49,6 +49,7 @@ test('registration OTP requires typed code and expires after two minutes', async
   await expect(page.getByRole('timer')).toContainText('02:00');
   await page.getByLabel('Mã xác minh 6 chữ số').fill('123456');
   await page.getByRole('button', { name: 'Xác minh tài khoản' }).click();
+  await expect(page).toHaveURL(/\/login$/); await expect(page.getByRole('status')).toContainText('Chào mừng bạn đến với movapost.');
   await expect.poll(() => calls.filter(call => call.path.endsWith('/verifications')).length).toBe(1);
   expect(calls.find(call => call.path.endsWith('/verifications'))?.body).toEqual({proofId,proof:'123456'});
   await page.goto('/login');
@@ -65,8 +66,9 @@ test('recovery confirmation retains exact command after an unknown response with
     if (++attempts === 1) await route.abort('failed'); else await route.fulfill({ status: 204 }); return true;
   });
   await page.goto('/recover/confirm#proofId=' + proofId + '&proof=' + 'B'.repeat(43)); await page.getByLabel('Mật khẩu mới', { exact: true }).fill('synthetic-recovered-password'); await page.getByLabel('Nhập lại mật khẩu mới').fill('synthetic-recovered-password'); await page.getByRole('button', { name: 'Xác nhận mật khẩu mới' }).click();
-  await expect(page.getByRole('alert')).toContainText('Chưa xác định'); expect(attempts).toBe(1); await expect(page.getByLabel('Mật khẩu mới', { exact: true })).toBeDisabled();
-  await page.getByRole('button', { name: 'Xác nhận mật khẩu mới' }).click(); await expect(page.getByRole('status')).toContainText('Mật khẩu đã được cập nhật');
+  await expect(page.getByRole('alert')).toContainText('Chưa xác định'); await expect(page).toHaveURL(/\/recover\/confirm$/); await expect(page.locator('.cp-success-popup')).toHaveCount(0); expect(attempts).toBe(1); await expect(page.getByLabel('Mật khẩu mới', { exact: true })).toBeDisabled();
+  await page.getByRole('button', { name: 'Xác nhận mật khẩu mới' }).click(); await expect(page.getByRole('status')).toContainText('Bạn đã đổi mật khẩu thành công!');
+  await expect(page).toHaveURL(/\/login$/); await expect(page.getByLabel('Email đã xác minh')).toBeVisible();
   const commands = calls.filter(c => c.path.endsWith('/recovery-confirm')); expect(commands).toHaveLength(2); expect(commands[0].key).toBe(commands[1].key); expect(commands[0].body).toEqual(commands[1].body); expect(new URL(page.url()).hash).toBe('');
 });
 test('profile unknown outcome stays unknown until scoped receipt GET confirms commit', async ({ page, context }) => {
@@ -135,7 +137,7 @@ test('recovery opens OTP immediately, resends with retained email, verifies befo
   await expect(page).toHaveURL(/\/recover\/confirm$/); await expect(page.getByLabel('Mật khẩu mới', { exact: true })).toBeVisible();
   expect(calls.find(call => call.path.endsWith('/recovery-verifications'))?.body).toEqual({proofId,proof:'123456'});
   await page.getByLabel('Mật khẩu mới', { exact: true }).fill('synthetic-recovered-password'); await page.getByLabel('Nhập lại mật khẩu mới').fill('synthetic-recovered-password'); await page.getByRole('button', { name: 'Xác nhận mật khẩu mới' }).click();
-  await expect(page.getByRole('status')).toContainText('Mật khẩu đã được cập nhật');
+  await expect(page.getByRole('status')).toContainText('Bạn đã đổi mật khẩu thành công!');
   expect(calls.find(call => call.path.endsWith('/recovery-confirm'))?.body?.proof).toBe('C'.repeat(43));
   expect(await page.evaluate(() => [localStorage.length,sessionStorage.length])).toEqual([0,0]);
 });
@@ -147,9 +149,32 @@ test('unknown recovery still opens the same OTP screen and does not expose passw
 });
 test('movapost brand, keyboard utility tabs, reduced motion and responsive navigation', async ({ page, context }) => {
   await fixture(context);await page.emulateMedia({reducedMotion:'reduce'});await page.goto('/');
-  await expect(page.getByRole('link',{name:'movapost., về trang chủ'}).first()).toBeVisible();await expect(page.getByRole('link',{name:'Đăng ký/Đăng nhập',exact:true})).toBeVisible();
+  await expect(page.getByRole('link',{name:'movapost., về trang chủ'}).first()).toBeVisible();await expect(page.getByRole('link',{name:'ĐĂNG NHẬP / ĐĂNG KÝ',exact:true})).toBeVisible();
   await page.getByRole('tab',{name:'Tra cứu vận đơn'}).focus();await page.keyboard.press('ArrowRight');await expect(page.getByRole('tab',{name:'Ước tính cước'})).toBeFocused();await expect(page.getByRole('tab',{name:'Ước tính cước'})).toHaveAttribute('aria-selected','true');
   expect(await page.locator('.ps-hero-art img').evaluate(element=>getComputedStyle(element).animationName)).toBe('none');
   await page.setViewportSize({width:360,height:800});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   await page.getByRole('button',{name:'Mở menu'}).click();await page.getByRole('navigation',{name:'Điều hướng chính'}).getByRole('link',{name:'Hỗ trợ',exact:true}).click();await expect(page.getByRole('heading',{name:'Hỗ trợ khách hàng'})).toBeVisible();
+});
+
+test('registration success opens login with a centered dismissible welcome popup only after server confirmation', async ({ page, context }) => {
+  let release!: () => void;
+  const pending = new Promise<void>(resolve => { release = resolve; });
+  await fixture(context,false,async (route,call)=>{if(!call.path.endsWith('/verifications'))return false;await pending;await route.fulfill({status:204});return true;});
+  await page.setViewportSize({width:390,height:844});await page.goto(`/verify-email#proofId=${proofId}&expiresAt=${new Date(Date.now()+120000).toISOString()}`);
+  await page.getByLabel('Mã xác minh 6 chữ số').fill('123456');await page.getByRole('button',{name:'Xác minh tài khoản'}).click();
+  await expect(page.getByRole('button',{name:'Đang xác minh…'})).toBeDisabled();await expect(page.locator('.cp-success-popup')).toHaveCount(0);expect(new URL(page.url()).pathname).toBe('/verify-email');
+  release();await expect(page).toHaveURL(/\/login$/);await expect(page.getByRole('heading',{name:'Đăng nhập bằng mật khẩu'})).toBeVisible();
+  const popup=page.locator('.cp-success-popup');await expect(popup).toContainText('Bạn đã đăng ký thành công!');await expect(popup).toContainText('Chào mừng bạn đến với movapost.');
+  await expect(popup).toHaveAttribute('role','status');const box=await popup.boundingBox();expect(box).not.toBeNull();expect(Math.abs(box!.x+box!.width/2-195)).toBeLessThan(2);expect(box!.y).toBeLessThan(24);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await page.screenshot({path:'../../../.demo/spec003-implementation/auth-success-mobile.png',fullPage:true,animations:'disabled'});
+  await page.setViewportSize({width:1280,height:900});const desktop=await popup.boundingBox();expect(Math.abs(desktop!.x+desktop!.width/2-640)).toBeLessThan(2);
+  await page.screenshot({path:'../../../.demo/spec003-implementation/auth-success-desktop.png',fullPage:true,animations:'disabled'});
+  await page.getByRole('button',{name:'Đóng thông báo thành công'}).click();await expect(popup).toHaveCount(0);await expect(page.getByLabel('Email đã xác minh')).toBeVisible();
+  await page.reload();await expect(popup).toHaveCount(0);
+});
+test('rejected password reset stays on its form and never shows success or redirects', async ({ page, context }) => {
+  await fixture(context,false,async(route,call)=>{if(!call.path.endsWith('/recovery-confirm'))return false;await route.fulfill({status:422,contentType:'application/json',body:JSON.stringify({code:'TOKEN_INVALID_OR_EXPIRED'})});return true;});
+  await page.goto(`/recover/confirm#proofId=${proofId}&proof=${'B'.repeat(43)}`);await page.getByLabel('Mật khẩu mới',{exact:true}).fill('synthetic-recovered-password');await page.getByLabel('Nhập lại mật khẩu mới').fill('synthetic-recovered-password');await page.getByRole('button',{name:'Xác nhận mật khẩu mới'}).click();
+  await expect(page.getByRole('alert')).toContainText('không còn hiệu lực');await expect(page).toHaveURL(/\/recover\/confirm$/);await expect(page.locator('.cp-success-popup')).toHaveCount(0);
 });

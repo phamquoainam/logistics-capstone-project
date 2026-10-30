@@ -43,7 +43,7 @@ export function PublicHeader({ compact = false }: { compact?: boolean }) {
       {!compact && <><button className="ps-menu-button" type="button" aria-label={open ? 'Đóng menu' : 'Mở menu'} aria-expanded={open} aria-controls="ps-primary-nav" onClick={() => setOpen(value => !value)}><span /><span /><span /></button>
         <nav id="ps-primary-nav" className={`ps-nav ${open ? 'is-open' : ''}`} aria-label="Điều hướng chính">{nav.map(item => <NavLink key={item.path} to={item.path} end={item.path === '/'} onClick={() => setOpen(false)} className={({ isActive }) => isActive || item.path === '/tracking' && utilities.some(utility => location.pathname === utility.path) ? 'is-active' : ''}>{item.label}</NavLink>)}</nav></>}
       {compact ? <nav className="ps-compact-links" aria-label="Điều hướng hỗ trợ"><Link to="/services">Dịch vụ</Link><Link to="/support">Hỗ trợ khách hàng</Link></nav>
-        : <div className="ps-account-links"><Link className="ps-signup" to="/login"><Glyph name="user" /> Đăng ký/Đăng nhập</Link></div>}
+        : <div className="ps-account-links"><Link className="ps-signup" to="/login"><Glyph name="user" /><span>ĐĂNG NHẬP / ĐĂNG KÝ</span></Link></div>}
     </div>
   </header>;
 }
