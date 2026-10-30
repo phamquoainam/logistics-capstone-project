@@ -32,8 +32,8 @@ class PostgresTestcontainersTests {
         Database db=PostgresTestcontainersSupport.database(POSTGRES);
         Flyway flyway=db.flyway("latest");assertEquals(0,flyway.info().applied().length);
         // Retain the report-policy method identity and assert the complete current stream.
-        assertEquals(16,flyway.migrate().migrationsExecuted);assertTrue(flyway.validateWithResult().validationSuccessful);
-        assertEquals(List.of("1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16"),Arrays.stream(flyway.info().applied()).map(m->m.getVersion().toString()).toList());
+        assertEquals(17,flyway.migrate().migrationsExecuted);assertTrue(flyway.validateWithResult().validationSuccessful);
+        assertEquals(List.of("1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17"),Arrays.stream(flyway.info().applied()).map(m->m.getVersion().toString()).toList());
     }
 
     private List<String> checksums(Flyway flyway) { return Arrays.stream(flyway.info().applied()).map(m->m.getVersion()+":"+m.getChecksum()).toList(); }

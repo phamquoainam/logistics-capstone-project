@@ -37,7 +37,7 @@ class IdentityMigrationTests {
 
     private Database migrated() throws Exception {
         Database db = PostgresTestcontainersSupport.database(POSTGRES);
-        assertEquals(16, db.flyway("latest").migrate().migrationsExecuted);
+        assertEquals(17, db.flyway("latest").migrate().migrationsExecuted);
         return db;
     }
     private static String digest(int value) { return "decode('" + String.format("%064x", value) + "','hex')"; }
@@ -81,7 +81,7 @@ class IdentityMigrationTests {
         Database db = migrated(); account(db);
         var flyway = db.flyway("latest"); flyway.validate();
         var before = Arrays.stream(flyway.info().applied()).map(m -> m.getVersion() + ":" + m.getChecksum()).toList();
-        assertEquals(List.of("1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16"), Arrays.stream(flyway.info().applied()).map(m -> m.getVersion().toString()).toList());
+        assertEquals(List.of("1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17"), Arrays.stream(flyway.info().applied()).map(m -> m.getVersion().toString()).toList());
         var rows = snapshot(db, "identity.user_account");
         assertEquals(0, flyway.migrate().migrationsExecuted);
         assertEquals(before, Arrays.stream(flyway.info().applied()).map(m -> m.getVersion() + ":" + m.getChecksum()).toList());
@@ -100,7 +100,7 @@ class IdentityMigrationTests {
         var tables = List.of("merchant.demo_merchant", "identity.demo_account", "orders.demo_shipment", "orders.demo_event");
         Map<String,List<String>> before = new LinkedHashMap<>(); for (String table : tables) before.put(table, snapshot(db, table));
         var oldChecksums = Arrays.stream(db.flyway("2").info().applied()).map(m -> m.getChecksum()).toList();
-        assertEquals(14, db.flyway("latest").migrate().migrationsExecuted); db.flyway("latest").validate();
+        assertEquals(15, db.flyway("latest").migrate().migrationsExecuted); db.flyway("latest").validate();
         for (String table : tables) assertEquals(before.get(table), snapshot(db, table));
         assertEquals(oldChecksums, Arrays.stream(db.flyway("latest").info().applied()).limit(2).map(m -> m.getChecksum()).toList());
         try (Connection c = db.runtimeConnection(); Statement s = c.createStatement()) {
@@ -269,7 +269,7 @@ class IdentityMigrationTests {
         execute(db,"INSERT INTO identity.account_grant(account_id,role_code,scope_type,scope_id,granted_at) VALUES ("+ACCOUNT+",'IDENTITY_MANAGEMENT','IDENTITY',"+ACCOUNT+","+NOW+")");
         var before=snapshot(db,"identity.user_account");
         var checksums=Arrays.stream(db.flyway("3").info().applied()).map(m->m.getChecksum()).toList();
-        assertEquals(13,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();
+        assertEquals(14,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();
         assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);
         assertEquals(before,snapshot(db,"identity.user_account"));
         assertEquals(checksums,Arrays.stream(db.flyway("latest").info().applied()).limit(3).map(m->m.getChecksum()).toList());
@@ -332,7 +332,7 @@ class IdentityMigrationTests {
         Database db=PostgresTestcontainersSupport.database(POSTGRES);assertEquals(4,db.flyway("4").migrate().migrationsExecuted);account(db);
         execute(db,proof(PROOF,"INVITATION",501,"24 hours"));var accounts=snapshot(db,"identity.user_account");
         var checksums=Arrays.stream(db.flyway("4").info().applied()).map(m->m.getChecksum()).toList();
-        assertEquals(12,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);
+        assertEquals(13,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);
         assertEquals(checksums,Arrays.stream(db.flyway("latest").info().applied()).limit(4).map(m->m.getChecksum()).toList());assertEquals(accounts,snapshot(db,"identity.user_account"));
         try(Connection c=db.runtimeConnection();Statement s=c.createStatement();ResultSet r=s.executeQuery("SELECT account_id,purpose,token_hash,expires_at-created_at=INTERVAL '24 hours',verifier_key_id,consumed_at,revoked_at FROM identity.action_proof WHERE id="+PROOF)) {
             assertTrue(r.next());assertEquals(UUID.fromString(ACCOUNT.replace("'","")),r.getObject(1,UUID.class));assertEquals("INVITATION",r.getString(2));
@@ -447,7 +447,7 @@ class IdentityMigrationTests {
         execute(db,"INSERT INTO identity.rate_limit_attempt VALUES ("+KEY+",'LOGIN_IP',"+digest(57)+","+NOW+","+NOW+"+INTERVAL '15 minutes',"+NOW+"+INTERVAL '60 seconds','COUNTED')");
         var rows=rateAttemptSnapshot(db);var checksums=Arrays.stream(db.flyway("8").info().applied()).map(m->m.getChecksum()).toList();
         var source=new org.springframework.jdbc.datasource.DriverManagerDataSource(db.url(),db.runtime(),db.runtimePassword());assertThrows(IllegalStateException.class,()->CustomerRuntimeRequirements.verify(source));
-        assertEquals(8,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);
+        assertEquals(9,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);
         assertEquals(checksums,Arrays.stream(db.flyway("latest").info().applied()).limit(8).map(m->m.getChecksum()).toList());assertEquals(rows,rateAttemptSnapshot(db));assertDoesNotThrow(()->CustomerRuntimeRequirements.verify(source));
     }
     private List<String> rateAttemptSnapshot(Database db)throws SQLException{
@@ -476,9 +476,17 @@ class IdentityMigrationTests {
     }
     @Test void recoveryProofDatabaseRequiresSecurityVersionWithoutSession(){
         assertDoesNotThrow(()->{
-            Database db=migrated();account(db);execute(db,session(SESSION).replace("identity.auth_session","identity.customer_auth_session"));
+            Database db=PostgresTestcontainersSupport.database(POSTGRES);assertEquals(16,db.flyway("16").migrate().migrationsExecuted);account(db);
+            var source=new org.springframework.jdbc.datasource.DriverManagerDataSource(db.url(),db.runtime(),db.runtimePassword());
+            assertEquals("CUSTOMER_POSTGRES18_SCHEMA_V17_REQUIRED",assertThrows(IllegalStateException.class,()->CustomerRuntimeRequirements.verify(source)).getMessage());
+            var checksums=Arrays.stream(db.flyway("16").info().applied()).map(m->m.getChecksum()).toList();assertEquals(1,db.flyway("latest").migrate().migrationsExecuted);
+            assertEquals(checksums,Arrays.stream(db.flyway("latest").info().applied()).limit(16).map(m->m.getChecksum()).toList());CustomerRuntimeRequirements.verify(source);
+            execute(db,session(SESSION).replace("identity.auth_session","identity.customer_auth_session"));
             String prefix="INSERT INTO identity.customer_proof(id,subject_id,account_id,purpose,verifier,verifier_key_id,created_at,expires_at,bound_auth_version,bound_session_id,policy_version) VALUES ("+TOKEN+","+ACCOUNT+","+ACCOUNT+",'CUSTOMER_RECOVERY',"+digest(64)+",'v1',"+NOW+","+NOW+"+INTERVAL '15 minutes',";
             rejects(db,"23514",prefix+"NULL,NULL,'S003-2026-10-27')");rejects(db,"23514",prefix+"0,NULL,'S003-2026-10-27')");rejects(db,"23514",prefix+"1,"+SESSION+",'S003-2026-10-27')");execute(db,prefix+"1,NULL,'S003-2026-10-27')");
+            String otp=prefix.replace(TOKEN,NEXT).replace("15 minutes","2 minutes")+"1,NULL,'S003-OTP-2026-10-30')";
+            rejects(db,"23514",otp.replace("2 minutes","3 minutes"));rejects(db,"23505",otp);
+            execute(db,"UPDATE identity.customer_proof SET revoked_at=created_at WHERE id="+TOKEN);execute(db,otp);
         });
     }
     @Test void proofReceiptDatabaseEnforcesPurposeRetentionAndNarrowPrivileges()throws Exception{
@@ -516,8 +524,8 @@ class IdentityMigrationTests {
     }
     @Test void reauthenticationV12UpgradePreservesV11ChecksumsAccountsAndSystemSessions()throws Exception{
         Database db=PostgresTestcontainersSupport.database(POSTGRES);assertEquals(11,db.flyway("11").migrate().migrationsExecuted);account(db);execute(db,session(SESSION));var rows=snapshot(db,"identity.user_account");var sessions=snapshot(db,"identity.auth_session");var checksums=Arrays.stream(db.flyway("11").info().applied()).map(m->m.getChecksum()).toList();
-        var source=new org.springframework.jdbc.datasource.DriverManagerDataSource(db.url(),db.runtime(),db.runtimePassword());assertEquals("CUSTOMER_POSTGRES18_SCHEMA_V15_REQUIRED",assertThrows(IllegalStateException.class,()->CustomerRuntimeRequirements.verify(source)).getMessage());
-        assertEquals(5,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);assertEquals(checksums,Arrays.stream(db.flyway("latest").info().applied()).limit(11).map(m->m.getChecksum()).toList());assertEquals(rows,snapshot(db,"identity.user_account"));assertEquals(sessions,snapshot(db,"identity.auth_session"));assertDoesNotThrow(()->CustomerRuntimeRequirements.verify(source));
+        var source=new org.springframework.jdbc.datasource.DriverManagerDataSource(db.url(),db.runtime(),db.runtimePassword());assertEquals("CUSTOMER_POSTGRES18_SCHEMA_V17_REQUIRED",assertThrows(IllegalStateException.class,()->CustomerRuntimeRequirements.verify(source)).getMessage());
+        assertEquals(6,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);assertEquals(checksums,Arrays.stream(db.flyway("latest").info().applied()).limit(11).map(m->m.getChecksum()).toList());assertEquals(rows,snapshot(db,"identity.user_account"));assertEquals(sessions,snapshot(db,"identity.auth_session"));assertDoesNotThrow(()->CustomerRuntimeRequirements.verify(source));
         execute(db,"UPDATE identity.auth_session SET revoked_at="+NOW+" WHERE id="+SESSION);execute(db,token(TOKEN,SESSION,77,"NULL"));
     }
     @Test void reauthenticationReceiptRequiresExactProofSessionVersionRetentionAndImmutablePrivileges()throws Exception{
@@ -542,7 +550,7 @@ class IdentityMigrationTests {
     @Test void applicationV14UpgradePreservesV13ProfileAndRestrictsDraftHistory()throws Exception{
         Database db=PostgresTestcontainersSupport.database(POSTGRES);assertEquals(13,db.flyway("13").migrate().migrationsExecuted);account(db);profileFixture(db);var profile=snapshot(db,"merchant.customer_profile");var checksums=Arrays.stream(db.flyway("13").info().applied()).map(m->m.getChecksum()).toList();
         var source=new org.springframework.jdbc.datasource.DriverManagerDataSource(db.url(),db.runtime(),db.runtimePassword());assertEquals("MERCHANT_APPLICATION_POSTGRES18_SCHEMA_V14_REQUIRED",assertThrows(IllegalStateException.class,()->com.elogistic.backend.merchant.internal.infrastructure.JdbcMerchantApplicationStore.requireSchema(source)).getMessage());
-        assertEquals(3,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);assertEquals(checksums,Arrays.stream(db.flyway("latest").info().applied()).limit(13).map(m->m.getChecksum()).toList());assertEquals(profile,snapshot(db,"merchant.customer_profile"));assertDoesNotThrow(()->com.elogistic.backend.merchant.internal.infrastructure.JdbcMerchantApplicationStore.requireSchema(source));
+        assertEquals(4,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);assertEquals(checksums,Arrays.stream(db.flyway("latest").info().applied()).limit(13).map(m->m.getChecksum()).toList());assertEquals(profile,snapshot(db,"merchant.customer_profile"));assertDoesNotThrow(()->com.elogistic.backend.merchant.internal.infrastructure.JdbcMerchantApplicationStore.requireSchema(source));
         rejects(db,"42501","DELETE FROM merchant.application");rejects(db,"42501","UPDATE merchant.application_draft_version SET draft='{}'");rejects(db,"42501","DELETE FROM merchant.application_draft_version");rejects(db,"42501","ALTER TABLE merchant.application ADD COLUMN injected BOOLEAN");
         try(Connection c=db.runtimeConnection();Statement q=c.createStatement();ResultSet r=q.executeQuery("SELECT count(*) FROM pg_constraint c JOIN pg_class t ON t.oid=c.conrelid JOIN pg_namespace n ON n.oid=t.relnamespace JOIN pg_class f ON f.oid=c.confrelid JOIN pg_namespace fn ON fn.oid=f.relnamespace WHERE c.contype='f' AND n.nspname='merchant' AND fn.nspname<>'merchant'")){assertTrue(r.next());assertEquals(0,r.getInt(1));}
     }

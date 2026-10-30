@@ -18,11 +18,12 @@ public record CustomerProof(UUID id, UUID subjectId, Purpose purpose, Instant cr
     }
     public static final long ENROLLMENT_OTP_SECONDS = 120;
     public boolean enrollmentOtp(){return purpose==Purpose.CUSTOMER_ENROLLMENT && expiresAt.equals(createdAt.plusSeconds(ENROLLMENT_OTP_SECONDS));}
+    public boolean emailOtp(){return (purpose==Purpose.CUSTOMER_ENROLLMENT || purpose==Purpose.CUSTOMER_RECOVERY) && expiresAt.equals(createdAt.plusSeconds(ENROLLMENT_OTP_SECONDS));}
     public CustomerProof {
         if(id==null || subjectId==null || purpose==null || createdAt==null || expiresAt==null
             || !createdAt.equals(createdAt.truncatedTo(ChronoUnit.MICROS))
             || !(expiresAt.equals(createdAt.plusSeconds(purpose.seconds))
-                || purpose==Purpose.CUSTOMER_ENROLLMENT && expiresAt.equals(createdAt.plusSeconds(ENROLLMENT_OTP_SECONDS)))
+                || (purpose==Purpose.CUSTOMER_ENROLLMENT || purpose==Purpose.CUSTOMER_RECOVERY) && expiresAt.equals(createdAt.plusSeconds(ENROLLMENT_OTP_SECONDS)))
             || (purpose!=Purpose.CUSTOMER_RECOVERY && (sessionId==null)!=(authVersion==null)) || (authVersion!=null && authVersion<1)
             || (purpose.customerSessionRequired() && sessionId==null)
             || ((purpose==Purpose.OWNER_RECOVERY_CONSENT)!=(organizationId!=null))

@@ -36,6 +36,15 @@
       "verifiedEmail": "person@example.invalid",
       "securityVersion": 1
     },
+    "RecoveryOtpInput": {
+      "proofId": "11111111-1111-4111-8111-111111111111",
+      "proof": "123456"
+    },
+    "RecoveryVerified": {
+      "proofId": "11111111-1111-4111-8111-111111111111",
+      "proof": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "expiresAt": "2026-10-30T00:02:00Z"
+    },
     "RecoveryConfirm": {
       "proofId": "11111111-1111-4111-8111-111111111111",
       "proof": "synthetic",

@@ -40,7 +40,7 @@ class IdentityGrantApplicationTests {
 
     @BeforeEach void fixture() throws Exception {
         db = PostgresTestcontainersSupport.database(POSTGRES);
-        assertEquals(16, db.flyway("latest", SCOPE).migrate().migrationsExecuted);
+        assertEquals(17, db.flyway("latest", SCOPE).migrate().migrationsExecuted);
         account(A, "ACTIVE", List.of(ADMIN)); account(B, "ACTIVE", List.of(ADMIN)); account(T, "ACTIVE", List.of(GX));
         session(S, A); session(AS, B); session(TS, T);
         execute("INSERT INTO identity.refresh_token(id,session_id,token_hash,issued_at,expires_at) VALUES ('" + id(20) + "','" + TS + "',decode(repeat('01',32),'hex'),TIMESTAMPTZ '2026-10-21 00:00:00Z',TIMESTAMPTZ '2026-10-21 08:00:00Z')");
@@ -1743,7 +1743,7 @@ class IdentityGrantApplicationTests {
             },Clock.fixed(time,ZoneOffset.UTC));
     }
     private com.elogistic.backend.identity.api.customer.CustomerEnrollmentCommands.Enrollment enrollCommand(UUID key,String email){
-        return new com.elogistic.backend.identity.api.customer.CustomerEnrollmentCommands.Enrollment(email,ENROLLMENT_PASSWORD,"Synthetic Customer","S003-2026-10-27",key,REQUEST);
+        return new com.elogistic.backend.identity.api.customer.CustomerEnrollmentCommands.Enrollment(email,ENROLLMENT_PASSWORD,"Synthetic Customer","S003-2026-10-27",key,UUID.randomUUID());
     }
     private com.elogistic.backend.identity.api.customer.CustomerEnrollmentCommands.Verification pendingEnrollmentProof()throws Exception {
         var source=outboxDataSource();var jdbc=new org.springframework.jdbc.core.JdbcTemplate(source);
@@ -1758,14 +1758,14 @@ class IdentityGrantApplicationTests {
         });
     }
     @Test void enrollmentQueuesOnlyProtectedMaterialWithoutAccountOrGrant()throws Exception {
-        enrollmentBinding();var before=snapshot();var result=enrollmentApp(NOW).enroll(enrollCommand(KEY,ENROLLMENT_EMAIL));
-        assertTrue(result.accepted());assertEquals(REQUEST,result.requestId());
+        enrollmentBinding();var before=snapshot();var command=enrollCommand(KEY,ENROLLMENT_EMAIL);var result=enrollmentApp(NOW).enroll(command);
+        assertTrue(result.accepted());assertEquals(command.requestId(),result.requestId());
         assertEquals(3,scalar("SELECT count(*) FROM identity.user_account"));assertEquals(0,scalar("SELECT count(*) FROM identity.customer_identifier"));
         assertEquals(1,scalar("SELECT count(*) FROM identity.customer_enrollment WHERE status='PENDING' AND octet_length(protected_password)=60"));
         assertEquals(1,scalar("SELECT count(*) FROM identity.customer_proof WHERE purpose='CUSTOMER_ENROLLMENT' AND expires_at=created_at+INTERVAL '2 minutes' AND octet_length(verifier)=32"));
         assertEquals(1,scalar("SELECT count(*) FROM identity.customer_delivery WHERE status='QUEUED' AND attempts=0 AND accepted_at IS NULL AND delivered_at IS NULL AND octet_length(ciphertext)=59 AND recipient_ciphertext IS NOT NULL"));
         assertEquals(before.get("account_grant"),snapshot().get("account_grant"));
-        assertNotNull(pendingEnrollmentProof());
+        assertEquals(result.requestId(),pendingEnrollmentProof().proofId());
     }
     @Test void enrollmentUniformReceiptAndChangedBindingPreventEnumerationAndDuplicates()throws Exception {
         enrollmentBinding();var app=enrollmentApp(NOW);var first=app.enroll(enrollCommand(KEY,ENROLLMENT_EMAIL));
@@ -1878,9 +1878,11 @@ class IdentityGrantApplicationTests {
     private Map<String,String> customerRegistration(){return Map.of("email",ENROLLMENT_EMAIL,"password",ENROLLMENT_PASSWORD,"displayName","Synthetic Customer","phone","0901-234-567","consentVersion","S003-2026-10-27");}
     private Map<String,String> receivedVerification(CustomerSmtpTestInbox inbox)throws Exception{
         var received=inbox.messages();assertEquals(1,received.size());var email=new jakarta.mail.internet.MimeMessage(jakarta.mail.Session.getInstance(new Properties()),new java.io.ByteArrayInputStream(received.getFirst()));
-        String content=(String)email.getContent();var locator=java.util.regex.Pattern.compile("/verify-email#proofId=([0-9a-f-]{36})&expiresAt=[0-9:.TZ-]+").matcher(content);
-        var code=java.util.regex.Pattern.compile("Mã xác minh E-Logistics: ([0-9]{6})").matcher(content);
-        assertTrue(locator.find());assertTrue(code.find());return Map.of("proofId",locator.group(1),"proof",code.group(1));
+        String content=CustomerSmtpTestInbox.plainText(email);
+        var code=java.util.regex.Pattern.compile("(?m)^([0-9]{6})\\r?$").matcher(content);
+        assertTrue(code.find());assertFalse(content.contains("#proofId="));
+        String locator=new org.springframework.jdbc.core.JdbcTemplate(outboxDataSource()).queryForObject("SELECT id::text FROM identity.customer_proof WHERE purpose='CUSTOMER_ENROLLMENT' AND consumed_at IS NULL AND revoked_at IS NULL",String.class);
+        return Map.of("proofId",locator,"proof",code.group(1));
     }
     @Test void customerHttpEnrollmentMailVerificationLoginRefreshLogoutUseActualChains()throws Exception{
         try(var inbox=new CustomerSmtpTestInbox(1,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW))){
@@ -1987,11 +1989,11 @@ class IdentityGrantApplicationTests {
             var p=new CustomerProof(r.getObject("id",UUID.class),r.getObject("subject_id",UUID.class),CustomerProof.Purpose.CUSTOMER_RECOVERY,r.getTimestamp("created_at").toInstant(),r.getTimestamp("expires_at").toInstant(),null,r.getLong("bound_auth_version"),null,null,null);
             var crypto=enrollmentProtection();String destination=crypto.openDestination(p,r.getString("verifier_key_id"),r.getString("encryption_key_id"),r.getBytes("recipient_nonce"),r.getBytes("recipient_ciphertext"),p.createdAt());assertEquals(CUSTOMER_EMAIL,destination);
             try(var opened=crypto.open(p,destination,r.getString("verifier_key_id"),r.getString("encryption_key_id"),r.getBytes("nonce"),r.getBytes("ciphertext"),p.createdAt())){
-                byte[] token=opened.token();try{return new com.elogistic.backend.identity.api.customer.CustomerRecoveryCommands.Confirmation(p.id(),new String(token,java.nio.charset.StandardCharsets.US_ASCII),"synthetic-recovered-password",UUID.randomUUID(),REQUEST);}finally{Arrays.fill(token,(byte)0);}
+                byte[] token=p.emailOtp()?crypto.recoveryGrant(p,r.getString("verifier_key_id"),r.getBytes("verifier"),p.createdAt()):opened.token();try{return new com.elogistic.backend.identity.api.customer.CustomerRecoveryCommands.Confirmation(p.id(),new String(token,java.nio.charset.StandardCharsets.US_ASCII),"synthetic-recovered-password",UUID.randomUUID(),REQUEST);}finally{Arrays.fill(token,(byte)0);}
             }
         });
     }
-    private com.elogistic.backend.identity.api.customer.CustomerRecoveryCommands.Email recoveryRequest(String email,UUID key){return new com.elogistic.backend.identity.api.customer.CustomerRecoveryCommands.Email(email,key,REQUEST);}
+    private com.elogistic.backend.identity.api.customer.CustomerRecoveryCommands.Email recoveryRequest(String email,UUID key){return new com.elogistic.backend.identity.api.customer.CustomerRecoveryCommands.Email(email,key,UUID.randomUUID());}
     @Test void recoveryUniformRequestsNeverUseUnverifiedDisabledStaleOrLegacyOnlyEmail()throws Exception{
         enrollmentBinding();customerFixture(true);long existingAccounts=scalar("SELECT count(*) FROM identity.user_account");var app=recoveryApp(NOW);
         assertTrue(app.request(recoveryRequest("unknown@example.invalid",KEY)).accepted());assertEquals(0,scalar("SELECT count(*) FROM identity.customer_delivery"));
@@ -2009,14 +2011,24 @@ class IdentityGrantApplicationTests {
             var mvc=httpMvc(context);var pre=customerCsrf(mvc,null);assertEquals(202,customerPost(mvc,"recovery",pre,KEY,Map.of("email",CUSTOMER_EMAIL)).getStatus());
             assertTrue(context.getBean(com.elogistic.backend.identity.internal.ProductionCustomerComposition.Services.class).delivery().runOne());
             var received=inbox.messages();assertEquals(1,received.size());var mail=new jakarta.mail.internet.MimeMessage(jakarta.mail.Session.getInstance(new Properties()),new java.io.ByteArrayInputStream(received.getFirst()));assertEquals(CUSTOMER_EMAIL,mail.getAllRecipients()[0].toString());
-            var match=java.util.regex.Pattern.compile("/recover/confirm#proofId=([0-9a-f-]{36})&proof=([A-Za-z0-9_-]{43})").matcher((String)mail.getContent());assertTrue(match.find());
-            var body=Map.of("proofId",match.group(1),"proof",match.group(2),"newPassword","synthetic-recovered-password");var reset=customerPost(mvc,"recovery-confirm",pre,id(924),body);assertEquals(204,reset.getStatus());
+            var code=java.util.regex.Pattern.compile("(?m)^([0-9]{6})\\r?$").matcher(CustomerSmtpTestInbox.plainText(mail));assertTrue(code.find());
+            String locator=new org.springframework.jdbc.core.JdbcTemplate(outboxDataSource()).queryForObject("SELECT id::text FROM identity.customer_proof WHERE purpose='CUSTOMER_RECOVERY' AND consumed_at IS NULL AND revoked_at IS NULL",String.class);
+            assertEquals(422,customerPost(mvc,"recovery-confirm",pre,UUID.randomUUID(),Map.of("proofId",locator,"proof",code.group(1),"newPassword","synthetic-recovered-password")).getStatus());
+            String wrong=code.group(1).equals("000000")?"999999":"000000";
+            assertEquals(422,customerPost(mvc,"recovery-verifications",pre,UUID.randomUUID(),Map.of("proofId",locator,"proof",wrong)).getStatus());
+            var verified=customerPost(mvc,"recovery-verifications",pre,UUID.randomUUID(),Map.of("proofId",locator,"proof",code.group(1)));assertEquals(200,verified.getStatus());
+            var grant=new tools.jackson.databind.ObjectMapper().readTree(verified.getContentAsString());assertEquals(43,grant.get("proof").asString().length());assertEquals(NOW.plusSeconds(120),Instant.parse(grant.get("expiresAt").asString()));
+            assertEquals(0,scalar("SELECT count(*) FROM identity.customer_proof WHERE purpose='CUSTOMER_RECOVERY' AND consumed_at IS NOT NULL"));
+            var body=Map.of("proofId",locator,"proof",grant.get("proof").asString(),"newPassword","synthetic-recovered-password");var reset=customerPost(mvc,"recovery-confirm",pre,id(924),body);assertEquals(204,reset.getStatus());
             assertEquals(2,scalar("SELECT auth_version FROM identity.user_account WHERE id='"+A+"'"));assertEquals(0,scalar("SELECT count(*) FROM identity.auth_session WHERE account_id='"+A+"' AND revoked_at IS NULL"));assertEquals(0,scalar("SELECT count(*) FROM identity.customer_auth_session WHERE account_id='"+A+"' AND revoked_at IS NULL"));assertEquals(grants,snapshot().get("account_grant"));
             assertEquals(1,scalar("SELECT count(*) FROM identity.customer_delivery WHERE status='DELIVERED' AND delivery_evidence IS NOT NULL"));
             var rotated=customerCsrf(mvc,pre);assertEquals(204,customerPost(mvc,"recovery-confirm",rotated,id(924),body).getStatus());
             assertEquals(401,customerPost(mvc,"login",rotated,null,Map.of("email",CUSTOMER_EMAIL,"password",SESSION_PASSWORD)).getStatus());assertEquals(200,customerPost(mvc,"login",rotated,null,Map.of("email",CUSTOMER_EMAIL,"password","synthetic-recovered-password")).getStatus());
             assertEquals(401,httpRead(mvc,"/api/v1/customer-auth/me",customerTokens(NOW).issue(customerLogin.access())).getStatus());
             byte[] old=systemLogin.refreshToken();try(var token=sessionToken(old)){sessionDenied(SESSION_INVALID,()->sessions(NOW).refreshIdentity(token));}finally{Arrays.fill(old,(byte)0);}
+            var abuse=customerCsrf(mvc,null);var unknown=Map.of("proofId",UUID.randomUUID().toString(),"proof","123456");
+            for(int attempt=0;attempt<5;attempt++)assertEquals(422,customerPost(mvc,"recovery-verifications",abuse,UUID.randomUUID(),unknown).getStatus());
+            var limited=customerPost(mvc,"recovery-verifications",abuse,UUID.randomUUID(),unknown);assertEquals(429,limited.getStatus());assertNotNull(limited.getHeader("Retry-After"));
         }
     }
     @Test void recoveryWrongExpiredAndReplayedProofCannotMutateCredentialOrSessions()throws Exception{

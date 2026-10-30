@@ -43,8 +43,8 @@ public final class CustomerEnrollments implements CustomerEnrollmentCommands {
     private void receipt(CustomerEnrollmentStore.Transaction tx,CustomerEnrollmentAdmission.Binding binding,UUID key,UUID request,String operation,Instant time,String... fields){
         tx.receipt(binding.id(),key,CustomerReceipts.prepare(protection,request,operation,fields),time);
     }
-    private void issue(CustomerEnrollmentStore.Transaction tx,CustomerEnrollment e,Instant time){
-        var proof=CustomerProof.issue(UUID.randomUUID(),e.intendedAccountId(),CustomerProof.Purpose.CUSTOMER_ENROLLMENT,time,null,null,null);
+    private void issue(CustomerEnrollmentStore.Transaction tx,CustomerEnrollment e,Instant time,UUID proofId){
+        var proof=CustomerProof.issue(proofId,e.intendedAccountId(),CustomerProof.Purpose.CUSTOMER_ENROLLMENT,time,null,null,null);
         try(var sealed=protection.issue(proof,e.email().value())){tx.issue(e,proof,sealed,time);}
     }
     @Override public Accepted enroll(Enrollment c){
@@ -65,7 +65,7 @@ public final class CustomerEnrollments implements CustomerEnrollmentCommands {
             }
             if(!tx.emailOccupied(email.value()) && pending.isEmpty()){
                 var enrollment=new CustomerEnrollment(UUID.randomUUID(),UUID.randomUUID(),email,c.displayName(),phone,material,c.consentVersion(),time,time.plusSeconds(86400),CustomerEnrollment.Status.PENDING,1);
-                tx.insert(enrollment);issue(tx,enrollment,time);tx.audit(enrollment.intendedAccountId(),c.requestId(),"CUSTOMER_ENROLLMENT_QUEUED",time);
+                tx.insert(enrollment);issue(tx,enrollment,time,c.requestId());tx.audit(enrollment.intendedAccountId(),c.requestId(),"CUSTOMER_ENROLLMENT_QUEUED",time);
             }
             receipt(tx,binding,c.key(),c.requestId(),"enrollCustomer",time,enrollmentFingerprint(c,phone));
             admission.requireCurrent(binding);return new Accepted(true,c.requestId());
@@ -80,7 +80,7 @@ public final class CustomerEnrollments implements CustomerEnrollmentCommands {
             if(previous!=null){admission.requireCurrent(binding);return new Accepted(true,previous.requestId());}
             Instant time=now();var pending=tx.pending(email.value());
             if(!tx.emailOccupied(email.value()) && pending.isPresent() && time.isBefore(pending.get().expiresAt())){
-                var before=pending.get();var after=before.resend(time);tx.revokePending(before.id(),time);tx.update(before,after);issue(tx,after,time);
+                var before=pending.get();var after=before.resend(time);tx.revokePending(before.id(),time);tx.update(before,after);issue(tx,after,time,c.requestId());
                 tx.audit(after.intendedAccountId(),c.requestId(),"CUSTOMER_VERIFICATION_RESENT",time);
             }
             receipt(tx,binding,c.key(),c.requestId(),"resendCustomerVerification",time,c.email());admission.requireCurrent(binding);return new Accepted(true,c.requestId());

@@ -70,6 +70,18 @@ class CustomerProofProtectionTests {
                 assertFalse(crypto.matches(p,"v1",Arrays.copyOf(first,6),a.verifier(),p.expiresAt()));
             }finally{Arrays.fill(first,(byte)0);Arrays.fill(second,(byte)0);}
         }
+        var recovery=new CustomerProof(UUID.randomUUID(),ACCOUNT,CustomerProof.Purpose.CUSTOMER_RECOVERY,NOW,NOW.plusSeconds(120),null,3L,null,null,null);
+        try(var sealed=crypto.issue(recovery,DESTINATION);var opened=crypto.open(recovery,DESTINATION,"v1","e1",sealed.nonce(),sealed.ciphertext(),NOW)){
+            byte[] envelope=opened.token(),otp=Arrays.copyOf(envelope,6),grant=crypto.recoveryGrant(recovery,"v1",sealed.verifier(),NOW);
+            try{
+                assertTrue(crypto.matches(recovery,"v1",otp,sealed.verifier(),NOW));assertTrue(crypto.matches(recovery,"v1",grant,sealed.verifier(),NOW));
+                assertEquals(43,grant.length);assertFalse(Arrays.equals(envelope,grant));assertFalse(crypto.matches(recovery,"v1",envelope,sealed.verifier(),NOW));
+                assertArrayEquals(grant,crypto.recoveryGrant(recovery,"v1",sealed.verifier(),NOW.plusSeconds(1)));
+                assertFalse(crypto.matches(recovery,"v1",grant,sealed.verifier(),NOW.plusSeconds(120)));
+                var other=new CustomerProof(UUID.randomUUID(),ACCOUNT,recovery.purpose(),NOW,recovery.expiresAt(),null,3L,null,null,null);
+                assertFalse(crypto.matches(other,"v1",grant,sealed.verifier(),NOW));
+            }finally{Arrays.fill(envelope,(byte)0);Arrays.fill(otp,(byte)0);Arrays.fill(grant,(byte)0);}
+        }
         var legacy=new CustomerProof(UUID.randomUUID(),ACCOUNT,CustomerProof.Purpose.CUSTOMER_ENROLLMENT,NOW,NOW.plusSeconds(86400),null,null,null,null,null);
         try(var sealed=crypto.issue(legacy,DESTINATION);var opened=crypto.open(legacy,DESTINATION,"v1","e1",sealed.nonce(),sealed.ciphertext(),NOW)){
             byte[] token=opened.token();try{

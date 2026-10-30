@@ -297,6 +297,79 @@
         "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/EmailInput"}}}}
       }
     },
+    "/customer-auth/recovery-verifications": {
+      "post": {
+        "operationId": "verifyCustomerRecovery",
+        "summary": "Verify recovery OTP before entering a new password",
+        "tags": [
+          "Customer Identity"
+        ],
+        "security": [],
+        "x-authority": "PREAUTH",
+        "x-permission-candidate": "SELF",
+        "x-current-authority-required": false,
+        "x-idempotency": true,
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/header_IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/header_Origin"
+          },
+          {
+            "$ref": "#/components/parameters/header_XCSRFToken"
+          }
+        ],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error422"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          },
+          "200": {
+            "description": "Current recovery OTP verified; capability expires at the original OTP deadline",
+            "headers": {
+              "Cache-Control": {
+                "$ref": "#/components/headers/CacheControl"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryVerified"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecoveryOtpInput"
+              }
+            }
+          }
+        }
+      }
+    },
     "/customer-auth/recovery-confirm": {
       "post": {
         "operationId": "confirmCustomerRecovery",
@@ -2953,6 +3026,51 @@
           "securityVersion": {"type": "integer", "minimum": 1}
         },
         "required": ["accountId", "displayName", "verifiedEmail", "securityVersion"]
+      },
+      "RecoveryOtpInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "proofId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "proof": {
+            "type": "string",
+            "pattern": "^[0-9]{6}$",
+            "minLength": 6,
+            "maxLength": 6
+          }
+        },
+        "required": [
+          "proofId",
+          "proof"
+        ]
+      },
+      "RecoveryVerified": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "proofId",
+          "proof",
+          "expiresAt"
+        ],
+        "properties": {
+          "proofId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "proof": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{43}$",
+            "minLength": 43,
+            "maxLength": 43
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
       },
       "RecoveryConfirm": {
         "type": "object",

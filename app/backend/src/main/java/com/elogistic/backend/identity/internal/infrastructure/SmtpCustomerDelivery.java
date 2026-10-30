@@ -68,7 +68,7 @@ public final class SmtpCustomerDelivery implements CustomerDeliveryTransport {
         byte[] token=null;
         try{
             intent.proof().requireAvailable(clock.instant());token=intent.token();
-            if(intent.proof().enrollmentOtp()){
+            if(intent.proof().emailOtp()){
                 if(token.length!=43)return outcome(Kind.BLOCKED);
                 for(int index=0;index<6;index++)if(token[index]<'0' || token[index]>'9')return outcome(Kind.BLOCKED);
             }else{
@@ -93,24 +93,27 @@ public final class SmtpCustomerDelivery implements CustomerDeliveryTransport {
             MimeMessage message=new MimeMessage(session){@Override protected void updateMessageID()throws MessagingException{setHeader("Message-ID",messageId);}};
             message.setFrom(new InternetAddress(settings.sender(),true));message.setRecipient(jakarta.mail.Message.RecipientType.TO,new InternetAddress(intent.destination(),true));
             boolean recovery=intent.proof().purpose()==CustomerProof.Purpose.CUSTOMER_RECOVERY;
-            message.setSubject(recovery?"E-Logistics - Đặt lại mật khẩu":"E-Logistics - Xác minh tài khoản","UTF-8");message.setSentDate(Date.from(clock.instant()));
+            message.setSubject(recovery?"movapost. - Xác minh khôi phục mật khẩu":"movapost. - Xác minh địa chỉ email","UTF-8");message.setSentDate(Date.from(clock.instant()));
             String path=switch(intent.proof().purpose()){
                 case CUSTOMER_ENROLLMENT->"/verify-email";case CUSTOMER_RECOVERY->"/recover/confirm";
                 case SECURITY_EMAIL_CHANGE->"/personal/security";case BUSINESS_CONTACT->"/personal/profile";case LEGACY_CUSTOMER_LINK->"/personal/security/link-customer";
                 default->throw configuration();
             };
             String link=settings.portalOrigin()+path+"#proofId="+intent.proof().id()
-                +(intent.proof().enrollmentOtp()?"&expiresAt="+intent.proof().expiresAt():"&proof="+new String(token,StandardCharsets.US_ASCII));
-            String content=intent.proof().enrollmentOtp()
-                ?"Mã xác minh E-Logistics: "+new String(token,0,6,StandardCharsets.US_ASCII)
-                    +"\nMã có hiệu lực trong 2 phút. Mở trang sau và nhập mã:\n"+link
-                    +"\nNếu bạn không đăng ký, hãy bỏ qua email này."
-                :recovery
-                    ?"Bạn đã yêu cầu đặt lại mật khẩu E-Logistics. Nhấp vào liên kết sau để tạo mật khẩu mới:\n"+link
-                        +"\nLiên kết có hiệu lực trong 15 phút. Nếu bạn không yêu cầu, hãy bỏ qua email này."
-                    :"Xác minh tài khoản E-Logistics qua liên kết:\n"+link
-                        +"\nNếu bạn không yêu cầu, hãy bỏ qua email này.";
-            message.setText(content,"UTF-8");message.saveChanges();
+                +(intent.proof().emailOtp()?"&expiresAt="+intent.proof().expiresAt():"&proof="+new String(token,StandardCharsets.US_ASCII));
+            boolean otp=intent.proof().emailOtp();
+            String code=otp?new String(token,0,6,StandardCharsets.US_ASCII):"";
+            String title=recovery?"Xác minh khôi phục mật khẩu":"Xác minh địa chỉ email của bạn";
+            String instruction=recovery?"Vui lòng nhập mã xác minh sau vào màn hình khôi phục để đặt mật khẩu mới.":"Vui lòng nhập mã xác minh sau vào màn hình đăng ký để kích hoạt tài khoản.";
+            String content=otp
+                ?"movapost.\n"+title+"\n\n"+(recovery?"":"Chào mừng bạn đến với movapost.\n\n")+instruction+"\n\n"+code+"\nMã có hiệu lực trong 2 phút.\n\nNếu bạn không thực hiện yêu cầu này, hãy bỏ qua email.\n\nmovapost. — Gửi niềm tin, nối hành trình."
+                :"movapost.\n"+title+"\n\nMở liên kết sau để tiếp tục:\n"+link+"\nNếu bạn không thực hiện yêu cầu này, hãy bỏ qua email.";
+            if(otp){
+                var plain=new MimeBodyPart();plain.setText(content,"UTF-8");
+                var html=new MimeBodyPart();html.setContent("<!doctype html><html lang=\"vi\"><body style=\"margin:0;background:#f4f6fa;font-family:Arial,sans-serif;color:#192d4b\"><table role=\"presentation\" style=\"max-width:560px;width:100%;margin:32px auto;background:#fff;border-radius:12px\"><tr><td style=\"padding:32px\"><div style=\"font-size:28px;font-weight:800;letter-spacing:-1px\"><span style=\"color:#1955a6\">mova</span><span style=\"color:#ef751b\">post.</span></div><h1 style=\"font-size:21px;margin:28px 0 16px\">"+title+"</h1>"+(recovery?"":"<p>Chào mừng bạn đến với movapost.</p>")+"<p style=\"line-height:1.7\">"+instruction+"</p><div style=\"background:#fff5eb;border-radius:8px;text-align:center;padding:22px;margin:24px 0\"><strong style=\"font-size:34px;letter-spacing:8px;color:#192d4b\">"+code+"</strong><p style=\"font-size:13px;color:#67748a;margin:12px 0 0\">Có hiệu lực trong 2 phút</p></div><p style=\"font-size:14px;line-height:1.7\">Nếu bạn không thực hiện yêu cầu này, hãy bỏ qua email.</p><p style=\"border-top:1px solid #e9edf3;padding-top:22px;font-size:12px;color:#67748a\">movapost. — Gửi niềm tin, nối hành trình.</p></td></tr></table></body></html>","text/html; charset=UTF-8");
+                var alternatives=new MimeMultipart("alternative");alternatives.addBodyPart(plain);alternatives.addBodyPart(html);message.setContent(alternatives);
+            }else message.setText(content,"UTF-8");
+            message.saveChanges();
             sender.send(message);
             return new Outcome(Kind.ACCEPTED_BY_PROVIDER,(testTransport()?"TEST:":"SMTP:")+intent.id(),testTransport());
         }catch(MailAuthenticationException blocked){return outcome(Kind.BLOCKED);}

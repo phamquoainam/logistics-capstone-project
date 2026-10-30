@@ -10,6 +10,8 @@ public interface CustomerProofProtection {
     String activeEncryptionKey();
     Protected issue(CustomerProof proof,String destination);
     boolean matches(CustomerProof proof,String keyId,byte[] supplied,byte[] verifier,Instant now);
+    /** Purpose/version/expiry-bound reset capability, issued only after a verified recovery OTP. */
+    default byte[] recoveryGrant(CustomerProof proof,String keyId,byte[] verifier,Instant now){throw new IllegalStateException("CUSTOMER_RECOVERY_GRANT_UNAVAILABLE");}
     byte[] fingerprint(String retainedKeyId,String operation,String... exactFields);
     String hashPassword(String password);
     /** Only a current owned delivery lease may call this; transport I/O is outside the DB transaction. */

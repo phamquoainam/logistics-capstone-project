@@ -845,5 +845,16 @@
     "authority": "BUSINESS_ADMIN",
     "permission": "ownership.recover",
     "versioned": false
+  },
+  {
+    "operation_id": "verifyCustomerRecovery",
+    "method": "post",
+    "path": "/customer-auth/recovery-verifications",
+    "request": "RecoveryOtpInput",
+    "response": "RecoveryVerified",
+    "success": 200,
+    "authority": "PREAUTH",
+    "permission": "SELF",
+    "versioned": false
   }
 ]

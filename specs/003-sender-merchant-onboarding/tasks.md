@@ -186,6 +186,13 @@ Minimum dependent work and acceptance limits: contracts/minimum-dependencies.md.
 
 Each checkbox closes only its stated deliverable. It does not imply acceptance of the enclosing T003 task, BC or full Spec003. Completed items are checked as soon as their evidence exists; outstanding required runtime gates stay open.
 
+### Owner-directed movapost. entry update — 2026-10-30
+
+- [x] **MOVAPOST-ENTRY** — DONE for UI/transport scope: immediate registration/recovery OTP screen, retained in-memory email/locator, countdown, resend and change-email; no link prerequisite or premature account-success claim. Frontend typecheck/lint and 13/13 isolated UI cases PASS, including expiry, unknown response/email, resend and memory-only capability. Real integration gate remains separate.
+- [x] **MOVAPOST-RECOVERY** — DONE for the implemented recovery boundary: purpose/version-bound OTP validation then password screen, five-guess quota, high-entropy in-memory reset capability, atomic single-use reset/session invalidation. Focused backend54 PASS; PostgreSQL real HTTP/SMTP reset/revocation and real browser9/9 PASS. Final migration45/45 PASS, including fail-closed V16 startup, V17/checksum preservation and single-live-proof constraint. CI and changed-flow live Gmail are separate gates below.
+- [x] **MOVAPOST-VISUAL** — DONE: blue/white/orange wordmark, coherent public/account palette, concise real-capability content, responsive navigation and motion/reduced-motion checks. Desktop/mobile screenshots inspected; actual browser UI checks PASS. Existing unavailable utilities and legal placeholders remain honest.
+- [ ] **MOVAPOST-INTEGRATION** — Required Architecture/H2/PG18/frontend/HTTP/browser gates on the integration revision; distinguish test SMTP from Owner live Gmail receipt.
+
 - [x] **T003-04-PROFILE-DOMAIN** - DONE: independent business-profile domain/application, current self-admission boundary, immutable account reference, optional untrusted contact metadata, optimistic versions and read-only initial profile. `CustomerProfileTests`: nine actual unit cases PASS in the clean backend run below.
 - [x] **T003-04-PROFILE-RECEIPTS-UNIT** - DONE: exact operation/target/version/field HMAC, retained-key rotation, original-version retry, changed-body denial and redacted diagnostics; four `MerchantFingerprintTests` plus replay/conflict application cases PASS. This closes unit verification only; PG receipt/rollback/race gate remains below.
 - [x] **T003-11-PROFILE-LOCAL** - DONE: clean backend `mvnw -o -B ... clean verify`, 612 discovered / 595 PASS / 17 expected policy skips / zero failure/error. Architecture23 including negative fixtures PASS in this full run. Actual report collector returns PASS; no PostgreSQL substitute is claimed.

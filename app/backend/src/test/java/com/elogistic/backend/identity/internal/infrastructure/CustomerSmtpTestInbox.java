@@ -22,6 +22,11 @@ final class CustomerSmtpTestInbox implements AutoCloseable {
             this.serverTls=serverTls;listener=implicit?serverTls.getServerSocketFactory().createServerSocket():new ServerSocket();listener.bind(new InetSocketAddress(InetAddress.getByName("127.0.0.1"),0));listener.setSoTimeout(acceptTimeout);
             task=executor.submit(()->{for(int i=0;i<connections;i++)try(Socket socket=listener.accept()){socket.setSoTimeout(5000);serve(socket,starttls,implicit,recipientCode);}catch(SSLException|SocketException expectedDisconnect){}catch(Exception failure){throw new IllegalStateException("SMTP_TEST_INBOX_FAILED");}});
         }
+        static String plainText(jakarta.mail.Part part)throws Exception{
+            if(part.isMimeType("text/plain"))return (String)part.getContent();
+            if(part.isMimeType("multipart/*")){var multipart=(jakarta.mail.Multipart)part.getContent();for(int i=0;i<multipart.getCount();i++){String text=plainText(multipart.getBodyPart(i));if(!text.isEmpty())return text;}}
+            return "";
+        }
         int port(){return listener.getLocalPort();}
         private void serve(Socket initial,boolean starttls,boolean implicit,int recipientCode)throws Exception{
             Socket socket=initial;boolean secure=implicit;

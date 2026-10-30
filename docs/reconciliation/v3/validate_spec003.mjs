@@ -36,7 +36,7 @@ function gate(doc,index){
    if(status==='429')assert(resolve(response.headers['Retry-After'])?.required);
   }
  }
- assert.deepEqual(new Set(found.keys()),expected,'complete independent operation inventory');assert.equal(index.length,77);
+ assert.deepEqual(new Set(found.keys()),expected,'complete independent operation inventory');assert.equal(index.length,78);
  for(const id of ['approveApplication','requestMerchantOwnerRecovery','reviewMerchantLegalProfile'])assert.equal(found.get(id)['x-authority'],'BUSINESS_ADMIN');
  assert.equal(found.get('getCustomerProfile')['x-permission-candidate'],'SELF');
  assert(![...found.keys()].includes('acceptIdentityInvitation'));
@@ -48,7 +48,7 @@ function gate(doc,index){
  return found;
 }
 const doc=read('openapi.candidate.json'),index=read('operation-index.json'),fixtures=read('fixtures.json');
-expected.add('getReviewOrganization');expected.add('getReviewOwnerRecovery');
+expected.add('verifyCustomerRecovery');expected.add('getReviewOrganization');expected.add('getReviewOwnerRecovery');
 const operations=gate(doc,index);
 const ajv=new Ajv({strict:true,allErrors:true});formats(ajv);ajv.addFormat('binary',true);
 const dependencySchemas=read('dependency-schemas.json').$defs;

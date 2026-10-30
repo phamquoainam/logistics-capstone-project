@@ -29,7 +29,7 @@ public final class CustomerRecoveries implements CustomerRecoveryCommands {
                 var account=tx.accounts().lockAccount(candidate.get()).orElseThrow(()->fail(TOKEN_INVALID_OR_EXPIRED));var destination=tx.currentEmail(account.id());
                 if(account.recoveryEligible(destination.filter(c.email()::equals).isPresent()?IdentityAccount.EmailMatch.MATCH:IdentityAccount.EmailMatch.NO_MATCH)){
                     tx.revokePending(account.id(),time);
-                    var proof=CustomerProof.issue(UUID.randomUUID(),account.id(),CustomerProof.Purpose.CUSTOMER_RECOVERY,time,null,account.version().authVersion(),null);
+                    var proof=new CustomerProof(c.requestId(),account.id(),CustomerProof.Purpose.CUSTOMER_RECOVERY,time,time.plusSeconds(120),null,account.version().authVersion(),null,null,null);
                     try(var sealed=protection.issue(proof,destination.orElseThrow())){tx.issue(proof,destination.get(),sealed,time);}
                     tx.audit(account.id(),c.requestId(),"CUSTOMER_RECOVERY_QUEUED",time);
                 }
@@ -37,14 +37,36 @@ public final class CustomerRecoveries implements CustomerRecoveryCommands {
             tx.receipt(binding.id(),c.key(),CustomerReceipts.prepare(protection,c.requestId(),"requestCustomerRecovery",c.email()),time);admission.requireCurrent(binding);return new CustomerEnrollmentCommands.Accepted(true,c.requestId());
         });
     }
+    @Override public Verified verify(Verification c){
+        if(c==null || c.proofId()==null || c.proof()==null || !c.proof().matches("[0-9]{6}"))throw fail(VALIDATION_FAILED);ids(c.key(),c.requestId());
+        var binding=Objects.requireNonNull(admission.admit(CustomerEnrollmentAdmission.Operation.RECOVERY_VERIFY,c.requestId(),c.proofId().toString()));
+        byte[] supplied=c.proof().getBytes(StandardCharsets.US_ASCII);
+        try{return store.transaction(tx->{
+            tx.accounts().lockAdministration();admission.requireCurrent(binding);
+            UUID subject=tx.proofSubject(c.proofId()).orElseThrow(()->fail(TOKEN_INVALID_OR_EXPIRED));
+            var account=tx.accounts().lockAccount(subject).orElseThrow(()->fail(TOKEN_INVALID_OR_EXPIRED));
+            var stored=tx.proof(c.proofId()).orElseThrow(()->fail(TOKEN_INVALID_OR_EXPIRED));var proof=stored.proof();Instant time=now();
+            if(proof.purpose()!=CustomerProof.Purpose.CUSTOMER_RECOVERY || !proof.emailOtp() || !proof.subjectId().equals(subject)
+                || !Objects.equals(proof.authVersion(),account.version().authVersion()) || !account.active()
+                || account.activation()!=IdentityAccount.Activation.VERIFIED || tx.currentEmail(subject).isEmpty())throw fail(TOKEN_INVALID_OR_EXPIRED);
+            byte[] verifier=stored.verifier(),grant=null;
+            try{
+                if(!protection.matches(proof,stored.verifierKey(),supplied,verifier,time))throw fail(TOKEN_INVALID_OR_EXPIRED);
+                grant=protection.recoveryGrant(proof,stored.verifierKey(),verifier,time);
+                if(!now().isBefore(proof.expiresAt()))throw fail(TOKEN_INVALID_OR_EXPIRED);admission.requireCurrent(binding);
+                return new Verified(proof.id(),new String(grant,StandardCharsets.US_ASCII),proof.expiresAt());
+            }finally{Arrays.fill(verifier,(byte)0);if(grant!=null)Arrays.fill(grant,(byte)0);}
+        });}finally{Arrays.fill(supplied,(byte)0);}
+    }
     @Override public void confirm(Confirmation c){
         if(c==null || c.proofId()==null || c.proof()==null || c.proof().isEmpty() || c.proof().length()>512)throw fail(VALIDATION_FAILED);ids(c.key(),c.requestId());
         try{PasswordPolicy.validateNew(c.newPassword());}catch(DomainViolation invalid){throw fail(VALIDATION_FAILED);}
-        var binding=Objects.requireNonNull(admission.admit(CustomerEnrollmentAdmission.Operation.RECOVERY_CONFIRM,c.requestId(),c.proofId().toString()));byte[] supplied=c.proof().getBytes(StandardCharsets.UTF_8);
+        var binding=Objects.requireNonNull(admission.admit(CustomerEnrollmentAdmission.Operation.RECOVERY_CONFIRM,c.requestId(),c.proofId()+":reset"));byte[] supplied=c.proof().getBytes(StandardCharsets.UTF_8);
         try{store.transaction(tx->{
             tx.accounts().lockAdministration();admission.requireCurrent(binding);
             UUID subject=tx.proofSubject(c.proofId()).orElseThrow(()->fail(TOKEN_INVALID_OR_EXPIRED));var account=tx.accounts().lockAccount(subject).orElseThrow(()->fail(TOKEN_INVALID_OR_EXPIRED));tx.lockSessions(subject);
             var stored=tx.proof(c.proofId()).orElseThrow(()->fail(TOKEN_INVALID_OR_EXPIRED));var proof=stored.proof();
+            if(proof.emailOtp() && c.proof().length()!=43)throw fail(TOKEN_INVALID_OR_EXPIRED);
             if(!proof.subjectId().equals(subject) || proof.purpose()!=CustomerProof.Purpose.CUSTOMER_RECOVERY || !account.active() || account.activation()!=IdentityAccount.Activation.VERIFIED || tx.currentEmail(subject).isEmpty())throw fail(TOKEN_INVALID_OR_EXPIRED);
             var previous=CustomerReceipts.match(tx.proofReceipt(c.proofId(),c.key()).orElse(null),protection,"confirmCustomerRecovery",c.proofId().toString(),c.proof(),c.newPassword());
             if(previous!=null){

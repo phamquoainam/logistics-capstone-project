@@ -44,7 +44,7 @@ public final class ProtectedCustomerProofs implements CustomerProofProtection {
         byte[] entropy=new byte[32],token=null,nonce=new byte[12],hash=null,ciphertext=null,recipientNonce=new byte[12],recipientCiphertext=null,recipient=destination.getBytes(StandardCharsets.UTF_8);
         try {
             random.nextBytes(entropy);token=Base64.getUrlEncoder().withoutPadding().encode(entropy);
-            if(proof.enrollmentOtp()){
+            if(proof.emailOtp()){
                 byte[] padded=new byte[43];int code=random.nextInt(1_000_000);
                 for(int index=5;index>=0;index--){padded[index]=(byte)('0'+code%10);code/=10;}
                 System.arraycopy(token,0,padded,6,37);wipe(token);token=padded;
@@ -57,8 +57,17 @@ public final class ProtectedCustomerProofs implements CustomerProofProtection {
     }
     @Override public boolean matches(CustomerProof proof,String keyId,byte[] supplied,byte[] expected,Instant now) {
         try{proof.requireAvailable(now);}catch(RuntimeException invalid){return false;}
+        if(proof.purpose()==CustomerProof.Purpose.CUSTOMER_RECOVERY && proof.emailOtp() && supplied!=null && supplied.length==43 && keyId!=null && verifiers.containsKey(keyId) && expected!=null && expected.length==32){
+            byte[] grant=recoveryGrant(proof,keyId,expected,now);try{return MessageDigest.isEqual(grant,supplied);}finally{wipe(grant);}
+        }
         if(!proof.purpose().possessionRequired() || keyId==null || !verifiers.containsKey(keyId) || !canonical(proof,supplied,false) || expected==null || expected.length!=32)return false;
         byte[] actual=verifier(proof,keyId,supplied);try{return MessageDigest.isEqual(actual,expected);}finally{wipe(actual);}
+    }
+    @Override public byte[] recoveryGrant(CustomerProof proof,String keyId,byte[] expected,Instant now) {
+        proof.requireAvailable(now);
+        if(proof.purpose()!=CustomerProof.Purpose.CUSTOMER_RECOVERY || !proof.emailOtp() || expected==null || expected.length!=32)throw rejected();
+        byte[] raw=mac(keyId,fields("customer-recovery-reset-capability-v1",proof.id(),proof.subjectId(),proof.createdAt(),proof.expiresAt(),proof.authVersion(),keyId),expected);
+        try{return Base64.getUrlEncoder().withoutPadding().encode(raw);}finally{wipe(raw);}
     }
     @Override public byte[] fingerprint(String retainedKeyId,String operation,String... exactFields) {
         if(retainedKeyId==null || operation==null || !operation.matches("[A-Za-z][A-Za-z0-9]{0,79}") || exactFields==null || exactFields.length>20)throw rejected();
@@ -83,7 +92,7 @@ public final class ProtectedCustomerProofs implements CustomerProofProtection {
         try{if(!canonical(proof,token,true))throw rejected();return new Opened(token);}finally{wipe(token);}
     }
     private byte[] verifier(CustomerProof proof,String keyId,byte[] token) {
-        byte[] input=proof.enrollmentOtp()?Arrays.copyOf(token,6):token;
+        byte[] input=proof.emailOtp()?Arrays.copyOf(token,6):token;
         try{return mac(keyId,fields("customer-possession-verifier-v1",proof.id(),proof.subjectId(),proof.purpose(),proof.createdAt(),proof.expiresAt(),
             proof.sessionId(),proof.authVersion(),proof.organizationId(),keyId),input);}
         finally{if(input!=token)wipe(input);}
@@ -114,7 +123,7 @@ public final class ProtectedCustomerProofs implements CustomerProofProtection {
         }catch(GeneralSecurityException failure){throw rejected();}
     }
     private static boolean canonical(CustomerProof proof,byte[] token,boolean deliveryEnvelope) {
-        if(proof.enrollmentOtp()){
+        if(proof.emailOtp()){
             if(token==null || token.length!=(deliveryEnvelope?43:6))return false;
             for(int index=0;index<6;index++)if(token[index]<'0' || token[index]>'9')return false;
             if(!deliveryEnvelope)return true;

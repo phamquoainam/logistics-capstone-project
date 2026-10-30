@@ -52,7 +52,7 @@ class SmtpCustomerDeliveryTests {
             var outcome=adapter(inbox,SmtpCustomerDelivery.Mode.TEST_LOOPBACK,null).send(intent);assertEquals(CustomerDeliveryTransport.Kind.ACCEPTED_BY_PROVIDER,outcome.kind());assertTrue(outcome.sandbox());
             var received=inbox.messages();assertEquals(1,received.size());var mail=new MimeMessage(Session.getInstance(new Properties()),new ByteArrayInputStream(received.getFirst()));
             assertEquals("<"+intent.id()+"@example.invalid>",mail.getMessageID());assertEquals(DESTINATION,mail.getAllRecipients()[0].toString());
-            String content=(String)mail.getContent();assertTrue(content.contains(ORIGIN+"/verify-email#proofId="+intent.proof().id()+"&expiresAt="));assertFalse(content.contains("/verify-email?"));
+            String content=CustomerSmtpTestInbox.plainText(mail);assertFalse(content.contains(ORIGIN));assertTrue(mail.isMimeType("multipart/alternative"));assertFalse(content.contains("/verify-email?"));
             byte[] token=intent.token();try{assertTrue(content.contains("123456"));assertFalse(content.contains(new String(token,StandardCharsets.US_ASCII)));}finally{Arrays.fill(token,(byte)0);}
             assertEquals(0,inbox.authentications.get());assertEquals("CustomerDeliveryOutcome[redacted]",outcome.toString());assertEquals("CustomerDeliveryMessage[redacted]",intent.toString());
         }
@@ -70,10 +70,10 @@ class SmtpCustomerDeliveryTests {
             assertEquals(CustomerDeliveryTransport.Kind.ACCEPTED_BY_PROVIDER,sender.send(recovery).kind());
             var first=new MimeMessage(Session.getInstance(new Properties()),new ByteArrayInputStream(inbox.messages().get(0)));
             var second=new MimeMessage(Session.getInstance(new Properties()),new ByteArrayInputStream(inbox.messages().get(1)));
-            assertEquals("E-Logistics - Xác minh tài khoản",first.getSubject());
-            assertEquals("E-Logistics - Đặt lại mật khẩu",second.getSubject());
-            assertTrue(((String)first.getContent()).contains(ORIGIN+"/verify-email#proofId="));
-            assertTrue(((String)second.getContent()).contains(ORIGIN+"/recover/confirm#proofId="));
+            assertEquals("movapost. - Xác minh địa chỉ email",first.getSubject());
+            assertEquals("movapost. - Xác minh khôi phục mật khẩu",second.getSubject());
+            assertTrue(CustomerSmtpTestInbox.plainText(first).contains("Mã có hiệu lực trong 2 phút"));assertFalse(CustomerSmtpTestInbox.plainText(first).contains(ORIGIN));
+            assertTrue(CustomerSmtpTestInbox.plainText(second).contains(ORIGIN+"/recover/confirm#proofId="));
         }
     }
     @Test void realImplicitTlsUsesApprovedCertificateAndHasNoPlaintextFallback()throws Exception{
@@ -101,7 +101,7 @@ class SmtpCustomerDeliveryTests {
             var smtp=adapter(inbox,SmtpCustomerDelivery.Mode.TEST_LOOPBACK,null);assertEquals(smtp.send(intent),smtp.send(intent));
             var received=inbox.messages();assertEquals(2,received.size());
             var first=new MimeMessage(Session.getInstance(new Properties()),new ByteArrayInputStream(received.get(0)));var second=new MimeMessage(Session.getInstance(new Properties()),new ByteArrayInputStream(received.get(1)));
-            assertEquals(first.getMessageID(),second.getMessageID());assertEquals(first.getContent(),second.getContent());
+            assertEquals(first.getMessageID(),second.getMessageID());assertEquals(CustomerSmtpTestInbox.plainText(first),CustomerSmtpTestInbox.plainText(second));
         }
     }
     @Test void unsafeWireLoggingBlocksBeforeConnectingOrDecryptedBodyEmission()throws Exception{

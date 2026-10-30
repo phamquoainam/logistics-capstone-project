@@ -39,7 +39,7 @@ class CustomerHttpSecurityTests {
         when(sessions.refreshIdentity(any())).thenAnswer(call->{sessionAdmission.authorize(SessionAdmission.Operation.REFRESH,REQUEST,SESSION,true);return sessionResult();});
         when(commands.enroll(any())).thenAnswer(call->{var command=(CustomerEnrollmentCommands.Enrollment)call.getArgument(0);var binding=enrollmentAdmission.admit(CustomerEnrollmentAdmission.Operation.ENROLL,command.requestId(),command.email());enrollmentAdmission.requireCurrent(binding);return new CustomerEnrollmentCommands.Accepted(true,command.requestId());});
         when(recoveries.request(any())).thenAnswer(call->{var command=(CustomerRecoveryCommands.Email)call.getArgument(0);var binding=enrollmentAdmission.admit(CustomerEnrollmentAdmission.Operation.RECOVERY_REQUEST,command.requestId(),command.email());enrollmentAdmission.requireCurrent(binding);return new CustomerEnrollmentCommands.Accepted(true,command.requestId());});
-        doAnswer(call->{var command=(CustomerRecoveryCommands.Confirmation)call.getArgument(0);var binding=enrollmentAdmission.admit(CustomerEnrollmentAdmission.Operation.RECOVERY_CONFIRM,command.requestId(),command.proofId().toString());enrollmentAdmission.requireCurrent(binding);return null;}).when(recoveries).confirm(any());
+        doAnswer(call->{var command=(CustomerRecoveryCommands.Confirmation)call.getArgument(0);var binding=enrollmentAdmission.admit(CustomerEnrollmentAdmission.Operation.RECOVERY_CONFIRM,command.requestId(),command.proofId()+":reset");enrollmentAdmission.requireCurrent(binding);return null;}).when(recoveries).confirm(any());
     }
     private IdentitySessionCommands.Result sessionResult(){return new IdentitySessionCommands.Result(new IdentitySessionCommands.AccessGrant(SESSION,ACCOUNT,1,NOW,NOW.plusSeconds(900)),new IdentityGrantCommands.Account(ACCOUNT,"synthetic","Synthetic",EMAIL,"ACTIVE",List.of(),1,true),NOW.plusSeconds(28800),R.getBytes(StandardCharsets.US_ASCII));}
     private MockHttpServletRequest request(String route){
@@ -148,7 +148,7 @@ class CustomerHttpSecurityTests {
     @Test void recoveryConfirmationUsesExactInputAndClearsRefreshOnlyAfterCommit()throws Exception{
         var request=request("recovery-confirm");request.setContent(json.writeValueAsBytes(Map.of("proofId",KEY.toString(),"proof",C,"newPassword","synthetic-new-password")));var response=run(request);assertEquals(204,response.getStatus());assertEquals("",response.getContentAsString());
         assertEquals(1,response.getHeaders("Set-Cookie").size());var cookie=MockCookie.parse(response.getHeader("Set-Cookie"));assertEquals("__Host-elogistics.customer.refresh",cookie.getName());assertEquals(0,cookie.getMaxAge());assertTrue(cookie.getSecure());assertTrue(cookie.isHttpOnly());
-        verify(limiter).reserve(List.of(new IdentityRateLimiter.Subject(IdentityRateLimiter.Policy.CUSTOMER_RECOVERY_PROOF,KEY.toString())));
+        verify(limiter).reserve(List.of(new IdentityRateLimiter.Subject(IdentityRateLimiter.Policy.CUSTOMER_RECOVERY_PROOF,KEY+":reset")));
         var captor=org.mockito.ArgumentCaptor.forClass(CustomerRecoveryCommands.Confirmation.class);verify(recoveries).confirm(captor.capture());assertEquals("CustomerRecoveryConfirmation[redacted]",captor.getValue().toString());
     }
     @Test void recoveryRejectsActorDestinationAndDuplicateProofFieldInjection()throws Exception{

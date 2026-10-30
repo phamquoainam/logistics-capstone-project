@@ -1,4 +1,4 @@
-import { clearEntryProof, getVerificationLocator, withEntryProof } from './entry-proof';
+import { acceptRecoveryGrant, beginOtp, clearEntryProof, getOtpChallenge, getVerificationLocator, withEntryProof } from './entry-proof';
 export type Subject = { accountId: string; displayName: string; verifiedEmail: string; securityVersion: number };
 export type ProfileInput = { displayName: string; preferredLanguage: 'vi' | 'en'; businessContactEmail?: string; businessContactPhone?: string };
 export type CustomerProfile = ProfileInput & { id: string; accountId: string; version: number };
@@ -83,9 +83,9 @@ export function createCustomerClient(ports: Ports = { fetch: (...args) => fetch(
   async function logoutLocked(): Promise<void> {
     const challenge = await csrf(); await request('customer-auth/logout', 'POST', undefined, { 'X-CSRF-Token': challenge }); forget(); channel?.postMessage('changed');
   }
-  async function preauth(route: string, input: object, key: string, noContent: boolean): Promise<void> {
+  async function preauth(route: string, input: object, key: string, noContent: boolean): Promise<string | undefined> {
     if (!uuid.test(key)) throw new CustomerApiError('VALIDATION_FAILED');
-    await ports.lock(async () => {
+    return ports.lock(async () => {
       if (access) throw new CustomerApiError('CUSTOMER_ALREADY_SIGNED_IN');
       const body = JSON.stringify(input);
       if (pending?.key === key && (pending.route !== route || pending.body !== body)) throw new CustomerApiError('IDEMPOTENCY_CONFLICT');
@@ -93,6 +93,7 @@ export function createCustomerClient(ports: Ports = { fetch: (...args) => fetch(
       const { value, response } = await request('customer-auth/' + route, 'POST', body, { 'X-CSRF-Token': challenge, 'Idempotency-Key': key });
       if (noContent ? response.status !== 204 : response.status !== 202 || !record(value) || !exact(value, ['accepted', 'requestId']) || value.accepted !== true || typeof value.requestId !== 'string' || !uuid.test(value.requestId)) throw unknown();
       pending = undefined;
+      return !noContent && record(value) ? value.requestId as string : undefined;
     });
   }
   function profile(value: unknown, response: Response): VersionedProfile {
@@ -149,9 +150,22 @@ export function createCustomerClient(ports: Ports = { fetch: (...args) => fetch(
     },
     logout: () => ports.lock(async () => { try { await logoutLocked(); } catch (error) { forget(error instanceof CustomerApiError ? error.code : 'OUTCOME_UNKNOWN'); throw error; } }),
     discardPending() { pending = undefined; },
-    enroll: (input: Enrollment, key: string) => preauth('enrollments', input, key, false),
-    resend: (email: string, key: string) => preauth('verification-resend', { email }, key, false),
-    recover: (email: string, key: string) => preauth('recovery', { email }, key, false),
+    async enroll(input: Enrollment, key: string): Promise<void> { const id = await preauth('enrollments', input, key, false); beginOtp('verification', id!, input.email, ports.now() + 120000); },
+    async resend(email: string, key: string): Promise<void> { const id = await preauth('verification-resend', { email }, key, false); beginOtp('verification', id!, email, ports.now() + 120000); },
+    async recover(email: string, key: string): Promise<void> { const id = await preauth('recovery', { email }, key, false); beginOtp('recovery', id!, email, ports.now() + 120000); },
+    async verifyRecovery(code: string, key: string): Promise<void> {
+      const locator = getOtpChallenge('recovery');
+      if (!locator || !/^\d{6}$/.test(code) || !uuid.test(key)) throw new CustomerApiError('VALIDATION_FAILED');
+      await ports.lock(async () => {
+        if (access) throw new CustomerApiError('CUSTOMER_ALREADY_SIGNED_IN');
+        const body = JSON.stringify({ proofId: locator.proofId, proof: code });
+        if (pending?.key === key && (pending.route !== 'recovery-verifications' || pending.body !== body)) throw new CustomerApiError('IDEMPOTENCY_CONFLICT');
+        const challenge = pending?.key === key ? pending.challenge : await csrf(); pending = { key, route: 'recovery-verifications', body, challenge };
+        const { value, response } = await request('customer-auth/recovery-verifications', 'POST', body, { 'X-CSRF-Token': challenge, 'Idempotency-Key': key });
+        if (response.status !== 200 || !record(value) || !exact(value, ['proofId', 'proof', 'expiresAt']) || value.proofId !== locator.proofId || typeof value.proof !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(value.proof) || typeof value.expiresAt !== 'string' || !Number.isFinite(Date.parse(value.expiresAt)) || Date.parse(value.expiresAt) <= ports.now() || Date.parse(value.expiresAt) > ports.now() + 121000) throw unknown();
+        acceptRecoveryGrant({ proofId: locator.proofId, proof: value.proof }); pending = undefined;
+      });
+    },
     async verify(key: string, code?: string): Promise<void> {
       const locator = getVerificationLocator();
       if (locator) {
