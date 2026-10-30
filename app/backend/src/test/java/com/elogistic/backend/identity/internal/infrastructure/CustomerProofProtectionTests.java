@@ -70,10 +70,7 @@ class CustomerProofProtectionTests {
                 assertFalse(crypto.matches(p,"v1",Arrays.copyOf(first,6),a.verifier(),p.expiresAt()));
             }finally{Arrays.fill(first,(byte)0);Arrays.fill(second,(byte)0);}
         }
-    }
-    @Test void existingTwentyFourHourEnrollmentLinksRemainReadableWithoutBecomingOtp(){
         var legacy=new CustomerProof(UUID.randomUUID(),ACCOUNT,CustomerProof.Purpose.CUSTOMER_ENROLLMENT,NOW,NOW.plusSeconds(86400),null,null,null,null,null);
-        var crypto=protection();
         try(var sealed=crypto.issue(legacy,DESTINATION);var opened=crypto.open(legacy,DESTINATION,"v1","e1",sealed.nonce(),sealed.ciphertext(),NOW)){
             byte[] token=opened.token();try{
                 assertEquals(32,Base64.getUrlDecoder().decode(token).length);
