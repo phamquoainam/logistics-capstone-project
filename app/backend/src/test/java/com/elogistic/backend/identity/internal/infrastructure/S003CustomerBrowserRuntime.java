@@ -2,6 +2,8 @@ package com.elogistic.backend.identity.internal.infrastructure;
 
 import com.elogistic.backend.identity.internal.*;
 import com.elogistic.backend.merchant.internal.CustomerProfileConfiguration;
+import com.elogistic.backend.platform.internal.infrastructure.PublicMediaConfiguration;
+import com.elogistic.backend.platform.internal.web.PublicMediaHttp;
 import com.elogistic.backend.workflow.internal.web.*;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.jwk.*;
@@ -37,10 +39,10 @@ final class S003CustomerBrowserRuntime {
     private static final List<String> CASES=List.of("retail guest registration uses the real HTTPS API", "verification consumes the actual SMTP message only after confirmation", "verified login has isolated customer cookies and no SYSTEM authority", "profile lost response resolves through the real committed receipt", "merchant draft uses the real HTTPS API and resolves one lost write", "logout and recovery request use the actual verified destination", "recovery confirmation changes the credential with the actual second message", "fresh login rejects the old credential and revoked browser loses its workspace", "unknown email and invalid proof do not fabricate account activation");
 
     @TestConfiguration(proxyBeanMethods=false) @EnableAutoConfiguration
-    @Import({ProductionIdentityHttpConfiguration.class,ProductionCustomerConfiguration.class,CustomerProfileConfiguration.class,CustomerProfileHttp.class,MerchantApplicationHttp.class,OnboardingHttpErrors.class})
+    @Import({ProductionIdentityHttpConfiguration.class,ProductionCustomerConfiguration.class,CustomerProfileConfiguration.class,CustomerProfileHttp.class,MerchantApplicationHttp.class,OnboardingHttpErrors.class,PublicMediaConfiguration.class,PublicMediaHttp.class})
     static class Host {
         @Bean WebMvcConfigurer customerAssets(){return new WebMvcConfigurer(){
-            public void addViewControllers(ViewControllerRegistry routes){for(String path:List.of("/","/login","/register","/verify-email","/recover","/recover/confirm","/personal","/personal/profile","/personal/applications","/personal/applications/{id}"))routes.addViewController(path).setViewName("forward:/index.html");}
+            public void addViewControllers(ViewControllerRegistry routes){for(String path:List.of("/","/services","/tracking","/quote","/coverage","/stations","/news","/faq","/about","/support","/privacy","/terms","/shipping-policy","/login","/register","/verify-email","/recover","/recover/confirm","/personal","/personal/profile","/personal/applications","/personal/applications/{id}","/merchant"))routes.addViewController(path).setViewName("forward:/index.html");}
             public void addInterceptors(InterceptorRegistry interceptors){interceptors.addInterceptor(new HandlerInterceptor(){
                 public boolean preHandle(jakarta.servlet.http.HttpServletRequest request,jakarta.servlet.http.HttpServletResponse response,Object handler){response.setHeader("Cache-Control","no-store");response.setHeader("Referrer-Policy","no-referrer");response.setHeader("X-Content-Type-Options","nosniff");return true;}
             });}
@@ -71,7 +73,7 @@ final class S003CustomerBrowserRuntime {
         Map<String,Object> p=new HashMap<>();
         p.put("server.address","127.0.0.1");p.put("server.port",port);p.put("server.ssl.enabled",true);p.put("server.ssl.key-store",directory.resolve("server.p12").toUri().toString());p.put("server.ssl.key-store-type","PKCS12");p.put("server.ssl.key-store-password",password);p.put("server.ssl.enabled-protocols","TLSv1.2,TLSv1.3");p.put("server.forward-headers-strategy","NONE");
         p.put("spring.autoconfigure.exclude","org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration,org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration,org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration,org.springframework.boot.data.redis.autoconfigure.DataRedisReactiveAutoConfiguration,org.springframework.boot.data.redis.autoconfigure.DataRedisRepositoriesAutoConfiguration,org.springframework.boot.amqp.autoconfigure.RabbitAutoConfiguration,org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration");
-        p.put("spring.flyway.enabled",false);p.put("spring.sql.init.mode","never");p.put("spring.main.banner-mode","off");p.put("logging.level.root","WARN");p.put("spring.web.resources.static-locations",web.resolve("dist-customer").toUri().toString());p.put("spring.web.resources.cache.cachecontrol.no-store",true);p.put("server.error.include-message","never");p.put("server.error.include-stacktrace","never");
+        p.put("spring.flyway.enabled",false);p.put("spring.sql.init.mode","never");p.put("spring.main.banner-mode","off");p.put("logging.level.root","WARN");p.put("spring.web.resources.static-locations",web.resolve("dist-customer").toUri().toString());p.put("spring.web.resources.cache.cachecontrol.no-store",true);p.put("server.error.include-message","never");p.put("server.error.include-stacktrace","never");p.put("public.media.mode","local");p.put("public.media.local-root",web.resolve("public/media").toString());
         p.put("identity.security.issuer","https://system-runtime.example.invalid");p.put("identity.security.audience","system-browser");p.put("identity.security.current-kid","system-test");p.put("identity.security.jwk-set",jwk("system-test"));p.put("identity.security.origin",origin);p.put("identity.security.limiter-hmac",randomKey());
         p.put("customer.rollout","SANDBOX");p.put("customer.security.issuer","https://customer-runtime.example.invalid");p.put("customer.security.audience","customer-browser");p.put("customer.security.current-kid","customer-test");p.put("customer.security.jwk-set",jwk("customer-test"));p.put("customer.security.origin",origin);p.put("customer.security.limiter-hmac",randomKey());
         p.put("customer.security.proof-verifier-keys",JSON.writeValueAsString(Map.of("v1",randomKey())));p.put("customer.security.delivery-encryption-keys",JSON.writeValueAsString(Map.of("e1",randomKey())));p.put("customer.security.current-proof-key","v1");p.put("customer.security.current-encryption-key","e1");
@@ -90,13 +92,15 @@ final class S003CustomerBrowserRuntime {
                 try{
                     if(!exchange.getRequestMethod().equals("GET") || !nonce.equals(exchange.getRequestHeaders().getFirst("X-Owned-Inbox-Nonce")) || !Set.of("/mail/0","/mail/1").contains(exchange.getRequestURI().toString())){exchange.sendResponseHeaders(404,-1);return;}
                     int index=Integer.parseInt(exchange.getRequestURI().getPath().substring(6));var message=inbox.message(index);if(message.isEmpty()){exchange.sendResponseHeaders(202,-1);return;}
-                    byte[] bytes=message.get();String link;
+                    byte[] bytes=message.get();String code=null;
                     try{
                         var mime=new jakarta.mail.internet.MimeMessage(jakarta.mail.Session.getInstance(new Properties()),new ByteArrayInputStream(bytes));
                         if(mime.getAllRecipients().length!=1 || !EMAIL.equals(mime.getAllRecipients()[0].toString()))throw new IllegalStateException();
-                        String path=index==0?"/verify-email":"/recover/confirm";var match=java.util.regex.Pattern.compile(java.util.regex.Pattern.quote(origin+path)+"#proofId=[0-9a-f-]{36}&proof=[A-Za-z0-9_-]{43}").matcher((String)mime.getContent());if(!match.find())throw new IllegalStateException();link=match.group();
+                        String content=CustomerSmtpTestInbox.plainText(mime);
+                        if(content.contains("#proofId="))throw new IllegalStateException();
+                        var otp=java.util.regex.Pattern.compile("(?m)^([0-9]{6})\\r?$").matcher(content);if(!otp.find())throw new IllegalStateException();code=otp.group(1);
                     }finally{Arrays.fill(bytes,(byte)0);}
-                    byte[] response=JSON.writeValueAsBytes(Map.of("link",link));exchange.getResponseHeaders().set("Content-Type","application/json");exchange.getResponseHeaders().set("Cache-Control","no-store");exchange.sendResponseHeaders(200,response.length);exchange.getResponseBody().write(response);Arrays.fill(response,(byte)0);
+                    byte[] response=JSON.writeValueAsBytes(Map.of("code",code));exchange.getResponseHeaders().set("Content-Type","application/json");exchange.getResponseHeaders().set("Cache-Control","no-store");exchange.sendResponseHeaders(200,response.length);exchange.getResponseBody().write(response);Arrays.fill(response,(byte)0);
                 }catch(Exception invalid){exchange.sendResponseHeaders(503,-1);}finally{exchange.close();}
             });server.start();
         }

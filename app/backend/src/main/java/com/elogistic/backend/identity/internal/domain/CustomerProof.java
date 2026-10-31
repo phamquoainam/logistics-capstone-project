@@ -16,9 +16,14 @@ public record CustomerProof(UUID id, UUID subjectId, Purpose purpose, Instant cr
         public boolean possessionRequired(){return this!=REAUTHENTICATION && this!=OWNER_RECOVERY_CONSENT;}
         public boolean customerSessionRequired(){return Set.of(SECURITY_EMAIL_CHANGE,BUSINESS_CONTACT,REAUTHENTICATION,OWNER_RECOVERY_CONSENT).contains(this);}
     }
+    public static final long ENROLLMENT_OTP_SECONDS = 120;
+    public boolean enrollmentOtp(){return purpose==Purpose.CUSTOMER_ENROLLMENT && expiresAt.equals(createdAt.plusSeconds(ENROLLMENT_OTP_SECONDS));}
+    public boolean emailOtp(){return (purpose==Purpose.CUSTOMER_ENROLLMENT || purpose==Purpose.CUSTOMER_RECOVERY) && expiresAt.equals(createdAt.plusSeconds(ENROLLMENT_OTP_SECONDS));}
     public CustomerProof {
         if(id==null || subjectId==null || purpose==null || createdAt==null || expiresAt==null
-            || !createdAt.equals(createdAt.truncatedTo(ChronoUnit.MICROS)) || !expiresAt.equals(createdAt.plusSeconds(purpose.seconds))
+            || !createdAt.equals(createdAt.truncatedTo(ChronoUnit.MICROS))
+            || !(expiresAt.equals(createdAt.plusSeconds(purpose.seconds))
+                || (purpose==Purpose.CUSTOMER_ENROLLMENT || purpose==Purpose.CUSTOMER_RECOVERY) && expiresAt.equals(createdAt.plusSeconds(ENROLLMENT_OTP_SECONDS)))
             || (purpose!=Purpose.CUSTOMER_RECOVERY && (sessionId==null)!=(authVersion==null)) || (authVersion!=null && authVersion<1)
             || (purpose.customerSessionRequired() && sessionId==null)
             || ((purpose==Purpose.OWNER_RECOVERY_CONSENT)!=(organizationId!=null))
@@ -31,7 +36,7 @@ public record CustomerProof(UUID id, UUID subjectId, Purpose purpose, Instant cr
         if(purpose==Purpose.LEGACY_CUSTOMER_LINK && sessionId==null)throw rejected();
     }
     public static CustomerProof issue(UUID id,UUID subject,Purpose purpose,Instant time,UUID session,Long version,UUID organization) {
-        return new CustomerProof(id,subject,purpose,time,time.plusSeconds(purpose.seconds),session,version,organization,null,null);
+        return new CustomerProof(id,subject,purpose,time,time.plusSeconds(purpose==Purpose.CUSTOMER_ENROLLMENT?ENROLLMENT_OTP_SECONDS:purpose.seconds),session,version,organization,null,null);
     }
     public void requireAvailable(Instant time) {
         if(time==null || time.isBefore(createdAt) || !time.isBefore(expiresAt) || consumedAt!=null || revokedAt!=null)throw rejected();

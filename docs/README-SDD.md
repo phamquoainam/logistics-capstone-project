@@ -4,7 +4,7 @@ First-party Logistics Management Platform on existing modular monolith/React/RN.
 
 1. Read AGENTS.md, [PRD](prd.md), [principles](principles.md), accepted architecture/security and [latest account-first decision](decisions/customer-account-merchant-admission.md).
 2. Use [canonical index](../specs/INDEX.md), [roadmap](implementation/roadmap-v3.md), [delivery principles](implementation/delivery-principles-v3.md), [DoR](codex/definition-of-ready.md).001/002 retained,003–030 one active hierarchy; no duplicate planning/legacy trees.
-3. Read own spec/design/tasks,371-BC crosswalk and material blockers; accepted contracts only in contracts/. Actual source app/backend, app/frontend/web, app/frontend/shipper-mobile. Proposed names are not official wire/schema.
+3. Read own spec/design/tasks,371-BC crosswalk and material blockers; accepted contracts only in contracts/. Actual source app/backend, app/frontend/web, app/frontend/mobile. The former shipper-mobile directory was renamed without changing its implementation; historical source paths refer to their original revision. Proposed names are not official wire/schema.
 4. [Portal coverage](portal/group-ab-coverage.md), [navigation](portal/navigation-permissions.md), [screenshot benchmark](portal/screenshot-benchmark.md), [journeys](portal/journeys.md), [product acceptance](portal/group-ab-acceptance.md) cover Group A/B across specs, not everything in003.
 5. [Retirement and source provenance](reconciliation/v3/legacy-retirement.md) preserve old REQ/AC/tasks/RQ/Demo history. Demo code/contracts/migrations/tests/evidence remain;001/002 accepted bounded implementations/status/findings unchanged.
 

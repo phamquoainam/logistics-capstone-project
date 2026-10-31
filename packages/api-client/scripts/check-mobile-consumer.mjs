@@ -7,7 +7,7 @@ import { spawnSync } from 'node:child_process';
 import { randomUUID, createHash } from 'node:crypto';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
-const mobile = resolve(root, 'app/frontend/shipper-mobile');
+const mobile = resolve(root, 'app/frontend/mobile');
 const requireMobile = createRequire(resolve(mobile, 'package.json'));
 const ts = requireMobile('typescript');
 const output = resolve(root, '.demo/d1-07-c05', `sdk-${randomUUID()}`);

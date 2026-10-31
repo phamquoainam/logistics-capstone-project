@@ -19,15 +19,18 @@ public final class ProductionCustomerEnrollmentHttp {
     public ProductionCustomerEnrollmentHttp(CustomerEnrollmentCommands commands,CustomerRecoveryCommands recoveries,ProductionCustomerEnrollmentAdmission admission,String origin){
         this.commands=Objects.requireNonNull(commands);this.recoveries=Objects.requireNonNull(recoveries);this.admission=Objects.requireNonNull(admission);this.origin=ProductionCustomerRequestAdmission.requireOrigin(origin);
     }
-    public boolean matches(HttpServletRequest request){String path=request.getRequestURI().substring(request.getContextPath().length());return request.getMethod().equals("POST") && Set.of(PREFIX+"enrollments",PREFIX+"verification-resend",PREFIX+"verifications",PREFIX+"recovery",PREFIX+"recovery-confirm").contains(path);}
+    public boolean matches(HttpServletRequest request){String path=request.getRequestURI().substring(request.getContextPath().length());return request.getMethod().equals("POST") && Set.of(PREFIX+"enrollments",PREFIX+"verification-resend",PREFIX+"verifications",PREFIX+"recovery",PREFIX+"recovery-verifications",PREFIX+"recovery-confirm").contains(path);}
     private static IdentityCommandFailure invalid(){return new IdentityCommandFailure(IdentityCommandFailure.Code.VALIDATION_FAILED);}
-    private static JsonNode body(HttpServletRequest request,Set<String> fields)throws IOException {
+    private static JsonNode body(HttpServletRequest request,Set<String> fields)throws IOException {return body(request,fields,Set.of());}
+    private static JsonNode body(HttpServletRequest request,Set<String> fields,Set<String> optional)throws IOException {
         try{
             if(request.getContentType()==null || !request.getContentType().split(";",2)[0].equalsIgnoreCase("application/json"))throw invalid();
             byte[] bytes=request.getInputStream().readNBytes(16385);try{
                 if(bytes.length>16384)throw invalid();JsonNode value=JSON.readTree(bytes);
-                if(value==null || !value.isObject() || value.size()!=fields.size())throw invalid();
-                for(String field:fields)if(value.get(field)==null || !value.get(field).isString())throw invalid();return value;
+                if(value==null || !value.isObject() || value.size()<fields.size() || value.size()>fields.size()+optional.size())throw invalid();
+                for(String field:fields)if(value.get(field)==null || !value.get(field).isString())throw invalid();
+                for(var entry:value.properties())if(!fields.contains(entry.getKey()) && !optional.contains(entry.getKey()) || !entry.getValue().isString())throw invalid();
+                return value;
             }finally{Arrays.fill(bytes,(byte)0);}
         }catch(IdentityCommandFailure rejected){throw rejected;}catch(Exception rejected){throw invalid();}
     }
@@ -45,16 +48,20 @@ public final class ProductionCustomerEnrollmentHttp {
             try(var scope=admission.enter(requestId,cookie,challenge,ProductionAuthenticationHttp.clientAddress(request))){
                 String path=request.getRequestURI();CustomerEnrollmentCommands.Accepted result;
                 if(path.endsWith("/enrollments")){
-                    var input=body(request,Set.of("email","password","displayName","consentVersion"));
-                    result=commands.enroll(new CustomerEnrollmentCommands.Enrollment(input.get("email").asString(),input.get("password").asString(),input.get("displayName").asString(),input.get("consentVersion").asString(),key,requestId));
+                    var input=body(request,Set.of("email","password","displayName","consentVersion"),Set.of("phone"));
+                    result=commands.enroll(new CustomerEnrollmentCommands.Enrollment(input.get("email").asString(),input.get("password").asString(),input.get("displayName").asString(),input.has("phone")?input.get("phone").asString():null,input.get("consentVersion").asString(),key,requestId));
                 }else if(path.endsWith("/verification-resend")){
                     var input=body(request,Set.of("email"));result=commands.resend(new CustomerEnrollmentCommands.Email(input.get("email").asString(),key,requestId));
                 }else if(path.endsWith("/recovery")){
                     var input=body(request,Set.of("email"));result=recoveries.request(new CustomerRecoveryCommands.Email(input.get("email").asString(),key,requestId));
                 }else{
-                    boolean recovery=path.endsWith("/recovery-confirm");var input=body(request,recovery?Set.of("proofId","proof","newPassword"):Set.of("proofId","proof"));UUID proof;
+                    boolean recovery=path.endsWith("/recovery-confirm"),recoveryVerification=path.endsWith("/recovery-verifications");var input=body(request,recovery?Set.of("proofId","proof","newPassword"):Set.of("proofId","proof"));UUID proof;
                     try{proof=UUID.fromString(input.get("proofId").asString());if(!proof.toString().equals(input.get("proofId").asString()))throw invalid();}
                     catch(IllegalArgumentException invalid){throw invalid();}
+                    if(recoveryVerification){
+                        var verified=recoveries.verify(new CustomerRecoveryCommands.Verification(proof,input.get("proof").asString(),key,requestId));
+                        response.setStatus(200);response.setContentType("application/json;charset=UTF-8");response.getWriter().write(JSON.writeValueAsString(verified));return;
+                    }
                     if(recovery){
                         recoveries.confirm(new CustomerRecoveryCommands.Confirmation(proof,input.get("proof").asString(),input.get("newPassword").asString(),key,requestId));
                         response.addHeader("Set-Cookie","__Host-elogistics.customer.refresh=; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=0");

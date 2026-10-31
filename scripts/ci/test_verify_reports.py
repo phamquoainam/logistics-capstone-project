@@ -283,9 +283,9 @@ class ReportGuardTests(unittest.TestCase):
         self.assertEqual([20, 38, 17, 34], [len(v) for v in reports.S2_REQUIRED.values()])
         for name, methods in reports.S2_REQUIRED.items():
             self.assertEqual(len(methods), len(set(methods)), name)
-        # Prior cases retained; authority composition requires9 unit and12 PostgreSQL identities.
-        for mode, passed, skipped in [('architecture', 23, 0), ('h2', 635, 17),
-                                      ('postgres', 987, 5), ('foundation', 5, 0)]:
+        # Prior cases retained; local S3/SMTP adds two exact unit identities.
+        for mode, passed, skipped in [('architecture', 23, 0), ('h2', 641, 17),
+                                      ('postgres', 993, 5), ('foundation', 5, 0)]:
             with self.subTest(mode=mode):
                 self.fixture(mode)
                 self.assertTrue(self.check(mode))

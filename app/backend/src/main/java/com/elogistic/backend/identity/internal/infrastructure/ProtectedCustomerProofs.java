@@ -43,7 +43,13 @@ public final class ProtectedCustomerProofs implements CustomerProofProtection {
         if(proof==null || !proof.purpose().possessionRequired())throw rejected();proof.requireAvailable(proof.createdAt());new CustomerEmail(destination);
         byte[] entropy=new byte[32],token=null,nonce=new byte[12],hash=null,ciphertext=null,recipientNonce=new byte[12],recipientCiphertext=null,recipient=destination.getBytes(StandardCharsets.UTF_8);
         try {
-            random.nextBytes(entropy);token=Base64.getUrlEncoder().withoutPadding().encode(entropy);random.nextBytes(nonce);
+            random.nextBytes(entropy);token=Base64.getUrlEncoder().withoutPadding().encode(entropy);
+            if(proof.emailOtp()){
+                byte[] padded=new byte[43];int code=random.nextInt(1_000_000);
+                for(int index=5;index>=0;index--){padded[index]=(byte)('0'+code%10);code/=10;}
+                System.arraycopy(token,0,padded,6,37);wipe(token);token=padded;
+            }
+            random.nextBytes(nonce);
             hash=verifier(proof,verifierId,token);ciphertext=crypt(Cipher.ENCRYPT_MODE,proof,destination,verifierId,encryptionId,nonce,token);
             random.nextBytes(recipientNonce);recipientCiphertext=recipientCrypt(Cipher.ENCRYPT_MODE,proof,verifierId,encryptionId,recipientNonce,recipient);
             return new Protected(verifierId,encryptionId,hash,nonce,ciphertext,recipientNonce,recipientCiphertext);
@@ -51,8 +57,17 @@ public final class ProtectedCustomerProofs implements CustomerProofProtection {
     }
     @Override public boolean matches(CustomerProof proof,String keyId,byte[] supplied,byte[] expected,Instant now) {
         try{proof.requireAvailable(now);}catch(RuntimeException invalid){return false;}
-        if(!proof.purpose().possessionRequired() || keyId==null || !verifiers.containsKey(keyId) || !canonical(supplied) || expected==null || expected.length!=32)return false;
+        if(proof.purpose()==CustomerProof.Purpose.CUSTOMER_RECOVERY && proof.emailOtp() && supplied!=null && supplied.length==43 && keyId!=null && verifiers.containsKey(keyId) && expected!=null && expected.length==32){
+            byte[] grant=recoveryGrant(proof,keyId,expected,now);try{return MessageDigest.isEqual(grant,supplied);}finally{wipe(grant);}
+        }
+        if(!proof.purpose().possessionRequired() || keyId==null || !verifiers.containsKey(keyId) || !canonical(proof,supplied,false) || expected==null || expected.length!=32)return false;
         byte[] actual=verifier(proof,keyId,supplied);try{return MessageDigest.isEqual(actual,expected);}finally{wipe(actual);}
+    }
+    @Override public byte[] recoveryGrant(CustomerProof proof,String keyId,byte[] expected,Instant now) {
+        proof.requireAvailable(now);
+        if(proof.purpose()!=CustomerProof.Purpose.CUSTOMER_RECOVERY || !proof.emailOtp() || expected==null || expected.length!=32)throw rejected();
+        byte[] raw=mac(keyId,fields("customer-recovery-reset-capability-v1",proof.id(),proof.subjectId(),proof.createdAt(),proof.expiresAt(),proof.authVersion(),keyId),expected);
+        try{return Base64.getUrlEncoder().withoutPadding().encode(raw);}finally{wipe(raw);}
     }
     @Override public byte[] fingerprint(String retainedKeyId,String operation,String... exactFields) {
         if(retainedKeyId==null || operation==null || !operation.matches("[A-Za-z][A-Za-z0-9]{0,79}") || exactFields==null || exactFields.length>20)throw rejected();
@@ -74,11 +89,13 @@ public final class ProtectedCustomerProofs implements CustomerProofProtection {
         if(!proof.purpose().possessionRequired() || verifierKeyId==null || encryptionKeyId==null || !verifiers.containsKey(verifierKeyId)
             || nonce==null || nonce.length!=12 || ciphertext==null || ciphertext.length!=59)throw rejected();
         byte[] token=crypt(Cipher.DECRYPT_MODE,proof,destination,verifierKeyId,encryptionKeyId,nonce,ciphertext);
-        try{if(!canonical(token))throw rejected();return new Opened(token);}finally{wipe(token);}
+        try{if(!canonical(proof,token,true))throw rejected();return new Opened(token);}finally{wipe(token);}
     }
     private byte[] verifier(CustomerProof proof,String keyId,byte[] token) {
-        return mac(keyId,fields("customer-possession-verifier-v1",proof.id(),proof.subjectId(),proof.purpose(),proof.createdAt(),proof.expiresAt(),
-            proof.sessionId(),proof.authVersion(),proof.organizationId(),keyId),token);
+        byte[] input=proof.emailOtp()?Arrays.copyOf(token,6):token;
+        try{return mac(keyId,fields("customer-possession-verifier-v1",proof.id(),proof.subjectId(),proof.purpose(),proof.createdAt(),proof.expiresAt(),
+            proof.sessionId(),proof.authVersion(),proof.organizationId(),keyId),input);}
+        finally{if(input!=token)wipe(input);}
     }
     @Override public String openDestination(CustomerProof proof,String verifierKeyId,String encryptionKeyId,byte[] nonce,byte[] ciphertext,Instant now) {
         proof.requireAvailable(now);
@@ -105,7 +122,15 @@ public final class ProtectedCustomerProofs implements CustomerProofProtection {
                 proof.createdAt(),proof.expiresAt(),proof.sessionId(),proof.authVersion(),proof.organizationId(),destination,verifierKeyId,encryptionKeyId));return cipher.doFinal(input);
         }catch(GeneralSecurityException failure){throw rejected();}
     }
-    private static boolean canonical(byte[] token) {
+    private static boolean canonical(CustomerProof proof,byte[] token,boolean deliveryEnvelope) {
+        if(proof.emailOtp()){
+            if(token==null || token.length!=(deliveryEnvelope?43:6))return false;
+            for(int index=0;index<6;index++)if(token[index]<'0' || token[index]>'9')return false;
+            if(!deliveryEnvelope)return true;
+            for(int index=6;index<43;index++)if(!((token[index]>='A' && token[index]<='Z') || (token[index]>='a' && token[index]<='z')
+                || (token[index]>='0' && token[index]<='9') || token[index]=='-' || token[index]=='_'))return false;
+            return true;
+        }
         if(token==null || token.length!=43)return false;byte[] raw=null,encoded=null;
         try{raw=Base64.getUrlDecoder().decode(token);encoded=Base64.getUrlEncoder().withoutPadding().encode(raw);return raw.length==32 && MessageDigest.isEqual(encoded,token);}
         catch(IllegalArgumentException invalid){return false;}finally{wipe(raw);wipe(encoded);}

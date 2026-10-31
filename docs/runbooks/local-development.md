@@ -1,5 +1,27 @@
 # Local Development Runbook — repository hiện hữu
 
+## Mobile directory rename — 2026-10-30
+
+The current mobile source is `app/frontend/mobile` (formerly
+`app/frontend/shipper-mobile`). This directory-only move preserves all 37 tracked
+files byte-for-byte and keeps the relative API-client dependency unchanged.
+Historical checkpoint paths and hashes remain evidence for their original
+revision; use the current path for local commands below.
+
+```powershell
+npm.cmd --prefix app/frontend/mobile run lint
+npm.cmd --prefix app/frontend/mobile run typecheck
+npm.cmd --prefix app/frontend/mobile test
+node packages/api-client/scripts/check-mobile-consumer.mjs
+```
+
+All four commands PASS after the move: Jest 1/1; the consumer check compiles the
+actual Expo/RN project, rejects four negative controls and bundles the SDK entry
+with Metro/Hermes (23 modules, including 14 SDK modules). This verifies the rename,
+not mobile business-feature acceptance. Generated native/build/cache directories
+remain ignored. Existing PR-required backend/browser checks run on the new PR
+integration revision before merge.
+
 ## Protected credential store — Phase 1, explicit selection only
 
 Current final review: **REVIEW_PASS_READY_FOR_PR_PREPARATION**. PCS-01/02/03/04
@@ -235,10 +257,10 @@ npm.cmd --prefix app/frontend/web run lint
 npm.cmd --prefix app/frontend/web run typecheck
 npm.cmd --prefix app/frontend/web test
 npm.cmd --prefix app/frontend/web run build
-npm.cmd --prefix app/frontend/shipper-mobile ci --ignore-scripts --no-audit
-npm.cmd --prefix app/frontend/shipper-mobile run lint
-npm.cmd --prefix app/frontend/shipper-mobile run typecheck
-npm.cmd --prefix app/frontend/shipper-mobile test
+npm.cmd --prefix app/frontend/mobile ci --ignore-scripts --no-audit
+npm.cmd --prefix app/frontend/mobile run lint
+npm.cmd --prefix app/frontend/mobile run typecheck
+npm.cmd --prefix app/frontend/mobile test
 node packages/api-client/scripts/check-mobile-consumer.mjs
 python -B -m unittest discover -s scripts/ci -p 'test_*.py' -v
 python -B packages/api-client/scripts/check-backend-baselines.py
@@ -271,7 +293,7 @@ Build SDK before the local mobile link is consumed. From repository root:
 
 ```powershell
 npm.cmd --prefix packages/api-client run verify:c02
-Set-Location app/frontend/shipper-mobile
+Set-Location app/frontend/mobile
 npm.cmd ci --ignore-scripts --no-audit --cache ../../../.demo/npm-cache
 npm.cmd run lint
 npm.cmd run typecheck
@@ -834,7 +856,7 @@ Phiên audit ban đầu chỉ cập nhật hai Markdown. Spike sau đó sửa Wr
 | Native development build | UNVERIFIED/BLOCKED: chưa expo-dev-client, EAS config, app identifier hoặc native directories; không run:android/prebuild | Duyệt build target/config/dependencies; thực hiện native build smoke với JDK/SDK được chọn. |
 | Cleanup/snapshot | PASS: dừng riêng Metro PID 2292/workers sau kiểm tra command line; dừng ADB daemon do task khởi chạy. SHA-256 source/config/lock khớp snapshot trước cập nhật docs | Không dừng process người khác, không xóa SDK/cache/user data; `.expo`/Metro cache là runtime output ignored. |
 
-**Bundle evidence:** tại `2026-10-13T10:20:20.296206Z`, launchAsset là `http://127.0.0.1:8081/index.ts.bundle?platform=android&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=src%2Fapp&unstable_transformProfile=hermes-stable`; response `application/javascript; charset=UTF-8`, 3,815,166 bytes, SHA-256 `b91487bceea7832ab60f1e06950af8f1e449936150afcadb211794d2ad9dff0c`. Python đọc response trong bộ nhớ, không tạo build artifact/source. Metro/status/manifest/bundle là host-side evidence, không device render evidence.
+**Bundle evidence:** tại `2026-10-13T10:20:20.296206Z`, launchAsset là `http://127.0.0.1:8081/index.ts.bundle` + `?` + `platform=android&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=src%2Fapp&unstable_transformProfile=hermes-stable`; response `application/javascript; charset=UTF-8`, 3,815,166 bytes, SHA-256 `b91487bceea7832ab60f1e06950af8f1e449936150afcadb211794d2ad9dff0c`. Python đọc response trong bộ nhớ, không tạo build artifact/source. Metro/status/manifest/bundle là host-side evidence, không device render evidence.
 
 **Native modules/target:** inventory `expo-module.config.json` có Expo core/status-bar và transitive modules như constants/asset/font/file-system/keep-awake/log-box/dom-webview. Không direct camera/location/SQLite/secure-storage/dev-client/Router; chưa code permissions/native shipper capabilities. Đề xuất Expo Go đúng SDK 57 để smoke starter, development build cho P0 cần cấu hình/native capabilities riêng; không khẳng định mọi SDK library đều cần dev build. Expo Go chỉ kiểm chứng được phần native libraries nó đóng gói; xem [Expo development builds](https://docs.expo.dev/develop/development-builds/introduction/). Cả hai target chưa được chạy trên Android trong phiên này.
 

@@ -51,7 +51,7 @@ def errors(policy,operations,fixtures,coverage):
     check(not any(a=='REVOKED' and b=='ACTIVE' for a,b,_ in transitions.get('membership',[])),'revoked membership cannot revive')
     check(not any(a=='QUEUED' and b=='DELIVERED' for a,b,_ in transitions.get('delivery',[])),'queued is not delivered')
     ids={o['operation_id'] for o in operations};schemas=set(json.loads((PACKAGE/'openapi.candidate.json').read_text(encoding='utf-8'))['components']['schemas'])
-    check(len(ids)==len(operations)==77,'exact reviewed operation inventory')
+    check(len(ids)==len(operations)==78,'exact reviewed operation inventory')
     problems.extend(review_errors(operations,coverage))
     check(len(coverage)==14 and {r['bc_id'] for r in coverage}==BCS,'complete13CORE+DENY045 coverage')
     scenario_ids={s['id'] for s in fixtures.get('scenarios',[])}

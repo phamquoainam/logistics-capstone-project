@@ -37,8 +37,10 @@ class SmtpCustomerDeliveryTests {
             trustRoots=KeyStore.getInstance(KeyStore.getDefaultType());trustRoots.load(null,null);trustRoots.setCertificateEntry("smtp-test",keys.getCertificate("smtp-test"));
         }finally{if(process!=null && process.isAlive()){process.destroyForcibly();assertTrue(process.waitFor(3,TimeUnit.SECONDS));}Arrays.fill(password,'\0');Files.deleteIfExists(keystore);Files.deleteIfExists(directory);}
     }
-    private static CustomerDeliveryTransport.Message message(UUID id){
-        var proof=CustomerProof.issue(UUID.randomUUID(),UUID.randomUUID(),CustomerProof.Purpose.CUSTOMER_ENROLLMENT,NOW,null,null,null);byte[] raw=new byte[32];new SecureRandom().nextBytes(raw);byte[] token=Base64.getUrlEncoder().withoutPadding().encode(raw);
+    private static CustomerDeliveryTransport.Message message(UUID id){return message(id,CustomerProof.Purpose.CUSTOMER_ENROLLMENT);}
+    private static CustomerDeliveryTransport.Message message(UUID id,CustomerProof.Purpose purpose){
+        var proof=CustomerProof.issue(UUID.randomUUID(),UUID.randomUUID(),purpose,NOW,null,purpose==CustomerProof.Purpose.CUSTOMER_RECOVERY?1L:null,null);byte[] raw=new byte[32];new SecureRandom().nextBytes(raw);byte[] token=Base64.getUrlEncoder().withoutPadding().encode(raw);
+        if(proof.enrollmentOtp())System.arraycopy("123456".getBytes(StandardCharsets.US_ASCII),0,token,0,6);
         try{return new CustomerDeliveryTransport.Message(id,proof,DESTINATION,token);}finally{Arrays.fill(raw,(byte)0);Arrays.fill(token,(byte)0);}
     }
     private SmtpCustomerDelivery adapter(CustomerSmtpTestInbox inbox,SmtpCustomerDelivery.Mode mode,KeyStore roots){
@@ -50,14 +52,28 @@ class SmtpCustomerDeliveryTests {
             var outcome=adapter(inbox,SmtpCustomerDelivery.Mode.TEST_LOOPBACK,null).send(intent);assertEquals(CustomerDeliveryTransport.Kind.ACCEPTED_BY_PROVIDER,outcome.kind());assertTrue(outcome.sandbox());
             var received=inbox.messages();assertEquals(1,received.size());var mail=new MimeMessage(Session.getInstance(new Properties()),new ByteArrayInputStream(received.getFirst()));
             assertEquals("<"+intent.id()+"@example.invalid>",mail.getMessageID());assertEquals(DESTINATION,mail.getAllRecipients()[0].toString());
-            String content=(String)mail.getContent();assertTrue(content.contains(ORIGIN+"/verify-email#proofId="+intent.proof().id()+"&proof="));assertFalse(content.contains("/verify-email?"));
-            byte[] token=intent.token();try{assertTrue(content.contains(new String(token,StandardCharsets.US_ASCII)));}finally{Arrays.fill(token,(byte)0);}
+            String content=CustomerSmtpTestInbox.plainText(mail);assertFalse(content.contains(ORIGIN));assertTrue(mail.isMimeType("multipart/alternative"));assertFalse(content.contains("/verify-email?"));
+            byte[] token=intent.token();try{assertTrue(content.contains("123456"));assertFalse(content.contains(new String(token,StandardCharsets.US_ASCII)));}finally{Arrays.fill(token,(byte)0);}
             assertEquals(0,inbox.authentications.get());assertEquals("CustomerDeliveryOutcome[redacted]",outcome.toString());assertEquals("CustomerDeliveryMessage[redacted]",intent.toString());
         }
     }
     @Test void realStarttlsChecksApprovedCertificateAndAuthenticatesBeforeSending()throws Exception{
         try(var inbox=new CustomerSmtpTestInbox(1,true,false,250,serverTls);var intent=message(UUID.randomUUID())){
             var outcome=adapter(inbox,SmtpCustomerDelivery.Mode.STARTTLS,trustRoots).send(intent);assertEquals(CustomerDeliveryTransport.Kind.ACCEPTED_BY_PROVIDER,outcome.kind());assertEquals(1,inbox.messages().size());assertEquals(1,inbox.authentications.get());assertEquals(1,inbox.handshakes.get());
+        }
+    }
+    @Test void verificationAndRecoveryUseDistinctVietnameseMessagesAndExactFrontendRoutes()throws Exception{
+        try(var inbox=new CustomerSmtpTestInbox(2,false,false,250,serverTls);
+            var enrollment=message(UUID.randomUUID());var recovery=message(UUID.randomUUID(),CustomerProof.Purpose.CUSTOMER_RECOVERY)){
+            var sender=adapter(inbox,SmtpCustomerDelivery.Mode.TEST_LOOPBACK,null);
+            assertEquals(CustomerDeliveryTransport.Kind.ACCEPTED_BY_PROVIDER,sender.send(enrollment).kind());
+            assertEquals(CustomerDeliveryTransport.Kind.ACCEPTED_BY_PROVIDER,sender.send(recovery).kind());
+            var first=new MimeMessage(Session.getInstance(new Properties()),new ByteArrayInputStream(inbox.messages().get(0)));
+            var second=new MimeMessage(Session.getInstance(new Properties()),new ByteArrayInputStream(inbox.messages().get(1)));
+            assertEquals("movapost. - Xác minh địa chỉ email",first.getSubject());
+            assertEquals("movapost. - Xác minh khôi phục mật khẩu",second.getSubject());
+            assertTrue(CustomerSmtpTestInbox.plainText(first).contains("Mã có hiệu lực trong 2 phút"));assertFalse(CustomerSmtpTestInbox.plainText(first).contains(ORIGIN));
+            assertTrue(CustomerSmtpTestInbox.plainText(second).contains(ORIGIN+"/recover/confirm#proofId="));
         }
     }
     @Test void realImplicitTlsUsesApprovedCertificateAndHasNoPlaintextFallback()throws Exception{
@@ -85,7 +101,7 @@ class SmtpCustomerDeliveryTests {
             var smtp=adapter(inbox,SmtpCustomerDelivery.Mode.TEST_LOOPBACK,null);assertEquals(smtp.send(intent),smtp.send(intent));
             var received=inbox.messages();assertEquals(2,received.size());
             var first=new MimeMessage(Session.getInstance(new Properties()),new ByteArrayInputStream(received.get(0)));var second=new MimeMessage(Session.getInstance(new Properties()),new ByteArrayInputStream(received.get(1)));
-            assertEquals(first.getMessageID(),second.getMessageID());assertEquals(first.getContent(),second.getContent());
+            assertEquals(first.getMessageID(),second.getMessageID());assertEquals(CustomerSmtpTestInbox.plainText(first),CustomerSmtpTestInbox.plainText(second));
         }
     }
     @Test void unsafeWireLoggingBlocksBeforeConnectingOrDecryptedBodyEmission()throws Exception{
@@ -99,5 +115,8 @@ class SmtpCustomerDeliveryTests {
         assertThrows(IllegalArgumentException.class,()->new SmtpCustomerDelivery.Settings("127.0.0.1",25,SmtpCustomerDelivery.Mode.TEST_LOOPBACK,null,null,"no-reply@example.invalid",Set.of("example.invalid"),ORIGIN,false));
         assertThrows(IllegalArgumentException.class,()->new SmtpCustomerDelivery.Settings("smtp.example.invalid",587,SmtpCustomerDelivery.Mode.STARTTLS,null,null,"no-reply@example.invalid",Set.of("example.invalid"),ORIGIN,false));
         assertThrows(IllegalArgumentException.class,()->new SmtpCustomerDelivery.Settings("127.0.0.1",25,SmtpCustomerDelivery.Mode.TEST_LOOPBACK,null,null,"no-reply@example.invalid",Set.of("other.invalid"),ORIGIN,true));
+        assertThrows(IllegalArgumentException.class,()->new SmtpCustomerDelivery.Settings("smtp.gmail.com",465,SmtpCustomerDelivery.Mode.LOCAL_REAL_SMTP,"sender@gmail.com","synthetic","sender@gmail.com",Set.of("gmail.com"),ORIGIN,true));
+        assertThrows(IllegalArgumentException.class,()->new SmtpCustomerDelivery.Settings("smtp.gmail.com",587,SmtpCustomerDelivery.Mode.LOCAL_REAL_SMTP,"other@gmail.com","synthetic","sender@gmail.com",Set.of("gmail.com"),ORIGIN,true));
+        assertDoesNotThrow(()->new SmtpCustomerDelivery.Settings("smtp.gmail.com",587,SmtpCustomerDelivery.Mode.LOCAL_REAL_SMTP,"sender@gmail.com","synthetic","sender@gmail.com",Set.of("gmail.com"),ORIGIN,true));
     }
 }
