@@ -34,6 +34,7 @@ function Set-ProcessEnvironment($settings) {
     $env:ELOGISTICS_CUSTOMER_DEV_TLS_PFX = $settings.CUSTOMER_HTTPS_KEY_STORE
     $env:ELOGISTICS_CUSTOMER_DEV_TLS_PFX_PASSWORD = $settings.CUSTOMER_HTTPS_KEY_STORE_PASSWORD
     $env:ELOGISTICS_CUSTOMER_DEV_API_ORIGIN = 'https://127.0.0.1:8443'
+    $env:SHIPPING_PILOT_ENVIRONMENT = 'LOCAL'
     $env:PUBLIC_MEDIA_LOCAL_ROOT = Join-Path $frontend 'public/media'
     $env:SPRING_PROFILES_ACTIVE = $null
     $env:JAVA_TOOL_OPTIONS = $null

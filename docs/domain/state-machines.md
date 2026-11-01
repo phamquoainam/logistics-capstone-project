@@ -99,3 +99,7 @@
 | T5 | CONFIRMED → SUPERSEDED | Dispatcher | Phiên bản thay thế đã được kiểm tra và xác nhận; thay đổi hiệu lực nhất quán, không để hai phiên bản đồng thời có hiệu lực. |
 | T6 | IN_PROGRESS → SUPERSEDED | Dispatcher | Chỉ thay phần chưa hoàn tất theo chính sách; giữ lịch sử các điểm đã phục vụ và tiếp tục bằng phiên bản mới. |
 | T7 | IN_PROGRESS → COMPLETED | Shipper/Hệ thống theo kết quả tác nghiệp | Các điểm trong kế hoạch có kết quả hợp lệ hoặc ngoại lệ đã được kết thúc theo chính sách; không đồng nghĩa mọi vận đơn đều giao thành công. |
+
+## Controlled Local/Test amendment, 2026-11-01
+
+[BR13-LOCAL-PILOT-01](../decisions/br13-local-pilot-01.md), explicitly approved by Owner, permits only PERSONAL simulated ROAD_STANDARD DRAFT to CONFIRMED with an UNPAID sender obligation. No successful collection, Carrier Acceptance or delivery is inferred. All original transitions and Production/Business/WMS guards above remain unchanged.

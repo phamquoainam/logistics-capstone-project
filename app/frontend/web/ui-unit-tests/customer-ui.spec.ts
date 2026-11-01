@@ -146,7 +146,7 @@ test('workspace disclosure never grants Business from an approved application or
 test('deferred Personal modules explain dependencies without sending unsupported mutations', async ({ page, context }) => {
   const calls = await fixture(context, true); await page.goto('/personal');
   const navigation = page.getByRole('navigation', { name: 'Điều hướng Personal', exact: true });
-  for (const title of ['Tạo vận đơn', 'Quản lý vận đơn', 'Tra cứu & Báo giá', 'In nhãn & Tiện ích', 'Cước & Chứng từ', 'Hỗ trợ & Khiếu nại']) {
+  for (const title of ['In nhãn & Tiện ích', 'Hỗ trợ & Khiếu nại']) {
     await navigation.getByRole('link', { name: title, exact: false }).click();
     await expect(page.getByRole('heading', { name: title, exact: true })).toBeVisible();
     await expect(page.locator('.pw-module-state')).toContainText('Chưa khả dụng'); await expect(page.locator('.pw-module-state input')).toHaveCount(0);
@@ -350,6 +350,20 @@ async function fillAddress(page: import('@playwright/test').Page, label = 'Nhà 
   await page.getByLabel('Tên gợi nhớ', { exact: false }).fill(label); await page.getByLabel('Họ tên liên hệ', { exact: true }).fill('Người gửi thử'); await page.getByLabel('Số điện thoại liên hệ', { exact: true }).fill('0901234567'); await page.getByLabel('Tỉnh / thành phố').fill('Địa phương thử'); await page.getByLabel('Phường / xã / địa phương').fill('Phường thử'); await page.getByLabel('Địa chỉ chi tiết').fill('Địa chỉ thử');
 }
 function addressValue(body?: Record<string, unknown>, version = 1) { return { ...body, id: proofId, accountId: account, contactPhone: '+84901234567', verificationStatus: 'UNVERIFIED', version, createdAt: '2026-11-01T00:00:00Z', updatedAt: '2026-11-01T00:00:00Z' }; }
+
+test('shipping preparation uses PW03 snapshots and resolves a lost save without another mutation', async ({ page, context }) => {
+  const source={kind:'SENDER',label:'Synthetic source',contactName:'Synthetic sender',contactPhone:'+84901234567',address:{country:'VN',administrativeArea:'Area',locality:'Locality',addressLine:'Street'},isDefault:false};
+  let stored:Record<string,unknown>|undefined;
+  const calls=await fixture(context,true,async(route,call)=>{
+    if(call.path.includes('/customer/addresses')){await route.fulfill({contentType:'application/json',body:JSON.stringify({items:new URL(route.request().url()).searchParams.get('kind')==='SENDER'?[addressValue(source)]:[],page:0,size:20,hasNext:false})});return true;}
+    if(call.path.includes('/shipment-draft-receipts/')){await route.fulfill({contentType:'application/json',body:JSON.stringify({operationId:'createShippingDraft',targetId:proofId,outcome:'COMMITTED',version:1})});return true;}
+    if(!call.path.includes('/shipment-drafts'))return false;
+    if(call.method==='POST'){stored={id:proofId,accountId:account,ownerType:'PERSONAL',state:'DRAFT',input:{...call.body,sender:{...source,name:source.contactName,phone:source.contactPhone}},version:1,createdAt:'2026-11-01T00:00:00Z',updatedAt:'2026-11-01T00:00:00Z'};const input=structuredClone(call.body!);input.sender={name:'Synthetic sender',phone:'+84901234567',address:source.address};input.recipient={name:'Synthetic recipient',phone:'+84901234567',address:source.address};stored.input=input;await route.abort('failed');return true;}
+    await route.fulfill({contentType:'application/json',headers:{ETag:'"v1"'},body:JSON.stringify(stored)});return true;
+  });
+  await page.goto('/personal/create');await page.locator('#sender-book').selectOption(proofId);await expect(page.locator('#sender-name')).toHaveValue('Synthetic sender');await page.locator('#recipient-name').fill('Synthetic recipient');await page.locator('#recipient-phone').fill('0901234567');await page.locator('#recipient-administrativeArea').fill('Area');await page.locator('#recipient-locality').fill('Locality');await page.locator('#recipient-addressLine').fill('Street');await page.locator('#parcel-description-0').fill('Synthetic box');await page.locator('#draft-reference').fill('UI preparation');await page.getByRole('button',{name:'Lưu bản nháp',exact:true}).click();await expect(page.getByRole('alert')).toContainText('Chưa xác định');await expect(page.locator('#sender-name')).toBeDisabled();await page.getByRole('button',{name:'Kiểm tra kết quả lưu',exact:true}).click();await expect(page.getByRole('heading',{name:'Chi tiết bản nháp',exact:true})).toBeVisible();expect(calls.filter(c=>c.path==='/api/v1/customer/shipment-drafts'&&c.method==='POST')).toHaveLength(1);await page.getByRole('tab',{name:'Chứng từ',exact:true}).click();await expect(page.getByRole('tabpanel')).toContainText('không phát hành nhãn');await expect(page.getByRole('button',{name:'Xác nhận booking'})).toHaveCount(0);
+  await page.setViewportSize({width:390,height:844});await expect(page.locator('#personal-sidebar')).not.toBeVisible();await page.screenshot({path:'../../../.demo/shipping-draft-mobile.png',fullPage:true,animations:'disabled'});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});
 
 test('address book creates edits archives and refreshes server-confirmed contacts only', async ({ page, context }) => {
   let item: Record<string, unknown> | undefined, writes = 0;

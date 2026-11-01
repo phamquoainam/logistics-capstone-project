@@ -1,5 +1,33 @@
 # Tasks 007 — shipment-booking-sender-payments
 
+## Owner-directed Personal Local/Test pilot — 2026-11-02
+
+[BR13-LOCAL-PILOT-01](../../docs/decisions/br13-local-pilot-01.md) is the accepted
+bounded amendment; original prepaid/WMS/Business requirements below stay unchanged.
+See [contract](../../docs/implementation/personal-pilot-booking-contract.md) and
+[current evidence/tasks](../../docs/implementation/shipping-personal-v1.md).
+
+- [x] T-PILOT-BOOKING-CONTRACT — DONE: exact self-owned draft/version/quote/key,
+  one-transaction snapshots/receipt/audit and UNPAID obligation, no Carrier acceptance.
+- [x] T-PILOT-BOOKING-DB-BE — DONE / VERIFIED_LOCAL: V20 Shipment/Parcel/Finance
+  persistence, quote consume and BOOKED draft conversion; all-or-nothing rollback.
+- [x] T-PILOT-MANAGEMENT-UI — DONE / VERIFIED_LOCAL: actual list/search/filter/detail,
+  saved price/address/parcel/payment facts; unknown POST receipt recovery, no fake success.
+- [x] T-PILOT-BOOKING-FOCUSED-VERIFY — DONE: actual PG ownership/replay/expiry/
+  same-key and different-key races, source/evidence/Finance fault rollback and forbidden
+  collection/carrier transitions; actual HTTPS/PG18 browser12 cases PASS.
+- [ ] T-PILOT-BOOKING-HOSTED — complete final PG/preservation/exact-source PR38 CI
+  checkpoint; no automatic merge or Full Personal acceptance.
+
+Pickup, Collection/PAID, Carrier Acceptance/Delivered, booked cancellation/refunds,
+labels, Support and Merchant booking remain outside this approved implementation.
+
+## Owner shipping pilot decision — 2026-11-01
+
+Independent draft preparation is implemented and verified under the [bounded contract](../../docs/implementation/personal-shipping-drafts-contract.md); see [delivery tracker](../../docs/implementation/shipping-personal-v1.md). Quote/Booking remains **BLOCKED**, not DONE: approved-in-principle candidate values do not activate a tariff/coverage/payment method. The [Owner packet](../../docs/decisions/shipping-policy-v1-owner-packet.md) records exact missing decisions and BR13/T1 cash-on-handover conflict; no canonical transition is silently amended.
+
+## Historical canonical planning tasks
+
 NOT_STARTED; thứ tự là contract/fixture → DB → BE/HTTP → UI/channel → verification → full acceptance. Mỗi BC là gói end-to-end nội bộ, không thay phương pháp Spec-by-Spec. Không task nào DONE trong rebuild docs.
 
 ## REQ-V3-BC-006 / BC-006: Tự tạo Shipment online khi không có tài khoản — BỊ CẤM theo phạm vi Capstone

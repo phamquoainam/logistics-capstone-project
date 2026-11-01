@@ -22,6 +22,7 @@ import tools.jackson.core.StreamReadFeature;
 /** Existing Merchant module hosts a separate personal aggregate, with no org or Identity SQL dependency. */
 @Configuration @Profile("customer")
 public class CustomerProfileConfiguration {
+    @Bean com.elogistic.backend.merchant.api.customer.PilotCoverage pilotCoverage(DataSource source,CustomerAdmission admission,@Qualifier("identityHttpClock")Clock clock){return new JdbcPilotCoverage(source,admission,clock);}
     private static final JsonMapper JSON=JsonMapper.builder().enable(StreamReadFeature.STRICT_DUPLICATE_DETECTION).build();
     @Bean
     MerchantFingerprints merchantReceiptFingerprints(Environment environment){

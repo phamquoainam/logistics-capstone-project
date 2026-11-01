@@ -1,0 +1,1232 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "ArgoPost approved Local/Test Quote and Booking pilot",
+    "version": "1.0.0",
+    "description": "Owner-approved simulation only. No Production/Merchant/Pickup/collection/Carrier authority. BR13-LOCAL-PILOT-01 creates UNPAID obligations only."
+  },
+  "servers": [
+    {
+      "url": "https://127.0.0.1:8443/api/v1"
+    }
+  ],
+  "tags": [
+    {
+      "name": "PersonalPilot",
+      "description": "Current self CustomerAdmission, explicit LOCAL/TEST environment, approved synthetic routes and immutable versions."
+    }
+  ],
+  "security": [
+    {
+      "customerAccess": []
+    }
+  ],
+  "paths": {
+    "/customer/shipping-catalog": {
+      "get": {
+        "tags": [
+          "PersonalPilot"
+        ],
+        "operationId": "getApprovedPersonalPilotCatalog",
+        "summary": "Read the effective approved simulation catalog",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Catalog"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Rejected"
+          },
+          "401": {
+            "$ref": "#/components/responses/Rejected"
+          },
+          "404": {
+            "$ref": "#/components/responses/Rejected"
+          },
+          "409": {
+            "$ref": "#/components/responses/Rejected"
+          },
+          "503": {
+            "$ref": "#/components/responses/Rejected"
+          }
+        }
+      }
+    },
+    "/customer/shipment-drafts/{id}/quotes": {
+      "post": {
+        "tags": [
+          "PersonalPilot"
+        ],
+        "operationId": "createPersonalPilotQuote",
+        "summary": "Quote an owned draft at exact version using the approved directed route",
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteView"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Rejected"
+          },
+          "401": {
+            "$ref": "#/components/responses/Rejected"
+          },
+          "404": {
+            "$ref": "#/components/responses/Rejected"
+          },
+          "409": {
+            "$ref": "#/components/responses/Rejected"
+          },
+          "503": {
+            "$ref": "#/components/responses/Rejected"
+          },
+          "428": {
+            "$ref": "#/components/responses/Rejected"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\"v[1-9][0-9]*\"$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuoteInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customer/shipping-quotes/{id}": {
+      "get": {
+        "tags": [
+          "PersonalPilot"
+        ],
+        "operationId": "getPersonalPilotQuote",
+        "summary": "Read original owned quote without extending TTL",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteView"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Rejected"
+          },
+          "401": {
+            "$ref": "#/components/responses/Rejected"
+          },
+          "404": {
+            "$ref": "#/components/responses/Rejected"
+          },
+          "409": {
+            "$ref": "#/components/responses/Rejected"
+          },
+          "503": {
+            "$ref": "#/components/responses/Rejected"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/customer/quote-receipts/{key}": {
+      "get": {
+        "tags": [
+          "PersonalPilot"
+        ],
+        "operationId": "getPersonalPilotQuoteReceipt",
+        "summary": "Recover quote creation by metadata, including expired quotes",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Receipt"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Rejected"
+          },
+          "401": {
+            "$ref": "#/components/responses/Rejected"
+          },
+          "404": {
+            "$ref": "#/components/responses/Rejected"
+          },
+          "409": {
+            "$ref": "#/components/responses/Rejected"
+          },
+          "503": {
+            "$ref": "#/components/responses/Rejected"
+          }
+        },
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/customer/shipment-drafts/{id}/bookings": {
+      "post": {
+        "tags": [
+          "PersonalPilot"
+        ],
+        "operationId": "confirmPersonalPilotBooking",
+        "summary": "Consume quote and create Shipment Parcel UNPAID obligation atomically",
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShipmentView"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "description": "Immutable shipment version",
+                "schema": {
+                  "const": "\"v1\""
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Rejected"
+          },
+          "401": {
+            "$ref": "#/components/responses/Rejected"
+          },
+          "404": {
+            "$ref": "#/components/responses/Rejected"
+          },
+          "409": {
+            "$ref": "#/components/responses/Rejected"
+          },
+          "503": {
+            "$ref": "#/components/responses/Rejected"
+          },
+          "428": {
+            "$ref": "#/components/responses/Rejected"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\"v[1-9][0-9]*\"$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BookingInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customer/booking-receipts/{key}": {
+      "get": {
+        "tags": [
+          "PersonalPilot"
+        ],
+        "operationId": "getPersonalPilotBookingReceipt",
+        "summary": "Recover the original booking after current authorization",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Receipt"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Rejected"
+          },
+          "401": {
+            "$ref": "#/components/responses/Rejected"
+          },
+          "404": {
+            "$ref": "#/components/responses/Rejected"
+          },
+          "409": {
+            "$ref": "#/components/responses/Rejected"
+          },
+          "503": {
+            "$ref": "#/components/responses/Rejected"
+          }
+        },
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/customer/shipments/{id}": {
+      "get": {
+        "tags": [
+          "PersonalPilot"
+        ],
+        "operationId": "getPersonalPilotShipment",
+        "summary": "Read owned immutable shipment and its actual UNPAID obligation",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShipmentView"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "description": "Immutable shipment version",
+                "schema": {
+                  "const": "\"v1\""
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Rejected"
+          },
+          "401": {
+            "$ref": "#/components/responses/Rejected"
+          },
+          "404": {
+            "$ref": "#/components/responses/Rejected"
+          },
+          "409": {
+            "$ref": "#/components/responses/Rejected"
+          },
+          "503": {
+            "$ref": "#/components/responses/Rejected"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/customer/shipments": {
+      "get": {
+        "tags": [
+          "PersonalPilot"
+        ],
+        "operationId": "listPersonalPilotShipments",
+        "summary": "Search filter and page owned simulation shipments before paging",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShipmentPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Rejected"
+          },
+          "401": {
+            "$ref": "#/components/responses/Rejected"
+          },
+          "404": {
+            "$ref": "#/components/responses/Rejected"
+          },
+          "409": {
+            "$ref": "#/components/responses/Rejected"
+          },
+          "503": {
+            "$ref": "#/components/responses/Rejected"
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "const": 20
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 160
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "WAITING_FOR_HANDOVER"
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "customerAccess": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          },
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "requestId"
+        ]
+      },
+      "Route": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "datasetVersion": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "originCode": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32
+          },
+          "destinationCode": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32
+          },
+          "classification": {
+            "enum": [
+              "INTRA",
+              "INTER"
+            ]
+          },
+          "dropOffCode": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32
+          }
+        },
+        "required": [
+          "datasetVersion",
+          "originCode",
+          "destinationCode",
+          "classification",
+          "dropOffCode"
+        ]
+      },
+      "Area": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32
+          },
+          "region": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          },
+          "dropOffCode": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32
+          }
+        },
+        "required": [
+          "code",
+          "region",
+          "label",
+          "dropOffCode"
+        ]
+      },
+      "Coverage": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "datasetVersion": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "namespace": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "provenance": {
+            "const": "SIMULATION"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "areas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Area"
+            },
+            "maxItems": 100
+          },
+          "routes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Route"
+            },
+            "maxItems": 100
+          }
+        },
+        "required": [
+          "datasetVersion",
+          "namespace",
+          "provenance",
+          "effectiveFrom",
+          "areas",
+          "routes"
+        ]
+      },
+      "Rules": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "version": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "intraFirstVnd": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "intraStepVnd": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "interFirstVnd": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "interStepVnd": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "stepGrams": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "volumetricDivisor": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "maxParcels": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "maxActualGrams": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "maxDimensionMm": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "maxGirthMm": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "ttlSeconds": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "taxTreatment": {
+            "const": "SIMULATION_NOT_TAX_INVOICE"
+          }
+        },
+        "required": [
+          "version",
+          "intraFirstVnd",
+          "intraStepVnd",
+          "interFirstVnd",
+          "interStepVnd",
+          "stepGrams",
+          "volumetricDivisor",
+          "maxParcels",
+          "maxActualGrams",
+          "maxDimensionMm",
+          "maxGirthMm",
+          "ttlSeconds",
+          "taxTreatment"
+        ]
+      },
+      "Catalog": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "simulation": {
+            "const": true
+          },
+          "serviceCode": {
+            "const": "ROAD_STANDARD"
+          },
+          "quoteEnabled": {
+            "const": true
+          },
+          "bookingEnabled": {
+            "const": true
+          },
+          "coverage": {
+            "$ref": "#/components/schemas/Coverage"
+          },
+          "tariff": {
+            "$ref": "#/components/schemas/Rules"
+          },
+          "paymentMethod": {
+            "const": "CASH_ON_HANDOVER"
+          },
+          "payer": {
+            "const": "SENDER"
+          },
+          "paymentCollectionEnabled": {
+            "const": false
+          }
+        },
+        "required": [
+          "simulation",
+          "serviceCode",
+          "quoteEnabled",
+          "bookingEnabled",
+          "coverage",
+          "tariff",
+          "paymentMethod",
+          "payer",
+          "paymentCollectionEnabled"
+        ]
+      },
+      "QuoteInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "originCode": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32
+          },
+          "destinationCode": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32
+          },
+          "ordinaryGoodsConfirmed": {
+            "type": "boolean",
+            "description": "Must be true to issue a quote; unsupported goods rejected, never Carrier inspection proof."
+          }
+        },
+        "required": [
+          "originCode",
+          "destinationCode",
+          "ordinaryGoodsConfirmed"
+        ]
+      },
+      "ParcelMeasurement": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "weightGrams": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "lengthMm": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "widthMm": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "heightMm": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "weightGrams",
+          "lengthMm",
+          "widthMm",
+          "heightMm"
+        ]
+      },
+      "FeeLine": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "parcelNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "actualGrams": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "chargeableGrams": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "feeVnd": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000000000
+          }
+        },
+        "required": [
+          "parcelNumber",
+          "actualGrams",
+          "chargeableGrams",
+          "feeVnd"
+        ]
+      },
+      "Quote": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "accountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "draftId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "draftVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "tariffVersion": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "route": {
+            "$ref": "#/components/schemas/Route"
+          },
+          "parcels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ParcelMeasurement"
+            },
+            "maxItems": 5
+          },
+          "feeLines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FeeLine"
+            },
+            "maxItems": 5
+          },
+          "totalVnd": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000000000
+          },
+          "taxTreatment": {
+            "const": "SIMULATION_NOT_TAX_INVOICE"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "consumedBy": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "id",
+          "accountId",
+          "draftId",
+          "draftVersion",
+          "tariffVersion",
+          "route",
+          "parcels",
+          "feeLines",
+          "totalVnd",
+          "taxTreatment",
+          "createdAt",
+          "expiresAt",
+          "consumedBy"
+        ]
+      },
+      "QuoteView": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "quote": {
+            "$ref": "#/components/schemas/Quote"
+          },
+          "usable": {
+            "type": "boolean"
+          },
+          "serverTime": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "quote",
+          "usable",
+          "serverTime"
+        ]
+      },
+      "BookingInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "quoteId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "quoteId"
+        ]
+      },
+      "Parcel": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "parcelNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "facts": {
+            "$ref": "./personal-shipping-drafts.yaml#/components/schemas/Parcel"
+          }
+        },
+        "required": [
+          "id",
+          "parcelNumber",
+          "facts"
+        ]
+      },
+      "Shipment": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "accountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^AP-SIM-[a-f0-9]{32}$"
+          },
+          "draftId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "draftVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "bookingState": {
+            "const": "CONFIRMED"
+          },
+          "carrierState": {
+            "const": "NOT_ACCEPTED"
+          },
+          "input": {
+            "$ref": "./personal-shipping-drafts.yaml#/components/schemas/Input"
+          },
+          "quote": {
+            "$ref": "#/components/schemas/Quote"
+          },
+          "totalVnd": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000000000
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "parcels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Parcel"
+            },
+            "maxItems": 5
+          }
+        },
+        "required": [
+          "id",
+          "accountId",
+          "code",
+          "draftId",
+          "draftVersion",
+          "bookingState",
+          "carrierState",
+          "input",
+          "quote",
+          "totalVnd",
+          "createdAt",
+          "parcels"
+        ]
+      },
+      "Obligation": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "accountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "shipmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "quoteId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amountVnd": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000000000
+          },
+          "currency": {
+            "const": "VND"
+          },
+          "state": {
+            "const": "UNPAID"
+          },
+          "payer": {
+            "const": "SENDER"
+          },
+          "method": {
+            "const": "CASH_ON_HANDOVER"
+          },
+          "policyVersion": {
+            "const": "BR13-LOCAL-PILOT-01"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "accountId",
+          "shipmentId",
+          "quoteId",
+          "amountVnd",
+          "currency",
+          "state",
+          "payer",
+          "method",
+          "policyVersion",
+          "createdAt"
+        ]
+      },
+      "ShipmentView": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "simulation": {
+            "const": true
+          },
+          "shipment": {
+            "$ref": "#/components/schemas/Shipment"
+          },
+          "obligation": {
+            "$ref": "#/components/schemas/Obligation"
+          }
+        },
+        "required": [
+          "simulation",
+          "shipment",
+          "obligation"
+        ]
+      },
+      "ShipmentPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShipmentView"
+            },
+            "maxItems": 20
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "size": {
+            "const": 20
+          },
+          "hasNext": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "size",
+          "hasNext"
+        ]
+      },
+      "Receipt": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "targetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "outcome": {
+            "const": "COMMITTED"
+          }
+        },
+        "required": [
+          "targetId",
+          "outcome"
+        ]
+      }
+    },
+    "responses": {
+      "Rejected": {
+        "description": "Safe scoped rejection; no PII or dependency diagnostics",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    }
+  }
+}
