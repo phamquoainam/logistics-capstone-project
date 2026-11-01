@@ -6,6 +6,11 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import static org.junit.jupiter.api.Assertions.*;
 class MerchantFingerprintTests {
     private static byte[] key(int value){byte[] k=new byte[32];Arrays.fill(k,(byte)value);return k;}
+    @Test void addressCreateAllowsZeroVersionOnlyForApprovedCreationOperations(){
+        var crypto=new ProtectedMerchantFingerprints(Map.of("k1",key(51)),"k1");UUID target=UUID.randomUUID();
+        var address=crypto.hash("k1","createPersonalAddress",target,0,"canonical");assertEquals(32,address.length);assertFalse(Arrays.equals(address,crypto.hash("k1","createApplicationDraft",target,0,"canonical")));
+        for(String operation:List.of("updatePersonalAddress","archivePersonalAddress","updateCustomerProfile","arbitraryCreate"))assertThrows(IllegalArgumentException.class,()->crypto.hash("k1",operation,target,0,"canonical"));
+    }
     @Test void exactFieldsNullAndOperationVersionTargetAreCryptographicallyBound(){
         var crypto=new ProtectedMerchantFingerprints(Map.of("k1",key(51)),"k1");UUID target=UUID.randomUUID();byte[] original=crypto.hash("k1","updateCustomerProfile",target,1,"a","bc",null);
         for(byte[] other:List.of(crypto.hash("k1","updateCustomerProfile",target,1,"ab","c",null),crypto.hash("k1","updateCustomerProfile",target,1,"a","bc",""),crypto.hash("k1","updateCustomerProfile",target,2,"a","bc",null),crypto.hash("k1","otherOperation",target,1,"a","bc",null),crypto.hash("k1","updateCustomerProfile",UUID.randomUUID(),1,"a","bc",null)))assertFalse(Arrays.equals(original,other));

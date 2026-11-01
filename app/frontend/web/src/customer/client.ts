@@ -9,6 +9,11 @@ export type ApplicationDraft = { entityType?: 'COMPANY' | 'HOUSEHOLD_BUSINESS'; 
 export type MerchantApplication = { id: string; applicantAccountId: string; state: 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'NEEDS_INFORMATION' | 'APPROVED' | 'REJECTED' | 'WITHDRAWN'; revision: number; version: number; draft?: ApplicationDraft; submission?: ApplicationDraft; reviewRegionId?: string; informationRequest?: string; organizationId?: string };
 export type VersionedApplication = { application: MerchantApplication; etag: string };
 export type ApplicationPage = { items: MerchantApplication[]; page: number; size: number; hasNext: boolean };
+export type AddressInput = { kind: 'SENDER' | 'RECIPIENT'; label?: string; contactName: string; contactPhone: string; address: ApplicationAddress; isDefault: boolean };
+export type PersonalAddress = AddressInput & { id: string; accountId: string; verificationStatus: 'UNVERIFIED'; version: number; createdAt: string; updatedAt: string };
+export type AddressPage = { items: PersonalAddress[]; page: number; size: number; hasNext: boolean };
+export type VersionedAddress = { address: PersonalAddress; etag: string };
+export type AddressOperation = 'createPersonalAddress' | 'updatePersonalAddress' | 'archivePersonalAddress';
 export type SessionState = Readonly<{ status: 'loading' | 'guest' | 'authenticated'; subject: Subject | null; error: string | null }>;
 type Access = { accessToken: string; expiresAt: string; accountId: string };
 type Lock = <T>(work: () => Promise<T>) => Promise<T>;
@@ -127,6 +132,29 @@ export function createCustomerClient(ports: Ports = { fetch: (...args) => fetch(
     if (current !== generation) throw new CustomerApiError('SESSION_CHANGED');
     try { const value = application(result.value); if (result.response.status !== (method === 'POST' ? 201 : 200) || result.response.headers.get('ETag') !== '"v' + value.version + '"') malformed(); return { application: value, etag: '"v' + value.version + '"' }; } catch { throw unknown(); }
   }
+  function personalAddress(value: unknown): PersonalAddress {
+    if (!record(value) || !exact(value, ['id', 'accountId', 'kind', 'contactName', 'contactPhone', 'address', 'isDefault', 'verificationStatus', 'version', 'createdAt', 'updatedAt'], ['label']) || typeof value.id !== 'string' || !uuid.test(value.id) || value.accountId !== access?.accountId || !version(value.version) || !['SENDER', 'RECIPIENT'].includes(value.kind as string) || !characters(value.contactName, 160) || typeof value.contactPhone !== 'string' || !/^\+84[35789]\d{8}$/.test(value.contactPhone) || 'label' in value && !characters(value.label, 80) || typeof value.isDefault !== 'boolean' || value.verificationStatus !== 'UNVERIFIED') malformed();
+    const a = value.address;
+    if (!record(a) || !exact(a, ['country', 'administrativeArea', 'locality', 'addressLine']) || a.country !== 'VN' || !characters(a.administrativeArea, 160) || !characters(a.locality, 160) || !characters(a.addressLine, 500)) malformed();
+    if (typeof value.createdAt !== 'string' || !Number.isFinite(Date.parse(value.createdAt)) || typeof value.updatedAt !== 'string' || !Number.isFinite(Date.parse(value.updatedAt)) || Date.parse(value.updatedAt) < Date.parse(value.createdAt)) malformed();
+    return value as PersonalAddress;
+  }
+  function addressResponse(value: unknown, response: Response, id?: string): VersionedAddress {
+    const address = personalAddress(value), etag = response.headers.get('ETag');
+    if (etag !== '"v' + address.version + '"' || id !== undefined && address.id !== id) malformed();
+    return { address, etag };
+  }
+  async function addressWrite(path: string, method: 'POST' | 'PUT', input: AddressInput | undefined, key: string, etag?: string, archive = false): Promise<VersionedAddress | undefined> {
+    if (!uuid.test(key) || etag !== undefined && !/^"v[1-9][0-9]*"$/.test(etag)) throw new CustomerApiError('VALIDATION_FAILED');
+    await ensureAccess(); const current = generation, challenge = await csrf();
+    const { value, response } = await request(path, method, input === undefined ? undefined : JSON.stringify(input), { Authorization: 'Bearer ' + access!.accessToken, 'X-CSRF-Token': challenge, 'Idempotency-Key': key, ...(etag ? { 'If-Match': etag } : {}) });
+    if (current !== generation) throw new CustomerApiError('SESSION_CHANGED');
+    try {
+      if (archive) { if (response.status !== 204) malformed(); return undefined; }
+      if (response.status !== (method === 'POST' ? 201 : 200)) malformed();
+      return addressResponse(value, response, method === 'PUT' ? path.split('/').at(-1) : undefined);
+    } catch { throw unknown(); }
+  }
   return {
     getSnapshot: () => state,
     subscribe: (listener: () => void) => { listeners.add(listener); return () => { listeners.delete(listener); }; },
@@ -216,6 +244,35 @@ export function createCustomerClient(ports: Ports = { fetch: (...args) => fetch(
       const { value } = await request('onboarding-receipts/' + operation + '/' + key, 'GET', undefined, { Authorization: 'Bearer ' + access!.accessToken });
       if (current !== generation) throw new CustomerApiError('SESSION_CHANGED');
       if (!record(value) || !exact(value, ['operationId', 'targetId', 'outcome', 'version']) || value.operationId !== operation || typeof value.targetId !== 'string' || !uuid.test(value.targetId) || value.outcome !== 'COMMITTED' || !version(value.version)) malformed(); return { targetId: value.targetId, version: value.version };
+    }),
+    listAddresses: (page = 0, search = '', kind = '') => ports.lock(async (): Promise<AddressPage> => {
+      if (!Number.isSafeInteger(page) || page < 0 || search.length > 160 || kind && !['SENDER', 'RECIPIENT'].includes(kind)) throw new CustomerApiError('VALIDATION_FAILED');
+      await ensureAccess(); const current = generation, query = new URLSearchParams({ page: String(page), size: '20', ...(search ? { search } : {}), ...(kind ? { kind } : {}) });
+      const { value } = await request('customer/addresses?' + query, 'GET', undefined, { Authorization: 'Bearer ' + access!.accessToken });
+      if (current !== generation) throw new CustomerApiError('SESSION_CHANGED');
+      if (!record(value) || !exact(value, ['items', 'page', 'size', 'hasNext']) || !Array.isArray(value.items) || value.items.length > 20 || value.page !== page || value.size !== 20 || typeof value.hasNext !== 'boolean') malformed();
+      const items = value.items.map(personalAddress); if (new Set(items.map(item => item.id)).size !== items.length) malformed();
+      return { items, page, size: 20, hasNext: value.hasNext };
+    }),
+    readAddress: (id: string) => ports.lock(async (): Promise<VersionedAddress> => {
+      if (!uuid.test(id)) throw new CustomerApiError('VALIDATION_FAILED'); await ensureAccess(); const current = generation;
+      const { value, response } = await request('customer/addresses/' + id, 'GET', undefined, { Authorization: 'Bearer ' + access!.accessToken });
+      if (current !== generation) throw new CustomerApiError('SESSION_CHANGED'); return addressResponse(value, response, id);
+    }),
+    createAddress: (input: AddressInput, key: string) => ports.lock(async () => (await addressWrite('customer/addresses', 'POST', input, key))!),
+    updateAddress: (id: string, input: AddressInput, etag: string, key: string) => ports.lock(async () => {
+      if (!uuid.test(id)) throw new CustomerApiError('VALIDATION_FAILED'); return (await addressWrite('customer/addresses/' + id, 'PUT', input, key, etag))!;
+    }),
+    archiveAddress: (id: string, etag: string, key: string) => ports.lock(async () => {
+      if (!uuid.test(id)) throw new CustomerApiError('VALIDATION_FAILED'); await addressWrite('customer/addresses/' + id + '/archive', 'POST', undefined, key, etag, true);
+    }),
+    addressReceipt: (operation: AddressOperation, key: string) => ports.lock(async () => {
+      if (!uuid.test(key) || !['createPersonalAddress', 'updatePersonalAddress', 'archivePersonalAddress'].includes(operation)) throw new CustomerApiError('VALIDATION_FAILED');
+      await ensureAccess(); const current = generation;
+      const { value } = await request('customer/address-receipts/' + operation + '/' + key, 'GET', undefined, { Authorization: 'Bearer ' + access!.accessToken });
+      if (current !== generation) throw new CustomerApiError('SESSION_CHANGED');
+      if (!record(value) || !exact(value, ['operationId', 'targetId', 'outcome', 'version']) || value.operationId !== operation || typeof value.targetId !== 'string' || !uuid.test(value.targetId) || value.outcome !== 'COMMITTED' || !version(value.version)) malformed();
+      return { targetId: value.targetId, version: value.version };
     }),
     dispose() { forget(); channel?.close(); listeners.clear(); },
   };

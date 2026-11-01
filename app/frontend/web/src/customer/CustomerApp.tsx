@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import type { FormEvent, ReactNode } from 'react';
-import { Link, NavLink, Navigate, Outlet, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Link, Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { customerClient, CustomerApiError } from './client';
 import type { Enrollment, ProfileInput, VersionedProfile, ApplicationAddress, ApplicationDraft, ApplicationPage, VersionedApplication } from './client';
 import { clearEntryProof, getOtpChallenge, getVerificationLocator, hasEntryProof } from './entry-proof';
-import PublicWebsite, { PublicBrand, PublicHeader } from './PublicWebsite';
+import PublicWebsite, { PublicHeader } from './PublicWebsite';
+import { WorkspaceShell, WorkspaceDashboard, WorkspaceModule, WorkspaceSecurity, workspaceModules } from './WorkspaceShell';
+import AddressBook from './AddressBook';
 import './customer.css';
 
 function message(error: unknown): string {
@@ -78,7 +80,6 @@ function PasswordField({ id, label, value, change, complete }: { id: string; lab
   return <><label htmlFor={id}>{label}</label><div className="cp-password-field"><input id={id} type={visible ? 'text' : 'password'} autoComplete={complete} placeholder={id.includes('confirmation') ? 'Nhập lại mật khẩu' : 'Nhập mật khẩu'} required maxLength={complete === 'new-password' ? 72 : 256} value={value} onChange={event => change(event.target.value)} /><button type="button" aria-label={`${visible ? 'Ẩn' : 'Hiện'} nội dung trường ${id === 'register-confirmation' ? 'xác nhận' : 'mật khẩu'}`} aria-pressed={visible} onClick={() => setVisible(current => !current)}><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z" /><circle cx="12" cy="12" r="3" />{visible && <path d="m3 3 18 18" />}</svg></button></div></>;
 }
 function Guest({ children }: { children: ReactNode }) { const session = useSession(); return session.status === 'authenticated' ? <Navigate to="/personal" replace /> : children; }
-function Protected() { const session = useSession(); return session.status === 'authenticated' ? <Outlet key={`${session.subject?.accountId}:${session.subject?.securityVersion}`} /> : <Navigate to="/login" replace />; }
 function Login() {
   const session = useSession(), [email, setEmail] = useState(''), [password, setPassword] = useState('');
   const action = useCommand<{ email: string; password: string }>(async input => { try { await customerClient.login(input.email, input.password); } finally { setPassword(''); } });
@@ -170,13 +171,6 @@ function ConfirmRecovery({ onRecovered }: { onRecovered: () => void }) {
     </form>}
   </Page>;
 }
-function Personal() {
-  const session = useSession(); return <Page title={`Xin chào, ${session.subject?.displayName ?? 'bạn'}`} description="Không gian gửi hàng cá nhân của bạn.">
-    <div className="cp-summary"><span className="cp-avatar" aria-hidden="true">CN</span><div><strong>Tài khoản cá nhân</strong><p>Email đăng nhập: {session.subject?.verifiedEmail}</p><span className="cp-verified">Email đã xác minh</span></div></div>
-    <Link className="cp-feature" to="/personal/profile"><span><strong>Hồ sơ cá nhân</strong><small>Cập nhật tên hiển thị và thông tin liên hệ dùng cho công việc.</small></span><span aria-hidden="true">→</span></Link>
-    <Link className="cp-feature" to="/personal/applications"><span><strong>Đăng ký trở thành Merchant</strong><small>Chuẩn bị hồ sơ doanh nghiệp và theo dõi tiến trình xét duyệt.</small></span><span aria-hidden="true">→</span></Link>
-  </Page>;
-}
 function MerchantEntry() {
   return <Page title="Không gian Merchant chưa khả dụng" description="Quyền truy cập tổ chức cần ACTIVE membership được backend xác nhận cho từng yêu cầu.">
     <Notice error>Hệ thống chưa cung cấp API membership và ngữ cảnh tổ chức đã được nghiệm thu. Trang này không hiển thị dữ liệu Merchant hoặc cấp quyền từ đường dẫn.</Notice>
@@ -249,11 +243,21 @@ export default function CustomerApp() {
   const accountRoute = /^\/(login|register|verify-email|recover|personal|merchant)(\/|$)/.test(location.pathname);
   const authRoute = /^\/(login|register|verify-email|recover)(\/|$)/.test(location.pathname);
   if (!accountRoute) return <PublicWebsite />;
-  return <div className={`customer-portal ${authRoute ? 'cp-auth-portal' : 'cp-workspace-portal'}`}><a className="cp-skip" href="#main-content">Đến nội dung chính</a>{success && <SuccessPopup key={success.id} kind={success.kind} dismiss={() => setSuccess(undefined)} />}{authRoute ? <PublicHeader compact /> : <header className="cp-header"><PublicBrand /><nav aria-label="Điều hướng tài khoản">
-    {session.status === 'authenticated' ? <><NavLink to="/personal" end>Cá nhân</NavLink><NavLink to="/personal/profile">Hồ sơ</NavLink><NavLink to="/personal/applications">Merchant</NavLink><button className="cp-logout" onClick={() => { void customerClient.logout().catch(() => {}); }}>Đăng xuất</button></> : <><NavLink to="/login">Đăng nhập</NavLink><NavLink to="/register">Đăng ký</NavLink></>}
-  </nav></header>}<main id="main-content" key={location.pathname}>{authRoute && <aside className="cp-auth-story" aria-label="Chào mừng đến ArgoPost"><span className="cp-story-kicker">CHÀO MỪNG ĐẾN ARGOPOST</span><h2>Khởi đầu mới.<br /><span>Kết nối xa hơn.</span></h2><p>Một tài khoản của bạn.<br />Một hành trình cùng ArgoPost.</p><img src="/media/movapost-network.svg" alt="" width="660" height="540" /><div className="cp-story-bottom"><span className="cp-story-line" /> Gửi niềm tin, nối hành trình.</div></aside>}{session.status === 'loading' ? <Loading /> : <Routes>
+  if (!authRoute) {
+    if (session.status === 'loading') return <Loading />;
+    if (session.status !== 'authenticated' || !session.subject) return <Navigate to="/login" replace />;
+    return <div className="customer-portal cp-workspace-portal"><WorkspaceShell key={`${session.subject.accountId}:${session.subject.securityVersion}`} subject={session.subject}><Routes>
+      <Route path="/personal" element={<WorkspaceDashboard subject={session.subject} />} />
+      <Route path="/personal/profile" element={<ProfilePage />} /><Route path="/personal/security" element={<WorkspaceSecurity subject={session.subject} />} />
+      <Route path="/personal/applications" element={<ApplicationList />} /><Route path="/personal/applications/:id" element={<ApplicationDetail />} />
+      <Route path="/personal/addresses" element={<AddressBook />} />
+      {workspaceModules.filter(item => item.path !== 'addresses').map(item => <Route key={item.path} path={'/personal/' + item.path} element={<WorkspaceModule name={item.path} />} />)}
+      <Route path="/merchant/*" element={<MerchantEntry />} />
+      <Route path="*" element={<Page title="Không tìm thấy trang"><Link to="/personal">Về tổng quan cá nhân</Link></Page>} />
+    </Routes></WorkspaceShell></div>;
+  }
+  return <div className="customer-portal cp-auth-portal"><a className="cp-skip" href="#main-content">Đến nội dung chính</a>{success && <SuccessPopup key={success.id} kind={success.kind} dismiss={() => setSuccess(undefined)} />}<PublicHeader compact /><main id="main-content" key={location.pathname}><aside className="cp-auth-story" aria-label="Chào mừng đến ArgoPost"><span className="cp-story-kicker">CHÀO MỪNG ĐẾN ARGOPOST</span><h2>Khởi đầu mới.<br /><span>Kết nối xa hơn.</span></h2><p>Một tài khoản của bạn.<br />Một hành trình cùng ArgoPost.</p><img src="/media/movapost-network.svg" alt="" width="660" height="540" /><div className="cp-story-bottom"><span className="cp-story-line" /> Gửi niềm tin, nối hành trình.</div></aside>{session.status === 'loading' ? <Loading /> : <Routes>
     <Route path="/login" element={<Login />} /><Route path="/register" element={<Register />} /><Route path="/verify-email" element={<Verify onRegistered={() => complete('registered')} />} /><Route path="/recover" element={<Recover />} /><Route path="/recover/otp" element={<Verify recovery onRegistered={() => complete('registered')} />} /><Route path="/recover/confirm" element={<ConfirmRecovery onRecovered={() => complete('password-reset')} />} />
-    <Route element={<Protected />}><Route path="/personal" element={<Personal />} /><Route path="/personal/profile" element={<ProfilePage />} /><Route path="/personal/applications" element={<ApplicationList />} /><Route path="/personal/applications/:id" element={<ApplicationDetail />} /><Route path="/merchant" element={<MerchantEntry />} /></Route>
     <Route path="*" element={<Page title="Không tìm thấy trang"><Link to="/">Về trang chủ</Link></Page>} />
-  </Routes>}</main>{authRoute ? <footer className="cp-auth-footer"><span>© {new Date().getFullYear()} ArgoPost</span><nav aria-label="Chính sách tài khoản"><Link to="/privacy">Bảo mật dữ liệu</Link><Link to="/terms">Điều khoản sử dụng</Link><Link to="/support">Trợ giúp</Link></nav></footer> : <footer className="cp-footer">ArgoPost · Gửi niềm tin, nối hành trình.</footer>}</div>;
+  </Routes>}</main><footer className="cp-auth-footer"><span>© {new Date().getFullYear()} ArgoPost</span><nav aria-label="Chính sách tài khoản"><Link to="/privacy">Bảo mật dữ liệu</Link><Link to="/terms">Điều khoản sử dụng</Link><Link to="/support">Trợ giúp</Link></nav></footer></div>;
 }

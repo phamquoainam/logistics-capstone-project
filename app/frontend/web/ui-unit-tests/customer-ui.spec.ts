@@ -99,6 +99,97 @@ test('merchant route fails closed without an authoritative active membership', a
   await expect(page.getByRole('alert')).toContainText('không hiển thị dữ liệu Merchant hoặc cấp quyền từ đường dẫn');
   expect(calls.some(call => call.path.includes('merchant'))).toBe(false);
 });
+
+test('Personal dashboard reads the own profile and never substitutes shipment counters or demo data', async ({ page, context }) => {
+  const calls = await fixture(context, true); await page.goto('/personal');
+  await expect(page.getByRole('heading', { name: 'Xin chào, Người dùng thử' })).toBeVisible();
+  await expect(page.locator('.pw-profile-details')).toContainText('Hồ sơ thử');
+  await expect(page.locator('.pw-profile-details')).toContainText('synthetic@example.invalid');
+  await expect(page.locator('.pw-unavailable')).toContainText('Số lượng vận đơn và hoạt động gần đây sẽ xuất hiện khi có nguồn dữ liệu thật');
+  await expect(page.locator('.pw-unavailable')).not.toContainText('Chưa có đơn');
+  expect(calls.filter(call => call.path === '/api/v1/customer/profile' && call.method === 'GET')).toHaveLength(1);
+  expect(calls.some(call => /demo|shipment|quote|notification/.test(call.path))).toBe(false);
+  await expect(page.getByRole('button', { name: /thông báo/i })).toHaveCount(0);
+  await page.reload(); await expect(page.locator('.pw-profile-details')).toContainText('Hồ sơ thử');
+});
+
+test('Personal profile loading and a failed read cannot become an empty-success dashboard', async ({ page, context }) => {
+  let release!: () => void; const pending = new Promise<void>(resolve => { release = resolve; }); let reads = 0;
+  await fixture(context, true, async (route, call) => {
+    if (call.path !== '/api/v1/customer/profile' || call.method !== 'GET') return false;
+    reads++; if (reads > 1) return false;
+    await pending; await route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ code: 'SERVICE_UNAVAILABLE' }) }); return true;
+  });
+  await page.goto('/personal'); await expect(page.getByRole('status')).toContainText('Đang tải hồ sơ');
+  await expect(page.locator('.pw-profile-details')).toHaveCount(0); release();
+  await expect(page.getByRole('alert')).toContainText('Không tải được hồ sơ');
+  await expect(page.locator('.pw-profile-details')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Tải lại hồ sơ' }).click(); await expect(page.locator('.pw-profile-details')).toContainText('Hồ sơ thử'); expect(reads).toBe(2);
+});
+
+test('workspace disclosure never grants Business from an approved application or a URL', async ({ page, context }) => {
+  const calls = await fixture(context, true, async (route, call) => {
+    if (call.path !== '/api/v1/merchant-applications') return false;
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ items: [{ id: proofId, applicantAccountId: account, state: 'APPROVED', revision: 1, version: 1, organizationId: '10000000-0000-4000-8000-000000000099' }], page: 0, size: 20, hasNext: false }) }); return true;
+  });
+  await page.goto('/personal/applications'); await expect(page.getByText('Đã duyệt · phiên bản 1')).toBeVisible();
+  const trigger = page.getByRole('button', { name: 'ArgoPost Personal', exact: true }); await trigger.focus(); await page.keyboard.press('Enter');
+  const choices = page.locator('#workspace-choices'); await expect(choices).toBeVisible();
+  await expect(choices.locator('a[href^="/merchant"]')).toHaveCount(0); await expect(choices).toContainText('Hồ sơ đăng ký không cấp quyền');
+  await page.keyboard.press('Escape'); await expect(choices).toHaveCount(0); await expect(trigger).toBeFocused();
+  await trigger.click(); await page.getByRole('heading', { name: 'Hồ sơ đăng ký Merchant' }).click(); await expect(choices).toHaveCount(0);
+  await page.goto('/merchant/10000000-0000-4000-8000-000000000099/profile');
+  await expect(page.getByRole('heading', { name: 'Không gian Merchant chưa khả dụng' })).toBeVisible();
+  expect(calls.some(call => /\/merchant\/|\/organizations|\/contexts/.test(call.path))).toBe(false);
+});
+
+test('deferred Personal modules explain dependencies without sending unsupported mutations', async ({ page, context }) => {
+  const calls = await fixture(context, true); await page.goto('/personal');
+  const navigation = page.getByRole('navigation', { name: 'Điều hướng Personal', exact: true });
+  for (const title of ['Tạo vận đơn', 'Quản lý vận đơn', 'Tra cứu & Báo giá', 'In nhãn & Tiện ích', 'Cước & Chứng từ', 'Hỗ trợ & Khiếu nại']) {
+    await navigation.getByRole('link', { name: title, exact: false }).click();
+    await expect(page.getByRole('heading', { name: title, exact: true })).toBeVisible();
+    await expect(page.locator('.pw-module-state')).toContainText('Chưa khả dụng'); await expect(page.locator('.pw-module-state input')).toHaveCount(0);
+    await expect(page.locator('.pw-module-state button[type="submit"]')).toHaveCount(0);
+  }
+  expect(calls.filter(call => !call.path.startsWith('/api/v1/customer-auth/') && call.path !== '/api/v1/customer/profile')).toHaveLength(0);
+});
+
+test('Personal shell supports narrow navigation, keyboard dismissal and accessible logout', async ({ page, context }) => {
+  await fixture(context, true); await page.goto('/personal');
+  for (const width of [1440, 1024, 768, 390, 360]) {
+    await page.setViewportSize({ width, height: 950 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await expect(page.getByRole('button', { name: 'ArgoPost Personal', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Đăng xuất', exact: true })).toBeVisible();
+    if (width === 1440 || width === 390) await page.screenshot({ path: `../../../.demo/argopost-personal/dashboard-${width}.png`, fullPage: true, animations: 'disabled' });
+  }
+  const menu = page.getByRole('button', { name: 'Mở menu cá nhân' }); await menu.click();
+  await expect(page.getByRole('navigation', { name: 'Điều hướng Personal' })).toBeVisible(); await page.keyboard.press('Escape'); await expect(menu).toBeFocused();
+  await menu.click(); await page.getByRole('navigation', { name: 'Điều hướng Personal' }).getByRole('link', { name: 'Hồ sơ', exact: true }).click();
+  await expect(page.getByLabel('Tên hiển thị trong hồ sơ')).toBeVisible(); await expect(menu).toHaveAttribute('aria-expanded', 'false');
+  await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click(); await expect(page.getByRole('heading', { name: 'Đăng nhập bằng mật khẩu' })).toBeVisible();
+  await expect(page.locator('.pw-shell')).toHaveCount(0);
+});
+
+test('unconfirmed logout for password recovery cannot claim success or open recovery automatically', async ({ page, context }) => {
+  await fixture(context, true, async (route, call) => {
+    if (!call.path.endsWith('/logout')) return false;
+    await route.abort('failed'); return true;
+  });
+  await page.goto('/personal/security'); await page.getByRole('button', { name: 'Đăng xuất để đặt lại mật khẩu' }).click();
+  await expect(page).toHaveURL(/\/login$/); await expect(page.getByRole('alert')).toContainText('Chưa xác định');
+  await expect(page.locator('.pw-shell')).toHaveCount(0); await expect(page.getByRole('heading', { name: 'Quên mật khẩu' })).toHaveCount(0);
+});
+
+test('Personal security starts recovery only after a confirmed logout without sending an email automatically', async ({ page, context }) => {
+  const calls = await fixture(context, true); await page.goto('/personal/security');
+  await page.getByRole('button', { name: 'Đăng xuất để đặt lại mật khẩu' }).click();
+  await expect(page).toHaveURL(/\/recover$/); await expect(page.getByLabel('Email của tài khoản')).toBeVisible();
+  await expect(page.locator('.pw-shell')).toHaveCount(0);
+  expect(calls.filter(call => call.path.endsWith('/logout') && call.method === 'POST')).toHaveLength(1);
+  expect(calls.filter(call => call.path.endsWith('/recovery'))).toHaveLength(0);
+});
 test('mobile labels keyboard navigation and public login layout remain usable', async ({ page, context }) => {
   await fixture(context); await page.setViewportSize({ width: 390, height: 844 }); await page.goto('/login'); await expect(page.getByLabel('Email đã xác minh')).toBeVisible(); await expect(page.getByLabel('Mật khẩu', { exact: true })).toBeVisible(); await page.keyboard.press('Tab'); await expect(page.getByRole('link', { name: 'Đến nội dung chính' })).toBeFocused();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true); await page.getByRole('heading', { name: 'Đăng nhập bằng mật khẩu' }).focus(); await page.screenshot({ path: '../../../.demo/spec003-implementation/customer-login-mobile.png', fullPage: true, animations: 'disabled' });
@@ -255,6 +346,53 @@ test('registration success opens login with a centered dismissible welcome popup
   await page.getByRole('button',{name:'Đóng thông báo thành công'}).click();await expect(popup).toHaveCount(0);await expect(page.getByLabel('Email đã xác minh')).toBeVisible();
   await page.reload();await expect(popup).toHaveCount(0);
 });
+async function fillAddress(page: import('@playwright/test').Page, label = 'Nhà riêng') {
+  await page.getByLabel('Tên gợi nhớ', { exact: false }).fill(label); await page.getByLabel('Họ tên liên hệ', { exact: true }).fill('Người gửi thử'); await page.getByLabel('Số điện thoại liên hệ', { exact: true }).fill('0901234567'); await page.getByLabel('Tỉnh / thành phố').fill('Địa phương thử'); await page.getByLabel('Phường / xã / địa phương').fill('Phường thử'); await page.getByLabel('Địa chỉ chi tiết').fill('Địa chỉ thử');
+}
+function addressValue(body?: Record<string, unknown>, version = 1) { return { ...body, id: proofId, accountId: account, contactPhone: '+84901234567', verificationStatus: 'UNVERIFIED', version, createdAt: '2026-11-01T00:00:00Z', updatedAt: '2026-11-01T00:00:00Z' }; }
+
+test('address book creates edits archives and refreshes server-confirmed contacts only', async ({ page, context }) => {
+  let item: Record<string, unknown> | undefined, writes = 0;
+  const calls = await fixture(context, true, async (route, call) => {
+    if (!call.path.includes('/customer/addresses')) return false;
+    const reply = (value: unknown, status = 200, headers: Record<string, string> = {}) => route.fulfill({ status, contentType: 'application/json', headers, body: JSON.stringify(value) });
+    if (call.method === 'GET') { await reply({ items: item ? [item] : [], page: 0, size: 20, hasNext: false }); return true; }
+    writes++;
+    if (call.path.endsWith('/archive')) { item = undefined; await route.fulfill({ status: 204 }); return true; }
+    item = addressValue(call.body, call.method === 'PUT' ? 2 : 1); await reply(item, call.method === 'POST' ? 201 : 200, { ETag: '"v' + item.version + '"' }); return true;
+  });
+  await page.goto('/personal/addresses'); await expect(page.getByRole('heading', { name: 'Sổ địa chỉ của bạn đang trống' })).toBeVisible(); await page.getByRole('button', { name: '+ Thêm địa chỉ', exact: true }).click(); await fillAddress(page); await page.getByRole('checkbox').check(); await page.getByRole('button', { name: 'Lưu địa chỉ', exact: true }).click(); await expect(page.getByRole('status')).toContainText('Đã lưu địa chỉ');
+  await expect(page.locator('.ab-card')).toContainText('Chưa xác minh'); await expect(page.locator('.ab-default')).toContainText('Mặc định'); await page.reload(); await expect(page.locator('.ab-card')).toContainText('Nhà riêng');
+  await page.getByRole('button', { name: 'Chỉnh sửa', exact: true }).click(); await page.getByLabel('Tên gợi nhớ', { exact: false }).fill('Địa chỉ đã sửa'); await page.getByRole('button', { name: 'Lưu địa chỉ', exact: true }).click(); await expect(page.locator('.ab-card')).toContainText('Địa chỉ đã sửa');
+  await page.screenshot({ path: '../../../.demo/argopost-personal/address-desktop.png', fullPage: true, animations: 'disabled' });
+  await page.setViewportSize({ width: 390, height: 950 }); await expect(page.locator('.pw-sidebar')).toBeHidden(); expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true); await page.screenshot({ path: '../../../.demo/argopost-personal/address-mobile.png', fullPage: true, animations: 'disabled' });
+  await page.getByRole('button', { name: 'Lưu trữ', exact: true }).click(); await expect(page.getByRole('alertdialog')).toContainText('Lịch sử vẫn được bảo toàn'); await page.getByRole('button', { name: 'Xác nhận lưu trữ', exact: true }).click(); await expect(page.getByRole('status')).toContainText('Đã lưu trữ địa chỉ'); await expect(page.locator('.ab-card')).toHaveCount(0); expect(writes).toBe(3);
+  expect(calls.filter(call => call.path.includes('/customer/addresses') && call.method !== 'GET').every(call => !!call.key)).toBe(true);
+});
+
+test('address unknown outcome locks the original form and resolves by receipt without a second POST', async ({ page, context }) => {
+  let item: Record<string, unknown> | undefined, queries = 0;
+  const calls = await fixture(context, true, async (route, call) => {
+    if (call.path.includes('/address-receipts/')) { queries++; await route.fulfill({ status: queries === 1 ? 404 : 200, contentType: 'application/json', body: JSON.stringify(queries === 1 ? { code: 'RESOURCE_NOT_FOUND' } : { operationId: 'createPersonalAddress', targetId: proofId, outcome: 'COMMITTED', version: 1 }) }); return true; }
+    if (!call.path.includes('/customer/addresses')) return false;
+    if (call.method === 'POST') { item = addressValue(call.body); await route.abort('failed'); return true; }
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ items: item ? [item] : [], page: 0, size: 20, hasNext: false }) }); return true;
+  });
+  await page.goto('/personal/addresses'); await page.getByRole('button', { name: '+ Thêm địa chỉ', exact: true }).click(); await fillAddress(page); await page.getByRole('button', { name: 'Lưu địa chỉ', exact: true }).click(); await expect(page.getByRole('alert')).toContainText('Chưa xác định'); await expect(page.getByLabel('Họ tên liên hệ', { exact: true })).toBeDisabled(); await expect(page.getByText('Đã lưu địa chỉ.', { exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Kiểm tra kết quả thao tác' }).click(); await expect(page.getByRole('alert')).toContainText('vẫn chưa xác định'); await page.getByRole('button', { name: 'Kiểm tra kết quả thao tác' }).click(); await expect(page.getByText('Đã lưu địa chỉ.', { exact: true })).toBeVisible(); await expect(page.locator('.ab-card')).toContainText('Nhà riêng'); expect(calls.filter(call => call.path === '/api/v1/customer/addresses' && call.method === 'POST')).toHaveLength(1);
+});
+
+test('address stale version preserves edits and malformed foreign data is never rendered', async ({ page, context }) => {
+  const body = { kind: 'SENDER', label: 'Own address', contactName: 'Synthetic name', address: { country: 'VN', administrativeArea: 'Area', locality: 'Locality', addressLine: 'Street' }, isDefault: false }; let foreign = false;
+  const calls = await fixture(context, true, async (route, call) => {
+    if (!call.path.includes('/customer/addresses')) return false;
+    if (call.method === 'PUT') { await route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ code: 'PRECONDITION_STALE' }) }); return true; }
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ items: [{ ...addressValue(body), ...(foreign ? { accountId: '10000000-0000-4000-8000-000000000002', label: 'Foreign private address' } : {}) }], page: 0, size: 20, hasNext: false }) }); return true;
+  });
+  await page.goto('/personal/addresses'); await page.getByRole('button', { name: 'Chỉnh sửa', exact: true }).click(); await page.getByLabel('Tên gợi nhớ', { exact: false }).fill('Unsaved value'); await page.getByRole('button', { name: 'Lưu địa chỉ', exact: true }).click(); await expect(page.getByRole('alert')).toContainText('Địa chỉ đã thay đổi'); await expect(page.getByLabel('Tên gợi nhớ', { exact: false })).toHaveValue('Unsaved value'); expect(calls.filter(call => call.method === 'PUT')).toHaveLength(1);
+  foreign = true; page.on('dialog', dialog => dialog.accept()); await page.getByRole('button', { name: 'Tải lại bản hiện tại' }).click(); await expect(page.getByRole('alert')).toContainText('Không xác thực được dữ liệu'); await expect(page.getByText('Foreign private address', { exact: true })).toHaveCount(0); await expect(page.locator('.ab-card')).toHaveCount(0);
+});
+
 test('rejected password reset stays on its form and never shows success or redirects', async ({ page, context }) => {
   await fixture(context,false,async(route,call)=>{if(!call.path.endsWith('/recovery-confirm'))return false;await route.fulfill({status:422,contentType:'application/json',body:JSON.stringify({code:'TOKEN_INVALID_OR_EXPIRED'})});return true;});
   await page.goto(`/recover/confirm#proofId=${proofId}&proof=${'B'.repeat(43)}`);await page.getByLabel('Mật khẩu mới',{exact:true}).fill('synthetic-recovered-password');await page.getByLabel('Nhập lại mật khẩu mới').fill('synthetic-recovered-password');await page.getByRole('button',{name:'Xác nhận mật khẩu mới'}).click();

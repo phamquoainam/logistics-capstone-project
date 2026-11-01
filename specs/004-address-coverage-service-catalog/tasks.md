@@ -1,5 +1,23 @@
 # Tasks 004 — address-coverage-service-catalog
 
+## Owner-directed Personal Address Book — 2026-11-01
+
+Approved [bounded contract](../../docs/implementation/personal-address-book-contract.md),
+BC136 PERSONAL_OWNER manual/UNVERIFIED subset. This is independent of catalog,
+geocoding, coverage and full Spec004 acceptance; no confirmed address is inferred.
+
+- [x] **PW-03-UI** — DONE: real typed client/form/list/search/filter/paging/edit/archive,
+  loading/empty/errors/stale versions and unknown-write receipt recovery.
+- [x] **PW-03-BE** — DONE: current CustomerAdmission, self-scoped public merchant API,
+  canonical contact validation, ETag/idempotency/replay, no credential/tenant grant.
+- [x] **PW-03-PG** — DONE: forward V18, unique active default/kind/owner, immutable
+  version/owner/archive guard, source/history/audit/receipt atomicity and narrow DML.
+- [x] **PW-03-VERIFY** — DONE: full local PG1011/H2646, UI30/unit44, browser10,
+  report-policy130 and source/contract validators PASS; final affected46 tests PASS.
+  [Exact checkpoints and limits](../../docs/implementation/argopost-personal-workspace.md#personal-address-book--completed-vertical-slice-2026-11-01).
+
+## Canonical V3 planning tasks retained below
+
 NOT_STARTED; thứ tự là contract/fixture → DB → BE/HTTP → UI/channel → verification → full acceptance. Mỗi BC là gói end-to-end nội bộ, không thay phương pháp Spec-by-Spec. Không task nào DONE trong rebuild docs.
 
 ## REQ-V3-BC-001 / BC-001: Tra cứu vùng phục vụ công khai

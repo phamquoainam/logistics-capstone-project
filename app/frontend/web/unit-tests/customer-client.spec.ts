@@ -24,6 +24,26 @@ function fixture(handler?:(call:Call)=>Promise<Response>|Response){
 }
 test.afterEach(()=>clearEntryProof());
 
+const addressInput={kind:'SENDER' as const,contactName:'Synthetic contact',contactPhone:'0901234567',address:{country:'VN',administrativeArea:'Area',locality:'Locality',addressLine:'Street'},isDefault:true};
+const address={...addressInput,contactPhone:'+84901234567',id:key,accountId:account,verificationStatus:'UNVERIFIED',version:1,createdAt:'2026-10-28T00:00:00Z',updatedAt:'2026-10-28T00:00:00Z'};
+function addressFixture(handler:(call:Call)=>Response|Promise<Response>){return fixture(call=>{
+  if(call.path.endsWith('/csrf'))return Response.json({challenge:'synthetic-live-challenge'});
+  if(call.path.endsWith('/me'))return Response.json(subject);
+  if(call.path.endsWith('/refresh'))return Response.json({accessToken:'synthetic-customer-access',expiresAt:new Date(initialTime+900000).toISOString(),accountId:account});
+  return handler(call);
+});}
+test('address writes carry current authorization csrf version and a single scoped key without caller ownership',async()=>{
+  const {client,calls}=addressFixture(()=>Response.json(address,{status:201,headers:{ETag:'"v1"'}}));await client.initialize();const result=await client.createAddress(addressInput,key);expect(result.address.verificationStatus).toBe('UNVERIFIED');
+  const call=calls.find(c=>c.path==='/api/v1/customer/addresses')!;expect(call.init.method).toBe('POST');expect(call.init.headers).toMatchObject({Authorization:'Bearer synthetic-customer-access','X-CSRF-Token':'synthetic-live-challenge','Idempotency-Key':key});expect(JSON.parse(call.init.body as string)).toEqual(addressInput);expect(call.init.credentials).toBe('same-origin');expect(call.init.redirect).toBe('error');client.dispose();
+});
+test('address client rejects foreign ownership unexpected verification and mismatched ETags before rendering',async()=>{
+  let value:Record<string,unknown>={...address,accountId:other},etag='"v1"';const {client}=addressFixture(()=>Response.json(value,{headers:{ETag:etag}}));await client.initialize();
+  await expect(client.readAddress(key)).rejects.toMatchObject({code:'RESPONSE_INVALID'});value={...address,verificationStatus:'VERIFIED'};await expect(client.readAddress(key)).rejects.toMatchObject({code:'RESPONSE_INVALID'});value={...address};etag='"v2"';await expect(client.readAddress(key)).rejects.toMatchObject({code:'RESPONSE_INVALID'});client.dispose();
+});
+test('address lost write is not automatically retried and receipt reads contain no submitted PII',async()=>{
+  const {client,calls}=addressFixture(call=>{if(call.init.method==='POST')throw Error('synthetic transport loss');return Response.json({operationId:'createPersonalAddress',targetId:key,outcome:'COMMITTED',version:1});});await client.initialize();await expect(client.createAddress(addressInput,key)).rejects.toMatchObject({code:'OUTCOME_UNKNOWN'});expect(calls.filter(c=>c.init.method==='POST'&&c.path.includes('/customer/addresses'))).toHaveLength(1);expect(await client.addressReceipt('createPersonalAddress',key)).toEqual({targetId:key,version:1});const read=calls.at(-1)!;expect(read.init.body).toBeUndefined();expect(read.path).not.toContain('Synthetic');client.dispose();
+});
+
 test('concurrent initialization has one strict refresh and never exposes access in session snapshot',async()=>{
   const {client,calls}=fixture();await Promise.all([client.initialize(),client.initialize(),client.initialize()]);
   expect(calls.filter(c=>c.path.endsWith('/refresh'))).toHaveLength(1);expect(client.getSnapshot()).toEqual({status:'authenticated',subject,error:null});expect(JSON.stringify(client.getSnapshot())).not.toContain('synthetic-customer-access');client.dispose();
