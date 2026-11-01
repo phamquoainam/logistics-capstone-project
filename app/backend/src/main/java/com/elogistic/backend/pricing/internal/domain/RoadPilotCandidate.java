@@ -1,5 +1,4 @@
 package com.elogistic.backend.pricing.internal.domain;
-import java.math.BigInteger;
 import java.util.*;
 
 /** Inactive decision-support calculation only: never issues a Quote, service grant or amount due. */
@@ -10,10 +9,9 @@ public final class RoadPilotCandidate {
     public record Estimate(List<Line> lines,long baseFeeVnd){public Estimate{lines=List.copyOf(lines);}}
     private RoadPilotCandidate(){}
     public static Estimate estimate(Region region,List<Parcel> parcels){
-        if(region==null||parcels==null||parcels.isEmpty()||parcels.size()>5)throw new IllegalArgumentException("CANDIDATE_INPUT_INVALID");List<Line> lines=new ArrayList<>();long total=0;
-        for(var p:parcels){if(p==null||p.weightGrams()<1||p.weightGrams()>20000||p.lengthMm()<1||p.widthMm()<1||p.heightMm()<1||p.lengthMm()>1000||p.widthMm()>1000||p.heightMm()>1000||p.lengthMm()+2*(p.widthMm()+p.heightMm())>2000)throw new IllegalArgumentException("CANDIDATE_PARCEL_LIMIT");
-            BigInteger volume=BigInteger.valueOf(p.lengthMm()).multiply(BigInteger.valueOf(p.widthMm())).multiply(BigInteger.valueOf(p.heightMm()));long volumetricSteps=volume.add(BigInteger.valueOf(2499999)).divide(BigInteger.valueOf(2500000)).longValueExact();long steps=Math.max((p.weightGrams()+499)/500,volumetricSteps);
-            long base=region==Region.INTRA?25000:38000,increment=region==Region.INTRA?3000:5000,fee=Math.addExact(base,Math.multiplyExact(steps-1,increment));lines.add(new Line(p.weightGrams(),steps*500,fee));total=Math.addExact(total,fee);
-        }return new Estimate(lines,total);
+        if(region==null||parcels==null)throw new IllegalArgumentException("CANDIDATE_INPUT_INVALID");
+        var rules=new com.elogistic.backend.pricing.api.PilotQuotes.Rules("candidate-compatibility-only",25000,3000,38000,5000,500,5000,5,20000,1000,2000,900,"SIMULATION_NOT_TAX_INVOICE");
+        var inputs=parcels.stream().map(p->{if(p==null)throw new IllegalArgumentException();return new com.elogistic.backend.pricing.api.PilotQuotes.Parcel(p.weightGrams(),p.lengthMm(),p.widthMm(),p.heightMm());}).toList();
+        var lines=RoadTariffCalculation.calculate(rules,region.name(),inputs).stream().map(l->new Line(l.actualGrams(),l.chargeableGrams(),l.feeVnd())).toList();long total=0;for(var line:lines)total=Math.addExact(total,line.baseFeeVnd());return new Estimate(lines,total);
     }
 }

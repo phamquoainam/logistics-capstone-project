@@ -9,7 +9,83 @@ clean root fast-forwarded safely; feature/shipping-policy-personal-v1, no new wo
 [bounded draft contract](personal-shipping-drafts-contract.md) distinguish authorized
 implementation from candidate commercial/operational values. No Full Personal acceptance.
 
-## Execution tasks
+## Current checkpoint — approved Personal pilot, 2026-11-02
+
+Authority: final Owner approval of ARGO-SIM-COVERAGE-1 and
+[BR13-LOCAL-PILOT-01](../decisions/br13-local-pilot-01.md).
+[Exact API/data/transaction contract](personal-pilot-booking-contract.md).
+Earlier draft-only states below are historical and superseded within this pilot.
+PR38 is still OPEN; its prior green checks do not prove this new revision.
+
+- [x] PILOT-DECISION — DONE: exact service/tariff/tax,3 synthetic areas,4 directed
+  routes, simulated drop-off only and bounded UNPAID booking amendment recorded.
+- [x] PILOT-DATA — DONE: new V20 only; immutable approved coverage/tariff seeds,
+  exact quote breakdown constraints, relational Shipment/Parcel snapshots,
+  narrow runtime DML and immutable Finance obligation. Upgrade/negative PG tests PASS.
+- [x] PILOT-QUOTE — DONE / VERIFIED_LOCAL: actual versioned DB-backed calculator,
+  per-parcel integer/dimensional rounding,15m expiry, strict owned source inputs,
+  receipt recovery, unsupported-route/goods/measurement denial and idempotency.
+- [x] PILOT-BOOKING — DONE / VERIFIED_LOCAL: quote consumption, DRAFT→BOOKED,
+  Shipment/Parcels, audit/receipt and UNPAID obligation in one local transaction;
+  same/different-key races, expired/stale/foreign denial and fault rollback PASS.
+- [x] PILOT-MANAGEMENT — DONE / VERIFIED_LOCAL: actual own Shipment list/search/
+  status filter/detail, quote/address/parcel snapshot, UNPAID views and drop-off
+  information; unknown POST outcomes resolved by original receipt, no blind retry.
+- [x] PILOT-LOCAL-CHECKPOINT — DONE: full PG1040 PASS/5 policy skips, original-DB
+  V20 migration/preservation and actual local HTTPS readiness verified below.
+- [ ] PILOT-HOSTED-CHECKPOINT — exact-source hosted CI recorded in PR38 metadata
+  after commit/push; no previous revision's evidence substituted.
+
+This is **PERSONAL BOOKING scope**, not Full Personal/Spec acceptance. Carrier
+Acceptance/Delivered, Pickup, Payment Collection/PAID, COD, labels, Support/Claims,
+Production and Merchant operation remain unavailable. No account receives those
+permissions. The UI identifies all route/handover/fee data as simulation.
+
+Architecture now has seven nonempty implemented packages: identity,merchant,
+orders,pricing,finance,platform,workflow. The nine domain-module architecture and
+all dependency/transaction/security rules remain; workflow uses public APIs and
+current CustomerAdmission, never client owner fields or cross-module internals.
+
+### Current local evidence
+
+Final focused backend41 PASS includes10 pilot PG cases,2 migration cases, the
+actual12-case HTTPS/PG18/test-SMTP browser suite,23 architecture cases and5 domain
+cases. Full H2 verify654 PASS/17 policy skips,0 failures/errors. Frontend51 unit
+and33 isolated UI cases PASS; after a checkbox alignment refinement, the2 affected
+pilot UI cases PASS again. Typecheck/lint/default+customer builds PASS.
+Report-policy/privacy130/130 PASS. New and existing OpenAPI/source/whitespace
+validators PASS. Desktop/mobile screenshots inspected. Raw evidence remains
+ignored under .demo/pilot-v20-*; no live Gmail/S3 retest or new delivery claim.
+
+Focused evidence: .demo/pilot-v20-final-focused-9d9975a4-9b95-46ac-a007-27cbb229a5b1.
+H2 receipt: .demo/pilot-v20-h2-sanitized/summary.json. Hosted CI/source SHA will
+be recorded in PR38 metadata after normal commit/push; no automatic merge.
+
+Full CI-style PG18 regression:1040 PASS/5 policy skips,0 failures/errors; sanitized
+report guard, generated-credential privacy and owned-resource absence audit PASS.
+Actual browser12/12 PASS, no page errors; original container restored healthy with
+the same identity and data volume. Evidence:
+.demo/pilot-v20-ci-pg-e90d2bbc-5abc-4f24-b071-5eaa14eb1527/sanitized and its
+customer-browser child's safe-browser-results.json. Rechecking cleanup from a new
+shell initially lacked the original execution binding/Docker path and failed closed;
+the read-only audit passed with both explicitly supplied. No cleanup gate weakened.
+
+Official local migrate applied V20 successfully. Aggregate fingerprints of existing
+account/identifier/profile/application/PW03 current/history and PW04 draft/current/
+history/audit/receipts all match the pre-migration checkpoint; V1–V19 checksum prefix
+unchanged. No dev Customer/contact/draft/shipment test row inserted. Existing secret,
+certificate, AWS/Gmail and PostgreSQL setup preserved; no init/reset/volume removal.
+Launcher returned LOCAL_FULL_STACK_HTTP_READY. Fresh-browser trusted HTTPS smoke:
+8 protected routes redirect to login,7 Customer APIs return401, no page errors or
+TLS bypass. Gmail delivery and S3 were not retested for this shipping-only scope.
+
+Owner local path: sign in at https://127.0.0.1:5173/login, prepare a draft at
+/personal/create, open its detail to select an approved synthetic route, declare
+ordinary goods, request quote and confirm. Actual records appear at
+/personal/shipments; drafts remain at /personal/shipments?tab=drafts. Every booked
+record stays UNPAID/NOT_ACCEPTED and only shows simulated drop-off information.
+
+## Historical PW04 execution tasks — prior draft-only checkpoint
 
 - [x] BASELINE — DONE: fetch/verify manual PR37 merge and synchronize clean root.
 - [x] AUDIT — DONE: canonical business rules/state/module ownership and source inventory;

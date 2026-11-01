@@ -32,8 +32,8 @@ class PostgresTestcontainersTests {
         Database db=PostgresTestcontainersSupport.database(POSTGRES);
         Flyway flyway=db.flyway("latest");assertEquals(0,flyway.info().applied().length);
         // Retain the report-policy method identity and assert the complete current stream.
-        assertEquals(19,flyway.migrate().migrationsExecuted);assertTrue(flyway.validateWithResult().validationSuccessful);
-        assertEquals(List.of("1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19"),Arrays.stream(flyway.info().applied()).map(m->m.getVersion().toString()).toList());
+        assertEquals(20,flyway.migrate().migrationsExecuted);assertTrue(flyway.validateWithResult().validationSuccessful);
+        assertEquals(List.of("1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20"),Arrays.stream(flyway.info().applied()).map(m->m.getVersion().toString()).toList());
     }
 
     private List<String> checksums(Flyway flyway) { return Arrays.stream(flyway.info().applied()).map(m->m.getVersion()+":"+m.getChecksum()).toList(); }
@@ -69,14 +69,14 @@ class PostgresTestcontainersTests {
             try(ResultSet r=s.executeQuery("SELECT current_user")) { assertTrue(r.next());assertEquals(db.owner(),r.getString(1)); }
             try(ResultSet r=s.executeQuery("SELECT count(*) FROM pg_namespace WHERE nspowner=(SELECT oid FROM pg_roles WHERE rolname='"+db.owner()+"') AND nspname IN ('platform','identity','merchant','orders','pricing','warehouse','dispatch','finance','routing','notification')")) { assertTrue(r.next());assertEquals(10,r.getInt(1)); }
             // Five Demo + twelve accepted Identity + twelve customer + four personal-profile and two applicant-draft tables + Flyway history.
-            try(ResultSet r=s.executeQuery("SELECT count(*) FROM pg_tables WHERE tableowner='"+db.owner()+"' AND schemaname IN ('platform','identity','merchant','orders')")) { assertTrue(r.next());assertEquals(42,r.getInt(1)); }
+            try(ResultSet r=s.executeQuery("SELECT count(*) FROM pg_tables WHERE tableowner='"+db.owner()+"' AND schemaname IN ('platform','identity','merchant','orders','pricing','finance')")) { assertTrue(r.next());assertEquals(51,r.getInt(1)); }
             Set<String> expectedTables=Set.of("platform.flyway_schema_history", "identity.demo_account",
                 "merchant.demo_merchant", "orders.demo_shipment", "orders.demo_event", "orders.demo_operation",
                 "identity.user_account", "identity.account_grant", "identity.auth_session", "identity.refresh_token",
                 "identity.action_proof", "identity.csrf_binding", "identity.command_receipt", "identity.audit_entry", "identity.realm", "identity.invitation_outbox", "identity.rate_limit_subject", "identity.rate_limit_attempt", "identity.customer_identifier", "identity.customer_auth_session", "identity.customer_refresh_token", "identity.customer_csrf_binding", "identity.customer_enrollment", "identity.customer_phone_contact", "identity.customer_proof", "identity.customer_delivery", "identity.customer_command_receipt", "identity.customer_proof_receipt", "identity.customer_security_receipt", "identity.customer_owner_consent_receipt",
-                "merchant.customer_profile", "merchant.customer_profile_version", "merchant.business_audit", "merchant.command_receipt", "merchant.application", "merchant.application_draft_version", "merchant.customer_address", "merchant.customer_address_version", "orders.shipping_draft", "orders.shipping_draft_version", "orders.shipping_draft_audit", "orders.shipping_draft_receipt");
+                "merchant.customer_profile", "merchant.customer_profile_version", "merchant.business_audit", "merchant.command_receipt", "merchant.application", "merchant.application_draft_version", "merchant.customer_address", "merchant.customer_address_version", "orders.shipping_draft", "orders.shipping_draft_version", "orders.shipping_draft_audit", "orders.shipping_draft_receipt", "merchant.pilot_coverage_dataset", "merchant.pilot_area", "merchant.pilot_route", "pricing.pilot_tariff_version", "pricing.pilot_quote", "orders.pilot_shipment", "orders.pilot_parcel", "orders.pilot_booking_receipt", "finance.pilot_shipping_obligation");
             Map<String,String> actualTables=new TreeMap<>();
-            try(ResultSet r=s.executeQuery("SELECT schemaname||'.'||tablename,tableowner FROM pg_tables WHERE schemaname IN ('platform','identity','merchant','orders')")) {
+            try(ResultSet r=s.executeQuery("SELECT schemaname||'.'||tablename,tableowner FROM pg_tables WHERE schemaname IN ('platform','identity','merchant','orders','pricing','finance')")) {
                 while(r.next()) actualTables.put(r.getString(1),r.getString(2));
             }
             assertEquals(expectedTables,actualTables.keySet());

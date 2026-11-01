@@ -146,7 +146,7 @@ test('workspace disclosure never grants Business from an approved application or
 test('deferred Personal modules explain dependencies without sending unsupported mutations', async ({ page, context }) => {
   const calls = await fixture(context, true); await page.goto('/personal');
   const navigation = page.getByRole('navigation', { name: 'Điều hướng Personal', exact: true });
-  for (const title of ['Tra cứu & Báo giá', 'In nhãn & Tiện ích', 'Cước & Chứng từ', 'Hỗ trợ & Khiếu nại']) {
+  for (const title of ['In nhãn & Tiện ích', 'Hỗ trợ & Khiếu nại']) {
     await navigation.getByRole('link', { name: title, exact: false }).click();
     await expect(page.getByRole('heading', { name: title, exact: true })).toBeVisible();
     await expect(page.locator('.pw-module-state')).toContainText('Chưa khả dụng'); await expect(page.locator('.pw-module-state input')).toHaveCount(0);

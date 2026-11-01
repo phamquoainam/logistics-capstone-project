@@ -72,7 +72,7 @@ export function WorkspaceShell({ subject, children }: { subject: Subject; childr
     <aside id="personal-sidebar" className={`pw-sidebar ${sidebar ? 'is-open' : ''}`} aria-label="Thanh điều hướng Personal"><span className="pw-nav-label">KHÔNG GIAN CÁ NHÂN</span>
       <nav aria-label="Điều hướng Personal" onClick={event => { if ((event.target as HTMLElement).closest('a')) setSidebar(false); }}>
         <NavLink to="/personal" end><Icon name="home" /><span>Tổng quan</span></NavLink>
-        {workspaceModules.map(item => <NavLink key={item.path} to={'/personal/' + item.path}><Icon name={item.icon} /><span>{item.title}</span>{!['addresses', 'create', 'shipments'].includes(item.path) && <span className="pw-nav-dot" aria-label="Chưa khả dụng" />}</NavLink>)}
+        {workspaceModules.map(item => <NavLink key={item.path} to={'/personal/' + item.path}><Icon name={item.icon} /><span>{item.title}</span>{!['addresses', 'create', 'shipments', 'lookup', 'billing'].includes(item.path) && <span className="pw-nav-dot" aria-label="Chưa khả dụng" />}</NavLink>)}
         <details open className="pw-account-links"><summary><Icon name="user" /><span>Tài khoản</span><Icon name="chevron" /></summary><NavLink to="/personal/profile">Hồ sơ</NavLink><NavLink to="/personal/security">Bảo mật</NavLink><NavLink to="/personal/applications">Merchant</NavLink></details>
       </nav><div className="pw-sidebar-foot"><Icon name="shield" /><span>Personal độc lập với quyền của tổ chức.</span></div>
     </aside>

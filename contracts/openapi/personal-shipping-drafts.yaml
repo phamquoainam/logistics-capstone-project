@@ -3,7 +3,7 @@
   "info": {
     "title": "Personal shipping preparation",
     "version": "1.0.0",
-    "description": "Owner-authorized preparation only. Quote/booking/payment/carrier capabilities remain disabled. Contacts remain unverified."
+    "description": "Owner-authorized self-owned preparation. Approved simulation quote/booking is a separate conditional contract; no preparation endpoint itself records Carrier acceptance or payment."
   },
   "servers": [
     {
@@ -705,7 +705,7 @@
         "summary": "Read actual disabled capability dependencies",
         "responses": {
           "200": {
-            "description": "No shipping policy activated",
+            "description": "Current explicit Local/Test pilot readiness; collection and COD remain disabled",
             "content": {
               "application/json": {
                 "schema": {
@@ -1018,10 +1018,10 @@
         ],
         "properties": {
           "quoteEnabled": {
-            "const": false
+            "type": "boolean"
           },
           "bookingEnabled": {
-            "const": false
+            "type": "boolean"
           },
           "codEnabled": {
             "const": false
@@ -1032,13 +1032,7 @@
           "blockers": {
             "type": "array",
             "items": {
-              "type": "string",
-              "enum": [
-                "COVERAGE_DATASET_NOT_APPROVED",
-                "TAX_FEE_POLICY_NOT_FINAL",
-                "BR13_AMENDMENT_PENDING",
-                "CARRIER_COLLECTION_AUTHORITY_UNAVAILABLE"
-              ]
+              "type": "string"
             }
           }
         }

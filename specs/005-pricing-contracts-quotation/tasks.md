@@ -1,5 +1,25 @@
 # Tasks 005 — pricing-contracts-quotation
 
+## Owner-directed Personal Local/Test pilot — 2026-11-02
+
+Bounded amendment, not closure of all canonical BCs below:
+[contract](../../docs/implementation/personal-pilot-booking-contract.md),
+[approved decisions and evidence](../../docs/implementation/shipping-personal-v1.md).
+
+- [x] T-PILOT-138-CONTRACT — DONE: approved ROAD_STANDARD tariff/tax simulation,
+  exact4 routes, limits/TTL and current self scope, strict input/error/key/version.
+- [x] T-PILOT-138-DB-BE — DONE / VERIFIED_LOCAL: V20 immutable master/versioned quote,
+  exact DB breakdown guard and shared integer engine; no public/Merchant pricing grant.
+- [x] T-PILOT-138-UI — DONE / VERIFIED_LOCAL: actual quote lines/countdown, unavailable
+  route/goods handling, receipt recovery on unknown outcome and safe confirmation handoff.
+- [x] T-PILOT-138-FOCUSED-VERIFY — DONE: real PG quote/expiry/race/rollback/foreign
+  cases and actual browser12-case suite PASS; full H2/architecture/frontend PASS.
+- [ ] T-PILOT-138-HOSTED — exact published source/integration CI belongs to PR38;
+  complete that checkpoint before declaring integration ready.
+
+Canonical full-spec/public/contract administration tasks remain open; no commercial
+coverage, Merchant tariff or operational acceptance is implied by pilot completion.
+
 NOT_STARTED; thứ tự là contract/fixture → DB → BE/HTTP → UI/channel → verification → full acceptance. Mỗi BC là gói end-to-end nội bộ, không thay phương pháp Spec-by-Spec. Không task nào DONE trong rebuild docs.
 
 ## REQ-V3-BC-002 / BC-002: Ước tính cước vận chuyển

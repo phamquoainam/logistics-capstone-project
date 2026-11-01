@@ -1,7 +1,7 @@
 # Personal shipping preparation — bounded implementation contract
 
 Authority: Owner shipping directive and subsequent pilot decision, 2026-11-01.
-Implementation of independent drafts is authorized; policy activation is not.
+Initial preparation checkpoint; subsequently the Owner approved the bounded Local/Test pilot in [BR13-LOCAL-PILOT-01](../decisions/br13-local-pilot-01.md). The separate [pilot booking contract](personal-pilot-booking-contract.md) governs Quote/Booking; draft syntax itself remains preparation.
 Maps REQ-AB-SHIPPING-FACTS, BC139/140/160/181 and BR01/02/12/19, specs006/007.
 
 Orders owns one shared shipping preparation aggregate. PERSONAL ownership is
@@ -27,8 +27,9 @@ addressLine}}`, required parcels1..5 with `{description,quantity,weightGrams,
 lengthMm,widthMm,heightMm,declaredValueVnd}`. Contacts are unverified, phone0/+84
 canonicalized, name/description<=160, area/locality<=160,line<=500. Quantity1..1e6,
 weightGrams1..1e9, dimensionsMm1..1e6, valueVnd0..1e12 are integer serialization/
-storage safety bounds, **not accepted service limits**. Commercial20kg/100cm/girth
-and supported commodities remain candidate service rules pending activation.
+storage safety bounds, **not accepted service limits**. Approved commercial-style20kg/100cm/girth simulation limits and ordinary-goods
+attestation are enforced at the separate pilot quote/booking boundary; draft syntax
+alone still does not confer eligibility.
 No floating-point monetary data. No COD field/service/pickup/quote in draft input.
 Passing draft validation does not confirm restricted goods or service eligibility.
 

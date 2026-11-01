@@ -1,5 +1,22 @@
 # Traceability Matrix (living document)
 
+## ArgoPost approved Personal pilot quote/booking — 2026-11-02
+
+Final Owner coverage/BR13 approval supersedes the earlier draft-only checkpoint.
+See [current tasks/evidence](../implementation/shipping-personal-v1.md),
+[pilot contract](../implementation/personal-pilot-booking-contract.md) and
+[bounded BR13 amendment](../decisions/br13-local-pilot-01.md).
+
+| Scope | Observed scoped disposition |
+| --- | --- |
+| BC138 / BR10–12 quote subset | DONE / VERIFIED_LOCAL: actual DB versioned ROAD_STANDARD quote, exact per-parcel integer price/limits/TTL15m, approved4 synthetic directed routes only; receipt/replay, invalid/foreign/stale/expired denial |
+| BC139/140/160/181 booking/management subset | DONE / VERIFIED_LOCAL: actual immutable own Shipment/Parcel/address/quote snapshots, filter-before-paging/search/detail and source-driven pending-handover presentation |
+| BR13-LOCAL-PILOT-01 / BR01/02/19 | Atomic booking consumes one quote, converts one owned draft, appends audit/receipt and immutable UNPAID obligation. No PAID, collection, COD or Carrier event; PG race/fault/revoke/foreign tests preserve isolation |
+| Data / ownership | V20 forward only; approved immutable master rows, quote price constraints, Parcel count/measurement checks and narrow runtime privileges. V1–V19 unchanged; no client authority/price or inferred real coverage |
+| Local focused / frontend | Backend41 PASS including actual HTTPS/PG18/test-SMTP browser12/12; H2654 PASS/17 skips. Frontend51 unit/33 UI and affected2 UI after alignment PASS; typecheck/lint/builds; report-policy130/130; OpenAPI/source validators PASS |
+| Full local regression / data | PG1040 PASS/5 policy skips; actual browser12/12 PASS, report guard/privacy/owned cleanup PASS. Official local V20 migrate/HTTPS readiness PASS; Identity/profile/PW03/PW04 aggregate fingerprints and V1–V19 checksums unchanged; trusted HTTPS guest8 routes/7 APIs denied |
+| Integration evidence / limits | Exact published source/integration hosted CI follows in PR38 metadata. No merge or Full Personal/Spec/operational acceptance inferred; Carrier/Finance Collection/Support remain BLOCKED |
+
 ## ArgoPost shared shipping preparation — Owner directive, 2026-11-01
 
 Baseline develop fecd646 (PR37 manually merged). [Tracker and evidence](../implementation/shipping-personal-v1.md), [draft contract](../implementation/personal-shipping-drafts-contract.md), [activation decision packet](../decisions/shipping-policy-v1-owner-packet.md).
