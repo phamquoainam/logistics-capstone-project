@@ -82,7 +82,7 @@ TLS bypass. Gmail delivery and S3 were not retested for this shipping-only scope
 Owner local path: sign in at https://127.0.0.1:5173/login, prepare a draft at
 /personal/create, open its detail to select an approved synthetic route, declare
 ordinary goods, request quote and confirm. Actual records appear at
-/personal/shipments; drafts remain at /personal/shipments?tab=drafts. Every booked
+/personal/shipments; drafts use the same route with query parameter tab=drafts. Every booked
 record stays UNPAID/NOT_ACCEPTED and only shows simulated drop-off information.
 
 ## Historical PW04 execution tasks — prior draft-only checkpoint
