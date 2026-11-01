@@ -1,5 +1,16 @@
 # Tasks 006 — order-shipment-parcel-contract
 
+## Owner-directed preparation subset — 2026-11-01
+
+- [x] **SHIP-DRAFT-CONTRACT** — DONE: [bounded contract](../../docs/implementation/personal-shipping-drafts-contract.md), personal self scope, no quote/booking/operational transition.
+- [x] **SHIP-DRAFT-BE-PG** — DONE / VERIFIED_LOCAL: shared Orders preparation/V19, multi-parcel snapshots, source/history/audit/receipt, ETag/idempotency and current authority via workflow.
+- [x] **SHIP-DRAFT-UI** — DONE / VERIFIED_LOCAL: real PW03 contact selection, create/resume/list/detail/edit/archive, unknown-write recovery and honest8 detail sections.
+- [x] **SHIP-DRAFT-VERIFY** — DONE locally: PG1026/H2652, browser11, UI31/unit47 and report-policy130 PASS; [exact evidence and limits](../../docs/implementation/shipping-personal-v1.md). Hosted revision evidence follows in PR metadata.
+
+This delivers preparation only. Canonical state/quote/Carrier/Finance obligations below remain unaccepted; no Full Spec006 or Personal acceptance.
+
+## Historical canonical planning tasks
+
 NOT_STARTED; thứ tự là contract/fixture → DB → BE/HTTP → UI/channel → verification → full acceptance. Mỗi BC là gói end-to-end nội bộ, không thay phương pháp Spec-by-Spec. Không task nào DONE trong rebuild docs.
 
 ## REQ-V3-BC-034 / BC-034: Giám sát Shipment và ngoại lệ

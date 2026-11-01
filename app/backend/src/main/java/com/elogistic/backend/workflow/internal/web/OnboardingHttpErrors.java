@@ -11,6 +11,11 @@ import org.springframework.web.bind.annotation.*;
 
 @RestControllerAdvice(basePackages="com.elogistic.backend.workflow.internal.web") @Profile("customer")
 public final class OnboardingHttpErrors {
+    @ExceptionHandler(com.elogistic.backend.orders.api.ShippingDraftFailure.class)
+    ResponseEntity<Map<String,String>> shippingDraft(com.elogistic.backend.orders.api.ShippingDraftFailure failure,HttpServletResponse response){
+        int status=switch(failure.code()){case VALIDATION_FAILED->400;case RESOURCE_NOT_FOUND->404;case PRECONDITION_STALE,IDEMPOTENCY_CONFLICT->409;};
+        return rejected(response,status,failure.code().name());
+    }
     private ResponseEntity<Map<String,String>> rejected(HttpServletResponse response,int status,String code){
         String request=response.getHeader("X-Request-Id");if(request==null)request=UUID.randomUUID().toString();
         return ResponseEntity.status(status).header("Cache-Control","no-store").body(Map.of("code",code,"message","Request rejected.","requestId",request));

@@ -7,6 +7,7 @@ import { clearEntryProof, getOtpChallenge, getVerificationLocator, hasEntryProof
 import PublicWebsite, { PublicHeader } from './PublicWebsite';
 import { WorkspaceShell, WorkspaceDashboard, WorkspaceModule, WorkspaceSecurity, workspaceModules } from './WorkspaceShell';
 import AddressBook from './AddressBook';
+import { ShippingDraftEditor, ShippingDraftList, ShippingDraftDetail } from './ShippingDrafts';
 import './customer.css';
 
 function message(error: unknown): string {
@@ -251,7 +252,9 @@ export default function CustomerApp() {
       <Route path="/personal/profile" element={<ProfilePage />} /><Route path="/personal/security" element={<WorkspaceSecurity subject={session.subject} />} />
       <Route path="/personal/applications" element={<ApplicationList />} /><Route path="/personal/applications/:id" element={<ApplicationDetail />} />
       <Route path="/personal/addresses" element={<AddressBook />} />
-      {workspaceModules.filter(item => item.path !== 'addresses').map(item => <Route key={item.path} path={'/personal/' + item.path} element={<WorkspaceModule name={item.path} />} />)}
+      <Route path="/personal/create" element={<ShippingDraftEditor key={location.search} />} />
+      <Route path="/personal/shipments" element={<ShippingDraftList />} /><Route path="/personal/shipments/:id" element={<ShippingDraftDetail key={location.pathname} />} />
+      {workspaceModules.filter(item => !['addresses', 'create', 'shipments'].includes(item.path)).map(item => <Route key={item.path} path={'/personal/' + item.path} element={<WorkspaceModule name={item.path} />} />)}
       <Route path="/merchant/*" element={<MerchantEntry />} />
       <Route path="*" element={<Page title="Không tìm thấy trang"><Link to="/personal">Về tổng quan cá nhân</Link></Page>} />
     </Routes></WorkspaceShell></div>;

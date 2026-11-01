@@ -40,7 +40,7 @@ class IdentityGrantApplicationTests {
 
     @BeforeEach void fixture() throws Exception {
         db = PostgresTestcontainersSupport.database(POSTGRES);
-        assertEquals(18, db.flyway("latest", SCOPE).migrate().migrationsExecuted);
+        assertEquals(19, db.flyway("latest", SCOPE).migrate().migrationsExecuted);
         account(A, "ACTIVE", List.of(ADMIN)); account(B, "ACTIVE", List.of(ADMIN)); account(T, "ACTIVE", List.of(GX));
         session(S, A); session(AS, B); session(TS, T);
         execute("INSERT INTO identity.refresh_token(id,session_id,token_hash,issued_at,expires_at) VALUES ('" + id(20) + "','" + TS + "',decode(repeat('01',32),'hex'),TIMESTAMPTZ '2026-10-21 00:00:00Z',TIMESTAMPTZ '2026-10-21 08:00:00Z')");
@@ -1863,7 +1863,7 @@ class IdentityGrantApplicationTests {
         if(profile){
             context.getEnvironment().getPropertySources().addFirst(new org.springframework.core.env.MapPropertySource("isolated-profile-keys",Map.of("merchant.customer-profile.receipt-keys","{\"v1\":\""+Base64.getEncoder().encodeToString(keyBytes(76))+"\"}","merchant.customer-profile.current-receipt-key","v1")));
             context.addBeanFactoryPostProcessor(factory->{factory.registerSingleton("customerAdmission",services.customers());factory.registerSingleton("customerRequestContext",services.requests());});
-            context.register(com.elogistic.backend.merchant.internal.CustomerProfileConfiguration.class,com.elogistic.backend.workflow.internal.web.CustomerProfileHttp.class,com.elogistic.backend.workflow.internal.web.PersonalAddressHttp.class,com.elogistic.backend.workflow.internal.web.MerchantApplicationHttp.class,com.elogistic.backend.workflow.internal.web.OnboardingHttpErrors.class);
+            context.register(com.elogistic.backend.orders.internal.ShippingDraftConfiguration.class,com.elogistic.backend.workflow.internal.web.ShippingDraftHttp.class,com.elogistic.backend.merchant.internal.CustomerProfileConfiguration.class,com.elogistic.backend.workflow.internal.web.CustomerProfileHttp.class,com.elogistic.backend.workflow.internal.web.PersonalAddressHttp.class,com.elogistic.backend.workflow.internal.web.MerchantApplicationHttp.class,com.elogistic.backend.workflow.internal.web.OnboardingHttpErrors.class);
         }
         try{context.refresh();return context;}catch(Exception failure){context.close();throw failure;}
     }
@@ -2137,7 +2137,7 @@ class IdentityGrantApplicationTests {
 
     @Test void customerEntryBrowserUsesActualHttpsPostgresAndSmtp()throws Exception{
         long accounts=scalar("SELECT count(*) FROM identity.user_account");var before=snapshot();S003CustomerBrowserRuntime.run(outboxDataSource());
-        assertEquals(1,scalar("SELECT count(*) FROM merchant.customer_address WHERE archived_at IS NOT NULL AND NOT is_default AND version=3"));assertEquals(3,scalar("SELECT count(*) FROM merchant.customer_address_version"));assertEquals(3,scalar("SELECT count(*) FROM merchant.command_receipt WHERE target_type='CUSTOMER_ADDRESS'"));
+        assertEquals(1,scalar("SELECT count(*) FROM merchant.customer_address WHERE archived_at IS NOT NULL AND NOT is_default AND version=3"));assertEquals(4,scalar("SELECT count(*) FROM merchant.customer_address_version"));assertEquals(4,scalar("SELECT count(*) FROM merchant.command_receipt WHERE target_type='CUSTOMER_ADDRESS'"));
         assertEquals(accounts+1,scalar("SELECT count(*) FROM identity.user_account"));assertEquals(1,scalar("SELECT count(*) FROM identity.user_account WHERE email='"+S003CustomerBrowserRuntime.EMAIL+"' AND status='ACTIVE' AND email_verified AND auth_version=2 AND version=2"));
         assertEquals(1,scalar("SELECT count(*) FROM identity.customer_identifier WHERE exact_email='"+S003CustomerBrowserRuntime.EMAIL+"' AND status='ACTIVE'"));assertEquals(0,scalar("SELECT count(*) FROM identity.account_grant WHERE account_id IN (SELECT id FROM identity.user_account WHERE email='"+S003CustomerBrowserRuntime.EMAIL+"')"));
         assertEquals(1,scalar("SELECT count(*) FROM merchant.customer_profile WHERE version=2"));assertEquals(1,scalar("SELECT count(*) FROM merchant.customer_profile_version"));
@@ -2365,4 +2365,63 @@ class IdentityGrantApplicationTests {
         }
     }
 
+
+    private static final String DRAFT_PATH="/api/v1/customer/shipment-drafts";
+    private Map<String,Object> shippingDraftInput(String reference){
+        var location=Map.of("country","VN","administrativeArea","Synthetic Area","locality","Synthetic Locality","addressLine","Synthetic preparation only");
+        var contact=Map.of("name","Synthetic Contact","phone","0901234567","address",location);
+        return Map.of("reference",reference,"sender",contact,"recipient",contact,"parcels",List.of(Map.of("description","Synthetic Box","quantity",1,"weightGrams",501,"lengthMm",100,"widthMm",100,"heightMm",100,"declaredValueVnd",0)));
+    }
+    @Test void shippingDraftCrudPersistsPreparationWithoutBookingOrPayment()throws Exception{
+        customerFixture(false);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW),true)){
+            var mvc=httpMvc(context);var browser=profileBrowser(mvc);var first=onboardingWrite(mvc,browser,"POST",DRAFT_PATH,KEY,null,shippingDraftInput("Draft-A"));assertEquals(201,first.getStatus());String target=responseId(first,"id");assertEquals("\"v1\"",first.getHeader("ETag"));assertTrue(first.getContentAsString().contains("+84901234567"));
+            var stored=httpRead(mvc,DRAFT_PATH+"/"+target,browser.access());assertEquals(200,stored.getStatus());assertTrue(stored.getContentAsString().contains("Draft-A"));
+            assertEquals(200,onboardingWrite(mvc,browser,"PUT",DRAFT_PATH+"/"+target,id(1201),"\"v1\"",shippingDraftInput("Draft-B")).getStatus());
+            assertEquals(2,scalar("SELECT count(*) FROM orders.shipping_draft_version"));assertEquals(2,scalar("SELECT count(*) FROM orders.shipping_draft_audit"));assertEquals(2,scalar("SELECT count(*) FROM orders.shipping_draft_receipt"));assertEquals(1,scalar("SELECT count(*) FROM orders.shipping_draft WHERE state='DRAFT' AND owner_type='PERSONAL'"));
+            assertEquals(204,onboardingWrite(mvc,browser,"POST",DRAFT_PATH+"/"+target+"/archive",id(1202),"\"v2\"","").getStatus());assertEquals(404,httpRead(mvc,DRAFT_PATH+"/"+target,browser.access()).getStatus());assertFalse(httpRead(mvc,DRAFT_PATH,browser.access()).getContentAsString().contains(target));assertEquals(3,scalar("SELECT count(*) FROM orders.shipping_draft_version"));
+        }
+    }
+    @Test void shippingDraftIsolatesForeignReadsWritesSearchAndReceipts()throws Exception{
+        customerFixture(true);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW),true)){
+            var mvc=httpMvc(context);var owner=profileBrowser(mvc);String target=responseId(onboardingWrite(mvc,owner,"POST",DRAFT_PATH,KEY,null,shippingDraftInput("ForeignSecret")),"id");var other=addressOtherBrowser(mvc);
+            assertEquals(404,httpRead(mvc,DRAFT_PATH+"/"+target,other.access()).getStatus());assertFalse(httpRead(mvc,DRAFT_PATH+"?search=ForeignSecret",other.access()).getContentAsString().contains(target));assertEquals(404,httpRead(mvc,"/api/v1/customer/shipment-draft-receipts/createShippingDraft/"+KEY,other.access()).getStatus());
+            assertEquals(404,onboardingWrite(mvc,other,"PUT",DRAFT_PATH+"/"+target,UUID.randomUUID(),"\"v1\"",shippingDraftInput("Attack")).getStatus());assertEquals(404,onboardingWrite(mvc,other,"POST",DRAFT_PATH+"/"+target+"/archive",UUID.randomUUID(),"\"v1\"","").getStatus());assertEquals(1,scalar("SELECT count(*) FROM orders.shipping_draft_version"));
+        }
+    }
+    @Test void shippingDraftConcurrentSameKeyReplaysAndConflictingInputIsRejected()throws Exception{
+        customerFixture(false);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW),true)){
+            var mvc=httpMvc(context);var browser=profileBrowser(mvc);var input=shippingDraftInput("One");var results=adminRace(()->onboardingWrite(mvc,browser,"POST",DRAFT_PATH,KEY,null,input).getContentAsString(),()->onboardingWrite(mvc,browser,"POST",DRAFT_PATH,KEY,null,input).getContentAsString());assertEquals(results.getFirst(),results.getLast());assertEquals(1,scalar("SELECT count(*) FROM orders.shipping_draft"));assertEquals(1,scalar("SELECT count(*) FROM orders.shipping_draft_receipt"));assertEquals(409,onboardingWrite(mvc,browser,"POST",DRAFT_PATH,KEY,null,shippingDraftInput("Different")).getStatus());assertEquals(200,httpRead(mvc,"/api/v1/customer/shipment-draft-receipts/createShippingDraft/"+KEY,browser.access()).getStatus());
+        }
+    }
+    @Test void shippingDraftConcurrentUpdateArchiveHaveOneWinner()throws Exception{
+        customerFixture(false);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW),true)){
+            var mvc=httpMvc(context);var browser=profileBrowser(mvc);String target=responseId(onboardingWrite(mvc,browser,"POST",DRAFT_PATH,KEY,null,shippingDraftInput("Race")),"id");var results=adminRace(()->onboardingWrite(mvc,browser,"PUT",DRAFT_PATH+"/"+target,id(1203),"\"v1\"",shippingDraftInput("Update")).getStatus(),()->onboardingWrite(mvc,browser,"POST",DRAFT_PATH+"/"+target+"/archive",id(1204),"\"v1\"","").getStatus());assertEquals(1,results.stream().filter(v->Integer.valueOf(200).equals(v)||Integer.valueOf(204).equals(v)).count());assertEquals(1,results.stream().filter(v->Integer.valueOf(404).equals(v)||Integer.valueOf(409).equals(v)).count());assertEquals(2,scalar("SELECT count(*) FROM orders.shipping_draft_version"));
+        }
+    }
+    @Test void shippingDraftMandatoryAuditReceiptFailuresRollBackAllChanges()throws Exception{
+        customerFixture(false);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW),true)){
+            var mvc=httpMvc(context);var browser=profileBrowser(mvc);for(String table:List.of("shipping_draft_audit","shipping_draft_receipt")){
+                db.ownerExecute("CREATE FUNCTION orders.synthetic_draft_fault() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'SYNTHETIC_DRAFT_EVIDENCE'; END $$");db.ownerExecute("CREATE TRIGGER synthetic_draft_fault BEFORE INSERT ON orders."+table+" FOR EACH ROW EXECUTE FUNCTION orders.synthetic_draft_fault()");var result=onboardingWrite(mvc,browser,"POST",DRAFT_PATH,UUID.randomUUID(),null,shippingDraftInput("Rollback"));assertEquals(503,result.getStatus());assertFalse(result.getContentAsString().contains("SYNTHETIC_DRAFT"));assertEquals(0,scalar("SELECT count(*) FROM orders.shipping_draft"));assertEquals(0,scalar("SELECT count(*) FROM orders.shipping_draft_version"));db.ownerExecute("DROP TRIGGER synthetic_draft_fault ON orders."+table);db.ownerExecute("DROP FUNCTION orders.synthetic_draft_fault()");
+            }
+        }
+    }
+    @Test void shippingDraftRejectsInjectedAuthorityInvalidMeasuresAndStaleVersions()throws Exception{
+        customerFixture(false);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW),true)){
+            var mvc=httpMvc(context);var browser=profileBrowser(mvc);var bad=new HashMap<String,Object>(shippingDraftInput("Invalid"));for(String field:List.of("accountId","merchantId","role","state","price","paymentStatus","cod")){bad.put(field,"ATTACK");assertEquals(400,onboardingWrite(mvc,browser,"POST",DRAFT_PATH,UUID.randomUUID(),null,bad).getStatus());bad.remove(field);}
+            bad.put("parcels",List.of(Map.of("description","Bad","quantity",1,"weightGrams",0,"lengthMm",1,"widthMm",1,"heightMm",1,"declaredValueVnd",0)));assertEquals(400,onboardingWrite(mvc,browser,"POST",DRAFT_PATH,UUID.randomUUID(),null,bad).getStatus());String target=responseId(onboardingWrite(mvc,browser,"POST",DRAFT_PATH,KEY,null,shippingDraftInput("Version")),"id");assertEquals(428,onboardingWrite(mvc,browser,"PUT",DRAFT_PATH+"/"+target,UUID.randomUUID(),null,shippingDraftInput("Missing version")).getStatus());assertEquals(409,onboardingWrite(mvc,browser,"PUT",DRAFT_PATH+"/"+target,UUID.randomUUID(),"\"v2\"",shippingDraftInput("Stale")).getStatus());assertEquals(1,scalar("SELECT count(*) FROM orders.shipping_draft_version"));
+        }
+    }
+    @Test void shippingDraftRevokedSessionAndPolicyGateCannotBeBypassed()throws Exception{
+        customerFixture(false);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW),true)){
+            var mvc=httpMvc(context);var browser=profileBrowser(mvc);String target=responseId(onboardingWrite(mvc,browser,"POST",DRAFT_PATH,KEY,null,shippingDraftInput("Own")),"id");var available=httpRead(mvc,"/api/v1/customer/shipping-availability",browser.access());assertEquals(200,available.getStatus());assertTrue(available.getContentAsString().contains("\"bookingEnabled\":false"));assertTrue(available.getContentAsString().contains("\"quoteEnabled\":false"));
+            for(String action:List.of("confirm","quote","paid","delivered"))assertEquals(404,onboardingWrite(mvc,browser,"POST",DRAFT_PATH+"/"+target+"/"+action,UUID.randomUUID(),"\"v1\"","").getStatus());execute("UPDATE identity.customer_auth_session SET revoked_at=created_at WHERE account_id='"+A+"'");assertEquals(401,httpRead(mvc,DRAFT_PATH,browser.access()).getStatus());assertEquals(401,httpRead(mvc,"/api/v1/customer/shipment-draft-receipts/createShippingDraft/"+KEY,browser.access()).getStatus());assertEquals(401,onboardingWrite(mvc,browser,"POST",DRAFT_PATH,KEY,null,shippingDraftInput("Own")).getStatus());
+        }
+    }
+    @Test void shippingDraftDatabaseAndRuntimeCannotBypassSnapshotOwnerHistory()throws Exception{
+        customerFixture(false);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW),true)){
+            var mvc=httpMvc(context);var browser=profileBrowser(mvc);String target=responseId(onboardingWrite(mvc,browser,"POST",DRAFT_PATH,KEY,null,shippingDraftInput("Guard")),"id");
+            assertThrows(SQLException.class,()->execute("UPDATE orders.shipping_draft SET owner_id='"+B+"',version=2 WHERE id='"+target+"'"));assertThrows(SQLException.class,()->execute("UPDATE orders.shipping_draft_version SET payload='{}'::jsonb WHERE id='"+target+"'"));assertThrows(SQLException.class,()->execute("DELETE FROM orders.shipping_draft WHERE id='"+target+"'"));assertEquals(0,scalar("SELECT count(*) FROM orders.shipping_draft_version WHERE orders.valid_shipping_preparation('{}'::jsonb)"));assertEquals(1,scalar("SELECT count(*) FROM orders.shipping_draft_version"));
+            var store=new com.elogistic.backend.orders.internal.infrastructure.JdbcShippingDraftStore(outboxDataSource());assertThrows(IllegalStateException.class,()->store.find(A,UUID.fromString(target)));
+        }
+    }
 }

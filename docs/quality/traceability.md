@@ -1,5 +1,19 @@
 # Traceability Matrix (living document)
 
+## ArgoPost shared shipping preparation — Owner directive, 2026-11-01
+
+Baseline develop fecd646 (PR37 manually merged). [Tracker and evidence](../implementation/shipping-personal-v1.md), [draft contract](../implementation/personal-shipping-drafts-contract.md), [activation decision packet](../decisions/shipping-policy-v1-owner-packet.md).
+
+| Scope | Observed disposition |
+| --- | --- |
+| REQ-AB-SHIPPING-FACTS / BC139/140/160/181 preparation subset | DONE / VERIFIED_LOCAL: shared Orders draft create/resume/list/detail/edit/archive; PW03 snapshots and1..5 parcel facts; no booking, carrier, money or credential authority |
+| BR01/02/12/19, ownership/PII | V19 only, current/history FK and immutable scope/state/version; owner-scoped HMAC receipts/audit atomic, rollback/race/revoke/foreign negatives; no client owner, event or price fields |
+| Regression | H2652 PASS/17 policy skips; PG1026 PASS/5 skips; Architecture23 included. Privacy/report guard/cleanup PASS; original DB volume preserved |
+| Browser/frontend | Actual HTTPS/PG18/test-SMTP11/11 PASS/CLEANUP; real unknown POST receipt recovery plus PW03 reuse. Frontend47 units/31 UI/typecheck/lint/builds/OpenAPI/source validator PASS |
+| Local data | Official V19 migration/HTTPS readiness PASS; existing Identity/profile/application/PW03 current/history fingerprints and prior Flyway checksums unchanged; no test Customer data inserted into dev |
+| Pricing candidate | Exact integer dimensional/per-parcel base-fee golden tests only. No activated service, quote, tax/fee treatment or real region inference |
+| Acceptance boundary | Personal PARTIAL, not Full Feature Ready. Coverage/Quote/Booking/Carrier/Payment/Labels/Support require the packet's explicit approved data/policy/authority; BR13 unchanged. Source checkpoint pre-publication; exact hosted SHA/CI follows in PR metadata |
+
 ## ArgoPost Personal Address Book — BC136, 2026-11-01
 
 Owner approved exact [contract](../implementation/personal-address-book-contract.md)

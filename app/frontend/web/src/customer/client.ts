@@ -14,6 +14,12 @@ export type PersonalAddress = AddressInput & { id: string; accountId: string; ve
 export type AddressPage = { items: PersonalAddress[]; page: number; size: number; hasNext: boolean };
 export type VersionedAddress = { address: PersonalAddress; etag: string };
 export type AddressOperation = 'createPersonalAddress' | 'updatePersonalAddress' | 'archivePersonalAddress';
+export type DraftContact = { name: string; phone: string; address: ApplicationAddress };
+export type DraftParcel = { description: string; quantity: number; weightGrams: number; lengthMm: number; widthMm: number; heightMm: number; declaredValueVnd: number };
+export type ShippingDraftInput = { reference?: string | null; instructions?: string | null; sender: DraftContact; recipient: DraftContact; parcels: DraftParcel[] };
+export type ShippingDraft = { id: string; accountId: string; ownerType: 'PERSONAL'; state: 'DRAFT'; input: ShippingDraftInput; version: number; createdAt: string; updatedAt: string };
+export type ShippingDraftPage = { items: ShippingDraft[]; page: number; size: number; hasNext: boolean };
+export type DraftOperation = 'createShippingDraft' | 'updateShippingDraft' | 'archiveShippingDraft';
 export type SessionState = Readonly<{ status: 'loading' | 'guest' | 'authenticated'; subject: Subject | null; error: string | null }>;
 type Access = { accessToken: string; expiresAt: string; accountId: string };
 type Lock = <T>(work: () => Promise<T>) => Promise<T>;
@@ -139,6 +145,24 @@ export function createCustomerClient(ports: Ports = { fetch: (...args) => fetch(
     if (typeof value.createdAt !== 'string' || !Number.isFinite(Date.parse(value.createdAt)) || typeof value.updatedAt !== 'string' || !Number.isFinite(Date.parse(value.updatedAt)) || Date.parse(value.updatedAt) < Date.parse(value.createdAt)) malformed();
     return value as PersonalAddress;
   }
+  function shippingInput(value: unknown): value is ShippingDraftInput {
+    if (!record(value) || !exact(value, ['sender', 'recipient', 'parcels'], ['reference', 'instructions'])) return false;
+    if (value.reference != null && !characters(value.reference, 80) || value.instructions != null && !characters(value.instructions, 1000)) return false;
+    for (const k of ['sender', 'recipient']) { const c = value[k]; if (!record(c) || !exact(c, ['name', 'phone', 'address']) || !characters(c.name, 160) || typeof c.phone !== 'string' || !/^\+84[35789][0-9]{8}$/.test(c.phone) || !record(c.address) || !exact(c.address, ['country', 'administrativeArea', 'locality', 'addressLine']) || c.address.country !== 'VN' || !characters(c.address.administrativeArea, 160) || !characters(c.address.locality, 160) || !characters(c.address.addressLine, 500)) return false; }
+    return Array.isArray(value.parcels) && value.parcels.length >= 1 && value.parcels.length <= 5 && value.parcels.every(p => record(p) && exact(p, ['description', 'quantity', 'weightGrams', 'lengthMm', 'widthMm', 'heightMm', 'declaredValueVnd']) && characters(p.description, 160) && ['quantity', 'weightGrams', 'lengthMm', 'widthMm', 'heightMm', 'declaredValueVnd'].every(k => Number.isSafeInteger(p[k]) && (p[k] as number) >= (k === 'declaredValueVnd' ? 0 : 1) && (p[k] as number) <= (k === 'declaredValueVnd' ? 1e12 : k === 'weightGrams' ? 1e9 : 1e6)));
+  }
+  function shippingDraft(value: unknown): ShippingDraft {
+    if (!record(value) || !exact(value, ['id', 'accountId', 'ownerType', 'state', 'input', 'version', 'createdAt', 'updatedAt']) || typeof value.id !== 'string' || !uuid.test(value.id) || value.accountId !== state.subject?.accountId || value.ownerType !== 'PERSONAL' || value.state !== 'DRAFT' || !version(value.version) || !shippingInput(value.input) || typeof value.createdAt !== 'string' || typeof value.updatedAt !== 'string' || !Number.isFinite(Date.parse(value.createdAt)) || !Number.isFinite(Date.parse(value.updatedAt)) || Date.parse(value.updatedAt) < Date.parse(value.createdAt)) malformed();
+    return value as ShippingDraft;
+  }
+  async function draftWrite(path: string, method: 'POST' | 'PUT', input: ShippingDraftInput | undefined, key: string, etag?: string, archive = false): Promise<ShippingDraft | undefined> {
+    if (!uuid.test(key) || etag !== undefined && !/^"v[1-9][0-9]*"$/.test(etag)) throw new CustomerApiError('VALIDATION_FAILED');
+    await ensureAccess(); const current = generation, challenge = await csrf();
+    const { value, response } = await request('customer/shipment-drafts' + path, method, input === undefined ? undefined : JSON.stringify(input), { Authorization: 'Bearer ' + access!.accessToken, 'X-CSRF-Token': challenge, 'Idempotency-Key': key, ...(etag ? { 'If-Match': etag } : {}) });
+    if (current !== generation) throw new CustomerApiError('SESSION_CHANGED');
+    if (archive) { if (response.status !== 204) throw unknown(); return; }
+    try { const result = shippingDraft(value); if (response.headers.get('ETag') !== '"v' + result.version + '"' || path && result.id !== path.slice(1)) malformed(); return result; } catch { throw unknown(); }
+  }
   function addressResponse(value: unknown, response: Response, id?: string): VersionedAddress {
     const address = personalAddress(value), etag = response.headers.get('ETag');
     if (etag !== '"v' + address.version + '"' || id !== undefined && address.id !== id) malformed();
@@ -244,6 +268,27 @@ export function createCustomerClient(ports: Ports = { fetch: (...args) => fetch(
       const { value } = await request('onboarding-receipts/' + operation + '/' + key, 'GET', undefined, { Authorization: 'Bearer ' + access!.accessToken });
       if (current !== generation) throw new CustomerApiError('SESSION_CHANGED');
       if (!record(value) || !exact(value, ['operationId', 'targetId', 'outcome', 'version']) || value.operationId !== operation || typeof value.targetId !== 'string' || !uuid.test(value.targetId) || value.outcome !== 'COMMITTED' || !version(value.version)) malformed(); return { targetId: value.targetId, version: value.version };
+    }),
+    listShippingDrafts: (page = 0, search = '') => ports.lock(async (): Promise<ShippingDraftPage> => {
+      if (!Number.isSafeInteger(page) || page < 0 || search.length > 160) throw new CustomerApiError('VALIDATION_FAILED');
+      await ensureAccess(); const current = generation, query = new URLSearchParams({ page: String(page), size: '20', ...(search ? { search } : {}) });
+      const { value } = await request('customer/shipment-drafts?' + query, 'GET', undefined, { Authorization: 'Bearer ' + access!.accessToken }, 4 * 1024 * 1024);
+      if (current !== generation) throw new CustomerApiError('SESSION_CHANGED');
+      if (!record(value) || !exact(value, ['items', 'page', 'size', 'hasNext']) || !Array.isArray(value.items) || value.items.length > 20 || value.page !== page || value.size !== 20 || typeof value.hasNext !== 'boolean') malformed();
+      return { items: value.items.map(shippingDraft), page, size: 20, hasNext: value.hasNext };
+    }),
+    readShippingDraft: (id: string) => ports.lock(async () => {
+      if (!uuid.test(id)) throw new CustomerApiError('VALIDATION_FAILED'); await ensureAccess(); const current = generation;
+      const { value, response } = await request('customer/shipment-drafts/' + id, 'GET', undefined, { Authorization: 'Bearer ' + access!.accessToken });
+      if (current !== generation) throw new CustomerApiError('SESSION_CHANGED'); const d = shippingDraft(value); if (d.id !== id || response.headers.get('ETag') !== '"v' + d.version + '"') malformed(); return d;
+    }),
+    createShippingDraft: (input: ShippingDraftInput, key: string) => ports.lock(() => draftWrite('', 'POST', input, key)),
+    updateShippingDraft: (id: string, input: ShippingDraftInput, etag: string, key: string) => ports.lock(() => { if (!uuid.test(id)) throw new CustomerApiError('VALIDATION_FAILED'); return draftWrite('/' + id, 'PUT', input, key, etag); }),
+    archiveShippingDraft: (id: string, etag: string, key: string) => ports.lock(() => { if (!uuid.test(id)) throw new CustomerApiError('VALIDATION_FAILED'); return draftWrite('/' + id + '/archive', 'POST', undefined, key, etag, true); }),
+    shippingDraftReceipt: (operation: DraftOperation, key: string) => ports.lock(async () => {
+      if (!uuid.test(key) || !['createShippingDraft', 'updateShippingDraft', 'archiveShippingDraft'].includes(operation)) throw new CustomerApiError('VALIDATION_FAILED'); await ensureAccess(); const current = generation;
+      const { value } = await request('customer/shipment-draft-receipts/' + operation + '/' + key, 'GET', undefined, { Authorization: 'Bearer ' + access!.accessToken });
+      if (current !== generation) throw new CustomerApiError('SESSION_CHANGED'); if (!record(value) || !exact(value, ['operationId', 'targetId', 'outcome', 'version']) || value.operationId !== operation || typeof value.targetId !== 'string' || !uuid.test(value.targetId) || value.outcome !== 'COMMITTED' || !version(value.version)) malformed(); return { targetId: value.targetId, version: value.version };
     }),
     listAddresses: (page = 0, search = '', kind = '') => ports.lock(async (): Promise<AddressPage> => {
       if (!Number.isSafeInteger(page) || page < 0 || search.length > 160 || kind && !['SENDER', 'RECIPIENT'].includes(kind)) throw new CustomerApiError('VALIDATION_FAILED');

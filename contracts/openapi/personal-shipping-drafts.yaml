@@ -1,0 +1,1049 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Personal shipping preparation",
+    "version": "1.0.0",
+    "description": "Owner-authorized preparation only. Quote/booking/payment/carrier capabilities remain disabled. Contacts remain unverified."
+  },
+  "servers": [
+    {
+      "url": "https://127.0.0.1:8443"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Shipping preparation",
+      "description": "Current CustomerAdmission personal ownership; no carrier acceptance or financial authority."
+    }
+  ],
+  "security": [
+    {
+      "customerBearer": []
+    }
+  ],
+  "paths": {
+    "/api/v1/customer/shipment-drafts": {
+      "get": {
+        "tags": [
+          "Shipping preparation"
+        ],
+        "operationId": "listShippingDrafts",
+        "summary": "List current personal drafts",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid preparation input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Current customer session required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found in current personal scope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Version/idempotency conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Required source unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "const": 20
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 160
+            }
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Shipping preparation"
+        ],
+        "operationId": "createShippingDraft",
+        "summary": "Save preparation, without booking",
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Draft"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "description": "Current quoted version vN",
+                "schema": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 40
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid preparation input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Current customer session required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found in current personal scope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Version/idempotency conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Required source unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Input"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/customer/shipment-drafts/{id}": {
+      "get": {
+        "tags": [
+          "Shipping preparation"
+        ],
+        "operationId": "getShippingDraft",
+        "summary": "Read an owned active draft",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Draft"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "description": "Current quoted version vN",
+                "schema": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 40
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid preparation input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Current customer session required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found in current personal scope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Version/idempotency conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Required source unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "Shipping preparation"
+        ],
+        "operationId": "updateShippingDraft",
+        "summary": "Replace preparation at an exact version",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Draft"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "description": "Current quoted version vN",
+                "schema": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 40
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid preparation input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Current customer session required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found in current personal scope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Version/idempotency conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Required source unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "If-Match required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\"v[1-9][0-9]*\"$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Input"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/customer/shipment-drafts/{id}/archive": {
+      "post": {
+        "tags": [
+          "Shipping preparation"
+        ],
+        "operationId": "archiveShippingDraft",
+        "summary": "Archive preparation without deleting history",
+        "responses": {
+          "204": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid preparation input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Current customer session required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found in current personal scope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Version/idempotency conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Required source unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "If-Match required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\"v[1-9][0-9]*\"$"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/customer/shipment-draft-receipts/{operationId}/{key}": {
+      "get": {
+        "tags": [
+          "Shipping preparation"
+        ],
+        "operationId": "shippingDraftReceipt",
+        "summary": "Recover a write using authorized metadata only",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Receipt"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid preparation input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Current customer session required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found in current personal scope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Version/idempotency conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Required source unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "operationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "createShippingDraft",
+                "updateShippingDraft",
+                "archiveShippingDraft"
+              ]
+            }
+          },
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/customer/shipping-availability": {
+      "get": {
+        "tags": [
+          "Shipping preparation"
+        ],
+        "operationId": "getShippingAvailability",
+        "summary": "Read actual disabled capability dependencies",
+        "responses": {
+          "200": {
+            "description": "No shipping policy activated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Availability"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Current customer session required"
+          },
+          "503": {
+            "description": "Admission unavailable"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "customerBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "schemas": {
+      "Address": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "country": {
+            "const": "VN"
+          },
+          "administrativeArea": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          },
+          "locality": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          },
+          "addressLine": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "country",
+          "administrativeArea",
+          "locality",
+          "addressLine"
+        ]
+      },
+      "Contact": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          },
+          "phone": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32
+          },
+          "address": {
+            "$ref": "#/components/schemas/Address"
+          }
+        },
+        "required": [
+          "name",
+          "phone",
+          "address"
+        ]
+      },
+      "Parcel": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000
+          },
+          "weightGrams": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000000
+          },
+          "lengthMm": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000
+          },
+          "widthMm": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000
+          },
+          "heightMm": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000
+          },
+          "declaredValueVnd": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000000000
+          }
+        },
+        "required": [
+          "description",
+          "quantity",
+          "weightGrams",
+          "lengthMm",
+          "widthMm",
+          "heightMm",
+          "declaredValueVnd"
+        ]
+      },
+      "Input": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "reference": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "instructions": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "sender": {
+            "$ref": "#/components/schemas/Contact"
+          },
+          "recipient": {
+            "$ref": "#/components/schemas/Contact"
+          },
+          "parcels": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 5,
+            "items": {
+              "$ref": "#/components/schemas/Parcel"
+            }
+          }
+        },
+        "required": [
+          "sender",
+          "recipient",
+          "parcels"
+        ]
+      },
+      "Draft": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "accountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ownerType": {
+            "const": "PERSONAL"
+          },
+          "state": {
+            "const": "DRAFT"
+          },
+          "input": {
+            "$ref": "#/components/schemas/Input"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "accountId",
+          "ownerType",
+          "state",
+          "input",
+          "version",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "Page": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "maxItems": 20,
+            "items": {
+              "$ref": "#/components/schemas/Draft"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "size": {
+            "const": 20
+          },
+          "hasNext": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "size",
+          "hasNext"
+        ]
+      },
+      "Receipt": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "operationId": {
+            "enum": [
+              "createShippingDraft",
+              "updateShippingDraft",
+              "archiveShippingDraft"
+            ]
+          },
+          "targetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "outcome": {
+            "const": "COMMITTED"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "operationId",
+          "targetId",
+          "outcome",
+          "version"
+        ]
+      },
+      "Error": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          },
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "requestId"
+        ]
+      },
+      "Availability": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "quoteEnabled",
+          "bookingEnabled",
+          "codEnabled",
+          "paymentCollectionEnabled",
+          "blockers"
+        ],
+        "properties": {
+          "quoteEnabled": {
+            "const": false
+          },
+          "bookingEnabled": {
+            "const": false
+          },
+          "codEnabled": {
+            "const": false
+          },
+          "paymentCollectionEnabled": {
+            "const": false
+          },
+          "blockers": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "COVERAGE_DATASET_NOT_APPROVED",
+                "TAX_FEE_POLICY_NOT_FINAL",
+                "BR13_AMENDMENT_PENDING",
+                "CARRIER_COLLECTION_AUTHORITY_UNAVAILABLE"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "parameters": {}
+  }
+}

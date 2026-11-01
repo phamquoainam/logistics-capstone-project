@@ -24,8 +24,22 @@ function fixture(handler?:(call:Call)=>Promise<Response>|Response){
 }
 test.afterEach(()=>clearEntryProof());
 
+test('shipping drafts use current bearer CSRF idempotency and ETag without client owner fields',async()=>{
+  const f=addressFixture(call=>Response.json(shippingDraft,{status:call.init.method==='POST'?201:200,headers:{ETag:'"v1"'}}));await f.client.initialize();await f.client.createShippingDraft(draftInput,key);
+  const write=f.calls.find(c=>c.path==='/api/v1/customer/shipment-drafts')!;expect(write.init.headers).toMatchObject({Authorization:'Bearer synthetic-customer-access','X-CSRF-Token':'synthetic-live-challenge','Idempotency-Key':key});expect(JSON.parse(String(write.init.body))).not.toHaveProperty('accountId');
+});
+test('shipping draft response rejects foreign owner operational states and imprecise parcel values',async()=>{
+  for(const value of [{...shippingDraft,accountId:other},{...shippingDraft,state:'DELIVERED'},{...shippingDraft,ownerType:'BUSINESS'},{...shippingDraft,input:{...draftInput,parcels:[{...draftInput.parcels[0],declaredValueVnd:0.5}]}}]){const f=addressFixture(()=>Response.json(value,{headers:{ETag:'"v1"'}}));await f.client.initialize();await expect(f.client.readShippingDraft(key)).rejects.toMatchObject({code:'RESPONSE_INVALID'});}
+});
+test('shipping draft network loss never blindly retries and receipt stays metadata only',async()=>{
+  let posts=0;const f=addressFixture(call=>{if(call.init.method==='POST'){posts++;throw new Error('synthetic lost result');}return Response.json({operationId:'createShippingDraft',targetId:key,outcome:'COMMITTED',version:1});});await f.client.initialize();await expect(f.client.createShippingDraft(draftInput,key)).rejects.toMatchObject({code:'OUTCOME_UNKNOWN'});expect(posts).toBe(1);expect(await f.client.shippingDraftReceipt('createShippingDraft',key)).toEqual({targetId:key,version:1});expect(posts).toBe(1);
+});
+
 const addressInput={kind:'SENDER' as const,contactName:'Synthetic contact',contactPhone:'0901234567',address:{country:'VN',administrativeArea:'Area',locality:'Locality',addressLine:'Street'},isDefault:true};
 const address={...addressInput,contactPhone:'+84901234567',id:key,accountId:account,verificationStatus:'UNVERIFIED',version:1,createdAt:'2026-10-28T00:00:00Z',updatedAt:'2026-10-28T00:00:00Z'};
+const draftContact={name:'Synthetic contact',phone:'+84901234567',address:addressInput.address};
+const draftInput={reference:'Synthetic preparation',sender:draftContact,recipient:draftContact,parcels:[{description:'Box',quantity:1,weightGrams:500,lengthMm:100,widthMm:100,heightMm:100,declaredValueVnd:0}]};
+const shippingDraft={id:key,accountId:account,ownerType:'PERSONAL',state:'DRAFT',input:draftInput,version:1,createdAt:'2026-10-28T00:00:00Z',updatedAt:'2026-10-28T00:00:00Z'};
 function addressFixture(handler:(call:Call)=>Response|Promise<Response>){return fixture(call=>{
   if(call.path.endsWith('/csrf'))return Response.json({challenge:'synthetic-live-challenge'});
   if(call.path.endsWith('/me'))return Response.json(subject);

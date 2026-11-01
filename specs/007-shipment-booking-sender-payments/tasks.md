@@ -1,5 +1,11 @@
 # Tasks 007 — shipment-booking-sender-payments
 
+## Owner shipping pilot decision — 2026-11-01
+
+Independent draft preparation is implemented and verified under the [bounded contract](../../docs/implementation/personal-shipping-drafts-contract.md); see [delivery tracker](../../docs/implementation/shipping-personal-v1.md). Quote/Booking remains **BLOCKED**, not DONE: approved-in-principle candidate values do not activate a tariff/coverage/payment method. The [Owner packet](../../docs/decisions/shipping-policy-v1-owner-packet.md) records exact missing decisions and BR13/T1 cash-on-handover conflict; no canonical transition is silently amended.
+
+## Historical canonical planning tasks
+
 NOT_STARTED; thứ tự là contract/fixture → DB → BE/HTTP → UI/channel → verification → full acceptance. Mỗi BC là gói end-to-end nội bộ, không thay phương pháp Spec-by-Spec. Không task nào DONE trong rebuild docs.
 
 ## REQ-V3-BC-006 / BC-006: Tự tạo Shipment online khi không có tài khoản — BỊ CẤM theo phạm vi Capstone
