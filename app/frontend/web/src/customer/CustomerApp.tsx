@@ -4,7 +4,7 @@ import { Link, NavLink, Navigate, Outlet, Route, Routes, useLocation, useNavigat
 import { customerClient, CustomerApiError } from './client';
 import type { Enrollment, ProfileInput, VersionedProfile, ApplicationAddress, ApplicationDraft, ApplicationPage, VersionedApplication } from './client';
 import { clearEntryProof, getOtpChallenge, getVerificationLocator, hasEntryProof } from './entry-proof';
-import PublicWebsite, { PublicBrand, PublicFooter, PublicHeader } from './PublicWebsite';
+import PublicWebsite, { PublicBrand, PublicHeader } from './PublicWebsite';
 import './customer.css';
 
 function message(error: unknown): string {
@@ -34,7 +34,7 @@ type AuthSuccess = 'registered' | 'password-reset';
 function SuccessPopup({ kind, dismiss }: { kind: AuthSuccess; dismiss: () => void }) {
   return <div className="cp-success-popup" role="status" aria-live="polite" aria-atomic="true">
     <span className="cp-success-popup-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m5 12 4 4L19 6" /></svg></span>
-    <div><strong>{kind === 'registered' ? 'Bạn đã đăng ký thành công!' : 'Bạn đã đổi mật khẩu thành công!'}</strong><p>{kind === 'registered' ? 'Chào mừng bạn đến với movapost. Đăng nhập để bắt đầu hành trình của bạn.' : 'Hãy đăng nhập bằng mật khẩu mới của bạn.'}</p></div>
+    <div><strong>{kind === 'registered' ? 'Bạn đã đăng ký thành công!' : 'Bạn đã đổi mật khẩu thành công!'}</strong><p>{kind === 'registered' ? 'Chào mừng bạn đến với ArgoPost. Đăng nhập để bắt đầu hành trình của bạn.' : 'Hãy đăng nhập bằng mật khẩu mới của bạn.'}</p></div>
     <button type="button" aria-label="Đóng thông báo thành công" onClick={dismiss}><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="m6 6 12 12M18 6 6 18" /></svg></button>
   </div>;
 }
@@ -72,7 +72,7 @@ function canonicalPhone(value: string) {
   return compact;
 }
 const emailProps = { type: 'text', inputMode: 'email', autoCapitalize: 'none', autoCorrect: 'off', spellCheck: false, maxLength: 254, pattern: '[^\\s@]+@[^\\s@]+', required: true } as const;
-function Page({ title, description, children, otp = false }: { title: string; description?: string; children: ReactNode; otp?: boolean }) { return <section className={`cp-page ${otp ? 'cp-otp-page' : ''}`}><p className="cp-eyebrow">MOVAPOST. · TÀI KHOẢN CÁ NHÂN</p><h1 tabIndex={-1}>{title}</h1>{description && <p className="cp-description">{description}</p>}{children}</section>; }
+function Page({ title, description, children, otp = false }: { title: string; description?: string; children: ReactNode; otp?: boolean }) { return <section className={`cp-page ${otp ? 'cp-otp-page' : ''}`}><p className="cp-eyebrow">ARGOPOST · TÀI KHOẢN CÁ NHÂN</p><h1 tabIndex={-1}>{title}</h1>{description && <p className="cp-description">{description}</p>}{children}</section>; }
 function PasswordField({ id, label, value, change, complete }: { id: string; label: string; value: string; change: (value: string) => void; complete: 'current-password' | 'new-password' }) {
   const [visible, setVisible] = useState(false);
   return <><label htmlFor={id}>{label}</label><div className="cp-password-field"><input id={id} type={visible ? 'text' : 'password'} autoComplete={complete} placeholder={id.includes('confirmation') ? 'Nhập lại mật khẩu' : 'Nhập mật khẩu'} required maxLength={complete === 'new-password' ? 72 : 256} value={value} onChange={event => change(event.target.value)} /><button type="button" aria-label={`${visible ? 'Ẩn' : 'Hiện'} nội dung trường ${id === 'register-confirmation' ? 'xác nhận' : 'mật khẩu'}`} aria-pressed={visible} onClick={() => setVisible(current => !current)}><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z" /><circle cx="12" cy="12" r="3" />{visible && <path d="m3 3 18 18" />}</svg></button></div></>;
@@ -245,15 +245,15 @@ export default function CustomerApp() {
   const [success, setSuccess] = useState<{ kind: AuthSuccess; id: string }>();
   useEffect(() => { if (!success) return; const timer = window.setTimeout(() => setSuccess(undefined), 10000); return () => window.clearTimeout(timer); }, [success]);
   function complete(kind: AuthSuccess) { setSuccess({ kind, id: crypto.randomUUID() }); navigate('/login', { replace: true }); }
-  useEffect(() => { if (!['/verify-email', '/recover/otp', '/recover/confirm'].includes(location.pathname)) clearEntryProof(); document.title = 'movapost. | Gửi niềm tin, nối hành trình'; window.scrollTo(0, 0); document.querySelector<HTMLElement>('main h1')?.focus(); }, [location.pathname]);
+  useEffect(() => { if (!['/verify-email', '/recover/otp', '/recover/confirm'].includes(location.pathname)) clearEntryProof(); document.title = 'ArgoPost | Gửi niềm tin, nối hành trình'; window.scrollTo(0, 0); document.querySelector<HTMLElement>('main h1')?.focus(); }, [location.pathname]);
   const accountRoute = /^\/(login|register|verify-email|recover|personal|merchant)(\/|$)/.test(location.pathname);
   const authRoute = /^\/(login|register|verify-email|recover)(\/|$)/.test(location.pathname);
   if (!accountRoute) return <PublicWebsite />;
   return <div className={`customer-portal ${authRoute ? 'cp-auth-portal' : 'cp-workspace-portal'}`}><a className="cp-skip" href="#main-content">Đến nội dung chính</a>{success && <SuccessPopup key={success.id} kind={success.kind} dismiss={() => setSuccess(undefined)} />}{authRoute ? <PublicHeader compact /> : <header className="cp-header"><PublicBrand /><nav aria-label="Điều hướng tài khoản">
     {session.status === 'authenticated' ? <><NavLink to="/personal" end>Cá nhân</NavLink><NavLink to="/personal/profile">Hồ sơ</NavLink><NavLink to="/personal/applications">Merchant</NavLink><button className="cp-logout" onClick={() => { void customerClient.logout().catch(() => {}); }}>Đăng xuất</button></> : <><NavLink to="/login">Đăng nhập</NavLink><NavLink to="/register">Đăng ký</NavLink></>}
-  </nav></header>}<main id="main-content" key={location.pathname}>{session.status === 'loading' ? <Loading /> : <Routes>
+  </nav></header>}<main id="main-content" key={location.pathname}>{authRoute && <aside className="cp-auth-story" aria-label="Chào mừng đến ArgoPost"><span className="cp-story-kicker">CHÀO MỪNG ĐẾN ARGOPOST</span><h2>Khởi đầu mới.<br /><span>Kết nối xa hơn.</span></h2><p>Một tài khoản của bạn.<br />Một hành trình cùng ArgoPost.</p><img src="/media/movapost-network.svg" alt="" width="660" height="540" /><div className="cp-story-bottom"><span className="cp-story-line" /> Gửi niềm tin, nối hành trình.</div></aside>}{session.status === 'loading' ? <Loading /> : <Routes>
     <Route path="/login" element={<Login />} /><Route path="/register" element={<Register />} /><Route path="/verify-email" element={<Verify onRegistered={() => complete('registered')} />} /><Route path="/recover" element={<Recover />} /><Route path="/recover/otp" element={<Verify recovery onRegistered={() => complete('registered')} />} /><Route path="/recover/confirm" element={<ConfirmRecovery onRecovered={() => complete('password-reset')} />} />
     <Route element={<Protected />}><Route path="/personal" element={<Personal />} /><Route path="/personal/profile" element={<ProfilePage />} /><Route path="/personal/applications" element={<ApplicationList />} /><Route path="/personal/applications/:id" element={<ApplicationDetail />} /><Route path="/merchant" element={<MerchantEntry />} /></Route>
     <Route path="*" element={<Page title="Không tìm thấy trang"><Link to="/">Về trang chủ</Link></Page>} />
-  </Routes>}</main>{authRoute ? <PublicFooter /> : <footer className="cp-footer">movapost. · Gửi niềm tin, nối hành trình.</footer>}</div>;
+  </Routes>}</main>{authRoute ? <footer className="cp-auth-footer"><span>© {new Date().getFullYear()} ArgoPost</span><nav aria-label="Chính sách tài khoản"><Link to="/privacy">Bảo mật dữ liệu</Link><Link to="/terms">Điều khoản sử dụng</Link><Link to="/support">Trợ giúp</Link></nav></footer> : <footer className="cp-footer">ArgoPost · Gửi niềm tin, nối hành trình.</footer>}</div>;
 }
