@@ -43,6 +43,13 @@ test('verification consumes the actual SMTP message only after confirmation', as
 test('verified login has isolated customer cookies and no SYSTEM authority', async ({ browser }) => {
   const response = page.waitForResponse(r => new URL(r.url()).pathname === '/api/v1/customer-auth/login' && r.request().method() === 'POST'); await login(page, originalPassword); const received = await response; expect(received.status()).toBe(200); const body = await received.json(); if (typeof body.accessToken !== 'string') throw new Error('CUSTOMER_ACCESS_RESPONSE_INVALID'); capturedAccess = body.accessToken;
   await expect(page.getByRole('heading', { name: 'Xin chào, Người gửi hàng thử' })).toBeVisible();
+  await expect(page.locator('.pw-profile-details')).toContainText('Người gửi hàng thử');
+  await page.getByRole('button', { name: 'ArgoPost Personal', exact: true }).click();
+  await expect(page.locator('#workspace-choices')).toContainText('Hồ sơ đăng ký không cấp quyền');
+  await expect(page.locator('#workspace-choices a[href^="/merchant"]')).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#workspace-choices')).toHaveCount(0);
+  await expect(page.locator('.pw-unavailable')).toContainText('Dịch vụ và bảng giá chưa được thiết lập');
   await page.goto('/merchant'); await expect(page.getByRole('heading', { name: 'Không gian Merchant chưa khả dụng' })).toBeVisible();
   await expect(page.getByRole('alert')).toContainText('không hiển thị dữ liệu Merchant'); await page.goto('/personal');
   const cookies = await context.cookies(); expect(cookies.some(c => c.name === '__Host-elogistics.customer.refresh' && c.httpOnly && c.secure && c.sameSite === 'Strict' && c.path === '/')).toBe(true); expect(cookies.some(c => c.name === '__Host-elogistics.refresh')).toBe(false);
@@ -60,6 +67,25 @@ test('profile lost response resolves through the real committed receipt', async 
   });
   await page.getByRole('button', { name: 'Lưu hồ sơ' }).click(); await expect(page.getByRole('alert')).toContainText('Chưa xác định'); await expect(page.getByLabel('Tên hiển thị trong hồ sơ')).toBeDisabled();
   await page.getByRole('button', { name: 'Kiểm tra kết quả lưu' }).click(); await expect(page.getByText('Đã lưu hồ sơ.', { exact: true })).toBeVisible(); await expect(page.getByLabel('Tên hiển thị trong hồ sơ')).toHaveValue('Tên gửi hàng đã cập nhật'); expect(writes).toBe(1); await page.unroute('**/api/v1/customer/profile');
+  await page.reload(); await expect(page.getByLabel('Tên hiển thị trong hồ sơ')).toHaveValue('Tên gửi hàng đã cập nhật');
+  await page.getByRole('navigation', { name: 'Điều hướng Personal' }).getByRole('link', { name: 'Tổng quan', exact: true }).click();
+  await expect(page.locator('.pw-profile-details')).toContainText('Tên gửi hàng đã cập nhật');
+});
+test('personal address book persists CRUD and resolves a lost create through its real receipt', async () => {
+  await page.getByRole('navigation', { name: 'Điều hướng Personal' }).getByRole('link', { name: 'Sổ địa chỉ', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Sổ địa chỉ của bạn đang trống' })).toBeVisible();
+  await page.getByRole('button', { name: '+ Thêm địa chỉ', exact: true }).click();
+  await page.getByLabel('Tên gợi nhớ', { exact: false }).fill('Synthetic browser address'); await page.getByLabel('Họ tên liên hệ', { exact: true }).fill('Synthetic browser contact'); await page.getByLabel('Số điện thoại liên hệ', { exact: true }).fill('0901234567'); await page.getByLabel('Tỉnh / thành phố').fill('Synthetic area'); await page.getByLabel('Phường / xã / địa phương').fill('Synthetic locality'); await page.getByLabel('Địa chỉ chi tiết').fill('Synthetic street'); await page.getByRole('checkbox').check();
+  let writes = 0;
+  await page.route('**/api/v1/customer/addresses', async route => {
+    if (route.request().method() !== 'POST') { await route.continue(); return; }
+    writes++; const committed = await route.fetch({ maxRedirects: 0, maxRetries: 0, timeout: 15000 }); expect(committed.status()).toBe(201); await route.abort('failed');
+  });
+  await page.getByRole('button', { name: 'Lưu địa chỉ', exact: true }).click(); await expect(page.getByRole('alert')).toContainText('Chưa xác định'); await expect(page.getByLabel('Họ tên liên hệ', { exact: true })).toBeDisabled(); await page.getByRole('button', { name: 'Kiểm tra kết quả thao tác' }).click();
+  await expect(page.getByText('Đã lưu địa chỉ.', { exact: true })).toBeVisible(); expect(writes).toBe(1); await page.unroute('**/api/v1/customer/addresses');
+  await page.reload(); await expect(page.locator('.ab-card')).toContainText('Synthetic browser address'); await expect(page.locator('.ab-card')).toContainText('+84901234567'); await expect(page.locator('.ab-card')).toContainText('Chưa xác minh');
+  await page.getByRole('button', { name: 'Chỉnh sửa', exact: true }).click(); await page.getByLabel('Tên gợi nhớ', { exact: false }).fill('Updated browser address'); await page.getByRole('button', { name: 'Lưu địa chỉ', exact: true }).click(); await expect(page.getByText('Đã lưu địa chỉ.', { exact: true })).toBeVisible(); await page.reload(); await expect(page.locator('.ab-card')).toContainText('Updated browser address');
+  await page.getByRole('button', { name: 'Lưu trữ', exact: true }).click(); await page.getByRole('button', { name: 'Xác nhận lưu trữ', exact: true }).click(); await expect(page.getByText('Đã lưu trữ địa chỉ.', { exact: true })).toBeVisible(); await page.reload(); await expect(page.getByRole('heading', { name: 'Sổ địa chỉ của bạn đang trống' })).toBeVisible();
 });
 test('merchant draft uses the real HTTPS API and resolves one lost write', async () => {
   await page.getByRole('link', { name: 'Merchant', exact: true }).click();

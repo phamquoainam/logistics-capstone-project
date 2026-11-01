@@ -3,6 +3,8 @@ package com.elogistic.backend.merchant.internal;
 import com.elogistic.backend.identity.api.customer.CustomerAdmission;
 import com.elogistic.backend.merchant.api.customer.CustomerProfiles;
 import com.elogistic.backend.merchant.api.customer.MerchantApplications;
+import com.elogistic.backend.merchant.api.customer.PersonalAddresses;
+import com.elogistic.backend.merchant.internal.application.PersonalAddressApplication;
 import com.elogistic.backend.merchant.internal.application.MerchantApplicationService;
 import com.elogistic.backend.merchant.internal.application.port.MerchantFingerprints;
 import com.elogistic.backend.merchant.internal.application.CustomerProfileApplication;
@@ -41,5 +43,9 @@ public class CustomerProfileConfiguration {
     @Bean @DependsOnDatabaseInitialization
     MerchantApplications merchantApplications(DataSource source,CustomerAdmission admission,MerchantFingerprints fingerprints,@Qualifier("identityHttpClock")Clock clock){
         JdbcMerchantApplicationStore.requireSchema(source);return new MerchantApplicationService(admission,new JdbcMerchantApplicationStore(source),fingerprints,clock);
+    }
+    @Bean @DependsOnDatabaseInitialization
+    PersonalAddresses personalAddresses(DataSource source,CustomerAdmission admission,MerchantFingerprints fingerprints,@Qualifier("identityHttpClock")Clock clock){
+        JdbcPersonalAddressStore.requireSchema(source);return new PersonalAddressApplication(admission,new JdbcPersonalAddressStore(source),fingerprints,clock);
     }
 }

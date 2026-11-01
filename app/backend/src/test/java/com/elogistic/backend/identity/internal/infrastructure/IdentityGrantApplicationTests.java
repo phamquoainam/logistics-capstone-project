@@ -40,7 +40,7 @@ class IdentityGrantApplicationTests {
 
     @BeforeEach void fixture() throws Exception {
         db = PostgresTestcontainersSupport.database(POSTGRES);
-        assertEquals(17, db.flyway("latest", SCOPE).migrate().migrationsExecuted);
+        assertEquals(18, db.flyway("latest", SCOPE).migrate().migrationsExecuted);
         account(A, "ACTIVE", List.of(ADMIN)); account(B, "ACTIVE", List.of(ADMIN)); account(T, "ACTIVE", List.of(GX));
         session(S, A); session(AS, B); session(TS, T);
         execute("INSERT INTO identity.refresh_token(id,session_id,token_hash,issued_at,expires_at) VALUES ('" + id(20) + "','" + TS + "',decode(repeat('01',32),'hex'),TIMESTAMPTZ '2026-10-21 00:00:00Z',TIMESTAMPTZ '2026-10-21 08:00:00Z')");
@@ -1863,7 +1863,7 @@ class IdentityGrantApplicationTests {
         if(profile){
             context.getEnvironment().getPropertySources().addFirst(new org.springframework.core.env.MapPropertySource("isolated-profile-keys",Map.of("merchant.customer-profile.receipt-keys","{\"v1\":\""+Base64.getEncoder().encodeToString(keyBytes(76))+"\"}","merchant.customer-profile.current-receipt-key","v1")));
             context.addBeanFactoryPostProcessor(factory->{factory.registerSingleton("customerAdmission",services.customers());factory.registerSingleton("customerRequestContext",services.requests());});
-            context.register(com.elogistic.backend.merchant.internal.CustomerProfileConfiguration.class,com.elogistic.backend.workflow.internal.web.CustomerProfileHttp.class,com.elogistic.backend.workflow.internal.web.MerchantApplicationHttp.class,com.elogistic.backend.workflow.internal.web.OnboardingHttpErrors.class);
+            context.register(com.elogistic.backend.merchant.internal.CustomerProfileConfiguration.class,com.elogistic.backend.workflow.internal.web.CustomerProfileHttp.class,com.elogistic.backend.workflow.internal.web.PersonalAddressHttp.class,com.elogistic.backend.workflow.internal.web.MerchantApplicationHttp.class,com.elogistic.backend.workflow.internal.web.OnboardingHttpErrors.class);
         }
         try{context.refresh();return context;}catch(Exception failure){context.close();throw failure;}
     }
@@ -2137,6 +2137,7 @@ class IdentityGrantApplicationTests {
 
     @Test void customerEntryBrowserUsesActualHttpsPostgresAndSmtp()throws Exception{
         long accounts=scalar("SELECT count(*) FROM identity.user_account");var before=snapshot();S003CustomerBrowserRuntime.run(outboxDataSource());
+        assertEquals(1,scalar("SELECT count(*) FROM merchant.customer_address WHERE archived_at IS NOT NULL AND NOT is_default AND version=3"));assertEquals(3,scalar("SELECT count(*) FROM merchant.customer_address_version"));assertEquals(3,scalar("SELECT count(*) FROM merchant.command_receipt WHERE target_type='CUSTOMER_ADDRESS'"));
         assertEquals(accounts+1,scalar("SELECT count(*) FROM identity.user_account"));assertEquals(1,scalar("SELECT count(*) FROM identity.user_account WHERE email='"+S003CustomerBrowserRuntime.EMAIL+"' AND status='ACTIVE' AND email_verified AND auth_version=2 AND version=2"));
         assertEquals(1,scalar("SELECT count(*) FROM identity.customer_identifier WHERE exact_email='"+S003CustomerBrowserRuntime.EMAIL+"' AND status='ACTIVE'"));assertEquals(0,scalar("SELECT count(*) FROM identity.account_grant WHERE account_id IN (SELECT id FROM identity.user_account WHERE email='"+S003CustomerBrowserRuntime.EMAIL+"')"));
         assertEquals(1,scalar("SELECT count(*) FROM merchant.customer_profile WHERE version=2"));assertEquals(1,scalar("SELECT count(*) FROM merchant.customer_profile_version"));
@@ -2199,9 +2200,11 @@ class IdentityGrantApplicationTests {
         }
     }
 
+    private final ThreadLocal<Exception> onboardingFailure=new ThreadLocal<>();
+    private String safeOnboardingFailure(){var failure=onboardingFailure.get();String result="";for(Throwable cause=failure;cause!=null;cause=cause.getCause())result+=cause.getClass().getSimpleName()+ (cause instanceof SQLException sql?":"+sql.getSQLState():"")+" ";return result;}
     private org.springframework.mock.web.MockHttpServletResponse onboardingWrite(org.springframework.test.web.servlet.MockMvc mvc,ProfileBrowser browser,String method,String path,UUID key,String version,Object body)throws Exception{
         var q=org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request(org.springframework.http.HttpMethod.valueOf(method),path).secure(true).header("Origin","https://portal.example.invalid").header("Authorization","Bearer "+browser.access()).header("X-CSRF-Token",browser.flow().challenge).cookie(browser.flow().csrf,browser.flow().refresh).contentType("application/json");
-        if(key!=null)q.header("Idempotency-Key",key);if(version!=null)q.header("If-Match",version);q.content(body instanceof String text?text:new tools.jackson.databind.ObjectMapper().writeValueAsString(body));return mvc.perform(q).andReturn().getResponse();
+        if(key!=null)q.header("Idempotency-Key",key);if(version!=null)q.header("If-Match",version);q.content(body instanceof String text?text:new tools.jackson.databind.ObjectMapper().writeValueAsString(body));var result=mvc.perform(q).andReturn();onboardingFailure.set(result.getResolvedException());return result.getResponse();
     }
     private String responseId(org.springframework.mock.web.MockHttpServletResponse response,String name)throws Exception{return new tools.jackson.databind.ObjectMapper().readTree(response.getContentAsString()).get(name).asString();}
     private String recentProof(org.springframework.test.web.servlet.MockMvc mvc,ProfileBrowser browser)throws Exception{var r=reauthenticationPost(mvc,browser,UUID.randomUUID(),Map.of("email",CUSTOMER_EMAIL,"password",SESSION_PASSWORD));assertEquals(200,r.getStatus());return responseId(r,"proofId");}
@@ -2268,4 +2271,98 @@ class IdentityGrantApplicationTests {
             execute("UPDATE identity.customer_auth_session SET revoked_at=created_at WHERE account_id='"+A+"'");assertEquals(401,httpRead(mvc,"/api/v1/onboarding-receipts/createApplicationDraft/"+KEY,browser.access()).getStatus());assertEquals(401,onboardingWrite(mvc,browser,"POST",path,KEY,null,body).getStatus());assertEquals(1,scalar("SELECT count(*) FROM merchant.application"));
         }
     }
+    private static final String ADDRESS_PATH="/api/v1/customer/addresses";
+    private Map<String,Object> addressInput(String name,String kind,boolean isDefault){return Map.of("kind",kind,"label",name,"contactName","Synthetic contact","contactPhone","0901234567","address",Map.of("country","VN","administrativeArea","Synthetic area","locality","Synthetic locality","addressLine","Synthetic street"),"isDefault",isDefault);}
+    private ProfileBrowser addressOtherBrowser(org.springframework.test.web.servlet.MockMvc mvc)throws Exception{
+        execute("UPDATE identity.user_account SET email='address-other@example.invalid',password_hash=(SELECT password_hash FROM identity.user_account WHERE id='"+A+"') WHERE id='"+B+"'");
+        execute("INSERT INTO identity.customer_identifier VALUES ('"+UUID.randomUUID()+"','"+B+"','address-other@example.invalid',TIMESTAMPTZ '2026-10-21 00:00:00Z','ACTIVE',1)");
+        var login=customerPost(mvc,"login",customerCsrf(mvc,null),null,Map.of("email","address-other@example.invalid","password",SESSION_PASSWORD));assertEquals(200,login.getStatus());
+        return new ProfileBrowser(responseId(login,"accessToken"),customerCsrf(mvc,new BrowserFlow(responseCookie(login,"__Host-elogistics.customer.csrf"),responseCookie(login,"__Host-elogistics.customer.refresh"),"unused")));
+    }
+    private Map<String,List<String>> addressSnapshot()throws Exception{
+        var result=new TreeMap<String,List<String>>();try(var c=db.runtimeConnection();var q=c.createStatement()){
+            for(String table:List.of("customer_address","customer_address_version","business_audit","command_receipt"))try(var rows=q.executeQuery("SELECT row_to_json(t)::text FROM merchant."+table+" t ORDER BY row_to_json(t)::text")){var values=new ArrayList<String>();while(rows.next())values.add(rows.getString(1));result.put(table,values);}
+        }return result;
+    }
+    @Test void addressHttpCrudPersistsOnlyUnverifiedSelfContacts()throws Exception{
+        customerFixture(false);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW),true)){
+            var mvc=httpMvc(context);var browser=profileBrowser(mvc);var identity=snapshot();var first=onboardingWrite(mvc,browser,"POST",ADDRESS_PATH,KEY,null,addressInput("Home","SENDER",true));assertEquals(201,first.getStatus(),this::safeOnboardingFailure);String target=responseId(first,"id");assertEquals("UNVERIFIED",responseId(first,"verificationStatus"));assertEquals("+84901234567",responseId(first,"contactPhone"));assertEquals(A.toString(),responseId(first,"accountId"));assertEquals("\"v1\"",first.getHeader("ETag"));assertEquals(ADDRESS_PATH+"/"+target,first.getHeader("Location"));
+            assertEquals(first.getContentAsString(),httpRead(mvc,ADDRESS_PATH+"/"+target,browser.access()).getContentAsString());assertTrue(httpRead(mvc,ADDRESS_PATH+"?search=0901234567",browser.access()).getContentAsString().contains("Home"));assertEquals(200,onboardingWrite(mvc,browser,"PUT",ADDRESS_PATH+"/"+target,id(1101),"\"v1\"",addressInput("New home","RECIPIENT",true)).getStatus());
+            assertTrue(httpRead(mvc,ADDRESS_PATH+"?kind=RECIPIENT&search=New",browser.access()).getContentAsString().contains("New home"));
+            assertEquals(204,onboardingWrite(mvc,browser,"POST",ADDRESS_PATH+"/"+target+"/archive",id(1102),"\"v2\"","").getStatus());assertEquals(404,httpRead(mvc,ADDRESS_PATH+"/"+target,browser.access()).getStatus());assertEquals(0,scalar("SELECT count(*) FROM merchant.customer_address WHERE is_default"));
+            assertEquals(204,onboardingWrite(mvc,browser,"POST",ADDRESS_PATH+"/"+target+"/archive",id(1102),"\"v2\"","").getStatus());var receipt=httpRead(mvc,"/api/v1/customer/address-receipts/archivePersonalAddress/"+id(1102),browser.access());assertEquals(200,receipt.getStatus());assertEquals(target,responseId(receipt,"targetId"));assertFalse(receipt.getContentAsString().contains("Synthetic"));assertTrue(httpRead(mvc,ADDRESS_PATH,browser.access()).getContentAsString().contains("\"items\":[]"));
+            assertEquals(identity,snapshot());assertEquals(3,scalar("SELECT count(*) FROM merchant.customer_address_version"));assertEquals(3,scalar("SELECT count(*) FROM merchant.command_receipt WHERE target_type='CUSTOMER_ADDRESS'"));assertEquals(0,scalar("SELECT count(*) FROM orders.demo_shipment"));
+        }
+    }
+    @Test void addressHttpIsolatesForeignTargetsSearchAndReceipts()throws Exception{
+        customerFixture(false);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW),true)){
+            var mvc=httpMvc(context);var a=profileBrowser(mvc);var b=addressOtherBrowser(mvc);UUID otherKey=id(1103);var foreign=onboardingWrite(mvc,b,"POST",ADDRESS_PATH,otherKey,null,addressInput("Private other","SENDER",true));assertEquals(201,foreign.getStatus());String target=responseId(foreign,"id");
+            for(UUID id:List.of(UUID.fromString(target),UUID.randomUUID())){assertEquals(404,httpRead(mvc,ADDRESS_PATH+"/"+id,a.access()).getStatus());assertEquals(404,onboardingWrite(mvc,a,"PUT",ADDRESS_PATH+"/"+id,UUID.randomUUID(),"\"v999\"",addressInput("Injected","SENDER",false)).getStatus());assertEquals(404,onboardingWrite(mvc,a,"POST",ADDRESS_PATH+"/"+id+"/archive",UUID.randomUUID(),"\"v999\"","").getStatus());}
+            assertEquals(404,httpRead(mvc,"/api/v1/customer/address-receipts/createPersonalAddress/"+otherKey,a.access()).getStatus());assertTrue(httpRead(mvc,ADDRESS_PATH+"?search=0901234567",a.access()).getContentAsString().contains("\"items\":[]"));assertTrue(httpRead(mvc,ADDRESS_PATH+"?search=Private&page=0&size=20",a.access()).getContentAsString().contains("\"items\":[]"));
+            var own=onboardingWrite(mvc,a,"POST",ADDRESS_PATH,otherKey,null,addressInput("My own","SENDER",true));assertEquals(201,own.getStatus());assertNotEquals(target,responseId(own,"id"));assertEquals(1,scalar("SELECT count(*) FROM merchant.customer_address WHERE account_id='"+A+"' AND is_default"));assertEquals(1,scalar("SELECT count(*) FROM merchant.customer_address WHERE account_id='"+B+"' AND is_default"));
+        }
+    }
+    @Test void addressHttpRejectsInvalidSchemaPreconditionsAndCredentialInjection()throws Exception{
+        customerFixture(false);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW),true)){
+            var mvc=httpMvc(context);var browser=profileBrowser(mvc);var body=addressInput("Valid","SENDER",false);var created=onboardingWrite(mvc,browser,"POST",ADDRESS_PATH,KEY,null,body);String target=responseId(created,"id");
+            for(String field:List.of("accountId","merchantId","role","verificationStatus","coordinates","version")){var injected=new HashMap<String,Object>(body);injected.put(field,A.toString());assertEquals(400,onboardingWrite(mvc,browser,"POST",ADDRESS_PATH,UUID.randomUUID(),null,injected).getStatus());}
+            for(Object invalid:List.of(Map.of(),"{\"kind\":\"SENDER\",\"kind\":\"RECIPIENT\"}",Map.of("kind","SENDER","isDefault","true"))){assertEquals(400,onboardingWrite(mvc,browser,"POST",ADDRESS_PATH,UUID.randomUUID(),null,invalid).getStatus());}
+            for(String phone:List.of("123","+1 901234567","0901234567\n")){var invalid=new HashMap<String,Object>(body);invalid.put("contactPhone",phone);assertEquals(400,onboardingWrite(mvc,browser,"POST",ADDRESS_PATH,UUID.randomUUID(),null,invalid).getStatus());}
+            assertEquals(428,onboardingWrite(mvc,browser,"PUT",ADDRESS_PATH+"/"+target,UUID.randomUUID(),null,body).getStatus());assertEquals(400,onboardingWrite(mvc,browser,"PUT",ADDRESS_PATH+"/"+target,UUID.randomUUID(),"W/\"v1\"",body).getStatus());assertEquals(409,onboardingWrite(mvc,browser,"PUT",ADDRESS_PATH+"/"+target,UUID.randomUUID(),"\"v2\"",body).getStatus());assertEquals(400,onboardingWrite(mvc,browser,"POST",ADDRESS_PATH+"/"+target+"/archive",UUID.randomUUID(),"\"v1\"",Map.of()).getStatus());
+            for(String query:List.of("?page=-1","?page=0&page=1","?size=100","?kind=OWNER","?accountId="+A))assertEquals(400,httpRead(mvc,ADDRESS_PATH+query,browser.access()).getStatus());
+            var system=new ProfileBrowser(httpToken(context,S,A,1,NOW,NOW.plusSeconds(900)),browser.flow());assertEquals(401,httpRead(mvc,ADDRESS_PATH,system.access()).getStatus());assertEquals(401,onboardingWrite(mvc,system,"POST",ADDRESS_PATH,UUID.randomUUID(),null,body).getStatus());
+            var insecure=org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(ADDRESS_PATH).secure(false).header("Authorization","Bearer "+browser.access());assertEquals(401,mvc.perform(insecure).andReturn().getResponse().getStatus());
+            var noCsrf=org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(ADDRESS_PATH).secure(true).header("Authorization","Bearer "+browser.access()).header("Origin","https://portal.example.invalid").contentType("application/json").content(new tools.jackson.databind.ObjectMapper().writeValueAsString(body));assertEquals(401,mvc.perform(noCsrf).andReturn().getResponse().getStatus());assertEquals(1,scalar("SELECT count(*) FROM merchant.customer_address"));
+        }
+    }
+    @Test void addressConcurrentDefaultsDisplaceAndInvalidateStaleForms()throws Exception{
+        customerFixture(false);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW),true)){
+            var mvc=httpMvc(context);var browser=profileBrowser(mvc);var results=adminRace(()->onboardingWrite(mvc,browser,"POST",ADDRESS_PATH,id(1104),null,addressInput("Left","SENDER",true)).getStatus(),()->onboardingWrite(mvc,browser,"POST",ADDRESS_PATH,id(1105),null,addressInput("Right","SENDER",true)).getStatus());assertEquals(List.of(201,201),results);
+            assertEquals(1,scalar("SELECT count(*) FROM merchant.customer_address WHERE is_default AND kind='SENDER'"));assertEquals(3,scalar("SELECT count(*) FROM merchant.customer_address_version"));assertEquals(3,scalar("SELECT count(*) FROM merchant.business_audit WHERE target_type='CUSTOMER_ADDRESS'"));
+            String old;try(var c=db.runtimeConnection();var q=c.createStatement();var r=q.executeQuery("SELECT id FROM merchant.customer_address WHERE NOT is_default")){assertTrue(r.next());old=r.getString(1);}
+            assertEquals(409,onboardingWrite(mvc,browser,"PUT",ADDRESS_PATH+"/"+old,UUID.randomUUID(),"\"v1\"",addressInput("Stale","SENDER",true)).getStatus());assertEquals(201,onboardingWrite(mvc,browser,"POST",ADDRESS_PATH,UUID.randomUUID(),null,addressInput("Recipient","RECIPIENT",true)).getStatus());assertEquals(2,scalar("SELECT count(*) FROM merchant.customer_address WHERE is_default"));
+        }
+    }
+    @Test void addressConcurrentUpdateAndArchiveHaveOneValidWinner()throws Exception{
+        customerFixture(false);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW),true)){
+            var mvc=httpMvc(context);var browser=profileBrowser(mvc);String target=responseId(onboardingWrite(mvc,browser,"POST",ADDRESS_PATH,KEY,null,addressInput("Original","SENDER",true)),"id");
+            var results=adminRace(()->onboardingWrite(mvc,browser,"PUT",ADDRESS_PATH+"/"+target,id(1106),"\"v1\"",addressInput("Updated","SENDER",true)).getStatus(),()->onboardingWrite(mvc,browser,"POST",ADDRESS_PATH+"/"+target+"/archive",id(1107),"\"v1\"","").getStatus());
+            assertEquals(1,results.stream().filter(value->Integer.valueOf(200).equals(value)||Integer.valueOf(204).equals(value)).count());assertEquals(1,results.stream().filter(value->Integer.valueOf(404).equals(value)||Integer.valueOf(409).equals(value)).count());assertEquals(2,scalar("SELECT count(*) FROM merchant.customer_address_version"));assertEquals(2,scalar("SELECT count(*) FROM merchant.command_receipt WHERE target_type='CUSTOMER_ADDRESS'"));assertEquals(0,scalar("SELECT count(*) FROM merchant.customer_address WHERE archived_at IS NOT NULL AND is_default"));
+        }
+    }
+    @Test void addressIdempotencyReplaysOriginalSnapshotsAndRejectsChangedBindings()throws Exception{
+        customerFixture(false);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW),true)){
+            var mvc=httpMvc(context);var browser=profileBrowser(mvc);var body=addressInput("First","SENDER",false);var first=onboardingWrite(mvc,browser,"POST",ADDRESS_PATH,KEY,null,body);String target=responseId(first,"id");UUID update=id(1108);var second=onboardingWrite(mvc,browser,"PUT",ADDRESS_PATH+"/"+target,update,"\"v1\"",addressInput("Second","SENDER",false));assertEquals(200,second.getStatus());assertEquals(200,onboardingWrite(mvc,browser,"PUT",ADDRESS_PATH+"/"+target,id(1109),"\"v2\"",addressInput("Third","SENDER",false)).getStatus());var before=addressSnapshot();
+            assertEquals(first.getContentAsString(),onboardingWrite(mvc,browser,"POST",ADDRESS_PATH,KEY,null,body).getContentAsString());assertEquals(second.getContentAsString(),onboardingWrite(mvc,browser,"PUT",ADDRESS_PATH+"/"+target,update,"\"v1\"",addressInput("Second","SENDER",false)).getContentAsString());assertEquals(before,addressSnapshot());
+            assertEquals(409,onboardingWrite(mvc,browser,"POST",ADDRESS_PATH,KEY,null,addressInput("Changed","SENDER",false)).getStatus());assertEquals(409,onboardingWrite(mvc,browser,"PUT",ADDRESS_PATH+"/"+target,update,"\"v2\"",addressInput("Second","SENDER",false)).getStatus());
+            String other=responseId(onboardingWrite(mvc,browser,"POST",ADDRESS_PATH,UUID.randomUUID(),null,body),"id");assertEquals(409,onboardingWrite(mvc,browser,"PUT",ADDRESS_PATH+"/"+other,update,"\"v1\"",addressInput("Second","SENDER",false)).getStatus());
+        }
+    }
+    @Test void addressConcurrentSameKeyCreatesOnlyOneSourceHistoryAndReceipt()throws Exception{
+        customerFixture(false);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW),true)){
+            var mvc=httpMvc(context);var browser=profileBrowser(mvc);var body=addressInput("One","SENDER",true);var results=adminRace(()->onboardingWrite(mvc,browser,"POST",ADDRESS_PATH,KEY,null,body).getContentAsString(),()->onboardingWrite(mvc,browser,"POST",ADDRESS_PATH,KEY,null,body).getContentAsString());assertEquals(results.getFirst(),results.getLast());assertEquals(1,scalar("SELECT count(*) FROM merchant.customer_address"));assertEquals(1,scalar("SELECT count(*) FROM merchant.customer_address_version"));assertEquals(1,scalar("SELECT count(*) FROM merchant.business_audit WHERE target_type='CUSTOMER_ADDRESS'"));assertEquals(1,scalar("SELECT count(*) FROM merchant.command_receipt WHERE target_type='CUSTOMER_ADDRESS'"));
+        }
+    }
+    @Test void addressAuditAndReceiptFailureRollBackDefaultReplacement()throws Exception{
+        customerFixture(false);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW),true)){
+            var mvc=httpMvc(context);var browser=profileBrowser(mvc);assertEquals(201,onboardingWrite(mvc,browser,"POST",ADDRESS_PATH,KEY,null,addressInput("Original default","SENDER",true)).getStatus());
+            for(String table:List.of("business_audit","command_receipt")){
+                var before=addressSnapshot();db.ownerExecute("CREATE FUNCTION merchant.synthetic_address_fault() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'SYNTHETIC_ADDRESS_EVIDENCE_FAILURE'; END $$");db.ownerExecute("CREATE TRIGGER synthetic_address_fault BEFORE INSERT ON merchant."+table+" FOR EACH ROW EXECUTE FUNCTION merchant.synthetic_address_fault()");
+                var result=onboardingWrite(mvc,browser,"POST",ADDRESS_PATH,UUID.randomUUID(),null,addressInput("Replacement","SENDER",true));assertEquals(503,result.getStatus());assertFalse(result.getContentAsString().contains("SYNTHETIC_ADDRESS"));assertEquals(before,addressSnapshot());db.ownerExecute("DROP TRIGGER synthetic_address_fault ON merchant."+table);db.ownerExecute("DROP FUNCTION merchant.synthetic_address_fault()");
+            }assertEquals(1,scalar("SELECT count(*) FROM merchant.customer_address WHERE is_default"));
+        }
+    }
+    @Test void addressRevocationPreventsReadReplayReceiptAndMutation()throws Exception{
+        customerFixture(false);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW),true)){
+            var mvc=httpMvc(context);var browser=profileBrowser(mvc);var body=addressInput("Own","SENDER",true);String target=responseId(onboardingWrite(mvc,browser,"POST",ADDRESS_PATH,KEY,null,body),"id");var before=addressSnapshot();execute("UPDATE identity.customer_auth_session SET revoked_at=created_at WHERE account_id='"+A+"'");
+            for(String path:List.of(ADDRESS_PATH,ADDRESS_PATH+"/"+target,"/api/v1/customer/address-receipts/createPersonalAddress/"+KEY))assertEquals(401,httpRead(mvc,path,browser.access()).getStatus());assertEquals(401,onboardingWrite(mvc,browser,"POST",ADDRESS_PATH,KEY,null,body).getStatus());assertEquals(401,onboardingWrite(mvc,browser,"POST",ADDRESS_PATH+"/"+target+"/archive",UUID.randomUUID(),"\"v1\"","").getStatus());assertEquals(before,addressSnapshot());
+        }
+    }
+    @Test void addressStoreAndConstructedContextCannotBypassOwnedAdmission()throws Exception{
+        customerFixture(false);var store=new com.elogistic.backend.merchant.internal.infrastructure.JdbcPersonalAddressStore(outboxDataSource());assertThrows(IllegalStateException.class,()->store.find(A,X,false));assertThrows(IllegalStateException.class,()->store.list(A,new com.elogistic.backend.merchant.api.customer.PersonalAddresses.Query(0,20,null,null)));assertThrows(IllegalStateException.class,()->store.lockOwner(A));
+        try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW),true)){
+            var fake=new com.elogistic.backend.identity.api.customer.CustomerAdmission.Context(REQUEST,S,new com.elogistic.backend.identity.api.customer.CustomerAdmission.Subject(A,"Fake","fake@example.invalid",1,true),Map.of());var api=context.getBean(com.elogistic.backend.merchant.api.customer.PersonalAddresses.class);assertThrows(RuntimeException.class,()->api.list(fake,new com.elogistic.backend.merchant.api.customer.PersonalAddresses.Query(0,20,null,null)));assertEquals(0,scalar("SELECT count(*) FROM merchant.customer_address"));
+        }
+    }
+
 }

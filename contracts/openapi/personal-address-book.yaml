@@ -1,0 +1,191 @@
+openapi: 3.1.0
+info:
+  title: ArgoPost Personal Address Book
+  version: 1.0.0
+  description: Owner-approved raw UNVERIFIED self contacts. No shipping eligibility, geocoding or Identity credential changes.
+servers:
+  - url: https://127.0.0.1:8443/api/v1
+security:
+  - customerAccess: []
+tags:
+  - name: PersonalAddresses
+    description: Private self-owned sender and recipient contact records
+paths:
+  /customer/addresses:
+    get:
+      operationId: listPersonalAddresses
+      summary: List the current customer's active addresses
+      tags: [PersonalAddresses]
+      parameters:
+        - {name: page, in: query, schema: {type: integer, minimum: 0, maximum: 2147483647, default: 0}}
+        - {name: size, in: query, schema: {type: integer, const: 20, default: 20}}
+        - {name: search, in: query, schema: {type: string, minLength: 1, maxLength: 160}}
+        - {name: kind, in: query, schema: {type: string, enum: [SENDER, RECIPIENT]}}
+      responses:
+        '200':
+          description: Self-scoped, filtered before paging; updatedAt DESC then id ASC
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [items, page, size, hasNext]
+                properties:
+                  items: {type: array, maxItems: 20, items: {$ref: '#/components/schemas/Address'}}
+                  page: {type: integer, minimum: 0}
+                  size: {type: integer, const: 20}
+                  hasNext: {type: boolean}
+        '401': {$ref: '#/components/responses/Rejected'}
+        default: {$ref: '#/components/responses/Rejected'}
+    post:
+      operationId: createPersonalAddress
+      summary: Save a self-owned unverified contact
+      tags: [PersonalAddresses]
+      parameters:
+        - {$ref: '#/components/parameters/Origin'}
+        - {$ref: '#/components/parameters/Csrf'}
+        - {$ref: '#/components/parameters/Key'}
+      requestBody: {$ref: '#/components/requestBodies/Input'}
+      responses:
+        '201':
+          description: Committed once, with address history, audit and receipt
+          headers:
+            ETag: {$ref: '#/components/headers/ETag'}
+            Location: {description: The created resource, schema: {type: string}}
+          content: {application/json: {schema: {$ref: '#/components/schemas/Address'}}}
+        '401': {$ref: '#/components/responses/Rejected'}
+        default: {$ref: '#/components/responses/Rejected'}
+  /customer/addresses/{id}:
+    parameters:
+      - {$ref: '#/components/parameters/Id'}
+    get:
+      operationId: getPersonalAddress
+      summary: Read an active own address; foreign and archived targets return 404
+      tags: [PersonalAddresses]
+      responses:
+        '200': {$ref: '#/components/responses/Address'}
+        '401': {$ref: '#/components/responses/Rejected'}
+        default: {$ref: '#/components/responses/Rejected'}
+    put:
+      operationId: updatePersonalAddress
+      summary: Replace an own active address with optimistic concurrency
+      tags: [PersonalAddresses]
+      parameters:
+        - {$ref: '#/components/parameters/Origin'}
+        - {$ref: '#/components/parameters/Csrf'}
+        - {$ref: '#/components/parameters/Key'}
+        - {$ref: '#/components/parameters/IfMatch'}
+      requestBody: {$ref: '#/components/requestBodies/Input'}
+      responses:
+        '200': {$ref: '#/components/responses/Address'}
+        '401': {$ref: '#/components/responses/Rejected'}
+        default: {$ref: '#/components/responses/Rejected'}
+  /customer/addresses/{id}/archive:
+    parameters:
+      - {$ref: '#/components/parameters/Id'}
+    post:
+      operationId: archivePersonalAddress
+      summary: Archive without deleting history; clear default in the same transaction
+      description: No request body. Exact committed replay is 204. Archive receipts remain current-self readable; active resource reads and non-archive replays cannot expose archived PII.
+      tags: [PersonalAddresses]
+      parameters:
+        - {$ref: '#/components/parameters/Origin'}
+        - {$ref: '#/components/parameters/Csrf'}
+        - {$ref: '#/components/parameters/Key'}
+        - {$ref: '#/components/parameters/IfMatch'}
+      responses:
+        '204': {description: Archive committed or exact authorized replay}
+        '401': {$ref: '#/components/responses/Rejected'}
+        default: {$ref: '#/components/responses/Rejected'}
+  /customer/address-receipts/{operationId}/{key}:
+    get:
+      operationId: personalAddressReceipt
+      summary: Resolve an unknown write without another mutation or idle extension
+      tags: [PersonalAddresses]
+      parameters:
+        - {name: operationId, in: path, required: true, schema: {type: string, enum: [createPersonalAddress, updatePersonalAddress, archivePersonalAddress]}}
+        - {name: key, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '200':
+          description: Current-self scoped receipt, no address PII
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [operationId, targetId, outcome, version]
+                properties:
+                  operationId: {type: string, enum: [createPersonalAddress, updatePersonalAddress, archivePersonalAddress]}
+                  targetId: {type: string, format: uuid}
+                  outcome: {type: string, const: COMMITTED}
+                  version: {type: integer, minimum: 1}
+        '401': {$ref: '#/components/responses/Rejected'}
+        default: {$ref: '#/components/responses/Rejected'}
+components:
+  securitySchemes:
+    customerAccess: {type: http, scheme: bearer, bearerFormat: Customer-purpose RS256 access}
+  parameters:
+    Id: {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+    Origin: {name: Origin, in: header, required: true, description: Exact configured HTTPS customer origin, schema: {type: string}}
+    Csrf: {name: X-CSRF-Token, in: header, required: true, description: Current session-bound challenge with its host-only cookie, schema: {type: string}}
+    Key: {name: Idempotency-Key, in: header, required: true, schema: {type: string, format: uuid}}
+    IfMatch: {name: If-Match, in: header, required: true, schema: {type: string, pattern: '^"v[1-9][0-9]*"$'}}
+  headers:
+    ETag: {description: Current response version, schema: {type: string, pattern: '^"v[1-9][0-9]*"$'}}
+  requestBodies:
+    Input:
+      required: true
+      content: {application/json: {schema: {$ref: '#/components/schemas/Input'}}}
+  responses:
+    Address:
+      description: Own UNVERIFIED contact; phone canonicalized to +84
+      headers: {ETag: {$ref: '#/components/headers/ETag'}}
+      content: {application/json: {schema: {$ref: '#/components/schemas/Address'}}}
+    Rejected:
+      description: Safe errors. VALIDATION_FAILED 400; SESSION_INVALID 401; RESOURCE_NOT_FOUND 404; PRECONDITION_REQUIRED 428; PRECONDITION_STALE and IDEMPOTENCY_CONFLICT 409; SERVICE_UNAVAILABLE 503. No submitted PII.
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [code, message, requestId]
+            properties:
+              code: {type: string}
+              message: {type: string}
+              requestId: {type: string, format: uuid}
+  schemas:
+    Location:
+      type: object
+      additionalProperties: false
+      required: [country, administrativeArea, locality, addressLine]
+      properties:
+        country: {type: string, const: VN}
+        administrativeArea: {type: string, minLength: 1, maxLength: 160}
+        locality: {type: string, minLength: 1, maxLength: 160}
+        addressLine: {type: string, minLength: 1, maxLength: 500}
+    AddressFields:
+      type: object
+      required: [kind, contactName, contactPhone, address, isDefault]
+      properties:
+        kind: {type: string, enum: [SENDER, RECIPIENT]}
+        label: {type: string, minLength: 1, maxLength: 80}
+        contactName: {type: string, minLength: 1, maxLength: 160}
+        contactPhone: {type: string, minLength: 1, maxLength: 32, description: Unverified Vietnamese contact; accepts domestic zero or +84 and normalizes; not an authentication identifier}
+        address: {$ref: '#/components/schemas/Location'}
+        isDefault: {type: boolean, description: At most one active default per kind and self account}
+    Input:
+      allOf: [{$ref: '#/components/schemas/AddressFields'}]
+      unevaluatedProperties: false
+    Address:
+      allOf:
+        - {$ref: '#/components/schemas/AddressFields'}
+        - type: object
+          required: [id, accountId, verificationStatus, version, createdAt, updatedAt]
+          properties:
+            id: {type: string, format: uuid}
+            accountId: {type: string, format: uuid, readOnly: true}
+            verificationStatus: {type: string, const: UNVERIFIED, readOnly: true}
+            version: {type: integer, minimum: 1}
+            createdAt: {type: string, format: date-time}
+            updatedAt: {type: string, format: date-time}
+      unevaluatedProperties: false

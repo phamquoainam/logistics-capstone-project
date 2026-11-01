@@ -1,5 +1,42 @@
 # Traceability Matrix (living document)
 
+## ArgoPost Personal Address Book — BC136, 2026-11-01
+
+Owner approved exact [contract](../implementation/personal-address-book-contract.md)
+with conditions; [PW-03 evidence/tasks](../implementation/argopost-personal-workspace.md#personal-address-book--completed-vertical-slice-2026-11-01).
+
+| Scope | Observed result |
+| --- | --- |
+| PW-03 / BC136 manual contact subset | DONE / IMPLEMENTED: actual self-owned CRUD/archive, sender/recipient/default, filter-before-paging, raw UNVERIFIED contacts only; no provider/Identity credential/Business or shipping grant |
+| Backend/PG | V18 new tables, current-history FK, immutable owner/version/archive, partial unique default, audit/receipt and narrow DML. HTTP negatives, Customer A/B, races, replay/conflict, audit/receipt rollback and revoke tested on real PG18 |
+| Regression checkpoint | Local clean H2646 PASS/17 skips; Architecture23 included. CI-style local PG1011 PASS/5 skips,0 failures/errors; full sanitized report guard/privacy/owned cleanup PASS. New browser case makes10/10 actual HTTPS/PG/test-SMTP cases PASS/CLEANUP |
+| Final refinement | Domestic0 phone search normalization preserves parenthesized self-scope. Final affected architecture/HMAC/domain/address/migration/browser46 Maven tests PASS, including domestic-phone Customer A/B denial; browser10/10 PASS. Full1011-case receipt precedes this final scoped search adjustment |
+| Frontend/contracts | Unit44, UI30 PASS; final screenshot refinement address3 PASS; desktop/mobile viewed. Typecheck/lint/default+customer builds, OpenAPI validator and implementation source validator PASS; unknown POST never blindly retried |
+| Report-policy |130/130 PASS. Added finite required tests and adjusted exact migration/table/source inventories; previous negative controls remain. Initial stale-count/runner failures retained accurately in execution record |
+| Local data | Official V18 migration and LOCAL_FULL_STACK_HTTP_READY. Existing account/identifier/profile/application aggregate fingerprints and prior migration checksums unchanged; exact original container restored healthy after owned CI fixture cleanup, no volume reset |
+| Limits | No real Gmail/S3 retest, new PR/hosted CI/merge or Full Spec004/Personal acceptance claim. Source uncommitted on feature/argopost-personal-workspace. Shipping/coverage/pricing/geocoding/Business dependencies remain outside the approved address scope |
+
+## ArgoPost Personal shell/account — historical checkpoint before PW-03, 2026-11-01
+
+Owner-directed implementation, baseline developcefd318; subsequent Owner response
+leaves shipment creation closed until service/coverage/tariff/funding inputs exist.
+See [bounded inventory/tasks/evidence](../implementation/argopost-personal-workspace.md).
+
+| Scope | Observed evidence / disposition |
+| --- | --- |
+| PW-01 SHELL | DONE: responsive header/sidebar, Personal-only workspace disclosure, user/logout and protected deep links. No Business authority inferred from approved applications/URL, no notification source invented |
+| PW-02 ACCOUNT | DONE for existing profile/account integration: dashboard reads current self-profile, loading/error/retry, actual profile editor/receipt recovery and Merchant draft routes retained; authenticated security entry uses confirmed logout before existing recovery |
+| Dashboard / switcher limits | PARTIAL for full dashboard; no shipment statistics source. Business switch BLOCKED by missing current org/member provider. Deferred modules expose descriptions, not functional shipping/financial controls or fake empty-success/counts |
+| Frontend | Typecheck/lint/default+customer build,41/41 units and final full27/27 isolated UI cases PASS. Desktop/mobile reviewed, widths360–1440, keyboard dismissal, cross-tab revocation, approved-application non-authority, absent sources and confirmed/unknown logout covered |
+| Backend / policy | Fresh clean verify PASS:658 discovered/641 passed/17 policy skips, zero failure/error, includes Architecture23/23. H2 sanitized report guard PASS; report/privacy controls130/130 PASS |
+| Focused actual PG18/browser | Existing integration method customerEntryBrowserUsesActualHttpsPostgresAndSmtp PASS; final build executes9/9 real HTTPS/PG18/test-SMTP browser cases. Adds actual dashboard/profile read, Personal-only switcher and post-save refresh checks. PASS/CLEANUP/NONE, LOCAL_UNPUBLISHED; not full993-case PG regression, hosted CI or live Gmail |
+| Local / data safety | Launcher restarted owned processes only after Windows JAR lock prevented repackaging. LOCAL_FULL_STACK_HTTP_READY; existing local DB preserved at V17, no production migration delta or test account inserted. Actual local HTTPS guest5/5 denied, validated TLS; test-owned PG resources cleaned |
+| Accurate failures | First offline .demo cache lacked mail; existing default cache resolved. Initial H2 tests passed but live JAR lock failed package; mixed stale reports failed report guard. Fresh clean verify fixed both, without weakening gates. Raw diagnostics retained privately/ignored |
+| Dependencies at this checkpoint | Address Book was awaiting Owner approval; it is now approved and implemented in PW-03 above. Booking remains closed; tracking/pickup/labels/support/Finance sources are not implemented |
+
+Source remains uncommitted on feature/argopost-personal-workspace. No PR or new
+hosted CI/merge claim; prior PR36 evidence belongs to its exact revision.
+
 ## ArgoPost commit checkpoint — 2026-11-01
 
 Owner requested commit/push of the completed public/auth presentation work on
