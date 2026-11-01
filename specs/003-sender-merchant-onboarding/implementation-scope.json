@@ -10,7 +10,7 @@
     "T003-10",
     "T003-11"
   ],
-  "purpose": "Authorized customer Identity/profile/frontend increments and Owner-directed 2026-10-30 local S3/Gmail runtime. Private evidence provider and remaining Merchant journeys remain pending. Owner-directed movapost OTP/public UI changes and 2026-10-30 mobile directory rename; deleted old paths remain explicitly inventoried.",
+  "purpose": "Authorized customer Identity/profile/frontend increments and Owner-directed 2026-10-30 local S3/Gmail runtime. Private evidence provider and remaining Merchant journeys remain pending. Owner-directed movapost OTP/public UI changes and 2026-10-30 mobile directory rename; deleted old paths remain explicitly inventoried. Owner-directed 2026-10-31 ArgoPost visual rebrand with supplied logo assets; no authentication contract or backend behavior change.",
   "paths": [
     ".gitattributes",
     ".github/workflows/backend-verification.yml",
@@ -215,6 +215,12 @@
     "app/frontend/web/package.json",
     "app/frontend/web/playwright-customer-runtime.config.ts",
     "app/frontend/web/playwright-customer-ui.config.ts",
+    "app/frontend/web/public/media/argopost-app-icon.png",
+    "app/frontend/web/public/media/argopost-freight-scenes-v2.png",
+    "app/frontend/web/public/media/argopost-logo-primary.png",
+    "app/frontend/web/public/media/argopost-logo-stacked.png",
+    "app/frontend/web/public/media/argopost-logo-white.png",
+    "app/frontend/web/public/media/argopost-symbol.png",
     "app/frontend/web/public/media/hero-network.svg",
     "app/frontend/web/public/media/movapost-network.svg",
     "app/frontend/web/runtime-tests/customer-entry.spec.ts",

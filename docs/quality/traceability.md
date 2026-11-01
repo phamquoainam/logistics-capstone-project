@@ -1,5 +1,96 @@
 # Traceability Matrix (living document)
 
+## ArgoPost commit checkpoint — 2026-11-01
+
+Owner requested commit/push of the completed public/auth presentation work on
+`feature/argopost-public-auth-ui`. Final local checks: `npm.cmd run lint`,
+`npm.cmd run build` (includes TypeScript), `npm.cmd test`41/41 and
+`npm.cmd run test:customer-ui`20/20 (includes customer build) PASS. Implementation
+source validator and `git diff --check` PASS. Removed a duplicate theme-color
+meta tag and restored punctuation in the welcome message before those checks.
+No backend, API, authentication lifecycle or migration changes. This checkpoint
+does not rerun real Gmail delivery or full-stack registration/recovery; hosted
+integration CI remains separate from these local checks. Prior uncommitted
+status statements below describe their historical checkpoints.
+
+## ArgoPost banner copy removal — Owner presentation request
+
+ARGOPOST-BANNER-COPY-REMOVAL DONE: removed banner kicker, promotional heading,
+description and two CTAs; retained/centered original illustration and an accessible
+screen-reader-only ArgoPost page heading. Removed exact utility label SẮP RA MẮT,
+retaining truthful development descriptions/statuses. Existing focused public UI
+cases3/3 and customer build PASS; responsive screenshots viewed. Runtime browser
+expectation now checks the semantic page heading and visible illustration; that
+full-stack suite was updated but not executed for this bounded UI increment.
+No backend/API/data change; earlier authentication/CI results remain historical.
+
+## ArgoPost reasons hover — Owner visual adjustment
+
+ARGOPOST-WHY-HOVER DONE: all four reasons cards now highlight orange, lift/scale
+slightly and retain readable navy text/icons, then return to white after pointer
+leave. Existing focused UI cases2/2 and customer build PASS. Actual localhost
+HTTPS browser checks4/4 orange/scale/reset states, mobile no-overflow and
+reduced-motion PASS; screenshot `.demo/argopost-ui/why-hover-final.png` viewed.
+Only CSS changed for this increment; no new business logic or persistent tests
+added. Earlier full regression evidence remains separate and was not rerun.
+
+## ArgoPost hero/service interaction V4 — latest Owner direction
+
+| Scope | Current implementation / observed evidence | Status |
+|---|---|---|
+| ARGOPOST-HERO-SERVICE-INTERACTION-V4 | Restored original parcel/vehicle SVG on compact navy hero with white/orange heading. Three portrait service cards retain gray unavailable air/sea and navy road defaults. All cards become bright orange and scale slightly on hover; road CTA also supports focus state | DONE for visual scope |
+| Interaction / availability | Browser checks each card's default color, orange hover, scale greater than1.01 and reset after pointer leaves. Air/sea continue showing not-developed status with no link/button. Existing road information page still describes development status | PASS; hover is presentation, not service enablement |
+| UI regression | `typecheck`, `lint`, default/customer builds,41/41 frontend units and20/20 isolated UI cases PASS. First UI run19 PASS/1 FAIL: stale truck-image locator; corrected expected restored hero illustration and full20-case rerun PASS | No remaining failure or weakened security test |
+| Visual/local | Desktop1280/mobile360 and hover screenshots viewed; responsive navigation/reduced-motion checks retained. Actual local HTTPS guest8/8 PASS at1280/390, images load, trusted TLS validation enabled, no uncaught page error, protected profile denies guest | No email/account mutation or fresh full authentication acceptance claim |
+
+Latest four-point reasons section, removal of homepage FAQ and final account/help
+rows remain unchanged. This interaction checkpoint supersedes V3's no-hover gray
+cards and warm road default; previous evidence remains historical. No asset bytes,
+backend contracts, data or migrations changed. Work remains uncommitted on the
+existing UI feature branch; no hosted CI or merge performed for this increment.
+
+## ArgoPost composition V3 — latest Owner presentation direction
+
+| Task / scope | Actual evidence | Status |
+|---|---|---|
+| ARGOPOST-PUBLIC-COMPOSITION-V3 | Removed three-pillar navy strip; replaced orange/staircase reasons layout with a balanced intro and four-point grid. Bright hero uses navy typography, orange CTA and the road illustration from the existing atlas. No asset/logo regeneration | DONE for requested presentation |
+| Service state | Air/sea cards are neutral gray, imagery grayscale; hover causes no animation, transition, transform, shadow or color change. Actual browser test runs with reduced-motion disabled to prove the static state. Road card has orange border/top rail/title/button, stronger hover/focus lift and scene zoom | PASS; availability and development statuses remain truthful |
+| Homepage order | Hero → utilities → reasons → services → account/help rows. Homepage FAQ block removed; standalone FAQ route retained. UI tests verify action section is last and retired strip/FAQ nodes are absent | PASS |
+| Current checks | Frontend typecheck/lint/default build/customer build PASS;41/41 frontend units,20/20 isolated UI cases PASS. Desktop1280/mobile360 screenshots viewed, no horizontal overflow. Existing OTP/resend/reset/success-navigation/authorization regression included | No failing tests; no BE/schema change requiring new migration |
+| Local / limits | Actual HTTPS guest presentation8/8 PASS at1280/390, images load, trusted TLS enabled, zero uncaught page errors, protected profile denies guest to login. No email/enrollment/reset command submitted by this smoke | Presentation smoke only; no new full authentication E2E/hosted CI claim |
+
+This visual checkpoint supersedes the earlier dark air/sea presentation and
+homepage reasons/FAQ arrangement; prior verification records remain historical.
+Source changes remain on `feature/argopost-public-auth-ui`, uncommitted.
+
+## ArgoPost homepage layout refinement — 2026-10-31
+
+| Task / scope | Evidence | Status |
+|---|---|---|
+| ARGOPOST-PUBLIC-LAYOUT-REFINEMENT | Reasons/pillars/mosaic inserted above help/actions. Pillar01/02/03 are ordinal labels, not customer/fleet counts. No unsupported7M/30K/3500 metrics or logistics SLA copied from the template | DONE for presentation scope |
+| Compact action rows | Three horizontal rows stacked vertically, all neutral white initially; pointer hover and keyboard focus apply orange highlight. Actual UI tests verify ordering, equal row geometry, reset/selection state and focus equivalent | PASS |
+| Service portraits/media | Three equal portrait columns on desktop; mobile stack. Navy unavailable air/sea, bright road focus. Detailed generated background atlas; accessible headings/tags/status and road-only service link remain real HTML. Existing service page still states development status | PASS; no service-runtime acceptance inferred |
+| Regression / test correction | `npm.cmd run typecheck`, `npm.cmd run lint`, `npm.cmd run build`, UI runner's customer build, frontend41/41 units and full UI19/19 PASS. Initial UI18 PASS/1 FAIL: static test server lacked PNG MIME; added `image/png`, retained nosniff/ownership/API refusal and reran full19 PASS. Final blend-only correction reran affected3/3 UI cases PASS | Zero remaining test failures; no security guard weakened |
+| Actual local / visual | HTTPS guest smoke8/8 at1280/390, trusted TLS validation enabled, zero uncaught page errors, protected profile denied to login. Desktop1280/mobile360 screenshots reviewed. Reduced-motion setting disables entrance/hover animation. Owner's five logo hashes unchanged; existing hero retained | Presentation smoke only; no email/account mutation requested or new full-stack auth-cycle claim |
+| Governance | Explicit source manifest includes new PNG; `validate.py --implementation` PASS with zero errors. Work remains uncommitted on the existing UI feature branch; hosted CI not run for this increment | No backend/schema/API changes; no publish/merge implied |
+
+[Generated asset, provenance and final built-in ImageGen prompt](../implementation/argopost-public-ui-assets.md).
+
+## Owner-directed ArgoPost public/auth presentation — 2026-10-31
+
+| Scope / gate | Observed evidence | Disposition |
+|---|---|---|
+| ARGOPOST-PUBLIC-AUTH-UI | Header/footer use supplied primary/white logos; about panel uses stacked logo; app icon supplies favicon. Five Owner PNG SHA-256 fingerprints unchanged. Shared navy `#012451`, orange `#ff6801`, white/neutral surfaces | Presentation refresh only; existing hero SVG retained; no external template assets copied |
+| Public layout | Compact navigation, utility tabs, account/help actions, original code-native freight illustrations, FAQ. Road card highlighted with development status; air/sea gray, explicitly unavailable and no actionable controls. Removed hero feature checklist/caption and repeated end CTA; no homepage news/testimonials/download section | Road emphasis is visual/product direction, not shipping-service acceptance |
+| Account UI / regressions | `npm.cmd run typecheck`, `npm.cmd run lint`, `npm.cmd run build`, UI runner's `build:customer` PASS; `npm.cmd test`41/41 PASS; `npm.cmd run test:customer-ui`17/17 PASS | OTP expiry/resend, unknown responses, reset capability, success popup/redirect, guest/profile/Merchant denial retained. UI uses explicit API fixtures, not backend acceptance |
+| Visual/accessibility | Desktop1280 and mobile360 screenshots reviewed; supplied images load, no horizontal overflow, keyboard utility/menu navigation and reduced-motion tests PASS. Corrected inherited column layout on consent checkbox | No new API, schema, permission or security-contract change |
+| Actual local HTTPS smoke |8 page/viewport checks across home/login/register/recover at1280/390 PASS, TLS validation enabled, all images loaded, zero uncaught page errors; guest `/personal/profile` redirected to login | Existing full-stack launcher READY; smoke submitted no enrollment, email or password-reset command. No repeat live-email or full authentication E2E claim |
+| Source governance | `python -B docs/reconciliation/v3/validate.py --implementation` PASS, zero errors; exact supplied asset paths declared in current source manifest | Task DONE within visual scope; current branch uncommitted pending review, hosted CI not run for these changes |
+
+Local screenshots/results: ignored `.demo/argopost-ui/`; reproducible UI cases in
+`app/frontend/web/ui-unit-tests/customer-ui.spec.ts`. Privacy/Terms approval and
+previously recorded Foundation/Identity acceptance limits remain unchanged.
+
 ## Owner-directed mobile directory rename — 2026-10-30
 
 | Scope | Evidence | Disposition |

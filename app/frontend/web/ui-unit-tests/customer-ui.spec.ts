@@ -26,6 +26,7 @@ async function fixture(context: BrowserContext, authenticated = false, special?:
 test('registration validates password and prevents duplicate submission without claiming email delivery', async ({ page, context }) => {
   const calls = await fixture(context); await page.goto('/register');
   expect(await page.getByRole('checkbox').locator('..').evaluate(element => getComputedStyle(element).display)).toBe('flex');
+  expect(await page.getByRole('checkbox').locator('..').evaluate(element => getComputedStyle(element).flexDirection)).toBe('row');
   await page.screenshot({ path: '../../../.demo/spec003-implementation/customer-register-desktop.png', fullPage: true, animations: 'disabled' });
   await page.getByLabel('Họ và tên', { exact: true }).fill('Người dùng thử'); await page.getByLabel('Email', { exact: true }).fill('synthetic@example.invalid'); await page.getByLabel('Số điện thoại liên hệ').fill('0901-234-567'); await page.getByLabel('Mật khẩu', { exact: true }).fill('short'); await page.getByLabel('Nhập lại mật khẩu').fill('short'); await page.getByRole('checkbox').check();
   await page.getByRole('button', { name: 'Đăng ký ngay', exact: true }).click(); await expect(page.getByRole('alert')).toContainText('15 ký tự'); expect(calls.filter(c => c.path.endsWith('/enrollments'))).toHaveLength(0);
@@ -49,7 +50,7 @@ test('registration OTP requires typed code and expires after two minutes', async
   await expect(page.getByRole('timer')).toContainText('02:00');
   await page.getByLabel('Mã xác minh 6 chữ số').fill('123456');
   await page.getByRole('button', { name: 'Xác minh tài khoản' }).click();
-  await expect(page).toHaveURL(/\/login$/); await expect(page.getByRole('status')).toContainText('Chào mừng bạn đến với movapost.');
+  await expect(page).toHaveURL(/\/login$/); await expect(page.getByRole('status')).toContainText('Chào mừng bạn đến với ArgoPost');
   await expect.poll(() => calls.filter(call => call.path.endsWith('/verifications')).length).toBe(1);
   expect(calls.find(call => call.path.endsWith('/verifications'))?.body).toEqual({proofId,proof:'123456'});
   await page.goto('/login');
@@ -105,18 +106,18 @@ test('mobile labels keyboard navigation and public login layout remain usable', 
 
 test('public website routes, utilities and mobile navigation disclose pending services', async ({ page, context }) => {
   const calls = await fixture(context); await page.goto('/');
-  await expect(page.getByRole('heading', { name: /Mỗi kiện hàng/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'ArgoPost', exact: true })).toHaveCount(1);
   await expect(page.getByRole('img', { name: /Minh họa các kiện hàng/ })).toBeVisible();
   await page.screenshot({ path: '../../../.demo/spec003-implementation/public-home-desktop.png', fullPage: true, animations: 'disabled' });
   await page.getByRole('tab', { name: 'Ước tính cước' }).click();
-  await expect(page.getByRole('tabpanel')).toContainText('SẮP RA MẮT');
+  await expect(page.getByRole('tabpanel')).not.toContainText('SẮP RA MẮT');
   await page.getByRole('tabpanel').getByRole('link', { name: 'Xem thông tin tiện ích' }).click();
   await expect(page.getByRole('heading', { name: 'Ước tính cước phí' })).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 }); await page.goto('/');
   await page.screenshot({ path: '../../../.demo/spec003-implementation/public-home-mobile.png', fullPage: true, animations: 'disabled' });
   await page.getByRole('button', { name: 'Mở menu' }).click();
-  await page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('link', { name: 'Tin & hướng dẫn' }).click();
-  await expect(page.getByRole('heading', { name: 'Cập nhật & hướng dẫn' })).toBeVisible();
+  await page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('link', { name: 'Hỗ trợ', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Hỗ trợ khách hàng' })).toBeVisible(); await page.goto('/news');
   await page.getByRole('button', { name: 'Nền tảng', exact: true }).click();
   await expect(page.locator('.ps-guide-grid article')).toHaveCount(1);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -147,13 +148,94 @@ test('unknown recovery still opens the same OTP screen and does not expose passw
   await page.getByLabel('Mã xác minh 6 chữ số').fill('123456');await page.getByRole('button',{name:'Tiếp tục',exact:true}).click();
   await expect(page.getByRole('alert')).toContainText('không còn hiệu lực');await expect(page.getByLabel('Mật khẩu mới',{exact:true})).toHaveCount(0);
 });
-test('movapost brand, keyboard utility tabs, reduced motion and responsive navigation', async ({ page, context }) => {
+test('ArgoPost brand, keyboard utility tabs, reduced motion and responsive navigation', async ({ page, context }) => {
   await fixture(context);await page.emulateMedia({reducedMotion:'reduce'});await page.goto('/');
-  await expect(page.getByRole('link',{name:'movapost., về trang chủ'}).first()).toBeVisible();await expect(page.getByRole('link',{name:'ĐĂNG NHẬP / ĐĂNG KÝ',exact:true})).toBeVisible();
+  await expect(page.getByRole('link',{name:'ArgoPost, về trang chủ'}).first()).toBeVisible();await expect(page.getByRole('link',{name:'ĐĂNG NHẬP / ĐĂNG KÝ',exact:true})).toBeVisible();
   await page.getByRole('tab',{name:'Tra cứu vận đơn'}).focus();await page.keyboard.press('ArrowRight');await expect(page.getByRole('tab',{name:'Ước tính cước'})).toBeFocused();await expect(page.getByRole('tab',{name:'Ước tính cước'})).toHaveAttribute('aria-selected','true');
   expect(await page.locator('.ps-hero-art img').evaluate(element=>getComputedStyle(element).animationName)).toBe('none');
   await page.setViewportSize({width:360,height:800});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   await page.getByRole('button',{name:'Mở menu'}).click();await page.getByRole('navigation',{name:'Điều hướng chính'}).getByRole('link',{name:'Hỗ trợ',exact:true}).click();await expect(page.getByRole('heading',{name:'Hỗ trợ khách hàng'})).toBeVisible();
+});
+
+test('ArgoPost solutions distinguish the road focus from unavailable air and sea services', async ({ page, context }) => {
+  const calls = await fixture(context); await page.goto('/');
+  const air = page.getByRole('article').filter({ has: page.getByRole('heading', { name: 'Vận chuyển hàng không' }) });
+  const sea = page.getByRole('article').filter({ has: page.getByRole('heading', { name: 'Vận chuyển đường biển' }) });
+  for (const unavailable of [air, sea]) { await expect(unavailable).toContainText('CHƯA PHÁT TRIỂN'); await expect(unavailable.getByRole('link')).toHaveCount(0); await expect(unavailable.getByRole('button')).toHaveCount(0); }
+  const road = page.getByRole('article').filter({ has: page.getByRole('heading', { name: 'Vận chuyển đường bộ' }) });
+  await expect(road).toContainText('đang được hoàn thiện'); await road.getByRole('link', { name: 'Tìm hiểu dịch vụ' }).click();
+  await expect(page).toHaveURL(/\/services$/); await expect(page.getByRole('heading', { name: 'Dịch vụ chuyển phát' })).toBeVisible();
+  expect(calls.filter(call => /tracking|quote|shipment/.test(call.path))).toHaveLength(0);
+});
+
+test('homepage has compact reasons and ends with neutral action rows instead of the old band and FAQ', async ({ page, context }) => {
+  await fixture(context); await page.emulateMedia({ reducedMotion: 'reduce' }); await page.goto('/');
+  const reasons = page.locator('.ps-why'), start = page.locator('.ps-start'), cards = page.locator('.ps-start-card');
+  expect((await reasons.boundingBox())!.y).toBeLessThan((await start.boundingBox())!.y);
+  await expect(reasons.locator('.ps-why-tile')).toHaveCount(4); await expect(cards).toHaveCount(3);
+  await expect(page.locator('.ps-why-band')).toHaveCount(0); await expect(page.locator('.ps-home-faq')).toHaveCount(0);
+  await expect(page.getByText('BẠN HỎI, ARGOPOST TRẢ LỜI', { exact: true })).toHaveCount(0);
+  expect((await page.locator('#solutions').boundingBox())!.y).toBeLessThan((await start.boundingBox())!.y);
+  await expect(page.locator('#public-main > section').last()).toHaveClass(/ps-start/);
+  const boxes = await cards.evaluateAll(elements => elements.map(element => { const box = element.getBoundingClientRect(); return { x: box.x, y: box.y, width: box.width }; }));
+  expect(boxes[1].y).toBeGreaterThan(boxes[0].y); expect(boxes[2].y).toBeGreaterThan(boxes[1].y); expect(boxes[0].x).toBe(boxes[1].x); expect(boxes[0].width).toBe(boxes[1].width);
+  for (const card of await cards.all()) expect(await card.evaluate(element => getComputedStyle(element).backgroundColor)).toBe('rgb(255, 255, 255)');
+  await cards.nth(1).hover(); expect(await cards.nth(1).evaluate(element => getComputedStyle(element).backgroundColor)).toBe('rgb(255, 104, 1)');
+  expect(await cards.first().evaluate(element => getComputedStyle(element).backgroundColor)).toBe('rgb(255, 255, 255)');
+  await page.mouse.move(0, 0); await cards.first().getByRole('link').focus(); expect(await cards.first().evaluate(element => getComputedStyle(element).backgroundColor)).toBe('rgb(255, 104, 1)');
+});
+
+test('service portraits keep gray air/sea and a navy road default', async ({ page, context }) => {
+  await fixture(context); await page.emulateMedia({ reducedMotion: 'reduce' }); await page.goto('/');
+  const cards = page.locator('.ps-freight-card'); await expect(cards).toHaveCount(3); await cards.first().scrollIntoViewIfNeeded();
+  const boxes = await cards.evaluateAll(elements => elements.map(element => { const box = element.getBoundingClientRect(); return { x: box.x, y: box.y, width: box.width, height: box.height }; }));
+  expect(boxes[0].y).toBe(boxes[1].y); expect(boxes[1].y).toBe(boxes[2].y); expect(boxes[1].x).toBeGreaterThan(boxes[0].x); expect(boxes[0].height).toBeGreaterThan(boxes[0].width);
+  for (const card of await page.locator('.ps-freight-card.is-coming').all()) expect(await card.evaluate(element => getComputedStyle(element).backgroundColor)).toBe('rgb(233, 237, 241)');
+  expect(await page.locator('.ps-freight-land').evaluate(element => getComputedStyle(element).backgroundColor)).toBe('rgb(1, 36, 81)');
+  const art = await page.request.get('/media/argopost-freight-scenes-v2.png'); expect(art.ok()).toBe(true); expect(art.headers()['content-type']).toContain('image/png');
+  await page.screenshot({ path: '../../../.demo/argopost-ui/portrait-services-desktop.png', fullPage: true, animations: 'disabled' });
+  await page.setViewportSize({ width: 390, height: 844 }); await cards.first().scrollIntoViewIfNeeded();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  const mobileBoxes = await cards.evaluateAll(elements => elements.map(element => element.getBoundingClientRect().y)); expect(mobileBoxes[1]).toBeGreaterThan(mobileBoxes[0]);
+});
+
+test('service cards turn orange and scale on hover without changing unavailable service controls', async ({ page, context }) => {
+  await fixture(context); await page.emulateMedia({ reducedMotion: 'no-preference' }); await page.goto('/');
+  await page.locator('#solutions').scrollIntoViewIfNeeded(); await expect(page.locator('#solutions')).toHaveClass(/is-visible/);
+  const cards = page.locator('.ps-freight-card');
+  for (const [index, card] of (await cards.all()).entries()) {
+    await page.mouse.move(0, 0);
+    const background = index < 2 ? 'rgb(233, 237, 241)' : 'rgb(1, 36, 81)';
+    await expect.poll(() => card.evaluate(element => getComputedStyle(element).backgroundColor)).toBe(background);
+    await card.hover();
+    await expect.poll(() => card.evaluate(element => getComputedStyle(element).backgroundColor)).toBe('rgb(255, 104, 1)');
+    await expect.poll(() => card.evaluate(element => new DOMMatrix(getComputedStyle(element).transform).a)).toBeGreaterThan(1.01);
+    if (index < 2) { await expect(card).toContainText('CHƯA PHÁT TRIỂN'); await expect(card.getByRole('link')).toHaveCount(0); await expect(card.getByRole('button')).toHaveCount(0); }
+    await page.mouse.move(0, 0);
+    await expect.poll(() => card.evaluate(element => getComputedStyle(element).backgroundColor)).toBe(background);
+  }
+  await cards.nth(1).hover(); await expect.poll(() => cards.nth(1).evaluate(element => getComputedStyle(element).backgroundColor)).toBe('rgb(255, 104, 1)');
+  await page.locator('#solutions').screenshot({ path: '../../../.demo/argopost-ui/services-hover-final.png', animations: 'disabled' });
+  await page.mouse.move(0, 0); await page.locator('.ps-service-cta').focus();
+  await expect.poll(() => cards.last().evaluate(element => getComputedStyle(element).backgroundColor)).toBe('rgb(255, 104, 1)');
+});
+
+test('ArgoPost supplied logos load and public/auth layouts stay within narrow and desktop viewports', async ({ page, context }) => {
+  await fixture(context); await page.emulateMedia({ reducedMotion: 'reduce' });
+  for (const width of [360, 1280]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const route of ['/', '/login', '/register', '/recover', '/about']) {
+      await page.goto(route); await expect(page).toHaveTitle(/ArgoPost/);
+      const logo = page.locator('.ps-header .ps-brand img'); await expect(logo).toHaveAttribute('src', '/media/argopost-logo-primary.png');
+      await expect.poll(() => logo.evaluate(element => (element as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      await expect(page.getByText('Xác minh email an toàn', { exact: true })).toHaveCount(0);
+      if (route === '/') { await expect(page.locator('.ps-footer .ps-brand img')).toHaveAttribute('src', '/media/argopost-logo-white.png'); await expect(page.locator('.ps-freight-land')).toBeVisible(); }
+      if (route === '/login') { await expect(page.getByLabel('Email đã xác minh')).toBeVisible(); await expect(page.getByLabel('Mật khẩu', { exact: true })).toBeVisible(); }
+      await page.screenshot({ path: `../../../.demo/argopost-ui/${route === '/' ? 'home' : route.slice(1)}-${width}.png`, fullPage: true, animations: 'disabled' });
+    }
+  }
+  const favicon = await page.request.get('/media/argopost-app-icon.png'); expect(favicon.ok()).toBe(true);
 });
 
 test('registration success opens login with a centered dismissible welcome popup only after server confirmation', async ({ page, context }) => {
@@ -164,7 +246,7 @@ test('registration success opens login with a centered dismissible welcome popup
   await page.getByLabel('Mã xác minh 6 chữ số').fill('123456');await page.getByRole('button',{name:'Xác minh tài khoản'}).click();
   await expect(page.getByRole('button',{name:'Đang xác minh…'})).toBeDisabled();await expect(page.locator('.cp-success-popup')).toHaveCount(0);expect(new URL(page.url()).pathname).toBe('/verify-email');
   release();await expect(page).toHaveURL(/\/login$/);await expect(page.getByRole('heading',{name:'Đăng nhập bằng mật khẩu'})).toBeVisible();
-  const popup=page.locator('.cp-success-popup');await expect(popup).toContainText('Bạn đã đăng ký thành công!');await expect(popup).toContainText('Chào mừng bạn đến với movapost.');
+  const popup=page.locator('.cp-success-popup');await expect(popup).toContainText('Bạn đã đăng ký thành công!');await expect(popup).toContainText('Chào mừng bạn đến với ArgoPost');
   await expect(popup).toHaveAttribute('role','status');const box=await popup.boundingBox();expect(box).not.toBeNull();expect(Math.abs(box!.x+box!.width/2-195)).toBeLessThan(2);expect(box!.y).toBeLessThan(24);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   await page.screenshot({path:'../../../.demo/spec003-implementation/auth-success-mobile.png',fullPage:true,animations:'disabled'});

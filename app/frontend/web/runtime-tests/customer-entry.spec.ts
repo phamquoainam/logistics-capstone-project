@@ -27,7 +27,8 @@ async function login(target: Page, password: string) {
 }
 
 test('retail guest registration uses the real HTTPS API', async () => {
-  await page.goto('/'); await expect(page.getByRole('heading', { name: /Mỗi kiện hàng/ })).toBeVisible();
+  await page.goto('/'); await expect(page.getByRole('heading', { name: 'ArgoPost', exact: true })).toHaveCount(1);
+  await expect(page.locator('.ps-hero-art img')).toBeVisible();
   const media = await page.request.get('/api/v1/public-media/hero-network.svg'); expect(media.status()).toBe(200);
   expect(media.headers()['content-type']).toContain('image/svg+xml');
   const denied = await page.request.post('/api/v1/public-media/hero-network.svg'); expect(denied.status()).toBe(403);

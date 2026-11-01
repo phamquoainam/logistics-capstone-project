@@ -4,7 +4,7 @@ import { resolve, sep, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 // Owned local static server for isolated browser units. It never implements a successful API.
 const root = await realpath(fileURLToPath(new URL('../../dist-customer/', import.meta.url)));
-const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml' };
+const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png' };
 const nonce = process.env.ELOGISTICS_UI_UNIT_SERVER_NONCE;
 if (!nonce || !/^[0-9a-f-]{36}$/.test(nonce)) throw new Error('OWNED_UI_UNIT_SERVER_NONCE_REQUIRED');
 const server = createServer(async (request, response) => {
