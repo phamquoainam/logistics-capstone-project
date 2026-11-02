@@ -121,6 +121,8 @@ test('station staff scans all parcel labels and atomically accepts custody with 
   await page.getByRole('tab', { name: 'Kiện hàng', exact: true }).click();
   await expect(page.locator('code.sl-code')).toHaveCount(2);
   codes = await page.locator('code.sl-code').allTextContents();expect(codes).toHaveLength(2);
+  // Independent read-only observations, not retries: any failure aborts the journey immediately.
+  for (let labelRead = 0; labelRead < 5; labelRead++) {
   const pdfResponse = page.waitForResponse(r => r.url().endsWith('/labels.pdf'));
   labelStage = 'LABEL_REQUEST';
   await page.getByRole('button', { name: 'Tải / In nhãn', exact: true }).click();
@@ -131,6 +133,7 @@ test('station staff scans all parcel labels and atomically accepts custody with 
   labelStage = 'LABEL_MAGIC';expect(bytes.subarray(0, 5).toString()).toBe('%PDF-');
   labelStage = 'LABEL_ACTIONS';
   await expect(page.getByRole('link', { name: 'Lưu PDF', exact: true })).toBeVisible();await expect(page.getByRole('link', { name: 'Mở bản in PDF', exact: true })).toBeVisible();
+  }
   } catch (error) {
     if (labelStage === 'LABEL_BODY_READ' && error instanceof Error) {
       if (error.message.includes('No resource with given identifier')) labelStage = 'LABEL_CDP_BODY_MISSING';
