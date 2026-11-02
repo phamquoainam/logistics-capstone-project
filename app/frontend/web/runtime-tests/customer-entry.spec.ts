@@ -1,4 +1,4 @@
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
 import type { BrowserContext, Page } from '@playwright/test';
 
@@ -129,16 +129,15 @@ test('station staff scans all parcel labels and atomically accepts custody with 
   labelStage = 'LABEL_RESPONSE_WAIT';const pdf = await pdfResponse;
   labelStage = 'LABEL_HTTP_' + pdf.status();expect(pdf.status()).toBe(200);
   labelStage = 'LABEL_MIME';expect(pdf.headers()['content-type']).toBe('application/pdf');
-  labelStage = 'LABEL_BODY_READ';const bytes = await pdf.body();
-  labelStage = 'LABEL_MAGIC';expect(bytes.subarray(0, 5).toString()).toBe('%PDF-');
+  labelStage = 'LABEL_PRIVACY';expect(pdf.headers()['cache-control']).toContain('no-store');expect(pdf.headers()['content-disposition']).toContain('attachment;');
   labelStage = 'LABEL_ACTIONS';
   await expect(page.getByRole('link', { name: 'Lưu PDF', exact: true })).toBeVisible();await expect(page.getByRole('link', { name: 'Mở bản in PDF', exact: true })).toBeVisible();
+  labelStage = 'LABEL_DOWNLOAD';const downloadEvent = page.waitForEvent('download');await page.getByRole('link', { name: 'Lưu PDF', exact: true }).click();const download = await downloadEvent;
+  labelStage = 'LABEL_FILE_BINDING';expect(download.suggestedFilename()).toBe('argopost-simulation-' + shipmentPath.split('/').at(-1) + '.pdf');
+  const target = process.env.S003_BROWSER_PRIVATE_DIRECTORY! + '/customer-label-' + labelRead + '.pdf';await download.saveAs(target);
+  labelStage = 'LABEL_FILE_MAGIC';const bytes = readFileSync(target);expect(bytes.byteLength).toBeGreaterThan(5);expect(bytes.byteLength).toBeLessThanOrEqual(12 * 1024 * 1024);expect(bytes.subarray(0, 5).toString()).toBe('%PDF-');
   }
   } catch (error) {
-    if (labelStage === 'LABEL_BODY_READ' && error instanceof Error) {
-      if (error.message.includes('No resource with given identifier')) labelStage = 'LABEL_CDP_BODY_MISSING';
-      else if (error.message.includes('evicted from inspector cache')) labelStage = 'LABEL_CDP_BODY_EVICTED';
-    }
     try { writeFileSync(process.env.S003_BROWSER_PRIVATE_DIRECTORY! + '/label-failure-stage.json', JSON.stringify({ stage: labelStage })); } catch { /* Preserve the original assertion/transport failure. */ }
     throw error;
   }
