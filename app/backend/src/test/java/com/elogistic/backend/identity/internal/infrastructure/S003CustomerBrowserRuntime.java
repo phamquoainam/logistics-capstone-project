@@ -115,6 +115,26 @@ final class S003CustomerBrowserRuntime {
         env.put("S003_BROWSER_ORIGIN",origin);env.put("S003_BROWSER_INBOX",inbox.origin());env.put("S003_BROWSER_INBOX_NONCE",inbox.nonce);env.put("S003_BROWSER_CERT",directory.resolve("server-cert.pem").toString());env.put("S003_BROWSER_SPKI",pin);env.put("S003_BROWSER_PRIVATE_DIRECTORY",directory.toString());env.put("NODE_EXTRA_CA_CERTS",directory.resolve("server-cert.pem").toString());env.put("C04_SAFE_REPORT",directory.resolve("safe-browser-results.json").toString());
         Process process=command.start();try{assertTrue(process.waitFor(180,TimeUnit.SECONDS),"OWNED_BROWSER_TIMEOUT");assertEquals(0,process.exitValue(),"CUSTOMER_BROWSER_RUNTIME_FAILED");}finally{finishOwned(process);}
     }
+    /** Fixed source-stage diagnostics only; private errors/values/stacks never become public evidence. */
+    private static String stationFailurePhase(Path directory)throws IOException{
+        Path file=directory.resolve("browser-private-diagnostics.json");
+        if(!Files.isRegularFile(file)||Files.isSymbolicLink(file)||Files.size(file)>65536)return "BROWSER";
+        var diagnostics=JSON.readTree(Files.readAllBytes(file));if(!diagnostics.isArray())return "BROWSER";
+        for(var item:diagnostics){
+            if(!CASES.get(7).equals(item.path("name").asString())||!item.path("errors").isArray())continue;
+            for(var error:item.path("errors")){
+                var match=java.util.regex.Pattern.compile("customer-entry\\.spec\\.ts:(\\d{1,3}):\\d{1,4}").matcher(error.path("stack").asString(""));
+                if(!match.find())continue;int line=Integer.parseInt(match.group(1));
+                if(line>=115&&line<=124)return "BROWSER_LABEL";
+                if(line==125)return "BROWSER_CUSTOMER_DENIAL";
+                if(line>=128&&line<=129)return "BROWSER_STAFF_LOGIN";
+                if(line>=130&&line<=134)return "BROWSER_STATION_SCAN";
+                if(line>=135&&line<=138)return "BROWSER_STATION_ACCEPTANCE";
+                if(line>=139&&line<=143)return "BROWSER_PERSONAL_TRACKING";
+            }
+        }
+        return "BROWSER";
+    }
     static void run(DataSource source)throws Exception{
         Path root=Path.of("").toAbsolutePath().normalize().getParent().getParent(),web=root.resolve("app/frontend/web");
         Path base=System.getenv("TASK_C_PRIVATE_DIRECTORY")==null?root.resolve(".demo/spec003-implementation/runtime-private"):Path.of(System.getenv("TASK_C_PRIVATE_DIRECTORY"));Files.createDirectories(base);Path directory=Files.createTempDirectory(base,"customer-browser-");
@@ -139,6 +159,7 @@ final class S003CustomerBrowserRuntime {
             throw new AssertionError("CUSTOMER_BROWSER_RUNTIME_FAILED_SEE_SANITIZED_PHASE");
         }finally{
             settings.clear();Files.deleteIfExists(directory.resolve("server.p12"));
+            if(!passed&&phase.equals("BROWSER"))phase=stationFailurePhase(directory);
             if(cases.isEmpty())try{
                 Path safe=directory.resolve("safe-browser-results.json");
                 if(Files.isRegularFile(safe) && Files.size(safe)<=65536){
