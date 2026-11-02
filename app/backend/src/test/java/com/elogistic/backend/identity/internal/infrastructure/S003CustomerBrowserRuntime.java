@@ -117,6 +117,7 @@ final class S003CustomerBrowserRuntime {
     }
     /** Fixed source-stage diagnostics only; private errors/values/stacks never become public evidence. */
     private static String stationFailurePhase(Path directory)throws IOException{
+      try {
         Path file=directory.resolve("browser-private-diagnostics.json");
         if(!Files.isRegularFile(file)||Files.isSymbolicLink(file)||Files.size(file)>65536)return "BROWSER";
         var diagnostics=JSON.readTree(Files.readAllBytes(file));if(!diagnostics.isArray())return "BROWSER";
@@ -125,7 +126,9 @@ final class S003CustomerBrowserRuntime {
             for(var error:item.path("errors")){
                 var match=java.util.regex.Pattern.compile("customer-entry\\.spec\\.ts:(\\d{1,3}):\\d{1,4}").matcher(error.path("stack").asString(""));
                 if(!match.find())continue;int line=Integer.parseInt(match.group(1));
-                if(line>=115&&line<=124)return "BROWSER_LABEL";
+                if(line>=115&&line<=120)return "BROWSER_LABEL_LOOKUP";
+                if(line>=121&&line<=123)return "BROWSER_LABEL_RESPONSE";
+                if(line==124)return "BROWSER_LABEL_ACTIONS";
                 if(line==125)return "BROWSER_CUSTOMER_DENIAL";
                 if(line>=128&&line<=129)return "BROWSER_STAFF_LOGIN";
                 if(line>=130&&line<=134)return "BROWSER_STATION_SCAN";
@@ -134,6 +137,10 @@ final class S003CustomerBrowserRuntime {
             }
         }
         return "BROWSER";
+      } catch(IOException|RuntimeException malformed) {
+        // Optional diagnostics must neither mask the original failed test nor expose malformed private JSON.
+        return "BROWSER";
+      }
     }
     static void run(DataSource source)throws Exception{
         Path root=Path.of("").toAbsolutePath().normalize().getParent().getParent(),web=root.resolve("app/frontend/web");

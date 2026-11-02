@@ -35,3 +35,14 @@ test('prepared private labels cannot follow the Station view into another Shipme
   await context.route('**/parcels/' + nextBarcode, route => route.fulfill({ contentType: 'application/json', body: JSON.stringify(next) }));await context.route('**/stations/SIM-DROP-A1/scans', route => route.fulfill({ contentType: 'application/json', body: JSON.stringify(nextScan) }));await context.route('**/shipments/' + nextId, route => route.fulfill({ contentType: 'application/json', body: JSON.stringify(next) }));
   await page.getByLabel('Scan hoặc nhập mã kiện', { exact: true }).fill(nextBarcode);await page.getByRole('button', { name: 'Scan & đối chiếu kiện', exact: true }).click();await expect(page.locator('.so-intake h2')).toContainText(next.cargo.shipment.code);await expect(save).toHaveCount(0);await expect(page.getByRole('link', { name: 'Mở bản in PDF', exact: true })).toHaveCount(0);await page.getByRole('button', { name: 'Tải / In nhãn', exact: true }).click();await expect(save).toHaveAttribute('download', 'argopost-simulation-' + nextId + '.pdf');expect(await save.getAttribute('href')).not.toBe(firstUrl);
 });
+test('early PDF mount can prepare the current private label before passive effects run', async ({ page, context }) => {
+  const f = await fixture(context);let reads = 0;await context.route('**/labels.pdf', route => { reads++;return route.fulfill({ contentType: 'application/pdf', body: '%PDF-1.7\nSynthetic isolated UI bytes' }); });
+  await page.addInitScript(() => {
+    const observer = new MutationObserver(() => {
+      const button = Array.from(document.querySelectorAll('button')).find(b => b.textContent === 'Tải / In nhãn');
+      if (button) { observer.disconnect();button.click(); }
+    });observer.observe(document, { childList: true, subtree: true });
+  });
+  await page.goto('/operations/station');await page.getByLabel('Scan hoặc nhập mã kiện', { exact: true }).fill(f.barcode);await page.getByRole('button', { name: 'Scan & đối chiếu kiện', exact: true }).click();
+  await expect.poll(() => reads).toBe(1);await expect(page.getByRole('link', { name: 'Lưu PDF', exact: true })).toBeVisible();
+});
