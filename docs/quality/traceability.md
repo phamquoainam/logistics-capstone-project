@@ -1,5 +1,30 @@
 # Traceability Matrix (living document)
 
+## ArgoPost Milestone B — bounded Station intake, 2026-11-02
+
+BC140/182 (Orders-owned labels), spec009 tracking and spec011 Station/custody map
+to [bounded tasks and capability matrix](../implementation/milestone-b-station-acceptance.md),
+[exact OpenAPI](../../contracts/openapi/personal-station-intake.yaml),
+[ADR0014](../architecture/decisions/ADR-0014-local-station-intake.md) and the explicitly
+accepted [BR13-LOCAL-INTAKE-01](../decisions/br13-local-intake-01.md).
+Baseline is PR38 merge0704a6bfb42455a89bcffb16eb731108d0b3e121, not an assumed open PR.
+V21 adds approved simulation Station records without Staff seeds, scoped immutable
+scan/acceptance/custody/audit/receipts and Orders Shipment/Parcel events. V1–V20 and
+immutable booking/UNPAID snapshots remain unchanged. Workflow joins existing current
+Identity admission with public Orders/Dispatch/Finance APIs in one transaction.
+
+Observed local checks: actual rendered/decoded private PDF labels; ten Station PG
+security/concurrency/fault cases and three upgrade/provisioning cases; focused
+13-case real HTTPS/PostgreSQL18/test-SMTP browser; frontend55 unit and37 isolated UI
+cases, typecheck/lint/build; report-policy/privacy130 cases. Full H2656 PASS/17 policy
+skips. The first full PG run had three stale V20 migration-list assertions (1052
+PASS,3 FAIL,5 skips); they were corrected to include V21, without weakening checksum
+or data-preservation assertions. The final regression/local preservation and hosted
+exact-source gates are recorded in the milestone tracker and publication metadata.
+No prior revision or mock success substitutes for those gates. Physical scanner/
+printer, Production/Merchant, In Transit/Delivered, collection/PAID and full Personal
+acceptance are not claimed. Original local database receives no automatic Staff grant.
+
 ## ArgoPost approved Personal pilot quote/booking — 2026-11-02
 
 Final Owner coverage/BR13 approval supersedes the earlier draft-only checkpoint.

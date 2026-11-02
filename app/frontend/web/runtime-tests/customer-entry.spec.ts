@@ -1,3 +1,4 @@
+import { writeFileSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
 import type { BrowserContext, Page } from '@playwright/test';
 
@@ -110,6 +111,36 @@ test('approved simulation quote booking persists shipment parcels and UNPAID obl
   await page.reload(); await expect(page.locator('.pb-shipment-heading')).toContainText('AP-SIM-'); await expect(page.locator('.pb-shipment-heading')).toContainText('UNPAID'); await page.getByRole('tab', { name: 'Kiện hàng', exact: true }).click(); await expect(page.getByRole('tabpanel')).toContainText('Ordinary test parcel two'); await page.getByRole('tab', { name: 'Cước & COD', exact: true }).click(); await expect(page.getByRole('tabpanel')).toContainText('53.000 VND'); await expect(page.getByRole('tabpanel')).toContainText('UNPAID'); await expect(page.getByRole('button', { name: 'Thanh toán', exact: true })).toHaveCount(0);
   await page.getByRole('link', { name: 'Danh sách vận đơn', exact: true }).click(); await page.getByLabel('Tìm mã vận đơn / tham chiếu / liên hệ').fill('Pilot booking browser'); await page.getByRole('button', { name: 'Tìm vận đơn', exact: true }).click(); await page.locator('#pilot-status').selectOption('WAITING_FOR_HANDOVER'); await expect(page.locator('.sd-draft-list')).toContainText('AP-SIM-'); await expect(page.locator('.sd-draft-list')).toContainText('UNPAID');
 });
+test('station staff scans all parcel labels and atomically accepts custody with visible Personal tracking', async ({ browser }) => {
+  await page.getByRole('link', { name: 'Xem vận đơn →', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Chi tiết vận đơn', exact: true })).toBeVisible();
+  const shipmentPath = new URL(page.url()).pathname;
+  await page.getByRole('tab', { name: 'Kiện hàng', exact: true }).click();
+  await expect(page.locator('code.sl-code')).toHaveCount(2);
+  const codes = await page.locator('code.sl-code').allTextContents();expect(codes).toHaveLength(2);
+  const pdfResponse = page.waitForResponse(r => r.url().endsWith('/labels.pdf'));
+  await page.getByRole('button', { name: 'Tải / In nhãn', exact: true }).click();
+  const pdf = await pdfResponse;expect(pdf.status()).toBe(200);expect(pdf.headers()['content-type']).toBe('application/pdf');expect((await pdf.body()).subarray(0, 5).toString()).toBe('%PDF-');
+  await expect(page.getByRole('link', { name: 'Lưu PDF', exact: true })).toBeVisible();await expect(page.getByRole('link', { name: 'Mở bản in PDF', exact: true })).toBeVisible();
+  await page.goto('/operations/station');await expect(page.getByRole('alert')).toContainText('chưa có permission');
+  const staff = await browser.newContext({ baseURL: origin, ignoreHTTPSErrors: false });const stationPage = await staff.newPage();
+  try {
+    await stationPage.goto('/operations/station');await stationPage.getByLabel('Email đã xác minh', { exact: true }).fill('browser-staff@example.invalid');await stationPage.getByLabel('Mật khẩu', { exact: true }).fill('synthetic-session-password');const staffLogin = stationPage.waitForResponse(r => r.url().endsWith('/customer-auth/login') && r.request().method() === 'POST');await stationPage.getByRole('button', { name: 'Đăng nhập', exact: true }).click();expect((await staffLogin).status()).toBe(200);
+    await expect(stationPage.getByRole('heading', { name: 'Tiếp nhận tại Station', exact: true })).toBeVisible();await expect(stationPage.locator('#intake-station')).toHaveValue('SIM-DROP-A1');
+    let scanWrites = 0, acceptanceWrites = 0;
+    await stationPage.route('**/api/v1/station-operations/stations/SIM-DROP-A1/scans', async route => { scanWrites++;const actual = await route.fetch({ maxRedirects: 0, maxRetries: 0, timeout: 15000 });expect(actual.status()).toBe(200);await route.abort('failed'); });
+    await stationPage.getByLabel('Scan hoặc nhập mã kiện', { exact: true }).fill(codes[0]);await stationPage.getByRole('button', { name: 'Scan & đối chiếu kiện', exact: true }).click();await expect(stationPage.getByRole('heading', { name: 'Kết quả chưa xác định', exact: true })).toBeVisible();await stationPage.getByRole('button', { name: 'Kiểm tra kết quả đã lưu', exact: true }).click();await expect(stationPage.getByText('1/2 kiện đã scan', { exact: false })).toBeVisible();expect(scanWrites).toBe(1);await stationPage.unroute('**/api/v1/station-operations/stations/SIM-DROP-A1/scans');
+    await expect(stationPage.getByRole('button', { name: 'Xác nhận tiếp nhận đủ kiện', exact: true })).toBeDisabled();
+    await stationPage.getByLabel('Scan hoặc nhập mã kiện', { exact: true }).fill(codes[1]);await stationPage.getByRole('button', { name: 'Scan & đối chiếu kiện', exact: true }).click();await expect(stationPage.getByText('2/2 kiện đã scan', { exact: false })).toBeVisible();
+    await stationPage.getByRole('checkbox').check();
+    await stationPage.route('**/api/v1/station-operations/stations/SIM-DROP-A1/shipments/*/acceptance', async route => { acceptanceWrites++;const actual = await route.fetch({ maxRedirects: 0, maxRetries: 0, timeout: 15000 });expect(actual.status()).toBe(200);await route.abort('failed'); });
+    await stationPage.getByRole('button', { name: 'Xác nhận tiếp nhận đủ kiện', exact: true }).click();await expect(stationPage.getByRole('heading', { name: 'Kết quả chưa xác định', exact: true })).toBeVisible();await stationPage.getByRole('button', { name: 'Kiểm tra kết quả đã lưu', exact: true }).click();await expect(stationPage.locator('.so-intake')).toContainText('Đã tiếp nhận tại Station');await expect(stationPage.locator('.so-intake')).toContainText('UNPAID');expect(acceptanceWrites).toBe(1);await stationPage.reload();await expect(stationPage.getByRole('heading', { name: 'Tiếp nhận tại Station', exact: true })).toBeVisible();
+    await stationPage.getByRole('button', { name: 'Đăng xuất', exact: true }).click();await expect(stationPage.getByRole('heading', { name: 'Đăng nhập bằng mật khẩu', exact: true })).toBeVisible();
+  } catch (error) { writeFileSync(process.env.S003_BROWSER_PRIVATE_DIRECTORY! + '/station-page-private.json', JSON.stringify({ path: new URL(stationPage.url()).pathname, headings: await stationPage.locator('h1').allTextContents(), alerts: await stationPage.getByRole('alert').allTextContents() }));throw error; } finally { await staff.close(); }
+  await page.goto(shipmentPath);await page.getByRole('tab', { name: 'Hành trình', exact: true }).click();await expect(page.getByRole('tabpanel')).toContainText('Carrier tiếp nhận tại Station');await expect(page.getByRole('tabpanel')).toContainText('SIM-DROP-A1');await page.reload();await page.getByRole('tab', { name: 'Lấy hàng & Giao hàng', exact: true }).click();await expect(page.getByRole('tabpanel')).toContainText('Đã tiếp nhận tại Station');await page.getByRole('tab', { name: 'Cước & COD', exact: true }).click();await expect(page.getByRole('tabpanel')).toContainText('UNPAID');
+  await page.goto('/personal/shipments');await page.locator('#pilot-status').selectOption('AT_STATION');await expect(page.locator('.sd-draft-list')).toContainText('Carrier đã nhận tại Station');await page.locator('#pilot-status').selectOption('WAITING_FOR_HANDOVER');await expect(page.getByRole('heading', { name: 'Không tìm thấy vận đơn phù hợp', exact: true })).toBeVisible();
+});
+
 test('merchant draft uses the real HTTPS API and resolves one lost write', async () => {
   await page.getByRole('link', { name: 'Merchant', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Hồ sơ đăng ký Merchant' })).toBeVisible();

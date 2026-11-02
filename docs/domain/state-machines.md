@@ -103,3 +103,13 @@
 ## Controlled Local/Test amendment, 2026-11-01
 
 [BR13-LOCAL-PILOT-01](../decisions/br13-local-pilot-01.md), explicitly approved by Owner, permits only PERSONAL simulated ROAD_STANDARD DRAFT to CONFIRMED with an UNPAID sender obligation. No successful collection, Carrier Acceptance or delivery is inferred. All original transitions and Production/Business/WMS guards above remain unchanged.
+
+## Controlled Local/Test Station intake amendment, 2026-11-02
+
+[BR13-LOCAL-INTAKE-01](../decisions/br13-local-intake-01.md) separately permits
+currently assigned/authorized Station Staff to accept all Parcels at the matching
+approved SIM-DROP despite UNPAID. The operational projection moves
+WAITING_FOR_HANDOVER/version0 → AT_STATION/version1 from one authoritative
+CARRIER_ACCEPTED_AT_STATION event, per-Parcel events and Dispatch custody. Immutable
+booking/financial snapshots remain unchanged. This is neither T4 IN_TRANSIT nor
+DELIVERED/PAID and grants no Pickup, partial intake, Merchant or Production right.

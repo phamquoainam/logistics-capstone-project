@@ -15,7 +15,11 @@ Authority: final Owner approval of ARGO-SIM-COVERAGE-1 and
 [BR13-LOCAL-PILOT-01](../decisions/br13-local-pilot-01.md).
 [Exact API/data/transaction contract](personal-pilot-booking-contract.md).
 Earlier draft-only states below are historical and superseded within this pilot.
-PR38 is still OPEN; its prior green checks do not prove this new revision.
+PR38 was subsequently merged at0704a6bfb42455a89bcffb16eb731108d0b3e121;
+post-merge CI41331696199 SUCCESS on that exact merge. The original checkpoint
+evidence below is historical. The next bounded increment is tracked separately in
+[Milestone B](milestone-b-station-acceptance.md), including labels and the explicitly
+approved unpaid simulated Station intake; it does not reopen commercial operations.
 
 - [x] PILOT-DECISION — DONE: exact service/tariff/tax,3 synthetic areas,4 directed
   routes, simulated drop-off only and bounded UNPAID booking amendment recorded.

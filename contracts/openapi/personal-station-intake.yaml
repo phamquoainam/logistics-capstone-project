@@ -1,0 +1,1453 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "ArgoPost Milestone B private labels and Station intake",
+    "version": "1.0.0",
+    "description": "Owner-authorized Personal LOCAL/TEST only. All-Parcels unpaid intake exception BR13-LOCAL-INTAKE-01; no commercial payment receipt or In Transit/Delivered inference."
+  },
+  "servers": [
+    {
+      "url": "https://127.0.0.1:8443"
+    }
+  ],
+  "paths": {
+    "/api/v1/customer/shipments/{id}/handling": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "get": {
+        "operationId": "getPersonalPilotHandling",
+        "summary": "Read own actual label and Carrier event projection",
+        "description": "Private LOCAL/TEST simulation. Current Identity and self ownership or explicit current Station permission/assignment are mandatory. No Pickup/PAID/Delivered/Production/Merchant authority.",
+        "security": [
+          {
+            "customerBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authorized private result. Replay returns the original committed identity without another business effect.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Handling"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/customer/shipments/{id}/labels.pdf": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "get": {
+        "operationId": "downloadPersonalPilotLabels",
+        "summary": "Download private booked Parcel labels",
+        "description": "Private LOCAL/TEST simulation. Current Identity and self ownership or explicit current Station permission/assignment are mandatory. No Pickup/PAID/Delivered/Production/Merchant authority.",
+        "security": [
+          {
+            "customerBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authorized private result. Replay returns the original committed identity without another business effect.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/station-operations/stations": {
+      "parameters": [],
+      "get": {
+        "operationId": "listAssignedPilotStations",
+        "summary": "Read current explicit assigned Stations",
+        "description": "Private LOCAL/TEST simulation. Current Identity and self ownership or explicit current Station permission/assignment are mandatory. No Pickup/PAID/Delivered/Production/Merchant authority.",
+        "security": [
+          {
+            "customerBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authorized private result. Replay returns the original committed identity without another business effect.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Stations"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/station-operations/stations/{station}/parcels/{barcode}": {
+      "parameters": [
+        {
+          "name": "station",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "enum": [
+              "SIM-DROP-A1",
+              "SIM-DROP-A2",
+              "SIM-DROP-B1"
+            ]
+          }
+        },
+        {
+          "name": "barcode",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^AP-P-[a-f0-9]{32}$"
+          }
+        }
+      ],
+      "get": {
+        "operationId": "lookupAssignedPilotParcel",
+        "summary": "Resolve a stable Parcel code in the assigned Station",
+        "description": "Private LOCAL/TEST simulation. Current Identity and self ownership or explicit current Station permission/assignment are mandatory. No Pickup/PAID/Delivered/Production/Merchant authority.",
+        "security": [
+          {
+            "customerBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authorized private result. Replay returns the original committed identity without another business effect.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StationView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/station-operations/stations/{station}/scans": {
+      "parameters": [
+        {
+          "name": "station",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "enum": [
+              "SIM-DROP-A1",
+              "SIM-DROP-A2",
+              "SIM-DROP-B1"
+            ]
+          }
+        }
+      ],
+      "post": {
+        "operationId": "scanAssignedPilotParcel",
+        "summary": "Persist scan evidence without custody",
+        "description": "Private LOCAL/TEST simulation. Current Identity and self ownership or explicit current Station permission/assignment are mandatory. No Pickup/PAID/Delivered/Production/Merchant authority.",
+        "security": [
+          {
+            "customerBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authorized private result. Replay returns the original committed identity without another business effect.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Scan"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScanInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/station-operations/stations/{station}/shipments/{id}": {
+      "parameters": [
+        {
+          "name": "station",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "enum": [
+              "SIM-DROP-A1",
+              "SIM-DROP-A2",
+              "SIM-DROP-B1"
+            ]
+          }
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "get": {
+        "operationId": "getAssignedPilotIntake",
+        "summary": "Read Shipment and own scan evidence at matching Station",
+        "description": "Private LOCAL/TEST simulation. Current Identity and self ownership or explicit current Station permission/assignment are mandatory. No Pickup/PAID/Delivered/Production/Merchant authority.",
+        "security": [
+          {
+            "customerBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authorized private result. Replay returns the original committed identity without another business effect.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StationView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/station-operations/stations/{station}/shipments/{id}/labels.pdf": {
+      "parameters": [
+        {
+          "name": "station",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "enum": [
+              "SIM-DROP-A1",
+              "SIM-DROP-A2",
+              "SIM-DROP-B1"
+            ]
+          }
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "get": {
+        "operationId": "downloadAssignedPilotLabels",
+        "summary": "Download labels with current Station permission",
+        "description": "Private LOCAL/TEST simulation. Current Identity and self ownership or explicit current Station permission/assignment are mandatory. No Pickup/PAID/Delivered/Production/Merchant authority.",
+        "security": [
+          {
+            "customerBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authorized private result. Replay returns the original committed identity without another business effect.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/station-operations/stations/{station}/shipments/{id}/acceptance": {
+      "parameters": [
+        {
+          "name": "station",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "enum": [
+              "SIM-DROP-A1",
+              "SIM-DROP-A2",
+              "SIM-DROP-B1"
+            ]
+          }
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "post": {
+        "operationId": "acceptAllPilotParcelsAtStation",
+        "summary": "Atomically accept all scanned Parcels under BR13-LOCAL-INTAKE-01",
+        "description": "Private LOCAL/TEST simulation. Current Identity and self ownership or explicit current Station permission/assignment are mandatory. No Pickup/PAID/Delivered/Production/Merchant authority.",
+        "security": [
+          {
+            "customerBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authorized private result. Replay returns the original committed identity without another business effect.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StationView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "enum": [
+                "\"i0\"",
+                "\"i1\""
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptanceInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/station-operations/stations/{station}/receipts/{key}": {
+      "parameters": [
+        {
+          "name": "station",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "enum": [
+              "SIM-DROP-A1",
+              "SIM-DROP-A2",
+              "SIM-DROP-B1"
+            ]
+          }
+        },
+        {
+          "name": "key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "get": {
+        "operationId": "getStationIntakeReceipt",
+        "summary": "Recover original authorized scan or acceptance result",
+        "description": "Private LOCAL/TEST simulation. Current Identity and self ownership or explicit current Station permission/assignment are mandatory. No Pickup/PAID/Delivered/Production/Merchant authority.",
+        "security": [
+          {
+            "customerBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authorized private result. Replay returns the original committed identity without another business effect.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Receipt"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Denied or unavailable; no unauthorized effects or private source disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "customerBearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Existing verified human Customer Identity. Staff additionally requires live Dispatch assignment/permission; no role claim accepted as authority."
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "message",
+          "requestId"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "Station": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "datasetVersion",
+          "assignmentVersion",
+          "permission",
+          "acceptanceEnabled"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "SIM-DROP-A1",
+              "SIM-DROP-A2",
+              "SIM-DROP-B1"
+            ]
+          },
+          "datasetVersion": {
+            "const": "ARGO-SIM-COVERAGE-1"
+          },
+          "assignmentVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "permission": {
+            "const": "STATION_INTAKE"
+          },
+          "acceptanceEnabled": {
+            "const": true
+          }
+        }
+      },
+      "Stations": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "stations",
+          "simulation"
+        ],
+        "properties": {
+          "stations": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 3,
+            "items": {
+              "$ref": "#/components/schemas/Station"
+            }
+          },
+          "simulation": {
+            "const": true
+          }
+        }
+      },
+      "ParcelState": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "parcelId",
+          "parcelNumber",
+          "barcode",
+          "state"
+        ],
+        "properties": {
+          "parcelId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "parcelNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "barcode": {
+            "type": "string",
+            "pattern": "^AP-P-[a-f0-9]{32}$"
+          },
+          "state": {
+            "enum": [
+              "NOT_ACCEPTED",
+              "AT_STATION"
+            ]
+          }
+        }
+      },
+      "Event": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "type",
+          "stationCode",
+          "occurredAt",
+          "provenance"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "const": "CARRIER_ACCEPTED_AT_STATION"
+          },
+          "stationCode": {
+            "type": "string",
+            "enum": [
+              "SIM-DROP-A1",
+              "SIM-DROP-A2",
+              "SIM-DROP-B1"
+            ]
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "provenance": {
+            "const": "SIMULATION"
+          }
+        }
+      },
+      "Handling": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "shipmentId",
+          "state",
+          "version",
+          "parcels",
+          "events",
+          "labelAvailable",
+          "simulation"
+        ],
+        "properties": {
+          "shipmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "state": {
+            "enum": [
+              "WAITING_FOR_HANDOVER",
+              "AT_STATION"
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ]
+          },
+          "parcels": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 5,
+            "items": {
+              "$ref": "#/components/schemas/ParcelState"
+            }
+          },
+          "events": {
+            "type": "array",
+            "maxItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/Event"
+            }
+          },
+          "labelAvailable": {
+            "const": true
+          },
+          "simulation": {
+            "const": true
+          }
+        }
+      },
+      "Cargo": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "shipment",
+          "handling"
+        ],
+        "properties": {
+          "shipment": {
+            "$ref": "./personal-pilot-booking.yaml#/components/schemas/Shipment"
+          },
+          "handling": {
+            "$ref": "#/components/schemas/Handling"
+          }
+        }
+      },
+      "Scan": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "shipmentId",
+          "parcelId",
+          "barcode",
+          "stationCode",
+          "scannedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "shipmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "parcelId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "barcode": {
+            "type": "string",
+            "pattern": "^AP-P-[a-f0-9]{32}$"
+          },
+          "stationCode": {
+            "type": "string",
+            "enum": [
+              "SIM-DROP-A1",
+              "SIM-DROP-A2",
+              "SIM-DROP-B1"
+            ]
+          },
+          "scannedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "StationView": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "cargo",
+          "scans",
+          "paymentState",
+          "simulation",
+          "policyVersion"
+        ],
+        "properties": {
+          "cargo": {
+            "$ref": "#/components/schemas/Cargo"
+          },
+          "scans": {
+            "type": "array",
+            "maxItems": 5,
+            "items": {
+              "$ref": "#/components/schemas/Scan"
+            }
+          },
+          "paymentState": {
+            "const": "UNPAID"
+          },
+          "simulation": {
+            "const": true
+          },
+          "policyVersion": {
+            "const": "BR13-LOCAL-INTAKE-01"
+          }
+        }
+      },
+      "ScanInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "barcode"
+        ],
+        "properties": {
+          "barcode": {
+            "type": "string",
+            "pattern": "^AP-P-[a-f0-9]{32}$"
+          }
+        }
+      },
+      "AcceptanceInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "scanIds",
+          "inspection"
+        ],
+        "properties": {
+          "scanIds": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 5,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "inspection": {
+            "const": "MATCHED"
+          }
+        }
+      },
+      "Receipt": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "operation",
+          "targetId",
+          "shipmentId",
+          "outcome"
+        ],
+        "properties": {
+          "operation": {
+            "enum": [
+              "SCAN",
+              "ACCEPT"
+            ]
+          },
+          "targetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "shipmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "outcome": {
+            "const": "COMMITTED"
+          }
+        }
+      }
+    }
+  }
+}
