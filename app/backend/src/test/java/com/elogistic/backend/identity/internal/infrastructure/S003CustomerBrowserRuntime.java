@@ -115,32 +115,40 @@ final class S003CustomerBrowserRuntime {
         env.put("S003_BROWSER_ORIGIN",origin);env.put("S003_BROWSER_INBOX",inbox.origin());env.put("S003_BROWSER_INBOX_NONCE",inbox.nonce);env.put("S003_BROWSER_CERT",directory.resolve("server-cert.pem").toString());env.put("S003_BROWSER_SPKI",pin);env.put("S003_BROWSER_PRIVATE_DIRECTORY",directory.toString());env.put("NODE_EXTRA_CA_CERTS",directory.resolve("server-cert.pem").toString());env.put("C04_SAFE_REPORT",directory.resolve("safe-browser-results.json").toString());
         Process process=command.start();try{assertTrue(process.waitFor(180,TimeUnit.SECONDS),"OWNED_BROWSER_TIMEOUT");assertEquals(0,process.exitValue(),"CUSTOMER_BROWSER_RUNTIME_FAILED");}finally{finishOwned(process);}
     }
-    /** Fixed source-stage diagnostics only; private errors/values/stacks never become public evidence. */
+    /** Explicit allowlisted checkpoints, independent of source-line shifts; never publish private errors or values. */
     private static String stationFailurePhase(Path directory)throws IOException{
       try {
-        Path file=directory.resolve("browser-private-diagnostics.json");
+        Path file=directory.resolve("label-failure-stage.json");
         if(!Files.isRegularFile(file)||Files.isSymbolicLink(file)||Files.size(file)>65536)return "BROWSER";
-        var diagnostics=JSON.readTree(Files.readAllBytes(file));if(!diagnostics.isArray())return "BROWSER";
-        for(var item:diagnostics){
-            if(!CASES.get(7).equals(item.path("name").asString())||!item.path("errors").isArray())continue;
-            for(var error:item.path("errors")){
-                var match=java.util.regex.Pattern.compile("customer-entry\\.spec\\.ts:(\\d{1,3}):\\d{1,4}").matcher(error.path("stack").asString(""));
-                if(!match.find())continue;int line=Integer.parseInt(match.group(1));
-                if(line>=115&&line<=120)return "BROWSER_LABEL_LOOKUP";
-                if(line>=121&&line<=123)return "BROWSER_LABEL_RESPONSE";
-                if(line==124)return "BROWSER_LABEL_ACTIONS";
-                if(line==125)return "BROWSER_CUSTOMER_DENIAL";
-                if(line>=128&&line<=129)return "BROWSER_STAFF_LOGIN";
-                if(line>=130&&line<=134)return "BROWSER_STATION_SCAN";
-                if(line>=135&&line<=138)return "BROWSER_STATION_ACCEPTANCE";
-                if(line>=139&&line<=143)return "BROWSER_PERSONAL_TRACKING";
-            }
-        }
-        return "BROWSER";
+        var marker=JSON.readTree(Files.readAllBytes(file));if(!marker.isObject()||!marker.propertyNames().equals(Set.of("stage"))||!marker.path("stage").isString())return "BROWSER";
+        String stage=marker.path("stage").asString();
+        return Set.of("LABEL_NAVIGATION","LABEL_REQUEST","LABEL_RESPONSE_WAIT","LABEL_MIME","LABEL_PRIVACY","LABEL_ACTIONS","LABEL_DOWNLOAD","LABEL_FILE_BINDING","LABEL_FILE_MAGIC").contains(stage)||stage.matches("LABEL_HTTP_[1-5][0-9]{2}")?stage:"BROWSER";
       } catch(IOException|RuntimeException malformed) {
         // Optional diagnostics must neither mask the original failed test nor expose malformed private JSON.
         return "BROWSER";
       }
+    }
+    /** Validate actual browser-saved bytes against the owned PostgreSQL source, not a DevTools payload copy. */
+    private static void verifyDownloadedLabels(DataSource source,Path directory)throws Exception{
+        record Parcel(UUID id,String shipmentCode){}
+        var jdbc=new org.springframework.jdbc.core.JdbcTemplate(source);
+        var parcels=jdbc.query("SELECT p.id,s.code FROM orders.pilot_parcel p JOIN orders.pilot_shipment s ON s.id=p.shipment_id JOIN identity.user_account a ON a.id=s.owner_id WHERE a.email=? ORDER BY p.parcel_number",(r,n)->new Parcel(r.getObject(1,UUID.class),r.getString(2)),EMAIL);
+        assertEquals(2,parcels.size(),"OWNED_BROWSER_LABEL_SOURCE_REQUIRED");
+        Set<String> expected=new HashSet<>();for(var parcel:parcels)expected.add("AP-P-"+parcel.id().toString().replace("-",""));
+        for(int read=0;read<5;read++){
+            Path file=directory.resolve("customer-label-"+read+".pdf");assertTrue(Files.isRegularFile(file,LinkOption.NOFOLLOW_LINKS)&&!Files.isSymbolicLink(file),"OWNED_BROWSER_DOWNLOAD_REQUIRED");assertTrue(Files.size(file)>5&&Files.size(file)<=12*1024*1024,"BOUNDED_BROWSER_DOWNLOAD_REQUIRED");
+            try(var pdf=org.apache.pdfbox.Loader.loadPDF(file.toFile())){
+                assertEquals(parcels.size(),pdf.getNumberOfPages(),"BROWSER_LABEL_PAGE_COUNT_REQUIRED");String text=new org.apache.pdfbox.text.PDFTextStripper().getText(pdf);assertTrue(text.contains("UNPAID")&&text.contains("LOCAL/TEST SIMULATION"),"BROWSER_LABEL_POLICY_REQUIRED");
+                for(var parcel:parcels)assertTrue(text.contains(parcel.shipmentCode()),"BROWSER_LABEL_SHIPMENT_BINDING_REQUIRED");
+                var renderer=new org.apache.pdfbox.rendering.PDFRenderer(pdf);Set<String> observed=new HashSet<>();
+                for(int page=0;page<pdf.getNumberOfPages();page++){
+                    var box=pdf.getPage(page).getMediaBox();assertEquals(100*72/25.4,box.getWidth(),0.1);assertEquals(150*72/25.4,box.getHeight(),0.1);
+                    var image=renderer.renderImageWithDPI(page,300);var bitmap=new com.google.zxing.BinaryBitmap(new com.google.zxing.common.HybridBinarizer(new com.google.zxing.client.j2se.BufferedImageLuminanceSource(image)));
+                    var code=new com.google.zxing.MultiFormatReader().decode(bitmap,Map.of(com.google.zxing.DecodeHintType.POSSIBLE_FORMATS,List.of(com.google.zxing.BarcodeFormat.CODE_128),com.google.zxing.DecodeHintType.TRY_HARDER,true)).getText();assertTrue(expected.contains(code)&&observed.add(code),"BROWSER_LABEL_PARCEL_BINDING_REQUIRED");
+                }
+                assertEquals(expected,observed,"BROWSER_LABEL_COMPLETE_PARCEL_SET_REQUIRED");
+            }
+        }
     }
     static void run(DataSource source)throws Exception{
         Path root=Path.of("").toAbsolutePath().normalize().getParent().getParent(),web=root.resolve("app/frontend/web");
@@ -153,7 +161,7 @@ final class S003CustomerBrowserRuntime {
             try(var smtp=new CustomerSmtpTestInbox(2,false,false,250,null,120000);var control=new InboxControl(smtp,origin)){
                 settings=properties(web,directory,password,origin,port,smtp.port());phase="BOOT";
                 try(var context=host(source,settings)){
-                    phase="BROWSER";node(web,directory,origin,control,pin);phase="RECEIPT";Path result=directory.resolve("safe-browser-results.json");assertTrue(Files.size(result)<=65536);var json=JSON.readTree(Files.readAllBytes(result));assertEquals("passed",json.get("status").asString());assertEquals(CASES.size(),json.get("passed").asInt());assertEquals(0,json.get("failed").asInt());assertEquals(CASES.size(),json.get("cases").size());
+                    phase="BROWSER";node(web,directory,origin,control,pin);phase="LABEL_DOWNLOAD_PDF";verifyDownloadedLabels(source,directory);phase="RECEIPT";Path result=directory.resolve("safe-browser-results.json");assertTrue(Files.size(result)<=65536);var json=JSON.readTree(Files.readAllBytes(result));assertEquals("passed",json.get("status").asString());assertEquals(CASES.size(),json.get("passed").asInt());assertEquals(0,json.get("failed").asInt());assertEquals(CASES.size(),json.get("cases").size());
                     int i=0;for(var item:json.get("cases")){assertEquals(CASES.get(i++),item.get("name").asString());assertEquals("passed",item.get("status").asString());assertEquals(0,item.get("errors").asInt());cases.add(Map.of("name",item.get("name").asString(),"status","passed"));}
                     phase="CLEANUP";
                 }

@@ -1,4 +1,4 @@
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
 import type { BrowserContext, Page } from '@playwright/test';
 
@@ -112,16 +112,37 @@ test('approved simulation quote booking persists shipment parcels and UNPAID obl
   await page.getByRole('link', { name: 'Danh sách vận đơn', exact: true }).click(); await page.getByLabel('Tìm mã vận đơn / tham chiếu / liên hệ').fill('Pilot booking browser'); await page.getByRole('button', { name: 'Tìm vận đơn', exact: true }).click(); await page.locator('#pilot-status').selectOption('WAITING_FOR_HANDOVER'); await expect(page.locator('.sd-draft-list')).toContainText('AP-SIM-'); await expect(page.locator('.sd-draft-list')).toContainText('UNPAID');
 });
 test('station staff scans all parcel labels and atomically accepts custody with visible Personal tracking', async ({ browser }) => {
+  let labelStage = 'LABEL_NAVIGATION';
+  let shipmentPath = '', codes: string[] = [];
+  try {
   await page.getByRole('link', { name: 'Xem vận đơn →', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Chi tiết vận đơn', exact: true })).toBeVisible();
-  const shipmentPath = new URL(page.url()).pathname;
+  shipmentPath = new URL(page.url()).pathname;
   await page.getByRole('tab', { name: 'Kiện hàng', exact: true }).click();
   await expect(page.locator('code.sl-code')).toHaveCount(2);
-  const codes = await page.locator('code.sl-code').allTextContents();expect(codes).toHaveLength(2);
+  codes = await page.locator('code.sl-code').allTextContents();expect(codes).toHaveLength(2);
+  // Independent read-only observations, not retries: any failure aborts the journey immediately.
+  for (let labelRead = 0; labelRead < 5; labelRead++) {
+  const save = page.getByRole('link', { name: 'Lưu PDF', exact: true }), previousUrl = await save.count() ? await save.getAttribute('href') : null;
   const pdfResponse = page.waitForResponse(r => r.url().endsWith('/labels.pdf'));
+  labelStage = 'LABEL_REQUEST';
   await page.getByRole('button', { name: 'Tải / In nhãn', exact: true }).click();
-  const pdf = await pdfResponse;expect(pdf.status()).toBe(200);expect(pdf.headers()['content-type']).toBe('application/pdf');expect((await pdf.body()).subarray(0, 5).toString()).toBe('%PDF-');
+  labelStage = 'LABEL_RESPONSE_WAIT';const pdf = await pdfResponse;
+  labelStage = 'LABEL_HTTP_' + pdf.status();expect(pdf.status()).toBe(200);
+  labelStage = 'LABEL_MIME';expect(pdf.headers()['content-type']).toBe('application/pdf');
+  labelStage = 'LABEL_PRIVACY';expect(pdf.headers()['cache-control']).toContain('no-store');expect(pdf.headers()['content-disposition']).toContain('attachment;');
+  labelStage = 'LABEL_ACTIONS';
   await expect(page.getByRole('link', { name: 'Lưu PDF', exact: true })).toBeVisible();await expect(page.getByRole('link', { name: 'Mở bản in PDF', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Tải / In nhãn', exact: true })).toBeEnabled();if (previousUrl) await expect(save).not.toHaveAttribute('href', previousUrl);
+  labelStage = 'LABEL_DOWNLOAD';const downloadEvent = page.waitForEvent('download');await page.getByRole('link', { name: 'Lưu PDF', exact: true }).click();const download = await downloadEvent;
+  labelStage = 'LABEL_FILE_BINDING';expect(download.suggestedFilename()).toBe('argopost-simulation-' + shipmentPath.split('/').at(-1) + '.pdf');
+  const target = process.env.S003_BROWSER_PRIVATE_DIRECTORY! + '/customer-label-' + labelRead + '.pdf';await download.saveAs(target);
+  labelStage = 'LABEL_FILE_MAGIC';const bytes = readFileSync(target);expect(bytes.byteLength).toBeGreaterThan(5);expect(bytes.byteLength).toBeLessThanOrEqual(12 * 1024 * 1024);expect(bytes.subarray(0, 5).toString()).toBe('%PDF-');
+  }
+  } catch (error) {
+    try { writeFileSync(process.env.S003_BROWSER_PRIVATE_DIRECTORY! + '/label-failure-stage.json', JSON.stringify({ stage: labelStage })); } catch { /* Preserve the original assertion/transport failure. */ }
+    throw error;
+  }
   await page.goto('/operations/station');await expect(page.getByRole('alert')).toContainText('chưa có permission');
   const staff = await browser.newContext({ baseURL: origin, ignoreHTTPSErrors: false });const stationPage = await staff.newPage();
   try {
