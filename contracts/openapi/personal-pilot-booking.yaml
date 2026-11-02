@@ -1050,7 +1050,8 @@
             "const": "CONFIRMED"
           },
           "carrierState": {
-            "const": "NOT_ACCEPTED"
+            "const": "NOT_ACCEPTED",
+            "description": "Immutable booking-time carrier fact. Current authorized Carrier state/events are read through the separate Milestone B /handling projection; AT_STATION never implies In Transit/Delivered."
           },
           "input": {
             "$ref": "./personal-shipping-drafts.yaml#/components/schemas/Input"

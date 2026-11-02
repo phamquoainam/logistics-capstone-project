@@ -1,5 +1,9 @@
 # Tasks 008 — parcel-label-merchant-fulfillment
 
+## Owner Milestone B / bounded LOCAL-TEST labels
+
+Current [tasks, scoped DONE status and actual evidence](../../docs/implementation/milestone-b-station-acceptance.md) and [accepted intake amendment](../../docs/decisions/br13-local-intake-01.md) govern this authorized Personal pilot. Canonical full-spec/public/Merchant/operational requirements below remain open; no full-spec acceptance follows.
+
 NOT_STARTED; thứ tự là contract/fixture → DB → BE/HTTP → UI/channel → verification → full acceptance. Mỗi BC là gói end-to-end nội bộ, không thay phương pháp Spec-by-Spec. Không task nào DONE trong rebuild docs.
 
 ## REQ-V3-BC-026 / BC-026: Tạo nhãn và danh sách bàn giao

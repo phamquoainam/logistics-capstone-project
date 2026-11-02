@@ -1,8 +1,11 @@
 # Personal pilot Quote → Booking — authorized contract
 
 Authority: Owner final pilot activation, [bounded BR13 amendment](../decisions/br13-local-pilot-01.md).
-Build on PW03/V18 and PW04/V19 on OPEN PR38; baseline develop fecd646 is not
-assumed to include PR38. No new worktree. New migration V20 only.
+Delivered on PR38, subsequently merged by Owner at0704a6bfb42455a89bcffb16eb731108d0b3e121.
+The original delivery baseline was develop fecd646, before that merge. PW03/V18,
+PW04/V19 and V20 remain intact. [Milestone B](milestone-b-station-acceptance.md)
+adds private labels and separate current operational tracking with forward V21;
+the immutable V20 carrierState NOT_ACCEPTED remains its booking-time snapshot.
 
 Runtime must explicitly select shipping.pilot.environment LOCAL or TEST; default
 DISABLED and any Production/unknown mode deny issuance/booking even if rows exist.
@@ -30,7 +33,8 @@ Endpoints under existing /api/v1/customer guard:
 - GET /quote-receipts/{key}: scoped quote identity metadata for unknown issuance.
 - GET /shipments: own search/reference/code/contact, fixed deterministic paging20,
   optional status WAITING_FOR_HANDOVER; GET /shipments/{id}: owned immutable detail plus its
-  actual finance UNPAID obligation. No paid/custody/change/cancel endpoint invented.
+  actual finance UNPAID obligation. Current Carrier facts use the separately
+  authorized handling projection; no paid/change/cancel endpoint is added.
 
 400 input errors,401 session,404 foreign/missing resources/receipts,409 stale/key/
 expired/consumed/unsupported/policy-disabled conflict,428 missing version,503 source

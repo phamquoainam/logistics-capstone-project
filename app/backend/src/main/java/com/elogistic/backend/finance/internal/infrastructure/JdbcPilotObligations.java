@@ -7,6 +7,7 @@ import javax.sql.DataSource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 public final class JdbcPilotObligations implements PilotObligations {
+    @Override public void requireUnpaidHandover(HandoverAccess a,UUID owner,UUID shipment,UUID quote,long amount){a.requireCurrent();if(!enabled||!TransactionSynchronizationManager.isActualTransactionActive()||!TransactionSynchronizationManager.hasResource(source))throw new IllegalStateException("PILOT_HANDOVER_ADMISSION_REQUIRED");Integer count=jdbc.queryForObject("SELECT count(*) FROM finance.pilot_shipping_obligation WHERE owner_id=? AND shipment_id=? AND quote_id=? AND amount_vnd=? AND state='UNPAID' AND currency='VND' AND payer='SENDER' AND method='CASH_ON_HANDOVER' AND policy_version='BR13-LOCAL-PILOT-01'",Integer.class,owner,shipment,quote,amount);if(count==null||count!=1)throw new IllegalStateException("PILOT_UNPAID_HANDOVER_BINDING_REQUIRED");a.requireCurrent();}
     private final DataSource source;private final JdbcTemplate jdbc;private final Clock clock;private final boolean enabled;
     public JdbcPilotObligations(DataSource source,Clock clock,boolean enabled){this.source=source;this.clock=clock;this.enabled=enabled;jdbc=new JdbcTemplate(source);}
     private void current(Access a){a.requireCurrent();if(!enabled||!TransactionSynchronizationManager.isActualTransactionActive()||!TransactionSynchronizationManager.hasResource(source))throw new IllegalStateException("PILOT_OBLIGATION_ADMISSION_REQUIRED");}

@@ -11,7 +11,11 @@ ARGO-SIM-COVERAGE-1 (exact proposed3 synthetic areas,4 directed routes and
 SIM-DROP drop-off only) and [BR13-LOCAL-PILOT-01](br13-local-pilot-01.md).
 All required business values for the bounded LOCAL/TEST pilot are now approved;
 activation is still conditional on implementation/verification, not more approval.
-Production/Business/collection/Pickup/Carrier events remain excluded. Historical
+Production/Business/collection/Pickup remain excluded. The subsequent Owner-approved
+[BR13-LOCAL-INTAKE-01](br13-local-intake-01.md) permits only all-Parcels simulated
+Station acceptance while UNPAID; no In Transit/Delivered or collection follows.
+Its technical activation/evidence is tracked in [Milestone B](../implementation/milestone-b-station-acceptance.md).
+Historical
 PENDING/PROPOSED descriptions below describe their earlier checkpoint only.
 Baseline: develop fecd646fcf2e3ee9fae0d2bc598cc57623e1d95f (PR37 merged).
 
@@ -29,8 +33,8 @@ capability, verified addresses, collection or acceptance of real shipments.
 | BR13 | BR13-LOCAL-PILOT-01 ACCEPTED within verified PERSONAL Local/Test. Atomic CONFIRMED booking creates immutable UNPAID obligation, not PAID or Carrier Acceptance |
 | Quote gate | Explicit LOCAL/TEST plus Customer SANDBOX rollout, non-production profiles, approved effective dataset/tariff, actual owned draft/measurements and ordinary-goods declaration; required positive/negative tests |
 | Booking gate | Quote gate plus current owner/draft version, unexpired unconsumed quote, exact snapshot binding and one-transaction Shipment/Parcel/receipt/audit/UNPAID persistence; races/rollback/replay tests |
-| Collection / Carrier / Production / Merchant | BLOCKED / excluded. No runtime collection or PAID permission; no Carrier Accepted/Delivered, COD, operational pickup or commercial document |
-| Evidence / PR38 | See [delivery tracker](../implementation/shipping-personal-v1.md). PR38 remains an unmerged integration proposal; exact published source/integration SHA and hosted checks belong to its PR metadata |
+| Collection / further Carrier / Production / Merchant | BLOCKED / excluded. Only the later bounded simulated Station acceptance amendment above is authorized; no collection/PAID, In Transit/Delivered, COD, pickup or commercial document |
+| Evidence / PR38 | PR38 merged0704a6bfb42455a89bcffb16eb731108d0b3e121; post-merge CI41331696199 SUCCESS. See [delivery tracker](../implementation/shipping-personal-v1.md). Milestone B has its own exact-source/integration gates |
 
 V20 records approval effective time2026-11-01T15:20:48Z, immutable synthetic master
 rows and tariff ARGO-ROAD-TARIFF-1. Runtime defaults DISABLED; the existing local

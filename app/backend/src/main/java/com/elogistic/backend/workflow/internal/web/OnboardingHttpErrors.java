@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.*;
 
 @RestControllerAdvice(basePackages="com.elogistic.backend.workflow.internal.web") @Profile("customer")
 public final class OnboardingHttpErrors {
+    @ExceptionHandler(com.elogistic.backend.orders.api.PilotHandlingFailure.class)
+    ResponseEntity<Map<String,String>> pilotHandling(com.elogistic.backend.orders.api.PilotHandlingFailure failure,HttpServletResponse response){int status=switch(failure.code()){case VALIDATION_FAILED->400;case RESOURCE_NOT_FOUND->404;case AUTHORITY_REQUIRED->403;default->409;};return rejected(response,status,failure.code().name());}
     @ExceptionHandler(com.elogistic.backend.pricing.api.PilotQuoteFailure.class)
     ResponseEntity<Map<String,String>> pilotQuote(com.elogistic.backend.pricing.api.PilotQuoteFailure failure,HttpServletResponse response){int status=switch(failure.code()){case VALIDATION_FAILED->400;case RESOURCE_NOT_FOUND->404;default->409;};return rejected(response,status,failure.code().name());}
     @ExceptionHandler(com.elogistic.backend.orders.api.PilotBookingFailure.class)
