@@ -123,6 +123,7 @@ test('station staff scans all parcel labels and atomically accepts custody with 
   codes = await page.locator('code.sl-code').allTextContents();expect(codes).toHaveLength(2);
   // Independent read-only observations, not retries: any failure aborts the journey immediately.
   for (let labelRead = 0; labelRead < 5; labelRead++) {
+  const save = page.getByRole('link', { name: 'Lưu PDF', exact: true }), previousUrl = await save.count() ? await save.getAttribute('href') : null;
   const pdfResponse = page.waitForResponse(r => r.url().endsWith('/labels.pdf'));
   labelStage = 'LABEL_REQUEST';
   await page.getByRole('button', { name: 'Tải / In nhãn', exact: true }).click();
@@ -132,6 +133,7 @@ test('station staff scans all parcel labels and atomically accepts custody with 
   labelStage = 'LABEL_PRIVACY';expect(pdf.headers()['cache-control']).toContain('no-store');expect(pdf.headers()['content-disposition']).toContain('attachment;');
   labelStage = 'LABEL_ACTIONS';
   await expect(page.getByRole('link', { name: 'Lưu PDF', exact: true })).toBeVisible();await expect(page.getByRole('link', { name: 'Mở bản in PDF', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Tải / In nhãn', exact: true })).toBeEnabled();if (previousUrl) await expect(save).not.toHaveAttribute('href', previousUrl);
   labelStage = 'LABEL_DOWNLOAD';const downloadEvent = page.waitForEvent('download');await page.getByRole('link', { name: 'Lưu PDF', exact: true }).click();const download = await downloadEvent;
   labelStage = 'LABEL_FILE_BINDING';expect(download.suggestedFilename()).toBe('argopost-simulation-' + shipmentPath.split('/').at(-1) + '.pdf');
   const target = process.env.S003_BROWSER_PRIVATE_DIRECTORY! + '/customer-label-' + labelRead + '.pdf';await download.saveAs(target);
