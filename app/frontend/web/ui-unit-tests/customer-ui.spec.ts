@@ -106,7 +106,7 @@ test('merchant route fails closed without an authoritative active membership', a
 
 test('Personal dashboard reads self Analytics without demo data or fabricated counters', async ({ page, context }) => {
   const calls = await fixture(context, true); await page.goto('/personal');
-  await expect(page.getByRole('heading', { name: 'Tổng quan gửi hàng', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Tổng quan', exact: true })).toBeVisible();
   await expect(page.locator('.an-empty')).toContainText('Chưa có vận đơn');
   await expect(page.locator('[data-metric=BOOKED_SHIPMENTS] .an-kpi-value')).toContainText('0');
   expect(calls.filter(call => call.path === '/api/v1/customer/personal-analytics' && call.method === 'GET')).toHaveLength(1);
