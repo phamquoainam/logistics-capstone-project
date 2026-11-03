@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import type { BrowserContext, Route } from '@playwright/test';
 import { analyticsFixture } from './support/analytics-fixture';
+import { managementFixture } from './support/management-fixture';
 
 // Explicit intercepted API fixtures: UI unit evidence only, never real BE/PG/full-Spec E2E PASS.
 const account = '10000000-0000-4000-8000-000000000001', proofId = '10000000-0000-4000-8000-000000000010';
@@ -17,6 +18,7 @@ async function fixture(context: BrowserContext, authenticated = false, special?:
     if (path.endsWith('/logout')) return route.fulfill({ status: 204 });
     if (path.endsWith('/me')) return reply({ accountId: account, displayName: 'Người dùng thử', verifiedEmail: 'synthetic@example.invalid', securityVersion: 1 });
     if (path.endsWith('/personal-analytics')) return reply(analyticsFixture(new URL(request.url()).searchParams));
+    if (path === '/api/v1/customer/shipments') return reply(managementFixture(new URL(request.url()).searchParams));
     if (path.endsWith('/profile')) return reply({ id: account, accountId: account, displayName: 'Hồ sơ thử', preferredLanguage: 'vi', version: 1 }, 200, { ETag: '"v1"' });
     if (path.endsWith('/recovery-verifications')) return reply({ proofId, proof: 'C'.repeat(43), expiresAt: new Date(Date.now() + 90000).toISOString() });
     if (path.endsWith('/verifications') || path.endsWith('/recovery-confirm')) return route.fulfill({ status: 204 });
@@ -137,7 +139,7 @@ test('workspace disclosure never grants Business from an approved application or
   const choices = page.locator('#workspace-choices'); await expect(choices).toBeVisible();
   await expect(choices.locator('a[href^="/merchant"]')).toHaveCount(0); await expect(choices).toContainText('Hồ sơ đăng ký không cấp quyền');
   await page.keyboard.press('Escape'); await expect(choices).toHaveCount(0); await expect(trigger).toBeFocused();
-  await trigger.click(); await page.getByRole('heading', { name: 'Hồ sơ đăng ký Merchant' }).click(); await expect(choices).toHaveCount(0);
+  await trigger.click(); await page.getByRole('heading', { name: 'Hồ sơ đăng ký Merchant' }).click({ position: { x: 4, y: 4 } }); await expect(choices).toHaveCount(0);
   await page.goto('/merchant/10000000-0000-4000-8000-000000000099/profile');
   await expect(page.getByRole('heading', { name: 'Không gian Merchant chưa khả dụng' })).toBeVisible();
   expect(calls.some(call => /\/merchant\/|\/organizations|\/contexts/.test(call.path))).toBe(false);
@@ -170,6 +172,26 @@ test('Personal shell supports narrow navigation, keyboard dismissal and accessib
   await expect(page.getByLabel('Tên hiển thị trong hồ sơ')).toBeVisible(); await expect(menu).toHaveAttribute('aria-expanded', 'false');
   await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click(); await expect(page.getByRole('heading', { name: 'Đăng nhập bằng mật khẩu' })).toBeVisible();
   await expect(page.locator('.pw-shell')).toHaveCount(0);
+});
+
+test('Personal page regions keep headings and controls clear on desktop tablet and mobile', async ({ page, context }) => {
+  await fixture(context, true, async (route, call) => {
+    if (!['/api/v1/customer/addresses', '/api/v1/merchant-applications'].includes(call.path)) return false;
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ items: [], page: 0, size: 20, hasNext: false }) }); return true;
+  });
+  const errors: string[] = []; page.on('pageerror', error => errors.push(error.name));
+  for (const width of [1440, 768, 390]) {
+    await page.setViewportSize({ width, height: 960 });
+    for (const route of ['profile', 'security', 'create', 'addresses', 'shipments', 'lookup', 'billing', 'labels', 'support', 'applications']) {
+      await page.goto('/personal/' + route);
+      const heading = page.locator('#main-content h1'); await expect(heading).toBeVisible();
+      const topbar = await page.locator('.pw-header').boundingBox(), title = await heading.boundingBox();
+      expect(title!.y).toBeGreaterThan(topbar!.y + topbar!.height);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      if (['profile', 'create', 'shipments'].includes(route)) await page.screenshot({ path: `../../../.demo/customer-portal-${route}-${width}.png`, fullPage: true, animations: 'disabled' });
+    }
+  }
+  expect(errors).toEqual([]);
 });
 
 test('unconfirmed logout for password recovery cannot claim success or open recovery automatically', async ({ page, context }) => {
@@ -380,7 +402,7 @@ test('address book creates edits archives and refreshes server-confirmed contact
   await page.getByRole('button', { name: 'Chỉnh sửa', exact: true }).click(); await page.getByLabel('Tên gợi nhớ', { exact: false }).fill('Địa chỉ đã sửa'); await page.getByRole('button', { name: 'Lưu địa chỉ', exact: true }).click(); await expect(page.locator('.ab-card')).toContainText('Địa chỉ đã sửa');
   await page.screenshot({ path: '../../../.demo/argopost-personal/address-desktop.png', fullPage: true, animations: 'disabled' });
   await page.setViewportSize({ width: 390, height: 950 }); await expect(page.locator('.pw-sidebar')).toBeHidden(); expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true); await page.screenshot({ path: '../../../.demo/argopost-personal/address-mobile.png', fullPage: true, animations: 'disabled' });
-  await page.getByRole('button', { name: 'Lưu trữ', exact: true }).click(); await expect(page.getByRole('alertdialog')).toContainText('Lịch sử vẫn được bảo toàn'); await page.getByRole('button', { name: 'Xác nhận lưu trữ', exact: true }).click(); await expect(page.getByRole('status')).toContainText('Đã lưu trữ địa chỉ'); await expect(page.locator('.ab-card')).toHaveCount(0); expect(writes).toBe(3);
+  await page.getByRole('button', { name: 'Lưu trữ', exact: true }).click(); await expect(page.getByRole('alertdialog')).toContainText('Lịch sử vẫn được bảo toàn'); await page.getByRole('button', { name: 'Xác nhận lưu trữ', exact: true }).click(); await expect(page.getByRole('status').filter({ hasText: 'Đã lưu trữ địa chỉ' })).toBeVisible(); await expect(page.locator('.ab-card')).toHaveCount(0); expect(writes).toBe(3);
   expect(calls.filter(call => call.path.includes('/customer/addresses') && call.method !== 'GET').every(call => !!call.key)).toBe(true);
 });
 

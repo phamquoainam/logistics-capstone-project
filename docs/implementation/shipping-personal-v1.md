@@ -165,3 +165,36 @@ table, especially exact pilot data/capability, tax/fees/goods limits and bounded
 BR13 exception/collection authority. Independent preparation is delivered; Personal
 Full Feature Ready, active pricing, booked shipments and operational acceptance
 are explicitly **not** achieved by this checkpoint.
+
+## Subsequent Owner-directed domestic entry checkpoint — 2026-11-03
+
+The earlier delivery-status paragraphs above remain historical. The current
+[booking contract](personal-pilot-booking-contract.md) and Owner-approved policy
+packet authorize bounded Local/Test ROAD_STANDARD, four SIM routes and UNPAID
+Booking; Milestone B adds its separately approved simulated Station intake.
+
+The domestic entry redesign reuses those accepted capabilities. New presentation
+and orchestration are documented in the [preparation contract](personal-shipping-drafts-contract.md#owner-directed-domestic-entry-presentation--2026-11-03).
+No new endpoint, schema, migration, provider or operational permission is needed.
+
+| Capability from the reference | Actual ArgoPost disposition |
+| --- | --- |
+| Sender/recipient and saved address | Self-owned raw contact snapshots; no phone discovery or Identity inference |
+| Goods/multiple parcels/measurements | Existing1..5 physical Parcels; cm UI to integer mm; exact declared-value/weight totals |
+| Draft/review/quote/confirm | Existing Backend APIs, current version/key, authoritative fee/expiry and atomic UNPAID Booking |
+| Service/handover | ROAD_STANDARD and approved simulation drop-off only; no guessed real national coverage |
+| International/instant delivery/Smart Box | Not implemented; no fake enabled controls or operational claims |
+| Pickup/delivery appointments | No authorized capability/calendar/capacity source; not opened |
+| COD/recipient payer/collection/promotions | No accepted policy/collection authority or source; not opened or fabricated |
+| Terms of carriage/commercial tax documents | Need approved legal/commercial policy; no invented consent or invoice |
+| Excel/templates/settings | No accepted import/template contract; omit decorative mutation actions |
+
+Local evidence:65 frontend units and55 isolated Customer UI cases PASS, plus the
+final8-case focused entry/quote regression after the mobile action-bar adjustment.
+Real HTTPS/PostgreSQL18/test-SMTP browser13/13 PASS, parent Maven method1/1 PASS,
+receipt `LOCAL_UNPUBLISHED`/`CLEANUP`/`NONE`. This is focused browser/integration
+evidence, not a full PostgreSQL regression or current hosted CI. The new entry flow
+actually persisted Shipment/Parcels and53000VND UNPAID in the owned test database.
+All five focused container lifecycle stages, owned resource absence and generated
+credential diagnostic audit PASS; original local PostgreSQL healthy with its
+existing volume. No real Gmail/AWS operation or local Customer-data mutation.

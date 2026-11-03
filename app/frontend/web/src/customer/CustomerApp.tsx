@@ -6,8 +6,9 @@ import { customerClient, CustomerApiError } from './client';
 import type { Enrollment, ProfileInput, VersionedProfile, ApplicationAddress, ApplicationDraft, ApplicationPage, VersionedApplication } from './client';
 import { clearEntryProof, getOtpChallenge, getVerificationLocator, hasEntryProof } from './entry-proof';
 import PublicWebsite, { PublicHeader } from './PublicWebsite';
-import { WorkspaceShell, WorkspaceDashboard, WorkspaceModule, WorkspaceSecurity, workspaceModules } from './WorkspaceShell';
+import { WorkspaceShell, WorkspaceDashboard, WorkspaceModule, WorkspaceSecurity, WorkspaceActionRequired, workspaceModules } from './WorkspaceShell';
 import AddressBook from './AddressBook';
+import { PersonalAnalyticsDashboard } from './PersonalAnalytics';
 import { ShippingDraftEditor, ShippingDraftList, ShippingDraftDetail } from './ShippingDrafts';
 import { PersonalShipmentManagement, PilotShipmentDetail } from './PilotShipping';
 import './customer.css';
@@ -263,7 +264,7 @@ export default function CustomerApp() {
       <Route path="/personal/applications" element={<ApplicationList />} /><Route path="/personal/applications/:id" element={<ApplicationDetail />} />
       <Route path="/personal/addresses" element={<AddressBook />} />
       <Route path="/personal/create" element={<ShippingDraftEditor key={location.search} />} />
-      <Route path="/personal/shipments" element={<PersonalShipmentManagement draftView={<ShippingDraftList />} />} /><Route path="/personal/shipments/:id" element={<PilotShipmentDetail key={location.pathname} />} /><Route path="/personal/drafts/:id" element={<ShippingDraftDetail key={location.pathname} />} /><Route path="/personal/lookup" element={<PersonalShipmentManagement lookup />} /><Route path="/personal/billing" element={<PersonalShipmentManagement billing />} />
+      <Route path="/personal/shipments" element={<PersonalShipmentManagement draftView={<ShippingDraftList />} />} /><Route path="/personal/shipments/:id" element={<PilotShipmentDetail key={location.pathname} />} /><Route path="/personal/drafts/:id" element={<ShippingDraftDetail key={location.pathname} />} /><Route path="/personal/lookup" element={<PersonalShipmentManagement lookup />} /><Route path="/personal/billing" element={<><PersonalAnalyticsDashboard subject={session.subject} view="fees" /><section className="pw-panel pm-fee-documents"><div><h2>Chứng từ theo vận đơn</h2><p>Mở chi tiết vận đơn để xem cước từng kiện và tải nhãn riêng tư. Cước xác nhận và nghĩa vụ UNPAID không phải tiền đã thu, COD hay doanh thu.</p></div><Link className="pw-secondary" to="/personal/shipments">Xem vận đơn</Link></section></>} /><Route path="/personal/action-required" element={<WorkspaceActionRequired />} />
       {workspaceModules.filter(item => !['addresses', 'create', 'shipments', 'lookup', 'billing'].includes(item.path)).map(item => <Route key={item.path} path={'/personal/' + item.path} element={<WorkspaceModule name={item.path} />} />)}
       <Route path="/merchant/*" element={<MerchantEntry />} />
       <Route path="*" element={<Page title="Không tìm thấy trang"><Link to="/personal">Về tổng quan cá nhân</Link></Page>} />

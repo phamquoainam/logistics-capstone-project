@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "ArgoPost approved Local/Test Quote and Booking pilot",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "Owner-approved simulation only. No Production/Merchant/Pickup/collection/Carrier authority. BR13-LOCAL-PILOT-01 creates UNPAID obligations only."
   },
   "servers": [
@@ -469,7 +469,14 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ShipmentPage"
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ShipmentPage"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ManagementPage"
+                    }
+                  ]
                 }
               }
             }
@@ -527,8 +534,117 @@
                 "WAITING_FOR_HANDOVER"
               ]
             }
+          },
+          {
+            "in": "query",
+            "name": "view",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "const": "management"
+            },
+            "description": "Select additive management projection; omitted uses exact legacy response."
+          },
+          {
+            "in": "query",
+            "name": "recipient",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 160
+            },
+            "description": "management only: literal self-owned recipient name/phone search."
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "management only, paired with until; inclusive Vietnam Booking day, max366 days. Omitted pair means all dates."
+          },
+          {
+            "in": "query",
+            "name": "until",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "management only, exclusive Vietnam Booking day; not later than tomorrow."
+          },
+          {
+            "in": "query",
+            "name": "service",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ROAD_STANDARD"
+              ]
+            },
+            "description": "management only, approved observed service."
+          },
+          {
+            "in": "query",
+            "name": "origin",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "SIM-A1",
+                "SIM-A2",
+                "SIM-B1"
+              ]
+            },
+            "description": "management only, paired with destination; approved directed route only."
+          },
+          {
+            "in": "query",
+            "name": "destination",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "SIM-A1",
+                "SIM-A2",
+                "SIM-B1"
+              ]
+            },
+            "description": "management only, paired with origin."
+          },
+          {
+            "in": "query",
+            "name": "obligation",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "UNPAID"
+              ]
+            },
+            "description": "management only; actual immutable Finance obligation, never money collected."
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "NEWEST",
+                "OLDEST",
+                "FEE_DESC",
+                "FEE_ASC"
+              ]
+            },
+            "description": "management only; stable UUID ascending tie-break; page0..500 and fixed20."
           }
-        ]
+        ],
+        "description": " Owner-approved 2026-11-03 additive view=management: source-owned KPI cohort plus current status and server filters. Omit view for the unchanged legacy response. Unknown or duplicate query parameters and owner/org/context selectors reject. No collection or Carrier transition authority."
       }
     }
   },
@@ -1215,6 +1331,102 @@
           "targetId",
           "outcome"
         ]
+      },
+      "ManagementSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "totalShipments",
+          "waitingForHandover",
+          "atStation"
+        ],
+        "properties": {
+          "totalShipments": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)$"
+          },
+          "waitingForHandover": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)$"
+          },
+          "atStation": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)$"
+          }
+        }
+      },
+      "ManagementItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "record",
+          "status"
+        ],
+        "properties": {
+          "record": {
+            "$ref": "#/components/schemas/ShipmentView"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "WAITING_FOR_HANDOVER",
+              "AT_STATION"
+            ]
+          }
+        }
+      },
+      "ManagementPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schemaVersion",
+          "generatedAt",
+          "timeZone",
+          "summary",
+          "total",
+          "page",
+          "size",
+          "hasNext",
+          "items"
+        ],
+        "properties": {
+          "schemaVersion": {
+            "const": "PERSONAL_MANAGEMENT_1"
+          },
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "timeZone": {
+            "const": "Asia/Ho_Chi_Minh"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/ManagementSummary"
+          },
+          "total": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)$"
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 500
+          },
+          "size": {
+            "const": 20
+          },
+          "hasNext": {
+            "type": "boolean"
+          },
+          "items": {
+            "type": "array",
+            "maxItems": 20,
+            "items": {
+              "$ref": "#/components/schemas/ManagementItem"
+            }
+          }
+        },
+        "description": "summary uses all non-status filters; waitingForHandover+atStation=totalShipments. total and items additionally apply status. One captured Orders SQL cohort; Finance validates each immutable UNPAID record. Money/count strings are exact."
       }
     },
     "responses": {

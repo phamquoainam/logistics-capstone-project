@@ -53,3 +53,34 @@ write input/key in memory; no PII/token storage or public logs.
 Verify real PG migration/upgrade/privilege/constraint/immutable owner, self isolation,
 replay/stale/archive/races/audit rollback, actual HTTPS browser save/reload/edit/
 archive and receipt recovery, existing required security/architecture/CI gates.
+
+## Owner-directed domestic entry presentation — 2026-11-03
+
+The Owner's ViettelPost screen reference authorizes a domestic order-entry UX
+refresh using these existing APIs, not new commercial policies or request fields.
+Contacts occupy the left column; physical parcels, payer information and notes
+the right. Shared ArgoPost Navy/Orange styles and a sticky action summary apply.
+
+- UI dimensions use centimetres with one decimal place; convert exactly into the
+  existing integer millimetre fields. Backend contracts, stored facts and service
+  limits are unchanged. Values with unsupported precision are not silently rounded.
+- Aggregate physical Parcel weight/value without multiplying by contents quantity.
+  Missing measurements render absent, not as a valid zero or free shipping quote.
+- Save draft retains the existing detail route. Continue saves via the same
+  ETag/idempotent API, then reviews the authoritative returned snapshot before
+  reusing the existing Quote/Booking panel. An unchanged saved draft needs no extra
+  write. Returning to edit discards the displayed quote; edited facts require a
+  new saved version and quote. No auto-booking or client-calculated fee is added.
+- Unknown save retains intent/key/input; resolve the scoped receipt, then read its
+  target before entering review. A newer version opens authoritative detail rather
+  than quoting it as the original lost snapshot. Unknown Quote/Booking locks the
+  edit/back action; scoped receipt recovery remains mandatory.
+- New/edit draft query identities isolate form state. Reset only clears unsaved
+  local form changes with confirmation; it never deletes or resets database data.
+- Free-text contacts never prove coverage. Use the separate approved SIM route
+  selection; no guessed VN administrative dropdown or phone-based customer lookup.
+  No unapproved terms checkbox, pickup appointment, COD, recipient payer, promotion,
+  Smart Box, international/instant service or Excel mutation is introduced.
+
+Backend eligibility, quote TTL/consumption, immutable Shipment/Parcel/UNPAID,
+ownership and Local/Test isolation remain governed by the existing booking contract.

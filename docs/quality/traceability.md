@@ -734,3 +734,94 @@ Observed local gates: `npm.cmd --prefix app/frontend/web run typecheck`, `run li
 L028/REQ-012-04/REQ-AB-PERSONAL-DASH and BC143/147: approved bounded [metric and read contract](../implementation/personal-analytics-contract.md), [OpenAPI](../../contracts/openapi/personal-analytics.yaml). New read-only Orders/Finance public projections feed notifications; current CustomerAdmission self authority and LOCAL/TEST guards remain. Six exact Booking-cohort KPIs, observed status/time/service/route/Parcel/fee breakdowns and seven URL-driven Overview/drill routes use the same contributing cohort. No schema migration or shipping/payment/Carrier mutation; no Business activation, collected revenue, fake Delivery/SLA or real-data seed.
 
 A/B audit/contract DONE; C/D/E/F VERIFIED_LOCAL for their bounded implementation, with10 aggregation,4 real PG HTTP,61 frontend unit and47 initial UI tests PASS; final focused refinements and hosted CI are recorded in the PR. Source/money/ownership/date/empty/denominator/production denial and session-generation checks are explicit. Real HTTPS/PG18/browser receipt reached13-case PASS/CLEANUP, but its local parent Maven run remains incomplete on Docker ownership inspection with Windows C full. No full local E2E process/cleanup PASS inferred. G required exact-revision CI/PR is pending at this source checkpoint. Full L028, Personal, Delivery/Return/Support/Finance lifecycle and Business acceptance remain unclaimed.
+
+## Owner-directed Customer Portal visual refresh — 2026-11-03
+
+Scope: presentation of the existing Personal workspace and shared customer typography,
+based on Owner's supplied dashboard reference. Branch
+`feature/argopost-customer-portal-ui` preserves the unmerged PR41 Analytics dependency
+at `e7de0c50157913b19da1d8ef4cf0e04709ce5ac6`; it does not assume PR41 is in develop.
+
+- [x] UI-01 — DONE: primary supplied logo in white sidebar, slim white topbar,
+  current-page context, consistent system typography and Navy/Orange visual tokens.
+  Remove the disabled search placeholder and redundant workspace explanation.
+- [x] UI-02 — DONE: compact KPI icon cards, separate chart/table regions and
+  collapsible advanced filters; URL-driven cohort/drill/search/page behavior retained.
+  Remove the repeated future-capability paragraph; unavailable metrics remain absent.
+- [x] UI-03 — DONE: consistent card/form/control spacing for addresses, shipment
+  preparation, management, lookup, billing, profile, security and application pages.
+  Combine Shipment search/status controls; retain UNPAID, raw-contact identity,
+  validation, uncertainty handling, deferred capabilities and printable label policy.
+- [x] UI-04 — DONE locally: typecheck, lint, default/customer production builds,
+  61 frontend units, the 50-case Customer UI regression and one additional 30-view
+  layout case (10 Personal routes at 1440/768/390) PASS. After consolidating Analytics
+  responsive CSS, its 10-case focused regression also PASS. Desktop/mobile synthetic
+  screenshots inspected for Overview, address book, profile and shipment preparation.
+  Screenshots/fixtures are isolated UI evidence, not real API/PostgreSQL acceptance.
+  Source/contract manifest validator and whitespace checks PASS. Final three-viewport
+  Analytics layout recheck PASS; HTTPS Vite serves the new stylesheet with the
+  existing trusted certificate and HTTP 200.
+
+No backend, API contract, permission, data, migration or environment guard changes.
+No new provider/font dependency, worktree, commit, push or merge in this UI checkpoint.
+Local launcher status observed `LOCAL_FULL_STACK_HTTP_READY`; no new live Gmail,
+AWS or database acceptance is inferred. Required hosted CI for this uncommitted
+visual diff remains unrun; earlier PR41 CI is not evidence for these edits.
+
+## Owner-directed domestic order entry — 2026-11-03
+
+REQ-AB-SHIPPING-FACTS/BC139/140/160/181 and BR01/02/10–13/19: presentation refresh
+and existing-flow orchestration under the Owner screen-reference request; see
+[preparation contract](../implementation/personal-shipping-drafts-contract.md)
+and [current shipping checkpoint/gaps](../implementation/shipping-personal-v1.md).
+
+- [x] CE-01 — DONE: inspect contracts/approved policy and preserve the existing
+  uncommitted Portal diff in ignored SHA-256 checkpoint archive before edits.
+- [x] CE-02 — DONE: domestic two-column entry, contact snapshots/address reuse,
+  multi-Parcel cm/mm conversion, exact fact totals, notes, payer and sticky summary.
+- [x] CE-03 — DONE: persist then review/quote using existing APIs; preserve legacy
+  save/detail, version/idempotency/receipt recovery and unknown-booking edit lock.
+- [x] CE-04 — DONE for local scope:65 units,55 UI cases and13 real HTTPS/PG18/test-SMTP
+  browser cases PASS, with focused cleanup/privacy PASS. No full backend regression,
+  hosted CI, production service or real Gmail/AWS acceptance inferred.
+  Typecheck/lint/default and Customer builds, source/contract manifest validator and
+  whitespace checks PASS. Final mobile action-bar8-case recheck PASS; localhost
+  launcher remains READY and serves the new entry/helper over validated HTTPS.
+
+No production Backend, migration, security gate, SIM dataset or tariff changed.
+No worktree, source discard, automatic commit/push or merge. Existing Portal WIP
+and unmerged PR41 dependency remain preserved on the current feature branch.
+
+## Owner-approved Personal Management workspace — 2026-11-03
+
+Owner approved the exact read extension in
+[Personal Management contract](../implementation/personal-management-contract.md).
+Maps BC139/140/143/147/160/181 and REQ-AB-SHIPPING-FACTS/PERSONAL-DASH; canonical
+Carrier/Finance transitions are unchanged. PM01–PM05 DONE locally; PM06 VERIFIED_LOCAL.
+
+Read-only local audit found0 Customer Draft/Shipment/Quote/Parcel/UNPAID/tracking
+records; all owners therefore legitimately see an empty Shipment list. Configuration
+seed is distinct:3 SIM areas,4 approved routes and1 tariff; Flyway V21 preserved.
+No demo seed or unauthorized Staff grant executed. Existing18 WIP paths archived
+with fingerprints before management edits; no worktree/reset/discard.
+
+New additive GET mode `view=management` leaves legacy requests/responses intact.
+Orders captures owner/date/search/recipient/service/route/payment/sort/status KPI
+and page identity in one materialized SQL cohort, then hydrates bounded immutable
+snapshots. Workflow checks Finance owner/quote/amount/currency/UNPAID bindings.
+No second financial analytics engine, cross-module internal dependency, schema
+change or mutation. New selector/duplicate/foreign/Production denial tests remain
+mandatory in the report inventory (Identity326, PG1071 expected after two new cases).
+
+Quản lý groups Shipment, action-required and Fees Analytics. Nine categories share
+existing resources; unsupported Carrier/Return/Cancel/Support categories expose
+dependencies rather than fake rows/zero metrics or unsupported actions. Fee view
+reuses accepted Analytics; documents deep-link to the existing private Shipment tab.
+Keyboard collapse, deep links, URL/Back/Forward and responsive scroll table verified.
+
+Observed local gates:2 focused PG tests,68 unit tests,63 UI cases and13 actual
+HTTPS/PostgreSQL18/test-SMTP browser cases PASS. Source/contract validator and
+whitespace checks PASS. Report-policy initially had6 stale-count assertions; the
+exact affected6 now PASS after inventory update, and all130 remain required in CI.
+Do not claim a full local PG/H2/report-policy rerun or hosted CI before that evidence.
+Commit/PR and exact required CI closure are recorded in the PR/final checkpoint.

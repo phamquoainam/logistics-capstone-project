@@ -21,16 +21,28 @@ function sparkline(metric: AnalyticsMetric) { const max = metric.points.reduce((
 function Info({ text, title }: { text: string; title: string }) { return <details className="an-info"><summary aria-label={'Giải thích ' + title}>i</summary><p>{text}</p></details>; }
 type Drill = (dimension: string, extra?: Record<string, string>) => string;
 
+function MetricIcon({ id }: { id: MetricId }) {
+  const paths: Record<MetricId, string> = {
+    BOOKED_SHIPMENTS: 'm3 7 9-5 9 5v10l-9 5-9-5Zm0 0 9 5 9-5M12 12v10',
+    AWAITING_HANDOVER: 'M12 8v4l3 2M22 12a10 10 0 1 0-20 0 10 10 0 0 0 20 0',
+    ACCEPTED_SHIPMENTS: 'm7 12 3 3 7-7M4 3h16v18H4Z',
+    CONFIRMED_FEES: 'M5 3h14v19l-3-2-4 2-4-2-3 2ZM9 8h6M9 12h6',
+    UNPAID_OBLIGATIONS: 'M3 6h18v14H3ZM3 10h18M15 15h3M7 3h10',
+    CREATED_PARCELS: 'm3 8 7-4 7 4v8l-7 4-7-4Zm0 0 7 4 7-4M10 12v8m5-16 6 4v8l-5 3',
+  };
+  return <span className="an-metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d={paths[id]} /></svg></span>;
+}
+
 function Filters({ parameters, change }: { parameters: URLSearchParams; change: (p: URLSearchParams) => void }) {
   const [from, setFrom] = useState(parameters.get('from') ?? ''), [to, setTo] = useState(moveDate(parameters.get('until') ?? '', -1));
   function submit(e: FormEvent<HTMLFormElement>) { e.preventDefault(); const fields = new FormData(e.currentTarget), p = new URLSearchParams(parameters); p.set('from', from); p.set('until', moveDate(to, 1)); for (const name of ['status', 'service', 'compare', 'bucket']) { const value = String(fields.get(name) ?? ''); if (value) p.set(name, value); else p.delete(name); } const route = String(fields.get('route') ?? '').split('/'); p.delete('origin'); p.delete('destination'); if (route.length === 2) { p.set('origin', route[0]); p.set('destination', route[1]); } for (const name of ['page', 'day', 'weight', 'multi']) p.delete(name); change(p); }
   return <form className="an-filters" aria-label="Bộ lọc Analytics" onSubmit={submit}>
     <label>Từ ngày<input type="date" required value={from} onChange={e => setFrom(e.target.value)} /></label><label>Đến ngày<input type="date" required min={from} value={to} onChange={e => setTo(e.target.value)} /></label>
-    <label>Trạng thái<select aria-label="Trạng thái" name="status" defaultValue={parameters.get('status') ?? ''}><option value="">Tất cả trạng thái</option><option value="WAITING_FOR_HANDOVER">Chờ bàn giao</option><option value="AT_STATION">Đã nhận tại Station</option></select></label>
+    <details className="an-more-filters" open={['status', 'service', 'origin', 'bucket', 'compare'].some(key => parameters.has(key))}><summary>Bộ lọc khác <span>Trạng thái, dịch vụ, tuyến & đối chiếu</span></summary><div className="an-filter-grid"><label>Trạng thái<select aria-label="Trạng thái" name="status" defaultValue={parameters.get('status') ?? ''}><option value="">Tất cả trạng thái</option><option value="WAITING_FOR_HANDOVER">Chờ bàn giao</option><option value="AT_STATION">Đã nhận tại Station</option></select></label>
     <label>Dịch vụ<select aria-label="Dịch vụ" name="service" defaultValue={parameters.get('service') ?? ''}><option value="">Tất cả dịch vụ</option><option value="ROAD_STANDARD">Đường bộ tiêu chuẩn</option></select></label>
     <label>Tuyến<select aria-label="Tuyến" name="route" defaultValue={parameters.has('origin') ? parameters.get('origin') + '/' + parameters.get('destination') : ''}><option value="">Tất cả tuyến</option>{['SIM-A1/SIM-A2', 'SIM-A2/SIM-A1', 'SIM-A1/SIM-B1', 'SIM-B1/SIM-A1'].map(r => <option key={r} value={r}>{r.replace('/', ' → ')}</option>)}</select></label>
     <label>Nhóm thời gian<select aria-label="Nhóm thời gian" name="bucket" defaultValue={parameters.get('bucket') ?? 'day'}><option value="day">Theo ngày</option><option value="week">Theo tuần</option><option value="month">Theo tháng</option></select></label>
-    <label>Đối chiếu<select aria-label="Đối chiếu" name="compare" defaultValue={parameters.get('compare') ?? 'previous'}><option value="previous">Kỳ liền trước</option><option value="none">Không so sánh</option></select></label>
+    <label>Đối chiếu<select aria-label="Đối chiếu" name="compare" defaultValue={parameters.get('compare') ?? 'previous'}><option value="previous">Kỳ liền trước</option><option value="none">Không so sánh</option></select></label></div></details>
     <div className="an-filter-actions"><button className="pw-primary">Áp dụng</button><button className="pw-secondary" type="button" onClick={() => change(new URLSearchParams(defaultDates()))}>Đặt lại</button></div>
   </form>;
 }
@@ -38,7 +50,7 @@ function Kpi({ metric, drill }: { metric: AnalyticsMetric; drill: Drill }) {
   const definition = metricDefinitions[metric.id], extra: Record<string, string> = metric.id === 'AWAITING_HANDOVER' ? { status: 'WAITING_FOR_HANDOVER' } : metric.id === 'ACCEPTED_SHIPMENTS' ? { status: 'AT_STATION' } : metric.id === 'UNPAID_OBLIGATIONS' ? { obligation: 'UNPAID' } : {};
   const trend = metric.changePercent === null ? null : Number(metric.changePercent);
   return <article className={'an-kpi an-kpi-' + metric.id.toLowerCase()} data-metric={metric.id}>
-    <div className="an-kpi-title"><span>{definition.title}</span><Info title={definition.title} text={definition.description + (metric.previousValue === null ? '' : ' Kỳ trước: ' + analyticsNumber(metric.previousValue) + (metric.unit === 'VND' ? ' VND.' : metric.unit === 'PARCEL' ? ' kiện.' : ' vận đơn.'))} /></div>
+    <div className="an-kpi-top"><MetricIcon id={metric.id} /><div className="an-kpi-title">{definition.title}</div><Info title={definition.title} text={definition.description + (metric.previousValue === null ? '' : ' Kỳ trước: ' + analyticsNumber(metric.previousValue) + (metric.unit === 'VND' ? ' VND.' : metric.unit === 'PARCEL' ? ' kiện.' : ' vận đơn.'))} /></div>
     <Link className="an-kpi-value" to={drill(definition.dimension, extra)}>{analyticsNumber(metric.value)}<small>{metric.unit === 'VND' ? 'VND' : metric.unit === 'PARCEL' ? 'kiện' : 'vận đơn'}</small></Link>
     <div className="an-kpi-bottom"><span className="an-trend">{trend === null ? '— Chưa có đối chiếu hợp lệ' : `${trend > 0 ? '↗ +' : trend < 0 ? '↘ ' : '→ '}${metric.changePercent}% so với kỳ trước`}</span><svg viewBox="0 0 120 36" aria-hidden="true"><polyline points={sparkline(metric)} fill="none" stroke="currentColor" strokeWidth="2" /></svg></div>
   </article>;
@@ -55,7 +67,7 @@ function Breakdown({ data, drill, dimension }: { data: AnalyticsReport; drill: D
   const [feeTrend, setFeeTrend] = useState(false);
   const total = data.shipments.total, accepted = data.status.find(s => s.key === 'AT_STATION')!.shipments;
   const all = !dimension || dimension === 'shipments';
-  const show = (name: string) => all || dimension === name;
+  const show = (name: string) => all || dimension === name || dimension === 'fees' && name === 'services';
   return <div className="an-breakdown">
     {show('status') && <section className="an-card an-status-card"><div className="an-card-heading"><div><span className="an-eyebrow">PHÂN BỔ</span><h2>Trạng thái vận đơn</h2></div><Info title="Trạng thái vận đơn" text="Trạng thái hiện tại của các vận đơn đặt trong kỳ. Đã nhận tại Station không phải đã giao hàng." /></div><div className="an-status-content"><div className="an-donut" role="img" aria-label={`${analyticsNumber(accepted)} trên ${analyticsNumber(total)} vận đơn đã được tiếp nhận`} style={{ background: `conic-gradient(var(--an-orange) ${scale(accepted, BigInt(total))}%, #e7edf5 0)` }}><span><strong>{analyticsNumber(total)}</strong><small>vận đơn</small></span></div><div className="an-status-legend">{data.status.map(s => <Link key={s.key} to={drill('status', { status: s.key })}><span className={'an-dot an-dot-' + s.key} /><span>{statusLabel[s.key]}<small>{fraction(s.shipments, total)}</small></span><strong>{analyticsNumber(s.shipments)}</strong></Link>)}</div></div></section>}
     {(all || dimension === 'fees') && <section className="an-card an-volume-card"><div className="an-card-heading"><div><span className="an-eyebrow">XU HƯỚNG</span><h2>{dimension === 'fees' || feeTrend ? 'Cước đã xác nhận theo kỳ' : 'Lượng vận đơn theo thời gian'}</h2></div><Link to={drill(dimension === 'fees' ? 'fees' : 'shipments')}>Phân tích ↗</Link></div>{dimension !== 'fees' && <select className="an-chart-selector" aria-label="Chỉ số biểu đồ" value={feeTrend ? 'fees' : 'shipments'} onChange={e => setFeeTrend(e.target.value === 'fees')}><option value="shipments">Số vận đơn Booking</option><option value="fees">Cước đã xác nhận</option></select>}<VolumeChart data={data} drill={drill} fees={dimension === 'fees' || feeTrend} /></section>}
@@ -75,8 +87,8 @@ function ShipmentTable({ data, parameters, change }: { data: AnalyticsReport; pa
   </section>;
 }
 
-export function PersonalAnalyticsDashboard({ subject }: { subject: Subject }) {
-  const [raw, setParameters] = useSearchParams(), location = useLocation(), dimension = location.pathname.split('/personal/overview/')[1] ?? '';
+export function PersonalAnalyticsDashboard({ subject, view = 'overview' }: { subject: Subject; view?: 'overview' | 'fees' }) {
+  const [raw, setParameters] = useSearchParams(), location = useLocation(), dimension = view === 'fees' ? 'fees' : location.pathname.split('/personal/overview/')[1] ?? '';
   const parameters = new URLSearchParams(raw); if (!parameters.has('from') && !parameters.has('until')) { const dates = defaultDates(); parameters.set('from', dates.from); parameters.set('until', dates.until); }
   const query = parameters.toString(), [result, setResult] = useState<{ query: string; report?: AnalyticsReport; error?: string }>(), [retry, setRetry] = useState(0);
   const data = result?.query === query ? result.report : undefined, error = result?.query === query ? result.error ?? '' : '';
@@ -85,16 +97,15 @@ export function PersonalAnalyticsDashboard({ subject }: { subject: Subject }) {
   const drill: Drill = (name, extra = {}) => { const p = new URLSearchParams(parameters); p.delete('page'); for (const [key, value] of Object.entries(extra)) p.set(key, value); return '/personal/overview/' + name + '?' + p; };
   const back = new URLSearchParams(parameters); for (const key of ['page', 'day', 'weight', 'multi', 'search', 'sort', 'obligation']) back.delete(key);
   const filtered = ['status', 'origin', 'day', 'weight', 'multi', 'obligation'].filter(key => parameters.has(key));
-  return <div className="an-dashboard"><header className="an-header"><div><span className="an-eyebrow">ARGOPOST PERSONAL / ANALYTICS</span>{dimension ? <nav aria-label="Đường dẫn phân tích"><Link to={'/personal/overview?' + back}>Tổng quan</Link><span aria-hidden="true"> / </span><span>{dimensions[dimension]}</span></nav> : null}<h1 tabIndex={-1}>{dimension ? dimensions[dimension] : 'Tổng quan gửi hàng'}</h1><p>{dimension ? 'Từ số tổng đến từng vận đơn trong cùng phạm vi dữ liệu.' : `Xin chào ${subject.displayName}, đây là hoạt động gửi hàng của bạn.`}</p></div><Link className="pw-primary" to="/personal/create">+ Tạo vận đơn</Link></header>
+  return <div className="an-dashboard"><header className="an-header"><div>{dimension ? <nav aria-label="Đường dẫn phân tích"><Link to={'/personal/overview?' + back}>Tổng quan</Link><span aria-hidden="true"> / </span><span>{dimensions[dimension]}</span></nav> : null}<h1 tabIndex={-1}>{view === 'fees' ? 'Cước phí & Thống kê' : dimension ? dimensions[dimension] : 'Tổng quan gửi hàng'}</h1><p>{dimension ? 'Chi tiết hoạt động trong khoảng thời gian đã chọn.' : `Xin chào ${subject.displayName}, cùng xem hoạt động gửi hàng của bạn.`}</p></div><Link className="pw-primary" to="/personal/create">+ Tạo vận đơn</Link></header>
     <Filters key={query} parameters={parameters} change={change} />
     {filtered.length > 0 && <div className="an-selection" aria-label="Điều kiện phân tích đang chọn">{filtered.map(key => <span key={key}>{key === 'status' ? statusLabel[parameters.get(key) as keyof typeof statusLabel] ?? parameters.get(key) : key === 'origin' ? parameters.get(key) + ' → ' + parameters.get('destination') : key === 'day' ? 'Nhóm thời gian: ' + parameters.get(key) : key === 'weight' ? 'Có kiện: ' + weightLabel[parameters.get(key)!] : key === 'multi' ? 'Vận đơn nhiều kiện' : 'Nghĩa vụ UNPAID'}</span>)}</div>}
     {error ? <div className="an-card an-error"><h2>Chưa thể hiển thị phân tích</h2><p role="alert">{error}</p><button className="pw-secondary" onClick={() => { setResult(undefined); setRetry(r => r + 1); }}>Thử lại Analytics</button></div> : !data ? <section className="an-loading" role="status" aria-label="Đang tải Analytics"><p>Đang đọc dữ liệu phân tích…</p><div>{Array.from({ length: 6 }, (_, i) => <span key={i} />)}</div></section> : <>
-      <div className="an-freshness"><span><i />Dữ liệu cập nhật {new Date(data.generatedAt).toLocaleTimeString('vi-VN', { timeZone: data.timeZone })} · Giờ Việt Nam</span><span>Trạng thái hiện tại của vận đơn Booking trong kỳ</span></div>
-      <section className="an-kpi-strip" aria-label="Chỉ số tổng quan">{data.metrics.map(metric => <Kpi key={metric.id} metric={metric} drill={drill} />)}</section>
+      <div className="an-freshness"><span><i />Cập nhật {new Date(data.generatedAt).toLocaleTimeString('vi-VN', { timeZone: data.timeZone })} · Giờ Việt Nam</span></div>
+      <section className={'an-kpi-strip' + (view === 'fees' ? ' an-fees-kpis' : '')} aria-label="Chỉ số tổng quan">{data.metrics.filter(metric => view !== 'fees' || ['BOOKED_SHIPMENTS', 'CONFIRMED_FEES', 'UNPAID_OBLIGATIONS'].includes(metric.id)).map(metric => <Kpi key={metric.id} metric={metric} drill={drill} />)}</section>
       {data.shipments.total === '0' && <section className="an-empty"><span aria-hidden="true">↗</span><div><h2>Chưa có vận đơn trong khoảng đã chọn</h2><p>Chọn khoảng thời gian khác hoặc tạo vận đơn để bắt đầu theo dõi hoạt động gửi hàng.</p></div><Link to="/personal/create" className="pw-secondary">Tạo vận đơn</Link></section>}
       <Breakdown data={data} drill={drill} dimension={dimension} />
       <ShipmentTable key={query} data={data} parameters={parameters} change={change} />
-      <p className="an-dependencies">Chưa có dữ liệu được ủy quyền cho tỷ lệ giao thành công, SLA, hoàn trả, COD và doanh thu đã thu. Các chỉ số này sẽ xuất hiện khi nghiệp vụ tương ứng được triển khai.</p>
     </>}
   </div>;
 }

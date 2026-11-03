@@ -70,7 +70,7 @@ export default function AddressBook() {
     finally { running.current = false; if (mounted.current) setBusy(false); }
   }
   return <section className="ab-page"><div className="pw-page-heading"><div><span className="pw-eyebrow">ARGOPOST PERSONAL</span><h1 tabIndex={-1}>Sổ địa chỉ</h1><p>Giữ thông tin người gửi và người nhận trong không gian của riêng bạn.</p></div><button className="pw-primary" disabled={busy || uncertain || !!editor || !!archive} onClick={() => { setEditor({}); setError(''); setSuccess(''); }}>+ Thêm địa chỉ</button></div>
-    <p className="ab-disclaimer">Địa chỉ tự nhập · Chưa xác minh. Lưu địa chỉ không xác nhận vùng phục vụ, không tạo vận đơn hay yêu cầu lấy hàng.</p>
+    <p className="ab-disclaimer">Liên hệ tự nhập, chưa xác minh. Vùng phục vụ được kiểm tra riêng khi báo giá.</p>
     {success && <p className="cp-notice" role="status">{success}</p>}{error && <p className="cp-notice cp-error" role="alert">{error}</p>}
     {uncertain && <button className="pw-secondary" disabled={busy} onClick={() => { void resolve(); }}>{busy ? 'Đang kiểm tra…' : 'Kiểm tra kết quả thao tác'}</button>}
     {editor && <Editor key={editor.original ? `${editor.original.id}:${editor.original.version}` : 'new'} original={editor.original} busy={busy} uncertain={uncertain} submit={input => { void execute({ operation: editor.original ? 'updatePersonalAddress' : 'createPersonalAddress', input, ...(editor.original ? { target: editor.original.id, etag: '"v' + editor.original.version + '"' } : {}) }); }} cancel={() => { setEditor(undefined); setError(''); }} />}
