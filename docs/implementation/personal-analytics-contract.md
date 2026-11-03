@@ -236,3 +236,45 @@ Observed existing PostgreSQL18.6: V21 successful,0 Shipments/Parcels/acceptances
 the read-only audit. No demo Shipments, synthetic PAID/Delivered, stations, routes
 or customer data are inserted into that database. Local empty Analytics is the
 correct state. Integration/visual fixtures are synthetic and isolated only.
+
+## Owner UI refinement amendment — 2026-11-03
+
+Authority: Owner directive `661f6fab-d341-4d74-b338-1016f35deb53`.
+This presentation amendment supersedes the six-card main Dashboard layout in
+section C–F only. Metric definitions, read DTO/query, ownership, comparison,
+LOCAL/TEST guards and all domain/security contracts above remain unchanged.
+Baseline: develop `f5e2c599e427818d97a825ede3104ec7fb12c521`, PR41/42 merged;
+one working directory, no existing uncommitted source at checkpoint start.
+
+- Main Overview: BOOKED_SHIPMENTS, AWAITING_HANDOVER, ACCEPTED_SHIPMENTS and
+  UNPAID_OBLIGATIONS only; other metrics remain in existing deep-dive routes.
+- Nonempty Overview: Booking volume, committed-event status distribution and
+  at most five source rows from the same returned page. No extra query/engine.
+  The preview is called recent only for page0/NEWEST without code search; other
+  preserved URL sort/search/page states are labelled as a filtered preview.
+- Empty cohort: four true-zero values and one concise empty state/CTA; no zero
+  donut, flat sparkline, large blank chart or repeated empty tables. Errors and
+  unavailable responses still show no metrics, never inferred zeroes.
+- Xem phân tích and dimension/drill routes retain all six metrics, source
+  search/sort/pagination, advanced filters and URL Back/Forward. Date presets
+  7/30/90 and dd/MM/yyyy inputs translate to the same existing ISO query with
+  exclusive `until` and fixed Vietnam timezone. No server parameter added.
+- Null comparisons omit repeated trend copy; sparklines require multiple points
+  and real nonzero values. No invented trend or financial result.
+- Shared header uses normal document flow instead of a fixed overlay; sidebar
+  remains independently scrollable. Keyboard focus, Escape-dismissed explanations,
+  viewport-bounded tooltips, mobile tables and reduced-motion rules remain.
+- Navy#0B2D5B/Orange#FF7A00, existing logo, compact type/spacing and white surfaces.
+  No analytics cache, provider, Backend, migration or runtime seed.
+
+Execution checklist for this amendment:
+- [x] UX-01 DONE: audit, accepted presentation scope and clean baseline preserved.
+- [x] UX-02 DONE: compact hierarchy, dates, disclosures, source preview and header.
+- [x] UX-03 DONE:75 Customer UI regressions PASS, including9 empty/few/many
+  synthetic visual cases at1440/768/390, keyboard/Escape/focus/viewport checks,
+  date presets/custom dates, deep links and unavailable responses.
+- [x] UX-04 LOCAL DONE: typecheck/lint,68 units, default/Customer builds and source
+  validator PASS; final invalid-date negative check PASS. No Backend/API change.
+  Hosted real API/HTTPS/PostgreSQL/browser and exact-revision CI remain required
+  before review readiness; commit/PR and final hosted results are recorded on
+  the refinement PR after push. No automatic merge.

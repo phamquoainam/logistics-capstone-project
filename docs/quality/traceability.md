@@ -825,3 +825,27 @@ whitespace checks PASS. Report-policy initially had6 stale-count assertions; the
 exact affected6 now PASS after inventory update, and all130 remain required in CI.
 Do not claim a full local PG/H2/report-policy rerun or hosted CI before that evidence.
 Commit/PR and exact required CI closure are recorded in the PR/final checkpoint.
+
+
+## Owner premium Personal Dashboard refinement — 2026-11-03
+
+Authority661f6fab-d341-4d74-b338-1016f35deb53; presentation amendment in
+[Personal Analytics contract](../implementation/personal-analytics-contract.md).
+Reuses L028/REQ-012-04/REQ-AB-PERSONAL-DASH/BC143/147 and the same authenticated
+read transport, exact VND/metrics and captured source cohort. Main Overview now
+prioritizes four KPIs, real volume/status charts and at most five source records.
+Six metrics and all route/weight/service/fee/source controls remain in deep dive.
+No repeated empty charts or null-comparison copy; unavailable still has no counters.
+7/30/90 presets and dd/MM/yyyy custom dates preserve existing query semantics;
+URL/Back/Forward, keyboard focus, Escape tooltips and responsive tables tested.
+Shared normal-flow header replaces the fixed overlap; sidebar remains scrollable.
+
+Observed local gates: typecheck/lint,68 frontend units, default/Customer builds,
+75 Customer UI regressions PASS, including9 synthetic empty/few/many visual cases
+at1440/768/390. Final custom-date negative case additionally PASS (invalid31/02
+never changes URL or submits an invalid query). Source validator errors[] and
+semantic ownership CONSISTENT. First new empty-CTA assertion counted the persistent
+sidebar navigation too; scoped to the Dashboard, preserving both usable links.
+No Backend/client DTO/OpenAPI/migration/provider/security/policy changes or runtime
+data seed. Real API/HTTPS/PostgreSQL/browser acceptance and required CI are tracked
+on this refinement PR's exact source/integration revision; not inferred from PR42.
