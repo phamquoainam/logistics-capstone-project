@@ -43,20 +43,20 @@ test('verification consumes the actual SMTP message only after confirmation', as
 });
 test('verified login has isolated customer cookies and no SYSTEM authority', async ({ browser }) => {
   const response = page.waitForResponse(r => new URL(r.url()).pathname === '/api/v1/customer-auth/login' && r.request().method() === 'POST'); await login(page, originalPassword); const received = await response; expect(received.status()).toBe(200); const body = await received.json(); if (typeof body.accessToken !== 'string') throw new Error('CUSTOMER_ACCESS_RESPONSE_INVALID'); capturedAccess = body.accessToken;
-  await expect(page.getByRole('heading', { name: 'Xin chào, Người gửi hàng thử' })).toBeVisible();
-  await expect(page.locator('.pw-profile-details')).toContainText('Người gửi hàng thử');
+  await expect(page.getByRole('heading', { name: 'Tổng quan gửi hàng', exact: true })).toBeVisible();
+  await expect(page.locator('.an-header')).toContainText('Người gửi hàng thử');
   await page.getByRole('button', { name: 'ArgoPost Personal', exact: true }).click();
   await expect(page.locator('#workspace-choices')).toContainText('Hồ sơ đăng ký không cấp quyền');
   await expect(page.locator('#workspace-choices a[href^="/merchant"]')).toHaveCount(0);
   await page.keyboard.press('Escape');
   await expect(page.locator('#workspace-choices')).toHaveCount(0);
-  await expect(page.locator('.pw-unavailable')).toContainText('Dịch vụ và bảng giá chưa được thiết lập');
+  await expect(page.locator('.an-empty')).toContainText('Chưa có vận đơn');
   await page.goto('/merchant'); await expect(page.getByRole('heading', { name: 'Không gian Merchant chưa khả dụng' })).toBeVisible();
   await expect(page.getByRole('alert')).toContainText('không hiển thị dữ liệu Merchant'); await page.goto('/personal');
   const cookies = await context.cookies(); expect(cookies.some(c => c.name === '__Host-elogistics.customer.refresh' && c.httpOnly && c.secure && c.sameSite === 'Strict' && c.path === '/')).toBe(true); expect(cookies.some(c => c.name === '__Host-elogistics.refresh')).toBe(false);
   expect(await page.evaluate(async token => (await fetch('/api/v1/auth/me', { headers: { Authorization: 'Bearer ' + token }, cache: 'no-store' })).status, capturedAccess)).toBe(401);
   expect(await page.evaluate(() => [localStorage.length, sessionStorage.length])).toEqual([0, 0]);
-  secondary = await browser.newContext({ baseURL: origin, ignoreHTTPSErrors: false }); secondaryPage = await secondary.newPage(); await secondaryPage.goto('/login'); await login(secondaryPage, originalPassword); await expect(secondaryPage.getByRole('heading', { name: 'Xin chào, Người gửi hàng thử' })).toBeVisible();
+  secondary = await browser.newContext({ baseURL: origin, ignoreHTTPSErrors: false }); secondaryPage = await secondary.newPage(); await secondaryPage.goto('/login'); await login(secondaryPage, originalPassword); await expect(secondaryPage.getByRole('heading', { name: 'Tổng quan gửi hàng', exact: true })).toBeVisible();
 });
 test('profile lost response resolves through the real committed receipt', async () => {
   await page.getByRole('link', { name: 'Hồ sơ', exact: true }).click(); await expect(page.getByLabel('Tên hiển thị trong hồ sơ')).toHaveValue('Người gửi hàng thử'); await page.getByLabel('Tên hiển thị trong hồ sơ').fill('Tên gửi hàng đã cập nhật');
@@ -70,7 +70,7 @@ test('profile lost response resolves through the real committed receipt', async 
   await page.getByRole('button', { name: 'Kiểm tra kết quả lưu' }).click(); await expect(page.getByText('Đã lưu hồ sơ.', { exact: true })).toBeVisible(); await expect(page.getByLabel('Tên hiển thị trong hồ sơ')).toHaveValue('Tên gửi hàng đã cập nhật'); expect(writes).toBe(1); await page.unroute('**/api/v1/customer/profile');
   await page.reload(); await expect(page.getByLabel('Tên hiển thị trong hồ sơ')).toHaveValue('Tên gửi hàng đã cập nhật');
   await page.getByRole('navigation', { name: 'Điều hướng Personal' }).getByRole('link', { name: 'Tổng quan', exact: true }).click();
-  await expect(page.locator('.pw-profile-details')).toContainText('Tên gửi hàng đã cập nhật');
+  await expect(page.getByRole('heading', { name: 'Tổng quan gửi hàng', exact: true })).toBeVisible();
 });
 test('personal address book persists CRUD and resolves a lost create through its real receipt', async () => {
   await page.getByRole('navigation', { name: 'Điều hướng Personal' }).getByRole('link', { name: 'Sổ địa chỉ', exact: true }).click();
@@ -109,6 +109,16 @@ test('approved simulation quote booking persists shipment parcels and UNPAID obl
   await page.route('**/api/v1/customer/shipment-drafts/*/bookings', async route => { bookingWrites++; const actual = await route.fetch({ maxRedirects: 0, maxRetries: 0, timeout: 15000 }); expect(actual.status()).toBe(201); await route.abort('failed'); });
   await page.getByRole('button', { name: 'Xác nhận đặt vận đơn mô phỏng', exact: true }).click(); await expect(page.getByRole('alert')).toContainText('Chưa xác định'); await page.getByRole('button', { name: 'Kiểm tra kết quả booking', exact: true }).click(); await expect(page.getByRole('heading', { name: 'Chi tiết vận đơn', exact: true })).toBeVisible(); expect(bookingWrites).toBe(1); await page.unroute('**/api/v1/customer/shipment-drafts/*/bookings');
   await page.reload(); await expect(page.locator('.pb-shipment-heading')).toContainText('AP-SIM-'); await expect(page.locator('.pb-shipment-heading')).toContainText('UNPAID'); await page.getByRole('tab', { name: 'Kiện hàng', exact: true }).click(); await expect(page.getByRole('tabpanel')).toContainText('Ordinary test parcel two'); await page.getByRole('tab', { name: 'Cước & COD', exact: true }).click(); await expect(page.getByRole('tabpanel')).toContainText('53.000 VND'); await expect(page.getByRole('tabpanel')).toContainText('UNPAID'); await expect(page.getByRole('button', { name: 'Thanh toán', exact: true })).toHaveCount(0);
+  await page.goto('/personal/overview');
+  await expect(page.locator('[data-metric=BOOKED_SHIPMENTS] .an-kpi-value')).toContainText('1');
+  await expect(page.locator('[data-metric=CREATED_PARCELS] .an-kpi-value')).toContainText('2');
+  await expect(page.locator('[data-metric=CONFIRMED_FEES] .an-kpi-value')).toContainText('53.000');
+  await expect(page.locator('[data-metric=UNPAID_OBLIGATIONS] .an-kpi-value')).toContainText('53.000');
+  await page.screenshot({ path: process.env.S003_BROWSER_PRIVATE_DIRECTORY! + '/analytics-real-overview.png', fullPage: true, animations: 'disabled' });
+  await page.locator('[data-metric=BOOKED_SHIPMENTS] .an-kpi-value').click();
+  await expect(page).toHaveURL(/\/personal\/overview\/shipments\?/);
+  await expect(page.locator('.an-source tbody tr')).toHaveCount(1);
+  await page.locator('.an-source tbody a').click();
   await page.getByRole('link', { name: 'Danh sách vận đơn', exact: true }).click(); await page.getByLabel('Tìm mã vận đơn / tham chiếu / liên hệ').fill('Pilot booking browser'); await page.getByRole('button', { name: 'Tìm vận đơn', exact: true }).click(); await page.locator('#pilot-status').selectOption('WAITING_FOR_HANDOVER'); await expect(page.locator('.sd-draft-list')).toContainText('AP-SIM-'); await expect(page.locator('.sd-draft-list')).toContainText('UNPAID');
 });
 test('station staff scans all parcel labels and atomically accepts custody with visible Personal tracking', async ({ browser }) => {
@@ -159,6 +169,13 @@ test('station staff scans all parcel labels and atomically accepts custody with 
     await stationPage.getByRole('button', { name: 'Đăng xuất', exact: true }).click();await expect(stationPage.getByRole('heading', { name: 'Đăng nhập bằng mật khẩu', exact: true })).toBeVisible();
   } catch (error) { writeFileSync(process.env.S003_BROWSER_PRIVATE_DIRECTORY! + '/station-page-private.json', JSON.stringify({ path: new URL(stationPage.url()).pathname, headings: await stationPage.locator('h1').allTextContents(), alerts: await stationPage.getByRole('alert').allTextContents() }));throw error; } finally { await staff.close(); }
   await page.goto(shipmentPath);await page.getByRole('tab', { name: 'Hành trình', exact: true }).click();await expect(page.getByRole('tabpanel')).toContainText('Carrier tiếp nhận tại Station');await expect(page.getByRole('tabpanel')).toContainText('SIM-DROP-A1');await page.reload();await page.getByRole('tab', { name: 'Lấy hàng & Giao hàng', exact: true }).click();await expect(page.getByRole('tabpanel')).toContainText('Đã tiếp nhận tại Station');await page.getByRole('tab', { name: 'Cước & COD', exact: true }).click();await expect(page.getByRole('tabpanel')).toContainText('UNPAID');
+  await page.goto('/personal/overview');
+  await expect(page.locator('[data-metric=ACCEPTED_SHIPMENTS] .an-kpi-value')).toContainText('1');
+  await expect(page.locator('[data-metric=AWAITING_HANDOVER] .an-kpi-value')).toContainText('0');
+  await page.locator('.an-status-legend').getByRole('link', { name: /Đã nhận tại Station/ }).click();
+  await expect(page.locator('.an-source tbody tr')).toHaveCount(1);
+  await expect(page.locator('.an-source tbody tr')).toContainText('Đã nhận tại Station');
+  await page.goBack(); await expect(page.getByRole('heading', { name: 'Tổng quan gửi hàng', exact: true })).toBeVisible();
   await page.goto('/personal/shipments');await page.locator('#pilot-status').selectOption('AT_STATION');await expect(page.locator('.sd-draft-list')).toContainText('Carrier đã nhận tại Station');await page.locator('#pilot-status').selectOption('WAITING_FOR_HANDOVER');await expect(page.getByRole('heading', { name: 'Không tìm thấy vận đơn phù hợp', exact: true })).toBeVisible();
 });
 
@@ -192,7 +209,7 @@ test('recovery confirmation changes the credential with the actual second messag
 });
 test('fresh login rejects the old credential and revoked browser loses its workspace', async () => {
   await secondaryPage.getByRole('link', { name: 'Hồ sơ', exact: true }).click(); await expect(secondaryPage.getByRole('heading', { name: 'Đăng nhập bằng mật khẩu' })).toBeVisible(); await expect(secondaryPage.getByLabel('Tên hiển thị trong hồ sơ')).toHaveCount(0);
-  await expect(page).toHaveURL(/\/login$/); await login(page, originalPassword); await expect(page.getByRole('alert')).toContainText('Email hoặc mật khẩu chưa đúng'); await login(page, newPassword); await expect(page.getByRole('heading', { name: 'Xin chào, Người gửi hàng thử' })).toBeVisible(); await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click(); await expect(page.getByRole('heading', { name: 'Đăng nhập bằng mật khẩu' })).toBeVisible();
+  await expect(page).toHaveURL(/\/login$/); await login(page, originalPassword); await expect(page.getByRole('alert')).toContainText('Email hoặc mật khẩu chưa đúng'); await login(page, newPassword); await expect(page.getByRole('heading', { name: 'Tổng quan gửi hàng', exact: true })).toBeVisible(); await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click(); await expect(page.getByRole('heading', { name: 'Đăng nhập bằng mật khẩu' })).toBeVisible();
 });
 test('unknown email and invalid proof do not fabricate account activation', async () => {
   await page.goto('/recover'); await page.getByLabel('Email của tài khoản').fill('unknown-browser@example.invalid'); await page.getByRole('button', { name: 'Yêu cầu khôi phục mật khẩu' }).click(); await expect(page).toHaveURL(/\/recover\/otp$/);await expect(page.getByLabel('Mã xác minh 6 chữ số')).toBeVisible();

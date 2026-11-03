@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { customerClient, CustomerApiError } from './client';
-import type { Subject, VersionedProfile } from './client';
+import { customerClient } from './client';
+import type { Subject } from './client';
 import { PublicBrand } from './PublicWebsite';
 import './workspace.css';
+import { PersonalAnalyticsDashboard } from './PersonalAnalytics';
 
 function Icon({ name }: { name: string }) {
   const paths: Record<string, string> = {
@@ -71,7 +72,7 @@ export function WorkspaceShell({ subject, children }: { subject: Subject; childr
     {sidebar && <button className="pw-sidebar-overlay" type="button" aria-label="Đóng điều hướng cá nhân" onClick={() => setSidebar(false)} />}
     <aside id="personal-sidebar" className={`pw-sidebar ${sidebar ? 'is-open' : ''}`} aria-label="Thanh điều hướng Personal"><span className="pw-nav-label">KHÔNG GIAN CÁ NHÂN</span>
       <nav aria-label="Điều hướng Personal" onClick={event => { if ((event.target as HTMLElement).closest('a')) setSidebar(false); }}>
-        <NavLink to="/personal" end><Icon name="home" /><span>Tổng quan</span></NavLink>
+        <Link to="/personal/overview" aria-current={location.pathname === '/personal' || location.pathname.startsWith('/personal/overview') ? 'page' : undefined} className={location.pathname === '/personal' || location.pathname.startsWith('/personal/overview') ? 'active' : undefined}><Icon name="home" /><span>Tổng quan</span></Link>
         {workspaceModules.map(item => <NavLink key={item.path} to={'/personal/' + item.path}><Icon name={item.icon} /><span>{item.title}</span>{!['addresses', 'create', 'shipments', 'lookup', 'billing'].includes(item.path) && <span className="pw-nav-dot" aria-label="Chưa khả dụng" />}</NavLink>)}
         <details open className="pw-account-links"><summary><Icon name="user" /><span>Tài khoản</span><Icon name="chevron" /></summary><NavLink to="/personal/profile">Hồ sơ</NavLink><NavLink to="/personal/security">Bảo mật</NavLink><NavLink to="/personal/applications">Merchant</NavLink></details>
       </nav><div className="pw-sidebar-foot"><Icon name="shield" /><span>Personal độc lập với quyền của tổ chức.</span></div>
@@ -81,23 +82,7 @@ export function WorkspaceShell({ subject, children }: { subject: Subject; childr
 }
 
 export function WorkspaceDashboard({ subject }: { subject: Subject }) {
-  const [data, setData] = useState<VersionedProfile>(), [error, setError] = useState(''), [revision, setRevision] = useState(0);
-  useEffect(() => {
-    let active = true;
-    customerClient.readProfile().then(value => { if (active) setData(value); }).catch(failure => { if (active) setError(failure instanceof CustomerApiError && failure.code === 'NETWORK_UNAVAILABLE' ? 'Không kết nối được máy chủ. Vui lòng thử lại.' : 'Không tải được hồ sơ hiện tại. Vui lòng thử lại.'); });
-    return () => { active = false; };
-  }, [revision]);
-  return <div className="pw-dashboard"><div className="pw-page-heading"><div><span className="pw-eyebrow">PERSONAL WORKSPACE</span><h1 tabIndex={-1}>Xin chào, {subject.displayName}</h1><p>Một không gian của bạn. Sẵn sàng cho những hành trình phía trước.</p></div><span className="pw-status"><Icon name="check" />Email đã xác minh</span></div>
-    <section className="pw-welcome" aria-label="Chào mừng đến ArgoPost Personal"><div><span className="pw-eyebrow">ARGOPOST PERSONAL</span><h2>Khởi đầu đơn giản.<br /><span>Kết nối từng hành trình.</span></h2><p>Quản lý thông tin của bạn trong một không gian riêng, rõ ràng và an toàn.</p><Link to="/personal/profile" className="pw-primary">Xem hồ sơ cá nhân <Icon name="arrow" /></Link></div><img src="/media/movapost-network.svg" alt="" width="660" height="540" /></section>
-    <section className="pw-section" aria-labelledby="quick-actions-title"><div className="pw-section-heading"><h2 id="quick-actions-title">Bạn muốn bắt đầu từ đâu?</h2><span>Tiện ích gửi hàng đang được chuẩn bị</span></div><div className="pw-quick-actions">{workspaceModules.filter(item => ['create', 'lookup', 'shipments'].includes(item.path)).map(item => <Link key={item.path} to={'/personal/' + item.path}><span className="pw-action-icon"><Icon name={item.icon} /></span><span><strong>{item.title}</strong><small>{['create', 'shipments'].includes(item.path) ? 'Bản nháp gửi hàng' : 'Chưa khả dụng'}</small></span><Icon name="arrow" /></Link>)}</div></section>
-    <div className="pw-dashboard-grid"><section className="pw-panel" aria-labelledby="activity-title"><div className="pw-panel-heading"><h2 id="activity-title">Hoạt động vận đơn</h2><span className="pw-tag">Chưa mở</span></div><div className="pw-unavailable"><span className="pw-empty-icon"><Icon name="box" /></span><h3>Hành trình gửi hàng đang được chuẩn bị</h3><p>Dịch vụ và bảng giá chưa được thiết lập. Số lượng vận đơn và hoạt động gần đây sẽ xuất hiện khi có nguồn dữ liệu thật.</p><p className="pw-small">Hiện chưa thể tạo vận đơn, đặt lịch lấy hàng hoặc lấy báo giá.</p></div></section>
-      <section className="pw-panel" aria-labelledby="personal-profile-title"><div className="pw-panel-heading"><h2 id="personal-profile-title">Thông tin của bạn</h2><Icon name="user" /></div>
-        {!data && !error && <p role="status" className="pw-profile-loading">Đang tải hồ sơ…</p>}
-        {error && <div className="pw-profile-error"><p role="alert">{error}</p><button className="pw-secondary" type="button" onClick={() => { setError(''); setData(undefined); setRevision(value => value + 1); }}>Tải lại hồ sơ</button></div>}
-        {data && !error && <><dl className="pw-profile-details"><div><dt>Tên hiển thị trong hồ sơ</dt><dd>{data.profile.displayName}</dd></div><div><dt>Email đăng nhập đã xác minh</dt><dd>{subject.verifiedEmail}</dd></div><div><dt>Ngôn ngữ ưu tiên</dt><dd>{data.profile.preferredLanguage === 'vi' ? 'Tiếng Việt' : 'Tiếng Anh'}</dd></div></dl><Link className="pw-text-link" to="/personal/profile">Cập nhật hồ sơ <Icon name="arrow" /></Link></>}
-      </section></div>
-    <section className="pw-merchant-invitation"><span className="pw-action-icon"><Icon name="user" /></span><div><h2>Bạn gửi hàng cho cửa hàng hoặc doanh nghiệp?</h2><p>Chuẩn bị hồ sơ Merchant từ tài khoản cá nhân. Bản nháp không cấp quyền vào Business Workspace.</p></div><Link to="/personal/applications">Xem hồ sơ Merchant <Icon name="arrow" /></Link></section>
-  </div>;
+  return <PersonalAnalyticsDashboard subject={subject} />;
 }
 
 export function WorkspaceModule({ name }: { name: string }) {
