@@ -160,9 +160,9 @@ All objects additionalProperties:false. No contact, actor, assignment, custody,
 proof, token or internal operational details. Monetary/count integer strings may
 be zero; IDs opaque UUID; strings source-bound; max20 page rows,6 metrics,366
 daily buckets,4 routes,1 current service and3 weight groups. Response bounded1MiB.
-Errors reuse safe existing `{code}` envelope:400 VALIDATION_FAILED;401 existing
+Errors reuse safe existing `{code,message,requestId}` envelope:400 VALIDATION_FAILED;401 existing
 session denial;403 existing current-customer denial;422 ANALYTICS_RANGE_TOO_LARGE;
-503 PILOT_DISABLED or ANALYTICS_UNAVAILABLE (no raw SQL/private diagnostic).
+503 PILOT_DISABLED, ANALYTICS_UNAVAILABLE or existing SERVICE_UNAVAILABLE (no raw SQL/private diagnostic).
 No Business fallback. Unknown selectors never change scope.
 
 ## C–F. UI and interaction contract

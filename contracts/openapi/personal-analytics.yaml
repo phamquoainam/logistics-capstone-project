@@ -261,7 +261,7 @@
             }
           },
           "503": {
-            "description": "PILOT_DISABLED or source/integrity unavailable",
+            "description": "PILOT_DISABLED, ANALYTICS_UNAVAILABLE or existing safe SERVICE_UNAVAILABLE for source failure; no raw diagnostics",
             "content": {
               "application/json": {
                 "schema": {
@@ -796,11 +796,23 @@
         "properties": {
           "code": {
             "type": "string",
-            "pattern": "^[A-Z_]+$"
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          },
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
           }
         },
         "required": [
-          "code"
+          "code",
+          "message",
+          "requestId"
         ]
       }
     }

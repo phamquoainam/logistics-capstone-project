@@ -1647,7 +1647,7 @@ class IdentityGrantApplicationTests {
     @Test void personalAnalyticsRejectsOwnerBusinessSelectorsDuplicatesAndRevokedSession()throws Exception{
         customerFixture(false);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var c=customerHttpContext(PILOT_NOW,smtp(inbox,PILOT_NOW),true)){
             var mvc=httpMvc(c);var owner=profileBrowser(mvc);
-            for(String extra:List.of("&ownerId="+B,"&organizationId="+B,"&context=BUSINESS","&page=0&page=1","&status=DELIVERED","&origin=SIM-A2&destination=SIM-B1","&from=2026-11-02"))assertEquals(400,httpRead(mvc,ANALYTICS_PATH+extra,owner.access()).getStatus());
+            for(String extra:List.of("&ownerId="+B,"&organizationId="+B,"&context=BUSINESS","&page=0&page=1","&status=DELIVERED","&origin=SIM-A2&destination=SIM-B1","&from=2026-11-02")){var rejected=httpRead(mvc,ANALYTICS_PATH+extra,owner.access());assertEquals(400,rejected.getStatus());var error=new tools.jackson.databind.ObjectMapper().readTree(rejected.getContentAsString());assertEquals(Set.of("code","message","requestId"),error.propertyNames());assertEquals("VALIDATION_FAILED",error.get("code").asString());assertEquals("Request rejected.",error.get("message").asString());UUID.fromString(error.get("requestId").asString());}
             assertEquals(0,scalar("SELECT count(*) FROM orders.pilot_shipment"));execute("UPDATE identity.user_account SET auth_version=auth_version+1 WHERE id='"+A+"'");assertEquals(401,httpRead(mvc,ANALYTICS_PATH,owner.access()).getStatus());
         }
     }
