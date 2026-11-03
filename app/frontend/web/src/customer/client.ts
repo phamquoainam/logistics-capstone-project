@@ -1,4 +1,5 @@
 import { acceptRecoveryGrant, beginOtp, clearEntryProof, getOtpChallenge, getVerificationLocator, withEntryProof } from './entry-proof';
+import { parseAnalytics } from './analytics-data';
 export type Subject = { accountId: string; displayName: string; verifiedEmail: string; securityVersion: number };
 export type ProfileInput = { displayName: string; preferredLanguage: 'vi' | 'en'; businessContactEmail?: string; businessContactPhone?: string };
 export type CustomerProfile = ProfileInput & { id: string; accountId: string; version: number };
@@ -243,6 +244,10 @@ export function createCustomerClient(ports: Ports = { fetch: (...args) => fetch(
     } catch { throw unknown(); }
   }
   return {
+    readAnalytics: (parameters: URLSearchParams) => ports.lock(async () => {
+      const { value } = await pilotRead('personal-analytics?' + parameters.toString(), 1024 * 1024);
+      try { return parseAnalytics(value); } catch { return malformed(); }
+    }),
     getSnapshot: () => state,
     subscribe: (listener: () => void) => { listeners.add(listener); return () => { listeners.delete(listener); }; },
     initialize(): Promise<void> {

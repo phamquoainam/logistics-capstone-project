@@ -1626,6 +1626,36 @@ class IdentityGrantApplicationTests {
     private com.elogistic.backend.identity.api.IdentitySessionCommands.Result customerLogin() {
         return customerSessions(NOW).loginIdentity(new com.elogistic.backend.identity.api.IdentitySessionCommands.Login(CUSTOMER_EMAIL,SESSION_PASSWORD,REQUEST));
     }
+    private static final String ANALYTICS_PATH="/api/v1/customer/personal-analytics?from=2026-11-01&until=2026-11-03";
+    private String analyticsMetric(tools.jackson.databind.JsonNode report,String id){for(var metric:report.get("metrics"))if(id.equals(metric.get("id").asString()))return metric.get("value").asString();throw new AssertionError("ANALYTICS_METRIC_REQUIRED");}
+    @Test void personalAnalyticsUsesRealPostgresOwnerCohortWithoutCollectedRevenue()throws Exception{
+        customerFixture(true);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var c=customerHttpContext(PILOT_NOW,smtp(inbox,PILOT_NOW),true)){
+            var mvc=httpMvc(c);var owner=profileBrowser(mvc);var stranger=addressOtherBrowser(mvc);String shipment=intakeBooked(mvc,owner);
+            var response=httpRead(mvc,ANALYTICS_PATH,owner.access());assertEquals(200,response.getStatus());assertTrue(response.getHeader("Cache-Control").contains("no-store"));var report=new tools.jackson.databind.ObjectMapper().readTree(response.getContentAsString());
+            assertEquals("1",analyticsMetric(report,"BOOKED_SHIPMENTS"));assertEquals("2",analyticsMetric(report,"CREATED_PARCELS"));assertEquals("53000",analyticsMetric(report,"CONFIRMED_FEES"));assertEquals("53000",analyticsMetric(report,"UNPAID_OBLIGATIONS"));assertEquals("1",report.get("shipments").get("total").asString());assertEquals(shipment,report.get("shipments").get("items").get(0).get("id").asString());assertEquals(1,report.get("routes").size());assertEquals("0",analyticsMetric(report,"ACCEPTED_SHIPMENTS"));
+            String json=response.getContentAsString();assertFalse(json.contains("example.invalid"));assertFalse(json.contains("sender"));assertFalse(json.contains("recipient"));assertFalse(json.contains("actorId"));assertFalse(json.contains("address"));
+            var foreign=new tools.jackson.databind.ObjectMapper().readTree(httpRead(mvc,ANALYTICS_PATH,stranger.access()).getContentAsString());assertEquals("0",analyticsMetric(foreign,"BOOKED_SHIPMENTS"));assertEquals(0,foreign.get("shipments").get("items").size());assertFalse(foreign.toString().contains(shipment));assertEquals(1,scalar("SELECT count(*) FROM finance.pilot_shipping_obligation WHERE state='UNPAID'"));
+        }
+    }
+    @Test void personalAnalyticsReadsCommittedTrackingAndReconcilesStatusDrill()throws Exception{
+        customerFixture(true);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var c=customerHttpContext(PILOT_NOW,smtp(inbox,PILOT_NOW),true)){
+            var mvc=httpMvc(c);var owner=profileBrowser(mvc);var staff=addressOtherBrowser(mvc);intakeAssignment(mvc,staff,"SIM-DROP-A1");String shipment=intakeBooked(mvc,owner);var scans=intakeScans(mvc,staff,intakeBarcodes(mvc,owner,shipment));assertEquals(200,intakeAccept(mvc,staff,shipment,scans,UUID.randomUUID(),"\"i0\"").getStatus());
+            var report=new tools.jackson.databind.ObjectMapper().readTree(httpRead(mvc,ANALYTICS_PATH+"&status=AT_STATION",owner.access()).getContentAsString());assertEquals("1",analyticsMetric(report,"ACCEPTED_SHIPMENTS"));assertEquals("0",analyticsMetric(report,"AWAITING_HANDOVER"));assertEquals("2",analyticsMetric(report,"CREATED_PARCELS"));assertEquals("1",report.get("shipments").get("total").asString());assertEquals(shipment,report.get("shipments").get("items").get(0).get("id").asString());assertEquals("AT_STATION",report.get("shipments").get("items").get(0).get("status").asString());
+            var waiting=new tools.jackson.databind.ObjectMapper().readTree(httpRead(mvc,ANALYTICS_PATH+"&status=WAITING_FOR_HANDOVER",owner.access()).getContentAsString());assertEquals("0",analyticsMetric(waiting,"BOOKED_SHIPMENTS"));assertEquals(1,scalar("SELECT count(*) FROM orders.pilot_shipment WHERE carrier_state='NOT_ACCEPTED'"));assertEquals(1,scalar("SELECT count(*) FROM finance.pilot_shipping_obligation WHERE state='UNPAID'"));assertEquals(1,scalar("SELECT count(*) FROM orders.pilot_tracking_event"));
+        }
+    }
+    @Test void personalAnalyticsRejectsOwnerBusinessSelectorsDuplicatesAndRevokedSession()throws Exception{
+        customerFixture(false);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var c=customerHttpContext(PILOT_NOW,smtp(inbox,PILOT_NOW),true)){
+            var mvc=httpMvc(c);var owner=profileBrowser(mvc);
+            for(String extra:List.of("&ownerId="+B,"&organizationId="+B,"&context=BUSINESS","&page=0&page=1","&status=DELIVERED","&origin=SIM-A2&destination=SIM-B1","&from=2026-11-02"))assertEquals(400,httpRead(mvc,ANALYTICS_PATH+extra,owner.access()).getStatus());
+            assertEquals(0,scalar("SELECT count(*) FROM orders.pilot_shipment"));execute("UPDATE identity.user_account SET auth_version=auth_version+1 WHERE id='"+A+"'");assertEquals(401,httpRead(mvc,ANALYTICS_PATH,owner.access()).getStatus());
+        }
+    }
+    @Test void personalAnalyticsDisabledEnvironmentCannotExposePilotAggregates()throws Exception{
+        customerFixture(false);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var c=customerHttpContext(PILOT_NOW,smtp(inbox,PILOT_NOW),true,"PRODUCTION")){
+            var mvc=httpMvc(c);var owner=profileBrowser(mvc);var response=httpRead(mvc,ANALYTICS_PATH,owner.access());assertEquals(503,response.getStatus());assertTrue(response.getContentAsString().contains("PILOT_DISABLED"));assertEquals(0,scalar("SELECT count(*) FROM orders.pilot_shipment"));
+        }
+    }
     @Test void customerLoginUsesIndependentVerifiedBindingWithoutSystemGrant()throws Exception {
         customerFixture(false);
         try(var result=customerLogin()) {
@@ -1866,7 +1896,7 @@ class IdentityGrantApplicationTests {
         if(profile){
             context.getEnvironment().getPropertySources().addFirst(new org.springframework.core.env.MapPropertySource("isolated-profile-keys",Map.of("merchant.customer-profile.receipt-keys","{\"v1\":\""+Base64.getEncoder().encodeToString(keyBytes(76))+"\"}","merchant.customer-profile.current-receipt-key","v1")));
             context.addBeanFactoryPostProcessor(factory->{factory.registerSingleton("customerAdmission",services.customers());factory.registerSingleton("customerRequestContext",services.requests());});
-            context.register(com.elogistic.backend.dispatch.internal.StationIntakeConfiguration.class,com.elogistic.backend.workflow.internal.web.StationIntakeHttp.class,com.elogistic.backend.pricing.internal.PilotPricingConfiguration.class,com.elogistic.backend.orders.internal.PilotBookingConfiguration.class,com.elogistic.backend.finance.internal.PilotFinanceConfiguration.class,com.elogistic.backend.workflow.internal.web.PilotShippingHttp.class,com.elogistic.backend.orders.internal.ShippingDraftConfiguration.class,com.elogistic.backend.workflow.internal.web.ShippingDraftHttp.class,com.elogistic.backend.merchant.internal.CustomerProfileConfiguration.class,com.elogistic.backend.workflow.internal.web.CustomerProfileHttp.class,com.elogistic.backend.workflow.internal.web.PersonalAddressHttp.class,com.elogistic.backend.workflow.internal.web.MerchantApplicationHttp.class,com.elogistic.backend.workflow.internal.web.OnboardingHttpErrors.class);
+            context.register(com.elogistic.backend.orders.internal.AnalyticsSourceConfiguration.class,com.elogistic.backend.finance.internal.AnalyticsFinanceConfiguration.class,com.elogistic.backend.notifications.internal.AnalyticsConfiguration.class,com.elogistic.backend.workflow.internal.web.PersonalAnalyticsHttp.class,com.elogistic.backend.dispatch.internal.StationIntakeConfiguration.class,com.elogistic.backend.workflow.internal.web.StationIntakeHttp.class,com.elogistic.backend.pricing.internal.PilotPricingConfiguration.class,com.elogistic.backend.orders.internal.PilotBookingConfiguration.class,com.elogistic.backend.finance.internal.PilotFinanceConfiguration.class,com.elogistic.backend.workflow.internal.web.PilotShippingHttp.class,com.elogistic.backend.orders.internal.ShippingDraftConfiguration.class,com.elogistic.backend.workflow.internal.web.ShippingDraftHttp.class,com.elogistic.backend.merchant.internal.CustomerProfileConfiguration.class,com.elogistic.backend.workflow.internal.web.CustomerProfileHttp.class,com.elogistic.backend.workflow.internal.web.PersonalAddressHttp.class,com.elogistic.backend.workflow.internal.web.MerchantApplicationHttp.class,com.elogistic.backend.workflow.internal.web.OnboardingHttpErrors.class);
         }
         try{context.refresh();return context;}catch(Exception failure){context.close();throw failure;}
     }

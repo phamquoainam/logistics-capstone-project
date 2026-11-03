@@ -1,0 +1,808 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "ArgoPost Owner-approved Personal Analytics",
+    "version": "1.0.0",
+    "description": "Owner accepted 2026-11-03. Read-only CustomerAdmission, LOCAL/TEST SANDBOX only. See docs/implementation/personal-analytics-contract.md for exact metric, time, query bounds and drill semantics. No Business or collection authority."
+  },
+  "servers": [
+    {
+      "url": "https://127.0.0.1:8443/api/v1"
+    }
+  ],
+  "tags": [
+    {
+      "name": "PersonalAnalytics",
+      "description": "Self-owned Booking, Parcel and UNPAID analytics only."
+    }
+  ],
+  "security": [
+    {
+      "customerAccess": []
+    }
+  ],
+  "paths": {
+    "/customer/personal-analytics": {
+      "get": {
+        "operationId": "readPersonalAnalytics",
+        "tags": [
+          "PersonalAnalytics"
+        ],
+        "summary": "Read consistent self KPI, breakdown and contributing Shipments",
+        "description": "Reject unknown/duplicate parameters and owner/context selectors. from/until pair uses inclusive/exclusive local dates; max366days and10000 rows/cohort; no silent truncation. day selects a displayed bucket. Read does not extend meaningful session activity.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "in": "query",
+            "name": "until",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "in": "query",
+            "name": "compare",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "previous",
+                "none"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "bucket",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "day",
+                "week",
+                "month"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "WAITING_FOR_HANDOVER",
+                "AT_STATION"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "service",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ROAD_STANDARD"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "origin",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "SIM-A1",
+                "SIM-A2",
+                "SIM-B1"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "destination",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "SIM-A1",
+                "SIM-A2",
+                "SIM-B1"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "day",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "in": "query",
+            "name": "obligation",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "UNPAID"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "weight",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "UP_TO_500G",
+                "UP_TO_5KG",
+                "OVER_5KG"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "multi",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 64
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "NEWEST",
+                "OLDEST",
+                "FEE_DESC",
+                "FEE_ASC"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 500
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Same self cohort: overview, breakdown and contributing page. Counts and VND exact strings; no PII.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Report"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid, unknown or duplicate query selector",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or revoked session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Current Customer eligibility/authority denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ANALYTICS_RANGE_TOO_LARGE; no truncation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "PILOT_DISABLED or source/integrity unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "customerAccess": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "schemas": {
+      "Point": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "value": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,39})$",
+            "description": "Exact nonnegative integer; VND values are never binary floating point."
+          }
+        },
+        "required": [
+          "date",
+          "value"
+        ]
+      },
+      "Metric": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": [
+              "BOOKED_SHIPMENTS",
+              "AWAITING_HANDOVER",
+              "ACCEPTED_SHIPMENTS",
+              "CONFIRMED_FEES",
+              "UNPAID_OBLIGATIONS",
+              "CREATED_PARCELS"
+            ]
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "SHIPMENT",
+              "PARCEL",
+              "VND"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,39})$",
+            "description": "Exact nonnegative integer; VND values are never binary floating point."
+          },
+          "previousValue": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]{0,39})$",
+                "description": "Exact nonnegative integer; VND values are never binary floating point."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "changePercent": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^-?[0-9]{1,40}\\.[0-9]$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "points": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Point"
+            },
+            "maxItems": 366
+          }
+        },
+        "required": [
+          "id",
+          "unit",
+          "value",
+          "previousValue",
+          "changePercent",
+          "points"
+        ]
+      },
+      "Period": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "startInclusive": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endExclusive": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "previousStartInclusive": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "previousEndExclusive": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "startInclusive",
+          "endExclusive",
+          "previousStartInclusive",
+          "previousEndExclusive"
+        ]
+      },
+      "Status": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string",
+            "enum": [
+              "WAITING_FOR_HANDOVER",
+              "AT_STATION"
+            ]
+          },
+          "shipments": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,39})$",
+            "description": "Exact nonnegative integer; VND values are never binary floating point."
+          }
+        },
+        "required": [
+          "key",
+          "shipments"
+        ]
+      },
+      "Volume": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "shipments": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,39})$",
+            "description": "Exact nonnegative integer; VND values are never binary floating point."
+          },
+          "confirmedFeeVnd": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,39})$",
+            "description": "Exact nonnegative integer; VND values are never binary floating point."
+          },
+          "unpaidVnd": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,39})$",
+            "description": "Exact nonnegative integer; VND values are never binary floating point."
+          }
+        },
+        "required": [
+          "date",
+          "shipments",
+          "confirmedFeeVnd",
+          "unpaidVnd"
+        ]
+      },
+      "Service": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "ROAD_STANDARD"
+            ]
+          },
+          "shipments": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,39})$",
+            "description": "Exact nonnegative integer; VND values are never binary floating point."
+          },
+          "confirmedFeeVnd": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,39})$",
+            "description": "Exact nonnegative integer; VND values are never binary floating point."
+          }
+        },
+        "required": [
+          "code",
+          "shipments",
+          "confirmedFeeVnd"
+        ]
+      },
+      "Route": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "datasetVersion": {
+            "type": "string",
+            "enum": [
+              "ARGO-SIM-COVERAGE-1"
+            ]
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "SIM-A1",
+              "SIM-A2",
+              "SIM-B1"
+            ]
+          },
+          "destination": {
+            "type": "string",
+            "enum": [
+              "SIM-A1",
+              "SIM-A2",
+              "SIM-B1"
+            ]
+          },
+          "shipments": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,39})$",
+            "description": "Exact nonnegative integer; VND values are never binary floating point."
+          },
+          "confirmedFeeVnd": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,39})$",
+            "description": "Exact nonnegative integer; VND values are never binary floating point."
+          }
+        },
+        "required": [
+          "datasetVersion",
+          "origin",
+          "destination",
+          "shipments",
+          "confirmedFeeVnd"
+        ]
+      },
+      "Weight": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string",
+            "enum": [
+              "UP_TO_500G",
+              "UP_TO_5KG",
+              "OVER_5KG"
+            ]
+          },
+          "parcels": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,39})$",
+            "description": "Exact nonnegative integer; VND values are never binary floating point."
+          }
+        },
+        "required": [
+          "key",
+          "parcels"
+        ]
+      },
+      "Parcels": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "count": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,39})$",
+            "description": "Exact nonnegative integer; VND values are never binary floating point."
+          },
+          "multiParcelShipments": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,39})$",
+            "description": "Exact nonnegative integer; VND values are never binary floating point."
+          },
+          "weight": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Weight"
+            },
+            "maxItems": 3
+          }
+        },
+        "required": [
+          "count",
+          "multiParcelShipments",
+          "weight"
+        ]
+      },
+      "Shipment": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "pattern": "^AP-SIM-[a-f0-9]{32}$"
+          },
+          "bookedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "WAITING_FOR_HANDOVER",
+              "AT_STATION"
+            ]
+          },
+          "service": {
+            "type": "string",
+            "enum": [
+              "ROAD_STANDARD"
+            ]
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "SIM-A1",
+              "SIM-A2",
+              "SIM-B1"
+            ]
+          },
+          "destination": {
+            "type": "string",
+            "enum": [
+              "SIM-A1",
+              "SIM-A2",
+              "SIM-B1"
+            ]
+          },
+          "parcels": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,39})$",
+            "description": "Exact nonnegative integer; VND values are never binary floating point."
+          },
+          "weightGrams": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,39})$",
+            "description": "Exact nonnegative integer; VND values are never binary floating point."
+          },
+          "confirmedFeeVnd": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,39})$",
+            "description": "Exact nonnegative integer; VND values are never binary floating point."
+          },
+          "unpaidVnd": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,39})$",
+            "description": "Exact nonnegative integer; VND values are never binary floating point."
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "bookedAt",
+          "status",
+          "service",
+          "origin",
+          "destination",
+          "parcels",
+          "weightGrams",
+          "confirmedFeeVnd",
+          "unpaidVnd"
+        ]
+      },
+      "Page": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "total": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,39})$",
+            "description": "Exact nonnegative integer; VND values are never binary floating point."
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 500
+          },
+          "size": {
+            "type": "integer",
+            "const": 20
+          },
+          "hasNext": {
+            "type": "boolean"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Shipment"
+            },
+            "maxItems": 20
+          }
+        },
+        "required": [
+          "total",
+          "page",
+          "size",
+          "hasNext",
+          "items"
+        ]
+      },
+      "Report": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "schemaVersion": {
+            "type": "string",
+            "enum": [
+              "PERSONAL_ANALYTICS_1"
+            ]
+          },
+          "context": {
+            "type": "string",
+            "enum": [
+              "PERSONAL"
+            ]
+          },
+          "timeZone": {
+            "type": "string",
+            "enum": [
+              "Asia/Ho_Chi_Minh"
+            ]
+          },
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "period": {
+            "$ref": "#/components/schemas/Period"
+          },
+          "metrics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Metric"
+            },
+            "maxItems": 6
+          },
+          "status": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Status"
+            },
+            "maxItems": 2
+          },
+          "volume": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Volume"
+            },
+            "maxItems": 366
+          },
+          "services": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Service"
+            },
+            "maxItems": 1
+          },
+          "routes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Route"
+            },
+            "maxItems": 4
+          },
+          "parcels": {
+            "$ref": "#/components/schemas/Parcels"
+          },
+          "shipments": {
+            "$ref": "#/components/schemas/Page"
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "context",
+          "timeZone",
+          "generatedAt",
+          "period",
+          "metrics",
+          "status",
+          "volume",
+          "services",
+          "routes",
+          "parcels",
+          "shipments"
+        ]
+      },
+      "Problem": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[A-Z_]+$"
+          }
+        },
+        "required": [
+          "code"
+        ]
+      }
+    }
+  }
+}

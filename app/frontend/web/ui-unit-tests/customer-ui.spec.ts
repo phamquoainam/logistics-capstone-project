@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import type { BrowserContext, Route } from '@playwright/test';
+import { analyticsFixture } from './support/analytics-fixture';
 
 // Explicit intercepted API fixtures: UI unit evidence only, never real BE/PG/full-Spec E2E PASS.
 const account = '10000000-0000-4000-8000-000000000001', proofId = '10000000-0000-4000-8000-000000000010';
@@ -15,6 +16,7 @@ async function fixture(context: BrowserContext, authenticated = false, special?:
     if (path.endsWith('/refresh') || path.endsWith('/login')) return authenticated || path.endsWith('/login') ? reply({ accessToken: 'synthetic-ui-access', accountId: account, expiresAt: new Date(Date.now() + 900000).toISOString() }) : reply({ code: 'SESSION_INVALID' }, 401);
     if (path.endsWith('/logout')) return route.fulfill({ status: 204 });
     if (path.endsWith('/me')) return reply({ accountId: account, displayName: 'Người dùng thử', verifiedEmail: 'synthetic@example.invalid', securityVersion: 1 });
+    if (path.endsWith('/personal-analytics')) return reply(analyticsFixture(new URL(request.url()).searchParams));
     if (path.endsWith('/profile')) return reply({ id: account, accountId: account, displayName: 'Hồ sơ thử', preferredLanguage: 'vi', version: 1 }, 200, { ETag: '"v1"' });
     if (path.endsWith('/recovery-verifications')) return reply({ proofId, proof: 'C'.repeat(43), expiresAt: new Date(Date.now() + 90000).toISOString() });
     if (path.endsWith('/verifications') || path.endsWith('/recovery-confirm')) return route.fulfill({ status: 204 });
@@ -100,31 +102,29 @@ test('merchant route fails closed without an authoritative active membership', a
   expect(calls.some(call => call.path.includes('merchant'))).toBe(false);
 });
 
-test('Personal dashboard reads the own profile and never substitutes shipment counters or demo data', async ({ page, context }) => {
+test('Personal dashboard reads self Analytics without demo data or fabricated counters', async ({ page, context }) => {
   const calls = await fixture(context, true); await page.goto('/personal');
-  await expect(page.getByRole('heading', { name: 'Xin chào, Người dùng thử' })).toBeVisible();
-  await expect(page.locator('.pw-profile-details')).toContainText('Hồ sơ thử');
-  await expect(page.locator('.pw-profile-details')).toContainText('synthetic@example.invalid');
-  await expect(page.locator('.pw-unavailable')).toContainText('Số lượng vận đơn và hoạt động gần đây sẽ xuất hiện khi có nguồn dữ liệu thật');
-  await expect(page.locator('.pw-unavailable')).not.toContainText('Chưa có đơn');
-  expect(calls.filter(call => call.path === '/api/v1/customer/profile' && call.method === 'GET')).toHaveLength(1);
-  expect(calls.some(call => /demo|shipment|quote|notification/.test(call.path))).toBe(false);
-  await expect(page.getByRole('button', { name: /thông báo/i })).toHaveCount(0);
-  await page.reload(); await expect(page.locator('.pw-profile-details')).toContainText('Hồ sơ thử');
+  await expect(page.getByRole('heading', { name: 'Tổng quan gửi hàng', exact: true })).toBeVisible();
+  await expect(page.locator('.an-empty')).toContainText('Chưa có vận đơn');
+  await expect(page.locator('[data-metric=BOOKED_SHIPMENTS] .an-kpi-value')).toContainText('0');
+  expect(calls.filter(call => call.path === '/api/v1/customer/personal-analytics' && call.method === 'GET')).toHaveLength(1);
+  expect(calls.some(call => /demo|notification/.test(call.path))).toBe(false);
+  await expect(page.getByRole('button', { name: /th?ng b?o/i })).toHaveCount(0);
+  await page.reload(); await expect(page.locator('.an-empty')).toContainText('Chưa có vận đơn');
 });
 
-test('Personal profile loading and a failed read cannot become an empty-success dashboard', async ({ page, context }) => {
+test('Personal Analytics loading and a failed read cannot become an empty-success dashboard', async ({ page, context }) => {
   let release!: () => void; const pending = new Promise<void>(resolve => { release = resolve; }); let reads = 0;
   await fixture(context, true, async (route, call) => {
-    if (call.path !== '/api/v1/customer/profile' || call.method !== 'GET') return false;
+    if (call.path !== '/api/v1/customer/personal-analytics' || call.method !== 'GET') return false;
     reads++; if (reads > 1) return false;
     await pending; await route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ code: 'SERVICE_UNAVAILABLE' }) }); return true;
   });
-  await page.goto('/personal'); await expect(page.getByRole('status')).toContainText('Đang tải hồ sơ');
-  await expect(page.locator('.pw-profile-details')).toHaveCount(0); release();
-  await expect(page.getByRole('alert')).toContainText('Không tải được hồ sơ');
-  await expect(page.locator('.pw-profile-details')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Tải lại hồ sơ' }).click(); await expect(page.locator('.pw-profile-details')).toContainText('Hồ sơ thử'); expect(reads).toBe(2);
+  await page.goto('/personal'); await expect(page.getByRole('status')).toContainText('Đang đọc dữ liệu phân tích');
+  await expect(page.locator('.an-kpi')).toHaveCount(0); release();
+  await expect(page.getByRole('alert')).toContainText('Không tải được dữ liệu phân tích');
+  await expect(page.locator('.an-kpi')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Thử lại Analytics' }).click(); await expect(page.locator('.an-empty')).toContainText('Chưa có vận đơn'); expect(reads).toBe(2);
 });
 
 test('workspace disclosure never grants Business from an approved application or a URL', async ({ page, context }) => {
@@ -152,7 +152,7 @@ test('deferred Personal modules explain dependencies without sending unsupported
     await expect(page.locator('.pw-module-state')).toContainText('Chưa khả dụng'); await expect(page.locator('.pw-module-state input')).toHaveCount(0);
     await expect(page.locator('.pw-module-state button[type="submit"]')).toHaveCount(0);
   }
-  expect(calls.filter(call => !call.path.startsWith('/api/v1/customer-auth/') && call.path !== '/api/v1/customer/profile')).toHaveLength(0);
+  expect(calls.filter(call => !call.path.startsWith('/api/v1/customer-auth/') && call.path !== '/api/v1/customer/personal-analytics')).toHaveLength(0);
 });
 
 test('Personal shell supports narrow navigation, keyboard dismissal and accessible logout', async ({ page, context }) => {

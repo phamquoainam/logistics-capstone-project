@@ -258,6 +258,7 @@ export default function CustomerApp() {
     if (session.status !== 'authenticated' || !session.subject) return <Navigate to="/login" replace />;
     return <div className="customer-portal cp-workspace-portal"><WorkspaceShell key={`${session.subject.accountId}:${session.subject.securityVersion}`} subject={session.subject}><Routes>
       <Route path="/personal" element={<WorkspaceDashboard subject={session.subject} />} />
+      {['', '/shipments', '/status', '/services', '/routes', '/fees', '/parcels'].map(path => <Route key={path} path={'/personal/overview' + path} element={<WorkspaceDashboard subject={session.subject!} />} />)}
       <Route path="/personal/profile" element={<ProfilePage />} /><Route path="/personal/security" element={<WorkspaceSecurity subject={session.subject} />} />
       <Route path="/personal/applications" element={<ApplicationList />} /><Route path="/personal/applications/:id" element={<ApplicationDetail />} />
       <Route path="/personal/addresses" element={<AddressBook />} />
