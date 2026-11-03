@@ -101,7 +101,7 @@ test('personal shipping preparation persists address snapshots parcels and unkno
 });
 test('approved simulation quote booking persists shipment parcels and UNPAID obligation with receipt recovery', async () => {
   await page.goto('/personal/create'); await page.locator('#sender-book').selectOption({ label: 'Draft sender source · +84901234567' });
-  await page.locator('#recipient-name').fill('Synthetic pilot recipient'); await page.locator('#recipient-phone').fill('0901234567'); await page.locator('#recipient-administrativeArea').fill('Synthetic address area'); await page.locator('#recipient-locality').fill('Synthetic address locality'); await page.locator('#recipient-addressLine').fill('Synthetic pilot address'); await page.locator('#parcel-description-0').fill('Ordinary test parcel one'); await page.locator('#weightGrams0').fill('501'); await page.getByRole('button', { name: '+ Thêm kiện (tối đa 5)', exact: true }).click(); await page.locator('#parcel-description-1').fill('Ordinary test parcel two'); await page.locator('#draft-reference').fill('Pilot booking browser'); await page.getByRole('button', { name: 'Lưu bản nháp', exact: true }).click(); await expect(page.getByRole('heading', { name: 'Chi tiết bản nháp', exact: true })).toBeVisible();
+  await page.locator('#recipient-name').fill('Synthetic pilot recipient'); await page.locator('#recipient-phone').fill('0901234567'); await page.locator('#recipient-administrativeArea').fill('Synthetic address area'); await page.locator('#recipient-locality').fill('Synthetic address locality'); await page.locator('#recipient-addressLine').fill('Synthetic pilot address'); await page.locator('#parcel-description-0').fill('Ordinary test parcel one'); await page.locator('#weightGrams0').fill('501'); await page.getByRole('button', { name: '+ Thêm kiện (tối đa 5)', exact: true }).click(); await page.locator('#parcel-description-1').fill('Ordinary test parcel two'); await page.locator('#draft-reference').fill('Pilot booking browser'); await page.getByRole('button', { name: 'Tiếp tục báo giá →', exact: true }).click(); await expect(page.getByRole('heading', { name: 'Xác nhận thông tin & báo giá', exact: true })).toBeVisible(); await expect(page).toHaveURL(/\/personal\/create$/);
   await page.locator('#pilot-origin').selectOption('SIM-A1'); await page.locator('#pilot-destination').selectOption('SIM-A2'); await page.getByLabel('Tôi xác nhận chỉ khai hàng thông thường', { exact: false }).check();
   let quoteWrites = 0, bookingWrites = 0;
   await page.route('**/api/v1/customer/shipment-drafts/*/quotes', async route => { quoteWrites++; const actual = await route.fetch({ maxRedirects: 0, maxRetries: 0, timeout: 15000 }); expect(actual.status()).toBe(201); await route.abort('failed'); });
@@ -119,7 +119,17 @@ test('approved simulation quote booking persists shipment parcels and UNPAID obl
   await expect(page).toHaveURL(/\/personal\/overview\/shipments\?/);
   await expect(page.locator('.an-source tbody tr')).toHaveCount(1);
   await page.locator('.an-source tbody a').click();
-  await page.getByRole('link', { name: 'Danh sách vận đơn', exact: true }).click(); await page.getByLabel('Tìm mã vận đơn / tham chiếu / liên hệ').fill('Pilot booking browser'); await page.getByRole('button', { name: 'Tìm vận đơn', exact: true }).click(); await page.locator('#pilot-status').selectOption('WAITING_FOR_HANDOVER'); await expect(page.locator('.sd-draft-list')).toContainText('AP-SIM-'); await expect(page.locator('.sd-draft-list')).toContainText('UNPAID');
+  await page.getByRole('link', { name: 'Danh sách vận đơn', exact: true }).click(); await page.getByLabel('Mã vận đơn / tham chiếu / liên hệ').fill('Pilot booking browser'); await page.getByRole('button', { name: 'Tìm vận đơn', exact: true }).click(); await page.locator('#pilot-status').selectOption('WAITING_FOR_HANDOVER'); await page.getByRole('button', { name: 'Tìm vận đơn', exact: true }).click(); await expect(page.locator('.pm-table')).toContainText('AP-SIM-'); await expect(page.locator('.pm-table')).toContainText('UNPAID');
+  await expect(page.getByRole('button', { name: /Tổng vận đơn/ })).toContainText('1');
+  const managementDay = new Date(Date.now() + 7 * 3600000).toISOString().slice(0, 10);
+  await page.getByLabel('Người nhận', { exact: true }).fill('Synthetic pilot recipient');
+  await page.getByLabel('Từ ngày', { exact: true }).fill(managementDay); await page.getByLabel('Đến ngày', { exact: true }).fill(managementDay);
+  await page.getByLabel('Dịch vụ', { exact: true }).selectOption('ROAD_STANDARD'); await page.getByLabel('Tuyến gửi hàng', { exact: true }).selectOption('SIM-A1/SIM-A2'); await page.getByLabel('Nghĩa vụ cước', { exact: true }).selectOption('UNPAID'); await page.getByLabel('Sắp xếp', { exact: true }).selectOption('FEE_DESC');
+  await page.getByRole('button', { name: 'Tìm vận đơn', exact: true }).click(); await expect(page.locator('.pm-table tbody tr')).toHaveCount(1); await expect(page.locator('.pm-table')).toContainText('53.000 ₫');
+  await page.screenshot({ path: process.env.S003_BROWSER_PRIVATE_DIRECTORY! + '/management-real-booked.png', fullPage: true, animations: 'disabled' });
+  await page.goto('/personal/billing'); await expect(page.locator('.an-kpi')).toHaveCount(3); await expect(page.locator('[data-metric=UNPAID_OBLIGATIONS]')).toContainText('53.000'); await expect(page.getByRole('button', { name: /Rút tiền|Thanh toán/ })).toHaveCount(0);
+  await page.goto('/personal/shipments'); await expect(page.locator('.pm-table tbody tr')).toHaveCount(1);
+
 });
 test('station staff scans all parcel labels and atomically accepts custody with visible Personal tracking', async ({ browser }) => {
   let labelStage = 'LABEL_NAVIGATION';
@@ -176,7 +186,7 @@ test('station staff scans all parcel labels and atomically accepts custody with 
   await expect(page.locator('.an-source tbody tr')).toHaveCount(1);
   await expect(page.locator('.an-source tbody tr')).toContainText('Đã nhận tại Station');
   await page.goBack(); await expect(page.getByRole('heading', { name: 'Tổng quan gửi hàng', exact: true })).toBeVisible();
-  await page.goto('/personal/shipments');await page.locator('#pilot-status').selectOption('AT_STATION');await expect(page.locator('.sd-draft-list')).toContainText('Carrier đã nhận tại Station');await page.locator('#pilot-status').selectOption('WAITING_FOR_HANDOVER');await expect(page.getByRole('heading', { name: 'Không tìm thấy vận đơn phù hợp', exact: true })).toBeVisible();
+  await page.goto('/personal/shipments');await page.locator('#pilot-status').selectOption('AT_STATION'); await page.getByRole('button', { name: 'Tìm vận đơn', exact: true }).click();await expect(page.locator('.pm-table')).toContainText('Tại Station');await page.locator('#pilot-status').selectOption('WAITING_FOR_HANDOVER'); await page.getByRole('button', { name: 'Tìm vận đơn', exact: true }).click();await expect(page.getByRole('heading', { name: 'Không có vận đơn phù hợp', exact: true })).toBeVisible();
 });
 
 test('merchant draft uses the real HTTPS API and resolves one lost write', async () => {

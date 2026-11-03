@@ -29,10 +29,21 @@ export const workspaceModules = [
   { path: 'shipments', icon: 'box', title: 'Quản lý vận đơn', description: 'Danh sách và hành trình các vận đơn thuộc tài khoản của bạn.', reason: 'Chưa có nguồn dữ liệu vận đơn Personal. Danh sách, bộ lọc, kiện hàng và tracking sẽ được kết nối cùng nghiệp vụ gửi hàng; vận đơn demo Merchant không được sử dụng trong không gian này.' },
   { path: 'addresses', icon: 'address', title: 'Sổ địa chỉ', description: 'Thông tin người gửi và người nhận của riêng bạn.', reason: 'Sổ địa chỉ cá nhân chưa được triển khai. Địa chỉ trong hồ sơ Merchant chỉ phục vụ hồ sơ đăng ký, không tự trở thành điểm lấy hàng hoặc địa chỉ đã được xác nhận.' },
   { path: 'lookup', icon: 'search', title: 'Tra cứu & Báo giá', description: 'Tra cứu hành trình, dịch vụ và cước phù hợp.', reason: 'Tra cứu và báo giá chưa khả dụng vì chưa có dữ liệu hành trình, vùng phục vụ và bảng giá được duyệt. Không hiển thị phí, thời gian giao hoặc địa điểm minh họa.' },
-  { path: 'labels', icon: 'label', title: 'In nhãn & Tiện ích', description: 'Chứng từ gửi hàng gắn với thông tin đã được xác nhận.', reason: 'Chưa có vận đơn Personal và nguồn phát hành nhãn. Chức năng in nhãn, mã vạch và biên nhận chưa mở.' },
-  { path: 'billing', icon: 'receipt', title: 'Cước & Chứng từ', description: 'Theo dõi cước vận chuyển và chứng từ theo quyền của bạn.', reason: 'Chưa có nguồn dữ liệu thanh toán, COD và chứng từ Personal. Không có số dư, giao dịch hay trạng thái thanh toán nào được giả lập.' },
+  { path: 'labels', icon: 'label', title: 'In nhãn & Tiện ích', description: 'Chứng từ gửi hàng gắn với vận đơn của bạn.', reason: 'Mở chi tiết vận đơn để tải nhãn gửi hàng và mã vạch. Công cụ in hàng loạt chưa khả dụng.' },
+  { path: 'billing', icon: 'receipt', title: 'Cước phí & Thống kê', description: 'Cước xác nhận và nghĩa vụ cước theo vận đơn.', reason: 'Chứng từ hợp lệ được truy cập từ từng vận đơn.' },
   { path: 'support', icon: 'help', title: 'Hỗ trợ & Khiếu nại', description: 'Hướng dẫn tài khoản và yêu cầu hỗ trợ liên quan đến vận đơn.', reason: 'Tạo và theo dõi ticket vận đơn chưa được triển khai. Bạn vẫn có thể xem hướng dẫn sử dụng tài khoản trong trung tâm trợ giúp.' },
 ] as const;
+
+function ManagementNavigation() {
+  const location = useLocation(), [open, setOpen] = useState(true);
+  const active = ['/personal/shipments', '/personal/drafts', '/personal/billing', '/personal/action-required'].some(path => location.pathname.startsWith(path));
+  return <details className={'pw-management-links ' + (active ? 'is-active' : '')} open={open} onToggle={event => setOpen(event.currentTarget.open)}>
+    <summary><Icon name="box" /><span>QUẢN LÝ</span><Icon name="chevron" /></summary>
+    <NavLink to="/personal/shipments" className={({ isActive }) => isActive || location.pathname.startsWith('/personal/drafts/') ? 'active' : undefined}>Quản lý vận đơn</NavLink>
+    <NavLink to="/personal/action-required">Đơn hàng cần xử lý</NavLink>
+    <NavLink to="/personal/billing">Cước phí & Thống kê</NavLink>
+  </details>;
+}
 
 function WorkspaceSwitcher() {
   const [open, setOpen] = useState(false), container = useRef<HTMLDivElement>(null), trigger = useRef<HTMLButtonElement>(null);
@@ -47,7 +58,7 @@ function WorkspaceSwitcher() {
     <button className="pw-workspace-trigger" ref={trigger} type="button" aria-expanded={open} aria-controls="workspace-choices" onClick={() => setOpen(value => !value)}><Icon name="user" /><span>ArgoPost Personal</span><Icon name="chevron" /></button>
     {open && <div id="workspace-choices" className="pw-workspace-choices"><p className="pw-dropdown-label">KHÔNG GIAN LÀM VIỆC</p>
       <Link className="pw-workspace-choice" to="/personal" aria-current="page" onClick={() => setOpen(false)}><span className="pw-choice-icon"><Icon name="user" /></span><span><strong>ArgoPost Personal</strong><small>Tài khoản cá nhân</small></span><Icon name="check" /></Link>
-      <div className="pw-business-note"><strong>ArgoPost Business</strong><p>Chưa có nguồn xác nhận membership đang hoạt động. Hồ sơ đăng ký không cấp quyền vào Business.</p><Link to="/personal/applications" onClick={() => setOpen(false)}>Xem hồ sơ Merchant <Icon name="arrow" /></Link></div>
+      <div className="pw-business-note"><strong>ArgoPost Business</strong><p>Hồ sơ đăng ký không cấp quyền vào Business.</p><Link to="/personal/applications" onClick={() => setOpen(false)}>Xem hồ sơ Merchant <Icon name="arrow" /></Link></div>
     </div>}
   </div>;
 }
@@ -56,6 +67,8 @@ export function WorkspaceShell({ subject, children }: { subject: Subject; childr
   const [sidebar, setSidebar] = useState(false), [loggingOut, setLoggingOut] = useState(false);
   const menu = useRef<HTMLButtonElement>(null);
   const location = useLocation();
+  const section = location.pathname.split('/')[2];
+  const pageTitle = workspaceModules.find(item => item.path === section)?.title ?? ({ 'action-required': 'Đơn hàng cần xử lý', drafts: 'Bản nháp vận đơn', profile: 'Hồ sơ cá nhân', security: 'Bảo mật tài khoản', applications: 'Hồ sơ Merchant' } as Record<string, string>)[section] ?? 'Tổng quan';
   useEffect(() => {
     if (!sidebar) return;
     const escape = (event: KeyboardEvent) => { if (event.key === 'Escape') { setSidebar(false); menu.current?.focus(); } };
@@ -64,18 +77,17 @@ export function WorkspaceShell({ subject, children }: { subject: Subject; childr
   const avatar = subject.displayName.trim().split(/\s+/u).slice(-2).map(part => [...part][0]).join('').toLocaleUpperCase('vi');
   async function logout() { if (loggingOut) return; setLoggingOut(true); try { await customerClient.logout(); } catch { /* Client clears local authority and exposes unknown outcome on login. */ } finally { setLoggingOut(false); } }
   return <div className="pw-shell"><a className="cp-skip" href="#main-content">Đến nội dung chính</a>
-    <header className="pw-header"><button ref={menu} className="pw-icon-button pw-menu-toggle" type="button" aria-label={sidebar ? 'Đóng menu cá nhân' : 'Mở menu cá nhân'} aria-expanded={sidebar} aria-controls="personal-sidebar" onClick={() => setSidebar(value => !value)}><Icon name="menu" /></button><PublicBrand light /><Link className="pw-mobile-brand" to="/" aria-label="ArgoPost, về trang chủ"><img src="/media/argopost-symbol.png" alt="ArgoPost" width="1254" height="1254" /></Link><WorkspaceSwitcher key={location.pathname} />
-      <div className="pw-header-search"><Icon name="search" /><input aria-label="Tìm kiếm vận đơn chưa khả dụng" placeholder="Tìm kiếm vận đơn · chưa mở" disabled /></div>
+    <header className="pw-header"><button ref={menu} className="pw-icon-button pw-menu-toggle" type="button" aria-label={sidebar ? 'Đóng menu cá nhân' : 'Mở menu cá nhân'} aria-expanded={sidebar} aria-controls="personal-sidebar" onClick={() => setSidebar(value => !value)}><Icon name="menu" /></button><div className="pw-header-context"><span>Không gian cá nhân</span><strong>{pageTitle}</strong></div><WorkspaceSwitcher key={location.pathname} />
       <div className="pw-user"><span className="pw-avatar" aria-hidden="true">{avatar}</span><details key={location.pathname} onKeyDown={event => { if (event.key === 'Escape') { event.currentTarget.open = false; event.currentTarget.querySelector('summary')?.focus(); } }}><summary aria-label={`Menu tài khoản ${subject.displayName}`}><span>{subject.displayName}</span><Icon name="chevron" /></summary><div className="pw-user-dropdown"><strong>Tài khoản cá nhân</strong><p>Email đã xác minh</p><Link to="/personal/profile">Hồ sơ cá nhân</Link><Link to="/personal/security">Bảo mật tài khoản</Link></div></details></div>
       <button type="button" className="pw-logout" aria-label={loggingOut ? 'Đang đăng xuất…' : 'Đăng xuất'} disabled={loggingOut} onClick={() => { void logout(); }}><Icon name="exit" /><span>{loggingOut ? 'Đang đăng xuất…' : 'Đăng xuất'}</span></button>
     </header>
     {sidebar && <button className="pw-sidebar-overlay" type="button" aria-label="Đóng điều hướng cá nhân" onClick={() => setSidebar(false)} />}
-    <aside id="personal-sidebar" className={`pw-sidebar ${sidebar ? 'is-open' : ''}`} aria-label="Thanh điều hướng Personal"><span className="pw-nav-label">KHÔNG GIAN CÁ NHÂN</span>
+    <aside id="personal-sidebar" className={`pw-sidebar ${sidebar ? 'is-open' : ''}`} aria-label="Thanh điều hướng Personal"><div className="pw-sidebar-brand"><PublicBrand /></div><span className="pw-nav-label">KHÔNG GIAN CÁ NHÂN</span>
       <nav aria-label="Điều hướng Personal" onClick={event => { if ((event.target as HTMLElement).closest('a')) setSidebar(false); }}>
         <Link to="/personal/overview" aria-current={location.pathname === '/personal' || location.pathname.startsWith('/personal/overview') ? 'page' : undefined} className={location.pathname === '/personal' || location.pathname.startsWith('/personal/overview') ? 'active' : undefined}><Icon name="home" /><span>Tổng quan</span></Link>
-        {workspaceModules.map(item => <NavLink key={item.path} to={'/personal/' + item.path}><Icon name={item.icon} /><span>{item.title}</span>{!['addresses', 'create', 'shipments', 'lookup', 'billing'].includes(item.path) && <span className="pw-nav-dot" aria-label="Chưa khả dụng" />}</NavLink>)}
+        {workspaceModules.filter(item => item.path !== 'billing').map(item => item.path === 'shipments' ? <ManagementNavigation key={location.pathname} /> : <NavLink key={item.path} to={'/personal/' + item.path}><Icon name={item.icon} /><span>{item.title}</span>{!['addresses', 'create', 'lookup'].includes(item.path) && <span className="pw-nav-dot" aria-label="Chưa khả dụng" />}</NavLink>)}
         <details open className="pw-account-links"><summary><Icon name="user" /><span>Tài khoản</span><Icon name="chevron" /></summary><NavLink to="/personal/profile">Hồ sơ</NavLink><NavLink to="/personal/security">Bảo mật</NavLink><NavLink to="/personal/applications">Merchant</NavLink></details>
-      </nav><div className="pw-sidebar-foot"><Icon name="shield" /><span>Personal độc lập với quyền của tổ chức.</span></div>
+      </nav><Link className="pw-sidebar-foot" to="/support"><Icon name="help" /><span>Trung tâm trợ giúp</span><Icon name="arrow" /></Link>
     </aside>
     <div className="pw-content"><main id="main-content" key={`${subject.accountId}:${subject.securityVersion}:${location.pathname}`}>{children}</main><footer className="pw-footer"><span>© {new Date().getFullYear()} ArgoPost</span><Link to="/support">Trung tâm trợ giúp <Icon name="arrow" /></Link></footer></div>
   </div>;
@@ -83,6 +95,10 @@ export function WorkspaceShell({ subject, children }: { subject: Subject; childr
 
 export function WorkspaceDashboard({ subject }: { subject: Subject }) {
   return <PersonalAnalyticsDashboard subject={subject} />;
+}
+
+export function WorkspaceActionRequired() {
+  return <section className="pm-action-page"><div className="pw-page-heading"><div><span className="pw-eyebrow">QUẢN LÝ</span><h1 tabIndex={-1}>Đơn hàng cần xử lý</h1><p>Các vấn đề và yêu cầu gắn với vận đơn của bạn.</p></div><Link className="pw-secondary" to="/personal/shipments">Quản lý vận đơn</Link></div><div className="pw-panel pm-dependency"><span className="pw-empty-icon"><Icon name="help" /></span><h2>Chưa có nguồn yêu cầu xử lý</h2><p>Ngoại lệ vận chuyển và ticket hỗ trợ chưa được kết nối. Màn hình này chưa xác nhận số lượng đơn cần xử lý.</p><div className="pm-dependency-grid"><div><strong>Sự cố vận chuyển</strong><span>Chờ nghiệp vụ Carrier Exception</span></div><div><strong>Yêu cầu hỗ trợ</strong><span>Chờ nghiệp vụ Support / Ticket</span></div><div><strong>Hành động xử lý</strong><span>Hiển thị khi có quyền và workflow hợp lệ</span></div></div><Link className="pw-primary" to="/personal/shipments">Xem vận đơn của bạn <Icon name="arrow" /></Link></div></section>;
 }
 
 export function WorkspaceModule({ name }: { name: string }) {

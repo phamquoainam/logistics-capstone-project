@@ -29,8 +29,28 @@ test('chart context is available on keyboard focus and point drill retains the g
 });
 for (const width of [1440, 768, 390]) test(`analytics responsive layout and tap metric explanation at ${width}px`, async ({ page, context }) => {
   await fixture(context); await page.setViewportSize({ width, height: 960 }); await page.goto('/personal/overview?from=2026-11-01&until=2026-11-04'); await expect(page.locator('.an-kpi')).toHaveCount(6); await expect(page.locator('.an-source tbody tr')).toHaveCount(20);
+  if (width > 760) {
+    const logo = page.locator('.pw-sidebar-brand img'); await expect(logo).toHaveAttribute('src', '/media/argopost-logo-primary.png');
+    await expect.poll(() => logo.evaluate(img => (img as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+  }
+  const toolbar = await page.locator('.pw-header').boundingBox(), heading = await page.getByRole('heading', { name: 'Tổng quan gửi hàng', exact: true }).boundingBox();
+  expect(toolbar!.y + toolbar!.height).toBeLessThan(heading!.y);
+  await expect(page.getByRole('textbox', { name: 'Tìm kiếm vận đơn chưa khả dụng' })).toHaveCount(0);
   await page.getByLabel('Giải thích Nghĩa vụ chưa thanh toán', { exact: true }).click(); await expect(page.locator('.an-info[open]')).toContainText('UNPAID'); const bounds = await page.locator('.an-info[open] p').boundingBox(); expect(bounds!.x).toBeGreaterThanOrEqual(0); expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width);
   await page.getByLabel('Giải thích Nghĩa vụ chưa thanh toán', { exact: true }).click(); expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true); await page.evaluate(() => scrollTo(0, 0)); await page.screenshot({ path: `../../../.demo/analytics-overview-${width}.png`, fullPage: true, animations: 'disabled' });
+});
+test('compact filters retain advanced selections and reset the same analytics cohort', async ({ page, context }) => {
+  await fixture(context); await page.goto('/personal/overview?from=2026-11-01&until=2026-11-04');
+  await expect(page.getByLabel('Trạng thái', { exact: true })).toBeHidden();
+  await page.getByText('Bộ lọc khác', { exact: false }).click();
+  await page.getByLabel('Trạng thái', { exact: true }).selectOption('AT_STATION');
+  await page.getByRole('button', { name: 'Áp dụng', exact: true }).click();
+  await expect(page.locator('.an-source tbody tr')).toHaveCount(12);
+  await expect(page.locator('[data-metric=BOOKED_SHIPMENTS] .an-kpi-value')).toContainText('12');
+  await expect(page.getByLabel('Trạng thái', { exact: true })).toHaveValue('AT_STATION');
+  await page.getByRole('button', { name: 'Đặt lại', exact: true }).click();
+  await expect(page.locator('[data-metric=BOOKED_SHIPMENTS] .an-kpi-value')).toContainText('25');
+  expect(new URL(page.url()).searchParams.has('status')).toBe(false);
 });
 test('unavailable and malformed analytics never fabricate zero cards; retry can recover', async ({ page, context }) => {
   await fixture(context, 0); let reads = 0; await context.route('**/api/v1/customer/personal-analytics?*', async route => { reads++; if (reads === 1) return route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ code: 'ANALYTICS_UNAVAILABLE' }) }); return route.fulfill({ contentType: 'application/json', body: JSON.stringify(analyticsFixture(new URL(route.request().url()).searchParams)) }); });

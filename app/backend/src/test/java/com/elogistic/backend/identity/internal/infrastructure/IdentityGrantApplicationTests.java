@@ -1628,6 +1628,44 @@ class IdentityGrantApplicationTests {
     }
     private static final String ANALYTICS_PATH="/api/v1/customer/personal-analytics?from=2026-11-01&until=2026-11-03";
     private String analyticsMetric(tools.jackson.databind.JsonNode report,String id){for(var metric:report.get("metrics"))if(id.equals(metric.get("id").asString()))return metric.get("value").asString();throw new AssertionError("ANALYTICS_METRIC_REQUIRED");}
+    @Test void personalManagementFiltersPageAndKpisUseOwnedCommittedSource()throws Exception{
+        customerFixture(true);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var c=customerHttpContext(PILOT_NOW,smtp(inbox,PILOT_NOW),true)){
+            var mvc=httpMvc(c);var owner=profileBrowser(mvc);var staff=addressOtherBrowser(mvc);intakeAssignment(mvc,staff,"SIM-DROP-A1");
+            String first=null,expensive=null;
+            for(int i=0;i<21;i++){
+                var input=new HashMap<String,Object>(pilotDraftInput(i==0?"Mgmt%_literal":"Mgmt "+i));
+                var recipient=new HashMap<String,Object>((Map<String,Object>)input.get("recipient"));recipient.put("name","Recipient "+i);input.put("recipient",recipient);
+                String draft=responseId(onboardingWrite(mvc,owner,"POST",DRAFT_PATH,UUID.randomUUID(),null,input),"id");
+                String quote=pilotQuoteId(pilotQuote(mvc,owner,draft,UUID.randomUUID(),"SIM-A1",i==20?"SIM-B1":"SIM-A2"));
+                String shipment=pilotShipmentId(pilotBook(mvc,owner,draft,quote,UUID.randomUUID()));if(i==0)first=shipment;if(i==20)expensive=shipment;
+            }
+            var scans=intakeScans(mvc,staff,intakeBarcodes(mvc,owner,first));assertEquals(200,intakeAccept(mvc,staff,first,scans,UUID.randomUUID(),"\"i0\"").getStatus());
+            String path="/api/v1/customer/shipments?view=management";var mapper=new tools.jackson.databind.ObjectMapper();
+            var response=httpRead(mvc,path,owner.access());assertEquals(200,response.getStatus());assertTrue(response.getHeader("Cache-Control").contains("no-store"));var report=mapper.readTree(response.getContentAsString());
+            assertEquals("PERSONAL_MANAGEMENT_1",report.get("schemaVersion").asString());assertEquals("21",report.get("total").asString());assertEquals("21",report.get("summary").get("totalShipments").asString());assertEquals("20",report.get("summary").get("waitingForHandover").asString());assertEquals("1",report.get("summary").get("atStation").asString());assertEquals(20,report.get("items").size());assertTrue(report.get("hasNext").asBoolean());
+            Set<String> ids=new HashSet<>();for(var row:report.get("items"))ids.add(row.get("record").get("shipment").get("id").asString());
+            var second=mapper.readTree(httpRead(mvc,path+"&page=1",owner.access()).getContentAsString());assertEquals(1,second.get("items").size());assertTrue(ids.add(second.get("items").get(0).get("record").get("shipment").get("id").asString()));assertEquals(21,ids.size());assertFalse(second.get("hasNext").asBoolean());
+            var accepted=mapper.readTree(httpRead(mvc,path+"&status=AT_STATION",owner.access()).getContentAsString());assertEquals("1",accepted.get("total").asString());assertEquals("21",accepted.get("summary").get("totalShipments").asString());assertEquals("AT_STATION",accepted.get("items").get(0).get("status").asString());assertEquals(first,accepted.get("items").get(0).get("record").get("shipment").get("id").asString());assertEquals("NOT_ACCEPTED",accepted.get("items").get(0).get("record").get("shipment").get("carrierState").asString());
+            for(String query:List.of("&recipient=Recipient%200&from=2026-11-01&until=2026-11-03&service=ROAD_STANDARD&origin=SIM-A1&destination=SIM-A2&obligation=UNPAID","&search=Mgmt%25_literal"))assertEquals("1",mapper.readTree(mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(java.net.URI.create(path+query)).secure(true).header("Authorization","Bearer "+owner.access())).andReturn().getResponse().getContentAsString()).get("total").asString(),query);
+            assertEquals("0",mapper.readTree(httpRead(mvc,path+"&from=2026-10-01&until=2026-10-02",owner.access()).getContentAsString()).get("total").asString());
+            var pricey=mapper.readTree(httpRead(mvc,path+"&sort=FEE_DESC",owner.access()).getContentAsString());assertEquals(expensive,pricey.get("items").get(0).get("record").get("shipment").get("id").asString());
+            var foreign=mapper.readTree(httpRead(mvc,path,staff.access()).getContentAsString());assertEquals("0",foreign.get("total").asString());assertEquals(0,foreign.get("items").size());assertFalse(foreign.toString().contains(first));
+            String phone=accepted.get("items").get(0).get("record").get("shipment").get("input").get("recipient").get("phone").asString();var phoneRead=mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/v1/customer/shipments").param("view","management").param("recipient",phone).secure(true).header("Authorization","Bearer "+owner.access())).andReturn().getResponse();assertEquals("21",mapper.readTree(phoneRead.getContentAsString()).get("total").asString());
+            var legacy=mapper.readTree(httpRead(mvc,"/api/v1/customer/shipments",owner.access()).getContentAsString());assertEquals(Set.of("items","page","size","hasNext"),legacy.propertyNames());
+            assertEquals(21,scalar("SELECT count(*) FROM finance.pilot_shipping_obligation WHERE state='UNPAID'"));assertEquals(42,scalar("SELECT count(*) FROM orders.pilot_parcel"));
+        }
+    }
+    @Test void personalManagementRejectsSelectorsInvalidQueriesAndProduction()throws Exception{
+        customerFixture(false);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var c=customerHttpContext(PILOT_NOW,smtp(inbox,PILOT_NOW),true)){
+            var mvc=httpMvc(c);var owner=profileBrowser(mvc);String path="/api/v1/customer/shipments?view=management";
+            for(String extra:List.of("&ownerId="+B,"&organizationId="+B,"&context=BUSINESS","&recipient=A&recipient=B","&view=management","&page=501","&size=10","&sort=UNKNOWN","&status=DELIVERED","&obligation=PAID","&service=AIR","&origin=SIM-A2&destination=SIM-B1","&from=2026-11-01","&from=2026-11-02&until=2026-11-01","&from=2020-01-01&until=2026-11-01"))assertEquals(400,httpRead(mvc,path+extra,owner.access()).getStatus(),extra);
+            assertEquals(400,httpRead(mvc,"/api/v1/customer/shipments?recipient=unreviewed",owner.access()).getStatus());
+            execute("UPDATE identity.user_account SET auth_version=auth_version+1 WHERE id='"+A+"'");assertEquals(401,httpRead(mvc,path,owner.access()).getStatus());
+        }
+        try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var c=customerHttpContext(PILOT_NOW,smtp(inbox,PILOT_NOW),true,"PRODUCTION")){
+            var mvc=httpMvc(c);var owner=profileBrowser(mvc);assertEquals(409,httpRead(mvc,"/api/v1/customer/shipments?view=management",owner.access()).getStatus());
+        }
+    }
     @Test void personalAnalyticsUsesRealPostgresOwnerCohortWithoutCollectedRevenue()throws Exception{
         customerFixture(true);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var c=customerHttpContext(PILOT_NOW,smtp(inbox,PILOT_NOW),true)){
             var mvc=httpMvc(c);var owner=profileBrowser(mvc);var stranger=addressOtherBrowser(mvc);String shipment=intakeBooked(mvc,owner);

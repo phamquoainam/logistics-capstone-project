@@ -4,7 +4,7 @@
 
 
 /* ArgoPost account entry: shared identity, independent secure form behavior. */
-.customer-portal{font-family:Segoe UI,Arial,sans-serif;color:var(--mp-ink);background:var(--mp-soft)}
+.customer-portal{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI Variable","Segoe UI",sans-serif;color:var(--mp-ink);background:var(--mp-soft)}
 .cp-auth-portal main{display:grid;grid-template-columns:.93fr 1.07fr;align-items:stretch;width:min(1120px,calc(100% - 80px));min-height:650px;margin:44px auto;border:1px solid var(--mp-line);border-radius:12px;background:#fff;overflow:hidden;box-shadow:0 14px 40px #06294f06;animation:ap-rise .35s both;flex:1}
 .cp-auth-story{position:relative;isolation:isolate;overflow:hidden;background:linear-gradient(145deg,var(--mp-navy),#123e6d);color:#fff;padding:45px 39px 330px;min-height:630px}
 .cp-auth-story:after{content:'';position:absolute;z-index:-1;right:-165px;top:-190px;width:440px;height:440px;border:65px solid #ffffff04;border-radius:50%}.cp-story-kicker{font-size:9px;font-weight:700;letter-spacing:2px;color:#c7d7e9;display:flex;align-items:center;gap:12px}.cp-story-kicker:before{content:'';width:24px;height:2px;background:var(--mp-orange)}
