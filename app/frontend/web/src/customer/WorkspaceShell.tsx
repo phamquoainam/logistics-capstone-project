@@ -17,6 +17,7 @@ function Icon({ name }: { name: string }) {
     receipt: 'M5 3h14v19l-3-2-4 2-4-2-3 2ZM9 8h6M9 12h6',
     help: 'M9 9a3 3 0 0 1 6 0c0 2-3 2-3 5m0 3h.01M22 12a10 10 0 1 0-20 0 10 10 0 0 0 20 0',
     user: 'M5 21v-2a7 7 0 0 1 14 0v2M16 7a4 4 0 1 0-8 0 4 4 0 0 0 8 0',
+    business: 'M3 21V7h7v14M10 3h10v18M1 21h22M6 11h1m-1 4h1M14 7h2m-2 4h2m-2 4h2',
     check: 'm5 12 4 4L19 6', arrow: 'M5 12h14m-5-5 5 5-5 5',
     chevron: 'm6 9 6 6 6-6', menu: 'M4 6h16M4 12h16M4 18h16',
     exit: 'M10 4H4v16h6M13 7l5 5-5 5M8 12h10', shield: 'M12 2 3 6v6c0 5 9 10 9 10s9-5 9-10V6ZM8 12l3 3 5-6',
@@ -35,14 +36,17 @@ export const workspaceModules = [
 ] as const;
 
 function ManagementNavigation() {
-  const location = useLocation(), [open, setOpen] = useState(true);
+  const location = useLocation(), trigger = useRef<HTMLButtonElement>(null);
   const active = ['/personal/shipments', '/personal/drafts', '/personal/billing', '/personal/action-required'].some(path => location.pathname.startsWith(path));
-  return <details className={'pw-management-links ' + (active ? 'is-active' : '')} open={open} onToggle={event => setOpen(event.currentTarget.open)}>
-    <summary><Icon name="box" /><span>QUẢN LÝ</span><Icon name="chevron" /></summary>
+  const [open, setOpen] = useState(active);
+  return <div className={'pw-management-links ' + (active ? 'is-active' : '')} onKeyDown={event => { if (event.key === 'Escape' && open) { event.stopPropagation(); setOpen(false); trigger.current?.focus(); } }}>
+    <button className="pw-management-toggle" ref={trigger} type="button" aria-expanded={open} aria-controls="personal-management-links" onClick={() => setOpen(value => !value)}><Icon name="box" /><span>Quản lý</span><Icon name="chevron" /></button>
+    <div className="pw-management-items" id="personal-management-links" hidden={!open}>
     <NavLink to="/personal/shipments" className={({ isActive }) => isActive || location.pathname.startsWith('/personal/drafts/') ? 'active' : undefined}>Quản lý vận đơn</NavLink>
     <NavLink to="/personal/action-required">Đơn hàng cần xử lý</NavLink>
     <NavLink to="/personal/billing">Cước phí & Thống kê</NavLink>
-  </details>;
+    </div>
+  </div>;
 }
 
 function WorkspaceSwitcher() {
@@ -51,14 +55,16 @@ function WorkspaceSwitcher() {
     if (!open) return;
     const outside = (event: PointerEvent) => { if (!container.current?.contains(event.target as Node)) setOpen(false); };
     const escape = (event: KeyboardEvent) => { if (event.key === 'Escape') { setOpen(false); trigger.current?.focus(); } };
+    const close = () => setOpen(false);
     document.addEventListener('pointerdown', outside); document.addEventListener('keydown', escape);
-    return () => { document.removeEventListener('pointerdown', outside); document.removeEventListener('keydown', escape); };
+    window.addEventListener('resize', close); window.addEventListener('scroll', close, true);
+    return () => { document.removeEventListener('pointerdown', outside); document.removeEventListener('keydown', escape); window.removeEventListener('resize', close); window.removeEventListener('scroll', close, true); };
   }, [open]);
   return <div className="pw-switcher" ref={container} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpen(false); }}>
     <button className="pw-workspace-trigger" ref={trigger} type="button" aria-expanded={open} aria-controls="workspace-choices" onClick={() => setOpen(value => !value)}><Icon name="user" /><span>ArgoPost Personal</span><Icon name="chevron" /></button>
-    {open && <div id="workspace-choices" className="pw-workspace-choices"><p className="pw-dropdown-label">KHÔNG GIAN LÀM VIỆC</p>
+    {open && <div id="workspace-choices" className="pw-workspace-choices" role="group" aria-label="Chọn không gian làm việc" onPointerDown={event => { if ((event.target as Element).closest('button:disabled')) event.preventDefault(); }}>
       <Link className="pw-workspace-choice" to="/personal" aria-current="page" onClick={() => setOpen(false)}><span className="pw-choice-icon"><Icon name="user" /></span><span><strong>ArgoPost Personal</strong><small>Tài khoản cá nhân</small></span><Icon name="check" /></Link>
-      <div className="pw-business-note"><strong>ArgoPost Business</strong><p>Hồ sơ đăng ký không cấp quyền vào Business.</p><Link to="/personal/applications" onClick={() => setOpen(false)}>Xem hồ sơ Merchant <Icon name="arrow" /></Link></div>
+      <button type="button" className="pw-workspace-choice pw-workspace-business" disabled><span className="pw-choice-icon"><Icon name="business" /></span><span><strong>ArgoPost Business</strong><small>Tài khoản doanh nghiệp</small></span><span className="pw-workspace-status">Chưa kích hoạt</span></button>
     </div>}
   </div>;
 }
@@ -67,8 +73,6 @@ export function WorkspaceShell({ subject, children }: { subject: Subject; childr
   const [sidebar, setSidebar] = useState(false), [loggingOut, setLoggingOut] = useState(false);
   const menu = useRef<HTMLButtonElement>(null);
   const location = useLocation();
-  const section = location.pathname.split('/')[2];
-  const pageTitle = workspaceModules.find(item => item.path === section)?.title ?? ({ 'action-required': 'Đơn hàng cần xử lý', drafts: 'Bản nháp vận đơn', profile: 'Hồ sơ cá nhân', security: 'Bảo mật tài khoản', applications: 'Hồ sơ Merchant' } as Record<string, string>)[section] ?? 'Tổng quan';
   useEffect(() => {
     if (!sidebar) return;
     const escape = (event: KeyboardEvent) => { if (event.key === 'Escape') { setSidebar(false); menu.current?.focus(); } };
@@ -77,16 +81,15 @@ export function WorkspaceShell({ subject, children }: { subject: Subject; childr
   const avatar = subject.displayName.trim().split(/\s+/u).slice(-2).map(part => [...part][0]).join('').toLocaleUpperCase('vi');
   async function logout() { if (loggingOut) return; setLoggingOut(true); try { await customerClient.logout(); } catch { /* Client clears local authority and exposes unknown outcome on login. */ } finally { setLoggingOut(false); } }
   return <div className="pw-shell"><a className="cp-skip" href="#main-content">Đến nội dung chính</a>
-    <header className="pw-header"><button ref={menu} className="pw-icon-button pw-menu-toggle" type="button" aria-label={sidebar ? 'Đóng menu cá nhân' : 'Mở menu cá nhân'} aria-expanded={sidebar} aria-controls="personal-sidebar" onClick={() => setSidebar(value => !value)}><Icon name="menu" /></button><div className="pw-header-context"><span>Không gian cá nhân</span><strong>{pageTitle}</strong></div><WorkspaceSwitcher key={location.pathname} />
-      <div className="pw-user"><span className="pw-avatar" aria-hidden="true">{avatar}</span><details key={location.pathname} onKeyDown={event => { if (event.key === 'Escape') { event.currentTarget.open = false; event.currentTarget.querySelector('summary')?.focus(); } }}><summary aria-label={`Menu tài khoản ${subject.displayName}`}><span>{subject.displayName}</span><Icon name="chevron" /></summary><div className="pw-user-dropdown"><strong>Tài khoản cá nhân</strong><p>Email đã xác minh</p><Link to="/personal/profile">Hồ sơ cá nhân</Link><Link to="/personal/security">Bảo mật tài khoản</Link></div></details></div>
+    <header className="pw-header"><button ref={menu} className="pw-icon-button pw-menu-toggle" type="button" aria-label={sidebar ? 'Đóng menu cá nhân' : 'Mở menu cá nhân'} aria-expanded={sidebar} aria-controls="personal-sidebar" onClick={() => setSidebar(value => !value)}><Icon name="menu" /></button><WorkspaceSwitcher key={location.pathname} />
+      <div className="pw-user"><span className="pw-avatar" aria-hidden="true">{avatar}</span><details key={location.pathname} onKeyDown={event => { if (event.key === 'Escape') { event.currentTarget.open = false; event.currentTarget.querySelector('summary')?.focus(); } }}><summary aria-label={`Menu tài khoản ${subject.displayName}`}><span>{subject.displayName}</span><Icon name="chevron" /></summary><div className="pw-user-dropdown" onClick={event => { if ((event.target as HTMLElement).closest('a')) setSidebar(false); }}><strong>Tài khoản cá nhân</strong><p>Email đã xác minh</p><Link to="/personal/profile">Hồ sơ cá nhân</Link><Link to="/personal/security">Bảo mật tài khoản</Link><Link to="/personal/applications">Hồ sơ Merchant</Link></div></details></div>
       <button type="button" className="pw-logout" aria-label={loggingOut ? 'Đang đăng xuất…' : 'Đăng xuất'} disabled={loggingOut} onClick={() => { void logout(); }}><Icon name="exit" /><span>{loggingOut ? 'Đang đăng xuất…' : 'Đăng xuất'}</span></button>
     </header>
     {sidebar && <button className="pw-sidebar-overlay" type="button" aria-label="Đóng điều hướng cá nhân" onClick={() => setSidebar(false)} />}
     <aside id="personal-sidebar" className={`pw-sidebar ${sidebar ? 'is-open' : ''}`} aria-label="Thanh điều hướng Personal"><div className="pw-sidebar-brand"><PublicBrand /></div><span className="pw-nav-label">KHÔNG GIAN CÁ NHÂN</span>
       <nav aria-label="Điều hướng Personal" onClick={event => { if ((event.target as HTMLElement).closest('a')) setSidebar(false); }}>
         <Link to="/personal/overview" aria-current={location.pathname === '/personal' || location.pathname.startsWith('/personal/overview') ? 'page' : undefined} className={location.pathname === '/personal' || location.pathname.startsWith('/personal/overview') ? 'active' : undefined}><Icon name="home" /><span>Tổng quan</span></Link>
-        {workspaceModules.filter(item => item.path !== 'billing').map(item => item.path === 'shipments' ? <ManagementNavigation key={location.pathname} /> : <NavLink key={item.path} to={'/personal/' + item.path}><Icon name={item.icon} /><span>{item.title}</span>{!['addresses', 'create', 'lookup'].includes(item.path) && <span className="pw-nav-dot" aria-label="Chưa khả dụng" />}</NavLink>)}
-        <details open className="pw-account-links"><summary><Icon name="user" /><span>Tài khoản</span><Icon name="chevron" /></summary><NavLink to="/personal/profile">Hồ sơ</NavLink><NavLink to="/personal/security">Bảo mật</NavLink><NavLink to="/personal/applications">Merchant</NavLink></details>
+        {workspaceModules.filter(item => item.path !== 'billing').map(item => item.path === 'shipments' ? <ManagementNavigation key="management" /> : <NavLink key={item.path} to={'/personal/' + item.path}><Icon name={item.icon} /><span>{item.title}</span>{!['addresses', 'create', 'lookup'].includes(item.path) && <span className="pw-nav-dot" aria-label="Chưa khả dụng" />}</NavLink>)}
       </nav><Link className="pw-sidebar-foot" to="/support"><Icon name="help" /><span>Trung tâm trợ giúp</span><Icon name="arrow" /></Link>
     </aside>
     <div className="pw-content"><main id="main-content" key={`${subject.accountId}:${subject.securityVersion}:${location.pathname}`}>{children}</main><footer className="pw-footer"><span>© {new Date().getFullYear()} ArgoPost</span><Link to="/support">Trung tâm trợ giúp <Icon name="arrow" /></Link></footer></div>

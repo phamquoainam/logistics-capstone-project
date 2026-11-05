@@ -44,11 +44,41 @@ test('nine categories distinguish Draft and unavailable lifecycle from an empty 
   await page.getByRole('navigation', { name: 'Nhóm vận đơn' }).getByRole('link', { name: 'Đơn nháp', exact: true }).click(); await expect(page.getByRole('heading', { name: 'Đơn nháp', exact: true })).toBeVisible(); await expect(page.getByRole('heading', { name: 'Bạn chưa có bản nháp', exact: true })).toBeVisible();
   await page.getByRole('navigation', { name: 'Nhóm vận đơn' }).getByRole('link', { name: /Đang vận chuyển/ }).click(); await expect(page.locator('.pm-dependency')).toContainText('Carrier Transit'); await expect(page.locator('.pm-kpis')).toHaveCount(0); expect(reads.length).toBe(before);
   await page.goto('/personal/action-required'); await expect(page.getByRole('heading', { name: 'Chưa có nguồn yêu cầu xử lý' })).toBeVisible(); await expect(page.getByRole('button', { name: /Sửa COD|Duyệt|Đồng ý/ })).toHaveCount(0);
-  const summary = page.locator('.pw-management-links>summary'); await summary.focus(); await page.keyboard.press('Enter'); await expect(page.getByRole('link', { name: 'Cước phí & Thống kê', exact: true })).toBeHidden(); await page.keyboard.press('Enter'); await expect(page.getByRole('link', { name: 'Cước phí & Thống kê', exact: true })).toBeVisible();
+  const summary = page.getByRole('button', { name: 'Quản lý', exact: true }); await summary.focus(); await page.keyboard.press('Enter'); await expect(page.getByRole('link', { name: 'Cước phí & Thống kê', exact: true })).toBeHidden(); await page.keyboard.press('Enter'); await expect(page.getByRole('link', { name: 'Cước phí & Thống kê', exact: true })).toBeVisible();
 });
 test('fees reuse Analytics and documents deep link opens the existing Shipment document tab', async ({ page, context }) => {
   await fixture(context); await page.goto('/personal/billing'); await expect(page.getByRole('heading', { name: 'Cước phí & Thống kê', exact: true })).toBeVisible(); await expect(page.locator('.an-kpi')).toHaveCount(3); await expect(page.locator('.an-kpi[data-metric=UNPAID_OBLIGATIONS]')).toContainText('925.000'); await expect(page.locator('.an-fee-card')).toContainText('UNPAID'); await expect(page.getByRole('button', { name: /Rút tiền|Thanh toán|Ví/ })).toHaveCount(0);
   await page.goto('/personal/shipments'); await page.locator('.pm-table tbody tr').first().getByRole('link', { name: 'Nhãn & chứng từ', exact: true }).click(); await expect(page.getByRole('tab', { name: 'Chứng từ', exact: true })).toHaveAttribute('aria-selected', 'true');
+});
+
+for (const width of [1440, 390]) test(`navigation has one account entry and stable Management disclosure at ${width}px`, async ({ page, context }) => {
+  await fixture(context); await page.setViewportSize({ width, height: 960 }); await page.goto('/personal/overview');
+  await expect(page.locator('.an-kpi')).toHaveCount(4);
+  const sidebar = page.getByRole('complementary', { name: 'Thanh điều hướng Personal' });
+  if (width < 760) await page.getByRole('button', { name: 'Mở menu cá nhân' }).click();
+  await expect(sidebar.locator('.pw-account-links')).toHaveCount(0); await expect(sidebar.getByRole('link', { name: /Hồ sơ|Bảo mật|Merchant/ })).toHaveCount(0);
+  await expect(page.locator('.pw-header-context')).toHaveCount(0);
+  const toggle = sidebar.getByRole('button', { name: 'Quản lý', exact: true }), items = sidebar.locator('#personal-management-links');
+  const font = (node: Element) => { const css = getComputedStyle(node); return [css.fontFamily, css.fontSize, css.fontWeight, css.lineHeight, css.letterSpacing]; };
+  expect(await toggle.evaluate(font)).toEqual(await sidebar.getByRole('link', { name: 'Sổ địa chỉ', exact: true }).evaluate(font));
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false'); await expect(items).toBeHidden();
+  for (let i = 0; i < 4; i++) { await toggle.click(); await expect(toggle).toHaveAttribute('aria-expanded', i % 2 === 0 ? 'true' : 'false'); }
+  await toggle.focus(); await page.keyboard.press('Enter'); await expect(items).toBeVisible();
+  await page.keyboard.press('Escape'); await expect(items).toBeHidden(); await expect(toggle).toBeFocused();
+  await page.keyboard.press('Space'); await expect(items).toBeVisible();
+  await items.getByRole('link', { name: 'Quản lý vận đơn', exact: true }).click(); await expect(page.locator('.pm-table tbody tr')).toHaveCount(20);
+  if (width < 760) await page.getByRole('button', { name: 'Mở menu cá nhân' }).click();
+  await toggle.click(); await expect(items).toBeHidden();
+  await sidebar.getByRole('link', { name: 'Tổng quan', exact: true }).click(); await expect(page.locator('.an-kpi')).toHaveCount(4);
+  if (width < 760) await page.getByRole('button', { name: 'Mở menu cá nhân' }).click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false'); await expect(items).toBeHidden();
+  await toggle.click(); await expect(items).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: `../../../.demo/navigation-polish-${width}.png`, fullPage: true, animations: 'disabled' });
+  if (width < 760) await page.getByRole('button', { name: 'Đóng menu cá nhân' }).click();
+  await page.getByLabel('Menu tài khoản Synthetic Customer', { exact: true }).click();
+  const account = page.locator('.pw-user-dropdown');
+  for (const [label, path] of [['Hồ sơ cá nhân', 'profile'], ['Bảo mật tài khoản', 'security'], ['Hồ sơ Merchant', 'applications']]) await expect(account.getByRole('link', { name: label, exact: true })).toHaveAttribute('href', '/personal/' + path);
 });
 test('failed or malformed management reads do not become zero KPIs or an empty success', async ({ page, context }) => {
   await fixture(context); let fail = true; await context.route('**/api/v1/customer/shipments?*', route => route.fulfill({ status: fail ? 503 : 200, contentType: 'application/json', body: JSON.stringify(fail ? { code: 'UNAVAILABLE' } : managementFixture(new URL(route.request().url()).searchParams, 45)) }));

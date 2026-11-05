@@ -72,7 +72,7 @@ test('recovery confirmation retains exact command after an unknown response with
   });
   await page.goto('/recover/confirm#proofId=' + proofId + '&proof=' + 'B'.repeat(43)); await page.getByLabel('Mật khẩu mới', { exact: true }).fill('synthetic-recovered-password'); await page.getByLabel('Nhập lại mật khẩu mới').fill('synthetic-recovered-password'); await page.getByRole('button', { name: 'Xác nhận mật khẩu mới' }).click();
   await expect(page.getByRole('alert')).toContainText('Chưa xác định'); await expect(page).toHaveURL(/\/recover\/confirm$/); await expect(page.locator('.cp-success-popup')).toHaveCount(0); expect(attempts).toBe(1); await expect(page.getByLabel('Mật khẩu mới', { exact: true })).toBeDisabled();
-  await page.getByRole('button', { name: 'Xác nhận mật khẩu mới' }).click(); await expect(page.getByRole('status')).toContainText('Bạn đã đổi mật khẩu thành công!');
+  await page.getByRole('button', { name: 'Xác nhận mật khẩu mới' }).click(); await expect(page).toHaveURL(/\/login$/); await expect(page.locator('.cp-success-popup')).toContainText('Bạn đã đổi mật khẩu thành công!');
   await expect(page).toHaveURL(/\/login$/); await expect(page.getByLabel('Email đã xác minh')).toBeVisible();
   const commands = calls.filter(c => c.path.endsWith('/recovery-confirm')); expect(commands).toHaveLength(2); expect(commands[0].key).toBe(commands[1].key); expect(commands[0].body).toEqual(commands[1].body); expect(new URL(page.url()).hash).toBe('');
 });
@@ -137,12 +137,32 @@ test('workspace disclosure never grants Business from an approved application or
   await page.goto('/personal/applications'); await expect(page.getByText('Đã duyệt · phiên bản 1')).toBeVisible();
   const trigger = page.getByRole('button', { name: 'ArgoPost Personal', exact: true }); await trigger.focus(); await page.keyboard.press('Enter');
   const choices = page.locator('#workspace-choices'); await expect(choices).toBeVisible();
-  await expect(choices.locator('a[href^="/merchant"]')).toHaveCount(0); await expect(choices).toContainText('Hồ sơ đăng ký không cấp quyền');
+  await expect(choices.locator('a[href^="/merchant"]')).toHaveCount(0); await expect(choices).toContainText('Chưa kích hoạt');
+  await expect(choices.getByRole('button', { name: /ArgoPost Business/ })).toBeDisabled();
   await page.keyboard.press('Escape'); await expect(choices).toHaveCount(0); await expect(trigger).toBeFocused();
-  await trigger.click(); await page.getByRole('heading', { name: 'Hồ sơ đăng ký Merchant' }).click({ position: { x: 4, y: 4 } }); await expect(choices).toHaveCount(0);
+  await trigger.click(); await page.locator('.pw-footer>span').click(); await expect(choices).toHaveCount(0);
   await page.goto('/merchant/10000000-0000-4000-8000-000000000099/profile');
   await expect(page.getByRole('heading', { name: 'Không gian Merchant chưa khả dụng' })).toBeVisible();
   expect(calls.some(call => /\/merchant\/|\/organizations|\/contexts/.test(call.path))).toBe(false);
+});
+
+for (const width of [1440, 768, 390, 360]) test(`workspace chooser stays in view and Business remains inactive at ${width}px`, async ({ page, context }) => {
+  const calls = await fixture(context, true); await page.setViewportSize({ width, height: 960 }); await page.goto('/personal/overview');
+  await expect(page.locator('.an-kpi')).toHaveCount(4);
+  const trigger = page.getByRole('button', { name: 'ArgoPost Personal', exact: true }); await trigger.click();
+  const choices = page.getByRole('group', { name: 'Chọn không gian làm việc' }), bounds = await choices.boundingBox(), anchor = await trigger.boundingBox();
+  expect(bounds!.x).toBeGreaterThanOrEqual(0); expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width); expect(bounds!.y).toBeGreaterThanOrEqual(anchor!.y + anchor!.height);
+  if (width > 760) { const sidebar = await page.locator('.pw-sidebar').boundingBox(); expect(bounds!.x).toBeGreaterThanOrEqual(sidebar!.x + sidebar!.width); }
+  const personal = choices.getByRole('link', { name: /ArgoPost Personal/ }), business = choices.getByRole('button', { name: /ArgoPost Business/ });
+  await expect(personal).toHaveAttribute('aria-current', 'page'); await expect(business).toBeDisabled(); await expect(business).toContainText('Chưa kích hoạt');
+  await expect(choices.getByRole('link')).toHaveCount(1);
+  const before = page.url(), beforeCalls = calls.length, box = await business.boundingBox(); await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
+  expect(page.url()).toBe(before); expect(calls.length).toBe(beforeCalls); await expect(choices).toBeVisible();
+  await personal.focus(); await page.keyboard.press('Tab'); await expect(page.getByLabel('Menu tài khoản Người dùng thử', { exact: true })).toBeFocused(); await expect(choices).toHaveCount(0);
+  await trigger.focus(); await page.keyboard.press('Enter'); await expect(choices).toBeVisible();
+  await page.mouse.move(0, 0); await page.screenshot({ path: `../../../.demo/workspace-chooser-${width}.png`, fullPage: true, animations: 'disabled' });
+  await page.keyboard.press('Escape'); await expect(choices).toHaveCount(0); await expect(trigger).toBeFocused();
+  await trigger.click(); await page.setViewportSize({ width: width === 360 ? 390 : 360, height: 960 }); await expect(choices).toHaveCount(0);
 });
 
 test('deferred Personal modules explain dependencies without sending unsupported mutations', async ({ page, context }) => {
@@ -168,7 +188,7 @@ test('Personal shell supports narrow navigation, keyboard dismissal and accessib
   }
   const menu = page.getByRole('button', { name: 'Mở menu cá nhân' }); await menu.click();
   await expect(page.getByRole('navigation', { name: 'Điều hướng Personal' })).toBeVisible(); await page.keyboard.press('Escape'); await expect(menu).toBeFocused();
-  await menu.click(); await page.getByRole('navigation', { name: 'Điều hướng Personal' }).getByRole('link', { name: 'Hồ sơ', exact: true }).click();
+  await menu.click(); await page.getByLabel('Menu tài khoản Người dùng thử', { exact: true }).click(); await page.locator('.pw-user-dropdown').getByRole('link', { name: 'Hồ sơ cá nhân', exact: true }).click();
   await expect(page.getByLabel('Tên hiển thị trong hồ sơ')).toBeVisible(); await expect(menu).toHaveAttribute('aria-expanded', 'false');
   await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click(); await expect(page.getByRole('heading', { name: 'Đăng nhập bằng mật khẩu' })).toBeVisible();
   await expect(page.locator('.pw-shell')).toHaveCount(0);
@@ -251,7 +271,7 @@ test('recovery opens OTP immediately, resends with retained email, verifies befo
   await expect(page).toHaveURL(/\/recover\/confirm$/); await expect(page.getByLabel('Mật khẩu mới', { exact: true })).toBeVisible();
   expect(calls.find(call => call.path.endsWith('/recovery-verifications'))?.body).toEqual({proofId,proof:'123456'});
   await page.getByLabel('Mật khẩu mới', { exact: true }).fill('synthetic-recovered-password'); await page.getByLabel('Nhập lại mật khẩu mới').fill('synthetic-recovered-password'); await page.getByRole('button', { name: 'Xác nhận mật khẩu mới' }).click();
-  await expect(page.getByRole('status')).toContainText('Bạn đã đổi mật khẩu thành công!');
+  await expect(page).toHaveURL(/\/login$/); await expect(page.locator('.cp-success-popup')).toContainText('Bạn đã đổi mật khẩu thành công!');
   expect(calls.find(call => call.path.endsWith('/recovery-confirm'))?.body?.proof).toBe('C'.repeat(43));
   expect(await page.evaluate(() => [localStorage.length,sessionStorage.length])).toEqual([0,0]);
 });

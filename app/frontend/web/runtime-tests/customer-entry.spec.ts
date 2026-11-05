@@ -46,7 +46,8 @@ test('verified login has isolated customer cookies and no SYSTEM authority', asy
   await expect(page.getByRole('heading', { name: 'Tổng quan', exact: true })).toBeVisible();
   await expect(page.locator('.an-header')).toContainText('Người gửi hàng thử');
   await page.getByRole('button', { name: 'ArgoPost Personal', exact: true }).click();
-  await expect(page.locator('#workspace-choices')).toContainText('Hồ sơ đăng ký không cấp quyền');
+  await expect(page.locator('#workspace-choices')).toContainText('Chưa kích hoạt');
+  await expect(page.locator('#workspace-choices').getByRole('button', { name: /ArgoPost Business/ })).toBeDisabled();
   await expect(page.locator('#workspace-choices a[href^="/merchant"]')).toHaveCount(0);
   await page.keyboard.press('Escape');
   await expect(page.locator('#workspace-choices')).toHaveCount(0);
@@ -59,7 +60,7 @@ test('verified login has isolated customer cookies and no SYSTEM authority', asy
   secondary = await browser.newContext({ baseURL: origin, ignoreHTTPSErrors: false }); secondaryPage = await secondary.newPage(); await secondaryPage.goto('/login'); await login(secondaryPage, originalPassword); await expect(secondaryPage.getByRole('heading', { name: 'Tổng quan', exact: true })).toBeVisible();
 });
 test('profile lost response resolves through the real committed receipt', async () => {
-  await page.getByRole('link', { name: 'Hồ sơ', exact: true }).click(); await expect(page.getByLabel('Tên hiển thị trong hồ sơ')).toHaveValue('Người gửi hàng thử'); await page.getByLabel('Tên hiển thị trong hồ sơ').fill('Tên gửi hàng đã cập nhật');
+  await page.locator('.pw-user summary').click(); await page.locator('.pw-user-dropdown').getByRole('link', { name: 'Hồ sơ cá nhân', exact: true }).click(); await expect(page.getByLabel('Tên hiển thị trong hồ sơ')).toHaveValue('Người gửi hàng thử'); await page.getByLabel('Tên hiển thị trong hồ sơ').fill('Tên gửi hàng đã cập nhật');
   let writes = 0;
   // Fault injection only: forward the actual protected PUT, require real commit, then lose its response.
   await page.route('**/api/v1/customer/profile', async route => {
@@ -191,7 +192,7 @@ test('station staff scans all parcel labels and atomically accepts custody with 
 });
 
 test('merchant draft uses the real HTTPS API and resolves one lost write', async () => {
-  await page.getByRole('link', { name: 'Merchant', exact: true }).click();
+  await page.locator('.pw-user summary').click(); await page.locator('.pw-user-dropdown').getByRole('link', { name: 'Hồ sơ Merchant', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Hồ sơ đăng ký Merchant' })).toBeVisible();
   await page.getByRole('button', { name: 'Tạo bản nháp Merchant' }).click();
   await expect(page.getByRole('heading', { name: 'Chi tiết hồ sơ Merchant' })).toBeVisible();
@@ -219,7 +220,7 @@ test('recovery confirmation changes the credential with the actual second messag
   await page.getByLabel('Mã xác minh 6 chữ số').fill((await mail(1)).code);await page.getByRole('button',{name:'Tiếp tục',exact:true}).click();await expect(page).toHaveURL(/\/recover\/confirm$/); await expect(page.getByLabel('Mật khẩu mới', { exact: true })).toBeVisible(); expect(new URL(page.url()).hash).toBe(''); await page.getByLabel('Mật khẩu mới', { exact: true }).fill(newPassword); await page.getByLabel('Nhập lại mật khẩu mới').fill(newPassword); await page.getByRole('button', { name: 'Xác nhận mật khẩu mới' }).click(); await expect(page.getByRole('status')).toContainText('Bạn đã đổi mật khẩu thành công!');await expect(page).toHaveURL(/\/login$/);
 });
 test('fresh login rejects the old credential and revoked browser loses its workspace', async () => {
-  await secondaryPage.getByRole('link', { name: 'Hồ sơ', exact: true }).click(); await expect(secondaryPage.getByRole('heading', { name: 'Đăng nhập bằng mật khẩu' })).toBeVisible(); await expect(secondaryPage.getByLabel('Tên hiển thị trong hồ sơ')).toHaveCount(0);
+  await secondaryPage.goto('/personal/profile'); await expect(secondaryPage.getByRole('heading', { name: 'Đăng nhập bằng mật khẩu' })).toBeVisible(); await expect(secondaryPage.getByLabel('Tên hiển thị trong hồ sơ')).toHaveCount(0);
   await expect(page).toHaveURL(/\/login$/); await login(page, originalPassword); await expect(page.getByRole('alert')).toContainText('Email hoặc mật khẩu chưa đúng'); await login(page, newPassword); await expect(page.getByRole('heading', { name: 'Tổng quan', exact: true })).toBeVisible(); await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click(); await expect(page.getByRole('heading', { name: 'Đăng nhập bằng mật khẩu' })).toBeVisible();
 });
 test('unknown email and invalid proof do not fabricate account activation', async () => {

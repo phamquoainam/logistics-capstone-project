@@ -89,7 +89,7 @@ test('overview preview preserves the cohort while all dimensions and source cont
   expect(new URL(page.url()).searchParams.get('sort')).toBe('FEE_DESC'); expect(new URL(page.url()).searchParams.get('service')).toBe('ROAD_STANDARD');
   for (const dimension of ['Tuyến gửi hàng', 'Kiện hàng', 'Dịch vụ vận chuyển', 'Cước & nghĩa vụ']) {
     await page.getByRole('navigation', { name: 'Nội dung phân tích' }).getByRole('link', { name: dimension, exact: true }).click();
-    await expect(page.getByRole('heading', { name: dimension, exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: dimension, exact: true, level: 1 })).toBeVisible();
     expect(new URL(page.url()).searchParams.get('from')).toBe('2026-11-01');
     await expect(page.getByLabel('Tìm mã vận đơn', { exact: true })).toBeVisible();
   }

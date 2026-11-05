@@ -1,13 +1,15 @@
 .pm-workspace,.pm-action-page{max-width:1600px;margin:auto;color:var(--pw-navy)}
 .pw-management-links{margin:7px 0 12px}
-.pw-management-links summary{display:flex;align-items:center;gap:12px;list-style:none;cursor:pointer;min-height:43px;padding:10px 13px;border-radius:8px;font-size:12px;font-weight:600;color:#54657c}
-.pw-management-links summary::-webkit-details-marker{display:none}
-.pw-management-links summary>svg{width:19px;height:19px}.pw-management-links summary>svg:last-child{width:13px;margin-left:auto;transition:rotate .18s}
-.pw-management-links:not([open]) summary>svg:last-child{rotate:-90deg}
-.pw-management-links.is-active summary{color:var(--pw-navy);background:#f1f4f9}
-.pw-management-links>a{display:block;text-decoration:none;font-size:12px;color:#65758b;padding:10px 9px 10px 43px;border-radius:7px;margin-top:4px}
-.pw-management-links>a:hover{background:#f5f7fb;color:var(--pw-navy)}
-.pw-management-links>a.active{color:#a24600;background:#fff1e4;font-weight:600;border-right:3px solid var(--pw-orange)}
+.pw-management-toggle{width:100%;border:0;background:transparent;text-align:left;display:flex;align-items:center;gap:12px;list-style:none;cursor:pointer;min-height:43px;padding:10px 13px;border-radius:8px;color:#54657c}
+.pw-management-toggle:hover{background:#f5f7fb;color:var(--pw-navy)}
+.pw-management-items[hidden]{display:none}
+.pw-management-toggle>svg{width:19px;height:19px}.pw-management-toggle>svg:last-child{width:13px;margin-left:auto;transition:rotate .18s}
+.pw-sidebar .pw-management-toggle>svg:last-child{width:13px}
+.pw-management-toggle[aria-expanded=false]>svg:last-child{rotate:-90deg}
+.pw-management-links.is-active .pw-management-toggle{color:var(--pw-navy);background:#f1f4f9}
+.pw-management-items>a{display:block;text-decoration:none;font-size:12px;color:#65758b;padding:10px 9px 10px 43px;border-radius:7px;margin-top:4px}
+.pw-management-items>a:hover{background:#f5f7fb;color:var(--pw-navy)}
+.pw-management-items>a.active{color:#a24600;background:#fff1e4;font-weight:600;border-right:3px solid var(--pw-orange)}
 .pm-filters{padding:22px;margin-bottom:20px;overflow:visible}
 .pm-filter-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
 .pm-filters label{display:flex;flex-direction:column;justify-content:space-between;gap:7px;font-size:12px;font-weight:500;min-width:0}
