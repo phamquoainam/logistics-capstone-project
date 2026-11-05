@@ -849,3 +849,44 @@ sidebar navigation too; scoped to the Dashboard, preserving both usable links.
 No Backend/client DTO/OpenAPI/migration/provider/security/policy changes or runtime
 data seed. Real API/HTTPS/PostgreSQL/browser acceptance and required CI are tracked
 on this refinement PR's exact source/integration revision; not inferred from PR42.
+
+## Owner Personal navigation polish — 2026-11-03
+
+UI-only follow-up after PR43: remove duplicate sidebar Account group and left
+header context; retain Profile/Security/Merchant application links in the header.
+Rename Management to Quản lý. Replace native controlled-details/onToggle and
+pathname remount with a stable button disclosure, aria-expanded/aria-controls,
+explicit hidden items and Escape/keyboard behavior. Initial deep links within
+Management expand it; manual expansion/collapse persists across internal routes.
+No route, authority, API, Backend, migration or business policy changes.
+Regression covers repeated clicks, Enter/Space/Escape, route persistence,
+desktop/mobile visibility and the header account destinations. Source tests that
+previously navigated Profile in the sidebar now use its real header link.
+
+Local verification DONE:77/77 Customer UI cases,68/68 frontend units, typecheck,
+lint, default and Customer builds PASS; source validator errors[]/CONSISTENT and
+whitespace check PASS. Visual desktop/mobile fixtures reviewed. Initial two test
+locator failures were specific to the moved workspace popover and a mismatched
+synthetic display name; corrected click target/name, then full77-case run PASS.
+This is local UI evidence, not a new hosted CI or Backend acceptance claim.
+
+Owner follow-up: Management now shares the exact sidebar typography rule rather
+than losing font-size/weight to the shared button font shorthand. Workspace
+chooser aligns with the trigger's left edge, remains within the viewport and
+uses two compact rows: current Personal and disabled gray Business with
+Chưa kích hoạt. No Business link/handler/activation or authority is created;
+Merchant application remains reachable from the separate account menu.
+Disabled-row pointer interaction retains focus without closing the chooser;
+Escape, outside focus/click, scroll and resize close it appropriately.
+Four synthetic geometry/noninteraction cases cover1440/768/390/360; exact computed
+menu font properties are compared in desktop/mobile navigation tests.
+Final81-case full Customer UI regression PASS. Two existing broad locators were
+made precise (h1 vs breakdown h2; completed recovery popup after login redirect);
+no Analytics or Identity runtime logic changed. Screenshot fixtures are synthetic.
+
+Publication checkpoint05/11/2026:Owner explicitly authorizes commit, push and merge
+after repository gates. Preserve all9 pending paths in ignored fingerprinted
+checkpoint before edits. Real-browser Profile/Merchant navigation now uses header
+links; revoked secondary session still must deny direct protected Profile access.
+No runtime permission/business/migration change. Current CI and actual merge SHA
+are recorded on the integration PR, not inferred from earlier UI/PR43 evidence.
