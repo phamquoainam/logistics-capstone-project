@@ -667,7 +667,7 @@ class IdentityMigrationTests {
         assertThrows(SQLException.class,()->db.ownerExecute("SELECT orders.configure_local_support_staff("+ACCOUNT+",'SUPPORT_TRIAGE','GRANT')"));
         assertThrows(SQLException.class,()->db.ownerExecute("SET argopost.operator_environment='TEST';SELECT orders.configure_local_support_staff("+ACCOUNT+",'SUPPORT_TRIAGE','GRANT')"));
         // Explicit synthetic fixture activation only, after preserved V21 data/checksum assertions.
-        db.ownerExecute("UPDATE identity.user_account SET status='ACTIVE',activated_at="+NOW+",email_verified=TRUE,password_hash="+HASH+",activated_at="+NOW+" WHERE id="+ACCOUNT);
+        db.ownerExecute("UPDATE identity.user_account SET status='ACTIVE',activated_at="+NOW+",email_verified=TRUE,password_hash="+HASH+" WHERE id="+ACCOUNT);
         db.ownerExecute("SET argopost.operator_environment='TEST';SELECT orders.configure_local_support_staff("+ACCOUNT+",'SUPPORT_TRIAGE','GRANT');SELECT orders.configure_local_support_staff("+ACCOUNT+",'SUPPORT_TRIAGE','REVOKE')");
         try(var c=db.runtimeConnection();var q=c.createStatement();var r=q.executeQuery("SELECT count(*) FROM orders.support_business_audit WHERE authority_grant_id IS NOT NULL AND operator_principal IS NOT NULL")){assertTrue(r.next());assertEquals(2,r.getInt(1));}
     }

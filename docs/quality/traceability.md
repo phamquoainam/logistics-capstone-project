@@ -1161,3 +1161,13 @@ BSC-03+ pending Owner acceptance; no new Business write privilege, migration or 
 | BUSINESS-PREPARATION-V1 / BSC-05a | Owner accepted Business preparation 2026-11-10 | CSV V1 scoped preview/job/rows, explicit 20-row commits through shared Draft command, current RBAC and receipts, V25 | PG import2 + Draft3 + populated upgrade1 + architecture23 PASS; real HTTPS Browser16; FE unit11/UI11 + responsive2; report-policy130; source validator PASS | CSV-to-Draft DONE; facilities/defaults/templates/packing and confirmed Business Shipping incomplete; no Quote/Booking/Carrier/Finance activation |
 
 | BUSINESS-IMPORT-WORKSHEET / IG-01–05 | Owner 2026-11-10 CSV+Excel worksheet direction; same accepted CSV V1 API | Editable scoped worksheet, bounded XLSX Worker/CSV adapters, five-Parcel fidelity, templates/history, invalidation and selected20-row chunk commits | Unit18, focused UI6 and existing Business UI9 PASS; actual HTTPS/PG18 Browser16 PASS; lint/typechecked builds/source validator PASS | File-to-Draft LOCAL DONE; [evidence and limits](../implementation/business-import-grid-checkpoint.md); no Backend/schema/business authority changes or false Booking/payment success |
+
+PR45 integration checkpoint,2026-11-11: first hosted PostgreSQL run42989038315
+reported1085 passed/4 failures/1 error. Four Foundation assertions still described
+the V21/61-table inventory; the accepted current stream is V1–V25/80 tables. The
+Support upgrade fixture also assigned activated_at twice in one UPDATE. Corrected
+only exact test inventory/fixture expectations, retaining the exhaustive table set,
+ownership/least-privilege/checksum/data-preservation assertions and all mandatory
+test identities. No deployed migration or application rule changed. Focused real
+PostgreSQL18 Testcontainers4/4 PASS after correction. The first CI failure remains
+recorded; fresh required CI on the correction revision is the merge gate.
