@@ -17,6 +17,7 @@ async function fixture(context: BrowserContext, authenticated = false, special?:
     if (path.endsWith('/refresh') || path.endsWith('/login')) return authenticated || path.endsWith('/login') ? reply({ accessToken: 'synthetic-ui-access', accountId: account, expiresAt: new Date(Date.now() + 900000).toISOString() }) : reply({ code: 'SESSION_INVALID' }, 401);
     if (path.endsWith('/logout')) return route.fulfill({ status: 204 });
     if (path.endsWith('/me')) return reply({ accountId: account, displayName: 'Người dùng thử', verifiedEmail: 'synthetic@example.invalid', securityVersion: 1 });
+    if (path.endsWith('/business-contexts')) return reply({ schemaVersion: 'BUSINESS_CONTEXTS_V1', items: [] }, 200, { 'Cache-Control': 'no-store' });
     if (path.endsWith('/personal-analytics')) return reply(analyticsFixture(new URL(request.url()).searchParams));
     if (path === '/api/v1/customer/shipments') return reply(managementFixture(new URL(request.url()).searchParams));
     if (path.endsWith('/profile')) return reply({ id: account, accountId: account, displayName: 'Hồ sơ thử', preferredLanguage: 'vi', version: 1 }, 200, { ETag: '"v1"' });
@@ -99,8 +100,8 @@ test('guest deep link cannot render or request a protected personal profile', as
 });
 test('merchant route fails closed without an authoritative active membership', async ({ page, context }) => {
   const calls = await fixture(context, true); await page.goto('/merchant');
-  await expect(page.getByRole('heading', { name: 'Không gian Merchant chưa khả dụng' })).toBeVisible();
-  await expect(page.getByRole('alert')).toContainText('không hiển thị dữ liệu Merchant hoặc cấp quyền từ đường dẫn');
+  await expect(page.getByRole('heading', { name: 'Chưa có quyền truy cập doanh nghiệp' })).toBeVisible();
+  await expect(page.locator('.bw-dashboard')).toHaveCount(0);
   expect(calls.some(call => call.path.includes('merchant'))).toBe(false);
 });
 
@@ -118,11 +119,11 @@ test('Personal dashboard reads self Analytics without demo data or fabricated co
 test('Personal Analytics loading and a failed read cannot become an empty-success dashboard', async ({ page, context }) => {
   let release!: () => void; const pending = new Promise<void>(resolve => { release = resolve; }); let reads = 0;
   await fixture(context, true, async (route, call) => {
-    if (call.path !== '/api/v1/customer/personal-analytics' || call.method !== 'GET') return false;
+    if (call.path !== '/api/v1/customer/personal-analytics' && !call.path.startsWith('/api/v1/customer/support-tickets') || call.method !== 'GET') return false;
     reads++; if (reads > 1) return false;
     await pending; await route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ code: 'SERVICE_UNAVAILABLE' }) }); return true;
   });
-  await page.goto('/personal'); await expect(page.getByRole('status')).toContainText('Đang đọc dữ liệu phân tích');
+  await page.goto('/personal'); await expect(page.getByRole('status', { name: 'Đang tải Analytics', exact: true })).toBeVisible();
   await expect(page.locator('.an-kpi')).toHaveCount(0); release();
   await expect(page.getByRole('alert')).toContainText('Không tải được dữ liệu phân tích');
   await expect(page.locator('.an-kpi')).toHaveCount(0);
@@ -142,7 +143,7 @@ test('workspace disclosure never grants Business from an approved application or
   await page.keyboard.press('Escape'); await expect(choices).toHaveCount(0); await expect(trigger).toBeFocused();
   await trigger.click(); await page.locator('.pw-footer>span').click(); await expect(choices).toHaveCount(0);
   await page.goto('/merchant/10000000-0000-4000-8000-000000000099/profile');
-  await expect(page.getByRole('heading', { name: 'Không gian Merchant chưa khả dụng' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Chưa có quyền truy cập doanh nghiệp' })).toBeVisible();
   expect(calls.some(call => /\/merchant\/|\/organizations|\/contexts/.test(call.path))).toBe(false);
 });
 
@@ -168,13 +169,13 @@ for (const width of [1440, 768, 390, 360]) test(`workspace chooser stays in view
 test('deferred Personal modules explain dependencies without sending unsupported mutations', async ({ page, context }) => {
   const calls = await fixture(context, true); await page.goto('/personal');
   const navigation = page.getByRole('navigation', { name: 'Điều hướng Personal', exact: true });
-  for (const title of ['In nhãn & Tiện ích', 'Hỗ trợ & Khiếu nại']) {
+  for (const title of ['Hỗ trợ & Khiếu nại']) {
     await navigation.getByRole('link', { name: title, exact: false }).click();
     await expect(page.getByRole('heading', { name: title, exact: true })).toBeVisible();
-    await expect(page.locator('.pw-module-state')).toContainText('Chưa khả dụng'); await expect(page.locator('.pw-module-state input')).toHaveCount(0);
-    await expect(page.locator('.pw-module-state button[type="submit"]')).toHaveCount(0);
+    await expect(page.locator('.su-tickets')).toContainText('Chưa tải hoặc xử lý'); await expect(page.locator('.sa-request input')).toHaveCount(0);
+    await expect(page.locator('.sa-request button[type="submit"]')).toHaveCount(0);
   }
-  expect(calls.filter(call => !call.path.startsWith('/api/v1/customer-auth/') && call.path !== '/api/v1/customer/personal-analytics')).toHaveLength(0);
+  expect(calls.filter(call => !call.path.startsWith('/api/v1/customer-auth/') && call.path !== '/api/v1/customer/personal-analytics' && !call.path.startsWith('/api/v1/customer/support-tickets'))).toHaveLength(0);
 });
 
 test('Personal shell supports narrow navigation, keyboard dismissal and accessible logout', async ({ page, context }) => {
@@ -403,7 +404,7 @@ test('shipping preparation uses PW03 snapshots and resolves a lost save without 
     if(call.method==='POST'){stored={id:proofId,accountId:account,ownerType:'PERSONAL',state:'DRAFT',input:{...call.body,sender:{...source,name:source.contactName,phone:source.contactPhone}},version:1,createdAt:'2026-11-01T00:00:00Z',updatedAt:'2026-11-01T00:00:00Z'};const input=structuredClone(call.body!);input.sender={name:'Synthetic sender',phone:'+84901234567',address:source.address};input.recipient={name:'Synthetic recipient',phone:'+84901234567',address:source.address};stored.input=input;await route.abort('failed');return true;}
     await route.fulfill({contentType:'application/json',headers:{ETag:'"v1"'},body:JSON.stringify(stored)});return true;
   });
-  await page.goto('/personal/create');await page.locator('#sender-book').selectOption(proofId);await expect(page.locator('#sender-name')).toHaveValue('Synthetic sender');await page.locator('#recipient-name').fill('Synthetic recipient');await page.locator('#recipient-phone').fill('0901234567');await page.locator('#recipient-administrativeArea').fill('Area');await page.locator('#recipient-locality').fill('Locality');await page.locator('#recipient-addressLine').fill('Street');await page.locator('#parcel-description-0').fill('Synthetic box');await page.locator('#draft-reference').fill('UI preparation');await page.getByRole('button',{name:'Lưu bản nháp',exact:true}).click();await expect(page.getByRole('alert')).toContainText('Chưa xác định');await expect(page.locator('#sender-name')).toBeDisabled();await page.getByRole('button',{name:'Kiểm tra kết quả lưu',exact:true}).click();await expect(page.getByRole('heading',{name:'Chi tiết bản nháp',exact:true})).toBeVisible();expect(calls.filter(c=>c.path==='/api/v1/customer/shipment-drafts'&&c.method==='POST')).toHaveLength(1);await page.getByRole('tab',{name:'Chứng từ',exact:true}).click();await expect(page.getByRole('tabpanel')).toContainText('không phát hành nhãn');await expect(page.getByRole('button',{name:'Xác nhận booking'})).toHaveCount(0);
+  await page.goto('/personal/create');await page.locator('#sender-book').selectOption(proofId);await expect(page.locator('#sender-name')).toHaveValue('Synthetic sender');await page.locator('#recipient-name').fill('Synthetic recipient');await page.locator('#recipient-phone').fill('0901234567');await page.locator('#recipient-administrativeArea').fill('Area');await page.locator('#recipient-locality').fill('Locality');await page.locator('#recipient-addressLine').fill('Street');await page.locator('#parcel-description-0').fill('Synthetic box');for(const [field,value] of Object.entries({weightGrams:'500',lengthMm:'10',widthMm:'10',heightMm:'10'}))await page.locator('#'+field+'0').fill(value);await page.locator('#draft-reference').fill('UI preparation');await page.getByRole('button',{name:'Lưu bản nháp',exact:true}).click();await expect(page.getByRole('alert')).toContainText('Chưa xác định');await expect(page.locator('#sender-name')).toBeDisabled();await page.getByRole('button',{name:'Kiểm tra kết quả lưu',exact:true}).click();await expect(page.getByRole('heading',{name:'Chi tiết bản nháp',exact:true})).toBeVisible();expect(calls.filter(c=>c.path==='/api/v1/customer/shipment-drafts'&&c.method==='POST')).toHaveLength(1);await page.getByRole('tab',{name:'Chứng từ',exact:true}).click();await expect(page.getByRole('tabpanel')).toContainText('không phát hành nhãn');await expect(page.getByRole('button',{name:'Xác nhận booking'})).toHaveCount(0);
   await page.setViewportSize({width:390,height:844});await expect(page.locator('#personal-sidebar')).not.toBeVisible();await page.screenshot({path:'../../../.demo/shipping-draft-mobile.png',fullPage:true,animations:'disabled'});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
 

@@ -84,3 +84,29 @@ the right. Shared ArgoPost Navy/Orange styles and a sticky action summary apply.
 
 Backend eligibility, quote TTL/consumption, immutable Shipment/Parcel/UNPAID,
 ownership and Local/Test isolation remain governed by the existing booking contract.
+
+
+## Owner Create Shipment audit refinement — 2026-11-09
+
+Presentation on existing accepted operations only. New physical Parcels have no
+assumed weight/dimensions; Customer measures the packed Parcel. Quantity defaults1
+and declared value0 remain explicit facts, never multiply physical weight/value.
+An explicit default-contact action traverses current self-owned address pages,
+locks entry while copying and preserves current values on no default/failure.
+It never auto-fills after user edits. Saved contact snapshots stay independent.
+Review shows every saved Parcel and reference/instructions before Quote.
+Catalog-driven per-Parcel limit messages are client guidance; Backend is always
+mandatory authority. No new field/table/price or capability grant.
+
+[Observed outcome and boundaries](create-shipment-review.md).
+
+## Owner estimator handoff —2026-11-09
+
+The dedicated Customer estimator can populate only measured Parcel facts and a
+preferred route in a NEW draft through transient navigation state. No contacts,
+money or issued Quote is accepted from this context. Reject invalid/unknown fields
+and any attempt to combine preparation with an existing draft/address selection.
+The raw contact/goods completion, explicit save, backend-normalized response,
+current catalog read, fresh Quote and Booking checks remain mandatory. No write
+occurs on navigation alone. No change to this Draft API/schema/state machine.
+[Tools contract/evidence](lookup-label-review.md).

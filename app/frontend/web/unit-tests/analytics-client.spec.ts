@@ -29,3 +29,15 @@ test('analytics reuses the authenticated self transport and rejects a response f
   const client = createCustomerClient({ lock: work => work(), now: () => now, fetch: async (input, init = {}) => { const path = String(input); calls.push(path); if (path.endsWith('/csrf')) return Response.json({ challenge: 'synthetic-csrf' }); if (path.endsWith('/refresh')) return Response.json({ accountId: owner, accessToken: 'synthetic-access', expiresAt: new Date(now + 900000).toISOString() }); if (path.endsWith('/me')) return Response.json({ accountId: owner, displayName: 'Synthetic', verifiedEmail: 'synthetic@example.invalid', securityVersion: 1 }); if (path.endsWith('/logout')) return new Response(null, { status: 204 }); expect(init.headers).toMatchObject({ Authorization: 'Bearer synthetic-access' }); return pending; } });
   await client.initialize(); const reading = client.readAnalytics(new URLSearchParams()); const rejection = expect(reading).rejects.toThrow('SESSION_CHANGED'); await expect.poll(() => calls.some(p => p.includes('personal-analytics'))).toBe(true); await client.logout(); release(Response.json(analyticsFixture())); await rejection;
 });
+
+
+test('analytics rejects contradictory status KPIs and dimension fee sums instead of showing conflicting Overview facts', () => {
+  const parameters = new URLSearchParams('from=2026-11-01&until=2026-11-04');
+  for (const field of ['status', 'route', 'service']) {
+    const r = analyticsFixture(parameters, 2);
+    if (field === 'status') { r.status[0].shipments = '0'; r.status[1].shipments = '2'; }
+    if (field === 'route') r.routes[0].confirmedFeeVnd = '1';
+    if (field === 'service') r.services[0].confirmedFeeVnd = '1';
+    expect(() => parseAnalytics(r)).toThrow('ANALYTICS_RESPONSE_INVALID');
+  }
+});

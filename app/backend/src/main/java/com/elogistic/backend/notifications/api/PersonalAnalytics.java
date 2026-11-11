@@ -19,5 +19,9 @@ public interface PersonalAnalytics {
     record Shipment(UUID id,String code,Instant bookedAt,String status,String service,String origin,String destination,String parcels,String weightGrams,String confirmedFeeVnd,String unpaidVnd){}
     record Page(String total,int page,int size,boolean hasNext,List<Shipment> items){}
     record Report(String schemaVersion,String context,String timeZone,Instant generatedAt,Period period,List<Metric> metrics,List<Status> status,List<Volume> volume,List<Service> services,List<Route> routes,Parcels parcels,Page shipments){}
+    record AcceptanceTiming(String sampleShipments,String totalDurationMillis,String minimumMillis,String maximumMillis){}
+    record ParcelWeights(String actualGrams,String chargeableGrams){}
+    record ShippingReport(String schemaVersion,Report report,AcceptanceTiming acceptanceTiming,ParcelWeights parcelWeights){}
     Report read(Access access,Map<String,String> parameters);
+    ShippingReport readShippingReport(Access access,Map<String,String> parameters);
 }

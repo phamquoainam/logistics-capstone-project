@@ -150,3 +150,81 @@ A scripted local seed remains NOT EXECUTED and requires its own bounded approval
 Until then, empty local tables and nonzero temporary test receipts are both correct.
 Required hosted evidence belongs in the PR on its exact source/integration SHA,
 not retroactively inferred from the earlier PR41 checks.
+
+
+## Latest Owner Shipment Management presentation amendment —2026-11-09
+
+Owner explicitly requests column choice, permitted list output and multi-label
+reads. Supersedes the earlier blanket presentation exclusion of export only for:
+CSV of current page/selected current-page rows using visible columns and existing
+self-owned response; up to20 selected existing private PDF GETs in a bounded ZIP.
+No background whole-account export, extra PII fields, new endpoint/schema or bulk
+Carrier command. CSV neutralizes formula cells and declares simulation/scope;
+ZIP preserves original authorized PDF bytes and fails before output on any denial.
+Generated files remain local browser downloads, never public media or server cache.
+
+Canonical WAITING category actually constrains the server query; empty-page recovery
+keeps all other selectors. Detail/back carries source query/page/column preferences;
+URL-named eight tabs remain refreshable and keyboard-operable. Shared current
+handling projection is bound to the exact immutable Parcel set and never inferred
+from NOT_ACCEPTED booking-time snapshot. Unknown/error states are not zero success.
+UpdatedAt/state sorts, independent point filters and unsupported lifecycle/payment/
+Support actions remain unavailable pending their accepted sources/contracts.
+
+[Audit tasks, disposition and actual gates](shipment-management-review.md).
+
+## Owner Reports / Fees presentation amendment —2026-11-09
+
+Management now includes distinct `/personal/reports` dimension analysis and
+`/personal/billing` Cước & Thanh toán, authorized by the Owner request and RF-05
+approval in [checkpoint](shipping-reports-fees-review.md). This supersedes the
+earlier presentation exclusion of a separate report entry only; Overview is not
+duplicated. Existing shipment-management GET and its ownership controls remain.
+
+Fees totals use the full filtered cohort; the paged charge list exports only its
+explicit current page. Lazy owned detail reads display immutable booked tariff,
+actual/dimensional/billable Parcel weights and confirmed fee lines. Current tariff
+may explain a line only when its version and decomposition match; it cannot replace
+the snapshot. Return preserves period/filters/page. Customer-owned private labels
+remain under existing authorization and keep simulation provenance.
+
+Confirmed charges, declared goods value, COD, cash collected and revenue remain
+separate concepts. UNPAID does not imply overdue or failed payment. Paid/overdue/
+refund/adjustment/COD/support/payment-document panels cannot invent values or
+issue commands without accepted sources. No new schema/migration/Carrier authority.
+
+## Owner Action Center / Address Book refinement —2026-11-09
+
+Management contains both Action Center and Sổ địa chỉ; keep the existing routes.
+Action Center distinguishes pending responses from submitted requests without
+claiming an operational list/count when exception/ticket sources are absent.
+Requested failure/contact/address/surcharge/return/damage categories and allowed
+response guidance remain explanatory only. No invented priority/deadline,
+resolution history, support ticket or command. Ordinary waiting Shipments and
+UNPAID obligations do not automatically become action items. No Customer Tracking,
+Delivered, compensation approval or payment confirmation authority is introduced.
+
+Address Book behavior and boundaries follow its existing accepted contract and
+latest refinement. Fees empty-page recovery retains all source filters and sorting;
+immutable snapshot, confirmed/UNPAID distinction and payment denial are unchanged.
+Live Customer exception/response workflows remain BLOCKED pending exact accepted
+source/command/state/authority contracts, rather than inferred from screen design.
+See [review checkpoint](action-address-review.md) for observed gates.
+
+## Owner peer Tracking / Labels pages —2026-11-09
+
+Dedicated `/personal/lookup` and `/personal/labels` replace the earlier lookup
+alias/labels placeholder. Both remain peers of Management. Own-code lookup uses
+existing authenticated self search with exact-code binding and at most10 unique
+codes; a bounded incomplete scan is unknown, never not-found. Result cards expose
+only code/service/route/Parcel count and separately current permitted tracking,
+not contacts, Finance details or internal actors. No public Guest API is added.
+
+Labels use the existing owned paged management read, fixed20-row selection and
+authorized PDF/ZIP controls. Return preserves safe source query; Tracking return
+retains only the submitted code text, never cached contacts or a fake success.
+No label is generated for a Draft. Paper stays100x150mm. Existing renderer emits
+continuation pages per Parcel for long contacts; the screen cannot infer PDF page
+count from Parcel count, and print instructions require all pages of that Parcel.
+Biên nhận/POD/payment documents remain unavailable without accepted issuance.
+[Tools evidence and remaining dependencies](lookup-label-review.md).

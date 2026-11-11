@@ -26,4 +26,11 @@ public final class PersonalAnalyticsHttp {
         try{var current=requests.current();return admission.execute(current.encodedAccess(),current.requestId(),Set.of(),context->analytics.read(new Scope(context),Map.copyOf(parameters)));}
         catch(AnalyticsFailure failure){int status=switch(failure.code()){case VALIDATION_FAILED->400;case ANALYTICS_RANGE_TOO_LARGE->422;default->503;};throw problem(status,failure.code().name());}
     }
+    @GetMapping("/api/v1/customer/personal-shipping-reports") public PersonalAnalytics.ShippingReport shippingReport(HttpServletRequest request){
+        Map<String,String> parameters=new HashMap<>();
+        request.getParameterMap().forEach((key,values)->{if(values.length!=1)throw problem(400,"VALIDATION_FAILED");parameters.put(key,values[0]);});
+        try{var current=requests.current();return admission.execute(current.encodedAccess(),current.requestId(),Set.of(),context->analytics.readShippingReport(new Scope(context),Map.copyOf(parameters)));}
+        catch(AnalyticsFailure failure){int status=switch(failure.code()){case VALIDATION_FAILED->400;case ANALYTICS_RANGE_TOO_LARGE->422;default->503;};throw problem(status,failure.code().name());}
+    }
+
 }

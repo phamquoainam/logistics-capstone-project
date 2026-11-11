@@ -15,3 +15,15 @@ export function analyticsFixture(parameters = new URLSearchParams(), count = 0):
   const page = Number(parameters.get('page') ?? 0), multi = selected.filter(r => r.parcels === '2').length;
   return { schemaVersion: 'PERSONAL_ANALYTICS_1', context: 'PERSONAL', timeZone: 'Asia/Ho_Chi_Minh', generatedAt: new Date().toISOString(), period: { startInclusive: from + 'T00:00:00Z', endExclusive: until + 'T00:00:00Z', previousStartInclusive: null, previousEndExclusive: null }, metrics, status: [{ key: 'WAITING_FOR_HANDOVER', shipments: String(selected.filter(r => r.status === 'WAITING_FOR_HANDOVER').length) }, { key: 'AT_STATION', shipments: String(selected.filter(r => r.status === 'AT_STATION').length) }], volume, services: total ? [{ code: 'ROAD_STANDARD', shipments: String(total), confirmedFeeVnd: fees }] : [], routes: total ? [{ datasetVersion: 'ARGO-SIM-COVERAGE-1', origin: 'SIM-A1', destination: 'SIM-A2', shipments: String(total), confirmedFeeVnd: fees }] : [], parcels: { count: String(parcels), multiParcelShipments: String(multi), weight: [{ key: 'UP_TO_500G', parcels: String(total) }, { key: 'UP_TO_5KG', parcels: String(multi) }, { key: 'OVER_5KG', parcels: '0' }] }, shipments: { total: String(total), page, size: 20, hasNext: (page + 1) * 20 < total, items: selected.slice(page * 20, (page + 1) * 20) } };
 }
+
+
+/** Explicit isolated RF-05 response. No runtime seed or Backend correctness claim. */
+export function shippingReportsFixture(parameters = new URLSearchParams(), count = 25): import('../../src/customer/analytics-data').ShippingReport {
+  const report = analyticsFixture(parameters, count), total = report.shipments.total;
+  // This fixture uses one500g physical parcel per shipment, including the first.
+  report.parcels = { count: total, multiParcelShipments: '0', weight: [{ key: 'UP_TO_500G', parcels: total }, { key: 'UP_TO_5KG', parcels: '0' }, { key: 'OVER_5KG', parcels: '0' }] };
+  const parcels = report.metrics.find(m => m.id === 'CREATED_PARCELS')!; parcels.value = total; parcels.points = report.volume.map(p => ({ date: p.date, value: p.shipments }));
+  report.shipments.items.forEach(r => { r.parcels = '1'; r.weightGrams = '500'; });
+  const accepted = report.metrics.find(m => m.id === 'ACCEPTED_SHIPMENTS')!.value;
+  return { schemaVersion: 'PERSONAL_REPORTS_1', report, acceptanceTiming: { sampleShipments: accepted, totalDurationMillis: String(BigInt(accepted) * 60000n), minimumMillis: accepted === '0' ? null : '60000', maximumMillis: accepted === '0' ? null : '60000' }, parcelWeights: { actualGrams: String(BigInt(total) * 500n), chargeableGrams: String(BigInt(total) * 500n) } };
+}

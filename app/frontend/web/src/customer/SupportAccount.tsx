@@ -1,0 +1,57 @@
+import { useEffect, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { customerClient } from './client';
+import type { VersionedProfile } from './client';
+import { CustomerSupportTickets } from './SupportTickets';
+import './support-account.css';
+
+const guides = [
+  { category: 'Tài khoản', question: 'Không nhận được mã xác minh hoặc quên mật khẩu?', answer: 'Kiểm tra Spam và đúng địa chỉ email. Mã gồm 6 chữ số, có hiệu lực 2 phút; gửi lại theo thời gian chờ trên màn hình sẽ thu hồi mã cũ. Email đã có tài khoản không tạo thêm tài khoản bằng đăng ký. Để đặt lại mật khẩu, đăng xuất và xác minh qua email của tài khoản.', to: '/personal/security', action: 'Bảo mật tài khoản' },
+  { category: 'Tài khoản', question: 'Sửa hồ sơ có đổi email đăng nhập không?', answer: 'Không. Email và số điện thoại liên hệ trong hồ sơ chưa được xác minh và không phải thông tin đăng nhập. Ngôn ngữ ưu tiên được lưu trong hồ sơ, chưa chuyển ngôn ngữ giao diện.', to: '/personal/profile', action: 'Chỉnh sửa hồ sơ' },
+  { category: 'Vận đơn', question: 'Booking thành công đã có nghĩa là Carrier nhận hàng?', answer: 'Chưa. Booking tạo vận đơn và mã kiện; chỉ sự kiện tiếp nhận hợp lệ mới xác nhận bàn giao. In nhãn không thay đổi trạng thái nhận hàng, vận chuyển hoặc thanh toán.', to: '/personal/shipments', action: 'Xem vận đơn' },
+  { category: 'Vận đơn', question: 'Tra cứu hành trình và điều kiện gửi ở đâu?', answer: 'Tra cứu vận đơn của chính bạn bằng mã vận đơn. Trang Tra cứu & Báo giá hiển thị danh mục dịch vụ, tuyến và điểm gửi đã được cấu hình. Không suy ra mọi địa chỉ đều được phục vụ hoặc có lịch Pickup.', to: '/personal/lookup', action: 'Tra cứu & Báo giá' },
+  { category: 'Cước & Nhãn', question: 'Cước xác nhận, UNPAID và COD khác nhau thế nào?', answer: 'Cước xác nhận là snapshot tại Booking; UNPAID là nghĩa vụ chưa được ghi nhận thanh toán. Giá trị hàng không phải COD hoặc tiền đã thu. Hiện chưa mở thu cước, COD, hoàn tiền hoặc hóa đơn thuế thật.', to: '/personal/billing', action: 'Xem cước theo vận đơn' },
+  { category: 'Cước & Nhãn', question: 'Tải nhãn và chuẩn bị kiện hàng thế nào?', answer: 'Chỉ vận đơn đã Booking mới có nhãn theo mã kiện thật. PDF hỗ trợ khổ 100 × 150 mm và Code128; nội dung dài có thể có trang tiếp nối. Giữ đủ các trang, không cắt mã vạch và kiểm tra đúng kiện trước khi bàn giao.', to: '/personal/labels', action: 'In nhãn & Tiện ích' },
+  { category: 'Vận đơn', question: 'Có thể sửa hoặc hủy vận đơn đã Booking không?', answer: 'Không sửa trực tiếp snapshot, tracking hoặc hủy tùy ý. Bản nháp còn có thể chỉnh sửa trước Booking. Thay đổi vận đơn đã xác nhận cần workflow, điều kiện và authority riêng; chức năng gửi yêu cầu này chưa mở.', to: '/personal/shipments', action: 'Kiểm tra trạng thái vận đơn' },
+  { category: 'Tài khoản', question: 'Vì sao chưa chuyển được sang Business?', answer: 'Hồ sơ Merchant được duyệt không tự thay thế membership đang hoạt động. Chuyển Workspace phải được Backend xác nhận quyền hiện hành. Business hiện chưa mở trong bộ chuyển Workspace.', to: '/personal/applications', action: 'Hồ sơ Merchant' },
+] as const;
+const categories = ['Tất cả', 'Tài khoản', 'Vận đơn', 'Cước & Nhãn'] as const;
+const requestKinds = {
+  ticket: { title: 'Yêu cầu hỗ trợ', description: 'Hỏi về tài khoản, tra soát hành trình hoặc kiểm tra cước của vận đơn.', process: 'Tiếp nhận → Phân công → Trao đổi / Bổ sung → Giải quyết → Đóng.', boundary: 'Ticket không tự sửa vận đơn, sự kiện giao nhận hoặc nghĩa vụ thanh toán.' },
+  change: { title: 'Yêu cầu thay đổi vận đơn', description: 'Hủy, cập nhật thông tin, đổi lịch hoặc giao lại khi trạng thái và chính sách cho phép.', process: 'Kiểm tra điều kiện → Gửi yêu cầu → Đơn vị có thẩm quyền quyết định → Ghi nhận kết quả.', boundary: 'Bạn không thể hủy hoặc sửa hành trình trực tiếp; lấy hàng tận nơi và giao lại chưa mở.' },
+  claim: { title: 'Khiếu nại & Bồi thường', description: 'Mất mát, hư hỏng, sai lệch cước hoặc COD khi dịch vụ tương ứng hỗ trợ.', process: 'Tiếp nhận hồ sơ → Xác minh bằng chứng → Điều tra → Quyết định → Thực hiện nghĩa vụ hợp lệ.', boundary: 'Tiếp nhận khiếu nại không đồng nghĩa chấp thuận bồi thường. Quyết định và chi trả cần được phê duyệt riêng.' },
+} as const;
+type RequestKind = keyof typeof requestKinds;
+
+export function PersonalSupport() {
+  const [query, setQuery] = useState(''), [category, setCategory] = useState<string>('Tất cả');
+  const [params, setParams] = useSearchParams();
+  const kind: RequestKind = params.get('kind') === 'change' ? 'change' : params.get('kind') === 'claim' ? 'claim' : 'ticket';
+  const selected = requestKinds[kind];
+  const help = params.get('view') === 'help';
+  const needle = query.trim().toLocaleLowerCase('vi');
+  const filtered = guides.filter(item => (category === 'Tất cả' || item.category === category) && (item.question + ' ' + item.answer).toLocaleLowerCase('vi').includes(needle));
+  return <section className="sa-page"><div className="pw-page-heading"><div><h1 tabIndex={-1}>Hỗ trợ & Khiếu nại</h1><p>Theo dõi yêu cầu của bạn và tìm hướng dẫn phù hợp.</p></div></div>
+    <nav className="sa-categories" aria-label="Nội dung hỗ trợ"><button data-support-navigation type="button" aria-current={!help ? 'page' : undefined} onClick={() => setParams({})}>Yêu cầu của tôi</button><button data-support-navigation type="button" aria-current={help ? 'page' : undefined} onClick={() => setParams({ view: 'help' })}>Hướng dẫn & Quy trình</button></nav>
+    {!help ? <CustomerSupportTickets /> : <><section className="sa-help pw-panel" aria-labelledby="support-help"><h2 id="support-help">Chúng tôi có thể giúp gì cho bạn?</h2><label htmlFor="support-search">Tìm trong hướng dẫn</label><input id="support-search" type="search" maxLength={120} placeholder="Tài khoản, mã xác minh, nhãn, cước…" value={query} onChange={event => setQuery(event.target.value)} />
+      <div className="sa-categories" role="group" aria-label="Nhóm hướng dẫn">{categories.map(item => <button type="button" key={item} aria-pressed={category === item} onClick={() => setCategory(item)}>{item}</button>)}</div>
+      <p className="sa-result" role="status">{filtered.length} hướng dẫn phù hợp</p><div className="sa-faq">{filtered.map(item => <details key={item.question}><summary>{item.question}</summary><p>{item.answer}</p><Link to={item.to}>{item.action}</Link></details>)}</div>{!filtered.length && <p>Chưa có hướng dẫn khớp. Thử từ khóa ngắn hơn hoặc chọn nhóm khác.</p>}
+    </section>
+    <section className="pw-panel sa-request" aria-labelledby="support-requests"><h2 id="support-requests">Hỗ trợ theo từng quy trình</h2><div className="sa-categories" role="group" aria-label="Loại yêu cầu hỗ trợ">{(Object.keys(requestKinds) as RequestKind[]).map(value => <button key={value} type="button" aria-pressed={kind === value} onClick={() => setParams({ view: 'help', kind: value }, { replace: true })}>{requestKinds[value].title}</button>)}</div>
+      <h3>{selected.title}</h3><p>{selected.description}</p><p className="sa-process">{selected.process}</p><p>{selected.boundary}</p><div className="sa-availability"><strong>{kind === 'ticket' ? 'Trao đổi qua yêu cầu hỗ trợ' : 'Chưa mở tiếp nhận trực tuyến'}</strong><p>{kind === 'ticket' ? 'Tạo yêu cầu chung hoặc gắn với vận đơn của bạn, bổ sung thông tin, xem kết quả và đề nghị xem xét lại. Trạng thái và quyền phản hồi được xác định từ yêu cầu hiện hành.' : kind === 'change' ? 'Chưa có quy trình xét duyệt yêu cầu thay đổi. Trang này không gửi lệnh hủy, cập nhật địa chỉ hoặc đặt lịch thay bạn.' : 'Chưa có quy trình điều tra, quyết định và bồi thường. Chưa tiếp nhận tải lên hình ảnh hoặc chứng từ khiếu nại.'}</p>{kind === 'ticket' && <button className="pw-secondary" onClick={() => setParams({})}>Xem yêu cầu của tôi</button>}</div>
+      <div className="sa-links"><Link to="/personal/shipments">Kiểm tra vận đơn</Link><Link to="/personal/action-required">Đơn cần xử lý</Link><Link to="/personal/billing">Kiểm tra cước</Link></div>
+      <details className="sa-note"><summary>Chuẩn bị thông tin và bảo vệ dữ liệu</summary><p>Chuẩn bị mã vận đơn, thời điểm phát sinh, mô tả vấn đề và chứng từ gốc. Không gửi mật khẩu, mã OTP, App Password hoặc dữ liệu thẻ/ngân hàng vào phần mô tả. Chỉ tải bằng chứng khi kênh tiếp nhận riêng tư, quyền truy cập và mục đích sử dụng đã được mở.</p><p>Lịch sử phản hồi, yêu cầu xem xét lại, người/bộ phận xử lý, thông báo và hạn phản hồi chỉ xuất hiện khi có dữ liệu, chính sách và quyền công khai hợp lệ. Chưa có hotline hoặc địa chỉ hỗ trợ chính thức được công bố.</p></details>
+    </section></>}
+  </section>;
+}
+
+export function PersonalSettings() {
+  const [profile, setProfile] = useState<VersionedProfile>(), [state, setState] = useState<'loading' | 'ready' | 'failed'>('loading'), [revision, setRevision] = useState(0);
+  useEffect(() => { let active = true; customerClient.readProfile().then(value => { if (active) { setProfile(value); setState('ready'); } }).catch(() => { if (active) setState('failed'); }); return () => { active = false; }; }, [revision]);
+  return <section className="sa-page"><div className="pw-page-heading"><div><h1 tabIndex={-1}>Cài đặt & Quyền riêng tư</h1><p>Tùy chọn tài khoản và phạm vi các chức năng đang hỗ trợ.</p></div></div><div className="sa-settings-grid">
+    <section className="pw-panel"><h2>Ngôn ngữ & Hiển thị</h2>{state === 'loading' ? <p role="status">Đang tải tùy chọn hồ sơ…</p> : state === 'failed' ? <><p role="alert">Không tải được tùy chọn đã lưu. Chưa xác định ngôn ngữ ưu tiên.</p><button className="pw-secondary" type="button" onClick={() => { setState('loading'); setRevision(value => value + 1); }}>Tải lại tùy chọn</button></> : <><dl><dt>Ngôn ngữ ưu tiên trong hồ sơ</dt><dd>{profile?.profile.preferredLanguage === 'en' ? 'Tiếng Anh' : 'Tiếng Việt'}</dd></dl><Link to="/personal/profile#profile-language">Đổi ngôn ngữ ưu tiên</Link></>}<p>Giao diện hiện dùng tiếng Việt. Báo cáo hiển thị giờ Việt Nam (Asia/Ho_Chi_Minh), ngày/tháng/năm và VND. Chưa có tùy chọn đổi múi giờ hoặc giao diện được lưu.</p></section>
+    <section className="pw-panel"><h2>Thông báo</h2><span className="sa-status">Đang hỗ trợ email xác thực</span><p>Mã xác minh đăng ký và khôi phục mật khẩu được gửi khi bạn yêu cầu, theo giới hạn bảo mật.</p><p>Chưa mở cài đặt email vận đơn, SMS, Push hoặc thông báo kết quả hỗ trợ. Không có lựa chọn nhận tin nào được tự bật thay bạn.</p><Link to="/personal/security">Xem bảo mật tài khoản</Link></section>
+    <section className="pw-panel"><h2>Dữ liệu cá nhân</h2><p>Bạn có thể sửa thông tin liên hệ trong hồ sơ. Những liên hệ này không tự trở thành thông tin đăng nhập đã xác minh.</p><Link to="/personal/profile">Quản lý hồ sơ</Link><p>Nội dung chính sách và điều khoản đang chờ phê duyệt. Chưa có workflow yêu cầu xuất/xóa dữ liệu, vô hiệu hóa hoặc đóng tài khoản.</p><div className="sa-links"><Link to="/privacy">Trạng thái chính sách</Link><Link to="/terms">Trạng thái điều khoản</Link></div></section>
+    <section className="pw-panel"><h2>Thanh toán & Workspace</h2><p>Cước xác nhận và nghĩa vụ thanh toán được hiển thị theo từng vận đơn. Chưa mở lưu phương thức thanh toán hoặc thông tin nhận COD.</p><Link to="/personal/billing">Cước & Thanh toán</Link><p>Chuyển Business cần membership đang hoạt động được Backend xác nhận; hồ sơ Merchant không tự cấp quyền.</p><Link to="/personal/applications">Hồ sơ đăng ký Merchant</Link></section>
+  </div></section>;
+}

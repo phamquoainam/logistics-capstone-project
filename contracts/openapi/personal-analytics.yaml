@@ -272,6 +272,257 @@
           }
         }
       }
+    },
+    "/customer/personal-shipping-reports": {
+      "get": {
+        "operationId": "readPersonalShippingReports",
+        "tags": [
+          "PersonalAnalytics"
+        ],
+        "summary": "Read self Shipping Reports with cohort-wide acceptance timing and immutable quote weights",
+        "description": "Reject unknown/duplicate parameters and owner/context selectors. from/until pair uses inclusive/exclusive local dates; max366days and10000 rows/cohort; no silent truncation. day selects a displayed bucket. Read does not extend meaningful session activity.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "in": "query",
+            "name": "until",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "in": "query",
+            "name": "compare",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "previous",
+                "none"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "bucket",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "day",
+                "week",
+                "month"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "WAITING_FOR_HANDOVER",
+                "AT_STATION"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "service",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ROAD_STANDARD"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "origin",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "SIM-A1",
+                "SIM-A2",
+                "SIM-B1"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "destination",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "SIM-A1",
+                "SIM-A2",
+                "SIM-B1"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "day",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "in": "query",
+            "name": "obligation",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "UNPAID"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "weight",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "UP_TO_500G",
+                "UP_TO_5KG",
+                "OVER_5KG"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "multi",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 64
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "NEWEST",
+                "OLDEST",
+                "FEE_DESC",
+                "FEE_ASC"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 500
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Same self cohort: overview, breakdown and contributing page. Counts and VND exact strings; no PII.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PersonalShippingReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid, unknown or duplicate query selector",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or revoked session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Current Customer eligibility/authority denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ANALYTICS_RANGE_TOO_LARGE; no truncation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "PILOT_DISABLED, ANALYTICS_UNAVAILABLE or existing safe SERVICE_UNAVAILABLE for source failure; no raw diagnostics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -814,6 +1065,85 @@
           "message",
           "requestId"
         ]
+      },
+      "PersonalShippingReport": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schemaVersion",
+          "report",
+          "acceptanceTiming",
+          "parcelWeights"
+        ],
+        "properties": {
+          "schemaVersion": {
+            "type": "string",
+            "const": "PERSONAL_REPORTS_1"
+          },
+          "report": {
+            "$ref": "#/components/schemas/Report"
+          },
+          "acceptanceTiming": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "sampleShipments",
+              "totalDurationMillis",
+              "minimumMillis",
+              "maximumMillis"
+            ],
+            "properties": {
+              "sampleShipments": {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]*)$"
+              },
+              "totalDurationMillis": {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]*)$"
+              },
+              "minimumMillis": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^(0|[1-9][0-9]*)$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "maximumMillis": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^(0|[1-9][0-9]*)$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          "parcelWeights": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "actualGrams",
+              "chargeableGrams"
+            ],
+            "properties": {
+              "actualGrams": {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]*)$"
+              },
+              "chargeableGrams": {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]*)$"
+              }
+            }
+          }
+        }
       }
     }
   }

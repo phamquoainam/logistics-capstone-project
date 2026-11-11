@@ -278,3 +278,93 @@ Execution checklist for this amendment:
   Hosted real API/HTTPS/PostgreSQL/browser and exact-revision CI remain required
   before review readiness; commit/PR and final hosted results are recorded on
   the refinement PR after push. No automatic merge.
+
+
+## Latest Owner UX amendment — single Overview and source drill, 2026-11-09
+
+Authority: Owner explicitly rejects the redundant Shipping Report/dimension
+Dashboards and requests immediate filters, purposeful drill-through and less
+repeated information. This supersedes the C–F navigation/presentation and earlier
+chart/summary layout only. The accepted API, metric definitions, captured cohort,
+source ownership, limits, monetary precision and security gates do not change.
+
+- One Overview: four priority KPIs; a single volume/confirmed-fee chart with local
+  measure switch; supported status distribution; Parcel weight breakdown; five
+  recent Shipments. Remove report CTA, dimension tabs, duplicate Parcel/financial
+  summary cards, repeated sparkline widgets and redundant quick-link toolbar.
+- Period presets and status/route selects apply immediately. Only custom date
+  edits need confirmation; cancel does not mutate applied filters. Read refresh
+  is explicit. One current service is not exposed as a redundant service selector.
+  Chart day/week/month grouping remains immediate and uses the accepted query.
+- KPI/point/group drills target existing `/personal/overview/shipments` with the
+  contributing cohort. Show contextual title, date/filter chips and paginated
+  source table only: no repeated KPI/chart/filter Dashboard. Old dimension URLs
+  remain compatible list-only entries; old Overview URLs carrying row selectors
+  redirect to the list rather than hiding search/page/point constraints in KPIs.
+- Zero KPI/status groups are text, not links that could replace an incompatible
+  current status selector and expand a zero cohort. Other filters remain in all
+  drill targets; each visible selector is removable and a route pair clears atomically.
+- List sorting is immediate; code search is explicit. Return state preserves the
+  source Overview, selected chart measure and exact source page across detail/
+  private-label navigation. `/personal` alias normalizes its return target safely.
+- Recent rows combine code/date, status, fee and private label entry; distinctive
+  short display codes retain the full code in accessible name/title. Mobile rows
+  use a readable card grid. Drill results scroll naturally vertically; horizontal
+  scrolling remains contained for the full source table. No new PII fields/read.
+
+Implementation/observed gates: [Overview checkpoint](personal-overview-checkpoint.md).
+No new reporting engine, schema, source authority, financial collection or Carrier
+lifecycle is introduced. Hosted exact-revision gates remain required on publication.
+
+
+## Latest Owner compact / vivid Overview amendment — 2026-11-09
+
+Supersedes earlier presentation limits on chart count and sparklines only.
+Accepted Backend DTO/query, self-only ownership, cohort, timezone, precision and
+Local/Test guards remain unchanged; no new business capability or schema.
+
+- Compact title/greeting/date/status/route/Create toolbar. One date trigger opens
+  two calendar months, immediate day/7/14/30/90/month presets and confirmed custom
+  dates. Includes yesterday/previous month. UI dates are inclusive; API `until`
+  remains exclusive. Future dates and ranges over366 days are rejected.
+- Four priority KPIs each have their own exact metric.points sparkline; actual
+  zero is a flat zero baseline, never invented activity. Remove KPI info buttons;
+  definitions remain accessible through descriptions. PreviousValue/changePercent
+  stays aggregate comparison only, not a fabricated previous-period plot.
+- Six complementary main views: Booking volume/confirmed-fee timeline, current
+  supported status distribution, route Shipment counts, confirmed VND by route,
+  declared Parcel weight distribution and created Parcel timeline. Route charts
+  show observed routes only. Parcel trend uses CREATED_PARCELS.points, attributed
+  to source Booking date, not a Carrier event or delivered Parcel time series.
+- Navy/Orange with blue/teal categorical accents, readable axes and contained
+  responsive layouts. No KPI tooltip glyphs, no duplicate report navigation.
+- Same-cohort list-only drills and source return context remain. Zero KPI/status
+  cannot expand an incompatible cohort. Fees/UNPAID are not cash received/revenue;
+  no Delivered/Return/COD/payment-success series is inferred.
+
+Observed gates and preservation: [Overview checkpoint](personal-overview-checkpoint.md).
+
+## Owner Reports / Fees amendment —2026-11-09
+
+Owner explicitly approved RF-05 in [review checkpoint](shipping-reports-fees-review.md).
+Add self-only GET `/api/v1/customer/personal-shipping-reports` as specified there
+and in `contracts/openapi/personal-analytics.yaml`. Existing Analytics path/DTO
+remains byte-equivalent in the contract. Both reads share the captured cohort,
+current admission, transaction, bounds, no-store and environment isolation.
+
+Reports at `/personal/reports` are distinct dimension analysis under Management;
+Overview remains compact. Daily source aggregates regroup to day/week/month/
+calendar-quarter/year within366 days, with partial periods identified. Source
+drill is a list only and returns to the exact reporting section/group/filters.
+CSV includes full aggregates, source period/time/filter and simulation provenance.
+No aggregate export of contacts or inference from the20-record source page.
+
+Booking-to-Acceptance timing has its own accepted sample count, exact sum/min/max
+milliseconds; zero sample is N/A. Negative timestamps, including submillisecond
+negatives, fail closed. This is not transit/delivery duration or SLA performance.
+Actual and chargeable weights reconcile all contributing Parcels; billable values
+come from immutable quote feeLines, not a current tariff recomputation.
+
+Delivery/failed/redelivery/return/exception/ETA/COD/payment metrics still require
+their accepted sources. They are unavailable, never silently zero or successful.
+See the checkpoint for executed gates and remaining commercial dependencies.
