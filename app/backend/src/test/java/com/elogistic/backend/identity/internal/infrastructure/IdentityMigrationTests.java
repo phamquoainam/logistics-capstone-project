@@ -37,7 +37,7 @@ class IdentityMigrationTests {
 
     private Database migrated() throws Exception {
         Database db = PostgresTestcontainersSupport.database(POSTGRES);
-        assertEquals(21, db.flyway("latest").migrate().migrationsExecuted);
+        assertEquals(25, db.flyway("latest").migrate().migrationsExecuted);
         return db;
     }
     private static String digest(int value) { return "decode('" + String.format("%064x", value) + "','hex')"; }
@@ -81,7 +81,7 @@ class IdentityMigrationTests {
         Database db = migrated(); account(db);
         var flyway = db.flyway("latest"); flyway.validate();
         var before = Arrays.stream(flyway.info().applied()).map(m -> m.getVersion() + ":" + m.getChecksum()).toList();
-        assertEquals(List.of("1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21"), Arrays.stream(flyway.info().applied()).map(m -> m.getVersion().toString()).toList());
+        assertEquals(List.of("1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25"), Arrays.stream(flyway.info().applied()).map(m -> m.getVersion().toString()).toList());
         var rows = snapshot(db, "identity.user_account");
         assertEquals(0, flyway.migrate().migrationsExecuted);
         assertEquals(before, Arrays.stream(flyway.info().applied()).map(m -> m.getVersion() + ":" + m.getChecksum()).toList());
@@ -100,7 +100,7 @@ class IdentityMigrationTests {
         var tables = List.of("merchant.demo_merchant", "identity.demo_account", "orders.demo_shipment", "orders.demo_event");
         Map<String,List<String>> before = new LinkedHashMap<>(); for (String table : tables) before.put(table, snapshot(db, table));
         var oldChecksums = Arrays.stream(db.flyway("2").info().applied()).map(m -> m.getChecksum()).toList();
-        assertEquals(19, db.flyway("latest").migrate().migrationsExecuted); db.flyway("latest").validate();
+        assertEquals(23, db.flyway("latest").migrate().migrationsExecuted); db.flyway("latest").validate();
         for (String table : tables) assertEquals(before.get(table), snapshot(db, table));
         assertEquals(oldChecksums, Arrays.stream(db.flyway("latest").info().applied()).limit(2).map(m -> m.getChecksum()).toList());
         try (Connection c = db.runtimeConnection(); Statement s = c.createStatement()) {
@@ -269,7 +269,7 @@ class IdentityMigrationTests {
         execute(db,"INSERT INTO identity.account_grant(account_id,role_code,scope_type,scope_id,granted_at) VALUES ("+ACCOUNT+",'IDENTITY_MANAGEMENT','IDENTITY',"+ACCOUNT+","+NOW+")");
         var before=snapshot(db,"identity.user_account");
         var checksums=Arrays.stream(db.flyway("3").info().applied()).map(m->m.getChecksum()).toList();
-        assertEquals(18,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();
+        assertEquals(22,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();
         assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);
         assertEquals(before,snapshot(db,"identity.user_account"));
         assertEquals(checksums,Arrays.stream(db.flyway("latest").info().applied()).limit(3).map(m->m.getChecksum()).toList());
@@ -332,7 +332,7 @@ class IdentityMigrationTests {
         Database db=PostgresTestcontainersSupport.database(POSTGRES);assertEquals(4,db.flyway("4").migrate().migrationsExecuted);account(db);
         execute(db,proof(PROOF,"INVITATION",501,"24 hours"));var accounts=snapshot(db,"identity.user_account");
         var checksums=Arrays.stream(db.flyway("4").info().applied()).map(m->m.getChecksum()).toList();
-        assertEquals(17,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);
+        assertEquals(21,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);
         assertEquals(checksums,Arrays.stream(db.flyway("latest").info().applied()).limit(4).map(m->m.getChecksum()).toList());assertEquals(accounts,snapshot(db,"identity.user_account"));
         try(Connection c=db.runtimeConnection();Statement s=c.createStatement();ResultSet r=s.executeQuery("SELECT account_id,purpose,token_hash,expires_at-created_at=INTERVAL '24 hours',verifier_key_id,consumed_at,revoked_at FROM identity.action_proof WHERE id="+PROOF)) {
             assertTrue(r.next());assertEquals(UUID.fromString(ACCOUNT.replace("'","")),r.getObject(1,UUID.class));assertEquals("INVITATION",r.getString(2));
@@ -447,7 +447,7 @@ class IdentityMigrationTests {
         execute(db,"INSERT INTO identity.rate_limit_attempt VALUES ("+KEY+",'LOGIN_IP',"+digest(57)+","+NOW+","+NOW+"+INTERVAL '15 minutes',"+NOW+"+INTERVAL '60 seconds','COUNTED')");
         var rows=rateAttemptSnapshot(db);var checksums=Arrays.stream(db.flyway("8").info().applied()).map(m->m.getChecksum()).toList();
         var source=new org.springframework.jdbc.datasource.DriverManagerDataSource(db.url(),db.runtime(),db.runtimePassword());assertThrows(IllegalStateException.class,()->CustomerRuntimeRequirements.verify(source));
-        assertEquals(13,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);
+        assertEquals(17,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);
         assertEquals(checksums,Arrays.stream(db.flyway("latest").info().applied()).limit(8).map(m->m.getChecksum()).toList());assertEquals(rows,rateAttemptSnapshot(db));assertDoesNotThrow(()->CustomerRuntimeRequirements.verify(source));
     }
     private List<String> rateAttemptSnapshot(Database db)throws SQLException{
@@ -479,7 +479,7 @@ class IdentityMigrationTests {
             Database db=PostgresTestcontainersSupport.database(POSTGRES);assertEquals(16,db.flyway("16").migrate().migrationsExecuted);account(db);
             var source=new org.springframework.jdbc.datasource.DriverManagerDataSource(db.url(),db.runtime(),db.runtimePassword());
             assertEquals("CUSTOMER_POSTGRES18_SCHEMA_V17_REQUIRED",assertThrows(IllegalStateException.class,()->CustomerRuntimeRequirements.verify(source)).getMessage());
-            var checksums=Arrays.stream(db.flyway("16").info().applied()).map(m->m.getChecksum()).toList();assertEquals(5,db.flyway("latest").migrate().migrationsExecuted);
+            var checksums=Arrays.stream(db.flyway("16").info().applied()).map(m->m.getChecksum()).toList();assertEquals(9,db.flyway("latest").migrate().migrationsExecuted);
             assertEquals(checksums,Arrays.stream(db.flyway("latest").info().applied()).limit(16).map(m->m.getChecksum()).toList());CustomerRuntimeRequirements.verify(source);
             execute(db,session(SESSION).replace("identity.auth_session","identity.customer_auth_session"));
             String prefix="INSERT INTO identity.customer_proof(id,subject_id,account_id,purpose,verifier,verifier_key_id,created_at,expires_at,bound_auth_version,bound_session_id,policy_version) VALUES ("+TOKEN+","+ACCOUNT+","+ACCOUNT+",'CUSTOMER_RECOVERY',"+digest(64)+",'v1',"+NOW+","+NOW+"+INTERVAL '15 minutes',";
@@ -525,7 +525,7 @@ class IdentityMigrationTests {
     @Test void reauthenticationV12UpgradePreservesV11ChecksumsAccountsAndSystemSessions()throws Exception{
         Database db=PostgresTestcontainersSupport.database(POSTGRES);assertEquals(11,db.flyway("11").migrate().migrationsExecuted);account(db);execute(db,session(SESSION));var rows=snapshot(db,"identity.user_account");var sessions=snapshot(db,"identity.auth_session");var checksums=Arrays.stream(db.flyway("11").info().applied()).map(m->m.getChecksum()).toList();
         var source=new org.springframework.jdbc.datasource.DriverManagerDataSource(db.url(),db.runtime(),db.runtimePassword());assertEquals("CUSTOMER_POSTGRES18_SCHEMA_V17_REQUIRED",assertThrows(IllegalStateException.class,()->CustomerRuntimeRequirements.verify(source)).getMessage());
-        assertEquals(10,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);assertEquals(checksums,Arrays.stream(db.flyway("latest").info().applied()).limit(11).map(m->m.getChecksum()).toList());assertEquals(rows,snapshot(db,"identity.user_account"));assertEquals(sessions,snapshot(db,"identity.auth_session"));assertDoesNotThrow(()->CustomerRuntimeRequirements.verify(source));
+        assertEquals(14,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);assertEquals(checksums,Arrays.stream(db.flyway("latest").info().applied()).limit(11).map(m->m.getChecksum()).toList());assertEquals(rows,snapshot(db,"identity.user_account"));assertEquals(sessions,snapshot(db,"identity.auth_session"));assertDoesNotThrow(()->CustomerRuntimeRequirements.verify(source));
         execute(db,"UPDATE identity.auth_session SET revoked_at="+NOW+" WHERE id="+SESSION);execute(db,token(TOKEN,SESSION,77,"NULL"));
     }
     @Test void reauthenticationReceiptRequiresExactProofSessionVersionRetentionAndImmutablePrivileges()throws Exception{
@@ -550,7 +550,7 @@ class IdentityMigrationTests {
     @Test void applicationV14UpgradePreservesV13ProfileAndRestrictsDraftHistory()throws Exception{
         Database db=PostgresTestcontainersSupport.database(POSTGRES);assertEquals(13,db.flyway("13").migrate().migrationsExecuted);account(db);profileFixture(db);var profile=snapshot(db,"merchant.customer_profile");var checksums=Arrays.stream(db.flyway("13").info().applied()).map(m->m.getChecksum()).toList();
         var source=new org.springframework.jdbc.datasource.DriverManagerDataSource(db.url(),db.runtime(),db.runtimePassword());assertEquals("MERCHANT_APPLICATION_POSTGRES18_SCHEMA_V14_REQUIRED",assertThrows(IllegalStateException.class,()->com.elogistic.backend.merchant.internal.infrastructure.JdbcMerchantApplicationStore.requireSchema(source)).getMessage());
-        assertEquals(8,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);assertEquals(checksums,Arrays.stream(db.flyway("latest").info().applied()).limit(13).map(m->m.getChecksum()).toList());assertEquals(profile,snapshot(db,"merchant.customer_profile"));assertDoesNotThrow(()->com.elogistic.backend.merchant.internal.infrastructure.JdbcMerchantApplicationStore.requireSchema(source));
+        assertEquals(12,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);assertEquals(checksums,Arrays.stream(db.flyway("latest").info().applied()).limit(13).map(m->m.getChecksum()).toList());assertEquals(profile,snapshot(db,"merchant.customer_profile"));assertDoesNotThrow(()->com.elogistic.backend.merchant.internal.infrastructure.JdbcMerchantApplicationStore.requireSchema(source));
         rejects(db,"42501","DELETE FROM merchant.application");rejects(db,"42501","UPDATE merchant.application_draft_version SET draft='{}'");rejects(db,"42501","DELETE FROM merchant.application_draft_version");rejects(db,"42501","ALTER TABLE merchant.application ADD COLUMN injected BOOLEAN");
         try(Connection c=db.runtimeConnection();Statement q=c.createStatement();ResultSet r=q.executeQuery("SELECT count(*) FROM pg_constraint c JOIN pg_class t ON t.oid=c.conrelid JOIN pg_namespace n ON n.oid=t.relnamespace JOIN pg_class f ON f.oid=c.confrelid JOIN pg_namespace fn ON fn.oid=f.relnamespace WHERE c.contype='f' AND n.nspname='merchant' AND fn.nspname<>'merchant'")){assertTrue(r.next());assertEquals(0,r.getInt(1));}
     }
@@ -558,7 +558,7 @@ class IdentityMigrationTests {
     @Test void addressV18UpgradePreservesV17DataChecksumsAndRuntimeBoundary()throws Exception{
         Database db=PostgresTestcontainersSupport.database(POSTGRES);assertEquals(17,db.flyway("17").migrate().migrationsExecuted);account(db);profileFixture(db);var profile=snapshot(db,"merchant.customer_profile");var identity=snapshot(db,"identity.user_account");var checksums=Arrays.stream(db.flyway("17").info().applied()).map(m->m.getChecksum()).toList();
         var source=new org.springframework.jdbc.datasource.DriverManagerDataSource(db.url(),db.runtime(),db.runtimePassword());assertEquals("PERSONAL_ADDRESS_POSTGRES18_SCHEMA_V18_REQUIRED",assertThrows(IllegalStateException.class,()->com.elogistic.backend.merchant.internal.infrastructure.JdbcPersonalAddressStore.requireSchema(source)).getMessage());
-        assertEquals(4,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);assertEquals(checksums,Arrays.stream(db.flyway("latest").info().applied()).limit(17).map(m->m.getChecksum()).toList());assertEquals(profile,snapshot(db,"merchant.customer_profile"));assertEquals(identity,snapshot(db,"identity.user_account"));assertDoesNotThrow(()->com.elogistic.backend.merchant.internal.infrastructure.JdbcPersonalAddressStore.requireSchema(source));
+        assertEquals(8,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);assertEquals(checksums,Arrays.stream(db.flyway("latest").info().applied()).limit(17).map(m->m.getChecksum()).toList());assertEquals(profile,snapshot(db,"merchant.customer_profile"));assertEquals(identity,snapshot(db,"identity.user_account"));assertDoesNotThrow(()->com.elogistic.backend.merchant.internal.infrastructure.JdbcPersonalAddressStore.requireSchema(source));
         for(String sql:List.of("DELETE FROM merchant.customer_address","UPDATE merchant.customer_address_version SET label='injected'","DELETE FROM merchant.customer_address_version","ALTER TABLE merchant.customer_address ADD COLUMN injected BOOLEAN"))rejects(db,"42501",sql);
     }
     private String addressRow(String id,String account,boolean isDefault){return "INSERT INTO merchant.customer_address(id,account_id,kind,contact_name,contact_phone,country,administrative_area,locality,address_line,is_default,version,created_at,updated_at) VALUES ("+id+","+account+",'SENDER','Synthetic contact','+84901234567','VN','Area','Locality','Street',"+isDefault+",1,"+NOW+","+NOW+")";}
@@ -579,7 +579,7 @@ class IdentityMigrationTests {
 
     @Test void shippingDraftV19UpgradePreservesV18DataAndNarrowPrivileges()throws Exception{
         Database db=PostgresTestcontainersSupport.database(POSTGRES);assertEquals(18,db.flyway("18").migrate().migrationsExecuted);account(db);profileFixture(db);addressFixture(db);var profile=snapshot(db,"merchant.customer_profile");var addresses=snapshot(db,"merchant.customer_address");var addressHistory=snapshot(db,"merchant.customer_address_version");var checksums=Arrays.stream(db.flyway("18").info().applied()).map(m->m.getChecksum()).toList();
-        var source=new org.springframework.jdbc.datasource.DriverManagerDataSource(db.url(),db.runtime(),db.runtimePassword());assertEquals("SHIPPING_DRAFT_POSTGRES18_V19_REQUIRED",assertThrows(IllegalStateException.class,()->com.elogistic.backend.orders.internal.infrastructure.JdbcShippingDraftStore.requireSchema(source)).getMessage());assertEquals(3,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);assertEquals(checksums,Arrays.stream(db.flyway("latest").info().applied()).limit(18).map(m->m.getChecksum()).toList());assertEquals(profile,snapshot(db,"merchant.customer_profile"));assertEquals(addresses,snapshot(db,"merchant.customer_address"));assertEquals(addressHistory,snapshot(db,"merchant.customer_address_version"));assertDoesNotThrow(()->com.elogistic.backend.orders.internal.infrastructure.JdbcShippingDraftStore.requireSchema(source));
+        var source=new org.springframework.jdbc.datasource.DriverManagerDataSource(db.url(),db.runtime(),db.runtimePassword());assertEquals("SHIPPING_DRAFT_POSTGRES18_V19_REQUIRED",assertThrows(IllegalStateException.class,()->com.elogistic.backend.orders.internal.infrastructure.JdbcShippingDraftStore.requireSchema(source)).getMessage());assertEquals(7,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);assertEquals(checksums,Arrays.stream(db.flyway("latest").info().applied()).limit(18).map(m->m.getChecksum()).toList());assertEquals(profile,snapshot(db,"merchant.customer_profile"));assertEquals(addresses,snapshot(db,"merchant.customer_address"));assertEquals(addressHistory,snapshot(db,"merchant.customer_address_version"));assertDoesNotThrow(()->com.elogistic.backend.orders.internal.infrastructure.JdbcShippingDraftStore.requireSchema(source));
         for(String sql:List.of("DELETE FROM orders.shipping_draft","UPDATE orders.shipping_draft_version SET payload='{}'","DELETE FROM orders.shipping_draft_audit","UPDATE orders.shipping_draft_receipt SET original_version=2","ALTER TABLE orders.shipping_draft ADD COLUMN injected BOOLEAN"))rejects(db,"42501",sql);
     }
 
@@ -595,7 +595,7 @@ class IdentityMigrationTests {
         rejects(db,"42501","UPDATE pricing.pilot_quote SET total_vnd=1");rejects(db,"42501","DELETE FROM pricing.pilot_quote");rejects(db,"42501","UPDATE orders.pilot_booking_receipt SET draft_version=2");
     }
     @Test void stationV21UpgradePreservesV20SnapshotsAndSeedsNoStaffAuthority()throws Exception{
-        Database db=PostgresTestcontainersSupport.database(POSTGRES);assertEquals(20,db.flyway("20").migrate().migrationsExecuted);account(db);profileFixture(db);addressFixture(db);var identity=snapshot(db,"identity.user_account");var address=snapshot(db,"merchant.customer_address");var tariff=snapshot(db,"(SELECT version AS id,* FROM pricing.pilot_tariff_version)");var checksums=Arrays.stream(db.flyway("20").info().applied()).map(m->m.getChecksum()).toList();assertEquals(1,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();assertEquals(identity,snapshot(db,"identity.user_account"));assertEquals(address,snapshot(db,"merchant.customer_address"));assertEquals(tariff,snapshot(db,"(SELECT version AS id,* FROM pricing.pilot_tariff_version)"));assertEquals(checksums,Arrays.stream(db.flyway("latest").info().applied()).limit(20).map(m->m.getChecksum()).toList());
+        Database db=PostgresTestcontainersSupport.database(POSTGRES);assertEquals(20,db.flyway("20").migrate().migrationsExecuted);account(db);profileFixture(db);addressFixture(db);var identity=snapshot(db,"identity.user_account");var address=snapshot(db,"merchant.customer_address");var tariff=snapshot(db,"(SELECT version AS id,* FROM pricing.pilot_tariff_version)");var checksums=Arrays.stream(db.flyway("20").info().applied()).map(m->m.getChecksum()).toList();assertEquals(5,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();assertEquals(identity,snapshot(db,"identity.user_account"));assertEquals(address,snapshot(db,"merchant.customer_address"));assertEquals(tariff,snapshot(db,"(SELECT version AS id,* FROM pricing.pilot_tariff_version)"));assertEquals(checksums,Arrays.stream(db.flyway("latest").info().applied()).limit(20).map(m->m.getChecksum()).toList());
         try(Connection c=db.runtimeConnection();Statement q=c.createStatement();ResultSet r=q.executeQuery("SELECT (SELECT count(*) FROM dispatch.pilot_station),(SELECT count(*) FROM dispatch.pilot_station_assignment),(SELECT count(*) FROM dispatch.pilot_station WHERE NOT pickup_enabled AND active AND drop_off_enabled AND provenance='SIMULATION')")){assertTrue(r.next());assertEquals(3,r.getInt(1));assertEquals(0,r.getInt(2));assertEquals(3,r.getInt(3));}
         rejects(db,"42501","UPDATE dispatch.pilot_station SET active=FALSE,version=version+1");rejects(db,"42501","INSERT INTO dispatch.pilot_station_assignment VALUES ('10000000-0000-4000-8000-000000000099',"+ACCOUNT+",'SIM-DROP-A1','STATION_INTAKE','ACTIVE','2026-11-01',NULL,1)");rejects(db,"42501","UPDATE orders.pilot_tracking_event SET event_type='DELIVERED'");rejects(db,"42501","DELETE FROM dispatch.pilot_intake_acceptance");
     }
@@ -608,6 +608,68 @@ class IdentityMigrationTests {
         Database db=migrated();account(db);rejects(db,"42501","SELECT dispatch.configure_pilot_station_staff("+ACCOUNT+",'SIM-DROP-A1','GRANT')");assertThrows(SQLException.class,()->db.ownerExecute("SELECT dispatch.configure_pilot_station_staff("+ACCOUNT+",'SIM-DROP-A1','GRANT')"));
         db.ownerExecute("DO $$ BEGIN PERFORM set_config('argopost.operator_environment','TEST',TRUE); PERFORM dispatch.configure_pilot_station_staff("+ACCOUNT+",'SIM-DROP-A1','GRANT'); PERFORM dispatch.configure_pilot_station_staff("+ACCOUNT+",'SIM-DROP-A1','GRANT'); IF (SELECT count(*) FROM dispatch.pilot_station_assignment_audit)<>1 THEN RAISE EXCEPTION 'OPERATOR_REPLAY_DUPLICATED'; END IF; PERFORM dispatch.configure_pilot_station_staff("+ACCOUNT+",'SIM-DROP-A1','REVOKE'); IF (SELECT count(*) FROM dispatch.pilot_station_assignment_audit)<>2 THEN RAISE EXCEPTION 'OPERATOR_AUDIT_REQUIRED'; END IF; END $$");
         try(Connection c=db.runtimeConnection();Statement q=c.createStatement();ResultSet r=q.executeQuery("SELECT count(*) FROM dispatch.pilot_station_assignment WHERE state='REVOKED' AND version=2")){assertTrue(r.next());assertEquals(1,r.getInt(1));}rejects(db,"42501","SELECT * FROM dispatch.pilot_station_assignment_audit");
+    }
+
+
+    @Test void businessV25UpgradePreservesPopulatedPreparationHistoryAndReceipts()throws Exception{
+        Database db=PostgresTestcontainersSupport.database(POSTGRES);assertEquals(24,db.flyway("24").migrate().migrationsExecuted);account(db);
+        execute(db,"UPDATE identity.user_account SET status='ACTIVE',activated_at="+NOW+",email_verified=TRUE,password_hash="+HASH+" WHERE id="+ACCOUNT);
+        execute(db,"INSERT INTO identity.customer_identifier VALUES("+OTHER+","+ACCOUNT+",'identity@example.invalid',"+NOW+",'ACTIVE',1)");
+        db.ownerExecute("BEGIN;SET LOCAL argopost.operator_environment='TEST';SELECT merchant.configure_local_workspace("+KEY+",'PROVISION',"+PROOF+",'Synthetic upgrade',"+ACCOUNT+",'OWNER',ARRAY['dashboard.read','shipment.draft.read','shipment.draft.write'],'Synthetic V24 baseline');COMMIT");
+        var address=new com.elogistic.backend.orders.api.ShippingDrafts.Address("VN","Synthetic area","Synthetic locality","Synthetic street");var contact=new com.elogistic.backend.orders.api.ShippingDrafts.Contact("Synthetic contact","+84901234567",address);
+        var input=new com.elogistic.backend.orders.api.ShippingDrafts.Input(null,null,contact,contact,List.of(new com.elogistic.backend.orders.api.ShippingDrafts.Parcel("Synthetic parcel",1,500,100,100,100,0)));
+        var draft=new com.elogistic.backend.orders.api.BusinessPreparations.Draft(UUID.fromString(SESSION.replace("'","")),UUID.fromString(PROOF.replace("'","")),null,UUID.fromString(ACCOUNT.replace("'","")),"DRAFT","DRAFT",1,input,null,null,java.time.Instant.parse("2026-10-21T00:00:00Z"),java.time.Instant.parse("2026-10-21T00:00:00Z"),List.of());
+        var json=tools.jackson.databind.json.JsonMapper.builder().build();
+        execute(db,"BEGIN;INSERT INTO orders.organization_preparation VALUES("+SESSION+","+PROOF+",NULL,"+ACCOUNT+",'DRAFT','DRAFT',1,NULL,NULL,'"+json.writeValueAsString(input)+"',"+NOW+","+NOW+");INSERT INTO orders.organization_preparation_version VALUES("+SESSION+","+PROOF+",1,'"+json.writeValueAsString(draft)+"',"+NOW+");INSERT INTO orders.organization_preparation_audit VALUES("+OTHER_SESSION+","+PROOF+","+ACCOUNT+","+SESSION+",'CREATE',0,1,NULL,'DRAFT',"+BINDING+","+NOW+");INSERT INTO orders.organization_preparation_receipt VALUES("+PROOF+",'CREATE',"+TOKEN+","+ACCOUNT+",NULL,"+SESSION+",0,1,'v1',"+digest(1)+","+NOW+");COMMIT");
+        Map<String,List<String>> before=new LinkedHashMap<>();String stripped="(to_jsonb(t)-'result_snapshot'-'preparation_target'-'preparation_version'-'import_target')::text";
+        var tables=List.of("orders.organization_preparation","orders.organization_preparation_version","orders.organization_preparation_audit","orders.organization_preparation_receipt");
+        for(String table:tables)try(var c=db.runtimeConnection();var q=c.createStatement();var r=q.executeQuery("SELECT "+stripped+" FROM "+table+" t ORDER BY 1")){var rows=new ArrayList<String>();while(r.next())rows.add(r.getString(1));before.put(table,rows);}
+        var checksums=Arrays.stream(db.flyway("24").info().applied()).map(m->m.getChecksum()).toList();assertEquals(1,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();assertEquals(checksums,Arrays.stream(db.flyway("latest").info().applied()).limit(24).map(m->m.getChecksum()).toList());
+        for(String table:tables)try(var c=db.runtimeConnection();var q=c.createStatement();var r=q.executeQuery("SELECT "+stripped+" FROM "+table+" t ORDER BY 1")){var rows=new ArrayList<String>();while(r.next())rows.add(r.getString(1));assertEquals(before.get(table),rows);}
+        assertEquals(0,snapshot(db,"orders.organization_import_job").size());rejects(db,"42501","DELETE FROM orders.organization_import_job");assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);
+    }
+    @Test void businessV24UpgradePreservesPopulatedOrganizationAndOperatorReceipt()throws Exception{
+        Database db=PostgresTestcontainersSupport.database(POSTGRES);assertEquals(23,db.flyway("23").migrate().migrationsExecuted);account(db);
+        execute(db,"UPDATE identity.user_account SET status='ACTIVE',activated_at="+NOW+",email_verified=TRUE,password_hash="+HASH+" WHERE id="+ACCOUNT);
+        execute(db,"INSERT INTO identity.customer_identifier VALUES("+OTHER+","+ACCOUNT+",'identity@example.invalid',"+NOW+",'ACTIVE',1)");
+        String command="SELECT merchant.configure_local_workspace("+KEY+",'PROVISION',"+PROOF+",'Synthetic upgrade organization',"+ACCOUNT+",'OWNER',ARRAY['dashboard.read'],'Synthetic legacy receipt')";
+        db.ownerExecute("BEGIN;SET LOCAL argopost.operator_environment='TEST';"+command+";COMMIT");
+        List<String> tables=List.of("merchant.organization","merchant.membership","merchant.member_grant","merchant.workspace_audit","merchant.workspace_command_receipt");Map<String,List<String>> before=new LinkedHashMap<>();
+        for(String table:tables)try(var c=db.migrationConnection();var q=c.createStatement()){q.execute("SET ROLE "+db.owner());try(var r=q.executeQuery("SELECT to_jsonb(t)::text FROM "+table+" t ORDER BY 1")){var rows=new ArrayList<String>();while(r.next())rows.add(r.getString(1));before.put(table,rows);}}
+        var sums=Arrays.stream(db.flyway("23").info().applied()).map(m->m.getChecksum()).toList();assertEquals(2,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();
+        assertEquals(sums,Arrays.stream(db.flyway("latest").info().applied()).limit(23).map(m->m.getChecksum()).toList());
+        db.ownerExecute("BEGIN;SET LOCAL argopost.operator_environment='TEST';"+command+";COMMIT");
+        for(String table:tables)try(var c=db.migrationConnection();var q=c.createStatement()){q.execute("SET ROLE "+db.owner());try(var r=q.executeQuery("SELECT "+(table.endsWith("member_grant")?"(to_jsonb(t)-'facility_id')":"to_jsonb(t)")+"::text FROM "+table+" t ORDER BY 1")){var rows=new ArrayList<String>();while(r.next())rows.add(r.getString(1));assertEquals(before.get(table),rows);}}
+        rejects(db,"42501","INSERT INTO merchant.facility VALUES(gen_random_uuid(),"+PROOF+",'Synthetic','{}','ACTIVE',1,now(),now())");
+        rejects(db,"42501","SELECT merchant.configure_local_workspace(gen_random_uuid(),'GRANT',"+PROOF+",NULL,"+ACCOUNT+",'OWNER',ARRAY['dashboard.read','shipment.draft.read','shipment.draft.write'],'Synthetic denied runtime grant')");
+        assertEquals(0,snapshot(db,"orders.organization_preparation").size());assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);
+    }
+    @Test void businessV23UpgradePreservesV22AndCannotGrantRuntimeAuthority()throws Exception{
+        Database db=PostgresTestcontainersSupport.database(POSTGRES);assertEquals(22,db.flyway("22").migrate().migrationsExecuted);account(db);profileFixture(db);addressFixture(db);
+        var source=new org.springframework.jdbc.datasource.DriverManagerDataSource(db.url(),db.runtime(),db.runtimePassword());assertEquals("BUSINESS_WORKSPACE_POSTGRES18_SCHEMA_V23_REQUIRED",assertThrows(IllegalStateException.class,()->com.elogistic.backend.merchant.internal.infrastructure.JdbcBusinessWorkspaces.requireSchema(source)).getMessage());
+        var identity=snapshot(db,"identity.user_account");var addresses=snapshot(db,"merchant.customer_address");var applications=snapshot(db,"merchant.application");var checksums=Arrays.stream(db.flyway("22").info().applied()).map(m->m.getChecksum()).toList();
+        assertEquals(3,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);
+        assertDoesNotThrow(()->com.elogistic.backend.merchant.internal.infrastructure.JdbcBusinessWorkspaces.requireSchema(source));
+        assertEquals(checksums,Arrays.stream(db.flyway("latest").info().applied()).limit(22).map(m->m.getChecksum()).toList());assertEquals(identity,snapshot(db,"identity.user_account"));assertEquals(addresses,snapshot(db,"merchant.customer_address"));assertEquals(applications,snapshot(db,"merchant.application"));
+        for(String table:List.of("organization","membership","member_grant"))try(var c=db.runtimeConnection();var s=c.createStatement();var r=s.executeQuery("SELECT count(*) FROM merchant."+table)){assertTrue(r.next());assertEquals(0,r.getInt(1));}
+        rejects(db,"42501","INSERT INTO merchant.organization VALUES(gen_random_uuid(),'Synthetic','ACTIVE','LOCAL_OPERATOR_PROVISIONED','TEST',gen_random_uuid(),1,now(),now())");
+        rejects(db,"42501","SELECT identity.lock_local_business_subject("+ACCOUNT+",TRUE)");
+        rejects(db,"42501","SELECT merchant.configure_local_workspace(gen_random_uuid(),'PROVISION',gen_random_uuid(),'Synthetic',"+ACCOUNT+",'OWNER',ARRAY['dashboard.read'],'Synthetic reason')");
+        assertThrows(SQLException.class,()->db.ownerExecute("SET argopost.operator_environment='TEST';SELECT merchant.configure_local_workspace(gen_random_uuid(),'PROVISION',gen_random_uuid(),'Synthetic',"+ACCOUNT+",'OWNER',ARRAY['dashboard.read'],'Synthetic reason')"));
+    }
+    @Test void supportV22UpgradePreservesV21DataAndRequiresOperatorAuthority()throws Exception{
+        Database db=PostgresTestcontainersSupport.database(POSTGRES);assertEquals(21,db.flyway("21").migrate().migrationsExecuted);account(db);profileFixture(db);addressFixture(db);
+        var identity=snapshot(db,"identity.user_account");var addresses=snapshot(db,"merchant.customer_address");var stations=snapshot(db,"(SELECT code AS id,* FROM dispatch.pilot_station)");
+        var checksums=Arrays.stream(db.flyway("21").info().applied()).map(m->m.getChecksum()).toList();assertEquals(4,db.flyway("latest").migrate().migrationsExecuted);db.flyway("latest").validate();assertEquals(0,db.flyway("latest").migrate().migrationsExecuted);
+        assertEquals(checksums,Arrays.stream(db.flyway("latest").info().applied()).limit(21).map(m->m.getChecksum()).toList());assertEquals(identity,snapshot(db,"identity.user_account"));assertEquals(addresses,snapshot(db,"merchant.customer_address"));assertEquals(stations,snapshot(db,"(SELECT code AS id,* FROM dispatch.pilot_station)"));
+        rejects(db,"42501","INSERT INTO orders.support_staff_grant VALUES(gen_random_uuid(),"+ACCOUNT+",'SUPPORT_TRIAGE','ACTIVE',1,clock_timestamp())");rejects(db,"42501","SELECT orders.configure_local_support_staff("+ACCOUNT+",'SUPPORT_TRIAGE','GRANT')");
+        try(var c=db.runtimeConnection();var q=c.createStatement();var r=q.executeQuery("SELECT (SELECT count(*) FROM orders.support_staff_grant)+(SELECT count(*) FROM orders.personal_support_ticket)")){assertTrue(r.next());assertEquals(0,r.getInt(1));}
+        assertThrows(SQLException.class,()->db.ownerExecute("SELECT orders.configure_local_support_staff("+ACCOUNT+",'SUPPORT_TRIAGE','GRANT')"));
+        assertThrows(SQLException.class,()->db.ownerExecute("SET argopost.operator_environment='TEST';SELECT orders.configure_local_support_staff("+ACCOUNT+",'SUPPORT_TRIAGE','GRANT')"));
+        // Explicit synthetic fixture activation only, after preserved V21 data/checksum assertions.
+        db.ownerExecute("UPDATE identity.user_account SET status='ACTIVE',activated_at="+NOW+",email_verified=TRUE,password_hash="+HASH+",activated_at="+NOW+" WHERE id="+ACCOUNT);
+        db.ownerExecute("SET argopost.operator_environment='TEST';SELECT orders.configure_local_support_staff("+ACCOUNT+",'SUPPORT_TRIAGE','GRANT');SELECT orders.configure_local_support_staff("+ACCOUNT+",'SUPPORT_TRIAGE','REVOKE')");
+        try(var c=db.runtimeConnection();var q=c.createStatement();var r=q.executeQuery("SELECT count(*) FROM orders.support_business_audit WHERE authority_grant_id IS NOT NULL AND operator_principal IS NOT NULL")){assertTrue(r.next());assertEquals(2,r.getInt(1));}
     }
 
 }

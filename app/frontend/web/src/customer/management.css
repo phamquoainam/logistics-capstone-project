@@ -61,3 +61,14 @@
 @media(max-width:1180px){.pm-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.pm-filter-bottom{flex-wrap:wrap}.pm-filter-bottom>span{flex-basis:100%}.pm-filter-bottom>label{flex:1}.pm-kpis>button{padding:17px;gap:12px}}
 @media(max-width:760px){.pm-filters{padding:17px}.pm-filter-grid{gap:13px}.pm-kpis{gap:10px}.pm-kpis>button{display:block;padding:14px}.pm-kpi-symbol{width:32px;height:32px;font-size:19px;margin-bottom:10px}.pm-kpis>button>span:last-child>span{font-size:11px;min-height:34px;display:block}.pm-kpis strong{display:block;font-size:25px}.pm-kpis strong small{display:block}.pm-kpi-caption{align-items:start;font-size:10px}.pm-kpi-caption>span:first-child{max-width:200px}.pm-results-heading{padding:18px}.pm-period{display:none}.pm-pagination{padding:16px;flex-wrap:wrap}.pm-pagination>span{flex-basis:100%}.pm-dependency{padding:30px 20px}.pm-dependency-grid{grid-template-columns:1fr}.pm-fee-documents{flex-wrap:wrap}}
 @media(max-width:420px){.pm-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.pm-filter-bottom>label{flex-basis:100%}.pm-filter-bottom>button{flex:1}.pm-categories{gap:20px}.pm-kpi-caption{flex-direction:column;gap:6px}.pm-kpi-caption>span:first-child{max-width:none}}
+
+.pm-results-options {display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.pm-column-picker {position:relative;font-size:12px}.pm-column-picker summary {cursor:pointer;color:var(--pw-navy)}
+.pm-column-picker>div {position:absolute;right:0;top:30px;z-index:5;background:#fff;border:1px solid var(--pw-border);border-radius:9px;box-shadow:var(--pw-shadow);padding:14px;min-width:220px}
+.pm-column-picker label {display:flex;align-items:center;gap:9px;padding:7px 0;font-size:12px}
+.pm-workspace input[type=checkbox] {width:16px;height:16px;accent-color:#0b2d5b;cursor:pointer}
+.pm-table .pm-select {padding-right:0;width:35px}
+.pm-downloads {padding:14px 22px;border-bottom:1px solid var(--pw-border);font-size:12px}
+.pm-downloads>div {display:flex;align-items:center;gap:10px;flex-wrap:wrap}.pm-downloads>div>span {margin-right:auto;color:var(--pw-muted)}
+.pm-downloads button {font-size:12px}.pm-downloads p {margin:10px 0 0;color:#216a55}.pm-downloads [role=alert] {color:#a13a25}
+@media(max-width:760px){.pm-results-heading {align-items:flex-start;flex-wrap:wrap}.pm-downloads>div>span {flex-basis:100%}.pm-kpi-caption {align-items:flex-start;flex-wrap:wrap}.pm-results-options {width:100%;justify-content:space-between}.pm-column-picker>div {left:0;right:auto}.sd-detail .se-facts dd {overflow-wrap:anywhere}}

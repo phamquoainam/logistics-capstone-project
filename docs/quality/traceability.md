@@ -890,3 +890,274 @@ checkpoint before edits. Real-browser Profile/Merchant navigation now uses heade
 links; revoked secondary session still must deny direct protected Profile access.
 No runtime permission/business/migration change. Current CI and actual merge SHA
 are recorded on the integration PR, not inferred from earlier UI/PR43 evidence.
+
+
+## Personal Overview completion — Owner direction, 2026-11-09
+
+Bounded presentation/drill-through delivery LOCAL DONE under the accepted
+PERSONAL_ANALYTICS_1 contract and [checkpoint](../implementation/personal-overview-checkpoint.md).
+Four priority KPIs plus Parcel/fee summaries share the authoritative read cohort;
+Overview → Breakdown → contributing Shipments → existing private detail/label.
+Router state restores the exact source Overview/report; individual active filters
+are visible/removable, route pair removal is atomic, empty pages recover to page0,
+fee chart routes to Fees and date presets include Today with local range validation.
+Status and route/service money inconsistencies fail closed at the client decoder.
+Unsupported Carrier/Exception/Paid/COD/Support/notifications remain dependency-bound,
+not fake zeros, payment success or fabricated customer alerts. No API/DTO/schema,
+authorization, simulation isolation, immutable snapshot or Backend source change.
+
+Final typecheck/lint,69 frontend units,87 isolated UI cases, default/Customer builds,
+contract530 and implementation validator errors[]/CONSISTENT PASS. Desktop/tablet/
+mobile synthetic visual review completed. Existing10 aggregation and4 real PG18
+Analytics HTTP cases PASS; final actual HTTPS/PG18/test-SMTP browser13/13 PASS,
+receipt PASS/CLEANUP/NONE/LOCAL_UNPUBLISHED and parent Maven browser gate exit0.
+Initial missing execution identity and stale browser return-link locator were
+identified rather than bypassed; final verification corrected only setup/test
+navigation, retaining all business/security assertions. No new live Gmail claim.
+Local original PostgreSQL18.6/Flyway and Backend/Frontend HTTPS startup READY;
+no reset, database reseed or applied migration edit. Source is uncommitted on
+feature/argopost-overview-completion; hosted exact-revision CI/publication pending.
+
+
+### Owner Overview/report chart refinement — 2026-11-09
+
+OV-05/06 LOCAL DONE in [Overview checkpoint](../implementation/personal-overview-checkpoint.md).
+Overview is a bounded summary; Shipping Report is same-cohort breakdown/drill
+without a second engine. Shared native SVG volume line/area and orange fee columns,
+supported status ring and Parcel weight bars preserve exact units, time basis,
+source filters/return context and private detail/label reads. Decorative arrows
+removed; route direction remains. PreviousValue is aggregate comparison only,
+not a fabricated prior-period series. No fee/UNPAID stacking or delivery inference.
+
+73 units and92 full UI cases PASS; final tablet-only CSS recheck33 cases PASS.
+Typecheck/lint/default+Customer builds PASS, synthetic desktop/tablet/mobile
+visuals reviewed. Shell SVG sizing conflict corrected with geometry assertions;
+axis dates align with point targets; huge VND/tooltip/no-fake-comparison checks pass.
+Actual HTTPS/PG18/test-SMTP browser13/13 PASS, parent Maven exit0, receipt
+PASS/CLEANUP/NONE/LOCAL_UNPUBLISHED; last tablet CSS separately UI-verified.
+Contract530 PASS; implementation manifest adds exactly three new chart/helper/test
+paths after initial undeclared-file rejection; validator errors[]/CONSISTENT.
+No backend/data/migration/security-policy changes; original WIP and private evidence
+preserved. Source remains uncommitted; hosted exact-revision gates/publication pending.
+
+
+### Owner single Overview and direct source-list drill — 2026-11-09
+
+OV-07/08 LOCAL DONE; supersedes the duplicated Report/dimension Dashboard UX in
+previous entries. [Accepted presentation amendment](../implementation/personal-analytics-contract.md)
+retains the same self-only Analytics read DTO/cohort and security definitions.
+One Overview, four KPIs, one volume/fee plot, status distribution, Parcel breakdown,
+five recent rows. No separate Report CTA, dimension tabs, duplicate summary cards
+or sparklines. Presets/selects/grouping apply immediately; custom dates confirm once.
+Canonical drills show contextual rows/filters only; legacy dimension/row-selector
+bookmarks remain compatible. Zero KPI/status links cannot expand a filtered cohort.
+Source page/Overview/chart measure and safe Personal alias returns survive private
+detail/label navigation. Retired CSS removed and recent mobile rows use a card grid.
+
+73 units PASS;94 distinct UI cases pass across92 full-run cases plus2 specifically
+corrected/verified test cases. Final list scroll CSS checked by2 focused responsive
+cases; typecheck/lint/default+Customer builds PASS. Actual HTTPS/PG18/test-SMTP
+browser13/13 PASS, parent Maven exit0, receipt PASS/CLEANUP/NONE/LOCAL_UNPUBLISHED;
+new row assertions preserve actual Parcel/cost evidence after duplicate KPI removal.
+No data, Backend, migration, source contract fields or security-policy changes.
+Original13-path WIP/checkpoints preserved. Hosted exact-revision publication remains
+pending; no push/merge is inferred from local evidence.
+
+
+### Owner compact / vivid Overview — 2026-11-09
+
+OV-09/10 LOCAL DONE in [Overview checkpoint](../implementation/personal-overview-checkpoint.md).
+Latest presentation amendment adds4 true metric sparklines without KPI info buttons,
+compact date/status/route toolbar and bounded two-month calendar. Six main views
+cover volume/confirmed fees, current status, route volume, route confirmed fees,
+Parcel weights and created Parcel trend. No fabricated prior period/event/paid/COD
+series. BigInt VND, accepted cohort and list-only drill/return context retained.
+
+77 units/100 full UI cases PASS;2 final calendar visual/dismissal cases PASS at
+1440/390px after test-only capture correction. Typecheck/lint/default+Customer builds
+PASS. Synthetic desktop/tablet/mobile visuals reviewed. Actual HTTPS/PG18/test-SMTP
+browser13/13 PASS, Maven parent exit0, PASS/CLEANUP/NONE/LOCAL_UNPUBLISHED receipt.
+Contract530 PASS; implementation/source validation recorded in checkpoint.
+No Backend/schema/migration/DB-data/security-policy change. Original15-path WIP
+and earlier archives preserved; final snapshot remains ignored/local. No new live
+Gmail verification or hosted exact-revision CI/publication claimed.
+
+
+### Owner Create Shipment completion audit — 2026-11-09
+
+CS-01–04 LOCAL DONE under [checkpoint](../implementation/create-shipment-review.md),
+reusing accepted shipping preparation/Quote/Booking and bounded BR13 contracts.
+Measured facts required; explicit default-contact copy including later pages;
+full saved Parcel/reference/instructions review; actionable catalog preflight;
+authoritative fee/actual/chargeable weight and fail-closed tariff explanation.
+No new API/schema/Backend authority; no invented Pickup/COD/ETA/insurance/legal
+terms/paid or Carrier event. Ordinary-goods attestation/UNPAID/current guards stay.
+
+81 final units PASS; full105 UI PASS plus17 final affected UI PASS; typecheck/lint/
+default+Customer build PASS. Synthetic desktop/mobile visuals reviewed. Actual
+HTTPS/PG18/test-SMTP browser13/13 PASS, parent1/0/0/0 exit0 and safe receipt
+PASS/CLEANUP/NONE/LOCAL_UNPUBLISHED. Final fee explanation followed that Browser
+run and has focused unit/UI/build coverage; no redundant full-stack run claimed.
+Contract530 PASS, source errors[]/CONSISTENT. Original17-path WIP retained by hash.
+No migration/app-data/credential mutation or publication. Commercial dependencies
+remain explicit in checkpoint; bounded core completion is not full-service acceptance.
+
+
+### Owner Shipment Management completion audit —2026-11-09
+
+SM-01–04 LOCAL DONE under [checkpoint](../implementation/shipment-management-review.md).
+Existing accepted self-only management GET unchanged. Canonical WAITING filter,
+empty-page context, source return/query/page/columns and URL/keyboard eight tabs
+corrected. One current handling projection shared across views, exact Parcel-set
+binding and no stale acceptance on failure. Customer has no Tracking/cancel/Carrier
+mutation authority. Future lifecycle/Support/Finance sources remain explicitly absent.
+
+Current-page visible-column CSV/selection and20-record private-label ZIP reuse
+existing owned reads, with formula-safe cells, simulation provenance, bounded
+memory, per-Shipment authorization, no partial bundle and URL disposal. No new
+Backend API/schema/migration or public storage. Original25-path WIP preserved.
+85 units PASS,115 distinct UI cases PASS across114 full-run plus1 corrected fixture
+case; final responsive/CSV/ZIP5 cases PASS, typecheck/lint/default+Customer builds
+PASS. Actual HTTPS/PG18/test-SMTP Browser13/13 PASS, parent exit0 and
+PASS/CLEANUP/NONE/LOCAL_UNPUBLISHED receipt, including real CSV/ZIP. Independent
+zipfile CRC/member checks PASS. Final responsive layout separately UI verified.
+Contract530 PASS; implementation errors[]/CONSISTENT. No full PostgreSQL suite,
+hosted exact-commit CI, live Gmail or commercial service acceptance is inferred.
+No publication performed; local original DB and migrations preserved.
+
+### Owner Shipping Reports / Fees and RF-05 —2026-11-09
+
+RF-01–05 LOCAL DONE under [checkpoint](../implementation/shipping-reports-fees-review.md).
+Owner approved additive self-only RF-05. Existing Analytics wire stays unchanged;
+one captured Booking cohort supplies report/source drill, exact acceptance sample
+timing and immutable chargeable weights before20-row pagination. Distinct Management
+Reports regroup day/week/month/quarter/year within366 days; list-only drill returns
+to the original section/group/filters. Whole-cohort aggregate CSV is PII-free.
+Fees uses exact confirmed/UNPAID totals, current-page charge CSV and lazy owned
+immutable Parcel/tariff details. No source-page-derived totals or fake paid/COD/
+delivery/refund/overdue metrics. Unsupported workflows remain explicitly unavailable.
+
+92 units/128 full UI PASS plus13 final affected UI PASS; typecheck/lint/default+
+Customer builds PASS. H2:666 PASS/17 profile skips, report policy130 PASS.
+PostgreSQL Testcontainers7+54+326=387 PASS with privacy/lifecycle audits; final
+focused RF-05/real Browser parent5/5 PASS, Browser13/13 PASS and safe receipt
+PASS/CLEANUP/NONE/LOCAL_UNPUBLISHED. Final submillisecond guard is focused tested;
+the earlier broad runs are not represented as rerun after it. Exact commands and
+resolved Docker/test-host failures are retained in checkpoint. Identity contract530
+and independent RF-05 AJV/legacy compatibility PASS; source errors[]/CONSISTENT.
+No old migration, app data, security authority or production isolation changed.
+Original34-path archive retained. No commit/push/merge or hosted CI claim.
+
+### Owner Action Center / Address Book / Fees audit —2026-11-09
+
+AA-01–05 bounded work LOCAL DONE under [checkpoint](../implementation/action-address-review.md).
+Existing self-only Address APIs supply explicit formatting normalization, advisory
+full-query duplicate scan, default PUT/receipt recovery and authorized fresh-contact
+copy into a new unsaved draft. Address list/filter/page recovery and Management
+placement refined. Raw recipient contacts remain UNVERIFIED and never Identity
+accounts; no official geographic validation/coverage claim or restore API added.
+Action Center has pending/sent boundary views and response-category guidance, not
+fake cases/counters/priority/deadline/commands. Live exception/ticket/response sources
+remain BLOCKED. Fees empty-page recovery retains actual selectors and immutable
+confirmed/UNPAID semantics; no Payment/COD/refund authority introduced.
+
+94 frontend units/141 final full UI PASS; typecheck/lint/default+Customer builds
+PASS. Ten focused PG18 Address tests PASS including default/update/archive races,
+replay/ownership/admission/revocation/audit rollback. Real HTTPS/PG18/test-SMTP
+Browser13/13 PASS; final parent1/1 PASS with exact updated address postconditions.
+Privacy and owned cleanup PASS. Source errors[]/CONSISTENT; no production Backend,
+API/schema/migration changes in this task. Backend changes are test host route and
+exact test postconditions for additional default writes only. No broader suite or
+hosted CI is claimed rerun; old locator, Docker-off and old postcondition failures
+are retained with their resolutions. Original53-path WIP archive hashes preserved.
+No reset/data purge/account seed/key rotation/worktree/publication performed.
+
+### Owner peer Tracking / quotation / Labels utilities —2026-11-09
+
+TL-01–05 LOCAL DONE under [checkpoint](../implementation/lookup-label-review.md).
+Dedicated peer-level pages reuse current self-auth/catalog/Shipment/handling/PDF
+contracts. At most10 unique exact codes, bounded source scan and unknown vs
+not-found distinction; no contact fields/public Guest exposure or new event.
+Indicative BigInt per-Parcel calculator uses approved catalog limits/routes only;
+raw preparation handoff never carries money/quoteId/contacts/authority, cannot
+overwrite a draft, and still requires explicit save/fresh Backend Quote/TTL and
+Booking checks. No client price or estimate is treated as persisted authority.
+
+Owned paged labels list/selection, original private PDF/20-record32MB ZIP and safe
+source return are reused. Existing P2 continuation pages are correctly explained;
+Parcel count is not fabricated as PDF page count.100x150mm/Code128/simulation and
+UNPAID provenance intact. Receipt/POD/real Station/ETA/extra service/Guest/Finance
+capabilities remain absent, not fake documents, places, prices or events.
+
+100 units PASS;154 distinct UI cases pass across152 full-run plus corrected/final
+affected54-case validation. Typecheck/lint/default+Customer builds PASS. PG13/13
+focused Quote/Booking/Label/security/browser-parent PASS; real Browser13/13 PASS,
+then final parent1/1 and Browser13/13 PASS for continuation-page correction.
+Safe receipt PASS/CLEANUP/NONE/LOCAL_UNPUBLISHED and privacy/owned cleanup PASS.
+Source errors[]/CONSISTENT. No production Backend/API/schema/migration/CI gate
+change, no actual customer data/credential reset or publication. Original59 WIP
+paths retained by hash. See checkpoint for exact commands and honest run scope.
+
+## Owner2026-11-10 — Personal Support Ticket V1 / Avatar Account
+
+Scope: BC153/Orders020 bounded LOCAL/TEST Ticket workflow, with separately accepted
+[exact contract](../implementation/personal-support-ticket-contract.proposed.md).
+[Checkpoint and commands](../implementation/support-account-review.md) map
+Customer list/create/conversation/reply/review/acknowledgement, Staff triage/current
+grant/current assignment/transitions, V22 messages/audit/receipts/quota and UI.
+Ticket, Shipment change request and Claim are distinct. Claims021/compensation,
+attachments, commercial SLA, outbound Ticket notifications and Carrier/Finance
+mutations remain unavailable; this is not Full Spec020/021/platform acceptance.
+
+Reused existing Identity transaction/TLS/Bearer/Origin/CSRF and self profile/ETag/
+receipts/OTP reset. Avatar disclosure and settings reflect actual supported data;
+profile contacts do not change verified login Identity. No fabricated MFA/device/
+security history/notification preferences, legal policy, data-request receipt or
+Business membership. Staff grant setup is explicit audited operator action only;
+no new account or runtime self-grant.
+
+V1–V21 untouched; additive V22 upgrade preserves old data/checksums. Current
+Customer/Staff authority, ownership, concurrency/replay/stale/denial, mandatory
+evidence rollback and Production/disabled modes are covered by5 PG Ticket tests.
+Existing54 migration cases plus the new V21→V22 case pass; architecture23/23 PASS.
+Actual HTTPS/PG18/test-SMTP Browser15/15 and parent1/1 PASS, including two-role Ticket
+closure and existing PW03/PW04/Booking/labels/intake/UNPAID/recovery/RF05 regression.
+Refresh throttling was not relaxed: redundant Browser document reloads were
+replaced by actual in-app refresh controls after observed429.
+
+104 units, affected70 UI cases, typecheck/lint and both builds PASS. Report policy:
+129/130 final full run PASS, then the exact inventory-count case corrected for55
+migration cases and rerun1/1 PASS;130 distinct cases pass, not a claimed single
+130/130 run. All required old tests retained; exact inventories add6 PG cases.
+Focused private credential audit and recorded test-resource absence PASS.
+Full-job/all-suite hosted collectors/H2/PR CI are not claimed rerun by this local
+checkpoint. Source validation and preserved files are recorded in the checkpoint.
+
+Official local launcher READY, existing PG18 container reused and V21/V22 success
+observed. Zero Support Staff grants/Tickets seeded in actual local DB; both new
+protected API groups deny anonymous401. No Gmail live delivery or S3 live smoke
+claim in this checkpoint. No commit/push/merge/new worktree or discarded WIP.
+
+
+### Owner 2026-11-10: Business Local/Test Dashboard
+
+BC-017 / BC-172 and current organization access: Owner accepted BUSINESS-LOCAL-ACCESS-01.
+Implementation/tests and exact source/runtime limits: [Business checkpoint](../implementation/business-dashboard-checkpoint.md).
+Additive V23, current Identity + organization/membership/explicit permission admission, operator audit/receipts,
+Backend-connected permission-redacted shell and truthful disconnected-source states.
+PG18 authorization/concurrency/upgrade, architecture23 and real Browser16 cases PASS;
+no Personal-to-Merchant source reassignment or Production/Payment/Carrier authority.
+After exact Owner UUID confirmation, official V23 migration and audited Local/Test provisioning completed for one target; zero other-account memberships. Before/after source-data SHA-256 and V1-V22 checksums match. Local HTTPS READY; Owner subsequently confirmed the actual authenticated switcher/Dashboard and Personal/Business separation. Manual Owner acceptance is distinguished from automated Browser evidence. No hosted CI or PR published.
+
+
+### Owner 2026-11-10: Business orange theme / Shipment Creation preparation gate
+
+BSC-01/02 verified: Business-only orange styling, Personal navy retained; UI14/14, contrast/mobile isolation, lint/typechecked builds PASS.
+[Business creation execution contract](../implementation/business-shipment-creation-contract.proposed.md) records exact proposed APIs/data/RBAC and independent preparation vs Merchant pricing/BR13 decisions.
+BSC-03+ pending Owner acceptance; no new Business write privilege, migration or fake Booking/Carrier event.
+
+| BUSINESS-PREPARATION-V1 / BSC-04 | Owner accepted Business preparation 2026-11-10 | Organization Draft manual UI/HTTP/Orders persistence, scoped Merchant permissions, V24 immutable local | PG3 + upgrade1 + Business5 + architecture23 PASS; real HTTPS Browser16 PASS; FE unit9/UI14, typecheck/lint/build, inventory3 and validator PASS | Manual Draft DONE; facility CRUD/import/templates/packing/Quote/Booking incomplete; no Carrier/payment effect |
+
+| BUSINESS-PREPARATION-V1 / BSC-05a | Owner accepted Business preparation 2026-11-10 | CSV V1 scoped preview/job/rows, explicit 20-row commits through shared Draft command, current RBAC and receipts, V25 | PG import2 + Draft3 + populated upgrade1 + architecture23 PASS; real HTTPS Browser16; FE unit11/UI11 + responsive2; report-policy130; source validator PASS | CSV-to-Draft DONE; facilities/defaults/templates/packing and confirmed Business Shipping incomplete; no Quote/Booking/Carrier/Finance activation |
+
+| BUSINESS-IMPORT-WORKSHEET / IG-01–05 | Owner 2026-11-10 CSV+Excel worksheet direction; same accepted CSV V1 API | Editable scoped worksheet, bounded XLSX Worker/CSV adapters, five-Parcel fidelity, templates/history, invalidation and selected20-row chunk commits | Unit18, focused UI6 and existing Business UI9 PASS; actual HTTPS/PG18 Browser16 PASS; lint/typechecked builds/source validator PASS | File-to-Draft LOCAL DONE; [evidence and limits](../implementation/business-import-grid-checkpoint.md); no Backend/schema/business authority changes or false Booking/payment success |

@@ -18,6 +18,23 @@ export type AnalyticsReport = {
   parcels: { count: string; multiParcelShipments: string; weight: { key: string; parcels: string }[] };
   shipments: { total: string; page: number; size: 20; hasNext: boolean; items: { id: string; code: string; bookedAt: string; status: 'WAITING_FOR_HANDOVER' | 'AT_STATION'; service: 'ROAD_STANDARD'; origin: string; destination: string; parcels: string; weightGrams: string; confirmedFeeVnd: string; unpaidVnd: string }[] };
 };
+
+export type ShippingReport = { schemaVersion: 'PERSONAL_REPORTS_1'; report: AnalyticsReport; acceptanceTiming: { sampleShipments: string; totalDurationMillis: string; minimumMillis: string | null; maximumMillis: string | null }; parcelWeights: { actualGrams: string; chargeableGrams: string } };
+
+export function parseShippingReport(value: unknown): ShippingReport {
+  object(value, ['schemaVersion', 'report', 'acceptanceTiming', 'parcelWeights']); check(value.schemaVersion === 'PERSONAL_REPORTS_1');
+  const report = parseAnalytics(value.report), timing = value.acceptanceTiming, weights = value.parcelWeights;
+  object(timing, ['sampleShipments', 'totalDurationMillis', 'minimumMillis', 'maximumMillis']); object(weights, ['actualGrams', 'chargeableGrams']);
+  for (const v of [timing.sampleShipments, timing.totalDurationMillis, weights.actualGrams, weights.chargeableGrams]) integer(v);
+  check(report.metrics.every(m => m.points.length === report.volume.length && m.points.every((point, index) => point.date === report.volume[index].date)));
+  const samples = BigInt(timing.sampleShipments as string), total = BigInt(timing.totalDurationMillis as string), parcels = BigInt(report.parcels.count), actual = BigInt(weights.actualGrams as string), chargeable = BigInt(weights.chargeableGrams as string);
+  check(timing.sampleShipments === report.metrics.find(m => m.id === 'ACCEPTED_SHIPMENTS')!.value);
+  if (samples === 0n) check(total === 0n && timing.minimumMillis === null && timing.maximumMillis === null);
+  else { integer(timing.minimumMillis); integer(timing.maximumMillis); const min = BigInt(timing.minimumMillis), max = BigInt(timing.maximumMillis); check(min <= max && total >= min * samples && total <= max * samples); }
+  check(actual >= parcels && actual <= parcels * 20000n && chargeable >= actual && chargeable % 500n === 0n);
+  if (parcels === 0n) check(actual === 0n && chargeable === 0n);
+  return { schemaVersion: 'PERSONAL_REPORTS_1', report, acceptanceTiming: timing as ShippingReport['acceptanceTiming'], parcelWeights: weights as ShippingReport['parcelWeights'] };
+}
 type Obj = Record<string, unknown>;
 function check(value: unknown): asserts value { if (!value) throw new Error('ANALYTICS_RESPONSE_INVALID'); }
 function object(v: unknown, fields: string[]): asserts v is Obj { check(v !== null && typeof v === 'object' && !Array.isArray(v) && Object.keys(v).sort().join() === fields.sort().join()); }
@@ -59,6 +76,8 @@ export function parseAnalytics(v: unknown): AnalyticsReport {
   const shipments = new Set(); for (const s of v.shipments.items) { object(s, ['id', 'code', 'bookedAt', 'status', 'service', 'origin', 'destination', 'parcels', 'weightGrams', 'confirmedFeeVnd', 'unpaidVnd']); check(typeof s.id === 'string' && /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(s.id) && !shipments.has(s.id)); shipments.add(s.id); text(s.code); check(/^AP-SIM-[a-f0-9]{32}$/.test(s.code)); instant(s.bookedAt); check(status(s.status) && s.service === 'ROAD_STANDARD' && route(s.origin, s.destination)); for (const field of ['parcels', 'weightGrams', 'confirmedFeeVnd', 'unpaidVnd']) integer(s[field]); check(BigInt(String(s.parcels)) >= 1n && BigInt(String(s.parcels)) <= 5n); }
   const report = v as unknown as AnalyticsReport, metric = (id: MetricId) => BigInt(report.metrics.find(m => m.id === id)!.value), total = BigInt(report.shipments.total);
   check(total === metric('BOOKED_SHIPMENTS') && sum(report.status.map(s => s.shipments)) === total && sum(report.routes.map(r => r.shipments)) === total && sum(report.services.map(s => s.shipments)) === total && sum(report.volume.map(p => p.shipments)) === total);
+  check(metric('AWAITING_HANDOVER') === BigInt(report.status.find(s => s.key === 'WAITING_FOR_HANDOVER')!.shipments) && metric('ACCEPTED_SHIPMENTS') === BigInt(report.status.find(s => s.key === 'AT_STATION')!.shipments));
+  check(sum(report.routes.map(r => r.confirmedFeeVnd)) === metric('CONFIRMED_FEES') && sum(report.services.map(s => s.confirmedFeeVnd)) === metric('CONFIRMED_FEES'));
   check(metric('CREATED_PARCELS') === BigInt(report.parcels.count) && sum(report.parcels.weight.map(w => w.parcels)) === metric('CREATED_PARCELS'));
   check(sum(report.volume.map(p => p.confirmedFeeVnd)) === metric('CONFIRMED_FEES') && sum(report.volume.map(p => p.unpaidVnd)) === metric('UNPAID_OBLIGATIONS'));
   check(report.shipments.hasNext === (BigInt(report.shipments.page * 20 + report.shipments.items.length) < total));

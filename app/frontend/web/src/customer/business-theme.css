@@ -1,0 +1,58 @@
+/* Business primary accent is scoped; Personal's shared tokens stay unchanged. */
+.cp-business-portal .pw-shell {
+  --bw-primary:#ff7a00;
+  --bw-primary-ink:#422000;
+  --bw-accent-ink:#984000;
+  --bw-soft:#fff0df;
+  --pw-border:#efdfcf;
+  --pw-shadow:0 3px 16px #76380008;
+  background:#fcf8f3;
+}
+.cp-business-portal .pw-header {border-color:#f0ddca;box-shadow:0 3px 18px #9e4e0006}
+.cp-business-portal .pw-sidebar {border-right-color:#efdfcf}
+.cp-business-portal .pw-nav-label {color:#956d4f}
+.cp-business-portal .pw-sidebar nav>a.active {
+  background:var(--bw-primary);color:var(--bw-primary-ink);
+  box-shadow:0 5px 14px #ff7a0020;
+}
+.cp-business-portal .pw-sidebar nav>a.active svg {color:var(--bw-primary-ink)}
+.cp-business-portal .pw-sidebar nav>a:not(.active):hover {background:#fff1e3;color:#984000}
+.cp-business-portal .pw-workspace-trigger {background:#fff7ee;border-color:#f3d4b5;color:#854000}
+.cp-business-portal .pw-workspace-trigger:hover {background:#ffedda;border-color:#e8ac73}
+.cp-business-portal .pw-avatar {background:#ffedda;color:#854000}
+.cp-business-portal .pw-icon-button {border-color:#f0ddca;color:#854000}
+.cp-business-portal .pw-workspace-choice[aria-current=page] {background:#fff0df;border-color:#f7c693}
+.cp-business-portal .pw-workspace-choice[aria-current=page]>.pw-choice-icon {background:#ffdbb5;color:#8b3e00}
+.cp-business-portal .pw-workspace-choice:not(:disabled):hover {background:#fff3e7}
+.cp-business-portal .pw-primary {background:var(--bw-primary);border-color:var(--bw-primary);color:var(--bw-primary-ink)}
+.cp-business-portal .pw-primary:hover {background:#ed7000;border-color:#ed7000}
+.cp-business-portal .pw-secondary {border-color:#edd2b5;color:#914300}
+.cp-business-portal .pw-secondary:hover {background:#fff4e8;border-color:#dfad7d}
+.cp-business-portal .pw-eyebrow {color:#a34800}
+.cp-business-portal .bw-heading h1 {color:#52311c}
+.cp-business-portal .bw-range {border-color:#efdfcf}
+.cp-business-portal .bw-range button[aria-pressed=true] {
+  background:var(--bw-primary);color:var(--bw-primary-ink);font-weight:650;
+  box-shadow:0 2px 6px #ff7a0017;
+}
+.cp-business-portal .bw-range button:not([aria-pressed=true]):hover {background:#fff0df;color:#914300}
+.cp-business-portal .bw-toolbar select,.cp-business-portal .bw-custom-range input {border-color:#ecd7c0;color:#6f3914}
+.cp-business-portal .bw-source-note {border-left-color:var(--bw-primary);color:#78634f}
+.cp-business-portal .bw-kpi {border-color:#f0dfcd;box-shadow:0 2px 8px #8c400004}
+.cp-business-portal .bw-kpi:before {background:var(--bw-primary);width:4px;border-radius:0 3px 3px 0}
+.cp-business-portal .bw-kpi strong {color:var(--bw-accent-ink)}
+.cp-business-portal .bw-panel {border-color:#eedfcf}
+.cp-business-portal .bw-panel header {border-bottom-color:#f5ece2}
+.cp-business-portal .bw-panel h2,.cp-business-portal .bw-metric-details summary {color:#6b391a}
+.cp-business-portal .bw-source-empty {background:linear-gradient(145deg,#fff,#fffaf5)}
+.cp-business-portal .bw-source-empty svg {color:#c5a17c}
+.cp-business-portal .bw-source-empty strong {color:#85674b}
+.cp-business-portal .bw-metric-catalog>div {border-bottom-color:#f4e9dc}
+.cp-business-portal .bw-quick button:disabled {background:#f9f5ef;border-color:#e9e0d5;color:#8a8075}
+.cp-business-portal .pw-footer {border-color:#efdfcf}
+@media(prefers-reduced-motion:no-preference) {
+  .cp-business-portal .pw-sidebar nav>a,.cp-business-portal .bw-range button,
+  .cp-business-portal .pw-workspace-trigger,.cp-business-portal .pw-secondary {
+    transition:background-color .16s ease,border-color .16s ease,box-shadow .16s ease;
+  }
+}

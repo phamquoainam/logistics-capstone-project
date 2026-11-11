@@ -1,5 +1,9 @@
+import { parseBusinessContexts, parseBusinessReport } from './business-data';
+import type { BusinessContext } from './business-data';
 import { acceptRecoveryGrant, beginOtp, clearEntryProof, getOtpChallenge, getVerificationLocator, withEntryProof } from './entry-proof';
-import { parseAnalytics } from './analytics-data';
+import { parseAnalytics, parseShippingReport } from './analytics-data';
+import { supportDetail, supportPage, supportReceipt, supportSummary } from './support-ticket-data';
+import type { SupportCreate, SupportOperation } from './support-ticket-data';
 export type Subject = { accountId: string; displayName: string; verifiedEmail: string; securityVersion: number };
 export type ProfileInput = { displayName: string; preferredLanguage: 'vi' | 'en'; businessContactEmail?: string; businessContactPhone?: string };
 export type CustomerProfile = ProfileInput & { id: string; accountId: string; version: number };
@@ -18,6 +22,12 @@ export type AddressOperation = 'createPersonalAddress' | 'updatePersonalAddress'
 export type DraftContact = { name: string; phone: string; address: ApplicationAddress };
 export type DraftParcel = { description: string; quantity: number; weightGrams: number; lengthMm: number; widthMm: number; heightMm: number; declaredValueVnd: number };
 export type ShippingDraftInput = { reference?: string | null; instructions?: string | null; sender: DraftContact; recipient: DraftContact; parcels: DraftParcel[] };
+export type BusinessPreparationInput = ShippingDraftInput & { facilityId?: string | null; sourceChannel?: string | null; sourceOrderReference?: string | null };
+export type BusinessPreparation = { id: string; organizationId: string; facilityId: string | null; creatorAccountId: string; state: 'DRAFT' | 'ARCHIVED'; preparationState: 'DRAFT'; version: number; input: ShippingDraftInput; sourceChannel: string | null; sourceOrderReference: string | null; createdAt: string; updatedAt: string; allowedActions: ('UPDATE' | 'ARCHIVE')[] };
+export type BusinessPreparationPage = { items: BusinessPreparation[]; page: number; size: 20; hasNext: boolean };
+export type BusinessPreparationOperation = 'CREATE' | 'UPDATE' | 'ARCHIVE' | 'IMPORT_PREVIEW' | 'IMPORT_COMMIT';
+export type BusinessImportRow = { rowNumber: number; state: 'VALID' | 'INVALID' | 'CREATED' | 'CONFLICT'; input: BusinessPreparationInput | null; errors: { rowNumber: number; field: string; code: string }[]; preparationId: string | null; version: number };
+export type BusinessImportJob = { id: string; organizationId: string; facilityId: string | null; creatorAccountId: string; templateVersion: 'BUSINESS_CSV_V1'; state: 'PREVIEW' | 'PARTIAL' | 'COMPLETED'; version: number; totalRows: number; validRows: number; invalidRows: number; createdRows: number; conflictRows: number; createdAt: string; updatedAt: string; rows: BusinessImportRow[]; page: number; size: 20; hasNext: boolean };
 export type ShippingDraft = { id: string; accountId: string; ownerType: 'PERSONAL'; state: 'DRAFT'; input: ShippingDraftInput; version: number; createdAt: string; updatedAt: string };
 export type ShippingDraftPage = { items: ShippingDraft[]; page: number; size: number; hasNext: boolean };
 export type DraftOperation = 'createShippingDraft' | 'updateShippingDraft' | 'archiveShippingDraft';
@@ -168,6 +178,29 @@ export function createCustomerClient(ports: Ports = { fetch: (...args) => fetch(
     if (!record(value) || !exact(value, ['id', 'accountId', 'ownerType', 'state', 'input', 'version', 'createdAt', 'updatedAt']) || typeof value.id !== 'string' || !uuid.test(value.id) || value.accountId !== state.subject?.accountId || value.ownerType !== 'PERSONAL' || value.state !== 'DRAFT' || !version(value.version) || !shippingInput(value.input) || typeof value.createdAt !== 'string' || typeof value.updatedAt !== 'string' || !Number.isFinite(Date.parse(value.createdAt)) || !Number.isFinite(Date.parse(value.updatedAt)) || Date.parse(value.updatedAt) < Date.parse(value.createdAt)) malformed();
     return value as ShippingDraft;
   }
+  function businessPreparation(value: unknown, context: BusinessContext, response?: Response): BusinessPreparation {
+    if (!record(value) || !exact(value, ['id', 'organizationId', 'facilityId', 'creatorAccountId', 'state', 'preparationState', 'version', 'input', 'sourceChannel', 'sourceOrderReference', 'createdAt', 'updatedAt', 'allowedActions']) || value.organizationId !== context.organizationId || typeof value.id !== 'string' || !uuid.test(value.id) || typeof value.creatorAccountId !== 'string' || !uuid.test(value.creatorAccountId) || value.facilityId !== null && (typeof value.facilityId !== 'string' || !uuid.test(value.facilityId)) || !['DRAFT', 'ARCHIVED'].includes(String(value.state)) || value.preparationState !== 'DRAFT' || !version(value.version) || !shippingInput(value.input) || (value.sourceChannel === null) !== (value.sourceOrderReference === null) || value.sourceChannel !== null && (!characters(value.sourceChannel, 40) || !characters(value.sourceOrderReference, 80)) || typeof value.createdAt !== 'string' || typeof value.updatedAt !== 'string' || !Number.isFinite(Date.parse(value.createdAt)) || !Number.isFinite(Date.parse(value.updatedAt)) || Date.parse(value.updatedAt) < Date.parse(value.createdAt) || !Array.isArray(value.allowedActions) || new Set(value.allowedActions).size !== value.allowedActions.length || value.allowedActions.some(v => !['UPDATE', 'ARCHIVE'].includes(v)) || value.state === 'ARCHIVED' && value.allowedActions.length !== 0) malformed();
+    if (response && response.headers.get('ETag') !== '"v' + value.version + '"') malformed();
+    return value as BusinessPreparation;
+  }
+  async function businessPreparationRequest(context: BusinessContext, suffix: string, method = 'GET', input?: unknown, key?: string, expected?: number) {
+    if (!uuid.test(context.organizationId) || key !== undefined && !uuid.test(key) || expected !== undefined && !version(expected)) throw new CustomerApiError('VALIDATION_FAILED');
+    await ensureAccess(); const current = generation, challenge = method === 'GET' ? undefined : await csrf();
+    const result = await request('merchant-organizations/' + context.organizationId + '/' + suffix, method, input === undefined ? undefined : JSON.stringify(input), { Authorization: 'Bearer ' + access!.accessToken, ...(challenge ? { 'X-CSRF-Token': challenge } : {}), ...(key ? { 'Idempotency-Key': key } : {}), ...(expected ? { 'If-Match': '"v' + expected + '"' } : {}) }, 4 * 1024 * 1024);
+    if (current !== generation) throw new CustomerApiError('SESSION_CHANGED');
+    if (result.response.headers.get('Cache-Control') !== 'no-store') { if (method !== 'GET') throw unknown(); malformed(); }
+    return result;
+  }
+  function importJob(value: unknown, context: BusinessContext, response?: Response): BusinessImportJob {
+    if (!record(value) || !exact(value, ['id', 'organizationId', 'facilityId', 'creatorAccountId', 'templateVersion', 'state', 'version', 'totalRows', 'validRows', 'invalidRows', 'createdRows', 'conflictRows', 'createdAt', 'updatedAt', 'rows', 'page', 'size', 'hasNext']) || value.organizationId !== context.organizationId || typeof value.id !== 'string' || !uuid.test(value.id) || typeof value.creatorAccountId !== 'string' || !uuid.test(value.creatorAccountId) || value.facilityId !== null && (typeof value.facilityId !== 'string' || !uuid.test(value.facilityId)) || value.templateVersion !== 'BUSINESS_CSV_V1' || !['PREVIEW', 'PARTIAL', 'COMPLETED'].includes(String(value.state)) || !version(value.version) || response && response.headers.get('ETag') !== '"v' + value.version + '"' || !['totalRows', 'validRows', 'invalidRows', 'createdRows', 'conflictRows', 'page'].every(k => Number.isSafeInteger(value[k]) && Number(value[k]) >= 0 && Number(value[k]) <= 100) || Number(value.totalRows) < 1 || Number(value.totalRows) !== Number(value.validRows) + Number(value.invalidRows) + Number(value.createdRows) + Number(value.conflictRows) || value.state === 'COMPLETED' && value.validRows !== 0 || value.state === 'PREVIEW' && (value.createdRows !== 0 || value.conflictRows !== 0) || typeof value.createdAt !== 'string' || typeof value.updatedAt !== 'string' || !Number.isFinite(Date.parse(value.createdAt)) || !Number.isFinite(Date.parse(value.updatedAt)) || Date.parse(value.updatedAt) < Date.parse(value.createdAt) || value.size !== 20 || !Array.isArray(value.rows) || value.rows.length !== Math.min(20, Math.max(0, Number(value.totalRows) - Number(value.page) * 20)) || value.hasNext !== (Number(value.totalRows) > (Number(value.page) + 1) * 20)) malformed();
+    for (const [index, row] of value.rows.entries()) {
+      if (!record(row) || !exact(row, ['rowNumber', 'state', 'input', 'errors', 'preparationId', 'version']) || row.rowNumber !== Number(value.page) * 20 + index + 1 || !['VALID', 'INVALID', 'CREATED', 'CONFLICT'].includes(String(row.state)) || !version(row.version) || !Array.isArray(row.errors) || row.errors.length > 40 || row.errors.some(e => !record(e) || !exact(e, ['rowNumber', 'field', 'code']) || e.rowNumber !== row.rowNumber || typeof e.field !== 'string' || !/^[a-z_]{1,40}$/.test(e.field) || typeof e.code !== 'string' || !/^[A-Z_]{1,64}$/.test(e.code)) || row.state === 'INVALID' && (row.input !== null || row.errors.length === 0) || ['VALID', 'CREATED'].includes(String(row.state)) && row.errors.length !== 0 || (row.state === 'CREATED') !== (typeof row.preparationId === 'string' && uuid.test(row.preparationId)) || row.state !== 'CREATED' && row.preparationId !== null) malformed();
+      if (row.state !== 'INVALID') {
+        if (!record(row.input) || !exact(row.input, ['facilityId', 'sourceChannel', 'sourceOrderReference', 'reference', 'instructions', 'sender', 'recipient', 'parcels']) || row.input.facilityId !== value.facilityId || !characters(row.input.sourceChannel, 40) || !characters(row.input.sourceOrderReference, 80) || !shippingInput({ reference: row.input.reference, instructions: row.input.instructions, sender: row.input.sender, recipient: row.input.recipient, parcels: row.input.parcels })) malformed();
+      }
+    }
+    return value as BusinessImportJob;
+  }
   async function draftWrite(path: string, method: 'POST' | 'PUT', input: ShippingDraftInput | undefined, key: string, etag?: string, archive = false): Promise<ShippingDraft | undefined> {
     if (!uuid.test(key) || etag !== undefined && !/^"v[1-9][0-9]*"$/.test(etag)) throw new CustomerApiError('VALIDATION_FAILED');
     await ensureAccess(); const current = generation, challenge = await csrf();
@@ -244,7 +277,27 @@ export function createCustomerClient(ports: Ports = { fetch: (...args) => fetch(
       return addressResponse(value, response, method === 'PUT' ? path.split('/').at(-1) : undefined);
     } catch { throw unknown(); }
   }
+  async function supportRequest<T>(path: string, parse: (value: unknown) => T, method = 'GET', input?: unknown, key?: string, expectedVersion?: number, target?: string) {
+    if (target !== undefined && !uuid.test(target) || key !== undefined && !uuid.test(key) || expectedVersion !== undefined && !version(expectedVersion)) throw new CustomerApiError('VALIDATION_FAILED');
+    await ensureAccess(); const current = generation, challenge = method === 'GET' ? undefined : await csrf();
+    const result = await request(path, method, input === undefined ? undefined : JSON.stringify(input), { Authorization: 'Bearer ' + access!.accessToken, ...(challenge ? { 'X-CSRF-Token': challenge } : {}), ...(key ? { 'Idempotency-Key': key } : {}), ...(expectedVersion ? { 'If-Match': '"v' + expectedVersion + '"' } : {}) }, 4 * 1024 * 1024);
+    if (current !== generation) throw new CustomerApiError('SESSION_CHANGED');
+    try { return parse(result.value); } catch { if (method !== 'GET') throw unknown(); return malformed(); }
+  }
+  const supportResource = (id: string) => { if (!uuid.test(id)) throw new CustomerApiError('VALIDATION_FAILED'); return 'customer/support-tickets/' + id; };
+  const caseResource = (id: string) => { if (!uuid.test(id)) throw new CustomerApiError('VALIDATION_FAILED'); return 'support-operations/cases/' + id; };
+  const supportBound = (value: unknown, id?: string, staff = false) => { const d = supportDetail(value, staff); if (id && d.ticket.id !== id) malformed(); return d; };
   return {
+    listSupportTickets: (page = 0, state = '', category = '', shipmentId = '') => ports.lock(async () => { if (!Number.isSafeInteger(page) || page < 0 || shipmentId && !uuid.test(shipmentId)) throw new CustomerApiError('VALIDATION_FAILED'); const p = new URLSearchParams({ page: String(page), size: '20', ...(state ? { state } : {}), ...(category ? { category } : {}), ...(shipmentId ? { shipmentId } : {}) }); return supportRequest('customer/support-tickets?' + p, v => supportPage(v, page)); }),
+    readSupportTicket: (id: string) => ports.lock(() => supportRequest(supportResource(id), v => supportBound(v, id))),
+    createSupportTicket: (input: SupportCreate, key: string) => ports.lock(() => supportRequest('customer/support-tickets', v => { const d = supportBound(v); if (d.ticket.kind !== input.kind || d.ticket.shipmentId !== (input.shipmentId ?? null) || d.ticket.category !== input.category || d.ticket.subject !== input.subject.trim()) malformed(); return d; }, 'POST', input, key)),
+    commandSupportTicket: (id: string, operation: Exclude<SupportOperation, 'CREATE'>, message: string, expectedVersion: number, key: string) => ports.lock(() => { const suffix = { REPLY: 'replies', REQUEST_REVIEW: 'review-requests', ACKNOWLEDGE: 'acknowledgements' }[operation]; if (!suffix) throw new CustomerApiError('VALIDATION_FAILED'); return supportRequest(supportResource(id) + '/' + suffix, v => supportBound(v, id), 'POST', operation === 'ACKNOWLEDGE' ? undefined : { message }, key, expectedVersion, id); }),
+    readSupportReceipt: (operation: SupportOperation, key: string) => ports.lock(() => { if (!uuid.test(key) || !['CREATE', 'REPLY', 'REQUEST_REVIEW', 'ACKNOWLEDGE'].includes(operation)) throw new CustomerApiError('VALIDATION_FAILED'); return supportRequest('customer/support-receipts/' + operation + '/' + key, v => supportReceipt(v, operation)); }),
+    readSupportQueue: (page = 0) => ports.lock(() => { if (!Number.isSafeInteger(page) || page < 0) throw new CustomerApiError('VALIDATION_FAILED'); return supportRequest('support-operations/queue?page=' + page + '&size=20', v => supportPage(v, page)); }),
+    readSupportCase: (id: string) => ports.lock(() => supportRequest(caseResource(id), v => supportBound(v, id, true))),
+    assignSupportCase: (id: string, assigneeAccountId: string, expectedVersion: number, key: string) => ports.lock(() => { if (!uuid.test(assigneeAccountId)) throw new CustomerApiError('VALIDATION_FAILED'); return supportRequest(caseResource(id) + '/assignments', v => { const summary = supportSummary(v); if (summary.id !== id) malformed(); return summary; }, 'POST', { assigneeAccountId }, key, expectedVersion, id); }),
+    transitionSupportCase: (id: string, action: string, message: string, expectedVersion: number, key: string) => ports.lock(() => { if (!['START', 'REQUEST_INFORMATION', 'RESOLVE', 'REOPEN'].includes(action)) throw new CustomerApiError('VALIDATION_FAILED'); return supportRequest(caseResource(id) + '/transitions', v => supportBound(v, id, true), 'POST', { action, message }, key, expectedVersion, id); }),
+    readShippingReport: (parameters: URLSearchParams) => ports.lock(async () => { const { value } = await pilotRead('personal-shipping-reports?' + parameters.toString(), 1024 * 1024); try { return parseShippingReport(value); } catch { return malformed(); } }),
     readAnalytics: (parameters: URLSearchParams) => ports.lock(async () => {
       const { value } = await pilotRead('personal-analytics?' + parameters.toString(), 1024 * 1024);
       try { return parseAnalytics(value); } catch { return malformed(); }
@@ -296,6 +349,70 @@ export function createCustomerClient(ports: Ports = { fetch: (...args) => fetch(
       clearEntryProof();
     },
     async confirmRecovery(newPassword: string, key: string): Promise<void> { await withEntryProof('recovery', proof => preauth('recovery-confirm', { ...proof, newPassword }, key, true)); clearEntryProof(); },
+    businessContexts: () => ports.lock(async () => {
+      await ensureAccess(); const current = generation;
+      const { value, response } = await request('customer/business-contexts', 'GET', undefined, { Authorization: 'Bearer ' + access!.accessToken });
+      if (current !== generation) throw new CustomerApiError('SESSION_CHANGED');
+      if (response.headers.get('Cache-Control') !== 'no-store') malformed(); return parseBusinessContexts(value);
+    }),
+    listBusinessPreparations: (context: BusinessContext, page = 0) => ports.lock(async (): Promise<BusinessPreparationPage> => {
+      if (!Number.isSafeInteger(page) || page < 0) throw new CustomerApiError('VALIDATION_FAILED');
+      const { value } = await businessPreparationRequest(context, 'shipment-preparations?page=' + page + '&size=20');
+      if (!record(value) || !exact(value, ['items', 'page', 'size', 'hasNext']) || value.page !== page || value.size !== 20 || typeof value.hasNext !== 'boolean' || !Array.isArray(value.items) || value.items.length > 20) malformed();
+      const items = value.items.map(v => businessPreparation(v, context)); if (items.some(v => v.state !== 'DRAFT') || new Set(items.map(v => v.id)).size !== items.length) malformed();
+      return { items, page, size: 20, hasNext: value.hasNext };
+    }),
+    readBusinessPreparation: (context: BusinessContext, id: string) => ports.lock(async () => {
+      if (!uuid.test(id)) throw new CustomerApiError('VALIDATION_FAILED'); const r = await businessPreparationRequest(context, 'shipment-preparations/' + id), d = businessPreparation(r.value, context, r.response); if (d.id !== id) malformed(); return d;
+    }),
+    saveBusinessPreparation: (context: BusinessContext, input: BusinessPreparationInput, key: string, original?: BusinessPreparation) => ports.lock(async () => {
+      if (original && (original.organizationId !== context.organizationId || !uuid.test(original.id))) throw new CustomerApiError('VALIDATION_FAILED');
+      const r = await businessPreparationRequest(context, 'shipment-preparations' + (original ? '/' + original.id : ''), original ? 'PUT' : 'POST', input, key, original?.version);
+      try { const d = businessPreparation(r.value, context, r.response); if (d.state !== 'DRAFT' || original && d.id !== original.id) malformed(); return d; } catch { throw unknown(); }
+    }),
+    archiveBusinessPreparation: (context: BusinessContext, original: BusinessPreparation, key: string) => ports.lock(async () => {
+      if (original.organizationId !== context.organizationId || !uuid.test(original.id)) throw new CustomerApiError('VALIDATION_FAILED');
+      const r = await businessPreparationRequest(context, 'shipment-preparations/' + original.id + '/archive', 'POST', undefined, key, original.version);
+      try { const d = businessPreparation(r.value, context, r.response); if (d.state !== 'ARCHIVED' || d.id !== original.id) malformed(); return d; } catch { throw unknown(); }
+    }),
+    businessPreparationReceipt: (context: BusinessContext, operation: BusinessPreparationOperation, key: string) => ports.lock(async () => {
+      if (!['CREATE', 'UPDATE', 'ARCHIVE', 'IMPORT_PREVIEW', 'IMPORT_COMMIT'].includes(operation) || !uuid.test(key)) throw new CustomerApiError('VALIDATION_FAILED');
+      const { value } = await businessPreparationRequest(context, 'shipping-preparation-receipts/' + operation + '/' + key);
+      if (!record(value) || !exact(value, ['operationId', 'targetId', 'outcome', 'version']) || value.operationId !== operation || value.outcome !== 'COMMITTED' || typeof value.targetId !== 'string' || !uuid.test(value.targetId) || !version(value.version)) malformed();
+      return value as { operationId: BusinessPreparationOperation; targetId: string; outcome: 'COMMITTED'; version: number };
+    }),
+    listBusinessImports: (context: BusinessContext, page = 0) => ports.lock(async () => {
+      if (!Number.isSafeInteger(page) || page < 0) throw new CustomerApiError('VALIDATION_FAILED');
+      const { value } = await businessPreparationRequest(context, 'shipment-imports?page=' + page + '&size=20');
+      if (!record(value) || !exact(value, ['items', 'page', 'size', 'hasNext']) || value.page !== page || value.size !== 20 || typeof value.hasNext !== 'boolean' || !Array.isArray(value.items) || value.items.length > 20) malformed();
+      const items = value.items.map(v => importJob(v, context)); if (new Set(items.map(v => v.id)).size !== items.length) malformed();
+      return { items, page, size: 20, hasNext: value.hasNext };
+    }),
+    readBusinessImport: (context: BusinessContext, id: string, page = 0) => ports.lock(async () => {
+      if (!uuid.test(id) || !Number.isSafeInteger(page) || page < 0 || page > 100) throw new CustomerApiError('VALIDATION_FAILED'); const r = await businessPreparationRequest(context, 'shipment-imports/' + id + '?page=' + page + '&size=20'), result = importJob(r.value, context, r.response); if (result.id !== id || result.page !== page) malformed(); return result;
+    }),
+    previewBusinessImport: (context: BusinessContext, csv: string, key: string) => ports.lock(async () => {
+      const r = await businessPreparationRequest(context, 'shipment-imports', 'POST', { templateVersion: 'BUSINESS_CSV_V1', csv }, key);
+      try { const result = importJob(r.value, context, r.response); if (result.state !== 'PREVIEW' || result.page !== 0) malformed(); return result; } catch { throw unknown(); }
+    }),
+    commitBusinessImport: (context: BusinessContext, job: BusinessImportJob, rows: number[], key: string) => ports.lock(async () => {
+      if (job.organizationId !== context.organizationId || !uuid.test(job.id) || !rows.length || rows.length > 20 || new Set(rows).size !== rows.length) throw new CustomerApiError('VALIDATION_FAILED');
+      const r = await businessPreparationRequest(context, 'shipment-imports/' + job.id + '/commit', 'POST', { rows }, key, job.version);
+      try { const result = importJob(r.value, context, r.response); if (result.id !== job.id || result.page !== 0) malformed(); return result; } catch { throw unknown(); }
+    }),
+    businessImportTemplate: (context: BusinessContext) => ports.lock(async () => {
+      if (!uuid.test(context.organizationId)) throw new CustomerApiError('VALIDATION_FAILED'); await ensureAccess(); const current = generation;
+      let response: Response; try { response = await ports.fetch('/api/v1/merchant-organizations/' + context.organizationId + '/shipment-import-template?format=csv', { headers: { Authorization: 'Bearer ' + access!.accessToken }, credentials: 'same-origin', mode: 'same-origin', cache: 'no-store', redirect: 'error', referrerPolicy: 'no-referrer', signal: AbortSignal.timeout(30000) }); } catch { throw new CustomerApiError('NETWORK_UNAVAILABLE'); }
+      if (current !== generation) throw new CustomerApiError('SESSION_CHANGED'); if (!response.ok) throw new CustomerApiError('REQUEST_REJECTED', response.status);
+      if (response.headers.get('Cache-Control') !== 'no-store' || !response.headers.get('Content-Type')?.startsWith('text/csv')) malformed(); const text = await response.text(); if (new TextEncoder().encode(text).length > 262144) malformed(); return new Blob([text], { type: 'text/csv;charset=utf-8' });
+    }),
+    businessDashboard: (context: BusinessContext, query: URLSearchParams) => ports.lock(async () => {
+      if (!uuid.test(context.organizationId) || [...query.keys()].some(k => !['from', 'to', 'interval'].includes(k) || query.getAll(k).length !== 1)) throw new CustomerApiError('VALIDATION_FAILED');
+      await ensureAccess(); const current = generation;
+      const { value, response } = await request('merchant-organizations/' + context.organizationId + '/dashboard?' + query, 'GET', undefined, { Authorization: 'Bearer ' + access!.accessToken });
+      if (current !== generation) throw new CustomerApiError('SESSION_CHANGED');
+      if (response.headers.get('Cache-Control') !== 'no-store') malformed(); return parseBusinessReport(value, context, query);
+    }),
     readProfile: () => ports.lock(async () => {
       await ensureAccess(); const current = generation, result = await request('customer/profile', 'GET', undefined, { Authorization: 'Bearer ' + access!.accessToken });
       if (current !== generation) throw new CustomerApiError('SESSION_CHANGED'); return profile(result.value, result.response);

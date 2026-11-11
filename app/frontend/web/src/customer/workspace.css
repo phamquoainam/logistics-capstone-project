@@ -248,6 +248,25 @@
 .pw-shell .ab-card-heading {padding-bottom:14px;border-bottom:1px solid #edf0f5}
 .pw-shell .ab-card .ab-actions {padding-top:16px;border-top:1px solid #edf0f5}
 .pw-shell .ab-list,.pw-shell .sd-draft-list {gap:20px}
+.ab-tools {display:flex;gap:20px;flex-wrap:wrap;margin-top:18px}
+.ab-check-result {padding:12px 16px;border-left:3px solid #ff7a00;background:#fff7ef;font-size:13px;line-height:1.8;color:#0b2d5b}
+.ab-filters>.sd-link {justify-self:start;grid-column:1/-1}
+.ab-actions .pw-primary {font-size:12px;min-height:38px;padding:10px 14px}
+.ac-views {display:flex;gap:6px;border-bottom:1px solid #dce4ef;margin:20px 0}
+.ac-views button {font:inherit;font-size:14px;border:0;border-bottom:3px solid transparent;background:none;padding:14px 20px;color:#526982;cursor:pointer}
+.ac-views button[aria-current=page] {color:#0b2d5b;border-color:#ff7a00;font-weight:650}
+.ac-views button:focus-visible {outline:2px solid #ff7a00;outline-offset:2px}
+.ac-unavailable {padding:36px;max-width:100%;text-align:center}
+.ac-unavailable .pw-empty-icon {margin:0 auto 16px}
+.ac-unavailable h2 {font-size:20px;margin:0 0 12px}
+.ac-unavailable p {max-width:660px;margin:0 auto 22px;font-size:14px;color:#526982;line-height:1.9}
+.ac-guide {margin-top:20px;padding:20px 24px;font-size:13px;line-height:1.9}
+.ac-guide summary {font-weight:600;cursor:pointer}
+.ac-guide-grid {display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:16px}
+.ac-guide h3 {font-size:14px;margin:0 0 8px}
+.ac-guide ul {padding-left:20px;margin:0}
+.ac-guide p {color:#526982}
+@media(max-width:650px) {.ac-guide-grid{grid-template-columns:1fr;gap:18px}.ac-unavailable{padding:28px 20px}.ac-guide{padding:18px}.ab-tools{gap:12px}.ac-views button{padding:12px;font-size:13px}}
 .pw-shell .sd-save {justify-content:flex-end;padding-top:12px}
 .cp-workspace-portal .cp-page :is(input:not([type=checkbox]),select) {border-color:#d9e0ea;border-radius:8px}
 .cp-workspace-portal .cp-page>form {border-top:1px solid var(--pw-border);padding-top:24px}
@@ -263,3 +282,15 @@
 .pw-workspace-business small{color:#788497}
 .pw-workspace-status{flex-shrink:0;margin-left:auto;background:#e7eaf0;color:#647084;font-size:10px;font-weight:500;line-height:1.5;padding:3px 6px;border-radius:5px;white-space:nowrap}
 .pw-workspace-choice:not(:disabled):hover{background:#ffecdd}
+
+/* Create Shipment: source-backed review and actionable service validation. */
+.se-default-contact {margin:0 0 12px;text-align:left}
+.se-review-parcels {display:grid;gap:10px;margin-top:18px}
+.se-review-parcels article {border:1px solid var(--pw-border);border-left:3px solid #ff7a00;border-radius:8px;padding:12px;overflow-wrap:anywhere}
+.se-review-parcels h3 {font-size:13px;margin:0 0 7px;color:var(--pw-navy)}
+.se-review-parcels p,.se-review-note {font-size:12px;line-height:1.8;margin:4px 0;color:#536981;white-space:pre-wrap;overflow-wrap:anywhere}
+.pb-fee-line span>strong {display:block;font-size:13px;color:var(--pw-navy)}
+.pb-fee-line small {display:block;font-size:12px;color:#536981;margin-top:5px}
+.pb-eligibility {border:1px solid #efc8a5;background:#fff5eb;border-radius:9px;padding:14px;margin:16px 0;color:#824000;font-size:12px;line-height:1.7}
+.pb-eligibility h3 {font-size:13px;margin:0 0 8px}.pb-eligibility ul {padding-left:20px}.pb-eligibility p {margin-bottom:0}
+.pb-policy-summary {font-size:12px;border-top:1px solid var(--pw-border);margin-top:0}

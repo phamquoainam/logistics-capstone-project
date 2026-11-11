@@ -1,3 +1,4 @@
+import { BusinessWorkspace } from './BusinessWorkspace';
 import StationOperations from './StationOperations';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import type { FormEvent, ReactNode } from 'react';
@@ -8,7 +9,10 @@ import { clearEntryProof, getOtpChallenge, getVerificationLocator, hasEntryProof
 import PublicWebsite, { PublicHeader } from './PublicWebsite';
 import { WorkspaceShell, WorkspaceDashboard, WorkspaceModule, WorkspaceSecurity, WorkspaceActionRequired, workspaceModules } from './WorkspaceShell';
 import AddressBook from './AddressBook';
-import { PersonalAnalyticsDashboard } from './PersonalAnalytics';
+import { ShippingReports, ShippingFees } from './ShippingReports';
+import { TrackingQuotation, LabelsUtilities } from './ShippingTools';
+import { PersonalSupport, PersonalSettings } from './SupportAccount';
+import { SupportWorkbench } from './SupportTickets';
 import { ShippingDraftEditor, ShippingDraftList, ShippingDraftDetail } from './ShippingDrafts';
 import { PersonalShipmentManagement, PilotShipmentDetail } from './PilotShipping';
 import './customer.css';
@@ -177,22 +181,16 @@ function ConfirmRecovery({ onRecovered }: { onRecovered: () => void }) {
     </form>}
   </Page>;
 }
-function MerchantEntry() {
-  return <Page title="Không gian Merchant chưa khả dụng" description="Quyền truy cập tổ chức cần ACTIVE membership được backend xác nhận cho từng yêu cầu.">
-    <Notice error>Hệ thống chưa cung cấp API membership và ngữ cảnh tổ chức đã được nghiệm thu. Trang này không hiển thị dữ liệu Merchant hoặc cấp quyền từ đường dẫn.</Notice>
-    <Link className="cp-secondary" to="/personal/applications">Xem hồ sơ đăng ký Merchant</Link>
-  </Page>;
-}
 function ProfileEditor({ original, saved, reload }: { original: VersionedProfile; saved: (value: VersionedProfile) => void; reload: () => void }) {
   const [name, setName] = useState(original.profile.displayName), [language, setLanguage] = useState(original.profile.preferredLanguage), [email, setEmail] = useState(original.profile.businessContactEmail ?? ''), [phone, setPhone] = useState(original.profile.businessContactPhone ?? '');
   const action = useCommand<ProfileInput>(async (input, key) => { saved(await customerClient.updateProfile(input, original.etag, key)); });
   function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); void action.submit({ displayName: name, preferredLanguage: language, ...(email ? { businessContactEmail: email } : {}), ...(phone ? { businessContactPhone: phone } : {}) }); }
   return <form onSubmit={submit}><fieldset disabled={action.busy || action.uncertain}>
     <label htmlFor="profile-name">Tên hiển thị trong hồ sơ</label><input id="profile-name" required maxLength={160} autoComplete="name" value={name} onChange={e => setName(e.target.value)} />
-    <label htmlFor="profile-language">Ngôn ngữ ưu tiên</label><select id="profile-language" value={language} onChange={e => setLanguage(e.target.value as 'vi' | 'en')}><option value="vi">Tiếng Việt</option><option value="en">Tiếng Anh</option></select>
+    <label htmlFor="profile-language">Ngôn ngữ ưu tiên</label><select id="profile-language" aria-describedby="profile-language-hint" value={language} onChange={e => setLanguage(e.target.value as 'vi' | 'en')}><option value="vi">Tiếng Việt</option><option value="en">Tiếng Anh</option></select><p id="profile-language-hint" className="cp-hint">Lưu ngôn ngữ ưu tiên trong hồ sơ; chưa đổi ngôn ngữ giao diện.</p>
     <label htmlFor="profile-email">Email liên hệ công việc <span className="cp-optional">(không bắt buộc)</span></label><input id="profile-email" {...emailProps} required={false} autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} />
     <label htmlFor="profile-phone">Số điện thoại liên hệ <span className="cp-optional">(không bắt buộc)</span></label><input id="profile-phone" type="tel" maxLength={32} autoComplete="tel" value={phone} onChange={e => setPhone(e.target.value)} />
-    <p className="cp-hint">Thông tin liên hệ công việc không thay đổi email hoặc mật khẩu đăng nhập.</p></fieldset>
+    <p className="cp-hint">Liên hệ tự khai, chưa xác minh. Không thay đổi email hoặc mật khẩu đăng nhập và không trở thành thông tin xác thực tài khoản.</p></fieldset>
     {action.error && <Notice error>{action.error}</Notice>}
     {action.uncertain ? <><Notice>Kết quả lưu chưa được xác định. Hãy kiểm tra kết quả trước khi gửi thay đổi mới.</Notice><button className="cp-primary" type="button" disabled={action.busy} onClick={() => { void action.resolve(async key => { await customerClient.profileReceipt(key); saved(await customerClient.readProfile()); }); }}>{action.busy ? 'Đang kiểm tra…' : 'Kiểm tra kết quả lưu'}</button></> : <button className="cp-primary" type="submit" disabled={action.busy}>{action.busy ? 'Đang lưu…' : 'Lưu hồ sơ'}</button>}
     {action.error && !action.uncertain && <button className="cp-secondary" type="button" disabled={action.busy} onClick={reload}>Xem dữ liệu hiện tại</button>}
@@ -249,7 +247,7 @@ export default function CustomerApp() {
   const accountRoute = /^\/(login|register|verify-email|recover|personal|merchant|operations)(\/|$)/.test(location.pathname);
   const authRoute = /^\/(login|register|verify-email|recover)(\/|$)/.test(location.pathname);
   if (!accountRoute) return <PublicWebsite />;
-  if (location.pathname.startsWith('/operations/')) {
+  if (/^\/operations\/station(?:\/|$)/.test(location.pathname)) {
     if (session.status === 'loading') return <Loading />;
     if (session.status !== 'authenticated' || !session.subject) return <Navigate to="/login?workspace=station" replace />;
     return <StationOperations key={`${session.subject.accountId}:${session.subject.securityVersion}`} subject={session.subject} />;
@@ -257,16 +255,18 @@ export default function CustomerApp() {
   if (!authRoute) {
     if (session.status === 'loading') return <Loading />;
     if (session.status !== 'authenticated' || !session.subject) return <Navigate to="/login" replace />;
+    if (/^\/merchant(?:\/|$)/.test(location.pathname)) return <BusinessWorkspace key={`${session.subject.accountId}:${session.subject.securityVersion}`} subject={session.subject} />;
     return <div className="customer-portal cp-workspace-portal"><WorkspaceShell key={`${session.subject.accountId}:${session.subject.securityVersion}`} subject={session.subject}><Routes>
       <Route path="/personal" element={<WorkspaceDashboard subject={session.subject} />} />
       {['', '/shipments', '/status', '/services', '/routes', '/fees', '/parcels'].map(path => <Route key={path} path={'/personal/overview' + path} element={<WorkspaceDashboard subject={session.subject!} />} />)}
       <Route path="/personal/profile" element={<ProfilePage />} /><Route path="/personal/security" element={<WorkspaceSecurity subject={session.subject} />} />
+      <Route path="/personal/support" element={<PersonalSupport />} /><Route path="/personal/settings" element={<PersonalSettings />} />
+      <Route path="/operations/support" element={<SupportWorkbench subject={session.subject} />} />
       <Route path="/personal/applications" element={<ApplicationList />} /><Route path="/personal/applications/:id" element={<ApplicationDetail />} />
       <Route path="/personal/addresses" element={<AddressBook />} />
       <Route path="/personal/create" element={<ShippingDraftEditor key={location.search} />} />
-      <Route path="/personal/shipments" element={<PersonalShipmentManagement draftView={<ShippingDraftList />} />} /><Route path="/personal/shipments/:id" element={<PilotShipmentDetail key={location.pathname} />} /><Route path="/personal/drafts/:id" element={<ShippingDraftDetail key={location.pathname} />} /><Route path="/personal/lookup" element={<PersonalShipmentManagement lookup />} /><Route path="/personal/billing" element={<><PersonalAnalyticsDashboard subject={session.subject} view="fees" /><section className="pw-panel pm-fee-documents"><div><h2>Chứng từ theo vận đơn</h2><p>Mở chi tiết vận đơn để xem cước từng kiện và tải nhãn riêng tư. Cước xác nhận và nghĩa vụ UNPAID không phải tiền đã thu, COD hay doanh thu.</p></div><Link className="pw-secondary" to="/personal/shipments">Xem vận đơn</Link></section></>} /><Route path="/personal/action-required" element={<WorkspaceActionRequired />} />
-      {workspaceModules.filter(item => !['addresses', 'create', 'shipments', 'lookup', 'billing'].includes(item.path)).map(item => <Route key={item.path} path={'/personal/' + item.path} element={<WorkspaceModule name={item.path} />} />)}
-      <Route path="/merchant/*" element={<MerchantEntry />} />
+      <Route path="/personal/shipments" element={<PersonalShipmentManagement draftView={<ShippingDraftList />} />} /><Route path="/personal/shipments/:id" element={<PilotShipmentDetail key={location.pathname} />} /><Route path="/personal/drafts/:id" element={<ShippingDraftDetail key={location.pathname} />} /><Route path="/personal/lookup" element={<TrackingQuotation />} /><Route path="/personal/labels" element={<LabelsUtilities />} /><Route path="/personal/reports" element={<ShippingReports />} /><Route path="/personal/billing" element={<ShippingFees />} /><Route path="/personal/action-required" element={<WorkspaceActionRequired />} />
+      {workspaceModules.filter(item => !['addresses', 'create', 'shipments', 'lookup', 'labels', 'billing', 'support'].includes(item.path)).map(item => <Route key={item.path} path={'/personal/' + item.path} element={<WorkspaceModule name={item.path} />} />)}
       <Route path="*" element={<Page title="Không tìm thấy trang"><Link to="/personal">Về tổng quan cá nhân</Link></Page>} />
     </Routes></WorkspaceShell></div>;
   }

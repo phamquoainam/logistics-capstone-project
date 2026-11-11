@@ -107,3 +107,34 @@ mandatory audit rollback. Real HTTPS UI create/edit/archive/refresh plus
 unknown-outcome receipt recovery and Customer A/B denial. Preserve existing
 architecture, Identity, H2/PG, report-policy and browser gates. No claim that a
 saved raw address is serviceable, verified or accepted by the carrier.
+
+## Owner Address Book refinement —2026-11-09
+
+Latest Shipping Pilot decisions supersede the historical statement that Shipping
+is closed; saving a raw address still grants no serviceability or Carrier authority.
+Sổ địa chỉ is now under Management with the same existing authenticated route.
+
+UI reuses existing reads/writes for explicit whitespace/NFC/phone normalization,
+advisory duplicate comparison, direct default updates and empty-page/filter
+recovery. Duplicate comparison includes kind/name/canonical phone/full location;
+labels/default flags do not define contact identity. Exact active self contacts
+are searched by phone/kind over successive pages, up to100 pages; an interrupted,
+changing or larger scan is unknown, never a false no-duplicates result. This is
+not a uniqueness constraint and does not silently merge data. No PII is persisted
+in browser storage/logs. Backend remains authoritative for validation/invariants.
+
+Frontend path `/personal/create` accepts selection query `senderAddressId=<uuid>`
+and/or `recipientAddressId=<uuid>` only as UI context. New draft entry re-reads the current self-owned
+active contact, validates its kind and copies a snapshot. A foreign/archived/wrong
+kind/malformed selection is denied; selection cannot overwrite an existing draft.
+No PII in the URL; no write until Customer explicitly saves. Existing Shipment
+snapshots, Identity credentials and address serviceability remain independent.
+
+Default shortcut uses the visible version's If-Match and existing UUID command
+receipt flow; no optimistic default, blind retry or new endpoint. Archive copy
+explains the accepted no-restore policy and preservation of booked snapshots.
+Restore/list-archived, official administrative dictionary, geocoding, multi-label
+groups and coverage inference remain unimplemented dependencies. Existing label
+is sufficient for user-entered place names; Recipient remains only a self contact.
+
+[Delivery evidence and dependency disposition](action-address-review.md).

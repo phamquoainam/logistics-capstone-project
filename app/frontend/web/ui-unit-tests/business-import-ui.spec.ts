@@ -1,0 +1,30 @@
+import { expect, test } from '@playwright/test';
+import { businessContextsFixture, organizationA } from './support/business-fixture';
+const account = '10000000-0000-4000-8000-000000000001', jobId = '10000000-0000-4000-8000-000000000808', draftId = '10000000-0000-4000-8000-000000000809';
+const contact = { name: 'Synthetic contact', phone: '+84901234567', address: { country: 'VN', administrativeArea: 'Synthetic area', locality: 'Synthetic locality', addressLine: 'Synthetic street' } };
+const input = { facilityId: null, sourceChannel: 'CSV', sourceOrderReference: 'SOURCE-1', reference: null, instructions: null, sender: contact, recipient: contact, parcels: [{ description: 'Synthetic parcel', quantity: 1, weightGrams: 500, lengthMm: 100, widthMm: 100, heightMm: 100, declaredValueVnd: 0 }] };
+for (const width of [360, 1440]) test(`Business CSV outcomes are readable and bounded at ${width}px`, async ({ page, context }) => {
+  await context.route('**/api/v1/**', async route => {
+    const path = new URL(route.request().url()).pathname;
+    const reply = (body: unknown, etag?: string) => route.fulfill({ contentType: 'application/json', headers: { 'Cache-Control': 'no-store', ...(etag ? { ETag: etag } : {}) }, body: JSON.stringify(body) });
+    if (path.endsWith('/csrf')) return reply({ challenge: 'synthetic-csrf' });
+    if (path.endsWith('/refresh')) return reply({ accountId: account, accessToken: 'synthetic-access', expiresAt: new Date(Date.now() + 900000).toISOString() });
+    if (path.endsWith('/me')) return reply({ accountId: account, displayName: 'Synthetic Customer', verifiedEmail: 'synthetic@example.invalid', securityVersion: 1 });
+    if (path.endsWith('/business-contexts')) return reply({ schemaVersion: 'BUSINESS_CONTEXTS_V1', items: [{ ...businessContextsFixture[0], permissions: [...businessContextsFixture[0].permissions, 'shipment.draft.read', 'shipment.draft.write', 'shipment.import'] }] });
+    if (path.endsWith('/shipment-imports/' + jobId)) return reply({ id: jobId, organizationId: organizationA, facilityId: null, creatorAccountId: account, templateVersion: 'BUSINESS_CSV_V1', state: 'COMPLETED', version: 2, totalRows: 2, validRows: 0, invalidRows: 1, createdRows: 1, conflictRows: 0, createdAt: '2026-11-10T01:00:00Z', updatedAt: '2026-11-10T01:01:00Z', page: 0, size: 20, hasNext: false, rows: [{ rowNumber: 1, state: 'CREATED', input, errors: [], preparationId: draftId, version: 2 }, { rowNumber: 2, state: 'INVALID', input: null, errors: [{ rowNumber: 2, field: 'sender_name', code: 'FORMULA_NOT_ALLOWED' }], preparationId: null, version: 1 }] }, '"v2"');
+    return route.fulfill({ status: 404, contentType: 'application/json', body: JSON.stringify({ code: 'RESOURCE_NOT_FOUND' }) });
+  });
+  await page.setViewportSize({ width, height: 1000 }); await page.goto('/merchant/' + organizationA + '/imports?job=' + jobId);
+  await expect(page.getByRole('heading', { name: 'Nhập đơn hàng từ file', exact: true })).toBeVisible();
+  await expect(page.locator('.bp-import-totals dd')).toHaveText(['2', '0', '1', '1', '0']); await page.getByRole('button', { name: 'Cần sửa', exact: true }).click(); await expect(page.getByRole('dialog')).toContainText('Không được dùng công thức.'); await page.getByRole('button', { name: 'Đóng cửa sổ' }).click();
+  await expect(page.getByRole('button', { name: 'Lưu 0 dòng thành nháp', exact: true })).toBeDisabled();
+  await expect(page.getByRole('link', { name: 'Mở nháp', exact: true })).toHaveAttribute('href', '/merchant/' + organizationA + '/create?draft=' + draftId);
+  await page.screenshot({ path: '../../../.demo/business-import-grid/debug-' + width + '.png', fullPage: true, animations: 'disabled' });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  const status = page.locator('tbody .ig-status').first(), before = await status.boundingBox();
+  await page.locator('.ig-grid-scroll').evaluate(element => { element.scrollLeft = 600; });
+  const after = await status.boundingBox(); expect(Math.abs(before!.x - after!.x)).toBeLessThan(1);
+  if (width === 360) expect(after!.width).toBeLessThanOrEqual(112);
+  await page.locator('.ig-grid-scroll').evaluate(element => { element.scrollLeft = 0; });
+  await page.screenshot({ path: '../../../.demo/business-import-grid/import-ui-' + width + '.png', fullPage: true, animations: 'disabled' });
+});

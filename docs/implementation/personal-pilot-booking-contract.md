@@ -61,3 +61,34 @@ V20 extends V19 state checks forward to BOOKED; prior snapshots remain readable
 internally and immutable. Old APIs still exclude converted drafts. No old migration
 edit or history cleanup. Runtime cannot alter catalog/tariff/Shipment/Parcel/
 obligation/history/audit/receipts; the quote update path can only consume once.
+
+
+## Owner Create Shipment audit presentation — 2026-11-09
+
+Quote UI retains issued fee/weight/total/expiry as authority. It explains first
+step and additional weight steps only when the immutable catalog tariff version
+and calculated explanatory sum agree with the server fee snapshot; otherwise
+omits the decomposition, never overwrites issued cước. No client quote engine,
+new surcharge or request field. Explicit sender-only UNPAID, unsupported ETA,
+insurance/VAS/Pickup/COD and non-tax-invoice treatment remain accurate.
+Full source review and catalog-limit guidance precede the existing Booking action.
+[Checkpoint](create-shipment-review.md) records source and actual validation.
+
+## Owner Tracking / quotation tools amendment —2026-11-09
+
+Latest Owner explicitly requests a dedicated cost estimator and preparation
+handoff. [Tools checkpoint](lookup-label-review.md) narrows the presentation
+amendment: client calculation from the accepted catalog is indicative only,
+not issuance of a Pricing Quote. BigInt per-Parcel/volumetric/step rounding and
+exact approved routes/limits apply. No new price, surcharge, insurance, COD,
+service, payer, source override or backend endpoint. Failed/disabled catalog
+cannot become a successful0-price estimate. Backend environment guards remain.
+
+Only raw measured Parcel facts and route selection transfer in transient browser
+navigation state to a new draft. Unknown fields, injected money/quoteId, invalid
+facts or conflicting existing draft/address selection are rejected. No contacts
+or credentials in that state; no automatic write. Goods descriptions and contacts
+still require Customer completion. Existing Draft save and fresh authoritative
+Quote precede Booking; the estimate carries no quoteId/TTL or payment meaning.
+Chosen route preselects review only; backend current coverage is still authority.
+Old approved Quote expiry/replay/version/ownership/atomicity/security rules stay.

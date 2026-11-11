@@ -19,7 +19,9 @@ public final class PersonalAnalyticsService implements PersonalAnalytics {
     private final boolean enabled;
     public PersonalAnalyticsService(AnalyticsShipments shipments,AnalyticsObligations obligations,Clock clock,boolean enabled){this.shipments=shipments;this.obligations=obligations;this.clock=clock;this.enabled=enabled;}
     private record Row(AnalyticsShipments.Fact fact,long unpaid,boolean accepted){}
-    @Override public Report read(Access access,Map<String,String> parameters){
+    @Override public Report read(Access access,Map<String,String> parameters){return capture(access,parameters).report();}
+    @Override public ShippingReport readShippingReport(Access access,Map<String,String> parameters){return capture(access,parameters);}
+    private ShippingReport capture(Access access,Map<String,String> parameters){
         access.requireCurrent();if(!enabled)throw new AnalyticsFailure(PILOT_DISABLED);
         Instant now=clock.instant().truncatedTo(ChronoUnit.MICROS);
         var q=AnalyticsQuery.parse(parameters,now);var start=q.start();var end=q.end(now);
@@ -52,13 +54,19 @@ public final class PersonalAnalyticsService implements PersonalAnalytics {
         int offset=Math.min(q.page()*20,sorted.size()),last=Math.min(offset+20,sorted.size());
         var items=sorted.subList(offset,last).stream().map(r->{var f=r.fact();return new Shipment(f.id(),f.code(),f.bookedAt(),r.accepted()?"AT_STATION":"WAITING_FOR_HANDOVER","ROAD_STANDARD",f.origin(),f.destination(),Integer.toString(f.weights().size()),Long.toString(f.weights().stream().mapToLong(Long::longValue).sum()),Long.toString(f.confirmedVnd()),Long.toString(r.unpaid()));}).toList();
         access.requireCurrent();
-        return new Report("PERSONAL_ANALYTICS_1","PERSONAL",AnalyticsQuery.ZONE.getId(),now,new Period(start,end,priorStart,priorEnd),List.copyOf(metrics),status,volume,services,routeViews,parcelView,new Page(Integer.toString(current.size()),q.page(),20,last<sorted.size(),items));
+        var report=new Report("PERSONAL_ANALYTICS_1","PERSONAL",AnalyticsQuery.ZONE.getId(),now,new Period(start,end,priorStart,priorEnd),List.copyOf(metrics),status,volume,services,routeViews,parcelView,new Page(Integer.toString(current.size()),q.page(),20,last<sorted.size(),items));
+        List<Long> durations=current.stream().filter(Row::accepted).map(r->Duration.between(r.fact().bookedAt(),r.fact().acceptedAt()).toMillis()).toList();
+        if(durations.stream().anyMatch(d->d<0))throw new AnalyticsFailure(ANALYTICS_UNAVAILABLE);
+        var timing=new AcceptanceTiming(Integer.toString(durations.size()),durations.stream().map(BigInteger::valueOf).reduce(BigInteger.ZERO,BigInteger::add).toString(),durations.stream().min(Long::compare).map(Object::toString).orElse(null),durations.stream().max(Long::compare).map(Object::toString).orElse(null));
+        var parcelWeights=new ParcelWeights(current.stream().flatMap(r->r.fact().weights().stream()).map(BigInteger::valueOf).reduce(BigInteger.ZERO,BigInteger::add).toString(),current.stream().flatMap(r->r.fact().chargeableWeights().stream()).map(BigInteger::valueOf).reduce(BigInteger.ZERO,BigInteger::add).toString());
+        access.requireCurrent();return new ShippingReport("PERSONAL_REPORTS_1",report,timing,parcelWeights);
     }
     private List<Row> cohort(Access access,AnalyticsQuery q,Instant from,Instant until,Instant now,boolean previous){
         var facts=shipments.read(access,from,until);
         if(facts.size()>10000)throw new AnalyticsFailure(ANALYTICS_RANGE_TOO_LARGE);
         Set<UUID> seen=new HashSet<>();
         for(var f:facts)if(!seen.add(f.id())||f.bookedAt().isBefore(from)||!f.bookedAt().isBefore(until)||f.confirmedVnd()<1||f.weights().isEmpty()||f.weights().stream().anyMatch(w->w<1||w>20000)||!"ARGO-SIM-COVERAGE-1".equals(f.datasetVersion())||!Set.of("SIM-A1/SIM-A2","SIM-A2/SIM-A1","SIM-A1/SIM-B1","SIM-B1/SIM-A1").contains(f.origin()+"/"+f.destination()))throw new AnalyticsFailure(ANALYTICS_UNAVAILABLE);
+        for(var f:facts){if(f.acceptedAt()!=null&&f.acceptedAt().isBefore(f.bookedAt())||f.chargeableWeights().size()!=f.weights().size())throw new AnalyticsFailure(ANALYTICS_UNAVAILABLE);for(int i=0;i<f.weights().size();i++)if(f.chargeableWeights().get(i)<f.weights().get(i)||f.chargeableWeights().get(i)%500!=0)throw new AnalyticsFailure(ANALYTICS_UNAVAILABLE);}
         var selected=facts.stream().filter(f->{boolean accepted=f.acceptedAt()!=null&&!f.acceptedAt().isAfter(now);return (q.status().isEmpty()||q.status().equals(accepted?"AT_STATION":"WAITING_FOR_HANDOVER"))&&(q.origin().isEmpty()||q.origin().equals(f.origin())&&q.destination().equals(f.destination()))&&(!q.multi()||f.weights().size()>1)&&f.weights().stream().anyMatch(q::weightMatches)&&q.selectedDay(f.bookedAt().atZone(AnalyticsQuery.ZONE).toLocalDate(),previous)&&f.code().toLowerCase(Locale.ROOT).contains(q.search());}).toList();
         var money=obligations.read(access,selected.stream().map(AnalyticsShipments.Fact::id).toList());Map<UUID,AnalyticsObligations.Fact> byId=new HashMap<>();
         for(var o:money)if(byId.put(o.shipmentId(),o)!=null)throw new AnalyticsFailure(ANALYTICS_UNAVAILABLE);

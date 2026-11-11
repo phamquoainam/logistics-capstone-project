@@ -20,7 +20,7 @@ public class ProductionCustomerWebConfiguration {
             || !"NONE".equalsIgnoreCase(environment.getProperty("server.forward-headers-strategy","NONE")))throw new IllegalStateException("CUSTOMER_SANDBOX_PROFILE_ISOLATION_REQUIRED");
     }
     @Bean @Order(-20) SecurityFilterChain customerChain(HttpSecurity http,ProductionCustomerComposition.Services services)throws Exception{
-        http.securityMatcher("/api/v1/customer-auth/**","/api/v1/customer/**","/api/v1/station-operations/**","/api/v1/merchant-applications/**","/api/v1/merchant-organizations/**","/api/v1/merchant-invitations/**","/api/v1/business-review/**","/api/v1/onboarding-receipts/**")
+        http.securityMatcher("/api/v1/customer-auth/**","/api/v1/customer/**","/api/v1/station-operations/**","/api/v1/support-operations/**","/api/v1/merchant-applications/**","/api/v1/merchant-organizations/**","/api/v1/merchant-invitations/**","/api/v1/business-review/**","/api/v1/onboarding-receipts/**")
             .csrf(c->c.disable()).httpBasic(c->c.disable()).formLogin(c->c.disable()).requestCache(c->c.disable()).sessionManagement(c->c.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(c->c.anyRequest().authenticated()).exceptionHandling(c->c.authenticationEntryPoint((q,r,e)->ProductionReadGuard.deny(r,401,"SESSION_INVALID"))
                 .accessDeniedHandler((q,r,e)->ProductionReadGuard.deny(r,403,"AUTHORITY_REQUIRED")))
