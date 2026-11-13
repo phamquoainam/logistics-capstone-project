@@ -16,7 +16,7 @@ public final class JdbcAnalyticsObligations implements AnalyticsObligations {
         if(ids==null||ids.size()>10000||ids.stream().anyMatch(Objects::isNull)||new HashSet<>(ids).size()!=ids.size())throw new IllegalArgumentException("ANALYTICS_BOUND_REQUIRED");
         if(ids.isEmpty())return List.of();
         var result=jdbc.query(connection->{
-            var statement=connection.prepareStatement("SELECT shipment_id,quote_id,amount_vnd,currency,state FROM finance.pilot_shipping_obligation WHERE owner_id=? AND shipment_id=ANY(?)");
+            var statement=connection.prepareStatement("SELECT shipment_id,quote_id,amount_vnd,currency,state FROM finance.pilot_shipping_obligation WHERE owner_type='PERSONAL' AND owner_id=? AND shipment_id=ANY(?)");
             statement.setObject(1,access.accountId());statement.setArray(2,connection.createArrayOf("uuid",ids.toArray()));return statement;
         },(r,n)->new Fact(r.getObject(1,UUID.class),r.getObject(2,UUID.class),r.getLong(3),r.getString(4),r.getString(5)));
         access.requireCurrent();return List.copyOf(result);

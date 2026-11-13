@@ -26,14 +26,15 @@ public final class BusinessPreparationHttp {
         public UUID accountId(){requireCurrent();return c.actor().accountId();}public void requireCurrent(){admission.requireCurrent(c);}
         public boolean eligibleAccount(UUID id){requireCurrent();return c.subjects().containsKey(id)&&c.subjects().get(id).eligible();}
     };}
-    <T>T execute(String organizationId,Function<BusinessPreparations.Access,T> work){
+    <T>T execute(String organizationId,Function<BusinessPreparations.Access,T> work){return executeWithContext(organizationId,(a,c)->work.apply(a));}
+    <T>T executeWithContext(String organizationId,java.util.function.BiFunction<BusinessPreparations.Access,CustomerAdmission.Context,T> work){
         UUID org=uuid(organizationId);var request=requests.current();try{
             var subjects=admission.execute(request.encodedAccess(),request.requestId(),Set.of(),c->workspaces.references(merchant(c),org));
             return admission.execute(request.encodedAccess(),request.requestId(),subjects,c->workspaces.inOrganization(merchant(c),org,scope->work.apply(new BusinessPreparations.Access(){
                 public UUID actorAccountId(){requireCurrent();return c.actor().accountId();}public UUID requestId(){requireCurrent();return c.requestId();}
                 public BusinessWorkspaces.Scope scope(){requireCurrent();return scope;}public void requireCurrent(){admission.requireCurrent(c);scope.requireCurrent();}
                 public void meaningfulAction(){admission.meaningfulAction(c);}
-            })));
+            },c)));
         }catch(BusinessPreparations.Failure|BusinessWorkspaces.Failure rejected){throw problem(switch(rejected.getMessage()){
             case "VALIDATION_FAILED"->400;case "RESOURCE_NOT_FOUND","BUSINESS_CONTEXT_UNAVAILABLE"->404;
             case "PRECONDITION_STALE","IDEMPOTENCY_CONFLICT","SOURCE_REFERENCE_CONFLICT","SOURCE_REFERENCE_IMMUTABLE","IMPORT_ROW_NOT_VALID"->409;default->503;

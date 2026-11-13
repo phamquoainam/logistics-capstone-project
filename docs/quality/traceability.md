@@ -1171,3 +1171,60 @@ ownership/least-privilege/checksum/data-preservation assertions and all mandator
 test identities. No deployed migration or application rule changed. Focused real
 PostgreSQL18 Testcontainers4/4 PASS after correction. The first CI failure remains
 recorded; fresh required CI on the correction revision is the merge gate.
+
+### Owner 2026-11-13: Personal / Business shipment-entry parity and BSC-06
+
+Authority: [exact accepted BSC-06 contract](../implementation/business-confirmed-shipping-contract.proposed.md),
+including explicit nullable-owner and BOOK guard/audit confirmations. Scope is
+source/disposable-test databases first; localhost V26 migration is not authorized
+by those confirmations. [Checkpoint and commands](../implementation/shipment-entry-parity.md)
+record task completion and all remaining boundaries. Accepted design amendment:
+[Business owner variants](../decisions/business-shipping-owner-variants.md).
+
+SEP-01–04 / BSC06-01–05 DONE: shared contact/measured-Parcel/notes/review UI,
+purpose-specific admission and transport, current Organization/Membership/RBAC/
+facility checks, versioned Merchant contract Quote on the four approved SIM routes,
+TTL15min, actor-bound HMAC receipts, and atomic BOOKED preparation + common
+Shipment/Parcels + consumed Quote + UNPAID + audit/receipt. Read/list/detail/private
+PDF use the same Shipping domain without disclosing employee Personal contacts or
+Personal shipments. Business barcodes cannot enter Personal-only Station intake.
+No Pickup, COD, collection, PAID, Carrier Acceptance or Production authority added.
+
+V26 only; populated V25 upgrade preserves original rows/receipts and V1–V25
+checksums. Seven new Business PG methods cover exact fees/all four routes,
+expiry/stale/unsupported requests, actor/Org/facility isolation and revocation,
+mandatory-evidence rollback, concurrency/idempotency and contract-suspension race.
+Full Testcontainers invocation: 1,086 PASS / 17 SKIP, including348 Identity
+application and59 migration cases, architecture23, labels2, real HTTPS/PG18/test-
+SMTP Browser16 and parent PASS. It did not run12 legacy external-DB Foundation/
+health methods. A separate disposable Linux run passed11/12; final stalled-socket
+health scenario lacked Docker CLI, so BSC06-06 remains OPEN. Automated approval
+review rejected the proposed brief localhost DB stop needed by the existing
+host-port5433 harness; command never executed and local DB remains untouched.
+
+H2 report-policy666 PASS /17 expected SKIP. Frontend126 units and39 distinct
+affected UI cases PASS, final parity rerun10, lint and both typechecked builds
+PASS. Report-policy128 PASS then exact2 corrected inventory-order cases PASS;
+validator/diff checks and credential/resource audits PASS. Original diagnostics
+and failed infrastructure attempts retained privately; no single complete PG
+gate or current hosted CI PASS is claimed. No localhost migration/activation,
+commit/push/merge or new worktree. Remaining Organization masters/packing/batch
+Booking and Dashboard adapter are explicitly not completed by this checkpoint.
+
+Owner UI follow-up, 2026-11-13: CM-01–05 DONE. Business sidebar no longer renders
+standalone Import; Create Shipment owns a shared route-aware Manual / CSV-Excel
+mode switch and highlights correctly for both existing routes. Unsaved navigation
+requires confirmation; busy/unknown write outcomes block switching. Current
+permissions still decide import access. Existing import history/bookmarks and
+explicit preview/commit behavior retained, no save or Booking on mode change.
+Five new regression cases plus affected UI total30/30 PASS; lint and both
+typechecked builds PASS; visual mobile390 and desktop1440 checked. Updated actual
+HTTPS/PG18/test-SMTP Browser16/16 and parent1/1 PASS. This UI-only follow-up does not
+resolve the earlier Foundation health runner blocker or authorize localhost V26
+migration. No local DB interruption, grants, business rule changes or commit/push.
+
+Subsequent Owner integration direction: CM-06/07 DONE. Remove Shipment and Draft
+from the Business sidebar, preserve routes/data and in-flow links; current-path
+Create highlighting includes their list/detail screens. UI30/30, lint and both
+typechecked builds PASS. Owner authorized normal push/PR/merge after mandatory
+hosted CI; local V26 migration and operator activation remain outside this command.

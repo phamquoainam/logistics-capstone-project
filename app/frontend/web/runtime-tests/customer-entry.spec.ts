@@ -125,6 +125,7 @@ test('personal support ticket uses real staff assignment conversation review and
 test('business workspace uses real organization membership without reusing Personal facts', async ({ browser }) => {
   const business = await browser.newContext({ baseURL: origin, ignoreHTTPSErrors: false }), businessPage = await business.newPage();
   const first = '10000000-0000-4000-8000-000000000901', second = '10000000-0000-4000-8000-000000000902';
+  const businessStage = (stage: 'IMPORTED_DRAFT' | 'REVIEW' | 'QUOTE_RECEIPT' | 'BOOKING_RECEIPT' | 'LABEL_DOWNLOAD' | 'CONTEXT_RETURN') => writeFileSync(process.env.S003_BROWSER_PRIVATE_DIRECTORY! + '/business-stage.json', JSON.stringify({ stage }));
   try {
     await businessPage.goto('/login'); await businessPage.getByLabel('Email đã xác minh').fill('browser-staff@example.invalid'); await businessPage.getByLabel('Mật khẩu', { exact: true }).fill('synthetic-session-password'); await businessPage.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
     await expect(businessPage.getByRole('heading', { name: 'Tổng quan', exact: true })).toBeVisible();
@@ -138,11 +139,11 @@ test('business workspace uses real organization membership without reusing Perso
       await businessPage.getByLabel('Số điện thoại ' + kind, { exact: true }).fill('0901234567');
       await businessPage.getByLabel('Địa chỉ chi tiết (' + kind + ')', { exact: true }).fill('Synthetic Business street');
       await businessPage.getByLabel('Tỉnh / thành phố (' + kind + ')', { exact: true }).fill('Synthetic area');
-      await businessPage.getByLabel('Phường / xã (' + kind + ')', { exact: true }).fill('Synthetic locality');
+      await businessPage.getByLabel('Phường / xã / địa phương (' + kind + ')', { exact: true }).fill('Synthetic locality');
     }
-    await businessPage.getByLabel('Mô tả kiện 1', { exact: true }).fill('Synthetic Business parcel');
+    await businessPage.locator('#parcel-description-0').fill('Synthetic Business parcel');
     for (const field of ['Trọng lượng (g)', 'Dài (cm)', 'Rộng (cm)', 'Cao (cm)']) await businessPage.getByLabel(field + ' — kiện 1', { exact: true }).fill(field === 'Trọng lượng (g)' ? '500' : '10');
-    await businessPage.getByLabel('Mã tham chiếu', { exact: true }).fill('SYNTHETIC-BUSINESS-ONLY');
+    await businessPage.locator('#draft-reference').fill('SYNTHETIC-BUSINESS-ONLY');
     let businessWrites = 0;
     await businessPage.route('**/api/v1/merchant-organizations/' + first + '/shipment-preparations', async route => {
       if (route.request().method() !== 'POST') return route.continue();
@@ -153,14 +154,16 @@ test('business workspace uses real organization membership without reusing Perso
     await expect(businessPage.getByRole('button', { name: 'Lưu bản nháp doanh nghiệp', exact: true })).toBeDisabled();
     await businessPage.getByRole('button', { name: 'Kiểm tra kết quả lưu', exact: true }).click();
     await expect(businessPage).toHaveURL(/create\?draft=/); expect(businessWrites).toBe(1);
-    await businessPage.reload(); await expect(businessPage.getByLabel('Mã tham chiếu', { exact: true })).toHaveValue('SYNTHETIC-BUSINESS-ONLY');
-    await businessPage.getByLabel('Ghi chú', { exact: true }).fill('Synthetic revised instructions');
+    await businessPage.reload(); await expect(businessPage.locator('#draft-reference')).toHaveValue('SYNTHETIC-BUSINESS-ONLY');
+    await businessPage.locator('#draft-instructions').fill('Synthetic revised instructions');
     await businessPage.getByRole('button', { name: 'Lưu bản nháp doanh nghiệp', exact: true }).click();
     await expect(businessPage.getByRole('status')).toContainText('Đã lưu bản nháp doanh nghiệp');
     await businessPage.screenshot({ path: process.env.S003_BROWSER_PRIVATE_DIRECTORY! + '/business-preparation-real.png', fullPage: true, animations: 'disabled' });
     businessPage.once('dialog', dialog => dialog.accept()); await businessPage.getByRole('button', { name: 'Lưu trữ bản nháp', exact: true }).click();
     await expect(businessPage.getByRole('heading', { name: 'Chưa có bản nháp', exact: true })).toBeVisible();
-    await businessPage.getByRole('navigation', { name: 'Điều hướng Business' }).getByRole('link', { name: 'Nhập file', exact: true }).click();
+    await expect(businessPage.getByRole('navigation', { name: 'Điều hướng Business' }).getByRole('link', { name: 'Nhập file', exact: true })).toHaveCount(0);
+    await businessPage.getByRole('navigation', { name: 'Điều hướng Business' }).getByRole('link', { name: 'Tạo vận đơn', exact: true }).click();
+    await businessPage.getByRole('navigation', { name: 'Cách tạo vận đơn' }).getByRole('link', { name: 'Nhập CSV/Excel', exact: true }).click();
     const templateDownload = businessPage.waitForEvent('download'); await businessPage.getByRole('button', { name: 'Tải file mẫu', exact: true }).click(); await businessPage.getByRole('button', { name: /CSV UTF-8/ }).click();
     expect((await templateDownload).suggestedFilename()).toBe('argopost-business-mau.csv');
     const headers = ['source_channel', 'source_order_reference', 'sender_name', 'sender_phone', 'sender_country', 'sender_administrative_area', 'sender_locality', 'sender_address_line', 'recipient_name', 'recipient_phone', 'recipient_country', 'recipient_administrative_area', 'recipient_locality', 'recipient_address_line', 'parcels_json', 'reference', 'instructions'];
@@ -185,7 +188,17 @@ test('business workspace uses real organization membership without reusing Perso
     await expect(businessPage.locator('.bp-import-totals dd')).toHaveText(['2', '0', '1', '1', '0']); expect(commits).toBe(1);
     await businessPage.reload(); await expect(businessPage.locator('.bp-import-totals dd')).toHaveText(['2', '0', '1', '1', '0']);
     await businessPage.screenshot({ path: process.env.S003_BROWSER_PRIVATE_DIRECTORY! + '/business-import-real.png', fullPage: true, animations: 'disabled' });
-    await businessPage.getByRole('button', { name: 'Synthetic organization', exact: true }).click(); await businessPage.locator('a[href="/merchant/' + second + '/overview"]').click(); await expect(businessPage).toHaveURL(new RegExp(second + '/overview$'));
+    await businessPage.getByRole('link', { name: 'Mở nháp', exact: true }).click(); await expect(businessPage.locator('#draft-reference')).toHaveValue('SYNTHETIC-IMPORT-1');
+    await businessPage.getByRole('button', { name: 'Xem lại thông tin', exact: true }).click(); await expect(businessPage.getByRole('heading', { name: 'Xác nhận thông tin doanh nghiệp', exact: true })).toBeVisible(); await expect(businessPage.getByLabel('Kiện hàng đã lưu')).toContainText('Synthetic imported parcel');
+    businessStage('REVIEW'); let quoteWrites = 0, bookingWrites = 0;
+    await businessPage.route('**/api/v1/merchant-organizations/' + first + '/shipment-preparations/*/quotes', async route => { quoteWrites++; const actual = await route.fetch({ maxRetries: 0 }); expect(actual.status()).toBe(201); await route.abort('failed'); });
+    await businessPage.getByRole('checkbox', { name: /Tôi xác nhận chỉ khai hàng thông thường/ }).check(); await businessPage.getByRole('button', { name: 'Lấy báo giá mô phỏng', exact: true }).click(); await businessPage.getByRole('button', { name: 'Kiểm tra kết quả báo giá', exact: true }).click(); await expect(businessPage.locator('.pb-total')).toContainText('25.000'); expect(quoteWrites).toBe(1);
+    await businessPage.route('**/api/v1/merchant-organizations/' + first + '/shipment-preparations/*/bookings', async route => { bookingWrites++; const actual = await route.fetch({ maxRetries: 0 }); expect(actual.status()).toBe(201); await route.abort('failed'); });
+    await businessPage.getByRole('button', { name: 'Xác nhận đặt vận đơn mô phỏng', exact: true }).click(); await expect(businessPage.getByRole('button', { name: '← Chỉnh sửa thông tin', exact: true })).toBeDisabled(); await businessPage.getByRole('button', { name: 'Kiểm tra kết quả booking', exact: true }).click(); await expect(businessPage.getByRole('heading', { name: 'Chi tiết vận đơn doanh nghiệp', exact: true })).toBeVisible(); await expect(businessPage.locator('.pb-unpaid')).toHaveText('UNPAID'); expect(bookingWrites).toBe(1);
+    businessStage('LABEL_DOWNLOAD'); const labels = businessPage.waitForEvent('download'); await businessPage.getByRole('button', { name: 'Tải nhãn tất cả kiện', exact: true }).click(); const label = await labels; expect(readFileSync((await label.path())!).subarray(0, 5).toString()).toBe('%PDF-');
+    await businessPage.screenshot({ path: process.env.S003_BROWSER_PRIVATE_DIRECTORY! + '/business-booking-real.png', fullPage: true, animations: 'disabled' });
+    const businessCode = await businessPage.locator('.pb-code').innerText(); await businessPage.getByRole('link', { name: 'Danh sách vận đơn', exact: true }).click(); await expect(businessPage.locator('.bp-list')).toContainText(businessCode);
+    businessStage('CONTEXT_RETURN'); await businessPage.getByRole('button', { name: 'Synthetic organization', exact: true }).click(); await businessPage.locator('a[href="/merchant/' + second + '/overview"]').click(); await expect(businessPage).toHaveURL(new RegExp(second + '/overview$'));
     await expect(businessPage.locator('.bw-kpi')).toHaveCount(4); await expect(businessPage.getByRole('heading', { name: 'Chi phí vận chuyển', exact: true })).toHaveCount(0); await expect(businessPage.getByRole('heading', { name: 'Hoạt động nhân viên', exact: true })).toHaveCount(0);
     await businessPage.screenshot({ path: process.env.S003_BROWSER_PRIVATE_DIRECTORY! + '/business-real-limited-context.png', fullPage: true, animations: 'disabled' });
     await businessPage.getByRole('button', { name: 'Synthetic organization', exact: true }).click(); await businessPage.getByRole('link', { name: /ArgoPost Personal/ }).click(); await expect(businessPage.getByRole('heading', { name: 'Tổng quan', exact: true })).toBeVisible();

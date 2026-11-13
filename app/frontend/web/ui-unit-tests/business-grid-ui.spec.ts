@@ -28,6 +28,16 @@ async function setup(page: Page) {
   await page.goto('/merchant/' + organizationA + '/imports'); await expect(page.getByRole('heading', { name: 'Nhập đơn hàng từ file' })).toBeVisible();
   return { counts: () => ({ previews, commits }) };
 }
+test('import mode retains the creation menu and protects unsubmitted worksheet data', async ({ page }) => {
+  const api = await setup(page); const modes = page.getByRole('navigation', { name: 'Cách tạo vận đơn', exact: true });
+  await expect(page.getByRole('navigation', { name: 'Điều hướng Business', exact: true }).getByRole('link', { name: 'Tạo vận đơn', exact: true })).toHaveAttribute('aria-current', 'page');
+  await expect(modes.getByRole('link', { name: 'Nhập CSV/Excel', exact: true })).toHaveAttribute('aria-current', 'page');
+  await page.getByLabel('Chọn file CSV hoặc Excel', { exact: true }).setInputFiles({ name: 'synthetic.csv', mimeType: 'text/csv', buffer: Buffer.from(serverCsv([sample()])) });
+  await expect(page.getByLabel('Mã đơn nguồn — dòng 1', { exact: true })).toHaveValue('001-SYNTHETIC');
+  page.once('dialog', dialog => dialog.dismiss()); await modes.getByRole('link', { name: 'Tạo thủ công', exact: true }).click(); await expect(page.getByLabel('Mã đơn nguồn — dòng 1', { exact: true })).toHaveValue('001-SYNTHETIC');
+  page.once('dialog', dialog => dialog.accept()); await modes.getByRole('link', { name: 'Tạo thủ công', exact: true }).click(); await expect(page.locator('#sender-name')).toBeVisible(); expect(api.counts()).toEqual({ previews: 0, commits: 0 });
+});
+
 test('worksheet edits invalidate backend checks; undo, selection, explicit commit and real history UI', async ({ page }) => {
   const api = await setup(page); await page.getByLabel('Chọn file CSV hoặc Excel', { exact: true }).setInputFiles({ name: 'synthetic.csv', mimeType: 'text/csv', buffer: Buffer.from(serverCsv([sample()])) });
   await expect(page.getByLabel('Mã đơn nguồn — dòng 1', { exact: true })).toHaveValue('001-SYNTHETIC');

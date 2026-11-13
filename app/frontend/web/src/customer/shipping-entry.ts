@@ -1,7 +1,7 @@
 import type { DraftParcel, PilotCatalog, PilotQuote } from './client';
 
 /** Explain an already-issued server fee only when the immutable tariff agrees. Never issues a price. */
-export function quotedFeeBreakdown(quote: PilotQuote, line: PilotQuote['feeLines'][number], tariff: PilotCatalog['tariff']) {
+export function quotedFeeBreakdown(quote: Pick<PilotQuote, 'tariffVersion' | 'route'>, line: PilotQuote['feeLines'][number], tariff: PilotCatalog['tariff']) {
   if (quote.tariffVersion !== tariff.version || line.chargeableGrams % tariff.stepGrams !== 0) return undefined;
   const base = quote.route.classification === 'INTRA' ? tariff.intraFirstVnd : tariff.interFirstVnd;
   const step = quote.route.classification === 'INTRA' ? tariff.intraStepVnd : tariff.interStepVnd;
