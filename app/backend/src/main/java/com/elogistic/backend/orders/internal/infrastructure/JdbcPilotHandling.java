@@ -22,10 +22,10 @@ public final class JdbcPilotHandling implements PilotHandling {
         return new Handling(s.id(),events.isEmpty()?"WAITING_FOR_HANDOVER":"AT_STATION",events.isEmpty()?0:1,s.parcels().stream().map(p->new ParcelState(p.id(),p.parcelNumber(),PilotLabelRenderer.barcode(p.id()),accepted.contains(p.id())?"AT_STATION":"NOT_ACCEPTED")).toList(),events,true,true);
     }
     @Override public Handling self(ShippingDrafts.Access a,UUID shipment){return projection(owned(a,shipment));}
-    @Override public Cargo lookup(CarrierAccess a,String barcode){a.requireCurrent();joined();UUID parcel=PilotLabelRenderer.parcelId(barcode);var ids=jdbc.query("SELECT s.id FROM orders.pilot_shipment s JOIN orders.pilot_parcel p ON p.shipment_id=s.id WHERE p.id=? AND s.quote_snapshot#>>'{route,dropOffCode}'=?",(r,n)->r.getObject(1,UUID.class),parcel,a.stationCode());if(ids.size()!=1)throw new PilotHandlingFailure(RESOURCE_NOT_FOUND);return atStation(a,ids.getFirst());}
+    @Override public Cargo lookup(CarrierAccess a,String barcode){a.requireCurrent();joined();UUID parcel=PilotLabelRenderer.parcelId(barcode);var ids=jdbc.query("SELECT s.id FROM orders.pilot_shipment s JOIN orders.pilot_parcel p ON p.shipment_id=s.id WHERE s.owner_type='PERSONAL' AND p.id=? AND s.quote_snapshot#>>'{route,dropOffCode}'=?",(r,n)->r.getObject(1,UUID.class),parcel,a.stationCode());if(ids.size()!=1)throw new PilotHandlingFailure(RESOURCE_NOT_FOUND);return atStation(a,ids.getFirst());}
     @Override public Cargo atStation(CarrierAccess a,UUID shipment){
         a.requireCurrent();joined();if(shipment==null)throw new PilotHandlingFailure(VALIDATION_FAILED);
-        var owners=jdbc.query("SELECT owner_id FROM orders.pilot_shipment WHERE id=? AND quote_snapshot#>>'{route,dropOffCode}'=?",(r,n)->r.getObject(1,UUID.class),shipment,a.stationCode());if(owners.size()!=1)throw new PilotHandlingFailure(RESOURCE_NOT_FOUND);
+        var owners=jdbc.query("SELECT owner_id FROM orders.pilot_shipment WHERE owner_type='PERSONAL' AND id=? AND quote_snapshot#>>'{route,dropOffCode}'=?",(r,n)->r.getObject(1,UUID.class),shipment,a.stationCode());if(owners.size()!=1)throw new PilotHandlingFailure(RESOURCE_NOT_FOUND);
         var s=shipments.find(owners.getFirst(),shipment);a.requireCurrent();return new Cargo(s,projection(s));
     }
     @Override public void accept(CarrierAccess a,UUID shipment,long expected,UUID acceptance,Instant occurredAt){

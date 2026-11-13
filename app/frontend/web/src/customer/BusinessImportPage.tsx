@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { customerClient, CustomerApiError } from './client';
 import type { BusinessImportJob, BusinessPreparationOperation } from './client';
 import type { BusinessContext } from './business-data';
+import { BusinessEntryMode } from './ShipmentEntryFields';
 import { applyGridPaste, blankImportRow, exportCsv, flatCsvTemplate, hasImportData, importColumns, localCellIssues, rowFromPreparation, serverCsv } from './business-import-grid';
 import type { ImportColumn, ImportGridRow } from './business-import-grid';
 import { exportImportExcel, readImportFile } from './business-import-files';
@@ -131,6 +132,7 @@ export function BusinessImportWorkspace({ context }: { context: BusinessContext 
   const summary = [dataRows.length, checked ? check.job.validRows : '—', checked ? check.job.invalidRows : '—', dataRows.filter(r => locked.has(r.id)).length, checked ? check.job.conflictRows : '—'];
   return <section className="ig-workspace bp-workspace" ref={root} aria-busy={busy}>
     <div className="ig-heading"><div><h1>Nhập đơn hàng từ file</h1><p>{context.displayName} <span>· CSV & Excel</span></p></div><div className="ig-heading-actions"><button className="pw-primary" disabled={busy || uncertain} onClick={() => file.current?.click()}><ImportIcon name="file" />Mở file</button><button className="pw-secondary" disabled={busy || uncertain} onClick={() => setDialog('templates')}><ImportIcon name="down" />Tải file mẫu</button><button className="pw-secondary" disabled={busy || uncertain} onClick={() => { setHistoryPage(0); setDialog('history'); }}><ImportIcon name="history" />Lịch sử nhập file</button></div></div>
+    <BusinessEntryMode base={base} mode="import" canImport={context.permissions.includes('shipment.import')} blocked={busy || uncertain} confirmLeave={() => !dirty || checked || window.confirm('Chuyển sang tạo thủ công? Dữ liệu chưa gửi trong bảng nhập sẽ không được giữ.')} />
     <input ref={file} className="ig-file-input" tabIndex={-1} type="file" aria-label="Chọn file CSV hoặc Excel" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" disabled={busy || uncertain} onChange={e => { const chosen = e.target.files?.[0]; e.target.value = ''; if (chosen) void openFile(chosen); }} />
     {error && <p role="alert" className="cp-notice cp-error">{error}</p>}{uncertain && <button className="pw-secondary" disabled={busy} onClick={() => { void resolve(); }}>Kiểm tra kết quả nhập</button>}
     <div className="ig-sheet"><div className="ig-toolbar"><label className="ig-search"><ImportIcon name="search" /><input aria-label="Tìm trong bảng nhập" placeholder="Tìm mã đơn, người nhận, số điện thoại…" value={search} onChange={e => setSearch(e.target.value)} /></label><div className="ig-tools">

@@ -24,21 +24,25 @@ public final class PilotLabelRenderer {
         String s=code.substring(5);return UUID.fromString(s.substring(0,8)+"-"+s.substring(8,12)+"-"+s.substring(12,16)+"-"+s.substring(16,20)+"-"+s.substring(20));
     }
     public byte[] render(PilotShipments.Shipment shipment){
-        if(shipment.parcels().isEmpty()||shipment.parcels().size()>5||!"CONFIRMED".equals(shipment.bookingState()))throw new IllegalArgumentException("BOOKED_PARCELS_REQUIRED");
+        if(!"CONFIRMED".equals(shipment.bookingState()))throw new IllegalArgumentException("BOOKED_PARCELS_REQUIRED");
+        return render(shipment.code(),shipment.input(),shipment.quote().route(),shipment.parcels());
+    }
+    byte[] render(String code,ShippingDrafts.Input input,com.elogistic.backend.pricing.api.PilotQuotes.Route route,List<PilotShipments.Parcel> parcels){
+        if(parcels.isEmpty()||parcels.size()>5)throw new IllegalArgumentException("BOOKED_PARCELS_REQUIRED");
         try(var document=new PDDocument();var fontData=resource("NotoSans-Regular.ttf");var logoData=resource("argopost-logo-primary.png");var output=new ByteArrayOutputStream()){
             var font=PDType0Font.load(document,fontData,true);var logo=PDImageXObject.createFromByteArray(document,logoData.readAllBytes(),"ArgoPost");
-            var pages=contactPages(font,shipment.input());
-            for(var parcel:shipment.parcels()){
+            var pages=contactPages(font,input);
+            for(var parcel:parcels){
               for(int index=0;index<pages.size();index++){
                 var page=new PDPage(new PDRectangle(WIDTH,HEIGHT));document.addPage(page);
                 try(var stream=new PDPageContentStream(document,page)){
                     stream.setNonStrokingColor(new Color(255,111,0));stream.addRect(0,HEIGHT-28,WIDTH,28);stream.fill();
                     text(stream,font,"ARGOPOST - LOCAL/TEST SIMULATION",8,MARGIN,HEIGHT-22);
                     float logoWidth=126,logoHeight=Math.min(38,logoWidth*logo.getHeight()/logo.getWidth());stream.drawImage(logo,MARGIN,HEIGHT-72,logoWidth,logoHeight);
-                    text(stream,font,"ROAD_STANDARD",8,169,HEIGHT-45);text(stream,font,"Kiện "+parcel.parcelNumber()+"/"+shipment.parcels().size()+" | "+(index+1)+"/"+pages.size(),8,169,HEIGHT-64);
-                    text(stream,font,shipment.code(),7,MARGIN,HEIGHT-91);
-                    text(stream,font,shipment.quote().route().originCode()+"  >  "+shipment.quote().route().destinationCode(),13,MARGIN,HEIGHT-112);
-                    text(stream,font,"Drop-off: "+shipment.quote().route().dropOffCode(),8,MARGIN,HEIGHT-128);
+                    text(stream,font,"ROAD_STANDARD",8,169,HEIGHT-45);text(stream,font,"Kiện "+parcel.parcelNumber()+"/"+parcels.size()+" | "+(index+1)+"/"+pages.size(),8,169,HEIGHT-64);
+                    text(stream,font,code,7,MARGIN,HEIGHT-91);
+                    text(stream,font,route.originCode()+"  >  "+route.destinationCode(),13,MARGIN,HEIGHT-112);
+                    text(stream,font,"Drop-off: "+route.dropOffCode(),8,MARGIN,HEIGHT-128);
                     drawBarcode(stream,barcode(parcel.id()),MARGIN,HEIGHT-188,WIDTH-2*MARGIN,43);
                     text(stream,font,barcode(parcel.id()),7,MARGIN,HEIGHT-201);
                     String note=index==0?(pages.size()==1?"Nhãn chính - đầy đủ thông tin":"Nhãn chính - kèm "+(pages.size()-1)+" trang tiếp nối"):

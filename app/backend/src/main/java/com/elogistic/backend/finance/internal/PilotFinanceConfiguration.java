@@ -10,5 +10,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 @Configuration @Profile("customer")
 public class PilotFinanceConfiguration {
+    @Bean com.elogistic.backend.finance.api.BusinessObligations businessObligations(DataSource source,Environment env,@Qualifier("identityHttpClock")Clock clock){boolean enabled=Set.of("LOCAL","TEST").contains(env.getProperty("shipping.pilot.environment","DISABLED"))&&"SANDBOX".equals(env.getProperty("customer.rollout"))&&!env.acceptsProfiles(Profiles.of("production","prod"));return new com.elogistic.backend.finance.internal.infrastructure.JdbcBusinessObligations(source,clock,enabled);}
     @Bean PilotObligations pilotObligations(DataSource source,Environment env,@Qualifier("identityHttpClock")Clock clock){boolean enabled=Set.of("LOCAL","TEST").contains(env.getProperty("shipping.pilot.environment","DISABLED"))&&"SANDBOX".equals(env.getProperty("customer.rollout"))&&!env.acceptsProfiles(Profiles.of("production","prod"));return new JdbcPilotObligations(source,clock,enabled);}
 }
