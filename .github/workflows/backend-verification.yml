@@ -78,6 +78,11 @@ jobs:
           npm --prefix app/frontend/web run build:customer
           cd app/frontend/web
           npx --no-install playwright install --with-deps chromium
+      - name: Organization development UI regression with synthetic API fixtures
+        if: matrix.mode == 'postgres'
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/spec003-owned-browsers
+        run: npm --prefix app/frontend/web run test:organization-dev-ui
       - name: Test fail-closed report guard
         run: python3 -B -m unittest discover -s scripts/ci -p 'test_*.py' -v
       - name: Prepare disposable PostgreSQL 18

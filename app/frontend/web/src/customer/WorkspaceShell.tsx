@@ -54,6 +54,31 @@ function ManagementNavigation() {
   </div>;
 }
 
+function BusinessManagementNavigation({ business }: { business: BusinessContext }) {
+  const location = useLocation(), trigger = useRef<HTMLButtonElement>(null), base = '/merchant/' + business.organizationId;
+  const actionCenter = location.pathname === base + '/shipments' && new URLSearchParams(location.search).get('category') === 'ACTION';
+  const managementList = /\/(shipments|preparations)(?:\/|$)/.test(location.pathname) && !actionCenter;
+  const active = location.pathname.startsWith(base + '/shipments') || location.pathname.startsWith(base + '/preparations') || location.pathname.startsWith(base + '/reports') || location.pathname.startsWith(base + '/finance') || location.pathname.startsWith(base + '/contacts');
+  const [disclosure, setDisclosure] = useState({ path: location.pathname, open: active });
+  const [scopedAdmission, setScopedAdmission] = useState<string>();
+  const authority = business.organizationId + ':' + business.authorityVersion, organizationRead = business.permissions.includes('shipment.draft.read');
+  useEffect(() => { if (organizationRead) return; let current = true; void customerClient.readOrganizationManagement(business, new URLSearchParams()).then(() => { if (current) setScopedAdmission(authority); }).catch(() => { if (current) setScopedAdmission(undefined); }); return () => { current = false; }; }, [business, authority, organizationRead]);
+  const [readable, setReadable] = useState<{ authority: string; reports: boolean; finance: boolean }>();
+  const reportsHint = business.permissions.includes('shipment.reports.read'), financeHint = business.permissions.includes('shipment.finance.read');
+  useEffect(() => { let current = true; void Promise.allSettled([reportsHint ? Promise.resolve() : customerClient.readBusinessOperations(business, new URLSearchParams()), financeHint ? Promise.resolve() : customerClient.readBusinessFinance(business, new URLSearchParams())]).then(values => { if (current) setReadable({ authority, reports: values[0].status === 'fulfilled', finance: values[1].status === 'fulfilled' }); }); return () => { current = false; }; }, [business, authority, reportsHint, financeHint]);
+  const [directoryAdmission, setDirectoryAdmission] = useState<string>();
+  const directoryHint = business.permissions.includes('contacts.read');
+  useEffect(() => { if (directoryHint) return; let live = true; void customerClient.listOrganizationContacts(business, { page: 0 }).then(() => { if (live) setDirectoryAdmission(authority); }).catch(() => { if (live) setDirectoryAdmission(undefined); }); return () => { live = false; }; }, [business, authority, directoryHint]);
+  const directory = directoryHint || directoryAdmission === authority;
+  const open = disclosure.path === location.pathname ? disclosure.open : active;
+  const setOpen = (value: boolean) => setDisclosure({ path: location.pathname, open: value });
+  if (!organizationRead && scopedAdmission !== authority && !directory) return null;
+  return <div className={'pw-management-links ' + (active ? 'is-active' : '')} onKeyDown={event => { if (event.key === 'Escape' && open) { event.stopPropagation(); setOpen(false); trigger.current?.focus(); } }}>
+    <button className="pw-management-toggle" ref={trigger} type="button" aria-expanded={open} aria-controls="business-management-links" onClick={() => setOpen(!open)}><Icon name="box" /><span>Quản lý</span><Icon name="chevron" /></button>
+    <div className="pw-management-items" id="business-management-links" hidden={!open}><Link to={base + '/shipments'} className={managementList ? 'active' : undefined} aria-current={managementList ? 'page' : undefined}>Quản lý vận đơn</Link>{(reportsHint || readable?.authority === authority && readable.reports) && <NavLink to={base + '/reports'}>Báo cáo vận hành Merchant</NavLink>}{(financeHint || readable?.authority === authority && readable.finance) && <NavLink to={base + '/finance'}>Cước, COD & Đối soát</NavLink>}<Link to={base + '/shipments?category=ACTION'} className={actionCenter ? 'active' : undefined} aria-current={actionCenter ? 'page' : undefined}>Đơn cần xử lý</Link>{directory && <NavLink to={base + '/contacts'}>Sổ địa chỉ & Người nhận</NavLink>}</div>
+  </div>;
+}
+
 function WorkspaceSwitcher({ business }: { business?: BusinessContext }) {
   const [open, setOpen] = useState(false), container = useRef<HTMLDivElement>(null), trigger = useRef<HTMLButtonElement>(null);
   useEffect(() => {
@@ -114,7 +139,7 @@ export function WorkspaceShell({ subject, children, business }: { subject: Subje
     {sidebar && <button className="pw-sidebar-overlay" type="button" aria-label="Đóng điều hướng cá nhân" onClick={() => setSidebar(false)} />}
     <aside id="personal-sidebar" className={`pw-sidebar ${sidebar ? 'is-open' : ''}`} aria-label={business ? 'Thanh điều hướng Business' : 'Thanh điều hướng Personal'}><div className="pw-sidebar-brand"><PublicBrand /></div><span className="pw-nav-label">{business ? 'KHÔNG GIAN DOANH NGHIỆP' : 'KHÔNG GIAN CÁ NHÂN'}</span>
       <nav aria-label={business ? 'Điều hướng Business' : 'Điều hướng Personal'} onClick={event => { if ((event.target as HTMLElement).closest('a')) setSidebar(false); }}>
-        {business ? <><NavLink to={"/merchant/" + business.organizationId + "/overview"}><Icon name="home" /><span>Tổng quan</span></NavLink>{(business.permissions.includes('shipment.draft.write') || business.permissions.includes('shipment.import') || business.permissions.includes('shipment.draft.read')) && <Link to={"/merchant/" + business.organizationId + (business.permissions.includes('shipment.draft.write') ? "/create" : business.permissions.includes('shipment.import') ? "/imports" : "/preparations")} className={/\/(create|imports|preparations|shipments)(\/[^/]+)?\/?$/.test(location.pathname) ? 'active' : undefined} aria-current={/\/(create|imports|preparations|shipments)(\/[^/]+)?\/?$/.test(location.pathname) ? 'page' : undefined}><Icon name="plus" /><span>Tạo vận đơn</span></Link>}</> : <>
+        {business ? <><NavLink to={"/merchant/" + business.organizationId + "/overview"}><Icon name="home" /><span>Tổng quan</span></NavLink>{(business.permissions.includes('shipment.draft.write') || business.permissions.includes('shipment.import')) && <Link to={"/merchant/" + business.organizationId + (business.permissions.includes('shipment.draft.write') ? "/create" : "/imports")} className={/\/(create|imports)\/?$/.test(location.pathname) ? 'active' : undefined} aria-current={/\/(create|imports)\/?$/.test(location.pathname) ? 'page' : undefined}><Icon name="plus" /><span>Tạo vận đơn</span></Link>}{<BusinessManagementNavigation key={business.organizationId} business={business} />}</> : <>
         <Link to="/personal/overview" aria-current={location.pathname === '/personal' || location.pathname.startsWith('/personal/overview') ? 'page' : undefined} className={location.pathname === '/personal' || location.pathname.startsWith('/personal/overview') ? 'active' : undefined}><Icon name="home" /><span>Tổng quan</span></Link>
         {workspaceModules.filter(item => !['billing', 'addresses'].includes(item.path)).map(item => item.path === 'shipments' ? <ManagementNavigation key="management" /> : <NavLink key={item.path} to={'/personal/' + item.path}><Icon name={item.icon} /><span>{item.title}</span></NavLink>)}
       </>} </nav><Link className="pw-sidebar-foot" to="/support"><Icon name="help" /><span>Trung tâm trợ giúp</span><Icon name="arrow" /></Link>

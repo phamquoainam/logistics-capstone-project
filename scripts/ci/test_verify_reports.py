@@ -284,8 +284,8 @@ class ReportGuardTests(unittest.TestCase):
         for name, methods in reports.S2_REQUIRED.items():
             self.assertEqual(len(methods), len(set(methods)), name)
         # Prior cases retained; local S3/SMTP adds two exact unit identities.
-        for mode, passed, skipped in [('architecture', 23, 0), ('h2', 666, 17),
-                                      ('postgres', 1098, 5), ('foundation', 5, 0)]:
+        for mode, passed, skipped in [('architecture', 23, 0), ('h2', 685, 17),
+                                      ('postgres', 1141, 5), ('foundation', 5, 0)]:
             with self.subTest(mode=mode):
                 self.fixture(mode)
                 self.assertTrue(self.check(mode))
@@ -707,6 +707,8 @@ IDENTITY_METHODS = (
     'pilotV20UpgradePreservesV19DataAndSeedsExactlyApprovedSimulation',
     'pilotV20DatabaseRejectsForgedPricesAndPaidObligations',
     'businessV26UpgradePreservesPopulatedPersonalBookingAndOwnerGuards',
+    'managementV27UpgradePreservesPopulatedV26WithoutGrantingAuthority',
+    'reportingV28UpgradePreservesPopulatedBookingOrganizationAndExplicitGrants',
     'stationV21UpgradePreservesV20SnapshotsAndSeedsNoStaffAuthority',
     'stationV21DatabaseRejectsUnapprovedNetworkAndMutableAuthorityIdentity',
     'stationV21OwnerProvisioningIsExplicitAuditedAndNotRuntimeCallable',
@@ -742,7 +744,7 @@ class IdentityMigrationInventoryTests(unittest.TestCase):
         self.assertEqual(list(IDENTITY_METHODS), re.findall(r'@Test\s+void\s+(\w+)\s*\(', source))
         self.assertIn('package com.elogistic.backend.identity.internal.infrastructure;', source)
         self.assertEqual('com.elogistic.backend.identity.internal.infrastructure.IdentityMigrationTests', reports.IDENTITY_MIGRATION)
-        self.assertEqual(59, len(set(IDENTITY_METHODS)))
+        self.assertEqual(61, len(set(IDENTITY_METHODS)))
         self.assertEqual(list(IDENTITY_METHODS), reports.REQUIRED[reports.IDENTITY_MIGRATION])
         self.assertIn(reports.IDENTITY_MIGRATION, reports.TESTCONTAINERS_ONLY)
         self.assertNotIn(reports.IDENTITY_MIGRATION, reports.PG_ONLY)
@@ -1568,7 +1570,7 @@ class IdentityActivationInventoryTests(unittest.TestCase):
         self.assertEqual(list(ACTIVATION_UNIT_METHODS), reports.REQUIRED[reports.IDENTITY_ACTIVATION_UNIT])
         self.assertEqual(list(ACTIVATION_PG_METHODS), reports.IDENTITY_ACTIVATION_PG_REQUIRED)
         self.assertEqual(12, len(ACTIVATION_UNIT_METHODS)); self.assertEqual(20, len(ACTIVATION_PG_METHODS))
-        self.assertEqual(348, len(reports.REQUIRED[reports.IDENTITY_GRANTS]))
+        self.assertEqual(370, len(reports.REQUIRED[reports.IDENTITY_GRANTS]))
         self.assertEqual(3, len(reports.TASK_C_SUITES))
         self.assertNotIn(reports.IDENTITY_GRANTS, reports.expected_suites('h2'))
         for mode in ('h2', 'postgres'): self.assertIn(reports.IDENTITY_ACTIVATION_UNIT, reports.expected_suites(mode))
@@ -1618,7 +1620,7 @@ class IdentitySessionInventoryTests(unittest.TestCase):
         self.assertEqual(re.findall(r'@Test\s+void\s+(session\w+)\s*\(', pg), reports.IDENTITY_SESSION_PG_REQUIRED)
         self.assertEqual(24, len(reports.IDENTITY_SESSION_UNIT_REQUIRED))
         self.assertEqual(23, len(reports.IDENTITY_SESSION_PG_REQUIRED))
-        self.assertEqual(348, len(reports.REQUIRED[reports.IDENTITY_GRANTS]))
+        self.assertEqual(370, len(reports.REQUIRED[reports.IDENTITY_GRANTS]))
         self.assertEqual(3, len(reports.TASK_C_SUITES))
         for mode in ('h2', 'postgres'): self.assertIn(reports.IDENTITY_SESSION_UNIT, reports.expected_suites(mode))
         self.assertNotIn(reports.IDENTITY_SESSION_UNIT, reports.expected_suites('architecture'))
@@ -1673,7 +1675,7 @@ class IdentityCurrentSessionInventoryTests(unittest.TestCase):
         self.assertEqual(re.findall(r'@Test\s+void\s+(currentSession\w+)\s*\(', pg), reports.IDENTITY_CURRENT_SESSION_PG_REQUIRED)
         self.assertEqual(21, len(reports.IDENTITY_CURRENT_SESSION_UNIT_REQUIRED))
         self.assertEqual(14, len(reports.IDENTITY_CURRENT_SESSION_PG_REQUIRED))
-        self.assertEqual(348, len(reports.REQUIRED[reports.IDENTITY_GRANTS]))
+        self.assertEqual(370, len(reports.REQUIRED[reports.IDENTITY_GRANTS]))
         self.assertEqual(3, len(reports.TASK_C_SUITES))
         self.assertNotIn('@Disabled', unit)
         for mode in ('h2', 'postgres'): self.assertIn(reports.IDENTITY_CURRENT_SESSION_UNIT, reports.expected_suites(mode))
@@ -1721,7 +1723,7 @@ class IdentityAdministrationInventoryTests(unittest.TestCase):
         self.assertEqual(re.findall(r'@Test\s+void\s+(admin\w+)\s*\(', pg), reports.IDENTITY_ADMIN_PG_REQUIRED)
         self.assertEqual(36, len(reports.IDENTITY_ADMIN_UNIT_REQUIRED))
         self.assertEqual(34, len(reports.IDENTITY_ADMIN_PG_REQUIRED))
-        self.assertEqual(348, len(reports.REQUIRED[reports.IDENTITY_GRANTS]))
+        self.assertEqual(370, len(reports.REQUIRED[reports.IDENTITY_GRANTS]))
         self.assertEqual(3, len(reports.TASK_C_SUITES))
         composition = (root / 'app/backend/src/main/java/com/elogistic/backend/identity/internal/infrastructure/ProductionIdentityAdministrationComposition.java').read_text(encoding='utf-8')
         self.assertNotRegex(composition, r'@(Bean|Component|Configuration|Controller|RestController)\b')
@@ -1767,7 +1769,7 @@ class ProductionIdentityHttpInventoryTests(unittest.TestCase):
         self.assertEqual(re.findall(r'@Test\s+void\s+(\w+)\s*\(',unit),reports.IDENTITY_HTTP_UNIT_REQUIRED)
         self.assertEqual(re.findall(r'@Test\s+void\s+(httpRead\w+)\s*\(',pg),reports.IDENTITY_HTTP_PG_REQUIRED)
         self.assertEqual(43,len(reports.IDENTITY_HTTP_UNIT_REQUIRED));self.assertEqual(18,len(reports.IDENTITY_HTTP_PG_REQUIRED))
-        self.assertEqual(348,len(reports.REQUIRED[reports.IDENTITY_GRANTS]));self.assertEqual(3,len(reports.TASK_C_SUITES))
+        self.assertEqual(370,len(reports.REQUIRED[reports.IDENTITY_GRANTS]));self.assertEqual(3,len(reports.TASK_C_SUITES))
         self.assertNotIn('@Disabled',unit)
 
     def test_each_http_security_case_must_execute_and_cannot_be_skipped(self):
@@ -1820,6 +1822,45 @@ class AuthenticationHttpReportTests(unittest.TestCase):
         marker='synthetic-private-authentication-marker';ET.SubElement(suite.find('testcase'),'error',message=marker).text=marker
         ET.SubElement(suite,'system-out').text=marker;suite.set('errors','1');self.save(suite);self.assertFalse(self.check('postgres'))
         self.assertNotIn(marker,''.join(p.read_text(encoding='utf-8') for p in self.output.iterdir()))
+
+class MerchantReportingInventoryTests(unittest.TestCase):
+    setUp = ReportGuardTests.setUp
+    fixture = ReportGuardTests.fixture
+    save = ReportGuardTests.save
+    check = ReportGuardTests.check
+
+    def test_merchant_reporting_inventory_matches_source_and_expected_gates(self):
+        root = Path(__file__).resolve().parents[2]
+        suffix = 'notifications.internal.application.BusinessReportingTests'
+        source = (root / ('app/backend/src/test/java/com/elogistic/backend/' + suffix.replace('.', '/') + '.java')).read_text(encoding='utf-8')
+        self.assertEqual(re.findall(r'@Test\s+void\s+(\w+)\s*\(', source), reports.CUSTOMER_ADMISSION_UNIT_REQUIRED[suffix])
+        pg = (root / 'app/backend/src/test/java/com/elogistic/backend/identity/internal/infrastructure/IdentityGrantApplicationTests.java').read_text(encoding='utf-8')
+        methods = re.findall(r'@Test\s+void\s+(businessReports\w+)\s*\(', pg)
+        self.assertEqual(11, len(reports.CUSTOMER_ADMISSION_UNIT_REQUIRED[suffix]))
+        self.assertEqual(5, len(methods))
+        self.assertEqual(methods, [m for m in reports.CUSTOMER_ADMISSION_PG_REQUIRED if m.startswith('businessReports')])
+        self.assertIn('reportingV28UpgradePreservesPopulatedBookingOrganizationAndExplicitGrants', reports.CUSTOMER_MIGRATION_PG_REQUIRED)
+
+    def test_every_reporting_unit_case_must_execute_without_skip_or_missing_evidence(self):
+        cls = reports.BASE + 'notifications.internal.application.BusinessReportingTests'
+        for mode in ('h2', 'postgres'):
+            self.fixture(mode)
+            path = self.source / ('TEST-' + cls + '.xml')
+            original = path.read_bytes()
+            for name in reports.REQUIRED[cls]:
+                for outcome in ('missing', 'skipped', 'failure', 'error'):
+                    with self.subTest(mode=mode, name=name, outcome=outcome):
+                        suite = ET.fromstring(original)
+                        case = next(c for c in suite if c.get('name') == name)
+                        if outcome == 'missing':
+                            suite.remove(case); suite.set('tests', str(len(suite.findall('testcase'))))
+                        else:
+                            ET.SubElement(case, outcome)
+                            suite.set({'skipped': 'skipped', 'failure': 'failures', 'error': 'errors'}[outcome], '1')
+                        self.save(suite)
+                        self.assertFalse(self.check(mode))
+            path.write_bytes(original)
+            self.assertTrue(self.check(mode))
 
 if __name__ == '__main__':
     unittest.main()

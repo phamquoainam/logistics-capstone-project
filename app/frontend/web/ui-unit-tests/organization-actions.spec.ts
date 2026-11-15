@@ -1,0 +1,38 @@
+import { test, expect } from '@playwright/test';
+import type { BrowserContext } from '@playwright/test';
+import { businessContextsFixture, organizationA } from './support/business-fixture';
+import type { TaskDetail, OrganizationTask } from '../src/customer/organization-actions-data';
+const account = '10000000-0000-4000-8000-000000000001', id = '10000000-0000-4000-8000-000000000031', base = '/merchant/' + organizationA;
+async function fixture(context: BrowserContext, mode = 'normal') {
+  let task: OrganizationTask = { id, organizationId: organizationA, facilityId: null, targetKind: 'SHIPMENT', targetId: id, type: 'SHIPMENT_FOLLOW_UP', title: 'Synthetic follow-up', state: 'OPEN', priority: 'HIGH', assigneeAccountId: account, dueAt: null, initialDueAt: null, version: 1, createdAt: '2026-11-15T00:00:00Z', updatedAt: '2026-11-15T00:00:00Z', completedAt: null, overdue: false, allowedActions: ['COMMENT', 'START', 'CANCEL', 'POLICY', 'ASSIGNMENT'] };
+  const events: TaskDetail['events'] = [{ id, operation: 'CREATE', actorAccountId: account, message: null, version: 1, occurredAt: task.createdAt }]; let denied = false;
+  const calls: { path: string; method: string; body: unknown }[] = []; const detail = () => ({ task, details: 'Synthetic internal review', events });
+  await context.route('**/api/v1/**', async route => {
+    const request = route.request(), url = new URL(request.url()), path = url.pathname, method = request.method(), body = request.postDataJSON();
+    const reply = (value: unknown, status = 200, etag?: string) => route.fulfill({ status, headers: { 'Cache-Control': 'no-store', ...(etag ? { ETag: etag } : {}) }, contentType: 'application/json', body: JSON.stringify(value) });
+    if (path.endsWith('/csrf')) return reply({ challenge: 'synthetic-csrf' }); if (path.endsWith('/refresh')) return reply({ accountId: account, accessToken: 'synthetic-access', expiresAt: new Date(Date.now() + 900000).toISOString() }); if (path.endsWith('/me')) return reply({ accountId: account, displayName: 'Synthetic Customer', verifiedEmail: 'synthetic@example.invalid', securityVersion: 1 });
+    if (path.endsWith('/business-contexts')) return reply({ schemaVersion: 'BUSINESS_CONTEXTS_V1', items: businessContextsFixture.map(c => ({ ...c, permissions: ['dashboard.read', 'shipment.draft.read', 'shipment.actions.manage', 'shipment.actions.respond'] })) });
+    calls.push({ path, method, body }); if (denied && path.includes('/action-')) return reply({ code: 'RESOURCE_NOT_FOUND' }, 404);
+    if (path.endsWith('/shipment-preparations')) return reply({ items: [], page: 0, size: 20, hasNext: false });
+    if (path.endsWith('/action-tasks')) { const matches = !url.searchParams.has('state') || url.searchParams.get('state') === task.state; return reply({ items: matches ? [mode === 'foreign' ? { ...task, organizationId: account } : task] : [], page: 0, size: 20, hasNext: false, total: matches ? 1 : 0, counts: Object.fromEntries(['OPEN', 'IN_PROGRESS', 'AWAITING_REVIEW', 'COMPLETED', 'CANCELLED'].map(state => [state, matches && state === task.state ? 1 : 0])), generatedAt: task.createdAt }); }
+    if (path.endsWith('/action-tasks/' + id)) return reply(detail(), 200, '"v' + task.version + '"');
+    if (path.endsWith('/transitions') || path.endsWith('/comments')) {
+      const op = path.endsWith('/comments') ? 'COMMENT' : body.action; const state = ({ START: 'IN_PROGRESS', REQUEST_REVIEW: 'AWAITING_REVIEW', COMPLETE: 'COMPLETED', CANCEL: 'CANCELLED' } as const)[op as 'START'] ?? task.state;
+      task = { ...task, state, version: task.version + 1, completedAt: state === 'COMPLETED' ? task.updatedAt : null, allowedActions: state === 'IN_PROGRESS' ? ['COMMENT', 'REQUEST_REVIEW'] : state === 'AWAITING_REVIEW' ? ['COMMENT', 'COMPLETE'] : state === 'COMPLETED' ? ['REOPEN'] : [] };
+      events.push({ id: '20000000-0000-4000-8000-' + String(task.version).padStart(12, '0'), operation: op, actorAccountId: account, message: body.message, version: task.version, occurredAt: task.updatedAt }); return mode === 'uncertain' ? reply({ broken: true }) : reply(detail(), 200, '"v' + task.version + '"');
+    }
+    if (path.includes('/action-task-receipts/')) return reply({ operationId: 'START', targetId: id, outcome: 'COMMITTED', version: task.version });
+    return reply({ code: 'RESOURCE_NOT_FOUND' }, 404);
+  }); return { calls, revoke: () => { denied = true; } };
+}
+test('internal workflow has real response and manager-review screens without Carrier controls', async ({ page, context }, info) => {
+  const api = await fixture(context); await page.goto(base + '/shipments?category=ACTION'); await page.getByRole('button', { name: 'Công việc nội bộ', exact: true }).click(); await expect(page.locator('.ot-total')).toHaveText('1 công việc phù hợp'); await page.getByRole('button', { name: 'Synthetic follow-up', exact: true }).click();
+  for (const [operation, button, state] of [['START', 'Bắt đầu xử lý', 'Đang xử lý'], ['REQUEST_REVIEW', 'Gửi quản lý duyệt', 'Chờ quản lý duyệt'], ['COMPLETE', 'Duyệt hoàn tất', 'Đã hoàn tất nội bộ']]) { await page.getByRole('combobox', { name: 'Thao tác', exact: true }).selectOption(operation); await page.getByLabel('Nội dung / Lý do', { exact: true }).fill('Synthetic workflow response'); await page.getByRole('button', { name: button, exact: true }).click(); await expect(page.locator('.ot-detail .ot-status')).toHaveText(state); }
+  await expect(page.locator('.ot-history li')).toHaveCount(4); expect(api.calls.filter(c => c.method !== 'GET').every(c => c.path.includes('/action-tasks/'))).toBe(true); await expect(page.getByRole('button', { name: 'Xác nhận thu tiền', exact: true })).toHaveCount(0); await page.setViewportSize({ width: 390, height: 844 }); expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true); await page.screenshot({ path: info.outputPath('internal-work-mobile-synthetic.png'), fullPage: true, animations: 'disabled' });
+});
+test('unknown task write is resolved with receipt and never sent twice', async ({ page, context }) => {
+  const api = await fixture(context, 'uncertain'); await page.goto(base + '/shipments?category=ACTION'); await page.getByRole('button', { name: 'Công việc nội bộ', exact: true }).click(); await page.getByRole('button', { name: 'Synthetic follow-up', exact: true }).click(); await page.getByRole('combobox', { name: 'Thao tác', exact: true }).selectOption('START'); await page.getByLabel('Nội dung / Lý do', { exact: true }).fill('Synthetic start'); await page.getByRole('button', { name: 'Bắt đầu xử lý', exact: true }).click(); await expect(page.getByRole('button', { name: 'Kiểm tra kết quả công việc', exact: true })).toBeVisible(); await expect(page.getByRole('button', { name: 'Bắt đầu xử lý', exact: true })).toBeDisabled(); await page.getByRole('button', { name: 'Kiểm tra kết quả công việc', exact: true }).click(); await expect(page.locator('.ot-detail .ot-status')).toHaveText('Đang xử lý'); expect(api.calls.filter(c => c.path.endsWith('/transitions'))).toHaveLength(1);
+});
+test('revoked current queue clears task contents instead of showing old work or fake zero', async ({ page, context }) => {
+  const api = await fixture(context); await page.goto(base + '/shipments?category=ACTION'); await page.getByRole('button', { name: 'Công việc nội bộ', exact: true }).click(); await expect(page.locator('.ot-total')).toHaveText('1 công việc phù hợp'); api.revoke(); await page.getByRole('button', { name: 'Làm mới', exact: true }).click(); await expect(page.locator('.ot-board [role=alert]')).toBeVisible(); await expect(page.locator('.ot-board')).not.toContainText('Synthetic follow-up'); await expect(page.locator('.ot-total')).toHaveCount(0);
+});

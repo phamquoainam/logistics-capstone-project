@@ -27,9 +27,10 @@ public final class BusinessPreparationHttp {
         public boolean eligibleAccount(UUID id){requireCurrent();return c.subjects().containsKey(id)&&c.subjects().get(id).eligible();}
     };}
     <T>T execute(String organizationId,Function<BusinessPreparations.Access,T> work){return executeWithContext(organizationId,(a,c)->work.apply(a));}
-    <T>T executeWithContext(String organizationId,java.util.function.BiFunction<BusinessPreparations.Access,CustomerAdmission.Context,T> work){
+    <T>T executeWithContext(String organizationId,java.util.function.BiFunction<BusinessPreparations.Access,CustomerAdmission.Context,T> work){return executeWithContext(organizationId,Set.of(),work);}
+    <T>T executeWithContext(String organizationId,Set<UUID> referencedAccounts,java.util.function.BiFunction<BusinessPreparations.Access,CustomerAdmission.Context,T> work){
         UUID org=uuid(organizationId);var request=requests.current();try{
-            var subjects=admission.execute(request.encodedAccess(),request.requestId(),Set.of(),c->workspaces.references(merchant(c),org));
+            var subjects=new HashSet<>(admission.execute(request.encodedAccess(),request.requestId(),Set.of(),c->workspaces.references(merchant(c),org)));subjects.addAll(referencedAccounts);
             return admission.execute(request.encodedAccess(),request.requestId(),subjects,c->workspaces.inOrganization(merchant(c),org,scope->work.apply(new BusinessPreparations.Access(){
                 public UUID actorAccountId(){requireCurrent();return c.actor().accountId();}public UUID requestId(){requireCurrent();return c.requestId();}
                 public BusinessWorkspaces.Scope scope(){requireCurrent();return scope;}public void requireCurrent(){admission.requireCurrent(c);scope.requireCurrent();}
@@ -37,7 +38,8 @@ public final class BusinessPreparationHttp {
             },c)));
         }catch(BusinessPreparations.Failure|BusinessWorkspaces.Failure rejected){throw problem(switch(rejected.getMessage()){
             case "VALIDATION_FAILED"->400;case "RESOURCE_NOT_FOUND","BUSINESS_CONTEXT_UNAVAILABLE"->404;
-            case "PRECONDITION_STALE","IDEMPOTENCY_CONFLICT","SOURCE_REFERENCE_CONFLICT","SOURCE_REFERENCE_IMMUTABLE","IMPORT_ROW_NOT_VALID"->409;default->503;
+            case "PRECONDITION_STALE","IDEMPOTENCY_CONFLICT","SOURCE_REFERENCE_CONFLICT","SOURCE_REFERENCE_IMMUTABLE","IMPORT_ROW_NOT_VALID","ASSIGNMENT_NO_CHANGE","ACTION_TARGET_STATE_CONFLICT"->409;case "ACTION_NOT_ALLOWED"->403;
+            case "EXPORT_LIMIT_EXCEEDED","REPORT_LIMIT_EXCEEDED","ACTION_HISTORY_LIMIT_EXCEEDED"->422;default->503;
         },rejected.getMessage());}
     }
     private static void query(HttpServletRequest r,boolean list){if(!(list?Set.of("page","size"):Set.of()).containsAll(r.getParameterMap().keySet())||r.getParameterMap().values().stream().anyMatch(v->v.length!=1))throw problem(400,"VALIDATION_FAILED");}
