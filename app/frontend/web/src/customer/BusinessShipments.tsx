@@ -1,30 +1,63 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { customerClient, CustomerApiError } from './client';
 import type { BusinessPreparation, BusinessShipmentView } from './client';
 import type { BusinessContext } from './business-data';
+import type { OrganizationManagementItem } from './business-management-data';
 import { SavedShippingSnapshot } from './ShipmentEntryFields';
 import { pilotMoney } from './PilotShipping';
+import { BusinessShipmentTabs } from './BusinessShipmentTabs';
+import { OrganizationAssignment, OrganizationInternalHistory } from './OrganizationAssignment';
+import { detailTabs, shipmentDate } from './shipment-management';
+import { organizationReturn } from './organization-management';
+import './organization-management.css';
+export { OrganizationShipmentList as BusinessShipmentList } from './OrganizationManagement';
 
 function message(error: unknown) { return error instanceof CustomerApiError && error.status === 404 ? 'Vận đơn không tồn tại hoặc quyền truy cập đã thay đổi.' : 'Chưa tải được dữ liệu. Hãy kiểm tra kết nối và thử lại.'; }
-function SourceFacts({ data }: { data: BusinessPreparation }) {
-  return <section className="pw-panel"><div className="se-card-body"><h2>Nguồn đơn doanh nghiệp</h2><dl className="se-facts"><div><dt>Nguồn đơn</dt><dd>{data.sourceChannel ?? 'Không khai báo'}</dd></div><div><dt>Mã đơn nguồn</dt><dd>{data.sourceOrderReference ?? 'Không khai báo'}</dd></div><div><dt>Kho / điểm gửi</dt><dd>{data.facilityId ? <code className="bp-parcel-code">{data.facilityId}</code> : 'Chưa gắn kho'}</dd></div></dl><p className="se-hint">Nguồn đơn và thông tin kho đã được gắn tại Booking, không thay đổi theo sổ địa chỉ cá nhân.</p></div></section>;
-}
-export function BusinessShipmentList({ context }: { context: BusinessContext }) {
-  const [page, setPage] = useState(0), [search, setSearch] = useState(''), [applied, setApplied] = useState(''), [revision, setRevision] = useState(0);
-  const [result, setResult] = useState<{ key: string; data?: Awaited<ReturnType<typeof customerClient.listBusinessShipments>>; error?: string }>();
-  const key = context.organizationId + ':' + context.authorityVersion + ':' + page + ':' + applied + ':' + revision, base = '/merchant/' + context.organizationId;
-  useEffect(() => { let current = true; void customerClient.listBusinessShipments(context, page, applied).then(data => { if (current) setResult({ key, data }); }).catch(e => { if (current) setResult({ key, error: message(e) }); }); return () => { current = false; }; }, [context, page, applied, key]);
-  const current = result?.key === key ? result : undefined;
-  return <section className="bp-workspace"><div className="bw-heading"><div><span className="pw-eyebrow">{context.displayName}</span><h1>Vận đơn doanh nghiệp</h1><p>Đơn đã xác nhận Booking, đang chờ bàn giao.</p></div><Link className="pw-primary" to={base + '/create'}>Tạo vận đơn</Link></div><form className="bw-panel bp-filter" onSubmit={e => { e.preventDefault(); setPage(0); setApplied(search.trim()); }}><label htmlFor="business-shipment-search">Tìm vận đơn</label><input id="business-shipment-search" maxLength={160} placeholder="Mã vận đơn, tham chiếu, người nhận" value={search} onChange={e => setSearch(e.target.value)} /><button className="pw-secondary">Tìm kiếm</button><button type="button" className="sd-link" onClick={() => setRevision(v => v + 1)}>Làm mới</button></form>
-    {!current ? <p role="status">Đang tải vận đơn…</p> : current.error ? <p role="alert">{current.error}</p> : current.data && <><div className="bw-panel bp-list"><table><thead><tr><th>Vận đơn / ngày tạo</th><th>Người nhận</th><th>Kiện</th><th>Trạng thái</th><th>Cước</th><th>Chi tiết</th></tr></thead><tbody>{current.data.items.map(({ shipment: s }) => <tr key={s.id}><td>{s.code}<small>{new Date(s.createdAt).toLocaleString('vi-VN')}</small></td><td>{s.input.recipient.name}<small>{s.input.reference}</small></td><td>{s.parcels.length}</td><td>Chờ bàn giao<small>UNPAID</small></td><td>{pilotMoney(s.totalVnd)}</td><td><Link to={base + '/shipments/' + s.id}>Xem chi tiết</Link></td></tr>)}</tbody></table>{!current.data.items.length && <p className="bp-empty">Không có vận đơn phù hợp.</p>}</div><nav className="ab-pagination" aria-label="Phân trang vận đơn doanh nghiệp"><button className="pw-secondary" disabled={page === 0} onClick={() => setPage(v => v - 1)}>Trang trước</button><span>Trang {page + 1}</span><button className="pw-secondary" disabled={!current.data.hasNext} onClick={() => setPage(v => v + 1)}>Trang sau</button></nav></>}
-  </section>;
+function SourceFacts({ data, item }: { data: BusinessPreparation; item: OrganizationManagementItem }) {
+  return <section className="om-info"><h2>Nguồn đơn doanh nghiệp</h2><dl className="se-facts"><div><dt>Nguồn đơn</dt><dd>{data.sourceChannel ?? 'Không khai báo'}</dd></div><div><dt>Mã đơn nguồn</dt><dd>{data.sourceOrderReference ?? 'Không khai báo'}</dd></div><div><dt>Kho / điểm gửi</dt><dd>{data.facilityId ? <code className="bp-parcel-code">{data.facilityId}</code> : 'Không gắn kho'}</dd></div><div><dt>Người tạo</dt><dd><code className="bp-parcel-code">{item.record.shipment.creatorAccountId}</code></dd></div><div><dt>Đợt nhập file</dt><dd>{item.source.importJobIds.length ? item.source.importJobIds.map(id => <code className="bp-parcel-code" key={id}>{id}</code>) : 'Không có'}</dd></div></dl><p className="se-hint">Dữ liệu nguồn được gắn tại Booking. Kho Merchant và đợt nhập không phải Station hoặc đợt Carrier nhận hàng.</p></section>;
 }
 export function BusinessShipmentDetail({ context, id }: { context: BusinessContext; id: string }) {
-  const [data, setData] = useState<BusinessShipmentView>(), [preparation, setPreparation] = useState<BusinessPreparation>(), [error, setError] = useState(''), [revision, setRevision] = useState(0), [busy, setBusy] = useState(false);
-  const base = '/merchant/' + context.organizationId;
-  useEffect(() => { let current = true; void customerClient.readBusinessShipment(context, id).then(async v => { const source = await customerClient.readBusinessPreparation(context, v.shipment.preparationId); if (source.state !== 'BOOKED' || source.version !== v.shipment.preparationVersion + 1 || source.facilityId !== v.shipment.facilityId) throw new CustomerApiError('RESPONSE_INVALID'); if (current) { setData(v); setPreparation(source); setError(''); } }).catch(e => { if (current) { setData(undefined); setPreparation(undefined); setError(message(e)); } }); return () => { current = false; }; }, [context, id, revision]);
-  async function label() { if (busy) return; setBusy(true); setError(''); try { const blob = await customerClient.downloadBusinessLabel(context, id), url = URL.createObjectURL(blob), anchor = document.createElement('a'); anchor.href = url; anchor.download = 'argopost-' + id + '.pdf'; anchor.click(); window.setTimeout(() => URL.revokeObjectURL(url), 1000); } catch (e) { setError(message(e)); } finally { setBusy(false); } }
-  return <section className="sd-page se-entry"><div className="pw-page-heading"><div><span className="pw-eyebrow">{context.displayName}</span><h1 tabIndex={-1}>Chi tiết vận đơn doanh nghiệp</h1></div><Link className="pw-secondary" to={base + '/shipments'}>Danh sách vận đơn</Link></div>{error && <div className="cp-notice cp-error"><p role="alert">{error}</p><button className="sd-link" onClick={() => setRevision(v => v + 1)}>Tải lại</button></div>}{!data ? !error && <p role="status">Đang tải vận đơn…</p> : <><div className="pb-shipment-heading"><h2 className="pb-code">{data.shipment.code}</h2><span className="pb-unpaid">UNPAID</span><span>Chờ bàn giao</span></div><div className="se-review-grid"><SavedShippingSnapshot input={data.shipment.input} /><div className="se-column">{preparation && <SourceFacts data={preparation} />}<section className="pw-panel"><div className="se-card-body"><h2>Cước & bàn giao</h2><dl className="se-facts"><div><dt>Doanh nghiệp sở hữu</dt><dd>{context.displayName}</dd></div><div><dt>Ngày Booking</dt><dd>{new Date(data.shipment.createdAt).toLocaleString('vi-VN')}</dd></div><div><dt>Tuyến</dt><dd>{data.shipment.quote.route.originCode} → {data.shipment.quote.route.destinationCode}</dd></div><div><dt>Điểm bàn giao</dt><dd>{data.shipment.quote.route.dropOffCode}</dd></div><div><dt>Hợp đồng / phiên bản</dt><dd>v{data.shipment.quote.contractVersion} · {data.shipment.quote.tariffVersion}</dd></div><div><dt>Người thanh toán</dt><dd>Người gửi</dd></div></dl>{data.shipment.quote.feeLines.map(l => <div className="pb-fee-line" key={l.parcelNumber}><span>Kiện {l.parcelNumber}<small>Thực {l.actualGrams} g · Tính cước {l.chargeableGrams} g</small></span><strong>{pilotMoney(l.feeVnd)}</strong></div>)}<div className="pb-total"><span>Cước đã xác nhận</span><strong>{pilotMoney(data.obligation.amountVnd)}</strong></div><p className="se-hint">Booking chưa đồng nghĩa Carrier đã nhận hàng. Nghĩa vụ UNPAID chưa được thu tiền. Chưa hỗ trợ COD, Pickup, ETA cam kết hoặc hóa đơn thuế.</p><small>{data.obligation.policyVersion}</small></div></section><section className="pw-panel"><div className="se-card-body"><h2>Kiện hàng & nhãn</h2>{data.shipment.parcels.map(p => <p className="se-review-note" key={p.id}><strong>Kiện {p.parcelNumber}</strong><br /><code className="bp-parcel-code">AP-P-{p.id.replaceAll('-', '')}</code></p>)}{context.permissions.includes('shipment.label.read') ? <button className="pw-primary" disabled={busy} onClick={() => { void label(); }}>{busy ? 'Đang tải…' : 'Tải nhãn tất cả kiện'}</button> : <p className="se-hint">Cần quyền đọc nhãn doanh nghiệp.</p>}<p className="se-hint">Nhãn 100 × 150 mm, Code128; giữ đầy đủ trang tiếp nối. In nhãn không xác nhận đã bàn giao.</p></div></section></div></div></>}
+  const [params, setParams] = useSearchParams(), tabValue = params.get('tab') ?? 'overview', tab = (detailTabs as readonly string[]).includes(tabValue) ? tabValue : 'overview';
+  const [result, setResult] = useState<{ key: string; data?: BusinessShipmentView; preparation?: BusinessPreparation; item?: OrganizationManagementItem; error?: string }>();
+  const [revision, setRevision] = useState(0), [historyRevision, setHistoryRevision] = useState(0), [busy, setBusy] = useState(false), [downloadError, setDownloadError] = useState('');
+  const lifecycle = useRef({ active: true, running: false, generation: 0 });
+  const key = context.organizationId + ':' + context.authorityVersion + ':' + id + ':' + revision;
+  const back = organizationReturn(context.organizationId, params.get('returnTo'));
+  const actionReturn = back.startsWith('/merchant/' + context.organizationId + '/shipments?') && new URL(back, 'https://local.invalid').searchParams.get('category') === 'ACTION';
+  useEffect(() => { const state = lifecycle.current; state.active = true; state.generation++; return () => { state.active = false; state.generation++; }; }, [context, id]);
+  useEffect(() => { let active = true;
+    void customerClient.readBusinessShipment(context, id).then(async data => {
+      const preparation = await customerClient.readBusinessPreparation(context, data.shipment.preparationId);
+      const page = await customerClient.readOrganizationManagement(context, new URLSearchParams({ search: data.shipment.code }));
+      const item = page.items.find(row => row.record.shipment.id === id);
+      if (!item || item.record.shipment.quote.id !== data.shipment.quote.id || item.record.shipment.totalVnd !== data.shipment.totalVnd || preparation.state !== 'BOOKED' || preparation.version !== data.shipment.preparationVersion + 1 || preparation.facilityId !== data.shipment.facilityId) throw new CustomerApiError('RESPONSE_INVALID');
+      if (active) setResult({ key, data, preparation, item });
+    }).catch(error => { if (active) setResult({ key, error: message(error) }); });
+    return () => { active = false; };
+  }, [context, id, key]);
+  const current = result?.key === key ? result : undefined, data = current?.data, item = current?.item;
+  function change(value: string) { const next = new URLSearchParams(params); if (value === 'overview') next.delete('tab'); else next.set('tab', value); setParams(next, { replace: true }); }
+  async function label() {
+    const state = lifecycle.current, generation = state.generation, identity = customerClient.getSnapshot();
+    if (state.running || !item?.allowedActions.includes('READ_LABEL')) return;
+    state.running = true; setBusy(true); setDownloadError('');
+    try { const blob = await customerClient.downloadBusinessLabel(context, id);
+      if (!state.active || state.generation !== generation || customerClient.getSnapshot() !== identity) return;
+      const url = URL.createObjectURL(blob), anchor = document.createElement('a'); anchor.href = url; anchor.download = 'argopost-' + id + '.pdf'; anchor.click(); window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) { if (state.active && state.generation === generation) setDownloadError(message(error)); }
+    finally { state.running = false; if (state.active && state.generation === generation) setBusy(false); }
+  }
+  return <section className="sd-page se-entry om-detail"><div className="pw-page-heading"><div><span className="pw-eyebrow">{context.displayName}</span><h1 tabIndex={-1}>Chi tiết vận đơn doanh nghiệp</h1></div><Link className="pw-secondary" to={back}>{actionReturn ? 'Quay lại đơn cần xử lý' : back.startsWith('/merchant/' + context.organizationId + '/reports') ? 'Quay lại báo cáo' : back.startsWith('/merchant/' + context.organizationId + '/finance') ? 'Quay lại cước & đối soát' : 'Danh sách vận đơn'}</Link></div>
+    {!current ? <p role="status">Đang tải vận đơn…</p> : current.error ? <div className="cp-notice cp-error"><p role="alert">{current.error}</p><button className="sd-link" onClick={() => setRevision(v => v + 1)}>Tải lại</button></div> : data && item && <>
+      <div className="pb-shipment-heading"><h2 className="pb-code">{data.shipment.code}</h2><span className="pb-unpaid">UNPAID</span><span>Chờ bàn giao</span></div>
+      <BusinessShipmentTabs data={data} tab={tab} change={change} download={() => { void label(); }} busy={busy} canLabel={item.allowedActions.includes('READ_LABEL')} history={<OrganizationInternalHistory key={context.organizationId + ':' + id + ':' + context.authorityVersion} context={context} id={id} revision={historyRevision} />} />
+      {tab === 'overview' && <div id="business-panel-overview" role="tabpanel" tabIndex={0} aria-labelledby="business-tab-overview" className="se-review-grid"><SavedShippingSnapshot input={data.shipment.input} /><div className="se-column">
+        {current.preparation && <SourceFacts data={current.preparation} item={item} />}
+        <OrganizationAssignment key={context.organizationId + ':' + id + ':' + context.authorityVersion} context={context} item={item} changed={() => setHistoryRevision(v => v + 1)} />
+        <section className="om-info"><h2>Cước & bàn giao</h2><dl className="se-facts"><div><dt>Ngày Booking</dt><dd>{shipmentDate(data.shipment.createdAt)}</dd></div><div><dt>Tuyến</dt><dd>{data.shipment.quote.route.originCode} → {data.shipment.quote.route.destinationCode}</dd></div><div><dt>Điểm bàn giao dự kiến</dt><dd>{data.shipment.quote.route.dropOffCode}</dd></div></dl><div className="pb-total"><span>Cước đã xác nhận</span><strong>{pilotMoney(data.obligation.amountVnd)}</strong></div><p className="se-hint">Carrier chưa tiếp nhận. Booking không xác nhận đã thu tiền.</p></section>
+        <section className="om-info"><h2>Kiện hàng & nhãn</h2><p>{data.shipment.parcels.length} kiện đã có định danh riêng.</p>{item.allowedActions.includes('READ_LABEL') ? <button type="button" className="pw-primary" disabled={busy} onClick={() => { void label(); }}>{busy ? 'Đang tải…' : 'Tải nhãn tất cả kiện'}</button> : <p>Cần quyền đọc nhãn tại kho của vận đơn.</p>}<p className="se-hint">PDF 100 × 150 mm, Code128 và đầy đủ trang tiếp nối.</p></section>
+      </div></div>}
+    </>}{downloadError && <p role="alert">{downloadError}</p>}
   </section>;
 }

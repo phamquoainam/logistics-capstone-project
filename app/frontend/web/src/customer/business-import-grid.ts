@@ -1,4 +1,4 @@
-import type { BusinessPreparationInput, DraftParcel } from './client';
+import type { BusinessPreparationInput, DraftParcel, DraftContact } from './client';
 
 export const importColumns = [
   ['sourceOrderReference', 'source_order_reference', 'Mã đơn nguồn', 'source', 160, 80],
@@ -30,6 +30,13 @@ export const parcelColumns = importColumns.filter(c => c[3] === 'parcel');
 export type ParcelCell = 'description' | 'quantity' | 'weightGrams' | 'lengthCm' | 'widthCm' | 'heightCm' | 'declaredValueVnd';
 export type RawParcel = Record<ParcelCell, string>;
 export type ImportGridRow = { id: string; cells: Record<ImportColumn, string>; extras: RawParcel[]; rawParcels?: string };
+/** Explicit local copy only: no preview, create, Booking or edits to locked rows. */
+export function applyOrganizationContactRows(rows: ImportGridRow[], selected: Set<string>, locked: Set<string>, kind: 'sender' | 'recipient', contact: DraftContact): ImportGridRow[] {
+  if (!selected.size || selected.size > 100 || [...selected].some(id => !rows.some(row => row.id === id))) throw new Error('ROW_SELECTION_REQUIRED');
+  if ([...selected].some(id => locked.has(id))) throw new Error('ROW_LOCKED');
+  const patch = { [kind + 'Name']: contact.name, [kind + 'Phone']: contact.phone, [kind + 'Country']: contact.address.country, [kind + 'AdministrativeArea']: contact.address.administrativeArea, [kind + 'Locality']: contact.address.locality, [kind + 'AddressLine']: contact.address.addressLine };
+  return rows.map(row => selected.has(row.id) ? { ...row, cells: { ...row.cells, ...patch } } : row);
+}
 export const canonicalHeaders = ['source_channel', 'source_order_reference', 'sender_name', 'sender_phone', 'sender_country', 'sender_administrative_area', 'sender_locality', 'sender_address_line', 'recipient_name', 'recipient_phone', 'recipient_country', 'recipient_administrative_area', 'recipient_locality', 'recipient_address_line', 'parcels_json', 'reference', 'instructions'];
 export const flatHeaders = importColumns.map(c => c[1]);
 export const flatLabels = importColumns.map(c => c[2] + (c[0] === 'reference' || c[0] === 'instructions' ? '' : '*'));

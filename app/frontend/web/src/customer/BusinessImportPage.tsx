@@ -1,10 +1,11 @@
+import { OrganizationContactPicker } from './OrganizationContacts';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { customerClient, CustomerApiError } from './client';
 import type { BusinessImportJob, BusinessPreparationOperation } from './client';
 import type { BusinessContext } from './business-data';
 import { BusinessEntryMode } from './ShipmentEntryFields';
-import { applyGridPaste, blankImportRow, exportCsv, flatCsvTemplate, hasImportData, importColumns, localCellIssues, rowFromPreparation, serverCsv } from './business-import-grid';
+import { applyOrganizationContactRows, applyGridPaste, blankImportRow, exportCsv, flatCsvTemplate, hasImportData, importColumns, localCellIssues, rowFromPreparation, serverCsv } from './business-import-grid';
 import type { ImportColumn, ImportGridRow } from './business-import-grid';
 import { exportImportExcel, readImportFile } from './business-import-files';
 import { fieldName, ImportIcon, importErrorNames, ParcelDialog, WorksheetDialog, WorksheetGrid } from './ImportWorksheet';
@@ -133,6 +134,7 @@ export function BusinessImportWorkspace({ context }: { context: BusinessContext 
   return <section className="ig-workspace bp-workspace" ref={root} aria-busy={busy}>
     <div className="ig-heading"><div><h1>Nhập đơn hàng từ file</h1><p>{context.displayName} <span>· CSV & Excel</span></p></div><div className="ig-heading-actions"><button className="pw-primary" disabled={busy || uncertain} onClick={() => file.current?.click()}><ImportIcon name="file" />Mở file</button><button className="pw-secondary" disabled={busy || uncertain} onClick={() => setDialog('templates')}><ImportIcon name="down" />Tải file mẫu</button><button className="pw-secondary" disabled={busy || uncertain} onClick={() => { setHistoryPage(0); setDialog('history'); }}><ImportIcon name="history" />Lịch sử nhập file</button></div></div>
     <BusinessEntryMode base={base} mode="import" canImport={context.permissions.includes('shipment.import')} blocked={busy || uncertain} confirmLeave={() => !dirty || checked || window.confirm('Chuyển sang tạo thủ công? Dữ liệu chưa gửi trong bảng nhập sẽ không được giữ.')} />
+    <details className="ig-contact-copy"><summary>Áp dụng danh bạ cho dòng được chọn</summary><p className="se-hint">Chỉ thay các ô liên hệ trong dòng được chọn, chưa lưu nháp hoặc Booking.</p>{(['sender', 'recipient'] as const).map(kind => <section key={kind}><h3>{kind === 'sender' ? 'Người gửi' : 'Người nhận'}</h3><OrganizationContactPicker selectionVersion={String(grid.revision) + ':' + [...selected].sort().join(',')} context={context} kind={kind === 'sender' ? 'SENDER' : 'RECIPIENT'} facilityId={null} disabled={busy || uncertain || !selected.size || [...selected].some(id => locked.has(id))} value={{ name: '', phone: '', address: { country: 'VN', administrativeArea: '', locality: '', addressLine: '' } }} change={contact => { if (busy || uncertain || !window.confirm('Thay liên hệ cho ' + selected.size + ' dòng được chọn? Nội dung cũ trong các ô này sẽ được thay.')) return; try { mutate(applyOrganizationContactRows(grid.rows, selected, locked, kind, contact)); } catch (e) { setError(message(e)); } }} /></section>)}</details>
     <input ref={file} className="ig-file-input" tabIndex={-1} type="file" aria-label="Chọn file CSV hoặc Excel" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" disabled={busy || uncertain} onChange={e => { const chosen = e.target.files?.[0]; e.target.value = ''; if (chosen) void openFile(chosen); }} />
     {error && <p role="alert" className="cp-notice cp-error">{error}</p>}{uncertain && <button className="pw-secondary" disabled={busy} onClick={() => { void resolve(); }}>Kiểm tra kết quả nhập</button>}
     <div className="ig-sheet"><div className="ig-toolbar"><label className="ig-search"><ImportIcon name="search" /><input aria-label="Tìm trong bảng nhập" placeholder="Tìm mã đơn, người nhận, số điện thoại…" value={search} onChange={e => setSearch(e.target.value)} /></label><div className="ig-tools">

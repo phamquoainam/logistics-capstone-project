@@ -18,7 +18,8 @@
     "test:e2e": "playwright test",
     "lint": "eslint . --max-warnings 0",
     "test": "playwright test --config playwright-unit.config.ts",
-    "test:customer-ui": "playwright test --config playwright-customer-ui.config.ts"
+    "test:customer-ui": "playwright test --config playwright-customer-ui.config.ts",
+    "test:organization-dev-ui": "playwright test --config playwright-organization-dev.config.ts"
   },
   "dependencies": {
     "@elogistics/api-client": "file:../../../packages/api-client",

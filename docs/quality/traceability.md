@@ -1,5 +1,76 @@
 # Traceability Matrix (living document)
 
+## Merchant Operations Reports & Finance V1 — Owner-directed, 2026-11-15
+
+Subsequent explicit Owner activation approval: verified build is now running on
+localhost; the exact NamShop Demo Owner received only the two new report/Finance
+read grants through audited operator request
+`e523cf7f-42c2-4ea6-acc3-46598f2863d4`. HTTPS readiness and unchanged source-data/
+other-authority/migration fingerprints PASS; V28 was already applied and no
+migration ran. Live authenticated UI/API verification awaits the Owner because
+Computer Use stopped on Windows browser URL-confidence policy. The historical
+implementation-only deployment limitations below are superseded only for this
+explicitly approved target; see the updated checkpoint for the exact scope.
+
+Owner accepted [MRF-01–07 and the exact read/export contract](../implementation/merchant-reports-finance-contract.proposed.md).
+Business **Quản lý → Báo cáo vận hành Merchant / Cước, COD & Đối soát** reuses
+spec002 current Identity, spec003 Organization/Membership, spec006 immutable
+Shipment/Parcel snapshots and existing Pricing/Finance APIs. This is bounded
+Local/Test reporting, not full Merchant Finance or Carrier acceptance.
+
+MRF-03 maps to scoped Business menu/screens, exact chart filters, bounded unbound
+contributions and safe same-Organization report/detail return. MRF-04 maps to
+Orders `BusinessReportSources` and notifications `BusinessReportingService`:
+whole-cohort Booking/Parcel/weight/calendar/dimension sums plus separately labelled
+current preparation states and CREATE/BOOK events. MRF-05 maps to independent
+`shipment.finance.read`, immutable Quote/contract/UNPAID binding validation and
+exact integer VND/grams; missing Finance scope is null, including empty cohorts.
+MRF-06 maps to literal CSV/XLSX, explicit scoped export permission and append-only
+V28 access history; no contacts or raw search are retained. Reopening history
+recomputes current data and rechecks current grants, not an archived invoice.
+
+MRF-01–07 LOCAL IMPLEMENTATION DONE: PG18 1,132 PASS/5 policy skips, H2 685 PASS/17
+policy skips, Architecture23, migration61, actual HTTPS/PG18/test-SMTP Browser16
+and parent1, Frontend unit145/affected UI37, lint/typecheck/builds, report-policy132,
+source validator and privacy/cleanup PASS. Final frontend-only 366-day mobile
+chart containment was reproduced, corrected and passed reporting9 UI/build/lint;
+Backend source remains the revision verified by the full PG gate.
+Details and environment limitations: [implementation checkpoint](../implementation/merchant-reports-finance-checkpoint.md).
+V1–V27 remain unchanged, V28 test databases only, no automatic/real account grants
+or localhost migration. The original PostgreSQL container was restored HEALTHY
+with its identity/data intact after the owned disposable test. No new hosted
+PR/CI, commit/push/merge, scheduled email, COD/collection/payout, commercial
+invoice, payment write or Carrier source is claimed.
+
+## Organization Shipment Management V1 — Owner-directed, 2026-11-15
+
+Owner accepted [OSM-01–07 and the exact management contract](../implementation/organization-shipment-management-contract.proposed.md).
+This bounded Local/Test extension reuses spec002 current Identity admission,
+spec003 Organization/Membership, spec006 immutable Shipment/Parcel facts, the
+accepted BSC-06 shared Booking/UNPAID contracts and Orders-owned private labels.
+It does not declare any complete canonical spec or Carrier/Finance lifecycle accepted.
+
+Menu **Business → Quản lý → Quản lý vận đơn** maps to a scoped captured Orders
+cohort, independently checked Finance obligations, existing Draft workflow, eight
+distinct detail tabs, authorized CSV/XLSX/PDF output and separate internal
+assignment history. OSM-04 maps to `OrganizationShipmentManagementHttp` and
+`JdbcBusinessShipmentManagement`; OSM-05 to explicit export/PII permissions and
+append-only access audit; OSM-06 to current Identity/Merchant scope, ETag `aN`,
+HMAC receipts and V27 deferred event/receipt invariants. Facility-only menu
+visibility is checked through the accepted management read, not widened grants.
+
+Observed evidence and remaining gate/deployment status are maintained in the
+[implementation checkpoint](../implementation/organization-shipment-management-checkpoint.md).
+OSM-01–07 LOCAL DONE: PG18 1,115 PASS/5 policy skips, H2 674 PASS/17 policy skips,
+Architecture23, actual HTTPS/PG18/test-SMTP Browser16 plus parent1, frontend
+unit136/UI28, lint/typecheck/builds, report-policy130, source validator and
+Testcontainers privacy/cleanup PASS. No failures were bypassed. These are local
+observations, not hosted CI or a declaration of full Merchant acceptance.
+V1–V26 and localhost data are preserved; V27 is exercised on disposable databases.
+Future lifecycle categories explain their missing source rather than manufacturing
+transit/delivery/return/cancellation/Claim facts. No PAID, COD, Pickup, Carrier
+acceptance, Production enablement, runtime grant or actual customer PII is added.
+
 ## ArgoPost Milestone B — bounded Station intake, 2026-11-02
 
 BC140/182 (Orders-owned labels), spec009 tracking and spec011 Station/custody map
@@ -1228,3 +1299,47 @@ from the Business sidebar, preserve routes/data and in-flow links; current-path
 Create highlighting includes their list/detail screens. UI30/30, lint and both
 typechecked builds PASS. Owner authorized normal push/PR/merge after mandatory
 hosted CI; local V26 migration and operator activation remain outside this command.
+
+### Owner 2026-11-15: Organization Action Center and Address Book
+
+OAA-01-06 DONE under the [Owner-accepted V1 contract](../implementation/organization-action-address-contract.proposed.md).
+All57 prior pending paths preserved with SHA-256; no worktree or source discard.
+Merchant owns contact/current versions, lifecycle/default bindings, actor-bound
+receipts and metadata audit. Directory/search/import/export enforce current
+Organization/facility grants and PII boundaries; contacts remain UNVERIFIED and
+separate from Identity, Personal and Coverage. Snapshot copying re-reads active
+contacts and cannot overwrite newer input or an existing Booking.
+
+Orders owns durable internal work, scoped assignment, responder replies/review,
+manager completion, deadlines and immutable history. Workflow composes Orders and
+Notifications APIs atomically. Own in-app notices contain task metadata only and
+recheck current target access. Completing work never mutates Carrier Tracking,
+Shipment acceptance/delivery, Finance, COD or compensation. Existing Draft and
+unassigned queues keep actual source filters, paging and return context.
+
+Observed gates: nine new PostgreSQL HTTP/race tests PASS; migration61 and pinned
+PostgreSQL18 suite7 PASS for additive V29/V30 with populated-upgrade preservation.
+Architecture23 PASS; H2 clean verify702 discovered/685 PASS/17 expected PG skips,
+report policy PASS. Actual HTTPS/PostgreSQL/test-SMTP Browser17 and parent1 PASS,
+including database assertions and session cleanup. Affected UI13 and StrictMode
+UI8 PASS, focused units7 PASS, typecheck/lint/Customer build PASS; report-policy132
+PASS and accepted contract/source validators PASS. Earlier failures and corrected
+causes are retained privately, not counted as PASS. See the
+[checkpoint](../implementation/organization-action-address-checkpoint.md) for exact
+scope and exact verification commands. OAA-07 source/local verification DONE:
+full Identity PostgreSQL370/370, PostgreSQL Foundation8/8, privacy and owned-resource
+audits PASS; frontend whole unit155, production UI13 and development UI8 PASS.
+CI adds only the development regression for the observed StrictMode file-worker
+defect; existing gates/assertions/TLS remain intact. Hosted PR CI remains pending.
+
+OAA-08 DONE2026-11-16 after separate explicit Owner deployment approval: same
+existing PostgreSQL container healthy; verified JAR classes/migrations matched;
+Flyway28->30; all pre-existing table fingerprints and V1-V28 checksums preserved.
+Exactly six new Organization contact/action permissions granted to the confirmed
+NamShop Demo Customer, with one operator audit/receipt; other grants and data
+preserved. HTTPS Frontend/Backend200 and anonymous private APIs401/no-store PASS.
+Owner confirmed both authenticated directory/internal-work screens open without
+errors. Computer-use initialization was unavailable and is not reported as a live
+automated browser PASS. No synthetic local contacts/tasks or Carrier/Finance facts.
+Runtime remains ready; no commit/push/PR/merge or new hosted-CI claim in this run.
+No full-platform acceptance or external notification/Claim/Carrier expansion.

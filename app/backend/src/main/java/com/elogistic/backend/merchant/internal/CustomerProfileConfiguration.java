@@ -22,6 +22,8 @@ import tools.jackson.core.StreamReadFeature;
 /** Existing Merchant module hosts a separate personal aggregate, with no org or Identity SQL dependency. */
 @Configuration @Profile("customer")
 public class CustomerProfileConfiguration {
+    @Bean JdbcOrganizationContacts organizationContacts(DataSource source,MerchantFingerprints fingerprints,@Qualifier("identityHttpClock")Clock clock,Environment env){boolean enabled=Set.of("LOCAL","TEST").contains(env.getProperty("shipping.pilot.environment","DISABLED"))&&"SANDBOX".equals(env.getProperty("customer.rollout"))&&!env.acceptsProfiles(org.springframework.core.env.Profiles.of("production","prod"));return new JdbcOrganizationContacts(source,fingerprints,clock,enabled);}
+    @Bean com.elogistic.backend.merchant.api.customer.OrganizationContactTransfers organizationContactTransfers(DataSource source,JdbcOrganizationContacts contacts,MerchantFingerprints fingerprints,@Qualifier("identityHttpClock")Clock clock){return new JdbcOrganizationContactTransfers(source,contacts,fingerprints,clock);}
     @Bean com.elogistic.backend.merchant.api.customer.PilotCoverage pilotCoverage(DataSource source,CustomerAdmission admission,@Qualifier("identityHttpClock")Clock clock){return new JdbcPilotCoverage(source,admission,clock);}
     private static final JsonMapper JSON=JsonMapper.builder().enable(StreamReadFeature.STRICT_DUPLICATE_DETECTION).build();
     @Bean
