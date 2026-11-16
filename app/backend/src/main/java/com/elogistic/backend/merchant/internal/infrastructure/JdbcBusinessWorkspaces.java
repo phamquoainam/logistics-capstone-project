@@ -9,7 +9,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 public final class JdbcBusinessWorkspaces implements BusinessWorkspaces {
     private final DataSource source; private final JdbcTemplate jdbc; private final boolean enabled; private final String environment;
-    private static final Set<String> PERMISSIONS=Set.of("dashboard.read","dashboard.finance.read","dashboard.staff.read","shipment.draft.read","shipment.draft.write","shipment.import","shipment.template.manage","shipment.prepare","shipment.quote","shipment.book","shipment.label.read","facility.manage","defaults.manage","shipment.export","shipment.export.pii","shipment.assign","shipment.reports.read","shipment.finance.read","contacts.read","contacts.write","contacts.import","contacts.export","shipment.actions.manage","shipment.actions.respond");
+    private static final Set<String> PERMISSIONS=Set.of("dashboard.read","dashboard.finance.read","dashboard.staff.read","shipment.draft.read","shipment.draft.write","shipment.import","shipment.template.manage","shipment.prepare","shipment.quote","shipment.book","shipment.label.read","shipment.handover.read","shipment.handover.manage","facility.read","facility.manage","defaults.manage","shipment.export","shipment.export.pii","shipment.assign","shipment.reports.read","shipment.finance.read","contacts.read","contacts.write","contacts.import","contacts.export","shipment.actions.manage","shipment.actions.respond");
     public JdbcBusinessWorkspaces(DataSource source,boolean enabled,String environment){this.source=source;this.jdbc=new JdbcTemplate(source);this.enabled=enabled;this.environment=environment;}
     public static void requireSchema(DataSource source){
         try(var c=source.getConnection();var s=c.createStatement();var r=s.executeQuery("""
@@ -72,6 +72,13 @@ public final class JdbcBusinessWorkspaces implements BusinessWorkspaces {
             }
             public void requireActiveFacility(UUID facility){
                 requireCurrent();if(facility!=null&&jdbc.queryForObject("SELECT count(*) FROM merchant.facility WHERE id=? AND organization_id=? AND state='ACTIVE'",Integer.class,facility,id)!=1)throw new Failure("BUSINESS_CONTEXT_UNAVAILABLE");
+            }
+            public boolean eligibleFacilityMember(UUID account,UUID facility){
+                requireCurrent();return account!=null&&a.eligibleAccount(account)&&jdbc.queryForObject("SELECT count(*) FROM merchant.membership m WHERE m.organization_id=? AND m.account_id=? AND m.state='ACTIVE' AND EXISTS(SELECT 1 FROM merchant.member_grant g WHERE g.membership_id=m.id AND g.permission='facility.read' AND (g.scope='ORGANIZATION' OR g.facility_id=?::uuid))",Integer.class,id,account,facility)==1;
+            }
+            public List<AssignmentMember> facilityMembers(UUID facility,int page){
+                requireCurrent();if(page<0||!permits("facility.read",facility)||!permits("facility.manage",facility))throw new Failure("BUSINESS_CONTEXT_UNAVAILABLE");
+                return List.copyOf(jdbc.query("SELECT m.account_id,m.id,m.role FROM merchant.membership m WHERE m.organization_id=? AND m.state='ACTIVE' AND EXISTS(SELECT 1 FROM merchant.member_grant g WHERE g.membership_id=m.id AND g.permission='facility.read' AND (g.scope='ORGANIZATION' OR g.facility_id=?::uuid)) ORDER BY m.account_id LIMIT 21 OFFSET ?",(r,n)->new AssignmentMember(r.getObject(1,UUID.class),r.getObject(2,UUID.class),r.getString(3)),id,facility,Math.multiplyExact((long)page,20)));
             }
             public boolean memberExists(UUID account){requireCurrent();return account!=null&&jdbc.queryForObject("SELECT count(*) FROM merchant.membership WHERE organization_id=? AND account_id=?",Integer.class,id,account)==1;}
             public boolean facilityExists(UUID facility){requireCurrent();return facility!=null&&jdbc.queryForObject("SELECT count(*) FROM merchant.facility WHERE organization_id=? AND id=?",Integer.class,id,facility)==1;}

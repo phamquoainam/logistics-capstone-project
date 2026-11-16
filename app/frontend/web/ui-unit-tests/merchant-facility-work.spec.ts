@@ -1,0 +1,28 @@
+import { test, expect } from '@playwright/test';
+import { merchantWorkFixture } from './support/merchant-work-fixture';
+import { organizationA } from './support/business-fixture';
+import { siteId } from './support/merchant-facility-fixture';
+const path = '/merchant/' + organizationA + '/facilities/' + siteId;
+test('preparation checks every actual parcel before packing and readiness stays internal', async ({ page, context }) => {
+  const api = await merchantWorkFixture(context); await page.goto(path); await page.getByRole('button', { name: 'Chuẩn bị & Bàn giao', exact: true }).click(); await page.getByRole('button', { name: 'Xem chuẩn bị kiện', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Xác nhận đã đóng gói', exact: true })).toBeDisabled();
+  for (const n of [1, 2]) { await page.getByLabel('Kết quả kiện ' + n, { exact: true }).selectOption('OK'); await page.getByRole('button', { name: 'Lưu kiểm tra kiện ' + n, exact: true }).click(); await expect.poll(() => api.work.preparation.checks.length).toBe(n); await expect(page.getByRole('button', { name: 'Lưu kiểm tra kiện ' + n, exact: true })).toBeEnabled(); }
+  await page.getByRole('button', { name: 'Xác nhận đã đóng gói', exact: true }).click(); await expect(page.getByRole('button', { name: 'Sẵn sàng bàn giao nội bộ', exact: true })).toBeVisible(); await page.getByRole('button', { name: 'Sẵn sàng bàn giao nội bộ', exact: true }).click(); await expect(page.locator('.fw-detail header')).toContainText('Sẵn sàng bàn giao');
+  expect(api.work.preparation.version).toBe(5); expect(api.workWrites.every(w => !/carrier|payment|custody|tracking/.test(w.path))).toBe(true);
+  await page.getByLabel('Lý do kiểm tra lại', { exact: true }).fill('Synthetic recount'); await page.getByRole('button', { name: 'Mở lại kiểm tra kiện', exact: true }).click(); await expect(page.getByLabel('Kết quả kiện 1', { exact: true })).toHaveValue(''); await expect(page.getByRole('button', { name: 'Xác nhận đã đóng gói', exact: true })).toBeDisabled();
+});
+test('handover treats missing as unresolved and a printable list never becomes Carrier acceptance', async ({ page, context }, info) => {
+  const api = await merchantWorkFixture(context); api.work.preparation.state = 'READY_TO_HANDOVER'; api.work.preparation.checks = api.work.preparation.parcels.map(p => ({ parcelId: p.id, result: 'OK', note: null })); api.work.preparation.allowedActions = ['REOPEN'];
+  await page.goto(path); await page.getByRole('button', { name: 'Chuẩn bị & Bàn giao', exact: true }).click(); await page.getByRole('button', { name: 'Danh sách bàn giao nội bộ', exact: true }).click(); await page.getByRole('button', { name: 'Mở đối chiếu kiện', exact: true }).click();
+  await page.getByLabel('Kết quả kiện 1', { exact: true }).selectOption('MISSING'); await page.getByRole('button', { name: 'Lưu kiểm tra kiện 1', exact: true }).click(); await expect.poll(() => api.work.batch.checks.length).toBe(1); await expect(page.getByRole('button', { name: 'Xác nhận sẵn sàng bàn giao', exact: true })).toBeDisabled();
+  for (const n of [1, 2]) { await page.getByLabel('Kết quả kiện ' + n, { exact: true }).selectOption('PRESENT'); await page.getByRole('button', { name: 'Lưu kiểm tra kiện ' + n, exact: true }).click(); await expect(page.getByRole('button', { name: 'Lưu kiểm tra kiện ' + n, exact: true })).toBeEnabled(); }
+  await page.getByRole('button', { name: 'Xác nhận sẵn sàng bàn giao', exact: true }).click(); await expect(page.locator('.fw-detail header')).toContainText('Sẵn sàng bàn giao'); await expect(page.locator('.fw-boundary')).toContainText('không phải biên nhận Carrier');
+  const download = page.waitForEvent('download'); await page.getByRole('button', { name: 'Tải danh sách PDF', exact: true }).click(); expect((await download).suggestedFilename()).toMatch(/^argopost-handover-/);
+  await page.setViewportSize({ width: 390, height: 844 }); expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true); await page.screenshot({ path: info.outputPath('merchant-handover-mobile-synthetic.png'), fullPage: true, animations: 'disabled' });
+});
+test('unknown check blocks site navigation until actor receipt resolves without duplicate mutation', async ({ page, context }) => {
+  const api = await merchantWorkFixture(context); await page.goto(path); await page.getByRole('button', { name: 'Chuẩn bị & Bàn giao', exact: true }).click(); await page.getByRole('button', { name: 'Xem chuẩn bị kiện', exact: true }).click(); api.work.unknownNext = true;
+  await page.getByLabel('Kết quả kiện 1', { exact: true }).selectOption('OK'); await page.getByRole('button', { name: 'Lưu kiểm tra kiện 1', exact: true }).click(); await expect(page.getByRole('button', { name: 'Kiểm tra kết quả chuẩn bị' })).toBeVisible(); await expect(page.getByRole('button', { name: 'Liên hệ & Giờ hoạt động', exact: true })).toBeDisabled(); expect(api.workWrites).toHaveLength(1);
+  const receipt = page.waitForResponse(r => r.url().includes('/facility-work-receipts/')); await page.getByRole('button', { name: 'Kiểm tra kết quả chuẩn bị' }).click(); expect((await receipt).status()).toBe(200); await expect(page.getByRole('button', { name: 'Làm mới công việc', exact: true })).toBeEnabled(); await expect(page.getByLabel('Kết quả kiện 1', { exact: true })).toHaveValue('OK'); expect(api.workWrites).toHaveLength(1);
+  api.work.denied = true; await page.getByRole('button', { name: 'Làm mới công việc', exact: true }).click(); await expect(page.getByRole('alert')).toContainText('Không còn quyền'); await expect(page.locator('.fw-detail')).toHaveCount(0);
+});

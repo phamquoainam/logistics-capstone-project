@@ -19,6 +19,8 @@ public interface BusinessWorkspaces {
         boolean permits(String permission,UUID facilityId);
         void requireActiveFacility(UUID facilityId);
         Set<UUID> facilities(String permission);
+        default boolean eligibleFacilityMember(UUID account,UUID facility){throw new Failure("BUSINESS_MEMBERSHIP_QUERY_UNAVAILABLE");}
+        default List<AssignmentMember> facilityMembers(UUID facility,int page){throw new Failure("BUSINESS_MEMBERSHIP_QUERY_UNAVAILABLE");}
         default boolean memberExists(UUID account){throw new Failure("BUSINESS_MEMBERSHIP_QUERY_UNAVAILABLE");}
         default boolean facilityExists(UUID facility){throw new Failure("BUSINESS_FACILITY_QUERY_UNAVAILABLE");}
         default boolean eligibleAssignee(UUID account,UUID facility){throw new Failure("BUSINESS_MEMBERSHIP_QUERY_UNAVAILABLE");}
