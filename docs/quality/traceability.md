@@ -1343,3 +1343,48 @@ errors. Computer-use initialization was unavailable and is not reported as a liv
 automated browser PASS. No synthetic local contacts/tasks or Carrier/Finance facts.
 Runtime remains ready; no commit/push/PR/merge or new hosted-CI claim in this run.
 No full-platform acceptance or external notification/Claim/Carrier expansion.
+
+
+## Merchant facilities V1 checkpoint - 2026-11-16
+
+Owner accepted WFP-02. WFP-03/04/05/06 DONE with focused PG18/HTTP/domain/PDF,
+UI and actual HTTPS Browser evidence: Merchant directory/defaults/current
+responsibilities -> explicit site-bound Booking -> real Parcel preparation ->
+internal handover reconciliation and private PDF. Root Business menu and source
+reports preserve Organization/site/financial scope; no Personal data reuse.
+
+Merchant owns site master/default/team; Orders owns internal work/checks/lists;
+Workflow composes current Identity/Merchant admission in the same transaction.
+V31/V32 are additive source migrations tested on disposable PG18; V1-V30 remain
+unchanged. Responsibilities do not grant rights. Ready-to-handover is not Carrier
+acceptance, payment, pickup or custody. Every printable list says simulation and
+not-Carrier-acceptance. Current permission/replay/receipt/ETag and DB evidence
+invariants are covered, including races/fault rollback and Production denial.
+
+WFP-07 local gates DONE:691 H2/architecture PASS (17 configured skips),163
+Frontend units,36 distinct affected UI tests,18 real HTTPS Browser journeys;
+corrective PG run102 PASS (5 configured skips), all62 migration cases. Combined
+unedited raw regression reports verify1155 PASS/5 skips/0 failures;739 production
+class/resource hashes identical across original and corrective runs. Original
+failed counts and later corrections retained; this is incremental local evidence,
+not one fresh hosted CI run. Report-policy selftests132 OK, credential privacy,
+cleanup, source manifest and whitespace checks PASS. WFP-08 live migration/
+real-account grants required separate GO, subsequently received and executed below. See
+[checkpoint](../implementation/merchant-facilities-checkpoint.md) for exact tested
+scope, evidence and bounded deployment proposal. No new hosted CI or PR claim.
+
+
+WFP-08 separate Owner GO received and executed2026-11-16: original local PG18.6
+container started, V30 -> V32 via official Flyway launcher, private custom backup
+and before/after original-column data fingerprints/history/checksums preserved.
+Exactly the confirmed NamShop Demo target has the six approved Facility/internal
+handover rights with operator audit; unrelated grants/memberships/data unchanged.
+Existing secrets/TLS retained. Backend8443 and Frontend5173 HTTPS ready, public
+checks200 and protected anonymous API/proxy checks401. No fixture/site/Shipment
+seed, Carrier/Pickup/Payment expansion or hosted CI claim. WFP-08 local deployment
+DONE; Owner-session visual check requested because both computer-use backends
+failed kernel-assets initialization. Existing18-journey synthetic-runtime Browser
+evidence remains distinct from the subsequent manual Owner confirmation: directory
+and Add Site button display correctly without permission/loading errors. WFP-08
+manual screen verification CLOSED; no additional real-account CRUD/Booking or
+Carrier workflow was inferred from this confirmation.
