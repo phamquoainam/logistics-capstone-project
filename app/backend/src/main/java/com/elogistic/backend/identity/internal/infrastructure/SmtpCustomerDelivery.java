@@ -92,15 +92,17 @@ public final class SmtpCustomerDelivery implements CustomerDeliveryTransport {
             String domain=settings.sender().substring(settings.sender().lastIndexOf('@')+1),messageId="<"+intent.id()+"@"+domain+">";
             MimeMessage message=new MimeMessage(session){@Override protected void updateMessageID()throws MessagingException{setHeader("Message-ID",messageId);}};
             message.setFrom(new InternetAddress(settings.sender(),true));message.setRecipient(jakarta.mail.Message.RecipientType.TO,new InternetAddress(intent.destination(),true));
+            boolean membership=intent.proof().purpose()==CustomerProof.Purpose.MERCHANT_MEMBERSHIP;
             boolean recovery=intent.proof().purpose()==CustomerProof.Purpose.CUSTOMER_RECOVERY;
             message.setSubject(recovery?"movapost. - Xác minh khôi phục mật khẩu":"movapost. - Xác minh địa chỉ email","UTF-8");message.setSentDate(Date.from(clock.instant()));
             String path=switch(intent.proof().purpose()){
-                case CUSTOMER_ENROLLMENT->"/verify-email";case CUSTOMER_RECOVERY->"/recover/confirm";
+                case CUSTOMER_ENROLLMENT->"/verify-email";case CUSTOMER_RECOVERY->"/recover/confirm";case MERCHANT_MEMBERSHIP->"/organization-invitations/"+intent.proof().subjectId();
                 case SECURITY_EMAIL_CHANGE->"/personal/security";case BUSINESS_CONTACT->"/personal/profile";case LEGACY_CUSTOMER_LINK->"/personal/security/link-customer";
                 default->throw configuration();
             };
             String link=settings.portalOrigin()+path+"#proofId="+intent.proof().id()
                 +(intent.proof().emailOtp()?"&expiresAt="+intent.proof().expiresAt():"&proof="+new String(token,StandardCharsets.US_ASCII));
+            if(membership)link=settings.portalOrigin()+path+"#proof="+new String(token,StandardCharsets.US_ASCII);
             boolean otp=intent.proof().emailOtp();
             String code=otp?new String(token,0,6,StandardCharsets.US_ASCII):"";
             String title=recovery?"Xác minh khôi phục mật khẩu":"Xác minh địa chỉ email của bạn";
@@ -108,6 +110,7 @@ public final class SmtpCustomerDelivery implements CustomerDeliveryTransport {
             String content=otp
                 ?"movapost.\n"+title+"\n\n"+(recovery?"":"Chào mừng bạn đến với movapost.\n\n")+instruction+"\n\n"+code+"\nMã có hiệu lực trong 2 phút.\n\nNếu bạn không thực hiện yêu cầu này, hãy bỏ qua email.\n\nmovapost. — Gửi niềm tin, nối hành trình."
                 :"movapost.\n"+title+"\n\nMở liên kết sau để tiếp tục:\n"+link+"\nNếu bạn không thực hiện yêu cầu này, hãy bỏ qua email.";
+            if(membership){message.setSubject("ArgoPost - Lời mời tham gia doanh nghiệp","UTF-8");content="ArgoPost\nLời mời tham gia doanh nghiệp\n\nBạn được mời tham gia một doanh nghiệp trên ArgoPost. Mở lời mời và xác nhận bằng tài khoản đã xác minh chính địa chỉ email nhận thư này. Nếu chưa có tài khoản, hãy đăng ký và xác minh email trước.\n\n"+link+"\n\nLời mời có hiệu lực trong72 giờ và chỉ dùng một lần. Không chia sẻ liên kết này. Nếu không mong đợi lời mời, bạn có thể từ chối hoặc bỏ qua.\n\nArgoPost — Gửi niềm tin, nối hành trình.";}
             if(otp){
                 var plain=new MimeBodyPart();plain.setText(content,"UTF-8");
                 var html=new MimeBodyPart();html.setContent("<!doctype html><html lang=\"vi\"><body style=\"margin:0;background:#f4f6fa;font-family:Arial,sans-serif;color:#192d4b\"><table role=\"presentation\" style=\"max-width:560px;width:100%;margin:32px auto;background:#fff;border-radius:12px\"><tr><td style=\"padding:32px\"><div style=\"font-size:28px;font-weight:800;letter-spacing:-1px\"><span style=\"color:#1955a6\">mova</span><span style=\"color:#ef751b\">post.</span></div><h1 style=\"font-size:21px;margin:28px 0 16px\">"+title+"</h1>"+(recovery?"":"<p>Chào mừng bạn đến với movapost.</p>")+"<p style=\"line-height:1.7\">"+instruction+"</p><div style=\"background:#fff5eb;border-radius:8px;text-align:center;padding:22px;margin:24px 0\"><strong style=\"font-size:34px;letter-spacing:8px;color:#192d4b\">"+code+"</strong><p style=\"font-size:13px;color:#67748a;margin:12px 0 0\">Có hiệu lực trong 2 phút</p></div><p style=\"font-size:14px;line-height:1.7\">Nếu bạn không thực hiện yêu cầu này, hãy bỏ qua email.</p><p style=\"border-top:1px solid #e9edf3;padding-top:22px;font-size:12px;color:#67748a\">movapost. — Gửi niềm tin, nối hành trình.</p></td></tr></table></body></html>","text/html; charset=UTF-8");

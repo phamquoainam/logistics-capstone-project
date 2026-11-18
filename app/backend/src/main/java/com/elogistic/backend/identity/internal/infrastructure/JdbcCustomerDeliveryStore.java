@@ -13,7 +13,9 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 /** Enrollment and version-bound recovery delivery; other purposes require their own current-authority checks. */
 public final class JdbcCustomerDeliveryStore implements CustomerDeliveryStore {
     private final JdbcIdentityGrantStore accounts;private final JdbcTemplate jdbc;
-    public JdbcCustomerDeliveryStore(DataSource source){accounts=new JdbcIdentityGrantStore(Objects.requireNonNull(source));jdbc=new JdbcTemplate(source);}
+    private final CustomerProofProtection protection;private final java.util.function.Supplier<com.elogistic.backend.identity.api.customer.CustomerMembershipDeliveryAdmission> memberships;
+    public JdbcCustomerDeliveryStore(DataSource source){this(source,null,()->(i,p,o,a,n,e)->false);}
+    public JdbcCustomerDeliveryStore(DataSource source,CustomerProofProtection protection,java.util.function.Supplier<com.elogistic.backend.identity.api.customer.CustomerMembershipDeliveryAdmission> memberships){accounts=new JdbcIdentityGrantStore(Objects.requireNonNull(source));jdbc=new JdbcTemplate(source);this.protection=protection;this.memberships=memberships;}
     private static Timestamp stamp(Instant time){return time==null?null:Timestamp.from(time);}
     private static Instant instant(ResultSet r,String column)throws SQLException{var value=r.getTimestamp(column);return value==null?null:value.toInstant();}
     private <T>T owned(Function<IdentityGrantStore.Transaction,T> work){
@@ -64,6 +66,14 @@ public final class JdbcCustomerDeliveryStore implements CustomerDeliveryStore {
     }
     private Optional<String> eligible(CustomerProof proof,Instant now){
         try{proof.requireAvailable(now);}catch(DomainViolation invalid){return Optional.empty();}
+        if(proof.purpose()==CustomerProof.Purpose.MERCHANT_MEMBERSHIP){
+            UUID issuer=jdbc.queryForObject("SELECT account_id FROM identity.customer_proof WHERE id=?",UUID.class,proof.id());
+            java.util.function.Predicate<UUID> eligible=id->jdbc.queryForObject("SELECT count(*) FROM identity.user_account a JOIN identity.customer_identifier i ON i.account_id=a.id AND i.status='ACTIVE' AND i.exact_email=a.email COLLATE \"C\" WHERE a.id=? AND a.status='ACTIVE' AND a.email_verified",Integer.class,id)==1;
+            if(protection==null||!eligible.test(issuer)||!memberships.get().current(proof.subjectId(),proof.id(),proof.organizationId(),issuer,now,eligible))return Optional.empty();
+            return jdbc.query("SELECT verifier_key_id,encryption_key_id,recipient_nonce,recipient_ciphertext FROM identity.customer_delivery WHERE proof_id=?",(r,n)->{
+                byte[] nonce=r.getBytes(3),ciphertext=r.getBytes(4);try{return protection.openDestination(proof,r.getString(1),r.getString(2),nonce,ciphertext,now);}finally{if(nonce!=null)Arrays.fill(nonce,(byte)0);if(ciphertext!=null)Arrays.fill(ciphertext,(byte)0);}
+            },proof.id()).stream().findFirst();
+        }
         if(proof.purpose()==CustomerProof.Purpose.CUSTOMER_RECOVERY){
             return jdbc.query("SELECT a.email FROM identity.user_account a JOIN identity.customer_identifier c ON c.account_id=a.id AND c.status='ACTIVE' AND c.exact_email=a.email COLLATE \"C\" WHERE a.id=? AND a.status='ACTIVE' AND a.email_verified AND a.auth_version=?",(r,n)->r.getString(1),proof.subjectId(),proof.authVersion()).stream().findFirst();
         }
@@ -73,7 +83,7 @@ public final class JdbcCustomerDeliveryStore implements CustomerDeliveryStore {
             (r,n)->r.getString(1),proof.id(),stamp(now)).stream().findFirst();
     }
     @Override public Optional<Lease> claim(Instant now){return owned(tx->{
-        var candidate=jdbc.query("SELECT d.id,d.proof_id,p.subject_id FROM identity.customer_delivery d JOIN identity.customer_proof p ON p.id=d.proof_id WHERE p.purpose IN ('CUSTOMER_ENROLLMENT','CUSTOMER_RECOVERY') AND d.status IN ('QUEUED','SENDING','RETRY_WAIT','BLOCKED') AND d.due_at<=? AND (d.status<>'SENDING' OR d.lease_until<=?) ORDER BY d.due_at,d.id LIMIT 1",
+        var candidate=jdbc.query("SELECT d.id,d.proof_id,CASE WHEN p.purpose='MERCHANT_MEMBERSHIP' THEN p.account_id ELSE p.subject_id END FROM identity.customer_delivery d JOIN identity.customer_proof p ON p.id=d.proof_id WHERE p.purpose IN ('CUSTOMER_ENROLLMENT','CUSTOMER_RECOVERY','MERCHANT_MEMBERSHIP') AND d.status IN ('QUEUED','SENDING','RETRY_WAIT','BLOCKED') AND d.due_at<=? AND (d.status<>'SENDING' OR d.lease_until<=?) ORDER BY d.due_at,d.id LIMIT 1",
             (r,n)->List.of(r.getObject(1,UUID.class),r.getObject(2,UUID.class),r.getObject(3,UUID.class)),stamp(now),stamp(now)).stream().findFirst();
         if(candidate.isEmpty())return Optional.empty();var ids=candidate.get();tx.lockAccount(ids.get(2));var proof=proof(ids.get(1));var before=delivery(ids.getFirst());
         var destination=eligible(proof,now);
@@ -89,7 +99,8 @@ public final class JdbcCustomerDeliveryStore implements CustomerDeliveryStore {
         },after.id()));
     });}
     @Override public boolean finish(Lease lease,CustomerDeliveryTransport.Outcome outcome,Instant now){return owned(tx->{
-        tx.lockAccount(lease.proof().subjectId());var currentProof=proof(lease.proof().id());var before=delivery(lease.delivery().id());
+        UUID lock=lease.proof().purpose()==CustomerProof.Purpose.MERCHANT_MEMBERSHIP?jdbc.queryForObject("SELECT account_id FROM identity.customer_proof WHERE id=?",UUID.class,lease.proof().id()):lease.proof().subjectId();
+        tx.lockAccount(lock);var currentProof=proof(lease.proof().id());var before=delivery(lease.delivery().id());
         if(Set.of(CustomerDelivery.Status.DELIVERED,CustomerDelivery.Status.ACCEPTED_BY_PROVIDER,CustomerDelivery.Status.FAILED,CustomerDelivery.Status.EXPIRED).contains(before.status()))return false;
         if(!Objects.equals(before.leaseId(),lease.delivery().leaseId()) || before.version()!=lease.delivery().version())return false;
         if(eligible(currentProof,now).isEmpty() || !now.isBefore(before.expiresAt())){

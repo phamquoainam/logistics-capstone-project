@@ -1,0 +1,38 @@
+.bst-page { display:grid;gap:22px;min-width:0; }
+.bst-page .bw-heading { margin:0; }
+.bst-page h1 { margin:4px 0 8px;font-size:28px; }
+.bst-page h2 { font-size:19px;margin:0 0 12px; }
+.bst-page h3 { font-size:16px; }
+.bst-page p,.bst-page li { line-height:1.7; }
+.bst-page small { color:#60748e;display:block;line-height:1.6; }
+.bst-page label { display:grid;gap:8px;font-size:14px;min-width:0; }
+.bst-page input:not([type=checkbox]),.bst-page select,.bst-page textarea { border:1px solid #cfdae8;border-radius:9px;padding:11px 12px;background:#fff;color:#0b2d5b;font:inherit;min-width:0;max-width:100%; }
+.bst-page input:focus-visible,.bst-page select:focus-visible,.bst-page textarea:focus-visible { outline:2px solid #ba5700;outline-offset:2px; }
+.bst-page input[type=checkbox] { accent-color:#bd5700;width:17px;height:17px; }
+.bst-card,.bst-search,.bst-contract,.bst-result,.bst-preview { padding:24px; }
+.bst-search { display:grid;grid-template-columns:220px 1fr auto;align-items:end;gap:20px; }
+.bst-catalog-grid { display:grid;grid-template-columns:1fr 1fr;gap:20px; }
+.bst-quotation,.bst-results { display:grid;gap:20px; }
+.bst-contract,.bst-results>header,.bst-preview>header,.bst-section-heading,.bst-quote-row>header { display:flex;align-items:center;justify-content:space-between;gap:16px; }
+.bst-actions { display:flex;flex-wrap:wrap;gap:12px;margin:18px 0; }
+.bst-match { display:flex;align-items:center;justify-content:space-between;gap:16px;border-top:1px solid #e1e8f1;padding:16px 0; }
+.bst-match strong,.bst-match span { display:block; }
+.bst-page code,.bst-match strong,.bst-quote-row h3 { overflow-wrap:anywhere; }
+.bst-drafts { display:grid;grid-template-columns:1fr 1fr;gap:10px; }
+.bst-page .bst-drafts label { display:flex;flex-direction:row;align-items:center;border:1px solid #dce5ef;padding:14px;border-radius:10px;text-align:left; }
+.bst-drafts input { flex:none; }
+.bst-drafts label>span { min-width:0;overflow-wrap:anywhere; }
+.bst-drafts label:has(:checked) { background:#fff5ea;border-color:#ff7a00; }
+.bst-page .bst-check { display:flex;flex-direction:row;align-items:start;gap:10px;margin:16px 0; }
+.bst-check input { flex:none; }
+.bst-quote-row { padding:20px 0;border-top:1px solid #dce5ef; }
+.bst-page .bst-quote-row>header { padding:0;border:0; }
+.bst-page .bst-quote-row>header>span { color:#a64c00;font-weight:700;font-size:18px; }
+.bst-page .bst-card h2 { font-size:18px;margin:0 0 12px; }
+.bst-quote-row .pw-primary { display:inline-flex;margin-top:16px; }
+.bst-preview object { display:block;width:100%;height:560px;border:1px solid #dce5ef;border-radius:8px; }
+.bst-measures { display:grid;grid-template-columns:1fr 1fr;gap:16px; }
+.bst-page .om-table td>small { margin-top:8px; }
+.bst-page .om-table td>a { display:block;margin-top:12px; }
+@media(max-width:1000px) { .bst-search { grid-template-columns:1fr; }.bst-catalog-grid { grid-template-columns:1fr; } }
+@media(max-width:600px) { .bst-card,.bst-search,.bst-contract,.bst-result,.bst-preview { padding:18px; }.bst-drafts { grid-template-columns:1fr; }.bst-contract,.bst-results>header,.bst-match,.bst-preview>header,.bst-section-heading,.bst-quote-row>header { align-items:stretch;flex-direction:column; }.bst-preview object { height:420px; }.bst-page h1 { font-size:24px; } }

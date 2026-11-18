@@ -9,6 +9,9 @@ public interface CustomerProofProtection {
     String activeVerifierKey();
     String activeEncryptionKey();
     Protected issue(CustomerProof proof,String destination);
+    default Protected protectMembership(CustomerProof proof,String destination,byte[] token,Instant now){throw new IllegalStateException("MEMBERSHIP_PROTECTION_UNAVAILABLE");}
+    default byte[] sealMembershipRecipient(java.util.UUID invitation,java.util.UUID organization,String destination){throw new IllegalStateException("MEMBERSHIP_RECIPIENT_UNAVAILABLE");}
+    default String openMembershipRecipient(java.util.UUID invitation,java.util.UUID organization,byte[] envelope){throw new IllegalStateException("MEMBERSHIP_RECIPIENT_UNAVAILABLE");}
     boolean matches(CustomerProof proof,String keyId,byte[] supplied,byte[] verifier,Instant now);
     /** Purpose/version/expiry-bound reset capability, issued only after a verified recovery OTP. */
     default byte[] recoveryGrant(CustomerProof proof,String keyId,byte[] verifier,Instant now){throw new IllegalStateException("CUSTOMER_RECOVERY_GRANT_UNAVAILABLE");}

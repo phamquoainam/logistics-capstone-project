@@ -1,0 +1,69 @@
+.otm-team { display: grid; gap: 20px; min-width: 0; }
+.otm-team .bw-heading { margin-bottom: 0; }
+.otm-card { padding: 24px; min-width: 0; }
+.otm-team h2 { font-size: 18px; margin: 0 0 8px; color: var(--pw-navy, #0b2d5b); }
+.otm-team p { color: #526780; line-height: 1.7; margin: 0 0 12px; }
+.otm-member { display: flex; align-items: center; gap: 16px; padding: 24px; min-width: 0; border-top: 3px solid #ff7a00; }
+.otm-avatar { width: 52px; height: 52px; border-radius: 16px; flex: 0 0 auto; display: grid; place-items: center; background: #fff1e5; color: #a34800; font-size: 24px; font-weight: 700; }
+.otm-member-name { min-width: 0; flex: 1; }
+.otm-member-name h2, .otm-member-name span { overflow-wrap: anywhere; }
+.otm-member-name span { font-size: 14px; color: #526780; }
+.otm-member-facts { display: flex; gap: 36px; }
+.otm-member-facts div { display: grid; gap: 8px; }
+.otm-member-facts small { color: #526780; }
+.otm-member-facts strong { font-size: 14px; }
+.otm-member-facts .otm-active { color: #167653; }
+.otm-layout { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(250px, 1fr); gap: 20px; align-items: start; }
+.otm-section-heading { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
+.otm-section-heading p { font-size: 14px; }
+.otm-count { flex: 0 0 auto; border-radius: 8px; padding: 6px 10px; background: #fff1e5; color: #a34800; font-size: 13px; }
+.otm-search { display: grid; gap: 8px; font-size: 14px; margin: 12px 0 24px; }
+.otm-search input { width: 100%; min-width: 0; }
+.otm-capabilities { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 20px; }
+.otm-capabilities h3 { margin: 0 0 12px; font-size: 14px; color: #0b2d5b; }
+.otm-capabilities ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+.otm-capabilities li { display: flex; align-items: start; gap: 8px; font-size: 14px; line-height: 1.6; color: #374c67; }
+.otm-granted { color: #167653; }
+.otm-team .otm-scope-note { font-size: 13px; margin: 20px 0 0; }
+.otm-technical { border-top: 1px solid #e2e8f0; margin-top: 20px; padding-top: 16px; color: #526780; font-size: 13px; }
+.otm-technical summary { cursor: pointer; }
+.otm-technical dl { margin-bottom: 0; }
+.otm-technical dl div { display: grid; gap: 6px; margin-top: 12px; }
+.otm-technical dd { margin: 0; overflow-wrap: anywhere; }
+.otm-aside { display: grid; gap: 20px; }
+.otm-aside-icon { display: grid; place-items: center; width: 44px; height: 44px; background: #fff1e5; color: #a34800; border-radius: 12px; margin-bottom: 16px; }
+.otm-aside-icon svg { width: 26px; height: 26px; }
+.otm-boundary { background: #f7f9fc; }
+.otm-aside p:last-child { margin-bottom: 0; }
+.otm-directory-filters { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin: 16px 0 24px; }
+.otm-directory-filters label { display: grid; gap: 8px; font-size: 14px; flex: 1 1 170px; min-width: 0; }
+.otm-directory-filters label:first-child { flex-grow: 2; }
+.otm-table-wrap { overflow-x: auto; }
+.otm-directory table { border-collapse: collapse; width: 100%; min-width: 530px; text-align: left; font-size: 14px; }
+.otm-directory th { background: #f7f9fc; color: #526780; font-weight: 500; }
+.otm-directory th, .otm-directory td { padding: 16px 12px; border-bottom: 1px solid #e2e8f0; }
+.otm-table-action { background: none; border: none; color: #a34800; padding: 4px 0; font: inherit; cursor: pointer; text-decoration: underline; text-underline-offset: 4px; }
+.otm-member-state { padding: 5px 8px; border-radius: 6px; font-size: 12px; background: #f0f3f7; white-space: nowrap; }
+.otm-member-state.is-active { color: #167653; background: #edf8f2; }
+.otm-member-state.is-suspended { color: #9e4a00; background: #fff1e5; }
+.otm-member-state.is-revoked { color: #5e6570; }
+.otm-pagination { display: flex; justify-content: end; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.otm-pagination span { margin-right: auto; color: #526780; font-size: 14px; }
+.otm-member-detail, .otm-role-templates { border-top: 1px solid #e2e8f0; padding-top: 20px; margin-top: 20px; }
+.otm-member-detail ul, .otm-role-templates ul { list-style: none; padding: 0; display: grid; gap: 12px; font-size: 14px; }
+.otm-member-detail li { display: grid; gap: 4px; }
+.otm-member-detail li small { color: #526780; overflow-wrap: anywhere; }
+.otm-role-templates details { padding: 12px 0; border-top: 1px solid #e2e8f0; }
+.otm-role-templates summary { cursor: pointer; font-weight: 600; }
+@media (max-width: 1100px) { .otm-layout { grid-template-columns: minmax(0, 1fr); } .otm-aside { grid-template-columns: repeat(2, minmax(0, 1fr)); } .otm-member-facts { gap: 20px; } }
+@media (max-width: 600px) { .otm-card, .otm-member { padding: 18px; } .otm-member { flex-wrap: wrap; } .otm-member-facts { width: 100%; margin-top: 8px; justify-content: space-between; } .otm-capabilities, .otm-aside { grid-template-columns: minmax(0, 1fr); } .otm-section-heading { flex-wrap: wrap; } }
+.otm-invitation-form { margin: 20px 0; padding: 20px; background: #fff9f3; border: 1px solid #ffe0c2; border-radius: 12px; }
+.otm-card > fieldset.otm-directory-filters { border: 0; padding: 0; margin: 18px 0; min-width: 0; }
+.otm-invitation-form fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.otm-invitation-form label { display: grid; gap: 7px; font-size: .88rem; }
+.otm-invitation-form input:not([type=checkbox]), .otm-invitation-form textarea, .otm-invitation-form select { width: 100%; min-width: 0; padding: 10px 12px; color: #0b2d5b; border: 1px solid #d7e1ed; border-radius: 8px; background: white; font: inherit; }
+.otm-invitation-form details { margin: 16px 0; }
+.otm-invitation-grants { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 16px 0; }
+.otm-invitation-grants label { display: flex; align-items: center; gap: 10px; }
+.otm-table-wrap td > small { display: block; color: #65758c; margin-top: 6px; }
+@media (max-width: 640px) { .otm-invitation-form { padding: 14px; } .otm-invitation-grants { grid-template-columns: 1fr; } }

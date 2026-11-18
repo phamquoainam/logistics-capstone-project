@@ -20,7 +20,7 @@ function IdSelect({ name, label, value, options, none }: { name: string; label: 
   const values = [...new Set([...options, ...(value && value !== 'NONE' ? [value] : [])])];
   return <label>{label}<select name={name} defaultValue={value}><option value="">Tất cả</option>{none && <option value="NONE">{none}</option>}{values.map(id => <option value={id} key={id}>{label} · {short(id)}</option>)}</select><small>Các mã có trên trang hoặc đang lọc</small></label>;
 }
-function Filters({ query, data, apply }: { query: URLSearchParams; data?: OrganizationManagementPage; apply: (query: URLSearchParams) => void }) {
+export function OrganizationFilters({ query, data, apply }: { query: URLSearchParams; data?: OrganizationManagementPage; apply: (query: URLSearchParams) => void }) {
   const [error, setError] = useState('');
   const items = data?.items ?? [], value = (key: string) => query.get(key) ?? '';
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -68,7 +68,7 @@ export function OrganizationShipmentList({ context }: { context: BusinessContext
     {!q.valid ? <section className="om-dependency"><h2>Bộ lọc không hợp lệ</h2><Link to={base + '/shipments'}>Đặt lại bộ lọc</Link></section> : <>
       <nav className="om-categories" aria-label="Nhóm vận đơn doanh nghiệp">{organizationCategories.map(([category, label]) => { const p = q.category === 'DRAFT' || category === 'DRAFT' ? new URLSearchParams() : new URLSearchParams(q.query); p.delete('page'); p.delete('status'); if (category !== 'ALL') p.set('category', category); else p.delete('category'); return <Link key={category} to={base + '/shipments' + (p.size ? '?' + p : '')} aria-current={q.category === category ? 'page' : undefined}>{label}</Link>; })}</nav>
       {q.category === 'DRAFT' ? <BusinessPreparationList context={context} embedded /> : dependency ? <section className="om-dependency"><h2>{dependency[0]}</h2><p>{dependency[1]}</p><Link className="pw-secondary" to={base + '/shipments'}>Xem vận đơn hiện có</Link></section> : <>
-        <section className="om-list-panel"><Filters key={q.query.toString()} query={q.api} data={data} apply={filters} />
+        <section className="om-list-panel"><OrganizationFilters key={q.query.toString()} query={q.api} data={data} apply={filters} />
         {!current ? <p className="om-state" role="status">Đang tải vận đơn…</p> : current.error ? <div className="om-state"><p role="alert">{current.error}</p><button className="pw-secondary" onClick={() => setRevision(v => v + 1)}>Thử lại</button></div> : data && <>
           <div className="om-summary"><div><span>Vận đơn phù hợp</span><strong>{BigInt(data.total).toLocaleString('vi-VN')}</strong></div><button type="button" onClick={() => { const next = new URLSearchParams(q.query); next.set('assignee', 'NONE'); filters(next); }}><span>Chưa phân công</span><strong>{BigInt(data.summary.unassigned).toLocaleString('vi-VN')}</strong></button><div><span>Cước chưa trả</span><strong>{BigInt(data.summary.unpaidFeesVnd).toLocaleString('vi-VN')} ₫</strong></div></div>
           <div className="om-list-tools"><span>Thống kê theo cùng bộ lọc · Không gộp đơn nháp</span><details><summary>Cột hiển thị</summary><div className="om-columns">{(Object.entries(columns) as [Column, string][]).map(([id, label]) => <label key={id}><input type="checkbox" checked={visible.includes(id)} onChange={e => setVisible(v => e.target.checked ? [...v, id] : v.filter(c => c !== id))} />{label}</label>)}</div></details></div>

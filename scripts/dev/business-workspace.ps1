@@ -4,7 +4,7 @@ param(
     [Parameter(Mandatory=$true)][Guid]$AccountId,
     [ValidateSet('PROVISION','GRANT','REVOKE','SUSPEND')][string]$Action='PROVISION',
     [ValidateSet('OWNER','MANAGER','OPERATOR')][string]$Role='OWNER',
-    [ValidateSet('dashboard.read','dashboard.finance.read','dashboard.staff.read','shipment.draft.read','shipment.draft.write','shipment.import','shipment.template.manage','shipment.prepare','shipment.quote','shipment.book','shipment.label.read','facility.manage','defaults.manage','shipment.export','shipment.export.pii','shipment.assign','shipment.reports.read','shipment.finance.read','contacts.read','contacts.write','contacts.import','contacts.export','shipment.actions.manage','shipment.actions.respond')][string[]]$Permissions=@('dashboard.read'),
+    [ValidateSet('dashboard.read','dashboard.finance.read','dashboard.staff.read','shipment.draft.read','shipment.draft.write','shipment.import','shipment.template.manage','shipment.prepare','shipment.quote','shipment.book','shipment.label.read','facility.manage','defaults.manage','shipment.export','shipment.export.pii','shipment.assign','shipment.reports.read','shipment.finance.read','contacts.read','contacts.write','contacts.import','contacts.export','shipment.actions.manage','shipment.actions.respond','team.read','team.invite','team.access.manage','team.membership.manage','team.audit.read')][string[]]$Permissions=@('dashboard.read'),
     [string]$Name,
     [Parameter(Mandatory=$true)][ValidateLength(1,300)][string]$Reason
 )

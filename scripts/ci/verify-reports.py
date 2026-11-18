@@ -497,6 +497,53 @@ CUSTOMER_MIGRATION_PG_REQUIRED += ['businessV25UpgradePreservesPopulatedPreparat
 CUSTOMER_MIGRATION_PG_REQUIRED += ['supportV22UpgradePreservesV21DataAndRequiresOperatorAuthority']
 REQUIRED[IDENTITY_MIGRATION] += CUSTOMER_MIGRATION_PG_REQUIRED
 
+# Owner-approved OTA V1: finite required inventory; focused evidence is not full acceptance.
+REQUIRED[BASE + 'merchant.internal.domain.OrganizationTeamPolicyTests'] = [
+    'templatesNeverGrantOrDelegateTeamFinanceOrPlatformByRole', 'grantsAreExplicitAndEveryFacilityMustBeCovered',
+    'ownerAndTerminalRevokeAreProtectedAcrossAllTransitions', 'sensitiveInputDoesNotAppearInGeneratedToString']
+CUSTOMER_ADMISSION_UNIT_REQUIRED['merchant.internal.domain.OrganizationTeamPolicyTests'] = REQUIRED[BASE + 'merchant.internal.domain.OrganizationTeamPolicyTests']
+REQUIRED[BASE + 'identity.internal.infrastructure.CustomerProofProtectionTests'] += [
+    'membershipProtectionBindsOrganizationRecipientTokenAndExactDeadline',
+    'membershipContactEnvelopeRejectsTamperingCrossTenantAndSupportsRetainedKeys']
+REQUIRED[BASE + 'identity.internal.infrastructure.SmtpCustomerDeliveryTests'] += [
+    'membershipInvitationUsesArgoPostSingleUseFragmentAndTestSmtpOnly']
+ORGANIZATION_TEAM_MIGRATION_REQUIRED = ['teamV34PreservesV32MembershipAndAddsNoAuthority', 'teamV34RejectsUnownedHistoryAndCrossOrganizationForeignKeys']
+CUSTOMER_MIGRATION_PG_REQUIRED += ORGANIZATION_TEAM_MIGRATION_REQUIRED
+REQUIRED[IDENTITY_MIGRATION] += ORGANIZATION_TEAM_MIGRATION_REQUIRED
+ORGANIZATION_TEAM_PG_REQUIRED = [
+    'teamOperatorGrantRemainsIndependentBoundedAuditedAndRuntimeDenied',
+    'teamMembershipLifecycleReplaysConsumedProofAndPreservesOtherAccess',
+    'teamInvitationRealOutboxResendAndAcceptanceReplaysWithoutDuplicateMembership',
+    'teamOfflineAuthorityChangeInvalidatesInvitationAndProtectedDeliveryAtomically',
+    'teamRuntimeDirectDmlCannotPromoteGrantForgeHistoryOrRemoveOwner',
+    'teamDeclineAndLateAuditFailurePreserveMembershipAndOutboxAtomicity',
+    'teamManagerDelegationCannotPromoteFinanceOrEscapeWarehouseAndProductionIsDenied',
+    'teamExactInvitationExpiryAndPolicyChangeCannotLeaveUsableProtectedProof',
+    'teamDirectoryUsesCurrentOrganizationPermissionAndDoesNotExposeCredentials']
+CUSTOMER_ADMISSION_PG_REQUIRED += ORGANIZATION_TEAM_PG_REQUIRED
+REQUIRED[IDENTITY_GRANTS] += ORGANIZATION_TEAM_PG_REQUIRED
+
+# Owner-approved OSC exact finite inventory; source/test evidence only.
+ORGANIZATION_SUPPORT_PG_REQUIRED = [
+    'organizationSupportConversationSeparatesMerchantAndCarrierAndPreservesHistory',
+    'organizationSupportReplayQuotaAndLateFailureAreAtomic',
+    'organizationSupportNotificationsPreferencesAndReadReplayUseCommittedEvents',
+    'organizationSupportFacilityScopeAssignmentAndRevocationFailClosed',
+    'organizationSupportTypedTargetsEventsAndStaffBindingsCannotBeForged',
+    'organizationSupportStrictHttpSearchAndProductionDenyWithoutSideEffects',
+    'organizationSupportShipmentBindingUsesCanonicalBusinessReadAndImmutableFacility',
+    'organizationSupportCandidatesFilterEligibilityBeforePaginationBeyondAdmissionLimit',
+    'organizationSupportSchemaIsForwardOnlyAndDisabledByDefault']
+CUSTOMER_ADMISSION_PG_REQUIRED += ORGANIZATION_SUPPORT_PG_REQUIRED
+REQUIRED[IDENTITY_GRANTS] += ORGANIZATION_SUPPORT_PG_REQUIRED
+ORGANIZATION_SUPPORT_MIGRATION_REQUIRED = ['organizationSupportV35PreservesV34DataChecksumsAndTeamCeilings']
+CUSTOMER_MIGRATION_PG_REQUIRED += ORGANIZATION_SUPPORT_MIGRATION_REQUIRED
+REQUIRED[IDENTITY_MIGRATION] += ORGANIZATION_SUPPORT_MIGRATION_REQUIRED
+REQUIRED[BASE + 'orders.internal.domain.SupportCasePolicyTests'] = [
+    'normalizationPreservesVietnameseAndPersonalCompatibility', 'merchantNeverAcquiresCarrierLifecycleAuthority',
+    'personalCategoriesDoNotExpandWithOrganizationContract', 'organizationSupportCannotBeEnabledByDefaultOrInProduction']
+CUSTOMER_ADMISSION_UNIT_REQUIRED['orders.internal.domain.SupportCasePolicyTests'] = REQUIRED[BASE + 'orders.internal.domain.SupportCasePolicyTests']
+
 TESTCONTAINERS_ONLY = {BASE + 'demo.PostgresTestcontainersTests', BASE + 'testsupport.TestcontainersRuntimePolicyTests', IDENTITY_MIGRATION, IDENTITY_GRANTS}
 SUREFIRE_NAMES = {
     (BASE + 'demo.DemoSecurityEvidenceTests',

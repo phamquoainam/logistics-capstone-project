@@ -13,9 +13,13 @@ import javax.sql.DataSource;
 public final class ProductionCustomerComposition {
     private ProductionCustomerComposition(){}
     public record Services(CustomerAdmission customers,CustomerRequestContext requests,CustomerEnrollmentCommands enrollments,CustomerRecoveryCommands recoveries,CustomerReauthentication reauthentication,CustomerOwnerRecoveryConsents consents,
-                           CustomerDeliveryWorker delivery,ProductionCustomerGuard guard){}
+                           CustomerDeliveryWorker delivery,ProductionCustomerGuard guard,CustomerMembershipInvitations memberships){}
     public static Services create(DataSource source,ProductionAccessTokens tokens,CustomerProofProtection protection,
                                   IdentityRateLimiter limiter,CustomerDeliveryTransport transport,String origin,Clock clock){
+        return create(source,tokens,protection,limiter,transport,origin,clock,()->(i,p,o,a,n,e)->false);
+    }
+    public static Services create(DataSource source,ProductionAccessTokens tokens,CustomerProofProtection protection,
+                                  IdentityRateLimiter limiter,CustomerDeliveryTransport transport,String origin,Clock clock,java.util.function.Supplier<CustomerMembershipDeliveryAdmission> membershipAuthority){
         Objects.requireNonNull(source);Objects.requireNonNull(tokens);Objects.requireNonNull(protection);Objects.requireNonNull(limiter);Objects.requireNonNull(transport);Objects.requireNonNull(clock);
         var browser=new JdbcIdentityBrowserState(source,IdentitySessionStorage.CUSTOMER);
         var sessionAdmission=new ProductionSessionAdmission(browser,limiter,true);
@@ -30,7 +34,8 @@ public final class ProductionCustomerComposition {
         var consents=new CustomerOwnerConsents(customers,requestAdmission,reauthentication,new JdbcCustomerOwnerConsentStore(source),protection,clock);
         var authentication=new ProductionAuthenticationHttp(sessions,sessionAdmission,browser,limiter,tokens,origin,clock,ProductionAuthenticationHttp.Transport.CUSTOMER);
         var enrollmentHttp=new ProductionCustomerEnrollmentHttp(enrollments,recoveries,enrollmentAdmission,origin);
-        var worker=new CustomerDeliveryWorker(new JdbcCustomerDeliveryStore(source),protection,transport,clock);
-        return new Services(customers,requestAdmission,enrollments,recoveries,reauthentication,consents,worker,new ProductionCustomerGuard(tokens,requestAdmission,customers,authentication,enrollmentHttp,new ProductionCustomerReauthenticationHttp(reauthentication),new ProductionCustomerConsentHttp(consents)));
+        var membershipInvitations=new JdbcCustomerMembershipInvitations(source,customers,protection,limiter,value->{if(!(limiter instanceof JdbcIdentityRateLimiter jdbc))throw new IllegalStateException("MEMBERSHIP_LIMITER_REQUIRED");return jdbc.identifier(new IdentityRateLimiter.Subject(IdentityRateLimiter.Policy.CUSTOMER_ENROLL_EMAIL,value));},clock);
+        var worker=new CustomerDeliveryWorker(new JdbcCustomerDeliveryStore(source,protection,membershipAuthority),protection,transport,clock);
+        return new Services(customers,requestAdmission,enrollments,recoveries,reauthentication,consents,worker,new ProductionCustomerGuard(tokens,requestAdmission,customers,authentication,enrollmentHttp,new ProductionCustomerReauthenticationHttp(reauthentication),new ProductionCustomerConsentHttp(consents)),membershipInvitations);
     }
 }

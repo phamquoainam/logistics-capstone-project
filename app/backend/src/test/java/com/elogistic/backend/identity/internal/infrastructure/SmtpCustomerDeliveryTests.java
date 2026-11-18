@@ -39,7 +39,7 @@ class SmtpCustomerDeliveryTests {
     }
     private static CustomerDeliveryTransport.Message message(UUID id){return message(id,CustomerProof.Purpose.CUSTOMER_ENROLLMENT);}
     private static CustomerDeliveryTransport.Message message(UUID id,CustomerProof.Purpose purpose){
-        var proof=CustomerProof.issue(UUID.randomUUID(),UUID.randomUUID(),purpose,NOW,null,purpose==CustomerProof.Purpose.CUSTOMER_RECOVERY?1L:null,null);byte[] raw=new byte[32];new SecureRandom().nextBytes(raw);byte[] token=Base64.getUrlEncoder().withoutPadding().encode(raw);
+        var proof=CustomerProof.issue(UUID.randomUUID(),UUID.randomUUID(),purpose,NOW,null,purpose==CustomerProof.Purpose.CUSTOMER_RECOVERY?1L:null,purpose==CustomerProof.Purpose.MERCHANT_MEMBERSHIP?UUID.randomUUID():null);byte[] raw=new byte[32];new SecureRandom().nextBytes(raw);byte[] token=Base64.getUrlEncoder().withoutPadding().encode(raw);
         if(proof.enrollmentOtp())System.arraycopy("123456".getBytes(StandardCharsets.US_ASCII),0,token,0,6);
         try{return new CustomerDeliveryTransport.Message(id,proof,DESTINATION,token);}finally{Arrays.fill(raw,(byte)0);Arrays.fill(token,(byte)0);}
     }
@@ -55,6 +55,19 @@ class SmtpCustomerDeliveryTests {
             String content=CustomerSmtpTestInbox.plainText(mail);assertFalse(content.contains(ORIGIN));assertTrue(mail.isMimeType("multipart/alternative"));assertFalse(content.contains("/verify-email?"));
             byte[] token=intent.token();try{assertTrue(content.contains("123456"));assertFalse(content.contains(new String(token,StandardCharsets.US_ASCII)));}finally{Arrays.fill(token,(byte)0);}
             assertEquals(0,inbox.authentications.get());assertEquals("CustomerDeliveryOutcome[redacted]",outcome.toString());assertEquals("CustomerDeliveryMessage[redacted]",intent.toString());
+        }
+    }
+    @Test void membershipInvitationUsesArgoPostSingleUseFragmentAndTestSmtpOnly()throws Exception{
+        try(var inbox=new CustomerSmtpTestInbox(1,false,false,250,serverTls);var intent=message(UUID.randomUUID(),CustomerProof.Purpose.MERCHANT_MEMBERSHIP)){
+            var outcome=adapter(inbox,SmtpCustomerDelivery.Mode.TEST_LOOPBACK,null).send(intent);
+            assertEquals(CustomerDeliveryTransport.Kind.ACCEPTED_BY_PROVIDER,outcome.kind());assertTrue(outcome.sandbox());
+            var mail=new MimeMessage(Session.getInstance(new Properties()),new ByteArrayInputStream(inbox.messages().getFirst()));
+            assertEquals("ArgoPost - Lời mời tham gia doanh nghiệp",mail.getSubject());
+            String content=CustomerSmtpTestInbox.plainText(mail);assertTrue(content.contains("72 giờ"));assertTrue(content.contains("chỉ dùng một lần"));
+            assertTrue(content.contains(ORIGIN+"/organization-invitations/"+intent.proof().subjectId()+"#"));
+            assertFalse(content.contains("?proof="));assertFalse(content.contains("?token="));assertFalse(content.contains("mật khẩu tạm"));
+            byte[] token=intent.token();try{assertTrue(content.contains("proof="+new String(token,StandardCharsets.US_ASCII)));}finally{Arrays.fill(token,(byte)0);}
+            assertEquals(0,inbox.authentications.get());
         }
     }
     @Test void realStarttlsChecksApprovedCertificateAndAuthenticatesBeforeSending()throws Exception{

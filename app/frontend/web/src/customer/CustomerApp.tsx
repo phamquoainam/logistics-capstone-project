@@ -1,4 +1,6 @@
 import { BusinessWorkspace } from './BusinessWorkspace';
+import { OrganizationInvitation } from './OrganizationInvitation';
+import { teamInvitationReturnPath } from './team-invitation-proof';
 import StationOperations from './StationOperations';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import type { FormEvent, ReactNode } from 'react';
@@ -90,7 +92,7 @@ function PasswordField({ id, label, value, change, complete }: { id: string; lab
 function Guest({ children }: { children: ReactNode }) { const session = useSession(); return session.status === 'authenticated' ? <Navigate to="/personal" replace /> : children; }
 function Login() {
   const loginLocation = useLocation();
-  const [afterLogin] = useState(() => new URLSearchParams(loginLocation.search).get('workspace') === 'station' ? '/operations/station' : '/personal');
+  const [afterLogin] = useState(() => teamInvitationReturnPath() ?? (new URLSearchParams(loginLocation.search).get('workspace') === 'station' ? '/operations/station' : '/personal'));
   const session = useSession(), [email, setEmail] = useState(''), [password, setPassword] = useState('');
   const action = useCommand<{ email: string; password: string }>(async input => { try { await customerClient.login(input.email, input.password); } finally { setPassword(''); } });
   if (session.status === 'authenticated') return <Navigate to={afterLogin} replace />;
@@ -246,6 +248,7 @@ export default function CustomerApp() {
   useEffect(() => { if (!['/verify-email', '/recover/otp', '/recover/confirm'].includes(location.pathname)) clearEntryProof(); document.title = 'ArgoPost | Gửi niềm tin, nối hành trình'; window.scrollTo(0, 0); document.querySelector<HTMLElement>('main h1')?.focus(); }, [location.pathname]);
   const accountRoute = /^\/(login|register|verify-email|recover|personal|merchant|operations)(\/|$)/.test(location.pathname);
   const authRoute = /^\/(login|register|verify-email|recover)(\/|$)/.test(location.pathname);
+  if (/^\/organization-invitations\/[^/]+$/.test(location.pathname)) return <div className="customer-portal cp-auth-portal"><PublicHeader compact /><main id="main-content"><OrganizationInvitation key={location.pathname} subject={session.subject} loading={session.status === 'loading'} /></main></div>;
   if (!accountRoute) return <PublicWebsite />;
   if (/^\/operations\/station(?:\/|$)/.test(location.pathname)) {
     if (session.status === 'loading') return <Loading />;

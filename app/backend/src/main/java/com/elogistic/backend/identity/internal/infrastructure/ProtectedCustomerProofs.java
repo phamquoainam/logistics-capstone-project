@@ -55,6 +55,36 @@ public final class ProtectedCustomerProofs implements CustomerProofProtection {
             return new Protected(verifierId,encryptionId,hash,nonce,ciphertext,recipientNonce,recipientCiphertext);
         }finally{wipe(entropy);wipe(token);wipe(nonce);wipe(hash);wipe(ciphertext);wipe(recipient);wipe(recipientNonce);wipe(recipientCiphertext);}
     }
+    @Override public Protected protectMembership(CustomerProof proof,String destination,byte[] supplied,Instant now) {
+        if(proof==null||proof.purpose()!=CustomerProof.Purpose.MERCHANT_MEMBERSHIP||!canonical(proof,supplied,false))throw rejected();
+        proof.requireAvailable(now);new CustomerEmail(destination);
+        byte[] token=supplied.clone(),nonce=new byte[12],recipientNonce=new byte[12],hash=null,ciphertext=null,recipientCiphertext=null,recipient=destination.getBytes(StandardCharsets.UTF_8);
+        try{random.nextBytes(nonce);random.nextBytes(recipientNonce);hash=verifier(proof,verifierId,token);
+            ciphertext=crypt(Cipher.ENCRYPT_MODE,proof,destination,verifierId,encryptionId,nonce,token);
+            recipientCiphertext=recipientCrypt(Cipher.ENCRYPT_MODE,proof,verifierId,encryptionId,recipientNonce,recipient);
+            return new Protected(verifierId,encryptionId,hash,nonce,ciphertext,recipientNonce,recipientCiphertext);
+        }finally{wipe(token);wipe(nonce);wipe(recipientNonce);wipe(hash);wipe(ciphertext);wipe(recipientCiphertext);wipe(recipient);}
+    }
+    @Override public byte[] sealMembershipRecipient(UUID invitation,UUID organization,String destination){
+        if(invitation==null||organization==null)throw rejected();new CustomerEmail(destination);
+        byte[] nonce=new byte[12],plain=destination.getBytes(StandardCharsets.UTF_8),encrypted=null,id=encryptionId.getBytes(StandardCharsets.US_ASCII);
+        try{random.nextBytes(nonce);encrypted=membershipRecipientCrypt(Cipher.ENCRYPT_MODE,invitation,organization,encryptionId,nonce,plain);
+            return ByteBuffer.allocate(2+id.length+nonce.length+encrypted.length).put((byte)1).put((byte)id.length).put(id).put(nonce).put(encrypted).array();
+        }finally{wipe(nonce);wipe(plain);wipe(encrypted);wipe(id);}
+    }
+    @Override public String openMembershipRecipient(UUID invitation,UUID organization,byte[] envelope){
+        if(invitation==null||organization==null||envelope==null||envelope.length<34||envelope.length>512)throw rejected();
+        var b=ByteBuffer.wrap(envelope);if(b.get()!=1)throw rejected();int length=Byte.toUnsignedInt(b.get());
+        if(length<1||length>64||b.remaining()<length+12+19)throw rejected();byte[] id=new byte[length],nonce=new byte[12],plain=null,ciphertext=null;
+        try{b.get(id);b.get(nonce);ciphertext=new byte[b.remaining()];b.get(ciphertext);String key=new String(id,StandardCharsets.US_ASCII);if(!encryptors.containsKey(key))throw rejected();
+            plain=membershipRecipientCrypt(Cipher.DECRYPT_MODE,invitation,organization,key,nonce,ciphertext);return new CustomerEmail(new String(plain,StandardCharsets.UTF_8)).value();
+        }finally{wipe(id);wipe(nonce);wipe(ciphertext);wipe(plain);}
+    }
+    private byte[] membershipRecipientCrypt(int mode,UUID invitation,UUID organization,String keyId,byte[] nonce,byte[] input){
+        try{var key=encryptors.get(keyId);if(key==null)throw rejected();var cipher=Cipher.getInstance("AES/GCM/NoPadding");cipher.init(mode,key,new GCMParameterSpec(128,nonce));
+            cipher.updateAAD(fields("merchant-membership-contact-v1",invitation,organization,keyId));return cipher.doFinal(input);
+        }catch(GeneralSecurityException bad){throw rejected();}
+    }
     @Override public boolean matches(CustomerProof proof,String keyId,byte[] supplied,byte[] expected,Instant now) {
         try{proof.requireAvailable(now);}catch(RuntimeException invalid){return false;}
         if(proof.purpose()==CustomerProof.Purpose.CUSTOMER_RECOVERY && proof.emailOtp() && supplied!=null && supplied.length==43 && keyId!=null && verifiers.containsKey(keyId) && expected!=null && expected.length==32){

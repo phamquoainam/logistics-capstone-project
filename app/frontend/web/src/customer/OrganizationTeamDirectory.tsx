@@ -1,0 +1,37 @@
+import { useEffect, useState } from 'react';
+import type { BusinessContext } from './business-data';
+import { customerClient } from './client';
+import type { TeamMemberDetail, TeamMemberPage, TeamQuery, TeamRoleTemplates } from './organization-team-data';
+import { teamCapabilities, teamRoleLabels } from './organization-team';
+import { OrganizationTeamMemberActions } from './OrganizationTeamMemberActions';
+
+const initial: TeamQuery = { search: '', role: null, state: null, facilityId: null, page: 0, size: 20 };
+const states = { ACTIVE: 'Đang hoạt động', SUSPENDED: 'Tạm khóa', REVOKED: 'Đã thu hồi' };
+export function OrganizationTeamDirectory({ context }: { context: BusinessContext }) {
+  const [query, setQuery] = useState<TeamQuery>(initial), [draft, setDraft] = useState(initial), [revision, setRevision] = useState(0);
+  const [selected, setSelected] = useState<string>(), [templates, setTemplates] = useState(false);
+  const [page, setPage] = useState<{ key: string; data?: TeamMemberPage; error?: boolean }>();
+  const [detail, setDetail] = useState<{ key: string; data?: TeamMemberDetail; error?: boolean }>();
+  const [roles, setRoles] = useState<{ key: string; data?: TeamRoleTemplates; error?: boolean }>();
+  const authority = `${context.organizationId}:${context.membershipId}:${context.authorityVersion}`;
+  const key = authority + ':' + JSON.stringify(query) + ':' + revision, detailKey = key + ':' + selected;
+  useEffect(() => { let active = true; void customerClient.readTeamMembers(context, query).then(data => { if (active) setPage({ key, data }); }).catch(() => { if (active) setPage({ key, error: true }); }); return () => { active = false; }; }, [context, query, key]);
+  useEffect(() => { if (!selected) return; let active = true; void customerClient.readTeamMember(context, selected).then(data => { if (active) setDetail({ key: detailKey, data }); }).catch(() => { if (active) setDetail({ key: detailKey, error: true }); }); return () => { active = false; }; }, [context, selected, detailKey]);
+  useEffect(() => { if (!templates) return; let active = true; void customerClient.readTeamRoleTemplates(context).then(data => { if (active) setRoles({ key, data }); }).catch(() => { if (active) setRoles({ key, error: true }); }); return () => { active = false; }; }, [context, templates, key]);
+  const current = page?.key === key ? page : undefined, currentDetail = detail?.key === detailKey ? detail : undefined, currentRoles = roles?.key === key ? roles : undefined;
+  const reset = () => { setSelected(undefined); setQuery(initial); setDraft(initial); setRevision(v => v + 1); };
+  return <section className="bw-panel otm-card otm-directory" aria-label="Danh sách thành viên"><div className="otm-section-heading"><div><h2>Thành viên doanh nghiệp</h2><p>Chỉ dữ liệu trong Organization và phạm vi quyền của bạn.</p></div><button type="button" className="pw-secondary" aria-expanded={templates} onClick={() => setTemplates(v => !v)}>Mẫu vai trò</button></div>
+    <form className="otm-directory-filters" onSubmit={event => { event.preventDefault(); setSelected(undefined); setQuery({ ...draft, page: 0 }); setRevision(v => v + 1); }}>
+      <label>Tìm thành viên<input type="search" maxLength={120} value={draft.search} placeholder="Nhập tên thành viên" onChange={event => setDraft({ ...draft, search: event.target.value })} /></label>
+      <label>Vai trò thành viên<select value={draft.role ?? ''} onChange={event => setDraft({ ...draft, role: (event.target.value || null) as TeamQuery['role'] })}><option value="">Tất cả vai trò</option>{Object.entries(teamRoleLabels).map(([role, name]) => <option key={role} value={role}>{name}</option>)}</select></label>
+      <label>Trạng thái thành viên<select value={draft.state ?? ''} onChange={event => setDraft({ ...draft, state: (event.target.value || null) as TeamQuery['state'] })}><option value="">Tất cả trạng thái</option>{Object.entries(states).map(([state, name]) => <option key={state} value={state}>{name}</option>)}</select></label>
+      <button className="pw-primary" type="submit">Áp dụng</button><button className="pw-secondary" type="button" onClick={reset}>Đặt lại</button>
+    </form>
+    {!current ? <p role="status">Đang kiểm tra quyền và tải danh sách…</p> : current.error ? <div role="alert"><p>Không tải được danh sách hoặc quyền xem nhân sự đã thay đổi. Dữ liệu cũ đã được ẩn.</p><button type="button" className="pw-secondary" onClick={() => setRevision(v => v + 1)}>Tải lại thành viên</button></div> : current.data && <><div className="otm-table-wrap"><table><thead><tr><th>Thành viên</th><th>Vai trò</th><th>Trạng thái</th><th>Quyền truy cập</th></tr></thead><tbody>{current.data.items.map(member => <tr key={member.membershipId}><td><strong>{member.displayName}</strong></td><td>{teamRoleLabels[member.role]}</td><td><span className={'otm-member-state is-' + member.state.toLowerCase()}>{states[member.state]}</span></td><td><button type="button" className="otm-table-action" aria-label={'Xem quyền của ' + member.displayName} onClick={() => setSelected(member.membershipId)}>Xem quyền</button></td></tr>)}</tbody></table></div>{!current.data.items.length && <p role="status">Không có thành viên khớp bộ lọc.</p>}
+      <nav className="otm-pagination" aria-label="Phân trang nhân sự"><span>Trang {query.page + 1}</span><button type="button" className="pw-secondary" disabled={query.page === 0} onClick={() => { setSelected(undefined); setQuery({ ...query, page: query.page - 1 }); }}>Trước</button><button type="button" className="pw-secondary" disabled={!current.data.hasNext} onClick={() => { setSelected(undefined); setQuery({ ...query, page: query.page + 1 }); }}>Tiếp</button></nav>
+    </>}
+    {selected && <section className="otm-member-detail" aria-label="Quyền thành viên"><div className="otm-section-heading"><h3>Quyền thành viên</h3><button type="button" className="pw-secondary" onClick={() => setSelected(undefined)}>Đóng chi tiết</button></div>{!currentDetail ? <p role="status">Đang kiểm tra quyền thành viên…</p> : currentDetail.error ? <p role="alert">Không xem được thành viên này hoặc quyền truy cập đã thay đổi.</p> : currentDetail.data && <><h4>{currentDetail.data.displayName}</h4><p>{teamRoleLabels[currentDetail.data.role]} · {states[currentDetail.data.state]}</p><ul>{currentDetail.data.grants.map(g => <li key={JSON.stringify(g)}><span>{teamCapabilities[g.permission].label}</span><small>{g.scope === 'ORGANIZATION' ? 'Toàn doanh nghiệp' : 'Kho · ' + g.facilityId}</small></li>)}</ul>{!currentDetail.data.grants.length && <p>Membership không có quyền đang được lưu.</p>}</>}</section>}
+    {selected && currentDetail?.data && <OrganizationTeamMemberActions key={currentDetail.data.membershipId + ':' + currentDetail.data.version} context={context} original={currentDetail.data} saved={() => setRevision(v => v + 1)} />}
+    {templates && <section className="otm-role-templates" aria-label="Mẫu vai trò"><h3>Mẫu vai trò</h3><p>Mẫu xác định giới hạn quyền; tên vai trò không tự cấp các quyền bên dưới.</p>{!currentRoles ? <p role="status">Đang tải mẫu vai trò…</p> : currentRoles.error ? <p role="alert">Không tải được mẫu vai trò hiện hành.</p> : currentRoles.data?.items.map(role => <details key={role.role}><summary>{teamRoleLabels[role.role]}</summary><ul>{role.allowedPermissions.map(permission => <li key={permission}>{teamCapabilities[permission].label}</li>)}</ul></details>)}</section>}
+  </section>;
+}

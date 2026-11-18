@@ -9,19 +9,22 @@ test.describe.configure({ mode: 'serial' });
 test.beforeAll(async ({ browser }) => { context = await browser.newContext({ baseURL: origin, ignoreHTTPSErrors: false }); page = await context.newPage(); });
 test.afterAll(async () => { capturedAccess = ''; await secondary?.close(); await context?.close(); });
 
-async function mail(index: number): Promise<{ code: string }> {
+async function mail(index: number): Promise<{ code: string; invitation?: string }> {
   const inbox = new URL(process.env.S003_BROWSER_INBOX ?? '');
   if (inbox.protocol !== 'http:' || inbox.hostname !== '127.0.0.1' || inbox.username || inbox.password || inbox.search || inbox.hash || inbox.pathname !== '/') throw new Error('OWNED_INBOX_CONTEXT_REQUIRED');
-  let code = '';
+  let code = '', invitation: string | undefined;
   await expect.poll(async () => {
     const response = await fetch(new URL('/mail/' + index, inbox), { headers: { 'X-Owned-Inbox-Nonce': process.env.S003_BROWSER_INBOX_NONCE ?? '' }, signal: AbortSignal.timeout(3000) });
     if (response.status === 202) return false;
     if (response.status !== 200) throw new Error('OWNED_INBOX_READ_FAILED');
     const value: unknown = await response.json();
-    if (typeof value !== 'object' || value === null || !('code' in value) || typeof value.code !== 'string' || !/^\d{6}$/.test(value.code) || Object.keys(value).length !== 1) throw new Error('OWNED_INBOX_MESSAGE_INVALID');
-    code=value.code;return true;
+    if (typeof value !== 'object' || value === null || Object.keys(value).length !== 1) throw new Error('OWNED_INBOX_MESSAGE_INVALID');
+    if ('invitation' in value && typeof value.invitation === 'string' && value.invitation.startsWith(origin + '/organization-invitations/') && /#proof=[A-Za-z0-9_-]{43}$/.test(value.invitation)) invitation=value.invitation;
+    else if ('code' in value && typeof value.code === 'string' && /^\d{6}$/.test(value.code)) code=value.code;
+    else throw new Error('OWNED_INBOX_MESSAGE_INVALID');
+    return true;
   }, { timeout: 15000, message: 'Actual SMTP message must be received' }).toBe(true);
-  return { code };
+  return { code, invitation };
 }
 async function login(target: Page, password: string) {
   await target.getByLabel('Email đã xác minh').fill(email); await target.getByLabel('Mật khẩu', { exact: true }).fill(password); await target.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
@@ -227,6 +230,42 @@ test('business workspace uses real organization membership without reusing Perso
     await businessPage.getByRole('button', { name: 'Đăng xuất', exact: true }).click(); await expect(businessPage.getByLabel('Email đã xác minh')).toBeVisible();
   } finally { await business.close(); }
 });
+test('organization support uses committed ticket conversation reports and notices on real HTTPS', async ({ browser }) => {
+  const stage = (value: string) => writeFileSync(process.env.S003_BROWSER_PRIVATE_DIRECTORY! + '/organization-support-stage.json', JSON.stringify({ stage: value }));
+  stage('SETUP');
+  const organization = '10000000-0000-4000-8000-000000000901', root = '/merchant/' + organization;
+  const merchant = await browser.newContext({ baseURL: origin, ignoreHTTPSErrors: false }), carrier = await browser.newContext({ baseURL: origin, ignoreHTTPSErrors: false });
+  const merchantPage = await merchant.newPage(), carrierPage = await carrier.newPage();
+  const observations: { operation: string; status: number; itemCount?: number; containsActor?: boolean; fields?: string[]; code?: string }[] = [];
+  merchantPage.on('response', response => { const path = new URL(response.url()).pathname; if (!path.includes('/support-')) return;
+    const item = { operation: path.replace(/[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}/g, '{id}'), status: response.status() }; observations.push(item);
+    if (path.endsWith('/assignment-candidates')) void response.json().then((v: unknown) => { if (v && typeof v === 'object') { const value = v as { items?: { accountId?: string }[]; code?: string }; Object.assign(item, { itemCount: value.items?.length, containsActor: value.items?.some(m => m.accountId === '10000000-0000-4000-8000-000000000002'), fields: Object.keys(value), ...(typeof value.code === 'string' && /^[A-Z_]+$/.test(value.code) ? { code: value.code } : {}) }); } writeFileSync(process.env.S003_BROWSER_PRIVATE_DIRECTORY! + '/organization-support-http.json', JSON.stringify(observations)); }).catch(() => { writeFileSync(process.env.S003_BROWSER_PRIVATE_DIRECTORY! + '/organization-support-http.json', JSON.stringify(observations)); });
+    writeFileSync(process.env.S003_BROWSER_PRIVATE_DIRECTORY! + '/organization-support-http.json', JSON.stringify(observations));
+  });
+  try {
+    for (const [index, p] of [merchantPage, carrierPage].entries()) { stage('LOGIN_' + index); await p.goto('/login'); await p.getByLabel('Email đã xác minh').fill('browser-staff@example.invalid'); await p.getByLabel('Mật khẩu', { exact: true }).fill('synthetic-session-password'); await p.getByRole('button', { name: 'Đăng nhập', exact: true }).click(); await expect(p.getByRole('heading', { name: 'Tổng quan', exact: true })).toBeVisible(); }
+    stage('PREFERENCES'); await merchantPage.goto(root + '/support?view=tickets'); stage('PREFERENCES_NAVIGATED'); await merchantPage.getByRole('button', { name: 'Thông báo của tôi', exact: true }).click(); await merchantPage.getByLabel('Nhận thông báo Ticket trong ứng dụng', { exact: true }).check(); stage('PREFERENCES_CHECKED');
+    stage('CREATE_LIST'); await merchantPage.getByRole('button', { name: 'Danh sách Ticket', exact: true }).click(); stage('CREATE_BUTTON'); await merchantPage.getByRole('button', { name: 'Tạo Ticket', exact: true }).click(); stage('CREATE_FIELDS'); await merchantPage.getByLabel('Tiêu đề', { exact: true }).fill('Synthetic organization investigation'); await merchantPage.getByLabel('Nội dung', { exact: true }).fill('Synthetic organization question');
+    let writes = 0; const create = '**/api/v1/merchant-organizations/' + organization + '/support-tickets';
+    await merchantPage.route(create, async route => { if (route.request().method() !== 'POST') return route.continue(); writes++; const response = await route.fetch({ maxRetries: 0 }); expect(response.status()).toBe(201); await route.abort('failed'); });
+    stage('CREATE_SUBMIT'); await merchantPage.getByRole('button', { name: 'Gửi yêu cầu', exact: true }).click(); await expect(merchantPage.getByRole('alert')).toContainText('Kết quả chưa xác định'); stage('CREATE_RECEIPT'); await merchantPage.getByRole('button', { name: 'Kiểm tra biên nhận', exact: true }).click(); await expect(merchantPage.getByRole('heading', { name: 'Chi tiết Ticket', exact: true })).toBeVisible(); expect(writes).toBe(1); await merchantPage.unroute(create);
+    stage('INTERNAL_ASSIGN'); await merchantPage.getByText('Phân công phối hợp nội bộ', { exact: true }).click(); stage('INTERNAL_CANDIDATES'); await expect(merchantPage.getByLabel('Người phối hợp', { exact: true }).locator('option[value="10000000-0000-4000-8000-000000000002"]')).toBeAttached({ timeout: 5000 }); await merchantPage.getByLabel('Người phối hợp', { exact: true }).selectOption('10000000-0000-4000-8000-000000000002'); stage('INTERNAL_SAVE'); await merchantPage.getByRole('button', { name: 'Lưu phân công', exact: true }).click();
+    stage('CARRIER_ASSIGN'); await carrierPage.goto('/operations/support?organization=' + organization); await carrierPage.getByRole('button', { name: 'Nhận xử lý doanh nghiệp', exact: true }).click(); await expect(carrierPage.locator('.os-conversation')).toContainText('Synthetic organization question');
+    async function staffCommand(message: string, label: string) { await carrierPage.getByLabel('Nội dung công khai cho doanh nghiệp', { exact: true }).fill(message); await carrierPage.getByRole('button', { name: label, exact: true }).click(); await expect(carrierPage.locator('.os-conversation')).toContainText(message); }
+    stage('CARRIER_INFORMATION'); await staffCommand('Synthetic organization start', 'Bắt đầu xử lý'); await staffCommand('Synthetic organization clarification request', 'Yêu cầu bổ sung');
+    await merchantPage.getByRole('button', { name: 'Cập nhật hội thoại', exact: true }).click(); await expect(merchantPage.locator('.os-context-facts')).toContainText('Cần bổ sung'); await merchantPage.getByLabel('Nội dung phản hồi', { exact: true }).fill('Synthetic merchant clarification'); await merchantPage.getByRole('button', { name: 'Gửi phản hồi', exact: true }).click(); await expect(merchantPage.locator('.os-conversation')).toContainText('Synthetic merchant clarification');
+    await carrierPage.getByRole('button', { name: 'Cập nhật hồ sơ doanh nghiệp', exact: true }).click(); await expect(carrierPage.locator('.os-conversation')).toContainText('Synthetic merchant clarification'); await staffCommand('Synthetic organization resolution', 'Gửi kết quả giải quyết');
+    await merchantPage.getByRole('button', { name: 'Cập nhật hội thoại', exact: true }).click(); await merchantPage.getByLabel('Nội dung phản hồi', { exact: true }).fill('Synthetic organization review request'); await merchantPage.getByRole('button', { name: 'Yêu cầu xem xét lại', exact: true }).click(); await expect(merchantPage.locator('.os-conversation')).toContainText('Synthetic organization review request');
+    await carrierPage.getByRole('button', { name: 'Cập nhật hồ sơ doanh nghiệp', exact: true }).click(); await expect(carrierPage.locator('.os-conversation')).toContainText('Synthetic organization review request'); await staffCommand('Synthetic review accepted', 'Chấp nhận xem xét lại'); await staffCommand('Synthetic final organization resolution', 'Gửi kết quả giải quyết');
+    await merchantPage.getByRole('button', { name: 'Cập nhật hội thoại', exact: true }).click(); await expect(merchantPage.locator('.os-conversation')).toContainText('Synthetic final organization resolution'); merchantPage.once('dialog', d => d.accept()); await merchantPage.getByRole('button', { name: 'Xác nhận kết quả và đóng', exact: true }).click(); await expect(merchantPage.locator('.os-context-facts')).toContainText('Đã đóng');
+    await merchantPage.reload(); await expect(merchantPage.locator('.os-context-facts')).toContainText('Đã đóng'); await merchantPage.screenshot({ path: process.env.S003_BROWSER_PRIVATE_DIRECTORY! + '/organization-support-real.png', fullPage: true, animations: 'disabled' });
+    await merchantPage.getByRole('button', { name: 'Danh sách Ticket', exact: true }).click(); await merchantPage.getByRole('button', { name: 'Báo cáo hỗ trợ', exact: true }).click(); await expect(merchantPage.locator('.os-report-metrics')).toContainText('1 mẫu');
+    await merchantPage.getByRole('button', { name: 'Thông báo của tôi', exact: true }).click(); await expect(merchantPage.locator('.os-notices')).toContainText('Có kết quả giải quyết'); await merchantPage.getByRole('button', { name: 'Đánh dấu đã đọc', exact: true }).first().click(); await expect(merchantPage.locator('.os-notices')).toContainText('Đã đọc');
+    // Closing a BrowserContext does not revoke its authenticated server session.
+    // Exercise the real logout for both test actors before the DB session gate.
+    for (const page of [merchantPage, carrierPage]) { await page.goto('/personal'); await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click(); await expect(page.getByRole('heading', { name: 'Đăng nhập bằng mật khẩu', exact: true })).toBeVisible(); }
+  } finally { await merchant.close(); await carrier.close(); }
+});
 test('organization contacts and internal work persist through real scoped APIs without Carrier writes', async ({ browser }) => {
   const business = await browser.newContext({ baseURL: origin, ignoreHTTPSErrors: false }), target = await business.newPage(), org = '10000000-0000-4000-8000-000000000901';
   const stage = (value: string) => writeFileSync(process.env.S003_BROWSER_PRIVATE_DIRECTORY! + '/organization-action-stage.json', JSON.stringify({ stage: value }));
@@ -269,7 +308,58 @@ test('merchant facilities persist real site-bound parcel preparation and interna
     for (const [field, value] of [['name', 'Synthetic Facility Recipient'], ['phone', '0901234567'], ['addressLine', 'Synthetic Recipient Street'], ['administrativeArea', 'Synthetic Area'], ['locality', 'Synthetic Locality']]) await target.locator('#recipient-' + field).fill(value);
     await target.getByRole('button', { name: '+ Thêm kiện (tối đa 5)', exact: true }).click();
     for (let n = 1; n <= 2; n++) { await target.locator('#parcel-description-' + (n - 1)).fill('Synthetic Facility Parcel ' + n); for (const field of ['Trọng lượng (g)', 'Dài (cm)', 'Rộng (cm)', 'Cao (cm)']) await target.getByLabel(field + ' — kiện ' + n, { exact: true }).fill(field === 'Trọng lượng (g)' ? '500' : '10'); }
-    await target.locator('#draft-reference').fill('SYNTHETIC-FACILITY-BOOKING'); await target.getByRole('button', { name: 'Xem lại thông tin', exact: true }).click(); await expect(target.getByRole('heading', { name: 'Xác nhận thông tin doanh nghiệp', exact: true })).toBeVisible(); await target.getByRole('checkbox', { name: /Tôi xác nhận chỉ khai hàng thông thường/ }).check(); await target.getByRole('button', { name: 'Lấy báo giá mô phỏng', exact: true }).click(); await expect(target.locator('.pb-total')).toContainText('50.000'); await target.getByRole('button', { name: 'Xác nhận đặt vận đơn mô phỏng', exact: true }).click(); await expect(target.locator('.pb-unpaid')).toHaveText('UNPAID'); const shipmentCode = await target.locator('.pb-code').innerText();
+    await target.locator('#draft-reference').fill('SYNTHETIC-FACILITY-BOOKING'); await target.getByRole('button', { name: 'Xem lại thông tin', exact: true }).click(); await expect(target.getByRole('heading', { name: 'Xác nhận thông tin doanh nghiệp', exact: true })).toBeVisible();
+    stage('MERCHANT_TOOLS_QUOTE'); await target.goto(base + '/lookup?view=quote');
+    await target.locator('.bst-drafts label').filter({ hasText: 'SYNTHETIC-FACILITY-BOOKING' }).getByRole('checkbox').check();
+    await target.getByRole('checkbox', { name: /^Tất cả kiện là hàng thông thường/ }).check();
+    await target.getByRole('button', { name: 'Lấy báo giá đã chọn', exact: true }).click(); await expect(target.locator('.bst-quote-row')).toContainText('50.000');
+    await target.getByRole('link', { name: 'Kiểm tra & Xác nhận Booking', exact: true }).click();
+    await expect(target.getByRole('timer', { name: 'Thời hạn báo giá' })).toBeVisible();
+    await target.getByRole('checkbox', { name: /Tôi xác nhận chỉ khai hàng thông thường/ }).check(); await expect(target.locator('.pb-total')).toContainText('50.000'); await target.getByRole('button', { name: 'Xác nhận đặt vận đơn mô phỏng', exact: true }).click(); await expect(target.locator('.pb-unpaid')).toHaveText('UNPAID'); const shipmentCode = await target.locator('.pb-code').innerText();
+    stage('MERCHANT_TOOLS_LOOKUP'); await target.goto(base + '/lookup');
+    await target.getByLabel('Danh sách mã', { exact: true }).fill(shipmentCode); await target.getByRole('button', { name: 'Tra cứu', exact: true }).click();
+    await expect(target.locator('.bst-match')).toContainText(shipmentCode); await target.getByRole('link', { name: 'Xem hành trình', exact: true }).click();
+    await expect(target.getByRole('heading', { name: 'Hành trình Carrier', exact: true })).toBeVisible(); await target.getByRole('link', { name: 'Quay lại tra cứu', exact: true }).click();
+    stage('ORGANIZATION_SUPPORT_HUB');
+    await target.getByLabel('Danh sách mã', { exact: true }).fill(shipmentCode); await target.getByRole('button', { name: 'Tra cứu', exact: true }).click();
+    await target.getByRole('link', { name: 'Xem hành trình', exact: true }).click(); await target.getByRole('tab', { name: 'Yêu cầu & Hỗ trợ', exact: true }).click();
+    await target.getByRole('link', { name: 'Mở hỗ trợ doanh nghiệp', exact: true }).click(); await expect(target.getByRole('heading', { name: 'Hỗ trợ & Khiếu nại', exact: true })).toBeVisible();
+    await expect(target.locator('.os-context-facts')).toContainText(shipmentCode); await expect(target.locator('.os-context-facts')).toContainText('Carrier chưa tiếp nhận');
+    await target.getByRole('link', { name: 'Claim & Bồi thường', exact: true }).click(); await expect(target.locator('.os-availability')).toContainText('người phê duyệt độc lập');
+    await target.getByRole('link', { name: 'Xem hành trình', exact: true }).click(); await target.getByRole('link', { name: 'Quay lại hỗ trợ doanh nghiệp', exact: true }).click();
+    await expect(target.locator('.os-context-facts')).toContainText(shipmentCode);
+    stage('ORGANIZATION_TEAM_SELF');
+    await target.getByRole('navigation', { name: 'Điều hướng Business', exact: true }).getByRole('link', { name: 'Nhân sự & Phân quyền', exact: true }).click();
+    await expect(target.getByRole('region', { name: 'Membership của tôi', exact: true })).toContainText('Đang hoạt động');
+    await expect(target.getByRole('region', { name: 'Quyền của tôi', exact: true })).toContainText('Xem tổng quan doanh nghiệp');
+    await expect(target.locator('.otm-aside')).toContainText('không làm thay đổi tài khoản cá nhân');
+    await target.getByRole('button', { name: 'Kiểm tra lại quyền', exact: true }).click();
+    await expect(target.locator('.otm-capabilities')).toBeVisible();
+    stage('ORGANIZATION_TEAM_INVITATION');
+    const invitationPanel=target.getByRole('region',{name:'Lời mời thành viên',exact:true});
+    await invitationPanel.getByLabel('Email người nhận',{exact:true}).fill(email);await invitationPanel.getByLabel('Lý do quản trị',{exact:true}).fill('Synthetic end-to-end invitation');
+    await invitationPanel.getByRole('button',{name:'Gửi lời mời',exact:true}).click();await expect(invitationPanel.getByRole('status').filter({hasText:'Đã lưu lời mời'})).toBeVisible();
+    const invitationMail=await mail(1);if(!invitationMail.invitation)throw new Error('TEAM_INVITATION_EMAIL_REQUIRED');
+    const invitePage=await page.context().newPage();
+    try{
+      await invitePage.goto(invitationMail.invitation);await expect(invitePage.getByRole('button',{name:'Chấp nhận lời mời',exact:true})).toBeVisible();expect(new URL(invitePage.url()).hash).toBe('');
+      await invitePage.getByRole('button',{name:'Chấp nhận lời mời',exact:true}).click();await expect(invitePage.getByRole('status')).toContainText('Đã chấp nhận lời mời');
+      await invitePage.getByRole('link',{name:'Về không gian cá nhân',exact:true}).click();await invitePage.getByRole('button',{name:'ArgoPost Personal',exact:true}).click();
+      await expect(invitePage.locator('a[href="'+base+'/overview"]')).toBeVisible();
+    }finally{await invitePage.close();}
+    await target.getByRole('button',{name:'Kiểm tra lại quyền',exact:true}).click();
+    const directory=target.getByRole('region',{name:'Danh sách thành viên',exact:true});await expect(directory.locator('tbody tr')).toHaveCount(2);
+    await directory.locator('tbody tr').filter({hasText:'Nhân viên vận hành'}).getByRole('button',{name:/Xem quyền/}).click();
+    for(const operation of ['Tạm khóa Membership','Mở lại Membership','Thu hồi Membership']){
+      await target.getByRole('button',{name:operation,exact:true}).click();await target.getByLabel('Lý do thay đổi',{exact:true}).fill('Synthetic end-to-end membership lifecycle');
+      await target.getByLabel('Mật khẩu hiện tại',{exact:true}).fill('synthetic-session-password');await target.getByRole('button',{name:'Xác nhận thay đổi',exact:true}).click();
+      await expect(directory.locator('tbody tr').filter({hasText:'Nhân viên vận hành'})).toContainText(operation==='Tạm khóa Membership'?'Tạm khóa':operation==='Mở lại Membership'?'Đang hoạt động':'Đã thu hồi');
+    }
+    await page.goto('/personal');await expect(page.getByRole('heading',{name:'Tổng quan',exact:true})).toBeVisible();
+    stage('MERCHANT_TOOLS_LABELS'); await target.goto(base + '/labels'); await target.getByLabel('Tìm vận đơn', { exact: true }).fill(shipmentCode); await target.getByRole('button', { name: 'Áp dụng bộ lọc', exact: true }).click();
+    await expect(target.locator('.om-table tbody tr')).toHaveCount(1); await target.getByRole('button', { name: 'Xem / In PDF', exact: true }).click();
+    const labelDownload = target.waitForEvent('download'); await target.getByRole('link', { name: 'Lưu PDF', exact: true }).click(); await (await labelDownload).saveAs(process.env.S003_BROWSER_PRIVATE_DIRECTORY! + '/business-tools-label-real.pdf');
+    await target.getByRole('button', { name: 'Đóng bản nhãn', exact: true }).click();
     stage('PREPARATION'); await target.goto(sitePath); await target.getByRole('button', { name: 'Chuẩn bị & Bàn giao', exact: true }).click(); await target.getByRole('row').filter({ hasText: shipmentCode }).getByRole('button', { name: 'Bắt đầu chuẩn bị', exact: true }).click();
     for (const n of [1, 2]) { await target.getByLabel('Kết quả kiện ' + n, { exact: true }).selectOption('OK'); await target.getByRole('button', { name: 'Lưu kiểm tra kiện ' + n, exact: true }).click(); await expect(target.getByRole('button', { name: 'Lưu kiểm tra kiện ' + n, exact: true })).toBeEnabled(); }
     await target.getByRole('button', { name: 'Xác nhận đã đóng gói', exact: true }).click(); await target.getByRole('button', { name: 'Sẵn sàng bàn giao nội bộ', exact: true }).click(); await expect(target.locator('.fw-detail header')).toContainText('Sẵn sàng bàn giao');
@@ -494,7 +584,7 @@ test('logout and recovery request use the actual verified destination', async ()
   await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click(); await expect(page.getByRole('heading', { name: 'Đăng nhập bằng mật khẩu' })).toBeVisible(); await page.getByRole('link', { name: 'Quên mật khẩu?' }).click(); await page.getByLabel('Email của tài khoản').fill(email); await page.getByRole('button', { name: 'Yêu cầu khôi phục mật khẩu' }).click(); await expect(page).toHaveURL(/\/recover\/otp$/);await expect(page.getByLabel('Mã xác minh 6 chữ số')).toBeVisible();
 });
 test('recovery confirmation changes the credential with the actual second message', async () => {
-  await page.getByLabel('Mã xác minh 6 chữ số').fill((await mail(1)).code);await page.getByRole('button',{name:'Tiếp tục',exact:true}).click();await expect(page).toHaveURL(/\/recover\/confirm$/); await expect(page.getByLabel('Mật khẩu mới', { exact: true })).toBeVisible(); expect(new URL(page.url()).hash).toBe(''); await page.getByLabel('Mật khẩu mới', { exact: true }).fill(newPassword); await page.getByLabel('Nhập lại mật khẩu mới').fill(newPassword); await page.getByRole('button', { name: 'Xác nhận mật khẩu mới' }).click(); await expect(page.getByRole('status')).toContainText('Bạn đã đổi mật khẩu thành công!');await expect(page).toHaveURL(/\/login$/);
+  await page.getByLabel('Mã xác minh 6 chữ số').fill((await mail(2)).code);await page.getByRole('button',{name:'Tiếp tục',exact:true}).click();await expect(page).toHaveURL(/\/recover\/confirm$/); await expect(page.getByLabel('Mật khẩu mới', { exact: true })).toBeVisible(); expect(new URL(page.url()).hash).toBe(''); await page.getByLabel('Mật khẩu mới', { exact: true }).fill(newPassword); await page.getByLabel('Nhập lại mật khẩu mới').fill(newPassword); await page.getByRole('button', { name: 'Xác nhận mật khẩu mới' }).click(); await expect(page.getByRole('status')).toContainText('Bạn đã đổi mật khẩu thành công!');await expect(page).toHaveURL(/\/login$/);
 });
 test('fresh login rejects the old credential and revoked browser loses its workspace', async () => {
   await secondaryPage.goto('/personal/profile'); await expect(secondaryPage.getByRole('heading', { name: 'Đăng nhập bằng mật khẩu' })).toBeVisible(); await expect(secondaryPage.getByLabel('Tên hiển thị trong hồ sơ')).toHaveCount(0);
