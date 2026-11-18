@@ -39,6 +39,7 @@ function Set-ProcessEnvironment($settings) {
     $env:SUPPORT_TICKETS_ENABLED = 'true'
     $env:BUSINESS_WORKSPACE_ENVIRONMENT = 'LOCAL'
     $env:BUSINESS_WORKSPACE_ENABLED = 'true'
+    $env:BUSINESS_TEAM_ENABLED = 'true'
     $env:PUBLIC_MEDIA_LOCAL_ROOT = Join-Path $frontend 'public/media'
     $env:SPRING_PROFILES_ACTIVE = $null
     $env:JAVA_TOOL_OPTIONS = $null
@@ -112,8 +113,24 @@ function Doctor {
 }
 function Prepare-Database($settings) {
     $docker = Docker-Path
-    & (Join-Path $root 'infra/postgres/start-local.ps1')
-    if ($LASTEXITCODE -ne 0) { throw 'POSTGRES_START_FAILED' }
+    $existing = & $docker inspect elogistics-d1-postgres18 --format '{{json .}}' 2>$null
+    if ($LASTEXITCODE -eq 0) {
+        $container = $existing | ConvertFrom-Json
+        if ($container.Config.Labels.'com.docker.compose.project' -ne 'elogistics-d1') { throw 'POSTGRES_CONTAINER_OWNERSHIP_MISMATCH' }
+        if ($container.State.Status -ne 'running') {
+            & $docker start $container.Id 1>$null
+            if ($LASTEXITCODE -ne 0) { throw 'POSTGRES_START_FAILED' }
+        }
+        # Reuse the verified instance; Compose must not recreate a demo container.
+        for ($attempt=0; $attempt -lt 60; $attempt++) {
+            $existingHealth = & $docker inspect $container.Id --format '{{.State.Health.Status}}' 2>$null
+            if ($LASTEXITCODE -eq 0 -and $existingHealth -eq 'healthy') { break }
+            Start-Sleep -Seconds 2
+        }
+    } else {
+        & (Join-Path $root 'infra/postgres/start-local.ps1')
+        if ($LASTEXITCODE -ne 0) { throw 'POSTGRES_START_FAILED' }
+    }
     $health = & $docker inspect elogistics-d1-postgres18 --format '{{.State.Health.Status}}' 2>$null
     if ($LASTEXITCODE -ne 0 -or $health -ne 'healthy') { throw 'POSTGRES_NOT_HEALTHY' }
     & (Join-Path $root 'app/backend/mvnw.cmd') -q -f (Join-Path $root 'app/backend/pom.xml') '-DskipTests' package
@@ -177,7 +194,7 @@ switch ($Action) {
             if (!(Test-Https 'https://127.0.0.1:8443/api/v1/public-media/hero-network.svg')) { throw 'BACKEND_READINESS_TIMEOUT' }
             # The frontend child must never inherit database, AWS profile, SMTP or signing material.
             foreach ($property in $settings.PSObject.Properties) { [Environment]::SetEnvironmentVariable($property.Name,$null,'Process') }
-            foreach ($name in @('PG_DB_URL','PG_RUNTIME_USER','PG_RUNTIME_PASSWORD','PG_MIGRATION_ENABLED','PG_OWNER_ROLE','PG_MIGRATOR_USER','PG_MIGRATOR_PASSWORD','CUSTOMER_SMTP_USERNAME','CUSTOMER_SMTP_SENDER','CUSTOMER_SMTP_APPROVED_SENDER_DOMAINS','CUSTOMER_SMTP_PASSWORD','PUBLIC_MEDIA_LOCAL_ROOT')) { [Environment]::SetEnvironmentVariable($name,$null,'Process') }
+            foreach ($name in @('PG_DB_URL','PG_RUNTIME_USER','PG_RUNTIME_PASSWORD','PG_MIGRATION_ENABLED','PG_OWNER_ROLE','PG_MIGRATOR_USER','PG_MIGRATOR_PASSWORD','CUSTOMER_SMTP_USERNAME','CUSTOMER_SMTP_SENDER','CUSTOMER_SMTP_APPROVED_SENDER_DOMAINS','CUSTOMER_SMTP_PASSWORD','PUBLIC_MEDIA_LOCAL_ROOT','BUSINESS_TEAM_ENABLED')) { [Environment]::SetEnvironmentVariable($name,$null,'Process') }
             $vite = Join-Path $frontend 'node_modules/vite/bin/vite.js'
             $frontendProcess = Start-Process -FilePath (Get-Command node).Source -ArgumentList @(('"'+$vite+'"'),'--host','127.0.0.1','--mode','customer') -WorkingDirectory $frontend -PassThru -WindowStyle Hidden -RedirectStandardOutput (Join-Path $privateRoot 'frontend.out.log') -RedirectStandardError (Join-Path $privateRoot 'frontend.err.log')
             $frontendRecord = Process-Record $frontendProcess 'FRONTEND'

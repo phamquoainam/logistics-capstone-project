@@ -1,5 +1,47 @@
 # Traceability Matrix (living document)
 
+## Organization Support Hub / V1 authority manifest — 2026-11-17
+
+Owner approved V1 BUSINESS scope with conditions; exact API/DTO/schema/permission
+confirmation remains pending by explicit Owner instruction, not implicitly
+accepted. Canonical020/BC-016/030 links; Claim021 remains excluded.
+[Authority split/evidence](../implementation/organization-support-technical-review.md)
+and [exact manifest](../implementation/organization-support-technical-manifest.json).
+OSC-01/02/03a DONE: preserved19 preceding WIP sources; root Business support hub,
+same-Organization Shipment context and safe return, factual guide search and
+separate Ticket/change/Claim availability use existing accepted APIs only.
+12 unit /15 support+Business UI PASS, plus9 Shipping Tools regressions in a
+separate run; typecheck/lint/default+Customer build PASS. Real HTTPS/PG18/test-SMTP
+Browser parent1 PASS with18 cases PASS, including Shipment→support→tracking→return.
+Credential privacy, recorded-resource absence and backup integrity PASS.
+OSC-03b and all new Ticket runtime/permissions/schema gates remain pending; no
+Backend production change, V33 creation/execution, localhost migration/grant,
+production activation, Claim/Finance/Carrier write or merge performed.
+
+## Business Tracking / Quotation and Labels / Utilities — 2026-11-16
+
+Owner-directed BTU-01–06 LOCAL DONE within accepted BSC-06/OSM-03/WFP contracts.
+BC-013/BC-026 and canonical L005/L008/L009 are target links, not new full-spec
+acceptance. [Scope, commands and evidence](../implementation/business-shipping-tools-review.md).
+New root Business menus use only Organization/current Membership/facility-scoped
+APIs: bounded exact Shipment/Parcel/reference lookup and authorized no-PII export;
+saved-Draft batch Quotes with receipts/current-contract checks and explicit
+existing-Quote Booking review; filtered authorized original PDF/ZIP and private
+preview; existing real preparation/handover navigation; measured-weight, service
+and approved coverage tools. No Personal price fallback, new wire/schema/right,
+SQL migration, live grant, Carrier acceptance, COD or Payment mutation.
+
+Final frontend169 units and9 new UI cases PASS, typecheck/lint/default+Customer
+build PASS. Focused Backend/Architecture39 PASS including18 real HTTPS/PG18/
+test-SMTP Browser cases. The new tools now participate in the actual two-Parcel
+Merchant Quote→Booking→lookup→private-PDF journey. Separate existing shell9 and
+facility-work3 UI regressions PASS. Credential privacy and independent recorded
+focused-resource absence checks PASS; no full H2/PG suite or hosted CI claimed.
+Official local HTTP readiness and strict-CA200 for new routes/module confirmed;
+existing PostgreSQL healthy, V1–V32 and application data unchanged. Commercial
+ETA/Pickup/COD, Carrier receipt/POD, other printers/templates and print-history
+remain unavailable pending their actual sources/authority.
+
 ## Merchant Operations Reports & Finance V1 — Owner-directed, 2026-11-15
 
 Subsequent explicit Owner activation approval: verified build is now running on
@@ -1388,3 +1430,236 @@ evidence remains distinct from the subsequent manual Owner confirmation: directo
 and Add Site button display correctly without permission/loading errors. WFP-08
 manual screen verification CLOSED; no additional real-account CRUD/Booking or
 Carrier workflow was inferred from this confirmation.
+
+
+### Organization Team V1 ? verification checkpoint 2026-11-17
+
+OTA-01 DONE: accepted IAM-INVITE-03 / Owner policy and actual V23/V32 compared;
+29 previous WIP paths preserved with verified SHA-256. OTA-02 LOCAL DONE: new
+same-level Team menu/current-self Membership and Org-grant projection uses existing
+GET business-contexts, truthful Warehouse scope limitation, refresh failure/revoke
+clears old rights; no directory/administration success inferred from a role label.
+2 units,19 affected UI (10 Team +9 Business), typecheck/lint/default+Customer build
+PASS. Focused PG18 parent1/1 and18 actual HTTPS/test-SMTP Browser journeys PASS,
+including current-self Team read/refresh; privacy and independent recorded-resource
+absence/binding audit PASS. Original local PG healthy/HTTP full-stack ready.
+
+OTA-03 DONE: Owner technical GO accepted [exact core manifest](../implementation/organization-team-technical-manifest.json)
+SHA-256 `f6e21ee3ec3f742035d37f2c10d624031cc450a9b590939df878e9397952f426`:
+15 APIs/20 DTOs/five rights/five tables/four amendments and six clarifications.
+Frozen JSON remains byte-for-byte. Bounded guard and runtime ACL source patches
+were separately confirmed after automatic review rejection; see [execution](../implementation/organization-team-execution.md),
+[guard disposition](../implementation/organization-team-guard-blocker.md) and
+[ACL disposition](../implementation/organization-team-runtime-acl-checkpoint.md).
+
+OTA-04 DONE / OTA-05 LOCAL SOURCE-TEST CHECKPOINT DONE: V34 (V33 absent;
+V1–V32 untouched), canonical Merchant Membership/grants, current Identity
+reauth/admission and protected proof/outbox, all15 HTTP routes, Team
+directory/invitations/scoped rights/member administration/audit and recipient UI.
+Only synthetic fixtures/isolated PostgreSQL18 were used. H2698 PASS/17 expected
+skips; migration64/64; frontend182 units and21 Team UI fixtures; lint/typecheck,
+default+Customer build; report-policy132/132; manifest/whitespace validation PASS.
+Actual HTTPS/PG/test-SMTP Browser18/18 PASS, including invitation acceptance and
+suspend/resume/revoke with Personal preserved. Protected credential UTF8/UTF16
+and independent resource-absence audits PASS;37 checkpoint hashes intact.
+
+Verification provenance: full PG run1172 PASS/one synthetic UUID assertion FAIL/
+five expected mode-specific skips; corrected Browser parent plus nine Team tests
+then10/10 PASS on real PG. Production classpaths are byte-identical between runs;
+only the test class changed. All1173 executed identities have observed passing
+outcomes across those runs. The original full invocation/report remains **FAIL**;
+no XML rewrite, single-run full PASS or hosted CI PASS is claimed. Earlier stale
+table inventory/unconfigured-Foundation failures also remain historical evidence.
+See the [execution log](../implementation/organization-team-execution.md) for
+commands, boundaries and private evidence pointers.
+
+Initial Owner remains immutable/active OWNER. Owner transfer and extra role
+templates stay outside scope. No localhost grants/migration, Production expansion,
+credentials/certificates/demo mutation, commit/push or merge. No full Team or
+local deployment acceptance is inferred from unit tests or UI fixtures.
+
+OTA-07 CONTROLLED LOCAL DEPLOYMENT DONE / WRITE UAT PENDING,2026-11-17:
+subsequent Owner Local/Test GO explicitly accepted V34 and five ORGANIZATION
+Team rights for NamShop Demo's verified Initial Owner only. [Deployment evidence](../implementation/organization-team-local-checkpoint.md):
+stopped-cluster backup206069760 bytes, isolated no-network restore/crash recovery
+and114-table live/restore fingerprint match PASS. Exactly32 historical checksums
+match; V33 absent from source/JAR/history; onlyV34 pending and then applied,
+checksum667729765. All113 old data tables unchanged by migration. Canonical
+independent operator added exactly five Team grants, preserving20 old rows and
+Membership identity/Role/state; counters6→7 once. One audit/receipt; same-request
+replay adds nothing. Pre-runtime preservation found only five expected changed
+old tables; no unexpected delta. Original instance/volume reused, no recreation.
+
+Local HTTPS/owned-process readiness PASS; HTTP6/6 and guest Browser5/5 PASS,
+with TLS validation enabled. Four focused mocked launcher lifecycle cases PASS.
+Owner confirmed authenticated Team directory/role-template/audit UI and the five
+rights. Owner clarified that write journeys had not actually been run; readback
+initially showed0 invitations/Team audit/receipts and that snapshot was not counted
+as write PASS. Subsequent concrete Owner UAT produced real Gmail receipt and one
+accepted OPERATOR invitation: one SMTP attempt, exact72h proof consumed once,
+cleared delivery payload and one INVITE/ACCEPT audit+receipt. Subsequent
+readback confirmed SUSPEND: test Membership SUSPENDED/version2/authority2,
+one audit/receipt, Personal still ACTIVE/verified. RESUME was subsequently
+corroborated at ACTIVE/version3/authority3 with one audit/receipt. A55-table
+read-only Shipping/Pricing/Finance/Carrier/global-grant preservation check matched.
+Resend/decline/revoke-invitation, REVOKE_MEMBER and Warehouse live UAT remain
+pending; no result is inferred for them. Protected config/cert hashes
+unchanged; isolated restore helper removed, verified backup preserved. No new
+Support/Claim/Finance/Carrier/Production authority or Git commit/push/merge.
+Original full PostgreSQL FAIL and focused10/10 PASS retain their exact provenance.
+
+## Organization Support V1 — source/test checkpoint, 2026-11-18
+
+Owner technical authority is the frozen manifest SHA-256
+`9484c415356e601ee8192e84a09af2e39f2f448d07244457de1ef79a09c3a940`, plus explicit
+approval for the existing workspace operator name, VARCHAR(32) permission column
+with exact allowlist, and the read-only Identity eligibility port. The historical
+V33 placeholder resolves to forward-only V35 after the already-applied V34 Team.
+See [execution and evidence](../implementation/organization-support-execution.md).
+
+| Approved requirement | Implementation | Observed verification |
+| --- | --- | --- |
+| OSC-API-01–23 / DTO-01–28 | `OrganizationSupportTickets`, `OrganizationSupportHttp`, strict Frontend projections/client and Merchant/CSKH Ticket screens | Nine focused Organization HTTP/PG cases; nineteen real HTTPS Browser journeys |
+| OSC-PERM-01–05 / REUSE-STAFF-01–02 | Current Membership/scope checks, canonical SUPPORT_TRIAGE/HANDLE plus explicit Organization binding, separate Merchant/Carrier assignments | Cross-Organization/facility denial, grant/membership/Staff revocation and Team offboarding PASS; no Support rights added to Team ceilings |
+| OSC-DB-01–12 / AMEND-01–04 / OPERATOR-01 | V35 typed target FKs, append-only message/audit/receipt, same-transaction evidence and owner-only audited offline operators | Direct-DML negatives, rollback, replay/concurrency and notification uniqueness PASS; V34→V35 preservation PASS; seven PG18 metadata/lifecycle checks PASS |
+| OSC-MODULE-01–03 | Merchant-scoped member discovery; Identity eligibility before pagination; shared pure Support policy preserving Personal semantics | >100-member candidate case PASS; five Personal Support cases PASS; eight Support/Team policy cases and twenty-three Architecture checks PASS |
+| OSC-CONFIG-01 | Default-off flag and existing LOCAL/TEST/SANDBOX/non-Production guards | Disabled/default/Production rejection without writes PASS; no localhost activation |
+| Reports, privacy and UX | Creation cohort in Vietnam time, real first CSKH response/resolution samples, no inferred SLA; current self notices from committed events | Fifteen Frontend units, eleven UI cases, typecheck/lint/customer build PASS; desktop/mobile visual inspection |
+
+Final Browser Java gate also asserts one CLOSED/version10 Organization Ticket,
+ten messages, one internal assignment, thirteen audit/receipt pairs and one read
+notice, with zero active test sessions. Early fixture/session-cleanup failures
+and the single existing Facility journey timeout remain recorded in the execution
+report; no timeout/assertion was weakened. Report-policy132 tests PASS (native
+exit0). These are focused source/test results, not full PostgreSQL-suite, GitHub
+CI, live SMTP, localhost deployment or Production acceptance.
+
+Original89-path WIP archive verified89/89; historical migrations and accepted
+Personal/Shipping contracts preserved. No reset/clean/worktree, demo mutation,
+new real-account grant or Git commit/push/merge. Claim/Compensation, evidence
+upload and Shipment/Finance mutation are still outside the approved Ticket V1.
+OSC-04/05/06 source/test DONE after canonical implementation/source validator
+exit0, zero errors and semantic status CONSISTENT. Local/Test deployment remains
+a separate Owner decision; no Full Support/Claims or full-suite acceptance claimed.
+
+### Organization Support V35 — Owner-approved Local/Test schema checkpoint
+
+2026-11-18: **LOCAL_SUPPORT_V35_SCHEMA_READY**, schema only. Exact original
+`elogistics-d1-postgres18` / `elogistics_dev` / volume
+`elogistics_d1_pg18_dev_data`, system ID7696150062350938155. A read-only stopped-
+volume backup (206602240 bytes, SHA-256
+`f7583e07eaf718775f6aa5565321d98b9b7268bb87895e5609192a4eda638368`) was recovered
+on a network-isolated tmpfs copy before starting the exact original container.
+All119 live table fingerprints/history/catalog matched that restored copy.
+
+Official Flyway migration profile target35 exited0; read-only post-validate PASS.
+History is exactly1–32,34,35, with one V35 row/checksum **-599636176**. No V33,
+historical edit, clean/repair/reset, or manual bypass. All118 old data tables
+unchanged; only history gained the expected row. Twelve new Support tables are
+empty, manifest columns/validated constraints/enabled guards present. Existing
+table ACLs preserved; permission column32/exact allowlists support five new rights
+without granting them or expanding Team ceilings. Support grants/bindings delta0.
+
+Organization Support remains default-off. No Backend/Frontend restart, Ticket UAT,
+new permission/Staff binding, credentials/certificate/global setting change or Git
+commit/push/merge. All105 current WIP paths archived and verified. Backup/evidence
+retained under the private path pointer in
+`.demo/organization-support/local-schema-path.txt`; only owned restore resources
+were cleaned, not the original volume. See the schema-only deployment section in
+[execution report](../implementation/organization-support-execution.md).
+Exact demo grants, Staff bindings, feature enablement and UAT require a separate
+Owner checkpoint; previous full-suite/CI limitations are not relabeled PASS.
+
+### Organization Support Local/Test activation — exact Merchant grants, Staff pending
+
+2026-11-18: **STAFF_BINDING_APPROVAL_REQUIRED**. Fresh V35/current Owner preflight
+PASS. Before grants, a new V35-state custom DB/global-role backup was actually
+restored on network-none/tmpfs, with131/131 table fingerprints matched. Standard
+restore needed the original PostgreSQL18 bootstrap grantor and Tariff-before-Quote
+TOC ordering; no guard/constraint disabled or original data changed. Catalog/ACL
+equivalence was verified, including documented PG deparse/generated-name forms.
+
+Approved exact5 `support.*` rights granted solely to the existing NamShop Demo
+Initial Owner, ORGANIZATION scope. Operator request
+`9400d8a1-9815-45a5-a513-5fa788797cf5` via canonical workspace operator produced one
+audit/receipt; same-key replay no-op. All26 old grants and other Membership rows
+preserved. Target counters7→8; identity/ownership/role/state unchanged. Only the
+four expected Merchant admin tables changed; other127 tables, including V35
+history/Personal Support/Team/Shipping/Finance/Support resources, unchanged.
+
+Canonical Staff discovery returned zero SUPPORT_TRIAGE/HANDLE rows and zero
+Organization bindings. No Staff target selected, no canonical grant created.
+Single blocker is absence of current canonical Staff authority to confirm.
+Feature remains default-off; runtime activation and HTTP/Browser UAT NOT RUN.
+Backup/evidence remain private under `.demo/organization-support/local-activation-path.txt`;
+owned restore helper removed, original volume preserved. Source WIP/configuration
+intact, no source/test or migration rerun, credentials/global changes, Git
+commit/push/merge or full-suite/CI PASS claim. See the subsequent activation
+section in [execution report](../implementation/organization-support-execution.md).
+
+### Organization Support Staff discovery — read-only Owner checkpoint
+
+2026-11-18: single READ ONLY / REPEATABLE READ discovery DONE on the verified
+Local/Test V35 database. Three Identity accounts: Merchant Owner explicitly
+excluded; two Customer-only eligible accounts have no Staff role/assignment and
+are not nominated as CSKH. Existing Identity/Station/Support Staff signals0;
+canonical SUPPORT_TRIAGE/HANDLE rows0/0, NamShop Staff bindings0. Thus no exact
+Staff candidate/Grant UUID exists to present. SYSTEM realm INACTIVE is recorded,
+not activated or used to infer authority. Five Merchant Support grants unchanged.
+
+SECURITY BLOCKED remains: dedicated verified Local/Test Staff identity and exact
+least-privilege canonical authority are proposal only, awaiting separate Owner
+selection/provisioning approval. TRIAGE assigns; HANDLE needs actual assignment
+for case handling. Existing self-claim UI needs both explicitly, without implying
+other Carrier/Finance/Platform or Merchant rights. No target selected/provisioned,
+grant/binding/flag/config mutation, restart, UAT, migration, backup or source/test
+rerun. Private sanitized evidence and proposal are in the latest
+[execution report](../implementation/organization-support-execution.md) section.
+
+### Dedicated CSKH provisioning — existing-mechanism security gate
+
+2026-11-18: **SECURITY_BLOCKED — CANONICAL_STAFF_PROVISIONING_REQUIRED** before
+mutation. Read-only exact Local/Test/V35 gate PASS; SYSTEM INACTIVE, eligible
+management actors0, accounts3, Support grants0, Organization bindings0, existing
+Merchant Support grants5 unchanged. Existing Identity provisioning/verification
+components require the exact ACTIVE SYSTEM/IDENTITY_MANAGEMENT authority and
+initial grant; no approved non-admin Local/Test Staff provisioning path exists
+under the required inactive-Realm boundary. Customer relabel/direct DML/schema-
+owner/session fabrication are not substitutes.
+
+Existing canonical `configure_local_support_staff(uuid,text,text)` was confirmed
+operator-only/audited/state-idempotent, not absent. It lacks request-bound receipt/
+payload correlation; the V22 operator audit deliberately has null request_id.
+Separate bounded Identity Staff-provisioning/admission and canonical operator-
+receipt amendments need an approved technical manifest before implementation.
+No Organization Support API/DTO/DB reapproval is requested. No Staff/Grant UUID,
+proof, audit/receipt or database change created; no backup/migration/tests/runtime
+restart, feature enablement or Git mutation. Exact code/catalog evidence and
+required deltas are recorded in the latest
+[mechanism gate](../implementation/organization-support-execution.md) section.
+
+
+## CSKH technical authority design review, 2026-11-18
+
+Owner scope: technical contract design only; no source/migration/runtime execution.
+Design packet: [contract](../implementation/cskh-staff-authority-contract.proposed.md),
+[exact manifest](../implementation/cskh-staff-authority-technical-manifest.json),
+[technical review](../implementation/cskh-staff-authority-technical-review.md).
+
+CSKH-DESIGN-01: DONE (source/authority inventory, exact proposed deltas and reuse evidence).
+CSKH-DESIGN-02: DONE (design only): JSON/IDs/status/references/source fingerprints PASS;
+repository validator exit 0, errors=[], semantic ownership CONSISTENT (182 Markdown,
+10 pre-existing broken links retained); git diff --check exit 0. No implementation acceptance.
+CSKH-IMPLEMENT-01/CSKH-DEPLOY-01: NOT STARTED, awaiting the separate exact-manifest decision.
+
+Proposals: dedicated STAFF/SUPPORT marker and real 24h invitation; reuse Identity
+credential/proof/outbox/session engines, fixed Staff audience/context; preserve
+Customer notification-reference eligibility without admitting Customer as Staff.
+Canonical grant engine/codes retained; durable operator-bound receipts, revoke-safe
+replay and deny-only legacy signature. V35 binding target-eligibility dependency
+explicit; V36/V37 available in source, not created or executed. Every new/changed
+manifest item is [PROPOSED]. No new Staff/Grant UUID, Organization binding, role
+grants, enabled feature or live SMTP/UAT evidence. No database/credential access,
+backup/restore repetition, runtime restart, commit/push/merge in this checkpoint.
+Historical original full Team PG run 1 FAIL/focused rerun 10/10 PASS remains;
+no full PostgreSQL/GitHub CI PASS claimed. CSKH-T-01..10 are unexecuted test plans.

@@ -1,0 +1,1062 @@
+{
+  "manifest_version": 1,
+  "id": "CSKH-AUTHORITY-V1",
+  "status": "[PROPOSED]",
+  "checkpoint": "CSKH_STAFF_AUTHORITY_TECHNICAL_REVIEW_READY",
+  "date": "2026-11-18",
+  "approval": "DESIGN_ONLY_NOT_IMPLEMENTATION",
+  "baseline_head": "c8cdfa335e31596116cf0d7626b81ef0d40dee78",
+  "baseline_includes_uncommitted_ota_osc_source": true,
+  "execution": {
+    "source_changed": false,
+    "migration_created": false,
+    "database_mutated": false,
+    "staff_provisioned": false,
+    "permissions_granted": false,
+    "runtime_restarted": false,
+    "feature_enabled": false,
+    "committed": false
+  },
+  "contract": "docs/implementation/cskh-staff-authority-contract.proposed.md",
+  "review": "docs/implementation/cskh-staff-authority-technical-review.md",
+  "reuse_evidence": [
+    {
+      "id": "CSKH-EV-01",
+      "path": "app/backend/src/main/java/com/elogistic/backend/identity/internal/application/ProvisionIdentityAccount.java",
+      "symbol": "provisionIdentityAccount",
+      "finding": "System-generated target UUID; pending account, proof, protected delivery, audit and receipt in one transaction; current management-admin admission prevents direct reuse as a non-admin Staff issuer."
+    },
+    {
+      "id": "CSKH-EV-02",
+      "path": "app/backend/src/main/java/com/elogistic/backend/identity/internal/application/IdentityRealmGrantPolicy.java",
+      "symbol": "resolveProvisioning",
+      "finding": "Existing ordinary provisioning requires the exact IDENTITY_MANAGEMENT/IDENTITY pair; SYSTEM remains INACTIVE. No call with empty grants or fabricated management actor is permitted."
+    },
+    {
+      "id": "CSKH-EV-03",
+      "path": "app/backend/src/main/java/com/elogistic/backend/identity/internal/infrastructure/JdbcIdentityInvitationStore.java",
+      "symbol": "eligibleRealm",
+      "finding": "Existing invitation acceptance binds an ACTIVE SYSTEM realm and management grant. Action proof, credential policy, activation versioning and receipt logic are reusable with an explicit isolated Staff purpose."
+    },
+    {
+      "id": "CSKH-EV-04",
+      "path": "app/backend/src/main/java/com/elogistic/backend/identity/internal/infrastructure/JdbcInvitationOutbox.java",
+      "symbol": "ELIGIBLE/claim/open/complete/purge",
+      "finding": "Protected invitation storage, leases, bounded retries and payload erasure exist. ELIGIBLE currently requires SYSTEM management. This class explicitly has no network sender; Staff mail delivery must be wired to the existing approved JavaMailSender transport, not assumed present."
+    },
+    {
+      "id": "CSKH-EV-05",
+      "path": "app/backend/src/main/java/com/elogistic/backend/identity/internal/application/IdentitySessions.java",
+      "symbol": "loginIdentity/refreshIdentity/logoutIdentity",
+      "finding": "Same credential verification, refresh rotation/replay revocation, 8h absolute/30m idle/15m access state machine can serve a fixed STAFF composition."
+    },
+    {
+      "id": "CSKH-EV-06",
+      "path": "app/backend/src/main/java/com/elogistic/backend/identity/internal/web/ProductionAccessTokens.java",
+      "symbol": "constructor/verify",
+      "finding": "RS256 engine already accepts a fixed issuer/audience and rejects foreign audience. No JWT claim or second signing engine required."
+    },
+    {
+      "id": "CSKH-EV-07",
+      "path": "app/backend/src/main/java/com/elogistic/backend/workflow/internal/web/OrganizationSupportHttp.java",
+      "symbol": "staff/staffTarget",
+      "finding": "Only the Staff adapter currently calls CustomerAdmission. Merchant execution remains BusinessWorkspaces + CustomerAdmission. Staff adapter must use new typed Staff admission; existing Support HTTP paths/DTOs remain unchanged."
+    },
+    {
+      "id": "CSKH-EV-08",
+      "path": "app/backend/src/main/resources/db/migration/V22__personal_support_tickets.sql",
+      "symbol": "configure_local_support_staff/support_business_audit",
+      "finding": "Canonical operator exists, is operator-only, stores session_user and returns an already ACTIVE grant without duplicate audit; no request receipt. A GRANT repeated after revoke can issue a fresh grant. Audit operator variant requires request_id NULL and new_version=prior_version+1."
+    },
+    {
+      "id": "CSKH-EV-09",
+      "path": "app/backend/src/main/resources/db/migration/V35__organization_support_tickets.sql",
+      "symbol": "organization_support_staff/configure_local_organization_support_staff",
+      "finding": "Current canonical grant + Organization binding + ACTIVE Organization/Initial Owner are independently required. Binding operator calls Customer-only identity.lock_local_business_subject; add a Staff-specific Identity lock API and amend only the binding target-eligibility call, preserving signature/receipts/locks."
+    },
+    {
+      "id": "CSKH-EV-10",
+      "path": "docs/implementation/organization-support-execution.md",
+      "symbol": "Dedicated CSKH identity/canonical authority mechanism gate",
+      "finding": "Previously enforced read-only catalog evidence: V35 latest, checksum -599636176; 3 accounts, 0 Staff candidates, 0 canonical grants/bindings, SYSTEM INACTIVE. Existing Merchant grants already complete. Discovery/migration/restore not repeated for design."
+    },
+    {
+      "id": "CSKH-EV-11",
+      "path": "app/backend/src/main/java/com/elogistic/backend/identity/internal/infrastructure/JdbcCustomerEnrollmentStore.java",
+      "symbol": "emailOccupied",
+      "finding": "Already checks all identity.user_account emails with exact C equality, not only customer_identifier. No Customer HTTP/DTO change required; retain generic occupied-email response. Staff provisioning also rejects pending customer_enrollment for same email, serialized by existing Identity administration lock."
+    },
+    {
+      "id": "CSKH-EV-12",
+      "path": "app/backend/src/main/resources/db/migration/V3__production_identity.sql",
+      "symbol": "command_receipt/audit_entry/auth_session/csrf_binding",
+      "finding": "Offline operator cannot reuse ACTOR receipt without fabricating an Identity actor; PROOF acceptance can reuse receipt after exact operation CHECK amendment. audit_entry permits null actor with real request/target. Audience discriminator avoids 3 duplicate Staff session tables."
+    },
+    {
+      "id": "CSKH-EV-13",
+      "path": "app/backend/src/main/resources/db/migration/V35__organization_support_tickets.sql",
+      "symbol": "support_operator_audit",
+      "finding": "Existing durable binding audit requires non-null organization_id and BIND/UNBIND, so it cannot safely hold global GRANT/REVOKE receipts. New global operator receipt is justified; retain existing canonical grant/audit engine."
+    },
+    {
+      "id": "CSKH-EV-14",
+      "path": "app/backend/src/main/java/com/elogistic/backend/orders/internal/infrastructure/JdbcOrganizationSupportTickets.java",
+      "symbol": "staffReferences/notify/carrierAssign/carrierCommand",
+      "finding": "Staff references include Merchant creator/internal assignee for notification eligibility, not just Staff handler candidates. New StaffAdmission must preserve eligible Customer reference subjects while requiring Staff actor; exact Staff+grant+Org predicate separately gates CSKH assignee. No notification regression or Customer login widening."
+    },
+    {
+      "id": "CSKH-EV-15",
+      "path": "app/backend/src/main/java/com/elogistic/backend/identity/internal/web/ProductionCustomerRequestAdmission.java",
+      "symbol": "enter/current/authorize",
+      "finding": "CustomerRequestContext is not a neutral bearer parser: authorize verifies Customer-specific CSRF cookie/session. Staff needs fixed typed Staff request context and narrowly ordered Staff filter on existing Organization Staff paths; cannot reuse Customer ThreadLocal/cookie or broaden all Personal Support operations."
+    }
+  ],
+  "policies": [
+    {
+      "id": "CSKH-POL-01",
+      "status": "[PROPOSED]",
+      "rule": "Dedicated immutable STAFF/SUPPORT purpose, mutually exclusive with Customer identifiers, Merchant memberships and Identity account_grant roles; no implicit grant. No conversion of an existing account. Email collision rejects without exposing account details."
+    },
+    {
+      "id": "CSKH-POL-02",
+      "status": "[PROPOSED]",
+      "rule": "Real controlled-mailbox invitation, opaque 32-byte random secret encoded unpadded base64url (43 characters), 24h expiry, initial password under existing policy; no operator-chosen password or verified flag. No automatic login. Resend invalidates old proof; cancellation terminal for pending enrollment. No active-account reactivation, recovery, email change, Owner transfer or new MFA in this amendment."
+    },
+    {
+      "id": "CSKH-POL-03",
+      "status": "[PROPOSED]",
+      "rule": "Trusted offline DB login must currently belong to elogistics_local_staff_operator; session_user, not user-supplied actor or SET ROLE alone, binds authority. No public provisioning HTTP endpoint. Existing migrator may receive membership only through a separately approved deployment operation; no default membership."
+    },
+    {
+      "id": "CSKH-POL-04",
+      "status": "[PROPOSED]",
+      "rule": "Runtime customer profile with customer.rollout=SANDBOX and environment LOCAL/TEST, disabled-by-default Staff gates, persisted physical DB binding and current operator role are all required. A user-settable GUC alone is never authority. No Production enablement or SYSTEM realm mutation."
+    },
+    {
+      "id": "CSKH-POL-05",
+      "status": "[PROPOSED]",
+      "rule": "Every Staff request rechecks current principal ACTIVE + account ACTIVE/verified/password + authVersion/session/deadlines. Support calls additionally require exact current canonical permission, exact Organization binding and case assignment as applicable. Staff token rejected at Customer/SYSTEM endpoints; Customer/SYSTEM tokens rejected at Staff endpoints."
+    },
+    {
+      "id": "CSKH-POL-06",
+      "status": "[PROPOSED]",
+      "rule": "Grant receipt is global CANONICAL_STAFF evidence, never Organization authority. Request UUID globally unique within each operator receipt table and namespace/version included in digest. Actor/operator or database binding mismatch rejects even for identical target/payload. No reactivation on replay after revoke."
+    }
+  ],
+  "http": [
+    {
+      "id": "CSKH-API-01",
+      "status": "[PROPOSED]",
+      "method": "GET",
+      "path": "/api/v1/staff-auth/csrf",
+      "request": null,
+      "response": "CSKH-DTO-01",
+      "authority": "Local/Test enabled; trusted HTTPS Origin; preauthentication only",
+      "errors": [
+        "403 ORIGIN_REJECTED",
+        "429 RATE_LIMITED",
+        "503 STAFF_UNAVAILABLE"
+      ]
+    },
+    {
+      "id": "CSKH-API-02",
+      "status": "[PROPOSED]",
+      "method": "POST",
+      "path": "/api/v1/staff-auth/login",
+      "request": "CSKH-DTO-02",
+      "response": "CSKH-DTO-03",
+      "authority": "Staff CSRF + Origin + current STAFF/SUPPORT eligibility + credentials; no permission grant required to authenticate",
+      "errors": [
+        "400 VALIDATION_FAILED",
+        "401 INVALID_CREDENTIALS",
+        "403 CSRF_REJECTED",
+        "429 RATE_LIMITED",
+        "503 STAFF_UNAVAILABLE"
+      ]
+    },
+    {
+      "id": "CSKH-API-03",
+      "status": "[PROPOSED]",
+      "method": "POST",
+      "path": "/api/v1/staff-auth/refresh",
+      "request": "CSKH-DTO-04",
+      "response": "CSKH-DTO-03",
+      "authority": "Staff-only refresh cookie + CSRF + Origin + current eligibility; consumed-token replay revokes Staff family only",
+      "errors": [
+        "401 SESSION_INVALID",
+        "401 REFRESH_REPLAY",
+        "403 CSRF_REJECTED",
+        "429 RATE_LIMITED",
+        "503 STAFF_UNAVAILABLE"
+      ]
+    },
+    {
+      "id": "CSKH-API-04",
+      "status": "[PROPOSED]",
+      "method": "POST",
+      "path": "/api/v1/staff-auth/logout",
+      "request": "CSKH-DTO-04",
+      "response": "204/no body",
+      "authority": "Staff refresh/CSRF binding; revoke only matching STAFF family, clear Staff cookies",
+      "errors": [
+        "403 CSRF_REJECTED",
+        "429 RATE_LIMITED",
+        "503 STAFF_UNAVAILABLE"
+      ]
+    },
+    {
+      "id": "CSKH-API-05",
+      "status": "[PROPOSED]",
+      "method": "GET",
+      "path": "/api/v1/staff-auth/me",
+      "request": null,
+      "response": "CSKH-DTO-05",
+      "authority": "Staff Bearer + current Staff admission; no listing of grants or Organization roster",
+      "errors": [
+        "401 SESSION_INVALID",
+        "503 STAFF_UNAVAILABLE"
+      ]
+    },
+    {
+      "id": "CSKH-API-06",
+      "status": "[PROPOSED]",
+      "method": "POST",
+      "path": "/api/v1/staff-auth/invitations/accept",
+      "request": "CSKH-DTO-06",
+      "response": "204/no body",
+      "authority": "Preauth Staff CSRF/Origin + proof possession + unexpired STAFF_INV + pending Staff + exact delivery destination; Idempotency-Key UUID required",
+      "errors": [
+        "400 VALIDATION_FAILED",
+        "403 CSRF_REJECTED",
+        "409 IDEMPOTENCY_CONFLICT",
+        "422 TOKEN_INVALID_OR_EXPIRED",
+        "429 RATE_LIMITED",
+        "503 STAFF_UNAVAILABLE"
+      ]
+    }
+  ],
+  "dtos": [
+    {
+      "id": "CSKH-DTO-01",
+      "status": "[PROPOSED]",
+      "name": "StaffCsrf",
+      "fields": {
+        "csrfToken": "opaque string"
+      }
+    },
+    {
+      "id": "CSKH-DTO-02",
+      "status": "[PROPOSED]",
+      "name": "StaffLogin",
+      "fields": {
+        "email": "existing exact CustomerEmail syntax; lookup only Staff principal",
+        "password": "existing login policy; redacted/wiped where possible"
+      }
+    },
+    {
+      "id": "CSKH-DTO-03",
+      "status": "[PROPOSED]",
+      "name": "StaffSession",
+      "fields": {
+        "accessToken": "existing RS256 string; audience argopost-local-support-staff",
+        "expiresAt": "UTC Instant",
+        "accountId": "server UUID"
+      }
+    },
+    {
+      "id": "CSKH-DTO-04",
+      "status": "[PROPOSED]",
+      "name": "StaffSessionCookieCommand",
+      "fields": {},
+      "note": "No JSON credentials or account/session identifiers; cookies only, same no-body transport as existing refresh/logout."
+    },
+    {
+      "id": "CSKH-DTO-05",
+      "status": "[PROPOSED]",
+      "name": "CurrentStaff",
+      "fields": {
+        "accountId": "UUID",
+        "displayName": "string <=160",
+        "principalType": "STAFF",
+        "purpose": "SUPPORT",
+        "environment": "LOCAL|TEST"
+      }
+    },
+    {
+      "id": "CSKH-DTO-06",
+      "status": "[PROPOSED]",
+      "name": "AcceptStaffInvitation",
+      "fields": {
+        "proofId": "UUID",
+        "token": "43-character opaque base64url secret",
+        "password": "existing initial password policy"
+      },
+      "note": "No account ID/role/grant/verified field accepted. Key UUID header; fingerprint includes keyed password digest, never plaintext/ordinary password hash in receipt."
+    },
+    {
+      "id": "CSKH-DTO-07",
+      "status": "[PROPOSED]",
+      "name": "OfflineStaffProvision",
+      "fields": {
+        "requestId": "nonzero UUID",
+        "displayName": "1..160 Unicode characters, existing controls policy",
+        "email": "exact email syntax; no collision with an existing Identity email/Customer identifier",
+        "reason": "trimmed 1..300 characters, no controls"
+      },
+      "note": "No target UUID, initial password, activation flag, realm, grants or arbitrary purpose accepted from CLI."
+    },
+    {
+      "id": "CSKH-DTO-08",
+      "status": "[PROPOSED]",
+      "name": "OfflineStaffInvitationDisposition",
+      "fields": {
+        "requestId": "nonzero UUID",
+        "accountId": "previously provisioned pending STAFF UUID",
+        "action": "RESEND|CANCEL",
+        "reason": "trimmed 1..300 characters, no controls"
+      }
+    },
+    {
+      "id": "CSKH-DTO-09",
+      "status": "[PROPOSED]",
+      "name": "OfflineStaffProvisionReceipt",
+      "fields": {
+        "requestId": "UUID",
+        "accountId": "server-generated UUID",
+        "proofId": "UUID|null for cancellation",
+        "committedOutcome": "PENDING_VERIFICATION|RESENT|CANCELLED",
+        "currentPrincipalState": "PENDING|ACTIVE|CANCELLED",
+        "replayed": "boolean"
+      },
+      "note": "No bearer, destination, password or encrypted payload printed. Expiry does not create a verified account."
+    },
+    {
+      "id": "CSKH-DTO-10",
+      "status": "[PROPOSED]",
+      "name": "CanonicalSupportGrantReceipt",
+      "fields": {
+        "requestId": "UUID",
+        "accountId": "UUID",
+        "permission": "SUPPORT_TRIAGE|SUPPORT_HANDLE",
+        "committedOutcome": "GRANTED|REVOKED|NO_CHANGE",
+        "grantId": "UUID|null",
+        "committedVersion": "int64 >=0",
+        "currentGrantState": "ACTIVE|REVOKED|ABSENT for original grantId, never a reactivated result",
+        "replayed": "boolean",
+        "effectiveGrantId": "UUID|null of currently effective canonical grant; may differ after separately authorized regrant",
+        "effectivePermissionActive": "boolean from current eligible Staff + current canonical grant only; never Organization authority"
+      },
+      "note": "Original result is historical evidence only. Current state is re-read under lock; no effective permission inferred from receipt."
+    },
+    {
+      "id": "CSKH-DTO-11",
+      "status": "[PROPOSED]",
+      "name": "identity.api.staff.StaffRequestContext.Request",
+      "fields": {
+        "requestId": "server correlation UUID",
+        "encodedAccess": "redacted in-memory Staff Bearer string"
+      },
+      "note": "Server-side only, not HTTP body or authority by itself."
+    },
+    {
+      "id": "CSKH-DTO-12",
+      "status": "[PROPOSED]",
+      "name": "identity.api.staff.StaffAdmission.Subject",
+      "fields": {
+        "accountId": "UUID",
+        "displayName": "string <=160; empty permitted only for NONE/missing identity, never exposed by HTTP as another account",
+        "principalType": "STAFF|CUSTOMER|NONE",
+        "securityVersion": "int64 >=0; >0 for a real account, 0 only for NONE/missing identity which is never eligible",
+        "eligible": "boolean"
+      },
+      "note": "Actor must be STAFF; Customer references only for existing notification recipients. No email/credential/grant in new Subject."
+    },
+    {
+      "id": "CSKH-DTO-13",
+      "status": "[PROPOSED]",
+      "name": "identity.api.staff.StaffAdmission.Context",
+      "fields": {
+        "requestId": "UUID",
+        "sessionId": "UUID",
+        "actor": "CSKH-DTO-12, eligible STAFF only",
+        "subjects": "Map<UUID, CSKH-DTO-12>, immutable, <=100 referenced accounts"
+      },
+      "note": "Callback-scoped and Identity-issued; captured/nested/constructed context is not authority."
+    }
+  ],
+  "interfaces": [
+    {
+      "id": "CSKH-PORT-01",
+      "status": "[PROPOSED]",
+      "owner": "identity.api.staff.StaffAdmission",
+      "signature": "<T> T execute(String encodedAccess, UUID requestId, Set<UUID> referencedAccounts, Function<Context,T> work); void requireCurrent(Context context); void meaningfulAction(Context context)",
+      "types": "Context(UUID requestId, UUID sessionId, Subject actor, Map<UUID,Subject> subjects); Subject(UUID accountId, String displayName, PrincipalType principalType, long securityVersion, boolean eligible); PrincipalType=STAFF|CUSTOMER|NONE",
+      "semantics": "Reuse CustomerAdmission transaction/account/session lock protocol, fixed STAFF actor/store/purpose. References bounded <=100 and locked in UUID order: Staff eligibility for handler candidates, existing Customer eligibility for Merchant notification recipients. Referenced Customer never becomes an authenticated Staff actor. No captured/reentrant context. No email exposed in new Subject."
+    },
+    {
+      "id": "CSKH-PORT-02",
+      "status": "[PROPOSED]",
+      "owner": "identity internal offline composition",
+      "signature": "provision(OfflineStaffProvision); disposition(OfflineStaffInvitationDisposition)",
+      "semantics": "Not a Spring public bean/HTTP authority adapter. Trusted operator connection only; reuses Identity aggregate, PasswordPolicy, ActionProof, InvitationProtection/outbox, audit and receipt infrastructure. UUID creation and cryptographic sealing happen inside one owned transaction."
+    },
+    {
+      "id": "CSKH-PORT-03",
+      "status": "[PROPOSED]",
+      "owner": "workflow OrganizationSupportHttp.staff/staffTarget",
+      "signature": "Existing OrganizationSupportTickets.StaffAccess implementation backed by StaffAdmission instead of CustomerAdmission",
+      "semantics": "Existing Staff Ticket paths/DTOs unchanged; eligibleAccount admits only referenced current eligible Staff or Customer subjects, for existing recipient notification semantics. Actor always STAFF. Assignee additionally requires current Staff canonical HANDLE + exact Org binding via existing Orders predicate. Merchant branch remains CustomerAdmission/BusinessWorkspaces. No Customer-to-Staff admission."
+    },
+    {
+      "id": "CSKH-PORT-04",
+      "status": "[PROPOSED]",
+      "owner": "identity internal fixed STAFF composition",
+      "signature": "IdentitySessionStorage.STAFF -> identity.auth_session/refresh_token/csrf_binding with server-fixed audience=STAFF; ProductionAuthenticationHttp.Transport.STAFF",
+      "semantics": "Reuse existing session commands/crypto/rate-limit engine. Every sessionAccount/lockSession/refresh/family/browser/access-timing query must enforce audience; no HTTP-selectable store. Existing SYSTEM defaults and Customer tables remain isolated."
+    },
+    {
+      "id": "CSKH-PORT-05",
+      "status": "[PROPOSED]",
+      "owner": "identity internal invitation delivery",
+      "signature": "ActionProof.Purpose.STAFF_INV; explicit InvitationProtection Staff context; JdbcInvitationOutbox Staff eligibility branch and approved JavaMailSender sender",
+      "semantics": "New Staff AAD/HMAC domain; retain byte-for-byte INVITATION format-v1 behavior. Staff format-v2, realmId=null; never substitute fake SYSTEM realm UUID. Lease/retry/purge reuse; final eligibility checked before decrypt/send; no SMTP inside transaction."
+    },
+    {
+      "id": "CSKH-PORT-06",
+      "status": "[PROPOSED]",
+      "owner": "identity.api.staff.StaffRequestContext",
+      "signature": "Request current(); Request defined by CSKH-DTO-11",
+      "semantics": "Separate typed request metadata from Staff filter, not CustomerRequestContext. Reuse Origin/Bearer/CSRF request checking algorithm with Staff cookie/browser state; authorize live matching session/Origin/headers for every mutation. Cannot enter Customer ThreadLocal or use Customer CSRF cookie."
+    }
+  ],
+  "new_tables": [
+    {
+      "id": "CSKH-DB-01",
+      "status": "[PROPOSED]",
+      "name": "identity.local_staff_environment",
+      "columns": [
+        "singleton BOOLEAN PRIMARY KEY CHECK(singleton)",
+        "environment VARCHAR(8) NOT NULL CHECK IN ('DISABLED','LOCAL','TEST')",
+        "enabled BOOLEAN NOT NULL DEFAULT FALSE",
+        "system_identifier NUMERIC(20,0)",
+        "database_oid OID",
+        "database_name NAME",
+        "audit_id UUID UNIQUE REFERENCES identity.audit_entry(id)",
+        "bound_by NAME",
+        "binding_request_id UUID UNIQUE",
+        "binding_digest BYTEA CHECK(binding_digest IS NULL OR octet_length(binding_digest)=32)"
+      ],
+      "constraints": [
+        "Disabled installation has enabled=false and all binding/audit/operator/request/digest fields NULL. Enabled LOCAL/TEST requires all fields NOT NULL. Binding is one-time immutable; append-only audit and request/digest/operator supply durable binding receipt, no second table.",
+        "Live binding must match pg_control_system().system_identifier, current database OID and name; fail closed on mismatch. Privileged checker returns boolean only, never exposes pg_control_system to runtime."
+      ],
+      "lifecycle": "One disabled sentinel installed by migration. No automatic Local/Test enablement. Explicit deployment-only environment binding, with identity audit, not a runtime API. No reset/delete by operator/runtime."
+    },
+    {
+      "id": "CSKH-DB-02",
+      "status": "[PROPOSED]",
+      "name": "identity.local_staff_principal",
+      "columns": [
+        "account_id UUID PRIMARY KEY REFERENCES identity.user_account(id) ON DELETE RESTRICT",
+        "exact_email TEXT COLLATE C NOT NULL UNIQUE",
+        "purpose VARCHAR(7) NOT NULL CHECK(purpose='SUPPORT')",
+        "environment VARCHAR(5) NOT NULL CHECK IN ('LOCAL','TEST')",
+        "state VARCHAR(9) NOT NULL CHECK IN ('PENDING','ACTIVE','CANCELLED')",
+        "version BIGINT NOT NULL CHECK(version>0)",
+        "provision_request_id UUID NOT NULL UNIQUE",
+        "created_at TIMESTAMPTZ NOT NULL",
+        "updated_at TIMESTAMPTZ NOT NULL CHECK(updated_at>=created_at)"
+      ],
+      "constraints": [
+        "UNIQUE(account_id,exact_email) on identity.user_account; composite FK principal(account_id,exact_email) -> user_account(id,email), RESTRICT.",
+        "provision_request_id FK -> local_staff_operator_receipt(request_id), DEFERRABLE INITIALLY DEFERRED.",
+        "Only new pending unverified account with password NULL can be marked Staff; pending version=1. No existing Customer identifier, account_grant or Merchant membership; mutual exclusion guards on all corresponding insert/update paths. Also deny collision with pending customer_enrollment exact_email; no takeover of its pending intent.",
+        "Only PENDING->ACTIVE or PENDING->CANCELLED, version+1; immutable account/email/purpose/environment/request/created_at; no DELETE, ACTIVE->PENDING, conversion or initial ACTIVE insert.",
+        "Deferred guard binds ACTIVE transition to consumed STAFF_INV, initial credential, proof-bound receipt/audit and matching verified user_account. CANCELLED requires pending account disabled and live proof/payload revoked/erased."
+      ],
+      "lifecycle": "Permanent purpose marker, including after cancellation; account UUID generated by canonical server workflow. No fake Customer identifier or Realm grant."
+    },
+    {
+      "id": "CSKH-DB-03",
+      "status": "[PROPOSED]",
+      "name": "identity.local_staff_operator_receipt",
+      "columns": [
+        "request_id UUID PRIMARY KEY CHECK(nonzero)",
+        "namespace VARCHAR(24) NOT NULL CHECK(namespace='CSKH_IDENTITY_V1')",
+        "operator_principal NAME NOT NULL",
+        "environment VARCHAR(5) NOT NULL CHECK IN ('LOCAL','TEST')",
+        "system_identifier NUMERIC(20,0) NOT NULL",
+        "database_oid OID NOT NULL",
+        "database_name NAME NOT NULL",
+        "operation VARCHAR(9) NOT NULL CHECK IN ('PROVISION','RESEND','CANCEL')",
+        "payload_digest BYTEA NOT NULL CHECK(octet_length=32)",
+        "account_id UUID NOT NULL REFERENCES identity.user_account(id)",
+        "proof_id UUID REFERENCES identity.action_proof(id) DEFERRABLE INITIALLY DEFERRED",
+        "message_id UUID REFERENCES identity.invitation_outbox(id) DEFERRABLE INITIALLY DEFERRED",
+        "audit_id UUID NOT NULL UNIQUE REFERENCES identity.audit_entry(id) DEFERRABLE INITIALLY DEFERRED",
+        "committed_outcome VARCHAR(20) NOT NULL CHECK IN ('PENDING_VERIFICATION','RESENT','CANCELLED')",
+        "reason VARCHAR(300) NOT NULL CHECK(trimmed_nonblank_no_controls)",
+        "created_at TIMESTAMPTZ NOT NULL"
+      ],
+      "constraints": [
+        "Operation/outcome pair exact; PROVISION/RESEND require proof/message, CANCEL requires both NULL.",
+        "Deferred trigger verifies target/proof/message/purpose/destination/expiry/receipt/audit/request correlation and complete transaction; no pending reservation can commit without sealed delivery.",
+        "Append-only, no UPDATE/DELETE/TRUNCATE grants; current operator/DB binding checked BEFORE receipt lookup; no expiry or request-ID reuse."
+      ],
+      "lifecycle": "Durable offline receipts separate from identity.command_receipt because ACTOR binding there requires a real Identity account; do not fabricate operator Identity. No secret/contact duplicate stored."
+    },
+    {
+      "id": "CSKH-DB-04",
+      "status": "[PROPOSED]",
+      "name": "orders.support_grant_operator_receipt",
+      "columns": [
+        "request_id UUID PRIMARY KEY CHECK(nonzero)",
+        "namespace VARCHAR(24) NOT NULL CHECK(namespace='CSKH_GRANT_V1')",
+        "scope VARCHAR(16) NOT NULL CHECK(scope='CANONICAL_STAFF')",
+        "operator_principal NAME NOT NULL",
+        "environment VARCHAR(5) NOT NULL CHECK IN ('LOCAL','TEST')",
+        "system_identifier NUMERIC(20,0) NOT NULL",
+        "database_oid OID NOT NULL",
+        "database_name NAME NOT NULL",
+        "account_id UUID NOT NULL REFERENCES identity.local_staff_principal(account_id)",
+        "permission VARCHAR(20) NOT NULL CHECK IN ('SUPPORT_TRIAGE','SUPPORT_HANDLE')",
+        "action VARCHAR(6) NOT NULL CHECK IN ('GRANT','REVOKE')",
+        "reason VARCHAR(300) NOT NULL CHECK(trimmed_nonblank_no_controls)",
+        "payload_digest BYTEA NOT NULL CHECK(octet_length=32)",
+        "grant_id UUID",
+        "prior_version BIGINT NOT NULL CHECK(prior_version>=0)",
+        "result_version BIGINT NOT NULL CHECK(result_version>=0)",
+        "committed_outcome VARCHAR(9) NOT NULL CHECK IN ('GRANTED','REVOKED','NO_CHANGE')",
+        "audit_id UUID UNIQUE REFERENCES orders.support_business_audit(id) DEFERRABLE INITIALLY DEFERRED",
+        "created_at TIMESTAMPTZ NOT NULL"
+      ],
+      "constraints": [
+        "FK(grant_id,account_id,permission) -> existing support_staff_grant(id,account_id,permission). Existing unique triple from V35 reused.",
+        "Changed outcome requires grant_id/audit_id NOT NULL and result_version=prior_version+1; GRANTED implies action GRANT, REVOKED implies action REVOKE.",
+        "NO_CHANGE requires result_version=prior_version and audit_id=NULL; absent REVOKE uses grant_id=NULL, versions=0. Existing ACTIVE GRANT uses exact existing grant/version without a synthetic version increment.",
+        "Append-only, one receipt per request; deferred evidence verifies exact grant/audit/request/operator. No organization_id accepted or stored: this cannot prove Organization scope."
+      ],
+      "lifecycle": "Permanent result, not a cache; no cascading delete or replay regrant. Fresh request after revoke can grant only through full current checks and produces a fresh grant ID."
+    }
+  ],
+  "changed_storage": [
+    {
+      "id": "CSKH-DB-05",
+      "status": "[PROPOSED]",
+      "objects": [
+        "identity.action_proof",
+        "identity.invitation_outbox"
+      ],
+      "delta": "Add STAFF_INV to purpose CHECKs (fits existing VARCHAR(10)); outbox realm_id nullable only for STAFF_INV, INVITATION still requires non-null realm FK. Keep proof composite FK/unique, exact 24h expiry, nonce12/ciphertext59/terminal erasure and existing INVITATION format_version=1; STAFF_INV requires format_version=2. Add one-live-STAFF_INV-per-account partial unique index (unconsumed/unrevoked; resend first revokes old even if expired). No Customer proof/delivery changes."
+    },
+    {
+      "id": "CSKH-DB-06",
+      "status": "[PROPOSED]",
+      "objects": [
+        "identity.auth_session",
+        "identity.csrf_binding",
+        "identity.refresh_token"
+      ],
+      "delta": "Add audience VARCHAR(6) NOT NULL DEFAULT 'SYSTEM' CHECK IN ('SYSTEM','STAFF') to auth_session and csrf_binding; immutable audience; UNIQUE(id,audience) on auth_session and composite FK csrf_binding(session_id,audience)->auth_session(id,audience). Refresh remains schema-identical and inherits audience through FK session; every query filters join audience. New STAFF sessions require current Staff principal. SYSTEM inserts reject Staff and require existing SYSTEM admission; Customer tables/rows not changed. Preauth CSRF audience checked before session exists."
+    },
+    {
+      "id": "CSKH-DB-07",
+      "status": "[PROPOSED]",
+      "objects": [
+        "identity.command_receipt",
+        "identity.audit_entry"
+      ],
+      "delta": "Extend exact operation/binding CHECK only with acceptStaffInvitation on PROOF binding; existing PK/FKs/TTL semantics retained. Add no audit columns: source IDENTITY_STAFF, event STAFF_PROVISIONED/STAFF_INVITATION_RESENT/STAFF_INVITATION_CANCELLED/STAFF_INVITATION_ACCEPTED/STAFF_LOGIN/STAFF_REFRESH/STAFF_REFRESH_REPLAY/STAFF_LOGOUT and environment-binding event. Offline actor_id NULL, target_id real account (NULL for environment binding), request_id real command UUID; operator principal is bound in new receipt. No fake Identity actor."
+    },
+    {
+      "id": "CSKH-DB-08",
+      "status": "[PROPOSED]",
+      "objects": [
+        "identity.user_account",
+        "identity.customer_identifier",
+        "identity.account_grant",
+        "merchant.membership"
+      ],
+      "delta": "Add UNIQUE(id,email) for Staff composite FK and Staff-only write/mutual-exclusion triggers; no role/code CHECK widening or existing row conversion. Customer enrollment already rejects occupied user_account emails; keep that path and generic response. A Staff-only DB guard remains a defense against direct DML. Shared administration lock serializes account-email collision/provisioning; all account/purpose writes require matching complete Staff evidence for marked accounts. Existing Customer/SYSTEM updates preserve previous invariants."
+    },
+    {
+      "id": "CSKH-DB-09",
+      "status": "[PROPOSED]",
+      "objects": [
+        "orders.support_staff_grant",
+        "orders.support_business_audit"
+      ],
+      "delta": "Canonical grant storage/codes/indexes unchanged; add definer-only mutation provenance and deferred new-command evidence guards. Existing immutable grant binding/version/delete rules remain. Preserve legacy NULL-request audit rows; add exact non-null request operator branch with receipt FK and matching grant/operator. Existing new_version=prior_version+1 stays. NO_CHANGE records only the new operator receipt, not a fabricated business mutation audit. Add operator_request_id UUID GENERATED ALWAYS AS (CASE WHEN operator_principal IS NOT NULL AND request_id IS NOT NULL THEN request_id ELSE NULL END) STORED, FK -> support_grant_operator_receipt(request_id) DEFERRABLE INITIALLY DEFERRED. Old rows and Ticket request UUIDs map to NULL; new operator request_id must equal receipt UUID."
+    },
+    {
+      "id": "CSKH-DB-10",
+      "status": "[PROPOSED]",
+      "objects": [
+        "orders.configure_local_organization_support_staff(UUID,TEXT,UUID,UUID,TEXT,TEXT)",
+        "orders.organization_support_staff(UUID,UUID,TEXT)"
+      ],
+      "delta": "Binding operator replaces Customer-only lock_local_business_subject target call with identity.lock_local_support_staff_subject(target, requireEligible); preserve exact signature, request digest/receipt, Organization and grant validations, audit and privileges. Authority predicate additionally checks identity.support_staff_eligible(actor); stale binding/disabled Staff fails immediately. No new binding or migration row is generated by this amendment design."
+    }
+  ],
+  "sql_functions": [
+    {
+      "id": "CSKH-SQL-01",
+      "status": "[PROPOSED]",
+      "signature": "identity.local_staff_environment_matches() RETURNS BOOLEAN",
+      "mode": "SECURITY DEFINER, identity_staff_writer, fixed search_path=pg_catalog",
+      "execute": "runtime and local operator; boolean check only",
+      "behavior": "Match enabled persisted binding to actual DB/system ID; disabled/mismatch/error false. Writer has only required pg_control_system inspection privilege, not superuser."
+    },
+    {
+      "id": "CSKH-SQL-02",
+      "status": "[PROPOSED]",
+      "signature": "identity.provision_local_support_staff(p_request UUID,p_display_name TEXT,p_email TEXT,p_reason TEXT) RETURNS TABLE(account_id UUID,proof_id UUID,message_id UUID,created_at TIMESTAMPTZ,expires_at TIMESTAMPTZ,replayed BOOLEAN,current_principal_state TEXT)",
+      "mode": "SECURITY DEFINER, identity_staff_writer",
+      "execute": "elogistics_local_staff_operator only",
+      "behavior": "Current operator/environment checks; Identity administration lock; serialize request; canonical digest; replay no new writes; otherwise gen_random_uuid target/proof/message/audit, auto username staff-<account UUID>, pending unverified password-null account + principal + receipt/audit reservation. Deferred commit guard requires SQL-03 same transaction before commit. Never return token/password."
+    },
+    {
+      "id": "CSKH-SQL-03",
+      "status": "[PROPOSED]",
+      "signature": "identity.seal_local_support_staff_invitation(p_request UUID,p_verifier_key_id TEXT,p_encryption_key_id TEXT,p_token_hash BYTEA,p_nonce BYTEA,p_ciphertext BYTEA) RETURNS VOID",
+      "mode": "SECURITY DEFINER, identity_staff_writer",
+      "execute": "elogistics_local_staff_operator only",
+      "behavior": "Same operator/request-owned pending reservation and physical transaction; strict protection sizes/known configured key identifiers; insert STAFF_INV action proof and format-v2 protected outbox with exact FK binding. No raw secret or externally selected target. Replayed already-complete request is read-only/no second delivery; incompatible envelope rejected."
+    },
+    {
+      "id": "CSKH-SQL-04",
+      "status": "[PROPOSED]",
+      "signature": "identity.disposition_local_support_staff_invitation(p_request UUID,p_account UUID,p_action TEXT,p_reason TEXT) RETURNS TABLE(account_id UUID,proof_id UUID,message_id UUID,created_at TIMESTAMPTZ,expires_at TIMESTAMPTZ,replayed BOOLEAN,current_principal_state TEXT)",
+      "mode": "SECURITY DEFINER, identity_staff_writer",
+      "execute": "elogistics_local_staff_operator only",
+      "behavior": "RESEND/CANCEL only pending Staff; current authority checked before replay. RESEND revokes prior proof and erases its queued payload, reserves new proof/delivery requiring SQL-03 before commit; CANCEL disables pending account and marks principal CANCELLED with no new proof. Real receipt/audit atomic; replay after activation reports prior result/current state without sending, revoking or downgrading ACTIVE account."
+    },
+    {
+      "id": "CSKH-SQL-05",
+      "status": "[PROPOSED]",
+      "signature": "identity.accept_local_support_staff_invitation(p_proof UUID,p_key UUID,p_fingerprint BYTEA,p_password_verifier TEXT,p_request UUID) RETURNS VOID",
+      "mode": "SECURITY DEFINER, identity_staff_writer",
+      "execute": "runtime only through Identity application command; not operator/public",
+      "behavior": "Identity app first validates possession using purpose-bound HMAC, password policy, Origin/CSRF/rate limits. DB locks/validates pending marker/account/proof/outbox, exact expiry/destination, then consumes proof + initial credential/activation + marker/version + receipt/audit + payload erasure atomically. Same key/fingerprint after successful consumption returns only 204 after fresh valid possession and current ACTIVE eligibility checks; no second activation. Stale different input rejects. Does not grant any permission or open session."
+    },
+    {
+      "id": "CSKH-SQL-06",
+      "status": "[PROPOSED]",
+      "signature": "identity.support_staff_eligible(p_account UUID) RETURNS BOOLEAN; identity.lock_local_support_staff_subject(p_account UUID,p_require_eligible BOOLEAN) RETURNS VOID",
+      "mode": "SECURITY DEFINER, identity_staff_writer; fixed search_path=pg_catalog; boolean/read-and-lock only, no DML",
+      "execute": "read predicate runtime/local operator; locking function only narrow Support writer and existing binding operator owner",
+      "behavior": "Exact Staff purpose/environment/account/credential/status exclusion checks; lock uses existing identity administration advisory lock 5279420865908921433 then account row. REVOKE may target ineligible existing Staff but never Customer. Does not reuse Customer-only lock_local_business_subject or broaden it."
+    },
+    {
+      "id": "CSKH-SQL-07",
+      "status": "[PROPOSED]",
+      "signature": "orders.configure_local_support_staff(p_request UUID,target UUID,permission_name TEXT,action TEXT,p_reason TEXT) RETURNS TABLE(request_id UUID,account_id UUID,permission TEXT,committed_outcome TEXT,grant_id UUID,committed_version BIGINT,current_grant_state TEXT,effective_grant_id UUID,effective_permission_active BOOLEAN,replayed BOOLEAN)",
+      "mode": "SECURITY DEFINER, support_grant_writer",
+      "execute": "elogistics_local_staff_operator only",
+      "behavior": "Current session_user operator and DB/environment binding first; Identity lock/subject then 730022,1. Exact two permissions GRANT/REVOKE, digest computed server-side. Receipt lookup checks operator/database/namespace/input before any business transition. GRANT requires eligible Staff; REVOKE permits existing disabled Staff to remove authority. Append receipt, optional actual mutation audit and grant delta in same transaction; canonical uniqueness retained. Replay after revoke reports current REVOKED and never regrants."
+    },
+    {
+      "id": "CSKH-SQL-08",
+      "status": "[PROPOSED]",
+      "signature": "orders.configure_local_support_staff(UUID,TEXT,TEXT) RETURNS UUID",
+      "mode": "existing signature replaced forward-only with deny-only body",
+      "execute": "REVOKE ALL FROM PUBLIC/runtime/operator; no writable legacy path even for prior owner invocation",
+      "behavior": "Always raise STAFF_REQUEST_ID_REQUIRED (SQLSTATE 42501), zero mutation. Update scripts/dev/support-staff.ps1 to require RequestId and Reason and call SQL-07. No compatibility wrapper generating a random key or mapping old calls into a new grant."
+    },
+    {
+      "id": "CSKH-SQL-09",
+      "status": "[PROPOSED]",
+      "signature": "identity.bind_local_staff_environment(p_request UUID,p_environment TEXT,p_reason TEXT) RETURNS TABLE(environment TEXT,system_identifier NUMERIC,database_oid OID,database_name NAME,replayed BOOLEAN)",
+      "mode": "SECURITY INVOKER, fixed search_path=pg_catalog",
+      "execute": "Existing independently authorized deployment/migration principal only; PUBLIC/runtime/local_staff_operator denied",
+      "behavior": "Requires current schema deployment authority plus original session_user membership in that authority and LOCAL/TEST disposition; derive physical identifiers from database, never caller input. One-time disabled->bound sentinel update and identity audit in same transaction. Bind operator/request/reason/environment digest in sentinel; exact authorized replay read-only, different request/input/operator conflicts. No secret, Staff, grants or runtime flag changes. No action in this design checkpoint."
+    },
+    {
+      "id": "CSKH-SQL-10",
+      "status": "[PROPOSED]",
+      "signature": "identity.support_staff_registered(p_account UUID) RETURNS BOOLEAN",
+      "mode": "SECURITY DEFINER, identity_staff_writer; fixed search_path=pg_catalog; marker existence boolean only",
+      "execute": "Runtime, narrow writer roles and Merchant mutual-exclusion trigger only; no DML",
+      "behavior": "Identity-owned purpose marker existence predicate, including PENDING/CANCELLED; only eligibility SQL-06 permits ACTIVE access. Merchant trigger consumes this read contract, not Identity internal Java packages."
+    }
+  ],
+  "privileges": [
+    {
+      "id": "CSKH-ACL-01",
+      "status": "[PROPOSED]",
+      "role": "elogistics_local_staff_operator",
+      "attributes": "NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS",
+      "grants": "Only EXECUTE SQL-02/03/04/07 and boolean environment check plus required schema USAGE; no direct table DML. Existing DB login membership requires explicit separate deployment approval; none auto-granted."
+    },
+    {
+      "id": "CSKH-ACL-02",
+      "status": "[PROPOSED]",
+      "role": "identity_staff_writer",
+      "attributes": "NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS",
+      "grants": "Own only Identity SQL-01..05; exact SELECT and account activation/status/version columns; INSERT principal/receipts/proof/outbox/audit, guarded update fields for Staff paths; read physical DB identity. No Customer identifiers, account_grant, realm or Merchant DML. No runtime/operator membership or SET ROLE privilege."
+    },
+    {
+      "id": "CSKH-ACL-03",
+      "status": "[PROPOSED]",
+      "role": "support_grant_writer",
+      "attributes": "NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS",
+      "grants": "Own only SQL-07; canonical grants SELECT/INSERT/UPDATE(state,version), new receipt INSERT/SELECT and Support audit INSERT/SELECT; Identity eligibility/lock EXECUTE. No Organization binding, Ticket, Merchant or Finance DML. No runtime/operator membership."
+    },
+    {
+      "id": "CSKH-ACL-04",
+      "status": "[PROPOSED]",
+      "role": "existing runtimeRole/PUBLIC",
+      "attributes": "No new operator EXECUTE or role membership",
+      "grants": "PUBLIC denied all new tables/operator/helper/trigger functions by default. Runtime gets only Staff admission reads, CSRF/session existing constrained DML, SQL-05 and SQL-01/read predicate EXECUTE. Raw writes to marked Staff activation/proofs/purpose/receipts/grants rejected by guards; Staff worker may change only lease/retry/terminal delivery fields, never destination/proof/verifier. No operator receipt DML, no Staff provisioning function EXECUTE. Runtime helper/trigger EXECUTE grants only where PostgreSQL requires them; these confer no operator authority or direct invocation side effects. Identity application remains responsible for cryptographic proof authentication before SQL-05."
+    },
+    {
+      "id": "CSKH-ACL-05",
+      "status": "[PROPOSED]",
+      "role": "migration/deployment owner",
+      "attributes": "Existing trusted DDL authority, not an application actor",
+      "grants": "Create roles/functions/constraints in migration transaction; no runtime secrets, default operator membership or enabled environment. Future explicit activation binds physical DB/environment + identity audit under existing migrator authority. Superuser/schema-owner malicious DDL is outside application threat boundary, never an allowed provisioning workaround."
+    }
+  ],
+  "replay": {
+    "status": "[PROPOSED]",
+    "id": "CSKH-REPLAY-01",
+    "grant_digest": "sha256(UTF8(jsonb_build_array('CSKH_GRANT_V1',system_identifier::text,database_oid::text,database_name::text,environment,session_user::text,action,target::text,permission_name,p_reason)::text))",
+    "identity_digest": "Same PostgreSQL jsonb array encoding, prefix CSKH_IDENTITY_V1; operation plus exact DTO fields in declared field order: PROVISION(displayName,email,reason), RESEND/CANCEL(accountId,action,reason). Operator/database/environment included before operation. Digests computed by authority, never trusted caller bytes.",
+    "canonical_input": "Trim reason once, reject controls/empty/>300; exact enum spelling, canonical UUIDs, existing email syntax without provider normalization, displayName preserves valid Unicode; explicit null positions. Session user captured before definer switch. Prefix version is immutable.",
+    "lock_order": "Existing Identity administration lock -> target account (and request serialization for provision) -> canonical Support lock (730022,1) -> receipt/grant rows; never acquire Identity after Orders. New operator request serialization uses pg_advisory_xact_lock(hashtextextended(namespace||requestId,0)); collisions serialize only, PK remains authority.",
+    "current_checks": "Operator role, physical DB/environment and current target admission checked before returning any receipt. GRANT replay for disabled target denied; REVOKE can still remove authority. Revoked original grant is not a failure to find a receipt and never triggers a new GRANT. No receipt expires into a fresh operation. Read original grant state and current effective canonical grant separately. effectivePermissionActive is never an Organization grant/binding or Ticket authority.",
+    "concurrency": "Same request exact input commits one receipt/audit/delta; different input/operator waits then conflicts. Different requests same account/permission serialize under canonical lock/unique active index; one GRANTED then NO_CHANGE. Lost response recovers original IDs. Fresh explicit request after revoke can create a new grant only after all current gates; bindings to old grant remain invalid. Rollback persists none of grant/audit/receipt/protected delivery."
+  },
+  "errors": {
+    "status": "[PROPOSED]",
+    "id": "CSKH-ERR-01",
+    "offline": {
+      "42501": [
+        "LOCAL_STAFF_OPERATOR_REQUIRED",
+        "LOCAL_STAFF_ENVIRONMENT_REQUIRED",
+        "STAFF_REQUEST_ID_REQUIRED",
+        "STAFF_ELIGIBILITY_REQUIRED"
+      ],
+      "23514": [
+        "STAFF_INPUT_INVALID",
+        "STAFF_REQUEST_CONFLICT",
+        "STAFF_STATE_CONFLICT",
+        "STAFF_EVIDENCE_REQUIRED",
+        "STAFF_PURPOSE_CONFLICT"
+      ]
+    },
+    "transport": "Reuse existing redacted error envelope. No account existence, email, grant/session secret, proof, password, connection data or SQL stack in HTTP errors; request correlation UUID only. All endpoints no-store; no implicit fallback on unavailable config/DB/SMTP."
+  },
+  "migration_proposals": [
+    {
+      "id": "CSKH-MIG-01",
+      "status": "[PROPOSED]",
+      "version": 36,
+      "filename": "V36__local_support_staff_identity.sql",
+      "includes": [
+        "CSKH-DB-01",
+        "CSKH-DB-02",
+        "CSKH-DB-03",
+        "CSKH-DB-05",
+        "CSKH-DB-06",
+        "CSKH-DB-07",
+        "CSKH-DB-08",
+        "CSKH-SQL-01",
+        "CSKH-SQL-02",
+        "CSKH-SQL-03",
+        "CSKH-SQL-04",
+        "CSKH-SQL-05",
+        "CSKH-SQL-06",
+        "CSKH-ACL-01",
+        "CSKH-ACL-02",
+        "CSKH-SQL-09",
+        "CSKH-SQL-10",
+        "CSKH-GUARD-01",
+        "CSKH-GUARD-02",
+        "CSKH-GUARD-03"
+      ],
+      "dependency": "Current actual Flyway stream through V35, including V34; do not insert V33 placeholder. No migration file exists yet. Disabled environment sentinel only; no Staff or enabled environment/grants seeded."
+    },
+    {
+      "id": "CSKH-MIG-02",
+      "status": "[PROPOSED]",
+      "version": 37,
+      "filename": "V37__request_bound_support_staff_grants.sql",
+      "includes": [
+        "CSKH-DB-04",
+        "CSKH-DB-09",
+        "CSKH-DB-10",
+        "CSKH-SQL-07",
+        "CSKH-SQL-08",
+        "CSKH-ACL-03",
+        "CSKH-ACL-04",
+        "CSKH-ACL-05",
+        "CSKH-GUARD-04"
+      ],
+      "dependency": "V36 installed; freeze V22 and V35 source. Preserve all legacy audit/grant rows. Refuse deployment if existing ACTIVE canonical grants have non-Staff targets; require explicit disposition, never convert or revoke them silently. Current reviewed Local/Test inventory has zero canonical grants."
+    }
+  ],
+  "deployment": {
+    "id": "CSKH-DEPLOY-01",
+    "status": "[PROPOSED]",
+    "sequence": [
+      "Owner technical approval of exact manifest hash, then implementation on isolated PostgreSQL18 only",
+      "Focused test/security/HTTP/Browser gates; no source/test claim until run",
+      "Separate Owner Local/Test deployment checkpoint: current DB identity/checksums/legacy-grant preflight, restorable backup, forward-only migrations and privilege verification",
+      "Explicit bounded environment binding/operator login authorization (not runtime) under that deployment approval",
+      "Provision dedicated Staff pending; controlled mailbox verification/initial password; verify ACTIVE and zero grants",
+      "Separate explicitly authorized request-bound TRIAGE/HANDLE grant commands and current receipt/audit check",
+      "Existing separate exact Organization binding approval, runtime artifact verification, Support feature activation and UAT; not granted by this packet"
+    ],
+    "rollback": "Migration transaction failure rolls back DDL; never Flyway repair/clean/down migration. After committed additive DDL, disable new feature/config and operator execute path, retain proofs/audit/receipts; reconcile failed outbox without activating account. Reverting runtime while writable legacy operator is disabled requires matching updated scripts, not restoring bypass. Restore verified backup only under separately approved recovery, no automatic data loss."
+  },
+  "tests": [
+    {
+      "id": "CSKH-T-01",
+      "status": "[PROPOSED]",
+      "gate": "PG18 migration/integrity",
+      "cases": "V35->V36->V37 on isolated DB; validate checksums V1..V35 unchanged, no V33 placeholder; upgrade retains Customer/Team/Shipping/Support rows and empty new principal/grant data; disabled sentinel; partial deployment/rollback on injected DDL failure."
+    },
+    {
+      "id": "CSKH-T-02",
+      "status": "[PROPOSED]",
+      "gate": "Direct DML and ACL",
+      "cases": "Runtime/public/operator cannot write marker/activation/receipt/grant or use legacy signature; cannot SET ROLE writer, forge current_user/operator via GUC, insert Customer identifier/account_grant/Merchant membership on Staff, mutate purpose/audience/destination, fabricate receipt/audit or leave an unsealed provision transaction committed."
+    },
+    {
+      "id": "CSKH-T-03",
+      "status": "[PROPOSED]",
+      "gate": "Provisioning/verification",
+      "cases": "Server UUID and pending/no-password; exact email collision with all existing accounts rejected; no default grants; real SMTP test transport only in CI; forged/expired/revoked/wrong-purpose token denial, password policy, real possession activation, single use, same-key replay after consumed proof, changed-key/input, cancellation/resend/timeout/failure atomicity and pending cleanup. Before actual Staff activation every controlled mailbox and confirmation stays test-only; production transport never used in CI."
+    },
+    {
+      "id": "CSKH-T-04",
+      "status": "[PROPOSED]",
+      "gate": "Protected delivery/privacy",
+      "cases": "STAFF_INV format2/AAD cannot decrypt as SYSTEM INVITATION or Customer; old format1 fixtures unchanged; revoked/expired/cancelled eligibility fails claim/open/send; bounded retry and crash lease recovery; post-provider-acceptance crash may redeliver same invitation, never activates account; no tokens/password/verifiers/email in logs/errors/reports/CLI receipts; outbox erasure on terminal state."
+    },
+    {
+      "id": "CSKH-T-05",
+      "status": "[PROPOSED]",
+      "gate": "Staff HTTP/session/security",
+      "cases": "TLS/Origin/CSRF/cookie flags, unknown/duplicate fields, oversize input, rate limits, wrong realm/audience across all endpoints, preauth/session CSRF binding, refresh rotation/replay, idle/absolute/access expiry, disabled account/authVersion, wrong purpose and captured/reentrant context denial; no SYSTEM admin or Customer/Merchant access from Staff tokens. Exact Staff filter matchers precede Customer chain; Organization Staff mutation rejects Customer CSRF/cookies/context and vice versa; unknown protected subpaths never fall through to another principal audience."
+    },
+    {
+      "id": "CSKH-T-06",
+      "status": "[PROPOSED]",
+      "gate": "Grant command receipt/concurrency",
+      "cases": "Same request same input and lost response one grant/audit/receipt; changed input/operator/database/environment reject; concurrent same/different keys; existing ACTIVE no-change; revoke absent no-change; replay GRANT after revoke returns current REVOKED without regrant; fresh authorized regrant new ID, old bindings invalid; no grant or audit without matching receipt and rollback injection at every write."
+    },
+    {
+      "id": "CSKH-T-07",
+      "status": "[PROPOSED]",
+      "gate": "Organization isolation/authority",
+      "cases": "Canonical grants alone denied; exact Organization binding plus current grant required; other Org/no binding/wrong case assignee denied; TRIAGE cannot HANDLE without HANDLE and case assignment, HANDLE cannot TRIAGE; disabled Staff/revoked grant/binding/Organization immediately denied, including receipt replay; Merchant branch and Personal Support unchanged. Merchant creator/internal assignee still receives notices after Staff reply/transition using current Customer reference eligibility, preference and Organization permission; referenced Customer cannot become handler or authenticated Staff; replay emits no duplicate notice."
+    },
+    {
+      "id": "CSKH-T-08",
+      "status": "[PROPOSED]",
+      "gate": "Environment/negative deployment",
+      "cases": "Production/unknown profile, wrong environment, disabled sentinel, database name/OID/system-ID mismatch, copied DB with unmatched identity, missing config/key or unavailable checker fails closed. No automatic local operator membership. SYSTEM INACTIVE and 3 existing accounts unchanged; NamShop 5 Merchant grants unchanged."
+    },
+    {
+      "id": "CSKH-T-09",
+      "status": "[PROPOSED]",
+      "gate": "Frontend/HTTP Browser",
+      "cases": "Dedicated Staff invitation fragment consumed in memory with immediate history scrub; password creation then Staff login; no secrets in query/localStorage/referrer; existing Organization Support desk uses Staff client and auth audience, no Personal workspace switch or admin menu. No binding -> 403 clean UX; test-only binding permits exact existing desk workflow. Frontend typecheck/lint/build and affected Browser tests only."
+    },
+    {
+      "id": "CSKH-T-10",
+      "status": "[PROPOSED]",
+      "gate": "Architecture/regression/report policy",
+      "cases": "Identity API-only cross-domain admission, Orders owns Support grant storage, workflow coordinates existing Ticket APIs; required architecture/report-policy plus affected Customer enrollment/session, SYSTEM invitation format1, Team and Personal Support focused regressions. Full-suite/CI evidence only if actually run on exact implementation revision."
+    }
+  ],
+  "owner_decisions": [
+    {
+      "id": "CSKH-DEC-01",
+      "status": "[PROPOSED]",
+      "decision": "Approve exact STAFF/SUPPORT purpose and 24h invitation policy, 6 new HTTP operations/13 DTOs and 6 existing Organization Staff admission-only changes, typed admission and the bounded existing Support Staff adapter change; no Customer conversion or SYSTEM activation."
+    },
+    {
+      "id": "CSKH-DEC-02",
+      "status": "[PROPOSED]",
+      "decision": "Approve 4 justified tables, additive purpose/audience/constraint amendments, 3 non-login DB roles and exact restricted functions/privileges; environment starts disabled and no live operator login receives authority automatically."
+    },
+    {
+      "id": "CSKH-DEC-03",
+      "status": "[PROPOSED]",
+      "decision": "Approve canonical request-bound signature, permanent receipts/current-authority replay, deny-only legacy path and target-eligibility amendment to existing V35 binding function; no automatic Organization binding."
+    },
+    {
+      "id": "CSKH-DEC-04",
+      "status": "[PROPOSED]",
+      "decision": "Approve V36/V37 numbers only if still free at implementation preflight and focused isolated PostgreSQL18/HTTP/security/Browser tests. Any collision or changed API/schema/privilege requires reporting exact delta; do not rewrite accepted manifest or migration silently. Local deployment/provision/grants/feature activation remain separate checkpoints."
+    }
+  ],
+  "risks": [
+    "Shared SYSTEM session tables need exhaustive audience predicates in every store/browser/timing/query; a single omitted lookup is a security defect. Required negative tests block release; Customer tables are not broadened.",
+    "Forward-only V5/ADR-0010 amendment adds an explicit purpose branch, never relaxes the old realm policy. Existing format1 ciphertext must remain verifiable until expiry.",
+    "Physical DB binding prevents accidental copied-database activation when identity differs; a deliberate clone preserving physical identity and operator roles is outside automatic detection. Runtime Production guard and controlled deployment approval remain independently mandatory.",
+    "DB constraints/ACLs protect direct DML and transaction consistency; HMAC possession and password policy remain a trusted Identity application responsibility. SQL activation is not claimed to cryptographically authenticate an arbitrary malicious holder of runtime DB credentials. No token/password/key is sent to offline operator or audit.",
+    "NOLOGIN writer roles/functions require exact deployment privileges. If migration principal cannot safely create them or restrict pg_control_system privilege, stop and report; no schema-owner DML fallback.",
+    "Current source includes uncommitted Team/Support dependencies and V34/V35; this design is not evidence that they are merged or CI-green. Preserve WIP; no commit/push/merge authorized.",
+    "SMTP provider acceptance is not proof of inbox delivery. Live controlled mailbox verification belongs to the later approved provisioning checkpoint, not this design review.",
+    "No completed runtime tests, full PostgreSQL PASS, GitHub CI PASS or Local Staff authority is implied by this manifest."
+  ],
+  "configuration": [
+    {
+      "id": "CSKH-CONFIG-01",
+      "status": "[PROPOSED]",
+      "new_properties": {
+        "identity.staff.local-enabled": "boolean default false",
+        "identity.staff.environment": "DISABLED default; explicit LOCAL|TEST only"
+      },
+      "reuse": "Existing customer profile, customer.rollout=SANDBOX, HTTPS/browser Origin, approved RS256 issuer/keyring, approved proof verifier/encryption keys and JavaMailSender configuration. No new provider, credentials, key generation/rotation or global environment variable. Reject Production/prod and unknown environment independently of flags. Organization Support flag remains independently disabled until separate authorization.",
+      "token_audience": "Fixed argopost-local-support-staff; never HTTP-selected and must differ from existing Customer/SYSTEM audiences",
+      "cookies": {
+        "csrf": "__Host-argopost.staff.csrf",
+        "refresh": "__Host-argopost.staff.refresh",
+        "attributes": "Path=/; Secure; HttpOnly; SameSite=Strict; no Domain; CSRF challenge returned in no-store JSON and sent as existing X-CSRF-Token header; request duplicate cookies/headers rejected"
+      },
+      "limits": "Reuse existing LOGIN_ACCOUNT/IP, REFRESH_SESSION, INVITATION_TOKEN and RESEND_ACCOUNT/IP policy thresholds via immutable STAFF-purpose subject prefix in hashed subject, no new rate-limit enum/table. Same deadlines and fail-closed shared DB limiter. Staff acceptance receipt retention fixed 24h after commit; proof possession and current activation/version still mandatory on replay, never renews proof."
+    },
+    {
+      "id": "CSKH-CONFIG-02",
+      "status": "[PROPOSED]",
+      "component": "Staff authentication filter/security matcher ordered before existing Customer chain",
+      "matchers": [
+        "/api/v1/staff-auth/**",
+        "/api/v1/support-operations/organization-queue",
+        "/api/v1/support-operations/organization-cases/**",
+        "/api/v1/support-operations/organization-receipts/**"
+      ],
+      "semantics": "Use fixed Staff JWT verifier/browser CSRF/request context and same admission engine, no general /support-operations/** matcher. Leave existing Personal Support/Customer/SYSTEM chains unchanged. Existing Organization Support enabled/environment/Organization-binding gates remain independent; no fallback to Customer chain on invalid Staff credentials."
+    }
+  ],
+  "frontend": [
+    {
+      "id": "CSKH-UI-01",
+      "status": "[PROPOSED]",
+      "routes": [
+        "/staff/login",
+        "/staff/activate"
+      ],
+      "behavior": "No public Staff registration or Staff link in Customer menu. Staff invitation URL /staff/activate#proofId=<uuid>&token=<secret>, immediate fragment scrub with history.replaceState, no analytics/referrer/storage leakage. Password form submits API-06 then directs to /staff/login; no automatic authenticated session. Existing OrganizationSupportDesk uses a distinct in-memory Staff auth client and existing Support-operation paths; no Merchant Membership/Workspace access inferred. No new Ticket UI/business workflow."
+    }
+  ],
+  "guards": [
+    {
+      "id": "CSKH-GUARD-01",
+      "status": "[PROPOSED]",
+      "functions": [
+        "identity.guard_local_staff_principal() RETURNS TRIGGER",
+        "identity.check_local_staff_evidence() RETURNS TRIGGER",
+        "identity.guard_local_staff_account() RETURNS TRIGGER",
+        "identity.guard_local_staff_exclusion() RETURNS TRIGGER"
+      ],
+      "triggers": "BEFORE INSERT/UPDATE/DELETE principal, BEFORE UPDATE/DELETE marked user_account; BEFORE INSERT/UPDATE customer_identifier/account_grant; DEFERRABLE INITIALLY DEFERRED AFTER principal/operator receipt/proof/account/outbox Staff changes checks complete correlation. Exclusion also checks username/email uniqueness under administration lock. Trigger functions not publicly callable; Staff writes only under controlled writer; Customer/SYSTEM behavior unchanged. BEFORE provenance checks are SECURITY INVOKER and inspect original current_user (writer-only); deferred evidence readers SECURITY DEFINER with fixed search_path, no authority inferred from definer identity. Runtime can call registered-predicate only, not read private offline receipts."
+    },
+    {
+      "id": "CSKH-GUARD-02",
+      "status": "[PROPOSED]",
+      "functions": [
+        "identity.guard_local_staff_delivery() RETURNS TRIGGER",
+        "identity.guard_identity_session_audience() RETURNS TRIGGER",
+        "identity.local_staff_evidence_append_only() RETURNS TRIGGER"
+      ],
+      "triggers": "Staff proof/outbox identity/payload immutable after seal except guarded consume/revoke and lease/terminal fields; worker cannot manufacture pending proof/account. Session and CSRF audience immutable, linked account/eligibility exact. New operator receipts and environment binding immutable after commit; no deletion. Old INVITATION proofs/Customer tables retain prior behavior."
+    },
+    {
+      "id": "CSKH-GUARD-03",
+      "status": "[PROPOSED]",
+      "functions": [
+        "merchant.reject_staff_membership() RETURNS TRIGGER"
+      ],
+      "triggers": "BEFORE INSERT/UPDATE membership account_id uses identity.support_staff_registered; Staff cannot become Merchant, existing members unaffected. Identity marker creation symmetrically rejects any existing membership, including terminal records. No Merchant grant or Role modification."
+    },
+    {
+      "id": "CSKH-GUARD-04",
+      "status": "[PROPOSED]",
+      "functions": [
+        "orders.guard_support_operator_request() RETURNS TRIGGER",
+        "orders.check_support_operator_request() RETURNS TRIGGER"
+      ],
+      "triggers": "Add BEFORE grant/audit/new-receipt provenance/append-only checks without replacing existing immutable grant guard; DEFERRABLE INITIALLY DEFERRED AFTER changed grant/new audit/new receipt requires exact mutual request/target/permission/version/operator evidence. Runtime raw canonical grants denied; old audits remain immutable and valid. New business_audit request_id FK to support_grant_operator_receipt is conditional on non-null operator request; no FK imposed on Ticket request IDs."
+    }
+  ],
+  "amendments": [
+    {
+      "id": "CSKH-IDENTITY-01",
+      "status": "[PROPOSED]",
+      "extends": "ADR-0010 bounded management-only provisioning and V3/V5 Identity purpose/session policies",
+      "rule": "Add isolated Staff branch; unchanged SYSTEM/Customer defaults and invariants, no Realm row, no implicit management grants."
+    },
+    {
+      "id": "CSKH-GRANT-02",
+      "status": "[PROPOSED]",
+      "extends": "V22 canonical Local/Test Support operator and bounded V35 Staff target admission dependency",
+      "rule": "Same grant engine/codes; request-bound durable authority and retirement of writable legacy signature; Org binding/assignment remain independent."
+    }
+  ],
+  "source_fingerprints": {
+    "app/backend/src/main/resources/db/migration/V34__organization_team_access.sql": "07ebf9fd74aa31c178ab4e849761c4f3b513fdee7c8ad46269713661de6f0f4c",
+    "app/backend/src/main/resources/db/migration/V35__organization_support_tickets.sql": "33e7e8b532de598627c321a454fd293157fb6c3a365cede946a03c3267d4844b",
+    "docs/implementation/organization-support-technical-manifest.json": "9484c415356e601ee8192e84a09af2e39f2f448d07244457de1ef79a09c3a940"
+  },
+  "migration_availability": {
+    "source_versions": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      34,
+      35
+    ],
+    "versions_36_37_absent": true,
+    "history_evidence": "Previously verified live history latest V35; no new DB discovery or migration executed in this design checkpoint. Recheck before future implementation/deployment; numbers are proposals, not reservations."
+  },
+  "changed_http_admission": [
+    {
+      "id": "CSKH-HTTP-AMEND-01",
+      "status": "[PROPOSED]",
+      "routes": [
+        "GET /api/v1/support-operations/organization-queue",
+        "GET /api/v1/support-operations/organization-cases/{id}",
+        "POST /api/v1/support-operations/organization-cases/{id}/assignments",
+        "POST /api/v1/support-operations/organization-cases/{id}/replies",
+        "POST /api/v1/support-operations/organization-cases/{id}/transitions",
+        "GET /api/v1/support-operations/organization-receipts/{operation}/{key}"
+      ],
+      "delta": "No path/DTO/business transition change; Staff audience/session/CSRF + typed context admission replaces Customer admission only on these existing V35 Staff operations. Canonical permission, Org binding, current actor eligibility and handler assignment remain mandatory."
+    }
+  ]
+}

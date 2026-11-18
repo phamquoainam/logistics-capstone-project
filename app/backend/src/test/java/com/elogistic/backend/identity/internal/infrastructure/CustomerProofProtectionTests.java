@@ -18,17 +18,50 @@ class CustomerProofProtectionTests {
     private static ProtectedCustomerProofs protection(){return new ProtectedCustomerProofs(Map.of("v1",key()),"v1",Map.of("e1",key()),"e1");}
     private static CustomerProof proof(CustomerProof.Purpose purpose){
         boolean session=purpose.customerSessionRequired() || purpose==CustomerProof.Purpose.LEGACY_CUSTOMER_LINK;
-        return CustomerProof.issue(UUID.randomUUID(),ACCOUNT,purpose,NOW,session?SESSION:null,session || purpose==CustomerProof.Purpose.CUSTOMER_RECOVERY?3L:null,purpose==CustomerProof.Purpose.OWNER_RECOVERY_CONSENT?ORG:null);
+        return CustomerProof.issue(UUID.randomUUID(),ACCOUNT,purpose,NOW,session?SESSION:null,session || purpose==CustomerProof.Purpose.CUSTOMER_RECOVERY?3L:null,purpose==CustomerProof.Purpose.OWNER_RECOVERY_CONSENT || purpose==CustomerProof.Purpose.MERCHANT_MEMBERSHIP?ORG:null);
     }
     private static CustomerProof copy(CustomerProof p,UUID id,UUID account,Instant time,UUID session,Long version){
         return CustomerProof.issue(id,account,p.purpose(),time,session,version,p.organizationId());
     }
     @Test void purposeDeadlinesAndRequiredBindingsAreExact(){
         for(var purpose:CustomerProof.Purpose.values()){
-            var p=proof(purpose);assertEquals(NOW.plusSeconds(purpose==CustomerProof.Purpose.CUSTOMER_ENROLLMENT?120:900),p.expiresAt());
+            var p=proof(purpose);assertEquals(NOW.plusSeconds(purpose==CustomerProof.Purpose.CUSTOMER_ENROLLMENT?120:purpose.seconds),p.expiresAt());
             if(purpose.customerSessionRequired() || purpose==CustomerProof.Purpose.LEGACY_CUSTOMER_LINK)
                 assertThrows(DomainViolation.class,()->CustomerProof.issue(p.id(),ACCOUNT,purpose,NOW,null,null,p.organizationId()));
         }
+    }
+    @Test void membershipProtectionBindsOrganizationRecipientTokenAndExactDeadline(){
+        var crypto=protection();var p=proof(CustomerProof.Purpose.MERCHANT_MEMBERSHIP);
+        byte[] raw=key(),token=Base64.getUrlEncoder().withoutPadding().encode(raw);
+        try(var sealed=crypto.protectMembership(p,DESTINATION,token,NOW);var opened=crypto.open(p,DESTINATION,sealed.verifierKey(),sealed.encryptionKey(),sealed.nonce(),sealed.ciphertext(),NOW)){
+            byte[] actual=opened.token();try{assertTrue(Arrays.equals(token,actual));}finally{Arrays.fill(actual,(byte)0);}
+            assertTrue(crypto.matches(p,sealed.verifierKey(),token,sealed.verifier(),p.expiresAt().minusNanos(1)));
+            assertFalse(crypto.matches(p,sealed.verifierKey(),token,sealed.verifier(),p.expiresAt()));
+            assertThrows(DomainViolation.class,()->crypto.protectMembership(p,DESTINATION,token,p.expiresAt()));
+            var other=CustomerProof.issue(p.id(),p.subjectId(),p.purpose(),NOW,null,null,UUID.randomUUID());
+            assertFalse(crypto.matches(other,sealed.verifierKey(),token,sealed.verifier(),NOW));
+            assertThrows(IllegalStateException.class,()->crypto.open(p,"other@example.invalid",sealed.verifierKey(),sealed.encryptionKey(),sealed.nonce(),sealed.ciphertext(),NOW));
+            assertThrows(IllegalStateException.class,()->crypto.protectMembership(proof(CustomerProof.Purpose.CUSTOMER_ENROLLMENT),DESTINATION,token,NOW));
+            var consumed=new CustomerProof(p.id(),p.subjectId(),p.purpose(),NOW,p.expiresAt(),SESSION,3L,ORG,NOW,null);
+            assertFalse(crypto.matches(consumed,sealed.verifierKey(),token,sealed.verifier(),NOW));
+            assertThrows(DomainViolation.class,()->new CustomerProof(p.id(),p.subjectId(),p.purpose(),NOW,p.expiresAt(),null,null,ORG,NOW,null));
+            assertThrows(DomainViolation.class,()->CustomerProof.issue(p.id(),p.subjectId(),p.purpose(),NOW,SESSION,3L,ORG));
+        }finally{Arrays.fill(raw,(byte)0);Arrays.fill(token,(byte)0);}
+    }
+    @Test void membershipContactEnvelopeRejectsTamperingCrossTenantAndSupportsRetainedKeys(){
+        byte[] verifier=key(),oldKey=key(),newKey=key();UUID invitation=UUID.randomUUID();
+        var old=new ProtectedCustomerProofs(Map.of("v1",verifier),"v1",Map.of("e1",oldKey),"e1");
+        var rotated=new ProtectedCustomerProofs(Map.of("v1",verifier),"v1",Map.of("e1",oldKey,"e2",newKey),"e2");
+        byte[] envelope=old.sealMembershipRecipient(invitation,ORG,DESTINATION);
+        try{
+            assertEquals(DESTINATION,rotated.openMembershipRecipient(invitation,ORG,envelope));
+            assertFalse(new String(envelope,StandardCharsets.ISO_8859_1).contains(DESTINATION));
+            assertThrows(IllegalStateException.class,()->rotated.openMembershipRecipient(UUID.randomUUID(),ORG,envelope));
+            assertThrows(IllegalStateException.class,()->rotated.openMembershipRecipient(invitation,UUID.randomUUID(),envelope));
+            byte[] tampered=envelope.clone();tampered[tampered.length-1]^=1;
+            assertThrows(IllegalStateException.class,()->rotated.openMembershipRecipient(invitation,ORG,tampered));
+            assertThrows(IllegalStateException.class,()->new ProtectedCustomerProofs(Map.of("v1",verifier),"v1",Map.of("e2",newKey),"e2").openMembershipRecipient(invitation,ORG,envelope));
+        }finally{for(byte[] b:List.of(verifier,oldKey,newKey,envelope))Arrays.fill(b,(byte)0);}
     }
     @Test void invalidPartialSessionAndUnscopedOrganizationAreRejected(){
         assertThrows(DomainViolation.class,()->CustomerProof.issue(UUID.randomUUID(),ACCOUNT,CustomerProof.Purpose.SECURITY_EMAIL_CHANGE,NOW,SESSION,null,null));

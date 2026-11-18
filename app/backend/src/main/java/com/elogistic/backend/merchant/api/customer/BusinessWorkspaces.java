@@ -23,6 +23,8 @@ public interface BusinessWorkspaces {
         default List<AssignmentMember> facilityMembers(UUID facility,int page){throw new Failure("BUSINESS_MEMBERSHIP_QUERY_UNAVAILABLE");}
         default boolean memberExists(UUID account){throw new Failure("BUSINESS_MEMBERSHIP_QUERY_UNAVAILABLE");}
         default boolean facilityExists(UUID facility){throw new Failure("BUSINESS_FACILITY_QUERY_UNAVAILABLE");}
+        default boolean eligibleSupportAssignee(UUID account,UUID facility){throw new Failure("BUSINESS_MEMBERSHIP_QUERY_UNAVAILABLE");}
+        default List<AssignmentMember> supportAssignmentMembers(UUID facility,int page){throw new Failure("BUSINESS_MEMBERSHIP_QUERY_UNAVAILABLE");}
         default boolean eligibleAssignee(UUID account,UUID facility){throw new Failure("BUSINESS_MEMBERSHIP_QUERY_UNAVAILABLE");}
         default boolean eligibleActionAssignee(UUID account,UUID facility){throw new Failure("BUSINESS_MEMBERSHIP_QUERY_UNAVAILABLE");}
         default List<AssignmentMember> actionAssignmentMembers(UUID facility,int page){throw new Failure("BUSINESS_MEMBERSHIP_QUERY_UNAVAILABLE");}

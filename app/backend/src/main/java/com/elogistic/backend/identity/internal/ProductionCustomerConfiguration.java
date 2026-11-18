@@ -53,7 +53,7 @@ public class ProductionCustomerConfiguration {
         }catch(Exception invalid){throw new IllegalStateException("CUSTOMER_JWT_PURPOSE_CONFIGURATION_INVALID");}
     }
     @Bean @DependsOnDatabaseInitialization
-    ProductionCustomerComposition.Services customerServices(DataSource source,Environment environment){
+    ProductionCustomerComposition.Services customerServices(DataSource source,Environment environment,org.springframework.beans.factory.ObjectProvider<CustomerMembershipDeliveryAdmission> membershipAuthority){
         Map<String,byte[]> verifiers=Map.of(),encryptors=Map.of();byte[] limiter=null,systemLimiter=null;
         try{
             CustomerRuntimeRequirements.verify(source);Clock clock=Clock.systemUTC();var tokens=customerTokens(environment,clock);
@@ -66,11 +66,13 @@ public class ProductionCustomerConfiguration {
             var domains=new HashSet<>(Arrays.asList(environment.getRequiredProperty("customer.smtp.approved-sender-domains").split(",",-1)));
             var smtp=new SmtpCustomerDelivery(new SmtpCustomerDelivery.Settings(environment.getRequiredProperty("customer.smtp.host"),environment.getRequiredProperty("customer.smtp.port",Integer.class),mode,
                 loopback?null:environment.getRequiredProperty("customer.smtp.username"),loopback?null:environment.getRequiredProperty("customer.smtp.password"),environment.getRequiredProperty("customer.smtp.sender"),domains,environment.getRequiredProperty("customer.security.origin"),true),clock);
-            return ProductionCustomerComposition.create(source,tokens,protection,new JdbcIdentityRateLimiter(source,limiter),smtp,environment.getRequiredProperty("customer.security.origin"),clock);
+            return ProductionCustomerComposition.create(source,tokens,protection,new JdbcIdentityRateLimiter(source,limiter),smtp,environment.getRequiredProperty("customer.security.origin"),clock,()->membershipAuthority.getIfAvailable(()->(i,p,o,a,n,e)->false));
         }catch(Exception invalid){throw new IllegalStateException("CUSTOMER_RUNTIME_CONFIGURATION_INVALID");}
         finally{verifiers.values().forEach(key->Arrays.fill(key,(byte)0));encryptors.values().forEach(key->Arrays.fill(key,(byte)0));if(limiter!=null)Arrays.fill(limiter,(byte)0);if(systemLimiter!=null)Arrays.fill(systemLimiter,(byte)0);}
     }
     @Bean CustomerAdmission customerAdmission(ProductionCustomerComposition.Services services){return services.customers();}
+    @Bean CustomerMemberNames customerMemberNames(DataSource source,CustomerAdmission admission){return new JdbcCustomerMemberNames(source,admission);}
+    @Bean CustomerMembershipInvitations customerMembershipInvitations(ProductionCustomerComposition.Services services){return services.memberships();}
     @Bean CustomerRequestContext customerRequestContext(ProductionCustomerComposition.Services services){return services.requests();}
     @Bean CustomerReauthentication customerReauthentication(ProductionCustomerComposition.Services services){return services.reauthentication();}
     @Bean CustomerOwnerRecoveryConsents customerOwnerRecoveryConsents(ProductionCustomerComposition.Services services){return services.consents();}

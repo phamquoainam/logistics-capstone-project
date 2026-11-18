@@ -1,0 +1,64 @@
+.os-support { display:grid;gap:22px;min-width:0; }
+.os-support .bw-heading { margin:0; }
+.os-support h1 { margin:5px 0 8px; }
+.os-support .os-card,.os-context { padding:26px; }
+.os-support h2 { font-size:19px;line-height:1.5;margin:0 0 12px; }
+.os-support p,.os-support li { line-height:1.75; }
+.os-support .os-hint { font-size:12px;color:#61738c; }
+.os-tabs { display:flex;gap:6px;overflow-x:auto;border-bottom:1px solid #eadfD2; }
+.os-tabs a { padding:14px 18px;white-space:nowrap;border-bottom:3px solid transparent;text-decoration:none;color:#61738c; }
+.os-tabs a[aria-current=page] { border-color:#ff7a00;color:#0b2d5b;font-weight:700; }
+.os-intro { display:flex;align-items:center;gap:16px;margin-bottom:20px; }
+.os-intro p { margin:0;color:#61738c; }
+.os-help-icon { display:grid;place-items:center;flex:none;width:52px;height:52px;border-radius:16px;background:#fff1e2;color:#aa5000;font-size:30px;font-weight:700; }
+.os-card>label { display:block;font-size:13px;margin-bottom:8px; }
+.os-card>input { width:100%;box-sizing:border-box;border:1px solid #d4deeb;border-radius:9px;padding:13px 14px;font:inherit;color:#0b2d5b;background:white; }
+.os-groups { display:flex;gap:8px;flex-wrap:wrap;margin:18px 0; }
+.os-groups button { padding:9px 13px;border:1px solid #e5e9ef;border-radius:8px;background:#fff;font:inherit;font-size:13px;color:#536984;cursor:pointer; }
+.os-groups button[aria-pressed=true] { background:#fff1e2;border-color:#ffd4a5;color:#8e4400; }
+.os-guides details { padding:17px 0;border-top:1px solid #e6ebf2; }
+.os-guides summary { font-weight:650;cursor:pointer;line-height:1.6; }
+.os-guides details p { color:#61738c;max-width:920px; }
+.os-processes { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px; }
+.os-process { padding:24px;text-decoration:none;color:#0b2d5b;transition:border-color .18s ease,box-shadow .18s ease; }
+.os-process p { font-size:13px;color:#61738c; }
+.os-process>span { display:block;color:#a34b00;font-size:13px;font-weight:650;margin-top:18px; }
+.os-process:hover { border-color:#ff7a00;box-shadow:0 6px 20px #a14d000b; }
+.os-context-facts { display:flex;gap:32px;flex-wrap:wrap; }
+.os-context-facts>div { min-width:0; }
+.os-context-facts strong { overflow-wrap:anywhere; }
+.os-context-facts small { display:block;font-size:12px;color:#61738c;margin-top:7px; }
+.os-context-actions { display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:20px 0; }
+.os-availability ol { padding-left:22px; }
+.os-support :is(button,a,input):focus-visible { outline:2px solid #ad5400;outline-offset:3px; }
+@media(max-width:1000px) { .os-processes { grid-template-columns:1fr; } }
+@media(max-width:600px) { .os-support .os-card,.os-context { padding:19px; }.os-tabs a { padding:12px; }.os-support h1 { font-size:24px; }.os-context-facts { display:grid;gap:16px; } }
+@media(prefers-reduced-motion:reduce) { .os-process { transition:none; } }
+.os-tickets { display:grid;gap:16px;min-width:0; }
+.os-tickets fieldset,.os-support .os-card fieldset { border:0;padding:0;margin:0;display:grid;gap:16px;min-width:0; }
+.os-tickets label,.os-support .os-card label { display:grid;gap:8px;font-size:13px; }
+.os-tickets :is(input,textarea,select),.os-support .os-card :is(input,textarea,select) { box-sizing:border-box;min-width:0;max-width:100%;border:1px solid #d4deeb;border-radius:8px;padding:11px 12px;background:white;color:#0b2d5b;font:inherit; }
+.os-tickets textarea,.os-support .os-card textarea { width:100%;resize:vertical; }
+.os-ticket-filters { display:flex;align-items:end;flex-wrap:wrap;gap:14px;margin-bottom:22px; }
+.os-ticket-filters label:first-child { flex:1;min-width:200px; }
+.os-table-scroll { overflow-x:auto; }
+.os-table-scroll table { border-collapse:collapse;width:100%;text-align:left; }
+.os-table-scroll :is(th,td) { padding:16px 12px;border-bottom:1px solid #e5ebf2;vertical-align:top; }
+.os-table-scroll th { font-size:12px;background:#f7f9fc;color:#61738c; }
+.os-ticket-link { border:0;background:transparent;padding:0;text-align:left;font:inherit;font-weight:650;color:#0b2d5b;cursor:pointer; }
+.os-ticket-link:hover { color:#a95000;text-decoration:underline; }
+.os-ticket-code { display:block;font-size:11px;color:#61738c;overflow-wrap:anywhere;margin-top:6px; }
+.os-state { font-size:12px;white-space:nowrap;border-radius:6px;padding:6px 9px;background:#eef3f9;color:#234770; }
+.os-state-needs_information { background:#fff0dd;color:#914500; }.os-state-resolved,.os-state-closed { background:#e9f5ef;color:#196b50; }
+.os-conversation { display:grid;gap:14px;padding:0;list-style:none;margin:24px 0; }
+.os-conversation li { border:1px solid #e1e8f0;border-radius:12px;padding:18px; }
+.os-conversation li.os-carrier-reply { background:#fff7ef;border-color:#f5ddc8; }
+.os-conversation header { display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap; }
+.os-conversation time { font-size:11px;color:#61738c; }.os-conversation p { white-space:pre-wrap;overflow-wrap:anywhere;margin-bottom:0; }
+.os-assignment { border-top:1px solid #e1e8f0;padding-top:22px; }.os-assignment summary { cursor:pointer;font-weight:650; }
+.os-report-metrics { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px; }.os-report-metrics>div { padding:18px;background:#fff6ec;border-radius:10px;display:grid;gap:12px; }.os-report-metrics strong { font-size:21px; }
+.os-report-states { display:flex;flex-wrap:wrap;gap:24px;margin:24px 0; }.os-report-states>div { display:grid;gap:10px; }
+.os-notice-preferences { border-bottom:1px solid #e1e8f0;padding-bottom:20px; }.os-notice-preferences>label { display:flex;align-items:center;gap:10px; }.os-notice-preferences small { display:block;color:#61738c;margin-top:10px; }
+.os-notices { list-style:none;margin:0;padding:0; }.os-notices li { display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:20px 0;border-bottom:1px solid #e1e8f0; }.os-notices time { font-size:12px;color:#61738c; }
+.os-support :is(textarea,select):focus-visible { outline:2px solid #ad5400;outline-offset:3px; }
+@media(max-width:700px) { .os-ticket-filters>* { width:100%; }.os-report-metrics { grid-template-columns:1fr; }.os-conversation li { padding:14px; } }

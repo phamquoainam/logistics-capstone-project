@@ -1,3 +1,8 @@
+import { organizationTicket, organizationTicketPage, organizationTicketDetail, organizationTicketAssignment, organizationSupportReceipt, organizationSupportMembers, organizationSupportHistory, organizationSupportReport, organizationSupportPreferences, organizationSupportNotices, organizationSupportNotice } from './organization-support-data';
+import type { OrganizationTicketQuery, OrganizationTicketCreate, OrganizationTicketOperation } from './organization-support-data';
+import { teamMembers, teamMember, teamRoleTemplates, teamDecision, teamInvitations, teamInvitation, teamAudits } from './organization-team-data';
+import { withTeamInvitation } from './team-invitation-proof';
+import type { TeamQuery, TeamInvitationQuery, TeamInvitationInput, TeamInvitation, TeamMemberDetail, TeamGrant, TeamAuditQuery } from './organization-team-data';
 import { parseParcelPreparation, parsePreparationPage, parseHandoverBatch, parseBatchPage, parseWorkReceipt } from './merchant-facility-work-data';
 import type { WorkOperation, WorkCheck, ParcelPreparation, HandoverBatch } from './merchant-facility-work-data';
 import { parseFacility, parseFacilityPage, parseFacilityDefault, parseFacilityTeam, parseFacilityReceipt } from './merchant-facilities-data';
@@ -197,7 +202,7 @@ export function createCustomerClient(ports: Ports = { fetch: (...args) => fetch(
     if (response && response.headers.get('ETag') !== '"v' + value.version + '"') malformed();
     return value as BusinessPreparation;
   }
-  async function businessPreparationRequest(context: BusinessContext, suffix: string, method = 'GET', input?: unknown, key?: string, expected?: number, prefix: 'v' | 'a' | 'd' = 'v') {
+  async function businessPreparationRequest(context: BusinessContext, suffix: string, method = 'GET', input?: unknown, key?: string, expected?: number, prefix: 'v' | 'a' | 'd' | 'n' = 'v') {
     if (!uuid.test(context.organizationId) || key !== undefined && !uuid.test(key) || expected !== undefined && (prefix !== 'v' || /^facilities\/[a-f0-9-]+\/responsibilities$/.test(suffix) ? !Number.isSafeInteger(expected) || expected < 0 : !version(expected))) throw new CustomerApiError('VALIDATION_FAILED');
     await ensureAccess(); const current = generation, challenge = method === 'GET' ? undefined : await csrf();
     const result = await request('merchant-organizations/' + context.organizationId + '/' + suffix, method, input === undefined ? undefined : JSON.stringify(input), { Authorization: 'Bearer ' + access!.accessToken, ...(challenge ? { 'X-CSRF-Token': challenge } : {}), ...(key ? { 'Idempotency-Key': key } : {}), ...(expected !== undefined ? { 'If-Match': '"' + prefix + expected + '"' } : {}) }, 4 * 1024 * 1024);
@@ -320,10 +325,39 @@ export function createCustomerClient(ports: Ports = { fetch: (...args) => fetch(
     if (current !== generation) throw new CustomerApiError('SESSION_CHANGED');
     try { return parse(result.value); } catch { if (method !== 'GET') throw unknown(); return malformed(); }
   }
+  async function organizationSupportRequest<T>(context: BusinessContext, suffix: string, parse: (v: unknown) => T, method = 'GET', input?: unknown, key?: string, expected?: number, prefix: 'v' | 'a' | 'n' = 'v', etag = false) {
+    const r = await businessPreparationRequest(context, suffix, method, input, key, expected, prefix);
+    try { const parsed = parse(r.value); if (etag && (!record(parsed) || r.response.headers.get('ETag') !== '"' + prefix + parsed.version + '"')) throw new Error(); return parsed; } catch { if (method !== 'GET') throw unknown(); return malformed(); }
+  }
   const supportResource = (id: string) => { if (!uuid.test(id)) throw new CustomerApiError('VALIDATION_FAILED'); return 'customer/support-tickets/' + id; };
   const caseResource = (id: string) => { if (!uuid.test(id)) throw new CustomerApiError('VALIDATION_FAILED'); return 'support-operations/cases/' + id; };
   const supportBound = (value: unknown, id?: string, staff = false) => { const d = supportDetail(value, staff); if (id && d.ticket.id !== id) malformed(); return d; };
   return {
+    organizationSupportQueue: (org: string, page = 0) => ports.lock(() => { contactId(org); return supportRequest('support-operations/organization-queue?organizationId=' + org + '&page=' + page + '&size=20', v => organizationTicketPage(v, org, page)); }),
+    organizationSupportCase: (org: string, id: string) => ports.lock(() => { contactId(org); contactId(id); return supportRequest('support-operations/organization-cases/' + id, v => organizationTicketDetail(v, org, id, true)); }),
+    assignOrganizationSupportCase: (org: string, id: string, assigneeAccountId: string, version: number, key: string) => ports.lock(() => { contactId(org); contactId(id); contactId(assigneeAccountId); return supportRequest('support-operations/organization-cases/' + id + '/assignments', v => { const s = organizationTicket(v, org); if (s.id !== id) malformed(); return s; }, 'POST', { assigneeAccountId }, key, version, id); }),
+    commandOrganizationSupportCase: (org: string, id: string, action: string, message: string, version: number, key: string) => ports.lock(() => { contactId(org); contactId(id); if (!['START', 'REPLY', 'REQUEST_INFORMATION', 'RESOLVE', 'REOPEN'].includes(action)) throw new CustomerApiError('VALIDATION_FAILED'); return supportRequest('support-operations/organization-cases/' + id + (action === 'REPLY' ? '/replies' : '/transitions'), v => organizationTicketDetail(v, org, id, true), 'POST', action === 'REPLY' ? { message } : { action, message }, key, version, id); }),
+    organizationCarrierSupportReceipt: (op: 'CARRIER_ASSIGN' | 'CARRIER_REPLY' | 'CARRIER_TRANSITION', key: string) => ports.lock(() => { contactId(key); if (!['CARRIER_ASSIGN', 'CARRIER_REPLY', 'CARRIER_TRANSITION'].includes(op)) throw new CustomerApiError('VALIDATION_FAILED'); return supportRequest('support-operations/organization-receipts/' + op + '/' + key, organizationSupportReceipt); }),
+    listOrganizationTickets: (c: BusinessContext, q: OrganizationTicketQuery, search = '') => ports.lock(async () => {
+      const p = new URLSearchParams(); for (const [k, v] of Object.entries(q)) if (v !== undefined) p.set(k, String(v));
+      return search.trim() ? organizationSupportRequest(c, 'support-tickets/search', v => organizationTicketPage(v, c.organizationId, q.page), 'POST', { ...q, search }) : organizationSupportRequest(c, 'support-tickets?' + p, v => organizationTicketPage(v, c.organizationId, q.page));
+    }),
+    readOrganizationTicket: (c: BusinessContext, id: string) => ports.lock(() => { contactId(id); return organizationSupportRequest(c, 'support-tickets/' + id, v => organizationTicketDetail(v, c.organizationId, id), 'GET', undefined, undefined, undefined, 'v', true); }),
+    createOrganizationTicket: (c: BusinessContext, input: OrganizationTicketCreate, key: string) => ports.lock(() => organizationSupportRequest(c, 'support-tickets', v => organizationTicketDetail(v, c.organizationId), 'POST', input, key, undefined, 'v', true)),
+    commandOrganizationTicket: (c: BusinessContext, id: string, op: 'REPLY' | 'REQUEST_REVIEW' | 'ACKNOWLEDGE', message: string, version: number, key: string) => ports.lock(() => {
+      contactId(id); const suffix = { REPLY: 'replies', REQUEST_REVIEW: 'review-requests', ACKNOWLEDGE: 'acknowledgements' }[op]; if (!suffix) throw new CustomerApiError('VALIDATION_FAILED');
+      return organizationSupportRequest(c, 'support-tickets/' + id + '/' + suffix, v => organizationTicketDetail(v, c.organizationId, id), 'POST', op === 'ACKNOWLEDGE' ? {} : { message }, key, version, 'v', true);
+    }),
+    organizationSupportReceipt: (c: BusinessContext, op: OrganizationTicketOperation, key: string) => ports.lock(() => { contactId(key); if (!['CREATE', 'REPLY', 'REQUEST_REVIEW', 'ACKNOWLEDGE', 'ASSIGN', 'PREFERENCES', 'READ_NOTICE'].includes(op)) throw new CustomerApiError('VALIDATION_FAILED'); return organizationSupportRequest(c, 'support-receipts/' + op + '/' + key, organizationSupportReceipt); }),
+    readOrganizationSupportAssignment: (c: BusinessContext, id: string) => ports.lock(() => { contactId(id); return organizationSupportRequest(c, 'support-tickets/' + id + '/assignment', v => organizationTicketAssignment(v, c.organizationId, id), 'GET', undefined, undefined, undefined, 'a', true); }),
+    organizationSupportCandidates: (c: BusinessContext, id: string, page = 0) => ports.lock(() => { contactId(id); return organizationSupportRequest(c, 'support-tickets/' + id + '/assignment-candidates?page=' + page + '&size=20', v => organizationSupportMembers(v, page)); }),
+    assignOrganizationSupport: (c: BusinessContext, id: string, assignee: string | null, version: number, key: string) => ports.lock(() => { contactId(id); if (assignee) contactId(assignee); return organizationSupportRequest(c, 'support-tickets/' + id + '/assignment', v => organizationTicketAssignment(v, c.organizationId, id), 'PUT', { assigneeAccountId: assignee }, key, version, 'a', true); }),
+    organizationSupportHistory: (c: BusinessContext, id: string, page = 0) => ports.lock(() => { contactId(id); return organizationSupportRequest(c, 'support-tickets/' + id + '/internal-history?page=' + page + '&size=20', v => organizationSupportHistory(v, page)); }),
+    organizationSupportReport: (c: BusinessContext, q: URLSearchParams) => ports.lock(() => organizationSupportRequest(c, 'support-reports?' + q, v => organizationSupportReport(v, c.organizationId))),
+    organizationSupportPreferences: (c: BusinessContext) => ports.lock(() => organizationSupportRequest(c, 'support-notification-preferences', organizationSupportPreferences, 'GET', undefined, undefined, undefined, 'n', true)),
+    saveOrganizationSupportPreferences: (c: BusinessContext, enabled: boolean, eventTypes: string[], version: number, key: string) => ports.lock(() => organizationSupportRequest(c, 'support-notification-preferences', organizationSupportPreferences, 'PUT', { enabled, eventTypes }, key, version, 'n', true)),
+    organizationSupportNotices: (c: BusinessContext, page = 0) => ports.lock(() => organizationSupportRequest(c, 'support-notices?page=' + page + '&size=20', v => organizationSupportNotices(v, c.organizationId, page))),
+    readOrganizationSupportNotice: (c: BusinessContext, id: string, version: number, key: string) => ports.lock(() => { contactId(id); return organizationSupportRequest(c, 'support-notices/' + id + '/read', v => organizationSupportNotice(v, c.organizationId), 'POST', {}, key, version, 'v', true); }),
     listSupportTickets: (page = 0, state = '', category = '', shipmentId = '') => ports.lock(async () => { if (!Number.isSafeInteger(page) || page < 0 || shipmentId && !uuid.test(shipmentId)) throw new CustomerApiError('VALIDATION_FAILED'); const p = new URLSearchParams({ page: String(page), size: '20', ...(state ? { state } : {}), ...(category ? { category } : {}), ...(shipmentId ? { shipmentId } : {}) }); return supportRequest('customer/support-tickets?' + p, v => supportPage(v, page)); }),
     readSupportTicket: (id: string) => ports.lock(() => supportRequest(supportResource(id), v => supportBound(v, id))),
     createSupportTicket: (input: SupportCreate, key: string) => ports.lock(() => supportRequest('customer/support-tickets', v => { const d = supportBound(v); if (d.ticket.kind !== input.kind || d.ticket.shipmentId !== (input.shipmentId ?? null) || d.ticket.category !== input.category || d.ticket.subject !== input.subject.trim()) malformed(); return d; }, 'POST', input, key)),
@@ -390,6 +424,39 @@ export function createCustomerClient(ports: Ports = { fetch: (...args) => fetch(
       const { value, response } = await request('customer/business-contexts', 'GET', undefined, { Authorization: 'Bearer ' + access!.accessToken });
       if (current !== generation) throw new CustomerApiError('SESSION_CHANGED');
       if (response.headers.get('Cache-Control') !== 'no-store') malformed(); return parseBusinessContexts(value);
+    }),
+    readTeamMembers: (context: BusinessContext, query: TeamQuery) => ports.lock(async () => { const r = await businessPreparationRequest(context, 'team/members/search', 'POST', query); try { return teamMembers(r.value, query); } catch { return malformed(); } }),
+    readTeamMember: (context: BusinessContext, id: string) => ports.lock(async () => { contactId(id); const r = await businessPreparationRequest(context, 'team/members/' + id); try { const m = teamMember(r.value, id); if (r.response.headers.get('ETag') !== '\"v' + m.version + '\"') return malformed(); return m; } catch { return malformed(); } }),
+    readTeamRoleTemplates: (context: BusinessContext) => ports.lock(async () => { const r = await businessPreparationRequest(context, 'team/role-templates'); try { return teamRoleTemplates(r.value); } catch { return malformed(); } }),
+    readTeamAudit: (context: BusinessContext, query: TeamAuditQuery) => ports.lock(async () => { const r = await businessPreparationRequest(context, 'team/audit/search', 'POST', query); try { return teamAudits(r.value, query); } catch { return malformed(); } }),
+    reauthenticateTeam: (password: string, key: string) => ports.lock(async () => {
+      contactId(key); await ensureAccess(); const current = generation, challenge = await csrf(), email = state.subject?.verifiedEmail;
+      if (!email) throw new CustomerApiError('SESSION_INVALID');
+      const r = await request('customer-auth/reauthentication', 'POST', JSON.stringify({ email, password }), { Authorization: 'Bearer ' + access!.accessToken, 'X-CSRF-Token': challenge, 'Idempotency-Key': key });
+      if (current !== generation) throw new CustomerApiError('SESSION_CHANGED');
+      try { if (r.response.headers.get('Cache-Control') !== 'no-store' || !record(r.value) || !exact(r.value, ['proofId', 'expiresAt']) || typeof r.value.proofId !== 'string' || !uuid.test(r.value.proofId) || !date(r.value.expiresAt)) throw new Error(); return { proofId: r.value.proofId, expiresAt: r.value.expiresAt }; } catch { throw unknown(); }
+    }),
+    changeTeamMember: (context: BusinessContext, original: TeamMemberDetail, input: { operation: 'access' | 'suspend' | 'resume' | 'revoke'; role: 'MANAGER' | 'OPERATOR'; grants: TeamGrant[]; reason: string; reauthenticationProofId: string }, key: string) => ports.lock(async () => {
+      contactId(original.membershipId); contactId(input.reauthenticationProofId);
+      const access = input.operation === 'access', body = { reason: input.reason, reauthenticationProofId: input.reauthenticationProofId, ...(access ? { role: input.role, grants: input.grants } : {}) };
+      const r = await businessPreparationRequest(context, 'team/members/' + original.membershipId + (access ? '/access' : '/' + input.operation), access ? 'PUT' : 'POST', body, key, original.version);
+      try { const m = teamMember(r.value, original.membershipId); if (r.response.headers.get('ETag') !== '"v' + m.version + '"') throw new Error(); return m; } catch { throw unknown(); }
+    }),
+    readTeamInvitations: (context: BusinessContext, query: TeamInvitationQuery) => ports.lock(async () => { const r = await businessPreparationRequest(context, 'team/invitations/search', 'POST', query); try { return teamInvitations(r.value, query); } catch { return malformed(); } }),
+    inviteTeamMember: (context: BusinessContext, input: TeamInvitationInput, key: string) => ports.lock(async () => {
+      const r = await businessPreparationRequest(context, 'team/invitations', 'POST', input, key);
+      try { const i = teamInvitation(r.value); if (r.response.headers.get('ETag') !== '"v' + i.version + '"') throw new Error(); return i; } catch { throw unknown(); }
+    }),
+    changeTeamInvitation: (context: BusinessContext, original: TeamInvitation, operation: 'resend' | 'revoke', reason: string, key: string) => ports.lock(async () => {
+      contactId(original.id); const r = await businessPreparationRequest(context, 'team/invitations/' + original.id + '/' + operation, 'POST', { reason }, key, original.version);
+      try { const i = teamInvitation(r.value); if (i.id !== original.id || r.response.headers.get('ETag') !== '"v' + i.version + '"') throw new Error(); return i; } catch { throw unknown(); }
+    }),
+    decideTeamInvitation: (id: string, accept: boolean, key: string) => ports.lock(async () => {
+      contactId(id); contactId(key); await ensureAccess(); const current = generation, challenge = await csrf();
+      const result = await withTeamInvitation(id, proof => request('customer/organization-invitations/' + id + (accept ? '/accept' : '/decline'), 'POST', JSON.stringify({ proof }), { Authorization: 'Bearer ' + access!.accessToken, 'X-CSRF-Token': challenge, 'Idempotency-Key': key }));
+      if (current !== generation) throw new CustomerApiError('SESSION_CHANGED');
+      if (result.response.headers.get('Cache-Control') !== 'no-store') throw unknown();
+      try { return teamDecision(result.value, id, accept); } catch { throw unknown(); }
     }),
     listMerchantPreparationWork: (context: BusinessContext, site: string, page = 0, state?: string) => ports.lock(async () => { contactId(site); const q = new URLSearchParams({ page: String(page), size: '20' }); if (state) q.set('preparationState', state); const r = await businessPreparationRequest(context, 'facilities/' + site + '/preparation-work?' + q); try { return parsePreparationPage(r.value, context.organizationId, site, page); } catch { return malformed(); } }),
     readMerchantPreparationWork: (context: BusinessContext, id: string) => ports.lock(async () => { contactId(id); const r = await businessPreparationRequest(context, 'shipment-preparation-work/' + id); try { const p = parseParcelPreparation(r.value, context.organizationId); if (p.id !== id || r.response.headers.get('ETag') !== '\"v' + p.version + '\"') return malformed(); return p; } catch { return malformed(); } }),

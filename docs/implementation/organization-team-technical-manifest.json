@@ -1,0 +1,1195 @@
+{
+  "schema_version": 1,
+  "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+  "business_direction": "OWNER_AGREED_V1_DIRECTION_2026_11_17",
+  "technical_approval": false,
+  "source_contract": "docs/implementation/organization-team-contract.proposed.md",
+  "runtime_new_api_implemented": false,
+  "migration_created": false,
+  "migration_executed": false,
+  "localhost_grants": false,
+  "error_response": {
+    "code": "single string from per-operation errors; no resource/PII/proof echo; existing failure envelope reused"
+  },
+  "existing_permissions": [
+    "dashboard.read",
+    "dashboard.finance.read",
+    "dashboard.staff.read",
+    "shipment.draft.read",
+    "shipment.draft.write",
+    "shipment.import",
+    "shipment.template.manage",
+    "shipment.prepare",
+    "shipment.quote",
+    "shipment.book",
+    "shipment.label.read",
+    "shipment.handover.read",
+    "shipment.handover.manage",
+    "facility.read",
+    "facility.manage",
+    "defaults.manage",
+    "shipment.export",
+    "shipment.export.pii",
+    "shipment.assign",
+    "shipment.reports.read",
+    "shipment.finance.read",
+    "contacts.read",
+    "contacts.write",
+    "contacts.import",
+    "contacts.export",
+    "shipment.actions.manage",
+    "shipment.actions.respond"
+  ],
+  "facility_allowed_permissions": [
+    "shipment.draft.read",
+    "shipment.draft.write",
+    "shipment.import",
+    "shipment.template.manage",
+    "shipment.prepare",
+    "shipment.quote",
+    "shipment.book",
+    "shipment.label.read",
+    "shipment.export",
+    "shipment.export.pii",
+    "shipment.assign",
+    "shipment.reports.read",
+    "shipment.finance.read",
+    "contacts.read",
+    "contacts.write",
+    "contacts.import",
+    "contacts.export",
+    "shipment.actions.manage",
+    "shipment.actions.respond",
+    "facility.read",
+    "facility.manage",
+    "shipment.handover.read",
+    "shipment.handover.manage"
+  ],
+  "role_templates": [
+    {
+      "role": "OWNER",
+      "version": 1,
+      "allowedPermissions": [
+        "dashboard.read",
+        "dashboard.finance.read",
+        "dashboard.staff.read",
+        "shipment.draft.read",
+        "shipment.draft.write",
+        "shipment.import",
+        "shipment.template.manage",
+        "shipment.prepare",
+        "shipment.quote",
+        "shipment.book",
+        "shipment.label.read",
+        "shipment.handover.read",
+        "shipment.handover.manage",
+        "facility.read",
+        "facility.manage",
+        "defaults.manage",
+        "shipment.export",
+        "shipment.export.pii",
+        "shipment.assign",
+        "shipment.reports.read",
+        "shipment.finance.read",
+        "contacts.read",
+        "contacts.write",
+        "contacts.import",
+        "contacts.export",
+        "shipment.actions.manage",
+        "shipment.actions.respond",
+        "team.read",
+        "team.invite",
+        "team.access.manage",
+        "team.membership.manage",
+        "team.audit.read"
+      ],
+      "runtime_delegable_ceiling": [
+        "dashboard.read",
+        "dashboard.finance.read",
+        "dashboard.staff.read",
+        "shipment.draft.read",
+        "shipment.draft.write",
+        "shipment.import",
+        "shipment.template.manage",
+        "shipment.prepare",
+        "shipment.quote",
+        "shipment.book",
+        "shipment.label.read",
+        "shipment.handover.read",
+        "shipment.handover.manage",
+        "facility.read",
+        "facility.manage",
+        "defaults.manage",
+        "shipment.export",
+        "shipment.export.pii",
+        "shipment.assign",
+        "shipment.reports.read",
+        "shipment.finance.read",
+        "contacts.read",
+        "contacts.write",
+        "contacts.import",
+        "contacts.export",
+        "shipment.actions.manage",
+        "shipment.actions.respond"
+      ]
+    },
+    {
+      "role": "MANAGER",
+      "version": 1,
+      "allowedPermissions": [
+        "dashboard.read",
+        "dashboard.staff.read",
+        "shipment.draft.read",
+        "shipment.draft.write",
+        "shipment.import",
+        "shipment.template.manage",
+        "shipment.prepare",
+        "shipment.quote",
+        "shipment.book",
+        "shipment.label.read",
+        "shipment.handover.read",
+        "shipment.handover.manage",
+        "facility.read",
+        "facility.manage",
+        "defaults.manage",
+        "shipment.export",
+        "shipment.assign",
+        "shipment.reports.read",
+        "contacts.read",
+        "contacts.write",
+        "contacts.import",
+        "contacts.export",
+        "shipment.actions.manage",
+        "shipment.actions.respond",
+        "team.read",
+        "team.invite",
+        "team.audit.read"
+      ],
+      "runtime_delegable_ceiling": [
+        "dashboard.read",
+        "shipment.draft.read",
+        "shipment.draft.write",
+        "shipment.import",
+        "shipment.prepare",
+        "shipment.quote",
+        "shipment.book",
+        "shipment.label.read",
+        "shipment.handover.read",
+        "facility.read",
+        "shipment.export",
+        "shipment.reports.read",
+        "contacts.read",
+        "contacts.write",
+        "contacts.import",
+        "contacts.export",
+        "shipment.actions.respond"
+      ]
+    },
+    {
+      "role": "OPERATOR",
+      "version": 1,
+      "allowedPermissions": [
+        "dashboard.read",
+        "shipment.draft.read",
+        "shipment.draft.write",
+        "shipment.import",
+        "shipment.prepare",
+        "shipment.quote",
+        "shipment.book",
+        "shipment.label.read",
+        "shipment.handover.read",
+        "facility.read",
+        "shipment.export",
+        "shipment.reports.read",
+        "contacts.read",
+        "contacts.write",
+        "contacts.import",
+        "contacts.export",
+        "shipment.actions.respond"
+      ],
+      "runtime_delegable_ceiling": []
+    }
+  ],
+  "apis": [
+    {
+      "id": "OTA-API-01",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "method": "POST",
+      "path": "/api/v1/merchant-organizations/{organizationId}/team/members/search",
+      "request_dto": "MemberSearch",
+      "response_dto": "MemberPage",
+      "permission": "team.read",
+      "ownership": "Current eligible Identity + ACTIVE Organization + ACTIVE same-Org Membership + explicit ORGANIZATION permission. No account/tenant supplied in body. Member profile names resolved through Identity public admission references; no cross-module internal query.",
+      "success_status": 200,
+      "headers": {
+        "Cache-Control": "no-store",
+        "Idempotency-Key": "not used",
+        "If-Match": "not used",
+        "Origin-CSRF": "required for all POST/PUT, including side-effect-free search",
+        "ETag": "not used"
+      },
+      "operation": null,
+      "errors": {
+        "400": "VALIDATION_FAILED",
+        "401": "SESSION_INVALID / existing Customer authentication failure",
+        "403": "AUTHORITY_REQUIRED / CSRF_REJECTED / TEAM_DELEGATION_DENIED",
+        "404": "RESOURCE_NOT_FOUND (foreign/hidden/absent resource indistinguishable)",
+        "429": "RATE_LIMITED + Retry-After",
+        "503": "SERVICE_UNAVAILABLE / ORGANIZATION_TEAM_DISABLED"
+      },
+      "side_effects": "none; no receipt/quota/idle extension"
+    },
+    {
+      "id": "OTA-API-02",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "method": "GET",
+      "path": "/api/v1/merchant-organizations/{organizationId}/team/members/{membershipId}",
+      "request_dto": null,
+      "response_dto": "MemberDetail",
+      "permission": "team.read",
+      "ownership": "Current eligible Identity + ACTIVE Organization + ACTIVE same-Org Membership + explicit ORGANIZATION permission. No account/tenant supplied in body. Member profile names resolved through Identity public admission references; no cross-module internal query.",
+      "success_status": 200,
+      "headers": {
+        "Cache-Control": "no-store",
+        "Idempotency-Key": "not used",
+        "If-Match": "not used",
+        "Origin-CSRF": "existing Customer read guard",
+        "ETag": "resource version on MemberDetail/Invitation response"
+      },
+      "operation": null,
+      "errors": {
+        "400": "VALIDATION_FAILED",
+        "401": "SESSION_INVALID / existing Customer authentication failure",
+        "403": "AUTHORITY_REQUIRED / CSRF_REJECTED / TEAM_DELEGATION_DENIED",
+        "404": "RESOURCE_NOT_FOUND (foreign/hidden/absent resource indistinguishable)",
+        "429": "RATE_LIMITED + Retry-After",
+        "503": "SERVICE_UNAVAILABLE / ORGANIZATION_TEAM_DISABLED"
+      },
+      "side_effects": "none; no receipt/quota/idle extension"
+    },
+    {
+      "id": "OTA-API-03",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "method": "GET",
+      "path": "/api/v1/merchant-organizations/{organizationId}/team/role-templates",
+      "request_dto": null,
+      "response_dto": "RoleTemplates",
+      "permission": "team.read",
+      "ownership": "Current eligible Identity + ACTIVE Organization + ACTIVE same-Org Membership + explicit ORGANIZATION permission. No account/tenant supplied in body. Member profile names resolved through Identity public admission references; no cross-module internal query.",
+      "success_status": 200,
+      "headers": {
+        "Cache-Control": "no-store",
+        "Idempotency-Key": "not used",
+        "If-Match": "not used",
+        "Origin-CSRF": "existing Customer read guard",
+        "ETag": "not used"
+      },
+      "operation": null,
+      "errors": {
+        "400": "VALIDATION_FAILED",
+        "401": "SESSION_INVALID / existing Customer authentication failure",
+        "403": "AUTHORITY_REQUIRED / CSRF_REJECTED / TEAM_DELEGATION_DENIED",
+        "404": "RESOURCE_NOT_FOUND (foreign/hidden/absent resource indistinguishable)",
+        "429": "RATE_LIMITED + Retry-After",
+        "503": "SERVICE_UNAVAILABLE / ORGANIZATION_TEAM_DISABLED"
+      },
+      "side_effects": "none; no receipt/quota/idle extension"
+    },
+    {
+      "id": "OTA-API-04",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "method": "POST",
+      "path": "/api/v1/merchant-organizations/{organizationId}/team/invitations",
+      "request_dto": "InvitationInput",
+      "response_dto": "Invitation",
+      "permission": "team.invite",
+      "ownership": "Same current admission + team.invite. OWNER may invite MANAGER/OPERATOR within current delegable grants; MANAGER may invite OPERATOR with operational ceilings only, and resend/revoke own invitation only. Revalidate inviter/policy/version/old+new scope; no OWNER invitation.",
+      "success_status": 201,
+      "headers": {
+        "Cache-Control": "no-store",
+        "Idempotency-Key": "required canonical UUID",
+        "If-Match": "not used",
+        "Origin-CSRF": "required for all POST/PUT, including side-effect-free search",
+        "ETag": "resource version on MemberDetail/Invitation response"
+      },
+      "operation": "INVITE",
+      "errors": {
+        "400": "VALIDATION_FAILED",
+        "401": "SESSION_INVALID / existing Customer authentication failure",
+        "403": "AUTHORITY_REQUIRED / CSRF_REJECTED / TEAM_DELEGATION_DENIED",
+        "404": "RESOURCE_NOT_FOUND (foreign/hidden/absent resource indistinguishable)",
+        "429": "RATE_LIMITED + Retry-After",
+        "503": "SERVICE_UNAVAILABLE / ORGANIZATION_TEAM_DISABLED",
+        "409": "IDEMPOTENCY_CONFLICT / TEAM_STATE_CONFLICT / LAST_OWNER_PROTECTED / MEMBERSHIP_ALREADY_EXISTS",
+        "422": "TEAM_INVITATION_INVALID_OR_EXPIRED / existing TOKEN_INVALID_OR_EXPIRED for reauthentication"
+      },
+      "side_effects": "atomic resource/grants/proof invalidation + append-only audit + receipt; invite/resend enqueues protected delivery in same transaction, no SMTP I/O inside it"
+    },
+    {
+      "id": "OTA-API-05",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "method": "POST",
+      "path": "/api/v1/merchant-organizations/{organizationId}/team/invitations/search",
+      "request_dto": "InvitationSearch",
+      "response_dto": "InvitationPage",
+      "permission": "team.invite",
+      "ownership": "Same current admission + team.invite. OWNER reads same-Org invitations; MANAGER only own OPERATOR invitations. No raw recipient email/proof or foreign inviter disclosure.",
+      "success_status": 200,
+      "headers": {
+        "Cache-Control": "no-store",
+        "Idempotency-Key": "not used",
+        "If-Match": "not used",
+        "Origin-CSRF": "required for all POST/PUT, including side-effect-free search",
+        "ETag": "not used"
+      },
+      "operation": null,
+      "errors": {
+        "400": "VALIDATION_FAILED",
+        "401": "SESSION_INVALID / existing Customer authentication failure",
+        "403": "AUTHORITY_REQUIRED / CSRF_REJECTED / TEAM_DELEGATION_DENIED",
+        "404": "RESOURCE_NOT_FOUND (foreign/hidden/absent resource indistinguishable)",
+        "429": "RATE_LIMITED + Retry-After",
+        "503": "SERVICE_UNAVAILABLE / ORGANIZATION_TEAM_DISABLED"
+      },
+      "side_effects": "none; no receipt/quota/idle extension"
+    },
+    {
+      "id": "OTA-API-06",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "method": "POST",
+      "path": "/api/v1/merchant-organizations/{organizationId}/team/invitations/{id}/resend",
+      "request_dto": "Reason",
+      "response_dto": "Invitation",
+      "permission": "team.invite",
+      "ownership": "Same current admission + team.invite. OWNER may invite MANAGER/OPERATOR within current delegable grants; MANAGER may invite OPERATOR with operational ceilings only, and resend/revoke own invitation only. Revalidate inviter/policy/version/old+new scope; no OWNER invitation.",
+      "success_status": 200,
+      "headers": {
+        "Cache-Control": "no-store",
+        "Idempotency-Key": "required canonical UUID",
+        "If-Match": "required exact resource ETag",
+        "Origin-CSRF": "required for all POST/PUT, including side-effect-free search",
+        "ETag": "resource version on MemberDetail/Invitation response"
+      },
+      "operation": "RESEND",
+      "errors": {
+        "400": "VALIDATION_FAILED",
+        "401": "SESSION_INVALID / existing Customer authentication failure",
+        "403": "AUTHORITY_REQUIRED / CSRF_REJECTED / TEAM_DELEGATION_DENIED",
+        "404": "RESOURCE_NOT_FOUND (foreign/hidden/absent resource indistinguishable)",
+        "429": "RATE_LIMITED + Retry-After",
+        "503": "SERVICE_UNAVAILABLE / ORGANIZATION_TEAM_DISABLED",
+        "409": "IDEMPOTENCY_CONFLICT / TEAM_STATE_CONFLICT / LAST_OWNER_PROTECTED / MEMBERSHIP_ALREADY_EXISTS",
+        "422": "TEAM_INVITATION_INVALID_OR_EXPIRED / existing TOKEN_INVALID_OR_EXPIRED for reauthentication",
+        "412": "VERSION_MISMATCH",
+        "428": "PRECONDITION_REQUIRED"
+      },
+      "side_effects": "atomic resource/grants/proof invalidation + append-only audit + receipt; invite/resend enqueues protected delivery in same transaction, no SMTP I/O inside it"
+    },
+    {
+      "id": "OTA-API-07",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "method": "POST",
+      "path": "/api/v1/merchant-organizations/{organizationId}/team/invitations/{id}/revoke",
+      "request_dto": "Reason",
+      "response_dto": "Invitation",
+      "permission": "team.invite",
+      "ownership": "Same current admission + team.invite. OWNER may invite MANAGER/OPERATOR within current delegable grants; MANAGER may invite OPERATOR with operational ceilings only, and resend/revoke own invitation only. Revalidate inviter/policy/version/old+new scope; no OWNER invitation.",
+      "success_status": 200,
+      "headers": {
+        "Cache-Control": "no-store",
+        "Idempotency-Key": "required canonical UUID",
+        "If-Match": "required exact resource ETag",
+        "Origin-CSRF": "required for all POST/PUT, including side-effect-free search",
+        "ETag": "resource version on MemberDetail/Invitation response"
+      },
+      "operation": "REVOKE_INVITATION",
+      "errors": {
+        "400": "VALIDATION_FAILED",
+        "401": "SESSION_INVALID / existing Customer authentication failure",
+        "403": "AUTHORITY_REQUIRED / CSRF_REJECTED / TEAM_DELEGATION_DENIED",
+        "404": "RESOURCE_NOT_FOUND (foreign/hidden/absent resource indistinguishable)",
+        "429": "RATE_LIMITED + Retry-After",
+        "503": "SERVICE_UNAVAILABLE / ORGANIZATION_TEAM_DISABLED",
+        "409": "IDEMPOTENCY_CONFLICT / TEAM_STATE_CONFLICT / LAST_OWNER_PROTECTED / MEMBERSHIP_ALREADY_EXISTS",
+        "422": "TEAM_INVITATION_INVALID_OR_EXPIRED / existing TOKEN_INVALID_OR_EXPIRED for reauthentication",
+        "412": "VERSION_MISMATCH",
+        "428": "PRECONDITION_REQUIRED"
+      },
+      "side_effects": "atomic resource/grants/proof invalidation + append-only audit + receipt; invite/resend enqueues protected delivery in same transaction, no SMTP I/O inside it"
+    },
+    {
+      "id": "OTA-API-08",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "method": "PUT",
+      "path": "/api/v1/merchant-organizations/{organizationId}/team/members/{id}/access",
+      "request_dto": "AccessInput",
+      "response_dto": "MemberDetail",
+      "permission": "team.access.manage",
+      "ownership": "Same current admission + explicit ORGANIZATION permission + actor role OWNER + target same-Org non-Owner, not self + fresh existing session-bound reauthentication. Cannot affect initial Owner, any Owner or platform/Carrier grants. Access replacement checks union of old/new scopes and current delegable rights.",
+      "success_status": 200,
+      "headers": {
+        "Cache-Control": "no-store",
+        "Idempotency-Key": "required canonical UUID",
+        "If-Match": "required exact resource ETag",
+        "Origin-CSRF": "required for all POST/PUT, including side-effect-free search",
+        "ETag": "resource version on MemberDetail/Invitation response"
+      },
+      "operation": "ACCESS",
+      "errors": {
+        "400": "VALIDATION_FAILED",
+        "401": "SESSION_INVALID / existing Customer authentication failure",
+        "403": "AUTHORITY_REQUIRED / CSRF_REJECTED / TEAM_DELEGATION_DENIED",
+        "404": "RESOURCE_NOT_FOUND (foreign/hidden/absent resource indistinguishable)",
+        "429": "RATE_LIMITED + Retry-After",
+        "503": "SERVICE_UNAVAILABLE / ORGANIZATION_TEAM_DISABLED",
+        "409": "IDEMPOTENCY_CONFLICT / TEAM_STATE_CONFLICT / LAST_OWNER_PROTECTED / MEMBERSHIP_ALREADY_EXISTS",
+        "422": "TEAM_INVITATION_INVALID_OR_EXPIRED / existing TOKEN_INVALID_OR_EXPIRED for reauthentication",
+        "412": "VERSION_MISMATCH",
+        "428": "PRECONDITION_REQUIRED"
+      },
+      "side_effects": "atomic resource/grants/proof invalidation + append-only audit + receipt; invite/resend enqueues protected delivery in same transaction, no SMTP I/O inside it"
+    },
+    {
+      "id": "OTA-API-09",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "method": "POST",
+      "path": "/api/v1/merchant-organizations/{organizationId}/team/members/{id}/suspend",
+      "request_dto": "SensitiveReason",
+      "response_dto": "MemberDetail",
+      "permission": "team.membership.manage",
+      "ownership": "Same current admission + explicit ORGANIZATION permission + actor role OWNER + target same-Org non-Owner, not self + fresh existing session-bound reauthentication. Cannot affect initial Owner, any Owner or platform/Carrier grants. Access replacement checks union of old/new scopes and current delegable rights.",
+      "success_status": 200,
+      "headers": {
+        "Cache-Control": "no-store",
+        "Idempotency-Key": "required canonical UUID",
+        "If-Match": "required exact resource ETag",
+        "Origin-CSRF": "required for all POST/PUT, including side-effect-free search",
+        "ETag": "resource version on MemberDetail/Invitation response"
+      },
+      "operation": "SUSPEND",
+      "errors": {
+        "400": "VALIDATION_FAILED",
+        "401": "SESSION_INVALID / existing Customer authentication failure",
+        "403": "AUTHORITY_REQUIRED / CSRF_REJECTED / TEAM_DELEGATION_DENIED",
+        "404": "RESOURCE_NOT_FOUND (foreign/hidden/absent resource indistinguishable)",
+        "429": "RATE_LIMITED + Retry-After",
+        "503": "SERVICE_UNAVAILABLE / ORGANIZATION_TEAM_DISABLED",
+        "409": "IDEMPOTENCY_CONFLICT / TEAM_STATE_CONFLICT / LAST_OWNER_PROTECTED / MEMBERSHIP_ALREADY_EXISTS",
+        "422": "TEAM_INVITATION_INVALID_OR_EXPIRED / existing TOKEN_INVALID_OR_EXPIRED for reauthentication",
+        "412": "VERSION_MISMATCH",
+        "428": "PRECONDITION_REQUIRED"
+      },
+      "side_effects": "atomic resource/grants/proof invalidation + append-only audit + receipt; invite/resend enqueues protected delivery in same transaction, no SMTP I/O inside it"
+    },
+    {
+      "id": "OTA-API-10",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "method": "POST",
+      "path": "/api/v1/merchant-organizations/{organizationId}/team/members/{id}/resume",
+      "request_dto": "SensitiveReason",
+      "response_dto": "MemberDetail",
+      "permission": "team.membership.manage",
+      "ownership": "Same current admission + explicit ORGANIZATION permission + actor role OWNER + target same-Org non-Owner, not self + fresh existing session-bound reauthentication. Cannot affect initial Owner, any Owner or platform/Carrier grants. Access replacement checks union of old/new scopes and current delegable rights.",
+      "success_status": 200,
+      "headers": {
+        "Cache-Control": "no-store",
+        "Idempotency-Key": "required canonical UUID",
+        "If-Match": "required exact resource ETag",
+        "Origin-CSRF": "required for all POST/PUT, including side-effect-free search",
+        "ETag": "resource version on MemberDetail/Invitation response"
+      },
+      "operation": "RESUME",
+      "errors": {
+        "400": "VALIDATION_FAILED",
+        "401": "SESSION_INVALID / existing Customer authentication failure",
+        "403": "AUTHORITY_REQUIRED / CSRF_REJECTED / TEAM_DELEGATION_DENIED",
+        "404": "RESOURCE_NOT_FOUND (foreign/hidden/absent resource indistinguishable)",
+        "429": "RATE_LIMITED + Retry-After",
+        "503": "SERVICE_UNAVAILABLE / ORGANIZATION_TEAM_DISABLED",
+        "409": "IDEMPOTENCY_CONFLICT / TEAM_STATE_CONFLICT / LAST_OWNER_PROTECTED / MEMBERSHIP_ALREADY_EXISTS",
+        "422": "TEAM_INVITATION_INVALID_OR_EXPIRED / existing TOKEN_INVALID_OR_EXPIRED for reauthentication",
+        "412": "VERSION_MISMATCH",
+        "428": "PRECONDITION_REQUIRED"
+      },
+      "side_effects": "atomic resource/grants/proof invalidation + append-only audit + receipt; invite/resend enqueues protected delivery in same transaction, no SMTP I/O inside it"
+    },
+    {
+      "id": "OTA-API-11",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "method": "POST",
+      "path": "/api/v1/merchant-organizations/{organizationId}/team/members/{id}/revoke",
+      "request_dto": "SensitiveReason",
+      "response_dto": "MemberDetail",
+      "permission": "team.membership.manage",
+      "ownership": "Same current admission + explicit ORGANIZATION permission + actor role OWNER + target same-Org non-Owner, not self + fresh existing session-bound reauthentication. Cannot affect initial Owner, any Owner or platform/Carrier grants. Access replacement checks union of old/new scopes and current delegable rights.",
+      "success_status": 200,
+      "headers": {
+        "Cache-Control": "no-store",
+        "Idempotency-Key": "required canonical UUID",
+        "If-Match": "required exact resource ETag",
+        "Origin-CSRF": "required for all POST/PUT, including side-effect-free search",
+        "ETag": "resource version on MemberDetail/Invitation response"
+      },
+      "operation": "REVOKE_MEMBER",
+      "errors": {
+        "400": "VALIDATION_FAILED",
+        "401": "SESSION_INVALID / existing Customer authentication failure",
+        "403": "AUTHORITY_REQUIRED / CSRF_REJECTED / TEAM_DELEGATION_DENIED",
+        "404": "RESOURCE_NOT_FOUND (foreign/hidden/absent resource indistinguishable)",
+        "429": "RATE_LIMITED + Retry-After",
+        "503": "SERVICE_UNAVAILABLE / ORGANIZATION_TEAM_DISABLED",
+        "409": "IDEMPOTENCY_CONFLICT / TEAM_STATE_CONFLICT / LAST_OWNER_PROTECTED / MEMBERSHIP_ALREADY_EXISTS",
+        "422": "TEAM_INVITATION_INVALID_OR_EXPIRED / existing TOKEN_INVALID_OR_EXPIRED for reauthentication",
+        "412": "VERSION_MISMATCH",
+        "428": "PRECONDITION_REQUIRED"
+      },
+      "side_effects": "atomic resource/grants/proof invalidation + append-only audit + receipt; invite/resend enqueues protected delivery in same transaction, no SMTP I/O inside it"
+    },
+    {
+      "id": "OTA-API-12",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "method": "POST",
+      "path": "/api/v1/merchant-organizations/{organizationId}/team/audit/search",
+      "request_dto": "AuditSearch",
+      "response_dto": "AuditPage",
+      "permission": "team.audit.read",
+      "ownership": "Current eligible Identity + ACTIVE Organization + ACTIVE same-Org Membership + explicit ORGANIZATION permission. No account/tenant supplied in body. Member profile names resolved through Identity public admission references; no cross-module internal query.",
+      "success_status": 200,
+      "headers": {
+        "Cache-Control": "no-store",
+        "Idempotency-Key": "not used",
+        "If-Match": "not used",
+        "Origin-CSRF": "required for all POST/PUT, including side-effect-free search",
+        "ETag": "not used"
+      },
+      "operation": null,
+      "errors": {
+        "400": "VALIDATION_FAILED",
+        "401": "SESSION_INVALID / existing Customer authentication failure",
+        "403": "AUTHORITY_REQUIRED / CSRF_REJECTED / TEAM_DELEGATION_DENIED",
+        "404": "RESOURCE_NOT_FOUND (foreign/hidden/absent resource indistinguishable)",
+        "429": "RATE_LIMITED + Retry-After",
+        "503": "SERVICE_UNAVAILABLE / ORGANIZATION_TEAM_DISABLED"
+      },
+      "side_effects": "none; no receipt/quota/idle extension"
+    },
+    {
+      "id": "OTA-API-13",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "method": "GET",
+      "path": "/api/v1/merchant-organizations/{organizationId}/team/receipts/{operation}/{key}",
+      "request_dto": null,
+      "response_dto": "Receipt",
+      "permission": "current permission for recorded operation",
+      "ownership": "Same current admission and actor-account/Org/operation/key binding. Recheck original command authority; recipient receipts require verified recipient/proof purpose binding. No possession-of-key-only read.",
+      "success_status": 200,
+      "headers": {
+        "Cache-Control": "no-store",
+        "Idempotency-Key": "not used",
+        "If-Match": "not used",
+        "Origin-CSRF": "existing Customer read guard",
+        "ETag": "not used"
+      },
+      "operation": null,
+      "errors": {
+        "400": "VALIDATION_FAILED / TEAM_RECEIPT_OPERATION_INVALID",
+        "401": "SESSION_INVALID / existing Customer authentication failure",
+        "403": "AUTHORITY_REQUIRED / CSRF_REJECTED / TEAM_DELEGATION_DENIED",
+        "404": "RESOURCE_NOT_FOUND (foreign/hidden/absent resource indistinguishable)",
+        "429": "RATE_LIMITED + Retry-After",
+        "503": "SERVICE_UNAVAILABLE / ORGANIZATION_TEAM_DISABLED"
+      },
+      "side_effects": "none; no receipt/quota/idle extension",
+      "receipt_lookup_boundary": "Only Org-admin operations INVITE/RESEND/REVOKE_INVITATION/ACCESS/SUSPEND/RESUME/REVOKE_MEMBER. Recipient uncertain outcome uses authenticated replay of API14/15 with same key and proof; B/receipts never requires a new member to have admin rights."
+    },
+    {
+      "id": "OTA-API-14",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "method": "POST",
+      "path": "/api/v1/customer/organization-invitations/{id}/accept",
+      "request_dto": "InvitationDecision",
+      "response_dto": "DecisionReceipt",
+      "permission": "current verified Customer recipient",
+      "ownership": "Current eligible verified Customer; Identity verified email must match protected invitation recipient digest. No prior Org Membership required. Lock current inviter, Org/policy/proof/resource; existing or terminal revoked Membership cannot be resurrected. Proof/body never logged.",
+      "success_status": 200,
+      "headers": {
+        "Cache-Control": "no-store",
+        "Idempotency-Key": "required canonical UUID",
+        "If-Match": "not used; recipient proof version is consumed under lock",
+        "Origin-CSRF": "required for all POST/PUT, including side-effect-free search",
+        "ETag": "not used"
+      },
+      "operation": "ACCEPT",
+      "errors": {
+        "400": "VALIDATION_FAILED",
+        "401": "SESSION_INVALID / existing Customer authentication failure",
+        "403": "AUTHORITY_REQUIRED / CSRF_REJECTED / TEAM_DELEGATION_DENIED",
+        "429": "RATE_LIMITED + Retry-After",
+        "503": "SERVICE_UNAVAILABLE / ORGANIZATION_TEAM_DISABLED",
+        "409": "IDEMPOTENCY_CONFLICT / TEAM_STATE_CONFLICT / LAST_OWNER_PROTECTED / MEMBERSHIP_ALREADY_EXISTS",
+        "422": "TEAM_INVITATION_INVALID_OR_EXPIRED uniformly for absent ID, wrong recipient/proof, expired/revoked/invalidated invitation"
+      },
+      "side_effects": "atomic resource/grants/proof invalidation + append-only audit + receipt; invite/resend enqueues protected delivery in same transaction, no SMTP I/O inside it"
+    },
+    {
+      "id": "OTA-API-15",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "method": "POST",
+      "path": "/api/v1/customer/organization-invitations/{id}/decline",
+      "request_dto": "InvitationDecision",
+      "response_dto": "DecisionReceipt",
+      "permission": "current verified Customer recipient",
+      "ownership": "Current eligible verified Customer; Identity verified email must match protected invitation recipient digest. No prior Org Membership required. Lock current inviter, Org/policy/proof/resource; existing or terminal revoked Membership cannot be resurrected. Proof/body never logged.",
+      "success_status": 200,
+      "headers": {
+        "Cache-Control": "no-store",
+        "Idempotency-Key": "required canonical UUID",
+        "If-Match": "not used; recipient proof version is consumed under lock",
+        "Origin-CSRF": "required for all POST/PUT, including side-effect-free search",
+        "ETag": "not used"
+      },
+      "operation": "DECLINE",
+      "errors": {
+        "400": "VALIDATION_FAILED",
+        "401": "SESSION_INVALID / existing Customer authentication failure",
+        "403": "AUTHORITY_REQUIRED / CSRF_REJECTED / TEAM_DELEGATION_DENIED",
+        "429": "RATE_LIMITED + Retry-After",
+        "503": "SERVICE_UNAVAILABLE / ORGANIZATION_TEAM_DISABLED",
+        "409": "IDEMPOTENCY_CONFLICT / TEAM_STATE_CONFLICT / LAST_OWNER_PROTECTED / MEMBERSHIP_ALREADY_EXISTS",
+        "422": "TEAM_INVITATION_INVALID_OR_EXPIRED uniformly for absent ID, wrong recipient/proof, expired/revoked/invalidated invitation"
+      },
+      "side_effects": "atomic resource/grants/proof invalidation + append-only audit + receipt; invite/resend enqueues protected delivery in same transaction, no SMTP I/O inside it"
+    }
+  ],
+  "dtos": [
+    {
+      "id": "OTA-DTO-01",
+      "name": "Grant",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "permission": "one of accepted27 or exact five proposed rights; no pending Support rights",
+        "scope": "ORGANIZATION|FACILITY",
+        "facilityId": "UUID|null; nonnull iff FACILITY; same-Org ACTIVE facility"
+      }
+    },
+    {
+      "id": "OTA-DTO-02",
+      "name": "MemberSearch",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "search": "literal display-name text0..120 codepoints; no email/account lookup",
+        "role": "OWNER|MANAGER|OPERATOR|null",
+        "state": "ACTIVE|SUSPENDED|REVOKED|null",
+        "facilityId": "UUID|null, same Org; filter never adds authorization",
+        "page": "integer0..1000",
+        "size": "integer1..50"
+      }
+    },
+    {
+      "id": "OTA-DTO-03",
+      "name": "Member",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "membershipId": "UUID",
+        "displayName": "Identity public projection, max160; no email/phone/account UUID",
+        "role": "OWNER|MANAGER|OPERATOR",
+        "state": "ACTIVE|SUSPENDED|REVOKED",
+        "authorityVersion": "positive safe integer",
+        "version": "positive safe integer",
+        "createdAt": "UTC instant",
+        "updatedAt": "UTC instant"
+      }
+    },
+    {
+      "id": "OTA-DTO-04",
+      "name": "MemberPage",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "items": "Member[0..50]",
+        "page": "integer0..1000",
+        "size": "integer1..50",
+        "hasNext": "boolean"
+      }
+    },
+    {
+      "id": "OTA-DTO-05",
+      "name": "MemberDetail",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "extends": "Member (flattened fields)",
+        "grants": "unique Grant[1..200]; includes existing dashboard.read dependency; no implied grants"
+      }
+    },
+    {
+      "id": "OTA-DTO-06",
+      "name": "RoleTemplate",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "role": "OWNER|MANAGER|OPERATOR",
+        "version": "positive integer",
+        "allowedPermissions": "unique explicit permission array; ceiling, not automatic grants"
+      }
+    },
+    {
+      "id": "OTA-DTO-07",
+      "name": "RoleTemplates",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "items": "exactly three RoleTemplate rows; no new Warehouse/Finance/Support role"
+      }
+    },
+    {
+      "id": "OTA-DTO-08",
+      "name": "InvitationInput",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "email": "existing Identity normalization, max254; no credentials",
+        "role": "MANAGER|OPERATOR",
+        "grants": "unique Grant[1..200], must include dashboard.read at ORGANIZATION",
+        "reason": "trimmed1..300 codepoints, no controls"
+      }
+    },
+    {
+      "id": "OTA-DTO-09",
+      "name": "Invitation",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "id": "UUID",
+        "maskedEmail": "server masked destination; never plaintext recipient",
+        "role": "MANAGER|OPERATOR",
+        "grants": "unique Grant[1..200]",
+        "state": "PENDING|ACCEPTED|DECLINED|REVOKED|EXPIRED|INVALIDATED",
+        "version": "positive safe integer",
+        "expiresAt": "server UTC instant,72h from issuance",
+        "deliveryState": "canonical protected-delivery projection; SMTP accepted is not DELIVERED",
+        "createdAt": "UTC instant"
+      }
+    },
+    {
+      "id": "OTA-DTO-10",
+      "name": "InvitationSearch",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "state": "invitation state|null",
+        "page": "integer0..1000",
+        "size": "integer1..50"
+      }
+    },
+    {
+      "id": "OTA-DTO-11",
+      "name": "InvitationPage",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "items": "Invitation[0..50]",
+        "page": "integer0..1000",
+        "size": "integer1..50",
+        "hasNext": "boolean"
+      }
+    },
+    {
+      "id": "OTA-DTO-12",
+      "name": "Reason",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "reason": "trimmed1..300 codepoints, no controls"
+      }
+    },
+    {
+      "id": "OTA-DTO-13",
+      "name": "SensitiveReason",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "reason": "trimmed1..300 codepoints, no controls",
+        "reauthenticationProofId": "existing session-bound CustomerReauthentication UUID, consumed transactionally"
+      }
+    },
+    {
+      "id": "OTA-DTO-14",
+      "name": "AccessInput",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "role": "MANAGER|OPERATOR",
+        "grants": "full replacement Grant[1..200], checks union of old/new scopes; legacy outside-ceiling grants cause TEAM_STATE_CONFLICT, never implicit strip",
+        "reason": "trimmed1..300 codepoints, no controls",
+        "reauthenticationProofId": "existing session-bound recent proof UUID"
+      }
+    },
+    {
+      "id": "OTA-DTO-15",
+      "name": "InvitationDecision",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "proof": "opaque256-bit secret, base64url43 chars; bound invitation+Org+purpose+recipient+proof version; request body only"
+      }
+    },
+    {
+      "id": "OTA-DTO-16",
+      "name": "AuditSearch",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "membershipId": "UUID|null, same Org",
+        "operation": "one of nine command operations|null",
+        "from": "UTC instant inclusive",
+        "to": "UTC instant exclusive, positive interval<=90 days",
+        "page": "integer0..1000",
+        "size": "integer1..50"
+      }
+    },
+    {
+      "id": "OTA-DTO-17",
+      "name": "Audit",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "id": "UUID",
+        "actorMembershipId": "UUID|null only for verified recipient decline with no Membership",
+        "targetMembershipId": "UUID|null",
+        "operation": "INVITE|RESEND|REVOKE_INVITATION|ACCESS|SUSPEND|RESUME|REVOKE_MEMBER|ACCEPT|DECLINE",
+        "reason": "bounded safe human reason; server fixed wording for recipient accept/decline",
+        "occurredAt": "UTC instant"
+      }
+    },
+    {
+      "id": "OTA-DTO-18",
+      "name": "AuditPage",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "items": "Audit[0..50]",
+        "page": "integer0..1000",
+        "size": "integer1..50",
+        "hasNext": "boolean"
+      }
+    },
+    {
+      "id": "OTA-DTO-19",
+      "name": "Receipt",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "operation": "one of seven Org-admin operations",
+        "key": "UUID",
+        "targetId": "UUID derived from typed persisted target FK",
+        "outcome": "COMMITTED",
+        "version": "positive integer of committed resource"
+      }
+    },
+    {
+      "id": "OTA-DTO-20",
+      "name": "DecisionReceipt",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "invitationId": "UUID",
+        "outcome": "ACCEPTED|DECLINED",
+        "membershipId": "UUID only if ACCEPTED, otherwise null"
+      }
+    }
+  ],
+  "permissions": [
+    {
+      "id": "OTA-PERM-01",
+      "name": "team.read",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "scope": "ORGANIZATION_ONLY",
+      "eligible_actor_role": "OWNER|MANAGER",
+      "purpose": "Read Org member/role directory; no mutation/PII export",
+      "automatic_role_grant": false,
+      "delegation": "operator explicit scoped grant only; runtime V1 cannot grant team.* via invitation/access replacement; Manager cannot grant finance/admin rights"
+    },
+    {
+      "id": "OTA-PERM-02",
+      "name": "team.invite",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "scope": "ORGANIZATION_ONLY",
+      "eligible_actor_role": "OWNER|MANAGER",
+      "purpose": "OWNER invites MANAGER/OPERATOR; MANAGER invites own OPERATOR within operational ceiling",
+      "automatic_role_grant": false,
+      "delegation": "operator explicit scoped grant only; runtime V1 cannot grant team.* via invitation/access replacement; Manager cannot grant finance/admin rights"
+    },
+    {
+      "id": "OTA-PERM-03",
+      "name": "team.access.manage",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "scope": "ORGANIZATION_ONLY",
+      "eligible_actor_role": "OWNER",
+      "purpose": "Change other non-Owner access; no self-promotion",
+      "automatic_role_grant": false,
+      "delegation": "operator explicit scoped grant only; runtime V1 cannot grant team.* via invitation/access replacement; Manager cannot grant finance/admin rights"
+    },
+    {
+      "id": "OTA-PERM-04",
+      "name": "team.membership.manage",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "scope": "ORGANIZATION_ONLY",
+      "eligible_actor_role": "OWNER",
+      "purpose": "Suspend/resume/revoke other non-Owner Membership",
+      "automatic_role_grant": false,
+      "delegation": "operator explicit scoped grant only; runtime V1 cannot grant team.* via invitation/access replacement; Manager cannot grant finance/admin rights"
+    },
+    {
+      "id": "OTA-PERM-05",
+      "name": "team.audit.read",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "scope": "ORGANIZATION_ONLY",
+      "eligible_actor_role": "OWNER|MANAGER",
+      "purpose": "Read bounded Org Team audit; no Identity session/device inventory",
+      "automatic_role_grant": false,
+      "delegation": "operator explicit scoped grant only; runtime V1 cannot grant team.* via invitation/access replacement; Manager cannot grant finance/admin rights"
+    }
+  ],
+  "tables": [
+    {
+      "id": "OTA-DB-01",
+      "name": "merchant.team_policy",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "columns": {
+        "organization_id": "UUID NOT NULL",
+        "version": "BIGINT NOT NULL",
+        "template_version": "BIGINT NOT NULL",
+        "updated_at": "TIMESTAMPTZ NOT NULL"
+      },
+      "primary_key": [
+        "organization_id"
+      ],
+      "foreign_keys": [
+        "organization_id -> merchant.organization(id)"
+      ],
+      "unique": [],
+      "checks": [
+        "version>0, template_version>0",
+        "environment inherited from same Org LOCAL/TEST; no browser policy update",
+        "version change invalidates pending invites transactionally"
+      ],
+      "lifecycle": "Insert baseline policy metadata for existing Org only in separately approved migration; no grants/backfill; versioned platform policy updates only",
+      "privileges": "REVOKE PUBLIC; no runtime raw-write bypass; reviewed command transaction + DB invariants; existing operator capability not inherited",
+      "delete": "denied; no cascade into historical resources"
+    },
+    {
+      "id": "OTA-DB-02",
+      "name": "merchant.team_invitation",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "columns": {
+        "id": "UUID NOT NULL",
+        "organization_id": "UUID NOT NULL",
+        "inviter_membership_id": "UUID NOT NULL",
+        "inviter_authority_version": "BIGINT NOT NULL",
+        "policy_version": "BIGINT NOT NULL",
+        "recipient_digest": "BYTEA NOT NULL (32-byte keyed digest)",
+        "protected_recipient": "BYTEA NOT NULL (existing authenticated-encryption envelope/key ID)",
+        "role": "VARCHAR(8) NOT NULL",
+        "state": "VARCHAR(12) NOT NULL",
+        "proof_digest": "BYTEA NOT NULL (32-byte purpose-bound keyed digest)",
+        "proof_version": "BIGINT NOT NULL",
+        "expires_at": "TIMESTAMPTZ NOT NULL",
+        "accepted_membership_id": "UUID NULL",
+        "version": "BIGINT NOT NULL",
+        "created_at": "TIMESTAMPTZ NOT NULL",
+        "updated_at": "TIMESTAMPTZ NOT NULL"
+      },
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [
+        "organization_id -> merchant.team_policy(organization_id)",
+        "(inviter_membership_id,organization_id) -> merchant.membership(id,organization_id)",
+        "(accepted_membership_id,organization_id) -> merchant.membership(id,organization_id)"
+      ],
+      "unique": [
+        "(id,organization_id)",
+        "(proof_digest)",
+        "(organization_id,recipient_digest) WHERE state=PENDING (explicit expiry transitions, no volatile now() index predicate)"
+      ],
+      "checks": [
+        "role MANAGER|OPERATOR; seven exact states",
+        "all versions>0; expires_at>created_at; updated_at>=created_at",
+        "accepted_membership_id nonnull iff ACCEPTED; same recipient identity checked at commit",
+        "immutable id/org/recipient/inviter/createdAt; resend only new proof/version/expiresAt, invalidates old proof",
+        "deferred current inviter authority/policy/delegation and exact grant checks; no proof plaintext or invite-to-Owner"
+      ],
+      "lifecycle": "PENDING -> ACCEPTED|DECLINED|REVOKED|EXPIRED|INVALIDATED, terminal states immutable. Resend PENDING only; new version/proof72h within quota. Expired/invalid invitation needs a fresh create, not revival.",
+      "privileges": "REVOKE PUBLIC; no runtime raw-write bypass; reviewed command transaction + DB invariants; existing operator capability not inherited",
+      "delete": "denied; no cascade into historical resources"
+    },
+    {
+      "id": "OTA-DB-03",
+      "name": "merchant.team_invitation_grant",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "columns": {
+        "id": "UUID NOT NULL",
+        "invitation_id": "UUID NOT NULL",
+        "organization_id": "UUID NOT NULL",
+        "permission": "VARCHAR(32) NOT NULL",
+        "scope": "VARCHAR(12) NOT NULL",
+        "facility_id": "UUID NULL"
+      },
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [
+        "(invitation_id,organization_id) -> merchant.team_invitation(id,organization_id)",
+        "(facility_id,organization_id) -> merchant.facility(id,organization_id)"
+      ],
+      "unique": [
+        "NULLS NOT DISTINCT(invitation_id,permission,scope,facility_id)"
+      ],
+      "checks": [
+        "scope ORGANIZATION iff facility null, FACILITY iff nonnull and allowed by unchanged V32 facility allowlist",
+        "team.* ORGANIZATION only; permission exact32 allowlist; current active facility",
+        "at least dashboard.read Org grant, max200 rows/invite; existing permission dependencies preserved"
+      ],
+      "lifecycle": "Immutable grant intent while PENDING/terminal; resend does not edit grants; different role/grants requires revoke+new invite",
+      "privileges": "REVOKE PUBLIC; no runtime raw-write bypass; reviewed command transaction + DB invariants; existing operator capability not inherited",
+      "delete": "denied; no cascade into historical resources"
+    },
+    {
+      "id": "OTA-DB-04",
+      "name": "merchant.team_audit",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "columns": {
+        "id": "UUID NOT NULL",
+        "organization_id": "UUID NOT NULL",
+        "actor_account_id": "UUID NOT NULL (Identity public external reference)",
+        "actor_membership_id": "UUID NULL",
+        "target_membership_id": "UUID NULL",
+        "invitation_id": "UUID NULL",
+        "operation": "VARCHAR(20) NOT NULL",
+        "reason": "VARCHAR(300) NOT NULL",
+        "request_id": "UUID NOT NULL",
+        "occurred_at": "TIMESTAMPTZ NOT NULL"
+      },
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [
+        "organization_id -> merchant.organization(id)",
+        "(actor_membership_id,organization_id) -> merchant.membership(id,organization_id)",
+        "(target_membership_id,organization_id) -> merchant.membership(id,organization_id)",
+        "(invitation_id,organization_id) -> merchant.team_invitation(id,organization_id)"
+      ],
+      "unique": [
+        "(organization_id,actor_account_id,operation,request_id)"
+      ],
+      "checks": [
+        "actor_account_id comes from current Identity, never request body; no FK into Identity-owned tables",
+        "actor Membership required except verified recipient DECLINE; ACCEPT binds new member as actor/target",
+        "target member required for member mutations; invitation required for invitation operations",
+        "safe reason1..300; server timestamp; request bound to same scoped receipt; no proof/email/password/IP/device logging"
+      ],
+      "lifecycle": "Append-only per committed command; replays/no-op rejected transitions create no duplicate audit",
+      "privileges": "REVOKE PUBLIC; no runtime raw-write bypass; reviewed command transaction + DB invariants; existing operator capability not inherited",
+      "delete": "denied; no cascade into historical resources"
+    },
+    {
+      "id": "OTA-DB-05",
+      "name": "merchant.team_command_receipt",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "columns": {
+        "organization_id": "UUID NOT NULL",
+        "actor_account_id": "UUID NOT NULL (Identity public external reference)",
+        "operation": "VARCHAR(20) NOT NULL",
+        "key": "UUID NOT NULL",
+        "input_digest": "BYTEA NOT NULL (32 bytes)",
+        "membership_id": "UUID NULL",
+        "invitation_id": "UUID NULL",
+        "outcome": "VARCHAR(16) NOT NULL",
+        "version": "BIGINT NOT NULL",
+        "recorded_at": "TIMESTAMPTZ NOT NULL"
+      },
+      "primary_key": [
+        "organization_id",
+        "actor_account_id",
+        "operation",
+        "key"
+      ],
+      "foreign_keys": [
+        "organization_id -> merchant.organization(id)",
+        "(membership_id,organization_id) -> merchant.membership(id,organization_id)",
+        "(invitation_id,organization_id) -> merchant.team_invitation(id,organization_id)"
+      ],
+      "unique": [],
+      "checks": [
+        "exactly one typed target nonnull; invitation FK for INVITE/RESEND/REVOKE_INVITATION/ACCEPT/DECLINE, member FK for ACCESS/SUSPEND/RESUME/REVOKE_MEMBER",
+        "outcome COMMITTED|ACCEPTED|DECLINED consistent with operation; version>0",
+        "purpose-bound keyed canonical input digest, excludes plaintext proofs/passwords; replay validates same authenticated actor and current authority",
+        "deferred receipt<->audit<->state/grants invariant; raw state writes without valid evidence roll back"
+      ],
+      "lifecycle": "Append-only immutable receipt, replay returns original outcome only after current admission; unknown result resolved by API13 or same-key recipient replay",
+      "privileges": "REVOKE PUBLIC; no runtime raw-write bypass; reviewed command transaction + DB invariants; existing operator capability not inherited",
+      "delete": "denied; no cascade into historical resources"
+    }
+  ],
+  "template_ceilings": {
+    "OWNER": "accepted27; still only current actor held/delegable grants, no automatic rights; team.* not runtime-delegable",
+    "MANAGER": "accepted27 EXCEPT dashboard.finance.read,shipment.finance.read,shipment.export.pii; no team.* delegation",
+    "OPERATOR": "accepted27 EXCEPT dashboard.finance.read,shipment.finance.read,shipment.export.pii,dashboard.staff.read,shipment.assign,facility.manage,defaults.manage,shipment.template.manage,shipment.handover.manage,shipment.actions.manage; no team.* delegation; exact granted subset only, labels confer none"
+  },
+  "existing_scope_preservation": "Exact V32 preparation_scope_check list retained. dashboard.* and defaults.manage stay ORGANIZATION-only; five team.* stay ORGANIZATION-only. Read dependencies/base dashboard.read remain enforced.",
+  "security": [
+    "No privilege escalation/self promotion/Owner target mutation",
+    "No cross-Org target/FK/receipt/grant/facility access",
+    "72h invitation, max5 invite/resend per actor+recipient+Org per rolling hour via existing shared limiter; same-key replay consumes no quota",
+    "No SMTP I/O inside DB transaction; existing protected outbox, no delivered claim from SMTP250",
+    "Inviter revoke/suspend/authorityVersion/policy change invalidates pending proof; concurrent duplicate accept/resend/revoke has single winner",
+    "Revoked Membership terminal; denied on every subsequent Org request; Personal/other Org preserved",
+    "Initial Owner immutable/ACTIVE OWNER invariant remains intact; no last-Owner removal",
+    "Customer reauth proof is existing session-bound single-use port, no second password/session system",
+    "Default-false Team-enabled AND existing Business LOCAL/TEST/SANDBOX/non-Production guards; no startup grants"
+  ],
+  "amendments": [
+    {
+      "id": "OTA-AMEND-01",
+      "target": "merchant.guard_workspace_identity",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "change": "Allow only MANAGER<->OPERATOR edits and ACTIVE<->SUSPENDED / ACTIVE|SUSPENDED->REVOKED under evidence/delegation/reauth checks. Preserve immutable id/org/account/createdAt, exact version+authorityVersion increment, terminal revoke and all organization/initial-owner protections."
+    },
+    {
+      "id": "OTA-AMEND-02",
+      "target": "merchant.membership state/check + member_grant permission/scope/guards",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "change": "State column VARCHAR9 with SUSPENDED; exact5 new team rights Org-only; preserve accepted27, V32 scope/permission dependencies. Keep initial Owner active, no OWNER role invitation/edit or existing-Owner mutation."
+    },
+    {
+      "id": "OTA-AMEND-03",
+      "target": "JdbcBusinessWorkspaces + existing offline operator functions",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "change": "Parser recognizes exact5 rights only after migration accepted; retains ACTIVE membership/initial owner/local source gates. Identity subject discovery and lock order unchanged. Grant/membership/Org version changes invalidate pending Team proofs through DB invariants, including offline operator changes. No runtime operator execution privilege, no blanket grants."
+    },
+    {
+      "id": "OTA-AMEND-04",
+      "target": "Identity protected delivery public port",
+      "status": "PENDING_OWNER_TECHNICAL_CONFIRMATION",
+      "change": "Typed enqueueMembershipInvitation(context,invitationId,proofVersion,recipient,proof,expiresAt) returns canonical delivery reference; stable outbox message ID is invitationId+proofVersion+purpose. Typed MERCHANT_MEMBERSHIP purpose, bound invitation/recipient/expiry; reuse crypto/outbox/worker and rate limiter; no privileged invitation activation, no password in Merchant, no new email provider."
+    }
+  ],
+  "clarifications": [
+    {
+      "id": "OTA-CLARIFY-01",
+      "change": "InvitationDecision proof is the concurrency credential; API14/15 need no If-Match because recipient has no pre-Membership invitation read/ETag. Idempotency and locked single-use proof enforce exact version."
+    },
+    {
+      "id": "OTA-CLARIFY-02",
+      "change": "Add invitation_grant.id PK and same-Org keys; nullable scope uniqueness uses PG18 NULLS NOT DISTINCT."
+    },
+    {
+      "id": "OTA-CLARIFY-03",
+      "change": "Audit records admitted actor_account_id; nullable actor Membership only for DECLINE before membership exists. No anonymous decline."
+    },
+    {
+      "id": "OTA-CLARIFY-04",
+      "change": "Persist receipt typed invitation/member FK instead of unvalidated polymorphic target_id; response targetId derived."
+    },
+    {
+      "id": "OTA-CLARIFY-05",
+      "change": "Member admin requires actual OWNER + explicit right; core cannot edit/grant team.* or finance/admin rights via Manager invitation; new role labels/transfer not part of this approval."
+    },
+    {
+      "id": "OTA-CLARIFY-06",
+      "change": "RoleTemplates.allowedPermissions is capability ceiling only; immutable version1 above. Newly proposed manager/operator roles cannot receive finance/PII-export or team rights. Existing operator-granted finance/staff rights are grandfathered until explicit reviewed disposition, never silently dropped by full replacement."
+    }
+  ],
+  "deferred": [
+    "Owner transfer: separate controlled current-owner/provenance/last-owner amendment, existing accepted15min two-step policy preserved",
+    "WAREHOUSE/FINANCE/SUPPORT role templates, rehire of terminal revoked member",
+    "Carrier/Root Admin/Store authority, API clients, Claims/Payment grants, Identity global session revocation",
+    "Support V33 remains unapproved/unimplemented; Team creates no dependency on pending support.* permission",
+    "No localhost migration/grant, Production rollout or merge"
+  ],
+  "migration_boundary": "New forward-only migration number allocated in one ordered stream before implementation; V33 Support reserved but not created. Never modify V1-V32. Disposable PG18 only after technical GO; no pretending migration tests PASS before source exists."
+}

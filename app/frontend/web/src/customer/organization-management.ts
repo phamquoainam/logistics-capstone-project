@@ -1,3 +1,5 @@
+import { organizationSupportQuery } from './organization-support';
+
 export const organizationCategories = [
   ['ALL', 'Tất cả vận đơn'], ['DRAFT', 'Đơn nháp'], ['WAITING', 'Chờ bàn giao'],
   ['TRANSIT', 'Đang vận chuyển'], ['ACTION', 'Đơn cần xử lý'], ['COMPLETED', 'Đã hoàn tất'],
@@ -32,6 +34,11 @@ export function organizationReturn(organization: string, value: string | null) {
     if ([reportPrefix + 'reports', reportPrefix + 'finance'].includes(url.pathname) && !url.hash && [...url.searchParams.keys()].every(k => keys.includes(k) && url.searchParams.getAll(k).length === 1 && (url.searchParams.get(k)?.length ?? 0) <= 160 && !/[\u0000-\u001f\u007f]/.test(url.searchParams.get(k) ?? ''))) return value;
     return path;
   }
+  if (value && value.length <= 4096 && (value === reportPrefix + 'support' || value.startsWith(reportPrefix + 'support?'))) {
+    const url = new URL(value, 'https://local.invalid');
+    return url.pathname === reportPrefix + 'support' && !url.hash && organizationSupportQuery(url.searchParams).valid ? value : path;
+  }
+  if (value === reportPrefix + 'lookup' || value === reportPrefix + 'labels') return value;
   if (!value || value.length > 4096 || value !== path && !value.startsWith(path + '?')) return path;
   const url = new URL(value, 'https://local.invalid');
   if (url.pathname !== path || url.hash || !organizationQuery(url.searchParams).valid) return path;

@@ -16,6 +16,7 @@ public final class ProtectedMerchantFingerprints implements MerchantFingerprints
     }
     private static IllegalArgumentException invalid(){return new IllegalArgumentException("MERCHANT_RECEIPT_KEY_CONFIGURATION_INVALID");}
     @Override public String activeKey(){return active;}
+    @Override public Set<String> retainedKeys(){return keys.keySet();}
     @Override public byte[] hash(String keyId,String operation,UUID target,long version,String... values){
         if(keyId==null || operation==null || !operation.matches("[A-Za-z][A-Za-z0-9]{0,79}") || target==null || version<0 || version==0 && !Set.of("createApplicationDraft","createPersonalAddress","organizationContactCREATE","organizationContactDEFAULT","organizationContactIMPORTPREVIEW","merchantFacilityCREATE","merchantFacilityDEFAULT","merchantFacilityRESPONSIBILITY").contains(operation) || values==null || values.length>30 || !keys.containsKey(keyId))throw invalid();
         try{

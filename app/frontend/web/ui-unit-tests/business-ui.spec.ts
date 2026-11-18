@@ -21,7 +21,7 @@ test('Business opens current Backend context with truthful source states and dis
   const calls = await fixture(context); await page.goto('/merchant'); await expect(page).toHaveURL(new RegExp(organizationA + '/overview$'));
   await expect(page.getByRole('heading', { name: 'Synthetic Store A', exact: true })).toBeVisible(); await expect(page.locator('.bw-kpi strong')).toHaveText(['—', '—', '—', '—']);
   await expect(page.getByRole('button', { name: 'Tạo vận đơn', exact: true })).toBeDisabled(); await expect(page.locator('.bw-dashboard canvas,.bw-dashboard .analytics-sparkline')).toHaveCount(0);
-  await expect(page.getByRole('navigation', { name: 'Điều hướng Business' }).getByRole('link')).toHaveCount(2);
+  await expect(page.getByRole('navigation', { name: 'Điều hướng Business' }).getByRole('link')).toHaveCount(4);
   await expect(page.getByRole('navigation', { name: 'Điều hướng Business' }).getByRole('link', { name: 'Kho & Điểm lấy hàng', exact: true })).toHaveAttribute('href', '/merchant/' + organizationA + '/facilities');
   expect(calls.filter(c => !c.path.includes('customer-auth')).every(c => c.method === 'GET' && !c.path.includes('personal-analytics'))).toBe(true);
   await page.screenshot({ path: '../../../.demo/business-dashboard-review/business-ui-desktop.png', fullPage: true, animations: 'disabled' });

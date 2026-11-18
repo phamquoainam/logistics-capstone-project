@@ -5,10 +5,12 @@ import App from './App';
 import CustomerApp from './customer/CustomerApp';
 import { customerClient } from './customer/client';
 import { captureEntryProof } from './customer/entry-proof';
+import { captureTeamInvitation } from './customer/team-invitation-proof';
 import './styles.css';
 const mode = import.meta.env.VITE_PORTAL_MODE ?? 'demo';
 if (!['demo', 'customer'].includes(mode)) throw new Error('PORTAL_MODE_INVALID');
 if (mode === 'customer') {
+  captureTeamInvitation(window.location, window.history);
   captureEntryProof(window.location, window.history);
   void customerClient.initialize();
   createRoot(document.getElementById('root')!).render(<StrictMode><BrowserRouter><CustomerApp /></BrowserRouter></StrictMode>);

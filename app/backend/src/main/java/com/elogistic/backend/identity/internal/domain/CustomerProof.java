@@ -10,7 +10,7 @@ public record CustomerProof(UUID id, UUID subjectId, Purpose purpose, Instant cr
                             Instant consumedAt, Instant revokedAt) {
     public enum Purpose {
         CUSTOMER_ENROLLMENT(86400), CUSTOMER_RECOVERY(900), SECURITY_EMAIL_CHANGE(900),
-        BUSINESS_CONTACT(900), REAUTHENTICATION(900), OWNER_RECOVERY_CONSENT(900), LEGACY_CUSTOMER_LINK(900);
+        BUSINESS_CONTACT(900), REAUTHENTICATION(900), OWNER_RECOVERY_CONSENT(900), LEGACY_CUSTOMER_LINK(900), MERCHANT_MEMBERSHIP(259200);
         public final long seconds;
         Purpose(long seconds){this.seconds=seconds;}
         public boolean possessionRequired(){return this!=REAUTHENTICATION && this!=OWNER_RECOVERY_CONSENT;}
@@ -26,7 +26,7 @@ public record CustomerProof(UUID id, UUID subjectId, Purpose purpose, Instant cr
                 || (purpose==Purpose.CUSTOMER_ENROLLMENT || purpose==Purpose.CUSTOMER_RECOVERY) && expiresAt.equals(createdAt.plusSeconds(ENROLLMENT_OTP_SECONDS)))
             || (purpose!=Purpose.CUSTOMER_RECOVERY && (sessionId==null)!=(authVersion==null)) || (authVersion!=null && authVersion<1)
             || (purpose.customerSessionRequired() && sessionId==null)
-            || ((purpose==Purpose.OWNER_RECOVERY_CONSENT)!=(organizationId!=null))
+            || ((purpose==Purpose.OWNER_RECOVERY_CONSENT || purpose==Purpose.MERCHANT_MEMBERSHIP)!=(organizationId!=null))
             || (consumedAt!=null && (consumedAt.isBefore(createdAt) || !consumedAt.isBefore(expiresAt)))
             || (revokedAt!=null && revokedAt.isBefore(createdAt)))throw rejected();
         if((purpose==Purpose.CUSTOMER_ENROLLMENT || purpose==Purpose.CUSTOMER_RECOVERY) && sessionId!=null)throw rejected();
@@ -34,6 +34,9 @@ public record CustomerProof(UUID id, UUID subjectId, Purpose purpose, Instant cr
         // Closed pre-amendment rows remain readable as unusable historical evidence.
         if(purpose==Purpose.CUSTOMER_RECOVERY && authVersion==null && consumedAt==null && revokedAt==null)throw rejected();
         if(purpose==Purpose.LEGACY_CUSTOMER_LINK && sessionId==null)throw rejected();
+        // Invitation delivery binds the issuer separately in persistence. Only
+        // consumption binds the verified recipient's actual session/version.
+        if(purpose==Purpose.MERCHANT_MEMBERSHIP && ((consumedAt==null)!=(sessionId==null)))throw rejected();
     }
     public static CustomerProof issue(UUID id,UUID subject,Purpose purpose,Instant time,UUID session,Long version,UUID organization) {
         return new CustomerProof(id,subject,purpose,time,time.plusSeconds(purpose==Purpose.CUSTOMER_ENROLLMENT?ENROLLMENT_OTP_SECONDS:purpose.seconds),session,version,organization,null,null);

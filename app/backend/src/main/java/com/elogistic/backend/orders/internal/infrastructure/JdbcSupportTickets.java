@@ -1,6 +1,7 @@
 package com.elogistic.backend.orders.internal.infrastructure;
 
 import com.elogistic.backend.orders.api.*;
+import com.elogistic.backend.orders.internal.domain.SupportCasePolicy;
 import com.elogistic.backend.orders.api.SupportTickets.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -17,7 +18,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 /** Orders-owned commands join the existing locked Identity business transaction. */
 public final class JdbcSupportTickets implements SupportTickets {
-    private static final Set<String> STATES=Set.of("NEW","IN_PROGRESS","NEEDS_INFORMATION","RESOLVED","CLOSED"), CATEGORIES=Set.of("ACCOUNT_HELP","SHIPMENT_TRACE","FEE_REVIEW","OTHER"), CUSTOMER_OPS=Set.of("CREATE","REPLY","REQUEST_REVIEW","ACKNOWLEDGE");
+    private static final Set<String> STATES=SupportCasePolicy.STATES, CATEGORIES=SupportCasePolicy.PERSONAL_CATEGORIES, CUSTOMER_OPS=Set.of("CREATE","REPLY","REQUEST_REVIEW","ACKNOWLEDGE");
     private final DataSource source; private final JdbcTemplate jdbc; private final PilotShipments shipments; private final Clock clock; private final boolean enabled;
     private final Map<String,SecretKeySpec> keys; private final String activeKey;
     private record Ticket(Summary summary,UUID owner,Long resolution,boolean review){}
@@ -32,7 +33,7 @@ public final class JdbcSupportTickets implements SupportTickets {
     private void lock(){jdbc.queryForObject("SELECT 1 FROM pg_advisory_xact_lock(730022,1)",Integer.class);}
     private Instant now(){return clock.instant().truncatedTo(ChronoUnit.MICROS);}
     private static void one(int changed){if(changed!=1)throw new IllegalStateException("SUPPORT_MANDATORY_EVIDENCE_REQUIRED");}
-    private static String text(String value,int max){if(value==null)throw fail("VALIDATION_FAILED");String v=value.replace("\r\n","\n").strip();if(v.isEmpty()||v.codePointCount(0,v.length())>max||v.codePoints().anyMatch(c->Character.isISOControl(c)&&!(max==4000&&(c==10||c==9))||c==0x7f))throw fail("VALIDATION_FAILED");return v;}
+    private static String text(String value,int max){try{return SupportCasePolicy.text(value,max,false);}catch(IllegalArgumentException invalid){throw fail("VALIDATION_FAILED");}}
     private static void id(UUID value){if(value==null||value.equals(new UUID(0,0)))throw fail("VALIDATION_FAILED");}
     private static Ticket row(ResultSet r,int ignored)throws SQLException{return new Ticket(new Summary(r.getObject("id",UUID.class),r.getString("code"),r.getString("kind"),r.getObject("shipment_id",UUID.class),r.getString("category"),r.getString("subject"),r.getString("state"),r.getLong("version"),r.getTimestamp("created_at").toInstant(),r.getTimestamp("updated_at").toInstant(),"NORMAL",null,null),r.getObject("owner_id",UUID.class),(Long)r.getObject("resolution_version"),r.getBoolean("review_pending"));}
     private Ticket ticket(UUID target,UUID owner,boolean locked){id(target);var found=jdbc.query("SELECT * FROM orders.personal_support_ticket WHERE id=?"+(owner==null?"":" AND owner_id=?")+(locked?" FOR UPDATE":""),JdbcSupportTickets::row,owner==null?new Object[]{target}:new Object[]{target,owner});if(found.isEmpty())throw fail("RESOURCE_NOT_FOUND");return found.getFirst();}

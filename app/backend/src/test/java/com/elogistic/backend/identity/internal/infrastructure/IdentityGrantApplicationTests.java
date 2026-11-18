@@ -42,7 +42,7 @@ class IdentityGrantApplicationTests {
 
     @BeforeEach void fixture() throws Exception {
         db = PostgresTestcontainersSupport.database(POSTGRES);
-        assertEquals(32, db.flyway("latest", SCOPE).migrate().migrationsExecuted);
+        assertEquals(34, db.flyway("latest", SCOPE).migrate().migrationsExecuted);
         account(A, "ACTIVE", List.of(ADMIN)); account(B, "ACTIVE", List.of(ADMIN)); account(T, "ACTIVE", List.of(GX));
         session(S, A); session(AS, B); session(TS, T);
         execute("INSERT INTO identity.refresh_token(id,session_id,token_hash,issued_at,expires_at) VALUES ('" + id(20) + "','" + TS + "',decode(repeat('01',32),'hex'),TIMESTAMPTZ '2026-10-21 00:00:00Z',TIMESTAMPTZ '2026-10-21 08:00:00Z')");
@@ -1929,19 +1929,25 @@ class IdentityGrantApplicationTests {
         return customerHttpContext(time,transport,profile,"TEST");
     }
     private org.springframework.web.context.support.AnnotationConfigWebApplicationContext customerHttpContext(Instant time,com.elogistic.backend.identity.internal.application.port.CustomerDeliveryTransport transport,boolean profile,String pilotMode)throws Exception{
+        return customerHttpContext(time,transport,profile,pilotMode,false);
+    }
+    private org.springframework.web.context.support.AnnotationConfigWebApplicationContext customerHttpContext(Instant time,com.elogistic.backend.identity.internal.application.port.CustomerDeliveryTransport transport,boolean profile,String pilotMode,boolean teamEnabled)throws Exception{
+        return customerHttpContext(time,transport,profile,pilotMode,teamEnabled,false);
+    }
+    private org.springframework.web.context.support.AnnotationConfigWebApplicationContext customerHttpContext(Instant time,com.elogistic.backend.identity.internal.application.port.CustomerDeliveryTransport transport,boolean profile,String pilotMode,boolean teamEnabled,boolean organizationSupportEnabled)throws Exception{
         boolean productionProfile=pilotMode.equals("TEST_WITH_PRODUCTION_PROFILE");String configuredMode=productionProfile?"TEST":pilotMode;
         HttpFixtureConfiguration.source=outboxDataSource();var source=HttpFixtureConfiguration.source;
         var key=new com.nimbusds.jose.jwk.RSAKey.Builder((java.security.interfaces.RSAPublicKey)httpKeys().getPublic()).privateKey((java.security.interfaces.RSAPrivateKey)httpKeys().getPrivate()).keyID("http-test").keyUse(com.nimbusds.jose.jwk.KeyUse.SIGNATURE).algorithm(com.nimbusds.jose.JWSAlgorithm.RS256).build();
         var context=new org.springframework.web.context.support.AnnotationConfigWebApplicationContext();context.setServletContext(new org.springframework.mock.web.MockServletContext());context.getEnvironment().setActiveProfiles(productionProfile?new String[]{"identity","postgres","customer","production"}:new String[]{"identity","postgres","customer"});
         context.getEnvironment().getPropertySources().addFirst(new org.springframework.core.env.MapPropertySource("isolated-customer-http-fixture",Map.of("identity.security.issuer","https://identity.example.invalid","identity.security.audience","elogistics-browser","identity.security.current-kid","http-test","identity.security.jwk-set",new com.nimbusds.jose.jwk.JWKSet(key).toString(false),"identity.security.origin","https://portal.example.invalid","identity.security.limiter-hmac",Base64.getEncoder().encodeToString(limiterKey()),"customer.rollout","SANDBOX","shipping.pilot.environment",configuredMode)));
         // Real production composition with deterministic test clock, test keys, same runtime DS and explicit manual worker tick.
-        var services=com.elogistic.backend.identity.internal.ProductionCustomerComposition.create(source,customerTokens(time),enrollmentProtection(),new JdbcIdentityRateLimiter(source,keyBytes(73)),transport,"https://portal.example.invalid",Clock.fixed(time,ZoneOffset.UTC));
+        var services=com.elogistic.backend.identity.internal.ProductionCustomerComposition.create(source,customerTokens(time),enrollmentProtection(),new JdbcIdentityRateLimiter(source,keyBytes(73)),transport,"https://portal.example.invalid",Clock.fixed(time,ZoneOffset.UTC),()->(i,p,o,a,n,e)->context.getBean(com.elogistic.backend.merchant.api.customer.OrganizationTeam.class).deliveryCurrent(i,p,o,a,n,e));
         context.addBeanFactoryPostProcessor(factory->{factory.registerSingleton("identityHttpClock",Clock.fixed(time,ZoneOffset.UTC));factory.registerSingleton("customerServices",services);});
         context.register(HttpFixtureConfiguration.class,com.elogistic.backend.identity.internal.ProductionIdentityHttpConfiguration.class,com.elogistic.backend.identity.internal.ProductionCustomerWebConfiguration.class,com.elogistic.backend.identity.internal.web.ProductionIdentityReads.class,com.elogistic.backend.identity.internal.web.ProductionIdentityErrors.class);
         if(profile){
-            context.getEnvironment().getPropertySources().addFirst(new org.springframework.core.env.MapPropertySource("isolated-profile-keys",Map.of("merchant.customer-profile.receipt-keys","{\"v1\":\""+Base64.getEncoder().encodeToString(keyBytes(76))+"\"}","merchant.customer-profile.current-receipt-key","v1","support.tickets.enabled","true","support.tickets.environment",configuredMode,"business.workspace.enabled","true","business.workspace.environment",configuredMode)));
-            context.addBeanFactoryPostProcessor(factory->{factory.registerSingleton("customerAdmission",services.customers());factory.registerSingleton("customerRequestContext",services.requests());});
-            context.register(com.elogistic.backend.workflow.internal.web.MerchantFacilityWorkHttp.class,com.elogistic.backend.workflow.internal.web.MerchantFacilitiesHttp.class,com.elogistic.backend.workflow.internal.web.BusinessReportingHttp.class,com.elogistic.backend.workflow.internal.web.OrganizationShipmentManagementHttp.class,com.elogistic.backend.workflow.internal.web.OrganizationContactsHttp.class,com.elogistic.backend.workflow.internal.web.OrganizationActionsHttp.class,com.elogistic.backend.workflow.internal.web.BusinessShippingHttp.class,com.elogistic.backend.orders.internal.BusinessPreparationConfiguration.class,com.elogistic.backend.workflow.internal.web.BusinessPreparationHttp.class,com.elogistic.backend.workflow.internal.web.BusinessImportHttp.class,com.elogistic.backend.merchant.internal.BusinessWorkspaceConfiguration.class,com.elogistic.backend.notifications.internal.BusinessDashboardConfiguration.class,com.elogistic.backend.workflow.internal.web.BusinessWorkspaceHttp.class,com.elogistic.backend.orders.internal.SupportTicketConfiguration.class,com.elogistic.backend.workflow.internal.web.SupportTicketHttp.class,com.elogistic.backend.orders.internal.AnalyticsSourceConfiguration.class,com.elogistic.backend.finance.internal.AnalyticsFinanceConfiguration.class,com.elogistic.backend.notifications.internal.AnalyticsConfiguration.class,com.elogistic.backend.workflow.internal.web.PersonalAnalyticsHttp.class,com.elogistic.backend.dispatch.internal.StationIntakeConfiguration.class,com.elogistic.backend.workflow.internal.web.StationIntakeHttp.class,com.elogistic.backend.pricing.internal.PilotPricingConfiguration.class,com.elogistic.backend.orders.internal.PilotBookingConfiguration.class,com.elogistic.backend.finance.internal.PilotFinanceConfiguration.class,com.elogistic.backend.workflow.internal.web.PilotShippingHttp.class,com.elogistic.backend.orders.internal.ShippingDraftConfiguration.class,com.elogistic.backend.workflow.internal.web.ShippingDraftHttp.class,com.elogistic.backend.merchant.internal.CustomerProfileConfiguration.class,com.elogistic.backend.workflow.internal.web.CustomerProfileHttp.class,com.elogistic.backend.workflow.internal.web.PersonalAddressHttp.class,com.elogistic.backend.workflow.internal.web.MerchantApplicationHttp.class,com.elogistic.backend.workflow.internal.web.OnboardingHttpErrors.class);
+            context.getEnvironment().getPropertySources().addFirst(new org.springframework.core.env.MapPropertySource("isolated-profile-keys",Map.of("merchant.customer-profile.receipt-keys","{\"v1\":\""+Base64.getEncoder().encodeToString(keyBytes(76))+"\"}","merchant.customer-profile.current-receipt-key","v1","support.tickets.enabled","true","support.tickets.environment",configuredMode,"business.workspace.enabled","true","business.workspace.environment",configuredMode,"business.team.enabled",Boolean.toString(teamEnabled),"support.tickets.organization-enabled",Boolean.toString(organizationSupportEnabled))));
+            context.addBeanFactoryPostProcessor(factory->{factory.registerSingleton("customerAdmission",services.customers());factory.registerSingleton("customerRequestContext",services.requests());factory.registerSingleton("customerMemberNames",new JdbcCustomerMemberNames(source,services.customers()));factory.registerSingleton("customerReauthentication",services.reauthentication());factory.registerSingleton("customerMembershipInvitations",services.memberships());});
+            context.register(com.elogistic.backend.orders.internal.OrganizationSupportConfiguration.class,com.elogistic.backend.workflow.internal.web.OrganizationSupportHttp.class,com.elogistic.backend.merchant.internal.OrganizationTeamConfiguration.class,com.elogistic.backend.workflow.internal.web.OrganizationTeamHttp.class,com.elogistic.backend.workflow.internal.web.MerchantFacilityWorkHttp.class,com.elogistic.backend.workflow.internal.web.MerchantFacilitiesHttp.class,com.elogistic.backend.workflow.internal.web.BusinessReportingHttp.class,com.elogistic.backend.workflow.internal.web.OrganizationShipmentManagementHttp.class,com.elogistic.backend.workflow.internal.web.OrganizationContactsHttp.class,com.elogistic.backend.workflow.internal.web.OrganizationActionsHttp.class,com.elogistic.backend.workflow.internal.web.BusinessShippingHttp.class,com.elogistic.backend.orders.internal.BusinessPreparationConfiguration.class,com.elogistic.backend.workflow.internal.web.BusinessPreparationHttp.class,com.elogistic.backend.workflow.internal.web.BusinessImportHttp.class,com.elogistic.backend.merchant.internal.BusinessWorkspaceConfiguration.class,com.elogistic.backend.notifications.internal.BusinessDashboardConfiguration.class,com.elogistic.backend.workflow.internal.web.BusinessWorkspaceHttp.class,com.elogistic.backend.orders.internal.SupportTicketConfiguration.class,com.elogistic.backend.workflow.internal.web.SupportTicketHttp.class,com.elogistic.backend.orders.internal.AnalyticsSourceConfiguration.class,com.elogistic.backend.finance.internal.AnalyticsFinanceConfiguration.class,com.elogistic.backend.notifications.internal.AnalyticsConfiguration.class,com.elogistic.backend.workflow.internal.web.PersonalAnalyticsHttp.class,com.elogistic.backend.dispatch.internal.StationIntakeConfiguration.class,com.elogistic.backend.workflow.internal.web.StationIntakeHttp.class,com.elogistic.backend.pricing.internal.PilotPricingConfiguration.class,com.elogistic.backend.orders.internal.PilotBookingConfiguration.class,com.elogistic.backend.finance.internal.PilotFinanceConfiguration.class,com.elogistic.backend.workflow.internal.web.PilotShippingHttp.class,com.elogistic.backend.orders.internal.ShippingDraftConfiguration.class,com.elogistic.backend.workflow.internal.web.ShippingDraftHttp.class,com.elogistic.backend.merchant.internal.CustomerProfileConfiguration.class,com.elogistic.backend.workflow.internal.web.CustomerProfileHttp.class,com.elogistic.backend.workflow.internal.web.PersonalAddressHttp.class,com.elogistic.backend.workflow.internal.web.MerchantApplicationHttp.class,com.elogistic.backend.workflow.internal.web.OnboardingHttpErrors.class);
         }
         try{context.refresh();return context;}catch(Exception failure){context.close();throw failure;}
     }
@@ -2221,11 +2227,15 @@ class IdentityGrantApplicationTests {
         businessCommand(UUID.randomUUID(),"PROVISION",id(902),B,"OWNER","'dashboard.read'");
         businessCommand(UUID.randomUUID(),"GRANT",id(901),B,"OWNER","'dashboard.read','contacts.read','contacts.write','contacts.import','contacts.export','shipment.draft.read','shipment.actions.manage','shipment.actions.respond'");
         businessTestContract(id(901));facilityGrant(id(901),B,null,"'facility.read','facility.manage','defaults.manage','shipment.draft.read','shipment.prepare','shipment.handover.read','shipment.handover.manage'");
+        businessCommand(UUID.randomUUID(),"GRANT",id(901),B,"OWNER","'dashboard.read','team.read','team.invite','team.access.manage','team.membership.manage','team.audit.read'");
+        businessCommand(UUID.randomUUID(),"GRANT",id(901),B,"OWNER",ORGANIZATION_SUPPORT_RIGHTS);
+        for(String permission:List.of("SUPPORT_TRIAGE","SUPPORT_HANDLE"))db.ownerExecute("BEGIN;SET LOCAL argopost.operator_environment='TEST';SELECT * FROM orders.configure_local_organization_support_staff('"+UUID.randomUUID()+"','BIND','"+id(901)+"','"+B+"','"+permission+"','Synthetic browser support binding');COMMIT;");
         long accounts=scalar("SELECT count(*) FROM identity.user_account");var before=snapshot();S003CustomerBrowserRuntime.run(outboxDataSource());
         assertEquals(1,scalar("SELECT count(*) FROM orders.organization_preparation WHERE state='ARCHIVED' AND version=3"));assertEquals(9,scalar("SELECT count(*) FROM orders.organization_preparation_audit"));assertEquals(7,scalar("SELECT count(*) FROM orders.organization_preparation_receipt"));assertEquals(1,scalar("SELECT count(*) FROM orders.organization_import_job WHERE state='COMPLETED' AND created_rows=1 AND invalid_rows=1"));
         assertEquals(1,scalar("SELECT count(*) FROM orders.organization_shipment_assignment"));assertEquals(1,scalar("SELECT count(*) FROM orders.organization_shipment_assignment_event"));assertEquals(1,businessScalar("SELECT count(*) FROM orders.organization_shipment_export_audit"));assertEquals(1,scalar("SELECT count(*) FROM orders.organization_report_export_audit"));
         assertEquals(2,scalar("SELECT count(*) FROM merchant.organization_contact"));assertEquals(1,scalar("SELECT count(*) FROM merchant.organization_contact WHERE version=3 AND state='ACTIVE'"));assertEquals(1,scalar("SELECT count(*) FROM merchant.organization_contact_default WHERE contact_id IS NULL AND version=2"));assertEquals(1,scalar("SELECT count(*) FROM merchant.organization_contact_import_row WHERE contact_id IS NOT NULL"));assertEquals(1,scalar("SELECT count(*) FROM orders.organization_action_task WHERE state='COMPLETED' AND version=5"));assertEquals(5,scalar("SELECT count(*) FROM orders.organization_action_event"));assertEquals(1,scalar("SELECT count(*) FROM notification.organization_action_notice WHERE read_at IS NOT NULL"));
         assertEquals(1,scalar("SELECT count(*) FROM orders.personal_support_ticket WHERE state='CLOSED' AND version=10"));assertEquals(10,scalar("SELECT count(*) FROM orders.personal_support_message"));assertEquals(10,scalar("SELECT count(*) FROM orders.support_command_receipt"));
+        assertEquals(1,scalar("SELECT count(*) FROM orders.organization_support_ticket WHERE state='CLOSED' AND version=10"));assertEquals(10,scalar("SELECT count(*) FROM orders.organization_support_message"));assertEquals(1,scalar("SELECT count(*) FROM orders.organization_support_assignment WHERE version=1"));assertEquals(13,scalar("SELECT count(*) FROM orders.organization_support_receipt"));assertEquals(13,scalar("SELECT count(*) FROM orders.organization_support_audit"));assertEquals(1,scalar("SELECT count(*) FROM orders.organization_support_notice WHERE read_at IS NOT NULL"));
         assertEquals(1,scalar("SELECT count(*) FROM dispatch.pilot_intake_acceptance"));assertEquals(2,scalar("SELECT count(*) FROM dispatch.pilot_custody"));assertEquals(1,scalar("SELECT count(*) FROM orders.pilot_tracking_event"));assertEquals(2,scalar("SELECT count(*) FROM orders.pilot_parcel_event"));
         assertEquals(3,scalar("SELECT count(*) FROM orders.pilot_shipment WHERE booking_state='CONFIRMED' AND carrier_state='NOT_ACCEPTED'"));assertEquals(5,scalar("SELECT count(*) FROM orders.pilot_parcel"));assertEquals(1,scalar("SELECT count(*) FROM finance.pilot_shipping_obligation WHERE state='UNPAID' AND amount_vnd=53000"));assertEquals(3,scalar("SELECT count(*) FROM pricing.pilot_quote WHERE consumed_by IS NOT NULL"));assertEquals(1,scalar("SELECT count(*) FROM finance.pilot_shipping_obligation WHERE owner_type='BUSINESS' AND state='UNPAID' AND amount_vnd=25000"));assertEquals(2,scalar("SELECT count(*) FROM orders.organization_booking_receipt"));
         assertEquals(1,scalar("SELECT count(*) FROM merchant.facility WHERE code='BROWSER-WH-1' AND sender_contact IS NOT NULL AND return_contact IS NOT NULL AND operating_hours IS NOT NULL"));
@@ -2241,7 +2251,14 @@ class IdentityGrantApplicationTests {
             assertEquals(1,scalar("SELECT count(*) FROM merchant.business_audit WHERE target_type='APPLICATION' AND operation='"+operation+"'"));
             assertEquals(1,scalar("SELECT count(*) FROM merchant.command_receipt WHERE target_type='APPLICATION' AND operation='"+operation+"'"));
         }
-        assertEquals(2,scalar("SELECT count(*) FROM identity.customer_proof WHERE consumed_at IS NOT NULL"));assertEquals(2,scalar("SELECT count(*) FROM identity.customer_delivery WHERE status='DELIVERED' AND delivery_evidence IS NOT NULL"));assertEquals(0,scalar("SELECT count(*) FROM identity.customer_auth_session WHERE revoked_at IS NULL"));
+        assertEquals(2,scalar("SELECT count(*) FROM identity.customer_proof WHERE consumed_at IS NOT NULL AND purpose IN ('CUSTOMER_ENROLLMENT','CUSTOMER_RECOVERY')"));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.customer_proof WHERE consumed_at IS NOT NULL AND purpose='MERCHANT_MEMBERSHIP'"));
+        assertEquals(3,scalar("SELECT count(*) FROM identity.customer_proof WHERE consumed_at IS NOT NULL AND purpose='REAUTHENTICATION'"));
+        assertEquals(2,scalar("SELECT count(*) FROM identity.customer_delivery WHERE status='DELIVERED' AND delivery_evidence IS NOT NULL AND purpose IN ('CUSTOMER_ENROLLMENT','CUSTOMER_RECOVERY')"));
+        assertEquals(1,scalar("SELECT count(*) FROM identity.customer_delivery WHERE status='DELIVERED' AND delivery_evidence IS NOT NULL AND purpose='MERCHANT_MEMBERSHIP'"));
+        assertEquals(1,scalar("SELECT count(*) FROM merchant.team_invitation WHERE state='ACCEPTED'"));
+        assertEquals(1,scalar("SELECT count(*) FROM merchant.membership WHERE organization_id='"+id(901)+"' AND role='OPERATOR' AND state='REVOKED'"));
+        assertEquals(0,scalar("SELECT count(*) FROM identity.customer_auth_session WHERE revoked_at IS NULL"));
         var after=snapshot();for(String table:List.of("auth_session","refresh_token","account_grant"))assertEquals(before.get(table),after.get(table));assertTrue(after.get("user_account").containsAll(before.get("user_account")));
     }
     private org.springframework.mock.web.MockHttpServletResponse reauthenticationPost(org.springframework.test.web.servlet.MockMvc mvc,ProfileBrowser browser,UUID key,Object body)throws Exception{
@@ -2295,7 +2312,11 @@ class IdentityGrantApplicationTests {
     }
 
     private final ThreadLocal<Exception> onboardingFailure=new ThreadLocal<>();
-    private String safeOnboardingFailure(){var failure=onboardingFailure.get();String result="";for(Throwable cause=failure;cause!=null;cause=cause.getCause())result+=cause.getClass().getSimpleName()+ (cause instanceof SQLException sql?":"+sql.getSQLState():"")+" ";return result;}
+    private String safeOnboardingFailure(){var failure=onboardingFailure.get();String result="";for(Throwable cause=failure;cause!=null;cause=cause.getCause()){
+        result+=cause.getClass().getSimpleName()+ (cause instanceof SQLException sql?":"+sql.getSQLState():"")+" ";
+        if(cause instanceof org.postgresql.util.PSQLException pg && pg.getServerErrorMessage()!=null){var message=pg.getServerErrorMessage().getMessage();var constraint=pg.getServerErrorMessage().getConstraint();
+            if(message!=null&&message.matches("[A-Z_]{3,80}"))result+=message+" ";if(constraint!=null&&constraint.matches("[a-z_]{3,100}"))result+=constraint+" ";}
+    }return result;}
     private org.springframework.mock.web.MockHttpServletResponse onboardingWrite(org.springframework.test.web.servlet.MockMvc mvc,ProfileBrowser browser,String method,String path,UUID key,String version,Object body)throws Exception{
         var q=org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request(org.springframework.http.HttpMethod.valueOf(method),path).secure(true).header("Origin","https://portal.example.invalid").header("Authorization","Bearer "+browser.access()).header("X-CSRF-Token",browser.flow().challenge).cookie(browser.flow().csrf,browser.flow().refresh).contentType("application/json");
         if(key!=null)q.header("Idempotency-Key",key);if(version!=null)q.header("If-Match",version);q.content(body instanceof String text?text:new tools.jackson.databind.ObjectMapper().writeValueAsString(body));var result=mvc.perform(q).andReturn();onboardingFailure.set(result.getResolvedException());return result.getResponse();
@@ -2367,9 +2388,12 @@ class IdentityGrantApplicationTests {
     }
     private static final String ADDRESS_PATH="/api/v1/customer/addresses";
     private Map<String,Object> addressInput(String name,String kind,boolean isDefault){return Map.of("kind",kind,"label",name,"contactName","Synthetic contact","contactPhone","0901234567","address",Map.of("country","VN","administrativeArea","Synthetic area","locality","Synthetic locality","addressLine","Synthetic street"),"isDefault",isDefault);}
-    private ProfileBrowser addressOtherBrowser(org.springframework.test.web.servlet.MockMvc mvc)throws Exception{
+    private void addressOtherIdentity()throws Exception{
         execute("UPDATE identity.user_account SET email='address-other@example.invalid',password_hash=(SELECT password_hash FROM identity.user_account WHERE id='"+A+"') WHERE id='"+B+"'");
         execute("INSERT INTO identity.customer_identifier VALUES ('"+UUID.randomUUID()+"','"+B+"','address-other@example.invalid',TIMESTAMPTZ '2026-10-21 00:00:00Z','ACTIVE',1)");
+    }
+    private ProfileBrowser addressOtherBrowser(org.springframework.test.web.servlet.MockMvc mvc)throws Exception{addressOtherIdentity();return addressOtherLogin(mvc);}
+    private ProfileBrowser addressOtherLogin(org.springframework.test.web.servlet.MockMvc mvc)throws Exception{
         var login=customerPost(mvc,"login",customerCsrf(mvc,null),null,Map.of("email","address-other@example.invalid","password",SESSION_PASSWORD));assertEquals(200,login.getStatus());
         return new ProfileBrowser(responseId(login,"accessToken"),customerCsrf(mvc,new BrowserFlow(responseCookie(login,"__Host-elogistics.customer.csrf"),responseCookie(login,"__Host-elogistics.customer.refresh"),"unused")));
     }
@@ -2682,7 +2706,7 @@ class IdentityGrantApplicationTests {
         customerFixture(false);UUID org=id(9013),site=id(9014);String contactId;
         try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var c=customerHttpContext(PILOT_NOW,smtp(inbox,PILOT_NOW),true)){
             var mvc=httpMvc(c);var owner=profileBrowser(mvc);var other=addressOtherBrowser(mvc);organizationContactOwner(org);String path=businessShippingBase(org)+"/contacts";contactId=intakeJson(onboardingWrite(mvc,owner,"POST",path,UUID.randomUUID(),null,organizationContactInput("Synthetic Org Contact"))).get("id").asString();
-            String contact=new tools.jackson.databind.ObjectMapper().writeValueAsString(shippingDraftInput("Site").get("sender")).replace("0901234567","+84901234567");seedFacility(site,org,contact);businessCommand(UUID.randomUUID(),"GRANT",org,B,"OPERATOR","'dashboard.read'");db.ownerExecute("INSERT INTO merchant.member_grant(id,membership_id,organization_id,permission,scope,facility_id) SELECT gen_random_uuid(),m.id,m.organization_id,p,'FACILITY','"+site+"' FROM merchant.membership m CROSS JOIN unnest(ARRAY['contacts.read','contacts.write']) p WHERE m.organization_id='"+org+"' AND account_id='"+B+"'");
+            String contact=new tools.jackson.databind.ObjectMapper().writeValueAsString(shippingDraftInput("Site").get("sender")).replace("0901234567","+84901234567");seedFacility(site,org,contact);businessCommand(UUID.randomUUID(),"GRANT",org,B,"OPERATOR","'dashboard.read'");seedScopedLegacyGrants(org,B,site,"'contacts.read','contacts.write'");
             assertEquals(404,httpRead(mvc,path+"/"+contactId,other.access()).getStatus());var local=new HashMap<>(organizationContactInput("Synthetic Site Contact"));local.put("facilityId",site);assertEquals(201,onboardingWrite(mvc,other,"POST",path,UUID.randomUUID(),null,local).getStatus());assertEquals(1,intakeJson(httpRead(mvc,path,other.access())).get("items").size());assertEquals(404,httpRead(mvc,businessShippingBase(org)+"/contact-defaults?kind=RECIPIENT",other.access()).getStatus());
         }
         try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var c=customerHttpContext(PILOT_NOW,smtp(inbox,PILOT_NOW),true,"PRODUCTION")){var mvc=httpMvc(c);var owner=profileBrowser(mvc);assertEquals(503,httpRead(mvc,businessShippingBase(org)+"/contacts",owner.access()).getStatus());}
@@ -2767,7 +2791,7 @@ class IdentityGrantApplicationTests {
         customerFixture(false);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var c=customerHttpContext(PILOT_NOW,smtp(inbox,PILOT_NOW),true)){
             var mvc=httpMvc(c);var owner=profileBrowser(mvc);var other=addressOtherBrowser(mvc);UUID org=id(8914),site=id(8915);businessReportOwner(org);businessManagementBooking(mvc,owner,org);String contact=new tools.jackson.databind.ObjectMapper().writeValueAsString(shippingDraftInput("Site").get("sender")).replace("0901234567","+84901234567");seedFacility(site,org,contact);
             var input=new HashMap<>(pilotDraftInput("Scoped report"));input.put("facilityId",site);String draft=responseId(onboardingWrite(mvc,owner,"POST",preparationPath(org),UUID.randomUUID(),null,input),"id");var q=businessTestQuote(mvc,owner,org,draft,UUID.randomUUID());assertEquals(201,q.getStatus(),this::safeOnboardingFailure);assertEquals(201,businessTestBook(mvc,owner,org,draft,intakeJson(q).get("quote").get("id").asString(),UUID.randomUUID()).getStatus());
-            businessCommand(UUID.randomUUID(),"GRANT",org,B,"OPERATOR","'dashboard.read','shipment.draft.read'");db.ownerExecute("INSERT INTO merchant.member_grant(id,membership_id,organization_id,permission,scope,facility_id) SELECT gen_random_uuid(),m.id,m.organization_id,p,'FACILITY','"+site+"' FROM merchant.membership m CROSS JOIN unnest(ARRAY['shipment.reports.read','shipment.finance.read','shipment.export']) p WHERE m.organization_id='"+org+"' AND account_id='"+B+"'");String base=businessShippingBase(org);
+            businessCommand(UUID.randomUUID(),"GRANT",org,B,"OPERATOR","'dashboard.read','shipment.draft.read'");seedScopedLegacyGrants(org,B,site,"'shipment.reports.read','shipment.finance.read','shipment.export'");String base=businessShippingBase(org);
             var ops=httpRead(mvc,base+"/operations-reports",other.access());assertEquals(200,ops.getStatus(),this::safeOnboardingFailure);assertEquals("1",intakeJson(ops).get("summary").get("shipments").asString());assertEquals("AVAILABLE",intakeJson(ops).get("financialState").asString());assertEquals("1",intakeJson(ops).get("preparations").get("total").asString());assertEquals("1",intakeJson(httpRead(mvc,base+"/shipping-finance",other.access())).get("total").asString());assertEquals(404,httpRead(mvc,base+"/operations-reports?facilityId="+UUID.randomUUID(),other.access()).getStatus());
             var route=intakeJson(httpRead(mvc,base+"/operations-reports?origin=SIM-A1&destination=SIM-A2",other.access()));assertEquals("NOT_COMPARABLE",route.get("preparations").get("state").asString());assertTrue(route.get("activity").get("created").isNull());
             businessCommand(UUID.randomUUID(),"GRANT",org,B,"OPERATOR","'dashboard.read','shipment.draft.read','shipment.reports.read'");assertEquals("FORBIDDEN",intakeJson(httpRead(mvc,base+"/operations-reports",other.access())).get("financialState").asString());assertEquals("AVAILABLE",intakeJson(httpRead(mvc,base+"/operations-reports?facilityId="+site,other.access())).get("financialState").asString());assertEquals("1",intakeJson(httpRead(mvc,base+"/shipping-finance",other.access())).get("total").asString());
@@ -2837,7 +2861,7 @@ class IdentityGrantApplicationTests {
             var mvc=httpMvc(c);var owner=profileBrowser(mvc);var other=addressOtherBrowser(mvc);UUID org=id(8815),site=id(8816);businessManagementOwner(org);String noSite=businessManagementBooking(mvc,owner,org);
             String contact=new tools.jackson.databind.ObjectMapper().writeValueAsString(shippingDraftInput("Site").get("sender")).replace("0901234567","+84901234567");seedFacility(site,org,contact);
             var input=new HashMap<>(pilotDraftInput("Scoped management"));input.put("facilityId",site);String draft=responseId(onboardingWrite(mvc,owner,"POST",preparationPath(org),UUID.randomUUID(),null,input),"id");var quote=businessTestQuote(mvc,owner,org,draft,UUID.randomUUID());assertEquals(201,quote.getStatus(),this::safeOnboardingFailure);var booking=businessTestBook(mvc,owner,org,draft,intakeJson(quote).get("quote").get("id").asString(),UUID.randomUUID());assertEquals(201,booking.getStatus(),this::safeOnboardingFailure);String shipment=intakeJson(booking).get("shipment").get("id").asString(),base=businessShippingBase(org),path=base+"/shipments/"+shipment+"/assignment";
-            businessCommand(UUID.randomUUID(),"GRANT",org,B,"OPERATOR","'dashboard.read'");db.ownerExecute("INSERT INTO merchant.member_grant(id,membership_id,organization_id,permission,scope,facility_id) SELECT gen_random_uuid(),m.id,m.organization_id,p,'FACILITY','"+site+"' FROM merchant.membership m CROSS JOIN unnest(ARRAY['shipment.draft.read','shipment.assign','shipment.export','shipment.label.read']) p WHERE m.organization_id='"+org+"' AND account_id='"+B+"'");
+            businessCommand(UUID.randomUUID(),"GRANT",org,B,"OPERATOR","'dashboard.read'");seedScopedLegacyGrants(org,B,site,"'shipment.draft.read','shipment.assign','shipment.export','shipment.label.read'");
             var page=intakeJson(httpRead(mvc,base+"/shipments?view=management",other.access()));assertEquals("1",page.get("total").asString());assertEquals("53000",page.get("summary").get("confirmedFeesVnd").asString());assertEquals(shipment,page.get("items").get(0).get("record").get("shipment").get("id").asString());assertEquals(404,httpRead(mvc,base+"/shipments/"+noSite,other.access()).getStatus());assertEquals(404,httpRead(mvc,base+"/shipments/"+noSite+"/labels",other.access()).getStatus());assertEquals(404,httpRead(mvc,base+"/shipments/"+noSite+"/internal-history",other.access()).getStatus());assertEquals(404,httpRead(mvc,base+"/shipments?view=management&facilityId="+UUID.randomUUID(),other.access()).getStatus());assertEquals(1,intakeJson(httpRead(mvc,base+"/shipment-exports",other.access())).get("rowCount").asInt());assertEquals(404,httpRead(mvc,base+"/shipment-exports?ids="+shipment+","+noSite,other.access()).getStatus());
             UUID key=UUID.randomUUID();assertEquals(200,onboardingWrite(mvc,owner,"PUT",path,key,"\"a0\"",Map.of("assigneeAccountId",B,"reasonCode","INITIAL_ASSIGNMENT")).getStatus());assertEquals(404,httpRead(mvc,base+"/shipment-assignment-receipts/"+key,other.access()).getStatus());
             businessCommand(UUID.randomUUID(),"REVOKE",org,B,"OPERATOR","'shipment.assign','shipment.export','shipment.label.read','shipment.draft.read'");assertEquals(404,onboardingWrite(mvc,owner,"PUT",base+"/shipments/"+noSite+"/assignment",UUID.randomUUID(),"\"a0\"",Map.of("assigneeAccountId",B,"reasonCode","INITIAL_ASSIGNMENT")).getStatus());assertEquals(1,intakeJson(httpRead(mvc,base+"/shipments/"+shipment+"/assignment-candidates",owner.access())).get("items").size());assertEquals(404,httpRead(mvc,base+"/shipments?view=management",other.access()).getStatus());
@@ -2933,7 +2957,7 @@ class IdentityGrantApplicationTests {
         customerFixture(true);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var c=customerHttpContext(PILOT_NOW,smtp(inbox,PILOT_NOW),true)){
             var mvc=httpMvc(c);var owner=profileBrowser(mvc);var member=addressOtherBrowser(mvc);UUID org=id(875),other=id(876),site=id(877),foreign=id(878);businessShippingOwner(org);preparationOwner(other);businessTestContract(org);
             String contact=new tools.jackson.databind.ObjectMapper().writeValueAsString(shippingDraftInput("Facility").get("sender")).replace("0901234567","+84901234567");seedFacility(site,org,contact);seedFacility(foreign,other,contact);
-            businessCommand(UUID.randomUUID(),"GRANT",org,B,"OPERATOR","'dashboard.read'");db.ownerExecute("INSERT INTO merchant.member_grant(id,membership_id,organization_id,permission,scope,facility_id) SELECT gen_random_uuid(),m.id,m.organization_id,p,'FACILITY','"+site+"' FROM merchant.membership m CROSS JOIN unnest(ARRAY['shipment.draft.read','shipment.quote','shipment.book','shipment.label.read']) p WHERE m.organization_id='"+org+"' AND account_id='"+B+"'");
+            businessCommand(UUID.randomUUID(),"GRANT",org,B,"OPERATOR","'dashboard.read'");seedScopedLegacyGrants(org,B,site,"'shipment.draft.read','shipment.quote','shipment.book','shipment.label.read'");
             var input=new HashMap<String,Object>(pilotDraftInput("Scoped"));input.put("facilityId",site);String draft=responseId(onboardingWrite(mvc,owner,"POST",preparationPath(org),UUID.randomUUID(),null,input),"id");String unscoped=businessTestDraft(mvc,owner,org);assertEquals(404,businessTestQuote(mvc,member,org,unscoped,UUID.randomUUID()).getStatus());
             UUID qkey=UUID.randomUUID();var q=businessTestQuote(mvc,member,org,draft,qkey);assertEquals(201,q.getStatus(),this::safeOnboardingFailure);String quote=intakeJson(q).get("quote").get("id").asString();UUID bkey=UUID.randomUUID();var booked=businessTestBook(mvc,member,org,draft,quote,bkey);assertEquals(201,booked.getStatus(),this::safeOnboardingFailure);String shipment=intakeJson(booked).get("shipment").get("id").asString();String base=businessShippingBase(org);assertTrue(httpRead(mvc,base+"/shipments",member.access()).getContentAsString().contains(shipment));assertEquals(200,httpRead(mvc,base+"/shipments/"+shipment+"/labels",member.access()).getStatus());
             assertEquals(404,httpRead(mvc,base+"/shipping-booking-receipts/"+bkey,owner.access()).getStatus());assertEquals(404,httpRead(mvc,base+"/shipping-quote-receipts/"+qkey,owner.access()).getStatus());assertEquals(404,httpRead(mvc,businessShippingBase(other)+"/shipments/"+shipment,owner.access()).getStatus());
@@ -3024,6 +3048,13 @@ class IdentityGrantApplicationTests {
     private String facilityPath(UUID org){return "/api/v1/merchant-organizations/"+org+"/facilities";}
     private void facilityGrant(UUID org,UUID account,UUID site,String permissions)throws Exception{
         db.ownerExecute("BEGIN; SET LOCAL argopost.operator_environment='TEST'; SELECT merchant.configure_local_facility_grants('"+UUID.randomUUID()+"','GRANT','"+org+"','"+account+"',"+(site==null?"NULL":"'"+site+"'")+",ARRAY["+permissions+"]::text[],'Synthetic facility permission'); COMMIT;");
+    }
+    /** Legacy scoped fixtures use the trusted schema-owner lane, with authority
+     * version + independent operator audit/receipt in one transaction. Never a
+     * runtime shortcut or a localhost provisioning mechanism. */
+    private void seedScopedLegacyGrants(UUID org,UUID account,UUID site,String permissions)throws Exception{
+        UUID request=UUID.randomUUID();
+        db.ownerExecute("BEGIN; SET LOCAL argopost.operator_environment='TEST'; UPDATE merchant.membership SET version=version+1,authority_version=authority_version+1,updated_at=clock_timestamp() WHERE organization_id='"+org+"' AND account_id='"+account+"'; INSERT INTO merchant.member_grant(id,membership_id,organization_id,permission,scope,facility_id) SELECT gen_random_uuid(),m.id,m.organization_id,p,'FACILITY','"+site+"' FROM merchant.membership m CROSS JOIN unnest(ARRAY["+permissions+"]::text[]) p WHERE m.organization_id='"+org+"' AND account_id='"+account+"'; INSERT INTO merchant.workspace_audit SELECT gen_random_uuid(),organization_id,id,session_user,'GRANT','"+request+"','Synthetic scoped legacy fixture',updated_at FROM merchant.membership WHERE organization_id='"+org+"' AND account_id='"+account+"'; INSERT INTO merchant.workspace_command_receipt SELECT '"+request+"',encode(sha256(convert_to('synthetic-scope-"+request+"','UTF8')),'hex'),organization_id,id,'GRANT',updated_at FROM merchant.membership WHERE organization_id='"+org+"' AND account_id='"+account+"'; COMMIT;");
     }
     private Map<String,Object> facilityInput(String code){var in=new HashMap<String,Object>();in.put("name","Synthetic site");in.put("code",code);in.put("kind","WAREHOUSE");in.put("contact",shippingDraftInput("Site").get("sender"));in.put("senderContact",null);in.put("returnContact",null);in.put("operatingHours",null);return in;}
     @Test void merchantFacilityCrudDefaultArchiveAndReplayAreScopedAndAtomic()throws Exception{
@@ -3130,7 +3161,7 @@ class IdentityGrantApplicationTests {
             var mvc=httpMvc(c);var owner=profileBrowser(mvc);var member=addressOtherBrowser(mvc);UUID org=id(861),other=id(862),site=id(863),foreign=id(864);preparationOwner(org);preparationOwner(other);businessCommand(UUID.randomUUID(),"GRANT",org,B,"OPERATOR","'dashboard.read'");
             String facilityContact=new tools.jackson.databind.ObjectMapper().writeValueAsString(shippingDraftInput("Site").get("sender")).replace("0901234567","+84901234567");
             seedFacility(site,org,facilityContact);seedFacility(foreign,other,facilityContact);
-            db.ownerExecute("INSERT INTO merchant.member_grant(id,membership_id,organization_id,permission,scope,facility_id) SELECT gen_random_uuid(),m.id,m.organization_id,p,'FACILITY','"+site+"' FROM merchant.membership m CROSS JOIN unnest(ARRAY['shipment.draft.read','shipment.draft.write']) p WHERE m.organization_id='"+org+"' AND account_id='"+B+"'");
+            seedScopedLegacyGrants(org,B,site,"'shipment.draft.read','shipment.draft.write'");
             String path=preparationPath(org);var input=new HashMap<String,Object>(shippingDraftInput("Scoped"));input.put("facilityId",site);String target=responseId(onboardingWrite(mvc,member,"POST",path,UUID.randomUUID(),null,input),"id");
             assertEquals(200,httpRead(mvc,path+"/"+target,member.access()).getStatus());assertTrue(httpRead(mvc,path,member.access()).getContentAsString().contains(target));assertEquals(404,httpRead(mvc,preparationPath(other)+"/"+target,owner.access()).getStatus());
             input.remove("facilityId");assertEquals(404,onboardingWrite(mvc,member,"POST",path,UUID.randomUUID(),null,input).getStatus());input.put("facilityId",foreign);assertEquals(404,onboardingWrite(mvc,owner,"POST",path,UUID.randomUUID(),null,input).getStatus());
@@ -3183,7 +3214,7 @@ class IdentityGrantApplicationTests {
             UUID key=UUID.randomUUID();assertEquals(List.of(200,200),adminRace(()->onboardingWrite(mvc,owner,"POST",path+"/"+job+"/commit",key,"\"v1\"",Map.of("rows",List.of(1))).getStatus(),()->onboardingWrite(mvc,owner,"POST",path+"/"+job+"/commit",key,"\"v1\"",Map.of("rows",List.of(1))).getStatus()));assertEquals(1,scalar("SELECT count(*) FROM orders.organization_preparation"));
             UUID site=id(868);String siteContact=new tools.jackson.databind.ObjectMapper().writeValueAsString(shippingDraftInput("Site").get("sender")).replace("0901234567","+84901234567");seedFacility(site,org,siteContact);
             UUID scopedKey=UUID.randomUUID();String scopedJob=responseId(onboardingWrite(mvc,owner,"POST",path,scopedKey,null,Map.of("templateVersion","BUSINESS_CSV_V1","facilityId",site,"csv",businessCsv(1))),"id");
-            businessCommand(UUID.randomUUID(),"GRANT",org,B,"OPERATOR","'dashboard.read'");db.ownerExecute("INSERT INTO merchant.member_grant(id,membership_id,organization_id,permission,scope,facility_id) SELECT gen_random_uuid(),m.id,m.organization_id,p,'FACILITY','"+site+"' FROM merchant.membership m CROSS JOIN unnest(ARRAY['shipment.draft.read','shipment.draft.write','shipment.import']) p WHERE m.organization_id='"+org+"' AND account_id='"+B+"'");
+            businessCommand(UUID.randomUUID(),"GRANT",org,B,"OPERATOR","'dashboard.read'");seedScopedLegacyGrants(org,B,site,"'shipment.draft.read','shipment.draft.write','shipment.import'");
             assertEquals(200,httpRead(mvc,path+"/"+scopedJob,other.access()).getStatus());assertEquals(404,httpRead(mvc,path+"/"+job,other.access()).getStatus());var restricted=httpRead(mvc,path,other.access());assertEquals(200,restricted.getStatus());assertFalse(restricted.getContentAsString().contains(job));assertTrue(restricted.getContentAsString().contains(scopedJob));assertEquals(404,httpRead(mvc,"/api/v1/merchant-organizations/"+org+"/shipping-preparation-receipts/IMPORT_PREVIEW/"+scopedKey,other.access()).getStatus());
             businessCommand(UUID.randomUUID(),"REVOKE",org,A,"OWNER","'shipment.import'");assertEquals(404,httpRead(mvc,path+"/"+job,owner.access()).getStatus());assertEquals(404,onboardingWrite(mvc,owner,"POST",path+"/"+job+"/commit",key,"\"v1\"",Map.of("rows",List.of(1))).getStatus());assertThrows(SQLException.class,()->execute("DELETE FROM orders.organization_import_row"));
         }
@@ -3255,6 +3286,347 @@ class IdentityGrantApplicationTests {
         for(String mode:List.of("DISABLED","PRODUCTION","TEST_WITH_PRODUCTION_PROFILE"))try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var c=customerHttpContext(PILOT_NOW,smtp(inbox,PILOT_NOW),true,mode)){
             var mvc=httpMvc(c);var owner=profileBrowser(mvc);assertEquals(503,onboardingWrite(mvc,owner,"POST",SUPPORT_PATH,UUID.randomUUID(),null,supportInput()).getStatus());assertEquals(503,httpRead(mvc,SUPPORT_STAFF+"/queue",owner.access()).getStatus());
         }
+    }
+
+    @Test void teamOperatorGrantRemainsIndependentBoundedAuditedAndRuntimeDenied()throws Exception{
+        customerFixture(true);UUID org=id(9071);businessShippingOwner(org);long auditBefore=businessScalar("SELECT count(*) FROM merchant.workspace_audit WHERE organization_id='"+org+"' AND operation='GRANT'");
+        businessCommand(UUID.randomUUID(),"GRANT",org,A,"OWNER","'dashboard.read','team.read','team.invite','team.access.manage','team.membership.manage','team.audit.read'");
+        assertEquals(5,scalar("SELECT count(*) FROM merchant.member_grant WHERE organization_id='"+org+"' AND permission LIKE 'team.%'"));
+        assertEquals(auditBefore+1,businessScalar("SELECT count(*) FROM merchant.workspace_audit WHERE organization_id='"+org+"' AND operation='GRANT'"));
+        try(var c=db.runtimeConnection();var q=c.createStatement()){
+            assertEquals("42501",assertThrows(SQLException.class,()->q.execute(businessSql(UUID.randomUUID(),"GRANT",org,A,"OWNER","'dashboard.read','team.invite'"))).getSQLState());
+        }
+        var before=scalar("SELECT count(*) FROM merchant.member_grant");
+        assertThrows(SQLException.class,()->businessCommand(UUID.randomUUID(),"GRANT",org,A,"OWNER","'dashboard.read','team.platform.admin'"));
+        assertEquals(before,scalar("SELECT count(*) FROM merchant.member_grant"));
+    }
+    @Test void teamMembershipLifecycleReplaysConsumedProofAndPreservesOtherAccess()throws Exception{
+        customerFixture(true);addressOtherIdentity();UUID org=id(9073),second=id(9074);businessShippingOwner(org);businessShippingOwner(second);
+            businessCommand(UUID.randomUUID(),"GRANT",org,A,"OWNER","'dashboard.read','team.read','team.membership.manage'");
+            businessCommand(UUID.randomUUID(),"GRANT",org,B,"OPERATOR","'dashboard.read','support.read','support.write'");businessCommand(UUID.randomUUID(),"GRANT",second,B,"OPERATOR","'dashboard.read'");
+        // Operator timestamps use CURRENT_TIMESTAMP; business API clock must be
+        // later than the already-provisioned fixture, never an older pilot date.
+        Instant teamNow=Instant.now().plusSeconds(1).truncatedTo(java.time.temporal.ChronoUnit.MICROS);
+        try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var c=customerHttpContext(teamNow,smtp(inbox,teamNow),true,"TEST",true)){
+            var mvc=httpMvc(c);var owner=profileBrowser(mvc);var other=addressOtherLogin(mvc);
+            var jdbc=new org.springframework.jdbc.core.JdbcTemplate(outboxDataSource());UUID target=jdbc.queryForObject("SELECT id FROM merchant.membership WHERE organization_id=? AND account_id=?",UUID.class,org,B);
+            var proof=onboardingWrite(mvc,owner,"POST","/api/v1/customer-auth/reauthentication",UUID.randomUUID(),null,Map.of("email",CUSTOMER_EMAIL,"password",SESSION_PASSWORD));assertEquals(200,proof.getStatus(),this::safeOnboardingFailure);
+            String proofId=intakeJson(proof).get("proofId").asString();var input=Map.of("reason","Synthetic offboarding check","reauthenticationProofId",proofId);UUID key=UUID.randomUUID();String base=businessShippingBase(org)+"/team",path=base+"/members/"+target;
+            var response=onboardingWrite(mvc,owner,"POST",path+"/suspend",key,"\"v1\"",input);assertEquals(200,response.getStatus(),this::safeOnboardingFailure);assertEquals("SUSPENDED",intakeJson(response).get("state").asString());
+            assertEquals(200,onboardingWrite(mvc,owner,"POST",path+"/suspend",key,"\"v1\"",input).getStatus());assertEquals(1,scalar("SELECT count(*) FROM merchant.team_audit WHERE target_membership_id='"+target+"'"));
+            assertEquals(409,onboardingWrite(mvc,owner,"POST",path+"/suspend",key,"\"v1\"",Map.of("reason","Changed payload","reauthenticationProofId",proofId)).getStatus());
+            assertEquals(422,onboardingWrite(mvc,owner,"POST",path+"/resume",UUID.randomUUID(),"\"v2\"",input).getStatus());
+            assertEquals(200,httpRead(mvc,"/api/v1/customer-auth/me",other.access()).getStatus());String contexts=httpRead(mvc,BUSINESS_CONTEXTS,other.access()).getContentAsString();assertTrue(contexts.contains(second.toString()));assertFalse(contexts.contains(org.toString()));
+            var resume=Map.of("reason","Synthetic resume","reauthenticationProofId",recentProof(mvc,owner));
+            assertEquals(200,onboardingWrite(mvc,owner,"POST",path+"/resume",UUID.randomUUID(),"\"v2\"",resume).getStatus());
+            var revoke=Map.of("reason","Synthetic permanent offboarding","reauthenticationProofId",recentProof(mvc,owner));UUID revokeKey=UUID.randomUUID();
+            assertEquals(200,onboardingWrite(mvc,owner,"POST",path+"/revoke",revokeKey,"\"v3\"",revoke).getStatus());
+            assertEquals(200,onboardingWrite(mvc,owner,"POST",path+"/revoke",revokeKey,"\"v3\"",revoke).getStatus());
+            assertEquals(409,onboardingWrite(mvc,owner,"POST",path+"/resume",UUID.randomUUID(),"\"v4\"",revoke).getStatus());
+            assertEquals(0,scalar("SELECT count(*) FROM merchant.member_grant WHERE membership_id='"+target+"'"));
+            assertEquals(3,scalar("SELECT count(*) FROM merchant.team_audit WHERE target_membership_id='"+target+"'"));
+            assertEquals(200,httpRead(mvc,"/api/v1/customer-auth/me",other.access()).getStatus());assertTrue(httpRead(mvc,BUSINESS_CONTEXTS,other.access()).getContentAsString().contains(second.toString()));
+            UUID initial=jdbc.queryForObject("SELECT initial_owner_membership_id FROM merchant.organization WHERE id=?",UUID.class,org);
+            assertEquals(409,onboardingWrite(mvc,owner,"POST",base+"/members/"+initial+"/suspend",UUID.randomUUID(),"\"v1\"",input).getStatus());
+        }
+    }
+    private Map<String,Object> teamInvitationBody(){var grant=new HashMap<String,Object>();grant.put("permission","dashboard.read");grant.put("scope","ORGANIZATION");grant.put("facilityId",null);return Map.of("email","address-other@example.invalid","role","OPERATOR","grants",List.of(grant),"reason","Synthetic team invitation");}
+    private String teamMailProof(byte[] raw)throws Exception{
+        var mail=new jakarta.mail.internet.MimeMessage(jakarta.mail.Session.getInstance(new Properties()),new java.io.ByteArrayInputStream(raw));
+        assertEquals("ArgoPost - Lời mời tham gia doanh nghiệp",mail.getSubject());String text=CustomerSmtpTestInbox.plainText(mail);
+        var match=java.util.regex.Pattern.compile("#proof=([A-Za-z0-9_-]{43})").matcher(text);assertTrue(match.find());assertTrue(text.contains("72 giờ"));return match.group(1);
+    }
+    @Test void teamInvitationRealOutboxResendAndAcceptanceReplaysWithoutDuplicateMembership()throws Exception{
+        customerFixture(true);try(var inbox=new CustomerSmtpTestInbox(2,false,false,250,null);var c=customerHttpContext(PILOT_NOW,smtp(inbox,PILOT_NOW),true,"TEST",true)){
+            var mvc=httpMvc(c);var owner=profileBrowser(mvc);var recipient=addressOtherBrowser(mvc);UUID org=id(9075);businessShippingOwner(org);
+            businessCommand(UUID.randomUUID(),"GRANT",org,A,"OWNER","'dashboard.read','team.invite','team.read'");String base=businessShippingBase(org)+"/team";
+            UUID issueKey=UUID.randomUUID();var input=teamInvitationBody();var first=onboardingWrite(mvc,owner,"POST",base+"/invitations",issueKey,null,input);assertEquals(201,first.getStatus(),this::safeOnboardingFailure);
+            String invitation=intakeJson(first).get("id").asString();assertFalse(first.getContentAsString().contains("address-other@example.invalid"));
+            assertEquals(201,onboardingWrite(mvc,owner,"POST",base+"/invitations",issueKey,null,input).getStatus());assertEquals(1,scalar("SELECT count(*) FROM identity.customer_delivery WHERE purpose='MERCHANT_MEMBERSHIP'"));
+            var worker=c.getBean(com.elogistic.backend.identity.internal.ProductionCustomerComposition.Services.class).delivery();assertTrue(worker.runOne());
+            UUID resendKey=UUID.randomUUID();var reason=Map.of("reason","Synthetic resend");String resource=base+"/invitations/"+invitation;
+            assertEquals(200,onboardingWrite(mvc,owner,"POST",resource+"/resend",resendKey,"\"v1\"",reason).getStatus());assertEquals(200,onboardingWrite(mvc,owner,"POST",resource+"/resend",resendKey,"\"v1\"",reason).getStatus());
+            assertTrue(worker.runOne());var messages=inbox.messages();assertEquals(2,messages.size());String oldProof=teamMailProof(messages.get(0)),proof=teamMailProof(messages.get(1));
+            String accept="/api/v1/customer/organization-invitations/"+invitation+"/accept";
+            assertEquals(422,onboardingWrite(mvc,recipient,"POST",accept,UUID.randomUUID(),null,Map.of("proof",oldProof)).getStatus());
+            assertEquals(422,onboardingWrite(mvc,owner,"POST",accept,UUID.randomUUID(),null,Map.of("proof",proof)).getStatus());
+            UUID acceptKey=UUID.randomUUID();var outcomes=adminRace(()->onboardingWrite(mvc,recipient,"POST",accept,acceptKey,null,Map.of("proof",proof)).getStatus(),()->onboardingWrite(mvc,recipient,"POST",accept,acceptKey,null,Map.of("proof",proof)).getStatus());assertEquals(List.of(200,200),outcomes);
+            var accepted=onboardingWrite(mvc,recipient,"POST",accept,acceptKey,null,Map.of("proof",proof));assertEquals(200,accepted.getStatus(),this::safeOnboardingFailure);
+            assertEquals("ACCEPTED",intakeJson(accepted).get("outcome").asString());assertEquals(accepted.getContentAsString(),onboardingWrite(mvc,recipient,"POST",accept,acceptKey,null,Map.of("proof",proof)).getContentAsString());
+            assertEquals(422,onboardingWrite(mvc,recipient,"POST",accept,UUID.randomUUID(),null,Map.of("proof",proof)).getStatus());
+            assertEquals(1,scalar("SELECT count(*) FROM merchant.membership WHERE organization_id='"+org+"' AND account_id='"+B+"'"));
+            assertEquals(1,scalar("SELECT count(*) FROM merchant.team_audit WHERE organization_id='"+org+"' AND operation='ACCEPT'"));
+            assertEquals(0,scalar("SELECT count(*) FROM merchant.member_grant g JOIN merchant.membership m ON m.id=g.membership_id WHERE m.account_id='"+B+"' AND g.permission LIKE 'team.%'"));
+            assertTrue(httpRead(mvc,BUSINESS_CONTEXTS,recipient.access()).getContentAsString().contains(org.toString()));
+        }
+    }
+    @Test void teamOfflineAuthorityChangeInvalidatesInvitationAndProtectedDeliveryAtomically()throws Exception{
+        customerFixture(true);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var c=customerHttpContext(PILOT_NOW,smtp(inbox,PILOT_NOW),true,"TEST",true)){
+            var mvc=httpMvc(c);var owner=profileBrowser(mvc);UUID org=id(9076);businessShippingOwner(org);businessCommand(UUID.randomUUID(),"GRANT",org,A,"OWNER","'dashboard.read','team.invite'");
+            var response=onboardingWrite(mvc,owner,"POST",businessShippingBase(org)+"/team/invitations",UUID.randomUUID(),null,teamInvitationBody());assertEquals(201,response.getStatus(),this::safeOnboardingFailure);
+            businessCommand(UUID.randomUUID(),"REVOKE",org,A,"OWNER","'team.invite'");
+            assertEquals(1,scalar("SELECT count(*) FROM merchant.team_invitation WHERE organization_id='"+org+"' AND state='INVALIDATED'"));
+            assertEquals(1,scalar("SELECT count(*) FROM identity.customer_proof WHERE purpose='MERCHANT_MEMBERSHIP' AND revoked_at IS NOT NULL"));
+            assertEquals(1,scalar("SELECT count(*) FROM identity.customer_delivery WHERE purpose='MERCHANT_MEMBERSHIP' AND status='EXPIRED' AND ciphertext IS NULL AND recipient_ciphertext IS NULL"));
+            assertFalse(c.getBean(com.elogistic.backend.identity.internal.ProductionCustomerComposition.Services.class).delivery().runOne());
+        }
+    }
+    @Test void teamRuntimeDirectDmlCannotPromoteGrantForgeHistoryOrRemoveOwner()throws Exception{
+        customerFixture(true);addressOtherIdentity();UUID org=id(9077);businessShippingOwner(org);
+        businessCommand(UUID.randomUUID(),"GRANT",org,A,"OWNER","'dashboard.read','team.read','team.access.manage','team.membership.manage'");
+        businessCommand(UUID.randomUUID(),"GRANT",org,B,"OPERATOR","'dashboard.read'");
+        var jdbc=new org.springframework.jdbc.core.JdbcTemplate(outboxDataSource());UUID member=jdbc.queryForObject("SELECT id FROM merchant.membership WHERE organization_id=? AND account_id=?",UUID.class,org,B);
+        for(String sql:List.of("UPDATE merchant.membership SET role='MANAGER',version=version+1,authority_version=authority_version+1,updated_at=clock_timestamp() WHERE id='"+member+"'",
+          "DELETE FROM merchant.member_grant WHERE membership_id='"+member+"'",
+          "INSERT INTO merchant.membership VALUES(gen_random_uuid(),'"+org+"','"+T+"','OPERATOR','ACTIVE',1,1,clock_timestamp(),clock_timestamp())",
+          "INSERT INTO merchant.team_command_receipt VALUES('"+org+"','"+A+"','ACCESS',gen_random_uuid(),decode(repeat('01',32),'hex'),'"+member+"',NULL,'COMMITTED',2,clock_timestamp())")){
+            assertEquals("23514",assertThrows(SQLException.class,()->execute(sql)).getSQLState());
+        }
+        for(String sql:List.of("UPDATE merchant.organization SET state='SUSPENDED' WHERE id='"+org+"'","UPDATE merchant.team_policy SET version=version+1 WHERE organization_id='"+org+"'",
+          "DELETE FROM merchant.membership WHERE organization_id='"+org+"'","UPDATE merchant.membership SET account_id='"+T+"' WHERE id='"+member+"'",
+          "INSERT INTO merchant.member_grant VALUES(gen_random_uuid(),'"+member+"','"+org+"','team.invite','ORGANIZATION',NULL)")){
+            assertEquals("42501",assertThrows(SQLException.class,()->execute(sql)).getSQLState());
+        }
+        assertEquals(0,scalar("SELECT count(*) FROM merchant.team_command_receipt"));assertEquals(0,scalar("SELECT count(*) FROM merchant.team_audit"));
+        assertEquals(1,scalar("SELECT count(*) FROM merchant.membership WHERE id='"+member+"' AND role='OPERATOR' AND state='ACTIVE' AND version=1"));
+        assertEquals(1,scalar("SELECT count(*) FROM merchant.member_grant WHERE membership_id='"+member+"'"));
+    }
+    @Test void teamDeclineAndLateAuditFailurePreserveMembershipAndOutboxAtomicity()throws Exception{
+        // The inbox accepts only after the rollback injection and fixture setup.
+        customerFixture(true);try(var inbox=new CustomerSmtpTestInbox(1,false,false,250,null,30000);var c=customerHttpContext(PILOT_NOW,smtp(inbox,PILOT_NOW),true,"TEST",true)){
+            var mvc=httpMvc(c);var owner=profileBrowser(mvc);var recipient=addressOtherBrowser(mvc);UUID org=id(9078);businessShippingOwner(org);businessCommand(UUID.randomUUID(),"GRANT",org,A,"OWNER","'dashboard.read','team.invite'");String base=businessShippingBase(org)+"/team/invitations";
+            db.ownerExecute("CREATE FUNCTION merchant.synthetic_team_audit_fault() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'SYNTHETIC_TEAM_AUDIT_FAULT'; END $$; CREATE TRIGGER synthetic_team_audit_fault BEFORE INSERT ON merchant.team_audit FOR EACH ROW EXECUTE FUNCTION merchant.synthetic_team_audit_fault()");
+            try{assertEquals(503,onboardingWrite(mvc,owner,"POST",base,UUID.randomUUID(),null,teamInvitationBody()).getStatus());assertEquals(0,scalar("SELECT count(*) FROM merchant.team_invitation"));assertEquals(0,scalar("SELECT count(*) FROM identity.customer_proof WHERE purpose='MERCHANT_MEMBERSHIP'"));assertEquals(0,scalar("SELECT count(*) FROM identity.customer_delivery WHERE purpose='MERCHANT_MEMBERSHIP'"));}
+            finally{db.ownerExecute("DROP TRIGGER synthetic_team_audit_fault ON merchant.team_audit; DROP FUNCTION merchant.synthetic_team_audit_fault()");}
+            var response=onboardingWrite(mvc,owner,"POST",base,UUID.randomUUID(),null,teamInvitationBody());assertEquals(201,response.getStatus(),this::safeOnboardingFailure);String invitation=intakeJson(response).get("id").asString();
+            assertTrue(c.getBean(com.elogistic.backend.identity.internal.ProductionCustomerComposition.Services.class).delivery().runOne());String proof=teamMailProof(inbox.messages().getFirst());UUID key=UUID.randomUUID();String decline="/api/v1/customer/organization-invitations/"+invitation+"/decline";
+            var result=onboardingWrite(mvc,recipient,"POST",decline,key,null,Map.of("proof",proof));assertEquals(200,result.getStatus(),this::safeOnboardingFailure);assertTrue(intakeJson(result).get("membershipId").isNull());
+            assertEquals(result.getContentAsString(),onboardingWrite(mvc,recipient,"POST",decline,key,null,Map.of("proof",proof)).getContentAsString());
+            assertEquals(409,onboardingWrite(mvc,recipient,"POST",decline,key,null,Map.of("proof","A".repeat(43))).getStatus());
+            assertEquals(422,onboardingWrite(mvc,recipient,"POST",decline.replace("/decline","/accept"),UUID.randomUUID(),null,Map.of("proof",proof)).getStatus());
+            assertEquals(0,scalar("SELECT count(*) FROM merchant.membership WHERE organization_id='"+org+"' AND account_id='"+B+"'"));assertEquals(200,httpRead(mvc,"/api/v1/customer-auth/me",recipient.access()).getStatus());
+        }
+    }
+    @Test void teamManagerDelegationCannotPromoteFinanceOrEscapeWarehouseAndProductionIsDenied()throws Exception{
+        customerFixture(true);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var c=customerHttpContext(PILOT_NOW,smtp(inbox,PILOT_NOW),true,"TEST",true)){
+            var mvc=httpMvc(c);var owner=profileBrowser(mvc);var manager=addressOtherBrowser(mvc);UUID org=id(9079),foreign=id(9080),site=id(9081),outside=id(9082);businessShippingOwner(org);businessShippingOwner(foreign);
+            seedFacility(site,org,new tools.jackson.databind.ObjectMapper().writeValueAsString(shippingDraftInput("Team site").get("sender")).replace("0901234567","+84901234567"));seedFacility(outside,org,new tools.jackson.databind.ObjectMapper().writeValueAsString(shippingDraftInput("Other site").get("sender")).replace("0901234567","+84901234567"));
+            businessCommand(UUID.randomUUID(),"GRANT",org,B,"MANAGER","'dashboard.read','team.invite','team.read'");facilityGrant(org,B,site,"'facility.read','shipment.draft.read'");String path=businessShippingBase(org)+"/team/invitations";
+            var body=new HashMap<>(teamInvitationBody());body.put("email","third@example.invalid");body.put("role","MANAGER");assertEquals(403,onboardingWrite(mvc,manager,"POST",path,UUID.randomUUID(),null,body).getStatus());body.put("role","OPERATOR");
+            var base=new HashMap<String,Object>();base.put("permission","dashboard.read");base.put("scope","ORGANIZATION");base.put("facilityId",null);
+            var finance=new HashMap<>(base);finance.put("permission","shipment.finance.read");finance.put("scope","FACILITY");finance.put("facilityId",site.toString());body.put("grants",List.of(base,Map.of("permission","shipment.draft.read","scope","FACILITY","facilityId",site.toString()),finance));assertEquals(403,onboardingWrite(mvc,manager,"POST",path,UUID.randomUUID(),null,body).getStatus());
+            body.put("grants",List.of(base,Map.of("permission","shipment.draft.read","scope","FACILITY","facilityId",outside.toString())));assertEquals(403,onboardingWrite(mvc,manager,"POST",path,UUID.randomUUID(),null,body).getStatus());
+            body.put("grants",List.of(base,Map.of("permission","shipment.draft.read","scope","FACILITY","facilityId",site.toString())));assertEquals(201,onboardingWrite(mvc,manager,"POST",path,UUID.randomUUID(),null,body).getStatus());
+            assertEquals(404,onboardingWrite(mvc,manager,"POST",businessShippingBase(foreign)+"/team/invitations",UUID.randomUUID(),null,body).getStatus());
+            assertEquals(1,scalar("SELECT count(*) FROM merchant.team_invitation"));
+        }
+        for(String mode:List.of("DISABLED","PRODUCTION","TEST_WITH_PRODUCTION_PROFILE"))try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var c=customerHttpContext(PILOT_NOW,smtp(inbox,PILOT_NOW),true,mode,true)){
+            var mvc=httpMvc(c);var owner=profileBrowser(mvc);assertEquals(503,onboardingWrite(mvc,owner,"POST",businessShippingBase(id(9079))+"/team/invitations",UUID.randomUUID(),null,teamInvitationBody()).getStatus());
+        }
+    }
+    @Test void teamExactInvitationExpiryAndPolicyChangeCannotLeaveUsableProtectedProof()throws Exception{
+        customerFixture(true);UUID org=id(9083);String invitation,proof;String path=businessShippingBase(org)+"/team/invitations";
+        try(var inbox=new CustomerSmtpTestInbox(1,false,false,250,null);var c=customerHttpContext(PILOT_NOW,smtp(inbox,PILOT_NOW),true,"TEST",true)){
+            var mvc=httpMvc(c);var owner=profileBrowser(mvc);addressOtherBrowser(mvc);businessShippingOwner(org);businessCommand(UUID.randomUUID(),"GRANT",org,A,"OWNER","'dashboard.read','team.invite'");
+            var response=onboardingWrite(mvc,owner,"POST",path,UUID.randomUUID(),null,teamInvitationBody());assertEquals(201,response.getStatus(),this::safeOnboardingFailure);invitation=intakeJson(response).get("id").asString();
+            assertTrue(c.getBean(com.elogistic.backend.identity.internal.ProductionCustomerComposition.Services.class).delivery().runOne());proof=teamMailProof(inbox.messages().getFirst());
+        }
+        Instant expires=PILOT_NOW.plusSeconds(259200);
+        try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var c=customerHttpContext(expires,smtp(inbox,expires),true,"TEST",true)){
+            var mvc=httpMvc(c);var owner=profileBrowser(mvc);var recipient=addressOtherLogin(mvc);
+            assertEquals(422,onboardingWrite(mvc,recipient,"POST","/api/v1/customer/organization-invitations/"+invitation+"/accept",UUID.randomUUID(),null,Map.of("proof",proof)).getStatus());
+            var replacement=onboardingWrite(mvc,owner,"POST",path,UUID.randomUUID(),null,teamInvitationBody());assertEquals(201,replacement.getStatus(),this::safeOnboardingFailure);
+            assertEquals(1,scalar("SELECT count(*) FROM merchant.team_invitation WHERE state='EXPIRED'"));
+            db.ownerExecute("UPDATE merchant.team_policy SET version=version+1,updated_at=GREATEST(clock_timestamp(),updated_at) WHERE organization_id='"+org+"'");
+            assertEquals(1,scalar("SELECT count(*) FROM merchant.team_invitation WHERE state='INVALIDATED'"));
+            assertEquals(2,scalar("SELECT count(*) FROM identity.customer_proof WHERE purpose='MERCHANT_MEMBERSHIP' AND revoked_at IS NOT NULL"));
+            assertEquals(2,scalar("SELECT count(*) FROM identity.customer_delivery WHERE purpose='MERCHANT_MEMBERSHIP' AND status='EXPIRED' AND ciphertext IS NULL"));
+            assertEquals(0,scalar("SELECT count(*) FROM merchant.membership WHERE organization_id='"+org+"' AND account_id='"+B+"'"));
+        }
+    }
+    @Test void teamDirectoryUsesCurrentOrganizationPermissionAndDoesNotExposeCredentials()throws Exception{
+        customerFixture(true);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var c=customerHttpContext(PILOT_NOW,smtp(inbox,PILOT_NOW),true,"TEST",true)){
+            var mvc=httpMvc(c);var owner=profileBrowser(mvc);var other=addressOtherBrowser(mvc);UUID org=id(9072);businessShippingOwner(org);
+            businessCommand(UUID.randomUUID(),"GRANT",org,A,"OWNER","'dashboard.read','team.read'");
+            var query=new HashMap<String,Object>();query.put("search","");query.put("role",null);query.put("state",null);query.put("facilityId",null);query.put("page",0);query.put("size",20);
+            String path=businessShippingBase(org)+"/team";var response=onboardingWrite(mvc,owner,"POST",path+"/members/search",UUID.randomUUID(),null,query);
+            assertEquals(200,response.getStatus(),this::safeOnboardingFailure);var page=intakeJson(response);assertEquals(1,page.get("items").size());
+            var first=page.get("items").get(0);assertEquals("OWNER",first.get("role").asString());assertFalse(first.has("accountId"));assertFalse(first.has("email"));assertFalse(first.has("phone"));
+            String membership=first.get("membershipId").asString();assertEquals(200,httpRead(mvc,path+"/members/"+membership,owner.access()).getStatus());
+            assertEquals(3,intakeJson(httpRead(mvc,path+"/role-templates",owner.access())).get("items").size());
+            assertEquals(404,onboardingWrite(mvc,other,"POST",path+"/members/search",UUID.randomUUID(),null,query).getStatus());
+            businessCommand(UUID.randomUUID(),"REVOKE",org,A,"OWNER","'team.read'");assertEquals(403,onboardingWrite(mvc,owner,"POST",path+"/members/search",UUID.randomUUID(),null,query).getStatus());
+            assertEquals(200,httpRead(mvc,"/api/v1/customer-auth/me",owner.access()).getStatus());
+        }
+    }
+
+    private static final String ORGANIZATION_SUPPORT_RIGHTS="'dashboard.read','support.read','support.write','support.assign','support.reports.read','support.notifications.manage'";
+    private Map<String,Object> organizationSupportInput(){var input=new HashMap<>(supportInput());input.put("requestedPriority","HIGH");return input;}
+    private void organizationSupportOwner(UUID org)throws Exception{businessShippingOwner(org);businessCommand(UUID.randomUUID(),"GRANT",org,A,"OWNER",ORGANIZATION_SUPPORT_RIGHTS);}
+    private void organizationSupportStaff(UUID org)throws Exception{supportGrant(B,"SUPPORT_TRIAGE");supportGrant(B,"SUPPORT_HANDLE");for(String permission:List.of("SUPPORT_TRIAGE","SUPPORT_HANDLE"))db.ownerExecute("BEGIN; SET LOCAL argopost.operator_environment='TEST';SELECT * FROM orders.configure_local_organization_support_staff('"+UUID.randomUUID()+"','BIND','"+org+"','"+B+"','"+permission+"','Synthetic support binding');COMMIT;");}
+    private org.springframework.mock.web.MockHttpServletResponse organizationSupportWrite(org.springframework.test.web.servlet.MockMvc mvc,ProfileBrowser browser,String path,String prefix,long version,Object body,UUID key)throws Exception{return onboardingWrite(mvc,browser,prefix.equals("n")||prefix.equals("a")?"PUT":"POST",path,key,"\""+prefix+version+"\"",body);}
+    @Test void organizationSupportConversationSeparatesMerchantAndCarrierAndPreservesHistory()throws Exception{
+        customerFixture(true);UUID org=id(9202);organizationSupportOwner(org);
+        try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var c=customerHttpContext(PILOT_NOW,smtp(inbox,PILOT_NOW),true,"TEST",false,true)){
+            var mvc=httpMvc(c);var owner=profileBrowser(mvc);var staff=addressOtherBrowser(mvc);organizationSupportStaff(org);String base=businessShippingBase(org)+"/support-tickets";
+            String target=supportId(onboardingWrite(mvc,owner,"POST",base,UUID.randomUUID(),null,organizationSupportInput()));
+            assertEquals(403,httpRead(mvc,SUPPORT_STAFF+"/organization-cases/"+target,owner.access()).getStatus());
+            var queue=httpRead(mvc,SUPPORT_STAFF+"/organization-queue?organizationId="+org,staff.access());assertEquals(200,queue.getStatus());assertTrue(queue.getContentAsString().contains(target));assertFalse(queue.getContentAsString().contains("Synthetic initial conversation"));
+            String path=SUPPORT_STAFF+"/organization-cases/"+target;
+            assertEquals(200,supportWrite(mvc,staff,path+"/assignments",1,Map.of("assigneeAccountId",B)).getStatus());
+            String report=businessShippingBase(org)+"/support-reports?from=2026-11-02&until=2026-11-03";
+            var before=intakeJson(httpRead(mvc,report,owner.access()));assertEquals("0",before.get("firstResponse").get("sampleCount").asString());
+            assertEquals(200,supportWrite(mvc,staff,path+"/transitions",2,Map.of("action","START","message","Investigation started")).getStatus());
+            assertEquals(200,supportWrite(mvc,staff,path+"/replies",3,Map.of("message","Substantive support reply")).getStatus());
+            assertEquals(200,supportWrite(mvc,staff,path+"/transitions",4,Map.of("action","REQUEST_INFORMATION","message","Clarify the request")).getStatus());
+            assertEquals(200,supportWrite(mvc,owner,base+"/"+target+"/replies",5,Map.of("message","Merchant clarification")).getStatus());
+            assertEquals(200,supportWrite(mvc,staff,path+"/transitions",6,Map.of("action","RESOLVE","message","Resolution supplied")).getStatus());
+            assertEquals(200,supportWrite(mvc,owner,base+"/"+target+"/review-requests",7,Map.of("message","Review requested")).getStatus());
+            assertEquals(409,supportWrite(mvc,owner,base+"/"+target+"/acknowledgements",8,Map.of()).getStatus());
+            assertEquals(200,supportWrite(mvc,staff,path+"/transitions",8,Map.of("action","REOPEN","message","Review accepted")).getStatus());
+            assertEquals(200,supportWrite(mvc,staff,path+"/transitions",9,Map.of("action","RESOLVE","message","Final resolution")).getStatus());
+            var closed=supportWrite(mvc,owner,base+"/"+target+"/acknowledgements",10,Map.of());assertEquals(200,closed.getStatus());assertEquals("CLOSED",intakeJson(closed).get("state").asString());
+            var after=intakeJson(httpRead(mvc,report,owner.access()));assertEquals("1",after.get("totalTickets").asString());assertEquals("1",after.get("firstResponse").get("sampleCount").asString());assertEquals("1",after.get("firstResolution").get("sampleCount").asString());assertEquals("UNPUBLISHED",after.get("slaState").asString());
+            assertEquals(11,scalar("SELECT count(*) FROM orders.organization_support_message"));assertEquals(11,scalar("SELECT count(*) FROM orders.organization_support_receipt"));
+            assertEquals(0,scalar("SELECT count(*) FROM orders.personal_support_ticket"));assertEquals(0,scalar("SELECT count(*) FROM orders.pilot_tracking_event"));assertEquals(0,scalar("SELECT count(*) FROM finance.pilot_shipping_obligation"));
+        }
+    }
+    @Test void organizationSupportReplayQuotaAndLateFailureAreAtomic()throws Exception{
+        customerFixture(true);UUID org=id(9203);organizationSupportOwner(org);
+        try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var c=customerHttpContext(PILOT_NOW,smtp(inbox,PILOT_NOW),true,"TEST",false,true)){
+            var mvc=httpMvc(c);var owner=profileBrowser(mvc);String base=businessShippingBase(org)+"/support-tickets";UUID key=UUID.randomUUID();var input=organizationSupportInput();
+            assertEquals(List.of(201,201),adminRace(()->onboardingWrite(mvc,owner,"POST",base,key,null,input).getStatus(),()->onboardingWrite(mvc,owner,"POST",base,key,null,input).getStatus()));
+            var receipt=httpRead(mvc,businessShippingBase(org)+"/support-receipts/CREATE/"+key,owner.access());assertEquals(200,receipt.getStatus());String target=responseId(receipt,"targetId");
+            var modified=new HashMap<>(input);modified.put("message","Different input");assertEquals(409,onboardingWrite(mvc,owner,"POST",base,key,null,modified).getStatus());
+            UUID reply=UUID.randomUUID();String path=base+"/"+target+"/replies";assertEquals(200,onboardingWrite(mvc,owner,"POST",path,reply,"\"v1\"",Map.of("message","Lost response")).getStatus());assertEquals(200,onboardingWrite(mvc,owner,"POST",path,reply,"\"v1\"",Map.of("message","Lost response")).getStatus());assertEquals(409,supportWrite(mvc,owner,path,1,Map.of("message","Stale version")).getStatus());
+            assertEquals(2,scalar("SELECT count(*) FROM orders.organization_support_message"));assertEquals(2,scalar("SELECT sum(count) FROM orders.organization_support_window"));
+            db.ownerExecute("CREATE FUNCTION orders.synthetic_organization_support_failure() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'SYNTHETIC_SUPPORT_FAULT';END $$;CREATE TRIGGER synthetic_organization_support_failure BEFORE INSERT ON orders.organization_support_audit FOR EACH ROW EXECUTE FUNCTION orders.synthetic_organization_support_failure()");
+            try{assertEquals(503,onboardingWrite(mvc,owner,"POST",base,UUID.randomUUID(),null,input).getStatus());assertEquals(1,scalar("SELECT count(*) FROM orders.organization_support_ticket"));assertEquals(2,scalar("SELECT sum(count) FROM orders.organization_support_window"));}finally{db.ownerExecute("DROP TRIGGER synthetic_organization_support_failure ON orders.organization_support_audit;DROP FUNCTION orders.synthetic_organization_support_failure()");}
+            for(int i=0;i<4;i++)supportId(onboardingWrite(mvc,owner,"POST",base,UUID.randomUUID(),null,input));assertEquals(429,onboardingWrite(mvc,owner,"POST",base,UUID.randomUUID(),null,input).getStatus());
+            assertEquals(5,scalar("SELECT count(*) FROM orders.organization_support_ticket"));
+        }
+    }
+    @Test void organizationSupportNotificationsPreferencesAndReadReplayUseCommittedEvents()throws Exception{
+        customerFixture(true);UUID org=id(9204);organizationSupportOwner(org);
+        try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var c=customerHttpContext(PILOT_NOW,smtp(inbox,PILOT_NOW),true,"TEST",false,true)){
+            var mvc=httpMvc(c);var owner=profileBrowser(mvc);var staff=addressOtherBrowser(mvc);organizationSupportStaff(org);String root=businessShippingBase(org),base=root+"/support-tickets";
+            var virtual=httpRead(mvc,root+"/support-notification-preferences",owner.access());assertEquals("\"n0\"",virtual.getHeader("ETag"));assertEquals(0,scalar("SELECT count(*) FROM orders.organization_support_notification_preference"));
+            UUID preferenceKey=UUID.randomUUID();var body=Map.of("enabled",true,"eventTypes",List.of("ASSIGNMENT","REPLY","NEEDS_INFORMATION","RESOLUTION","REVIEW"));
+            assertEquals(200,organizationSupportWrite(mvc,owner,root+"/support-notification-preferences","n",0,body,preferenceKey).getStatus());
+            assertEquals(200,organizationSupportWrite(mvc,owner,root+"/support-notification-preferences","n",0,body,preferenceKey).getStatus());assertEquals(1,scalar("SELECT version FROM orders.organization_support_notification_preference"));
+            String target=supportId(onboardingWrite(mvc,owner,"POST",base,UUID.randomUUID(),null,organizationSupportInput()));String staffPath=SUPPORT_STAFF+"/organization-cases/"+target;
+            UUID assignmentKey=UUID.randomUUID();assertEquals(200,onboardingWrite(mvc,staff,"POST",staffPath+"/assignments",assignmentKey,"\"v1\"",Map.of("assigneeAccountId",B)).getStatus());assertEquals(200,onboardingWrite(mvc,staff,"POST",staffPath+"/assignments",assignmentKey,"\"v1\"",Map.of("assigneeAccountId",B)).getStatus());
+            assertEquals(1,scalar("SELECT count(*) FROM orders.organization_support_notice"));
+            var notices=httpRead(mvc,root+"/support-notices",owner.access());assertEquals(200,notices.getStatus());String notice=intakeJson(notices).get("items").get(0).get("id").asString();UUID readKey=UUID.randomUUID();
+            assertEquals(200,onboardingWrite(mvc,owner,"POST",root+"/support-notices/"+notice+"/read",readKey,"\"v1\"",Map.of()).getStatus());assertEquals(200,onboardingWrite(mvc,owner,"POST",root+"/support-notices/"+notice+"/read",readKey,"\"v1\"",Map.of()).getStatus());
+            assertEquals(2,scalar("SELECT version FROM orders.organization_support_notice"));assertEquals(1,scalar("SELECT count(*) FROM orders.organization_support_receipt WHERE operation='READ_NOTICE'"));
+            assertEquals(404,httpRead(mvc,root+"/support-notices",staff.access()).getStatus());
+            assertEquals(200,supportWrite(mvc,staff,staffPath+"/transitions",2,Map.of("action","START","message","Started")).getStatus());assertEquals(2,scalar("SELECT count(*) FROM orders.organization_support_notice"));
+            db.ownerExecute("CREATE FUNCTION orders.synthetic_support_notice_fault() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'SYNTHETIC_NOTICE_FAULT';END $$;CREATE TRIGGER synthetic_support_notice_fault BEFORE INSERT ON orders.organization_support_notice FOR EACH ROW EXECUTE FUNCTION orders.synthetic_support_notice_fault()");
+            try{assertEquals(503,supportWrite(mvc,staff,staffPath+"/replies",3,Map.of("message","Must rollback")).getStatus());assertEquals(3,scalar("SELECT version FROM orders.organization_support_ticket"));assertEquals(3,scalar("SELECT count(*) FROM orders.organization_support_message"));}finally{db.ownerExecute("DROP TRIGGER synthetic_support_notice_fault ON orders.organization_support_notice;DROP FUNCTION orders.synthetic_support_notice_fault()");}
+            assertEquals(0,inbox.messages().size());
+        }
+    }
+    @Test void organizationSupportFacilityScopeAssignmentAndRevocationFailClosed()throws Exception{
+        customerFixture(true);UUID org=id(9205),foreign=id(9206),site=id(9207),outside=id(9208);organizationSupportOwner(org);businessShippingOwner(foreign);
+        try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var c=customerHttpContext(PILOT_NOW,smtp(inbox,PILOT_NOW),true,"TEST",false,true)){
+            var mvc=httpMvc(c);var owner=profileBrowser(mvc);var member=addressOtherBrowser(mvc);String siteContact=new tools.jackson.databind.ObjectMapper().writeValueAsString(shippingDraftInput("Support site").get("sender")).replace("0901234567","+84901234567");seedFacility(site,org,siteContact);seedFacility(outside,org,siteContact);businessCommand(UUID.randomUUID(),"GRANT",org,B,"OPERATOR","'dashboard.read'");facilityGrant(org,B,site,"'support.read','support.write','support.assign','support.reports.read','support.notifications.manage'");String base=businessShippingBase(org)+"/support-tickets";
+            String broad=supportId(onboardingWrite(mvc,owner,"POST",base,UUID.randomUUID(),null,organizationSupportInput()));var scoped=new HashMap<>(organizationSupportInput());scoped.put("facilityId",site);String local=supportId(onboardingWrite(mvc,owner,"POST",base,UUID.randomUUID(),null,scoped));scoped.put("facilityId",outside);String other=supportId(onboardingWrite(mvc,owner,"POST",base,UUID.randomUUID(),null,scoped));
+            var list=httpRead(mvc,base,member.access());assertEquals(200,list.getStatus());assertTrue(list.getContentAsString().contains(local));assertFalse(list.getContentAsString().contains(broad));assertFalse(list.getContentAsString().contains(other));
+            assertEquals(404,httpRead(mvc,base+"/"+broad,member.access()).getStatus());assertEquals(404,httpRead(mvc,businessShippingBase(foreign)+"/support-tickets/"+local,member.access()).getStatus());
+            String candidates=base+"/"+local+"/assignment-candidates";assertEquals(200,httpRead(mvc,candidates,member.access()).getStatus());
+            String assignment=base+"/"+local+"/assignment";assertEquals("\"a0\"",httpRead(mvc,assignment,owner.access()).getHeader("ETag"));
+            UUID key=UUID.randomUUID();assertEquals(200,organizationSupportWrite(mvc,owner,assignment,"a",0,Map.of("assigneeAccountId",B),key).getStatus());assertEquals(200,organizationSupportWrite(mvc,owner,assignment,"a",0,Map.of("assigneeAccountId",B),key).getStatus());
+            assertEquals(1,scalar("SELECT count(*) FROM orders.organization_support_assignment_event"));assertEquals(1,scalar("SELECT version FROM orders.organization_support_ticket WHERE id='"+local+"'"));
+            assertEquals(1,intakeJson(httpRead(mvc,base+"?assignee="+B,member.access())).get("items").size());
+            var report=httpRead(mvc,businessShippingBase(org)+"/support-reports?from=2026-11-02&until=2026-11-03",member.access());assertEquals(200,report.getStatus());assertEquals("1",intakeJson(report).get("totalTickets").asString());
+            db.ownerExecute("BEGIN;SET LOCAL argopost.operator_environment='TEST';SELECT merchant.configure_local_facility_grants('"+UUID.randomUUID()+"','REVOKE','"+org+"','"+B+"','"+site+"',ARRAY['support.write'],'Synthetic permission revoke');COMMIT;");
+            assertEquals(409,organizationSupportWrite(mvc,owner,assignment,"a",0,Map.of("assigneeAccountId",A),UUID.randomUUID()).getStatus());
+            assertEquals(404,supportWrite(mvc,member,base+"/"+local+"/replies",1,Map.of("message","Revoked write")).getStatus());
+        }
+    }
+    @Test void organizationSupportTypedTargetsEventsAndStaffBindingsCannotBeForged()throws Exception{
+        customerFixture(true);UUID org=id(9209);organizationSupportOwner(org);
+        try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var c=customerHttpContext(PILOT_NOW,smtp(inbox,PILOT_NOW),true,"TEST",false,true)){
+            var mvc=httpMvc(c);var owner=profileBrowser(mvc);var staff=addressOtherBrowser(mvc);String base=businessShippingBase(org)+"/support-tickets";String target=supportId(onboardingWrite(mvc,owner,"POST",base,UUID.randomUUID(),null,organizationSupportInput()));
+            assertThrows(SQLException.class,()->execute("UPDATE orders.organization_support_ticket SET version=version+1 WHERE id='"+target+"'"));
+            assertThrows(SQLException.class,()->execute("UPDATE orders.organization_support_message SET message='tampered'"));
+            assertThrows(SQLException.class,()->execute("SELECT * FROM orders.configure_local_organization_support_staff(gen_random_uuid(),'BIND','"+org+"','"+B+"','SUPPORT_TRIAGE','forged')"));
+            assertThrows(SQLException.class,()->execute("SELECT * FROM orders.support_operator_audit"));
+            assertThrows(SQLException.class,()->execute("INSERT INTO orders.organization_support_receipt VALUES(gen_random_uuid(),'"+org+"','"+A+"','PREFERENCES',gen_random_uuid(),'PREFERENCES',NULL,'"+A+"',NULL,'"+A+"',0,1,'v1',decode(repeat('01',32),'hex'),clock_timestamp())"));
+            organizationSupportStaff(org);String path=SUPPORT_STAFF+"/organization-cases/"+target;UUID staffKey=UUID.randomUUID();assertEquals(200,onboardingWrite(mvc,staff,"POST",path+"/assignments",staffKey,"\"v1\"",Map.of("assigneeAccountId",B)).getStatus());
+            UUID second=id(9215);organizationSupportOwner(second);for(String permission:List.of("SUPPORT_TRIAGE","SUPPORT_HANDLE"))db.ownerExecute("BEGIN;SET LOCAL argopost.operator_environment='TEST';SELECT * FROM orders.configure_local_organization_support_staff('"+UUID.randomUUID()+"','BIND','"+second+"','"+B+"','"+permission+"','Synthetic second binding');COMMIT;");
+            String other=supportId(onboardingWrite(mvc,owner,"POST",businessShippingBase(second)+"/support-tickets",UUID.randomUUID(),null,organizationSupportInput()));
+            assertEquals(409,onboardingWrite(mvc,staff,"POST",SUPPORT_STAFF+"/organization-cases/"+other+"/assignments",staffKey,"\"v1\"",Map.of("assigneeAccountId",B)).getStatus());
+            assertEquals(target,intakeJson(httpRead(mvc,SUPPORT_STAFF+"/organization-receipts/CARRIER_ASSIGN/"+staffKey,staff.access())).get("targetId").asString());assertEquals(1,scalar("SELECT version FROM orders.organization_support_ticket WHERE id='"+other+"'"));
+            UUID unbind=UUID.randomUUID();String sql="SELECT * FROM orders.configure_local_organization_support_staff('"+unbind+"','UNBIND','"+org+"','"+B+"','SUPPORT_HANDLE','Synthetic revoke')";
+            db.ownerExecute("BEGIN;SET LOCAL argopost.operator_environment='TEST';"+sql+";COMMIT;");db.ownerExecute("BEGIN;SET LOCAL argopost.operator_environment='TEST';"+sql+";COMMIT;");
+            assertEquals(403,httpRead(mvc,path,staff.access()).getStatus());assertEquals(403,supportWrite(mvc,staff,path+"/transitions",2,Map.of("action","START","message","Revoked binding")).getStatus());
+            assertEquals(5,businessScalar("SELECT count(*) FROM orders.support_operator_audit"));assertEquals(2,scalar("SELECT version FROM orders.organization_support_ticket WHERE id='"+target+"'"));
+            assertEquals(0,scalar("SELECT count(*) FROM orders.organization_support_notice"));
+        }
+    }
+    @Test void organizationSupportStrictHttpSearchAndProductionDenyWithoutSideEffects()throws Exception{
+        customerFixture(true);UUID org=id(9210);organizationSupportOwner(org);
+        try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var c=customerHttpContext(PILOT_NOW,smtp(inbox,PILOT_NOW),true,"TEST",false,true)){
+            var mvc=httpMvc(c);var owner=profileBrowser(mvc);String base=businessShippingBase(org)+"/support-tickets";String target=supportId(onboardingWrite(mvc,owner,"POST",base,UUID.randomUUID(),null,organizationSupportInput()));
+            assertEquals(400,httpRead(mvc,base+"?search=forbidden",owner.access()).getStatus());assertEquals(400,httpRead(mvc,base+"?page=0&page=1",owner.access()).getStatus());assertEquals(400,httpRead(mvc,base+"?size=21",owner.access()).getStatus());
+            var read=onboardingWrite(mvc,owner,"POST",base+"/search",UUID.randomUUID(),null,Map.of("search","Synthetic support","page",0,"size",20));assertEquals(200,read.getStatus());assertTrue(read.getContentAsString().contains(target));assertEquals("no-store",read.getHeader("Cache-Control"));
+            assertEquals(1,scalar("SELECT count(*) FROM orders.organization_support_receipt"));assertEquals(1,scalar("SELECT sum(count) FROM orders.organization_support_window"));
+            var over=new HashMap<>(organizationSupportInput());over.put("organizationId",org);assertEquals(400,onboardingWrite(mvc,owner,"POST",base,UUID.randomUUID(),null,over).getStatus());
+            assertEquals(400,onboardingWrite(mvc,owner,"POST",base,UUID.randomUUID(),null,"{\"kind\":\"GENERAL\",\"kind\":\"GENERAL\"}").getStatus());
+            assertEquals(428,onboardingWrite(mvc,owner,"POST",base+"/"+target+"/replies",UUID.randomUUID(),null,Map.of("message","Missing ETag")).getStatus());
+            assertEquals(400,supportWrite(mvc,owner,base+"/"+target+"/acknowledgements",1,Map.of("message","not allowed")).getStatus());
+        }
+        for(String mode:List.of("PRODUCTION","TEST_WITH_PRODUCTION_PROFILE"))try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var c=customerHttpContext(PILOT_NOW,smtp(inbox,PILOT_NOW),true,mode,false,true)){
+            var mvc=httpMvc(c);var owner=profileBrowser(mvc);assertEquals(503,httpRead(mvc,businessShippingBase(org)+"/support-tickets",owner.access()).getStatus());
+        }
+        assertEquals(1,scalar("SELECT count(*) FROM orders.organization_support_ticket"));
+    }
+    @Test void organizationSupportShipmentBindingUsesCanonicalBusinessReadAndImmutableFacility()throws Exception{
+        customerFixture(true);UUID org=id(9211),foreign=id(9212);organizationSupportOwner(org);businessShippingOwner(foreign);businessTestContract(org);
+        try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var c=customerHttpContext(PILOT_NOW,smtp(inbox,PILOT_NOW),true,"TEST",false,true)){
+            var mvc=httpMvc(c);var owner=profileBrowser(mvc);var draftInput=new HashMap<String,Object>(pilotDraftInput("Synthetic Business Booking"));draftInput.put("sourceChannel","MANUAL");draftInput.put("sourceOrderReference","SYNTHETIC-REF-9211");
+            var draft=onboardingWrite(mvc,owner,"POST",preparationPath(org),UUID.randomUUID(),null,draftInput);assertEquals(201,draft.getStatus(),this::safeOnboardingFailure);String draftId=responseId(draft,"id");var quote=businessTestQuote(mvc,owner,org,draftId,UUID.randomUUID());assertEquals(201,quote.getStatus(),this::safeOnboardingFailure);var booking=businessTestBook(mvc,owner,org,draftId,intakeJson(quote).get("quote").get("id").asString(),UUID.randomUUID());assertEquals(201,booking.getStatus(),this::safeOnboardingFailure);
+            String shipment=intakeJson(booking).get("shipment").get("id").asString(),base=businessShippingBase(org)+"/support-tickets";var input=new HashMap<>(organizationSupportInput());input.put("kind","SHIPMENT");input.put("shipmentId",shipment);input.put("category","SHIPMENT_TRACE");
+            String target=supportId(onboardingWrite(mvc,owner,"POST",base,UUID.randomUUID(),null,input));assertEquals(shipment,intakeJson(httpRead(mvc,base+"/"+target,owner.access())).get("shipmentId").asString());
+            var search=onboardingWrite(mvc,owner,"POST",base+"/search",null,null,Map.of("search","SYNTHETIC-REF-9211"));assertEquals(200,search.getStatus(),this::safeOnboardingFailure);assertEquals(target,intakeJson(search).get("items").get(0).get("id").asString());
+            input.put("facilityId",id(9213));assertEquals(400,onboardingWrite(mvc,owner,"POST",base,UUID.randomUUID(),null,input).getStatus());input.remove("facilityId");
+            businessCommand(UUID.randomUUID(),"GRANT",foreign,A,"OWNER",ORGANIZATION_SUPPORT_RIGHTS);assertEquals(404,onboardingWrite(mvc,owner,"POST",businessShippingBase(foreign)+"/support-tickets",UUID.randomUUID(),null,input).getStatus());
+            assertThrows(SQLException.class,()->execute("UPDATE orders.organization_support_ticket SET facility_id='"+id(9213)+"',version=version+1 WHERE id='"+target+"'"));
+            businessCommand(UUID.randomUUID(),"REVOKE",org,A,"OWNER","'shipment.draft.read','shipment.draft.write','shipment.quote','shipment.book','shipment.label.read'");
+            assertEquals(404,onboardingWrite(mvc,owner,"POST",base,UUID.randomUUID(),null,input).getStatus());assertEquals(1,scalar("SELECT count(*) FROM orders.organization_support_ticket"));
+            assertEquals(1,scalar("SELECT count(*) FROM finance.pilot_shipping_obligation WHERE state='UNPAID'"));assertEquals(0,scalar("SELECT count(*) FROM orders.pilot_tracking_event"));
+        }
+    }
+    @Test void organizationSupportCandidatesFilterEligibilityBeforePaginationBeyondAdmissionLimit()throws Exception{
+        customerFixture(true);UUID org=id(9214);organizationSupportOwner(org);
+        // Test-owned synthetic Organization, no real recipients or demo database.
+        for(int n=0;n<110;n++){
+            UUID member=id(9300+n);String email="support-candidate-"+n+"@example.invalid";boolean disabled=n<25;
+            execute("INSERT INTO identity.user_account(id,username,display_name,email,password_hash,status,email_verified,created_at,updated_at,activated_at,disabled_at) VALUES('"+member+"','support.candidate."+n+"','Synthetic member "+n+"','"+email+"',(SELECT password_hash FROM identity.user_account WHERE id='"+A+"'),'ACTIVE',TRUE,'2026-11-01','2026-11-01','2026-11-01',NULL)");
+            execute("INSERT INTO identity.customer_identifier VALUES(gen_random_uuid(),'"+member+"','"+email+"','2026-11-01','ACTIVE',1)");
+            businessCommand(UUID.randomUUID(),"GRANT",org,member,"OPERATOR","'dashboard.read','support.read','support.write'");
+            if(disabled)execute("UPDATE identity.user_account SET status='DISABLED',disabled_at=updated_at WHERE id='"+member+"'");
+        }
+        try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var c=customerHttpContext(PILOT_NOW,smtp(inbox,PILOT_NOW),true,"TEST",false,true)){
+            var mvc=httpMvc(c);var owner=profileBrowser(mvc);String base=businessShippingBase(org)+"/support-tickets";String target=supportId(onboardingWrite(mvc,owner,"POST",base,UUID.randomUUID(),null,organizationSupportInput()));
+            var first=httpRead(mvc,base+"/"+target+"/assignment-candidates?page=0&size=20",owner.access());assertEquals(200,first.getStatus());assertEquals(20,intakeJson(first).get("items").size());assertTrue(intakeJson(first).get("hasNext").asBoolean());
+            for(int n=0;n<25;n++)assertFalse(first.getContentAsString().contains(id(9300+n).toString()));
+            var last=httpRead(mvc,base+"/"+target+"/assignment-candidates?page=4&size=20",owner.access());assertEquals(200,last.getStatus());assertEquals(6,intakeJson(last).get("items").size());assertFalse(intakeJson(last).get("hasNext").asBoolean());assertFalse(last.getContentAsString().contains("@example.invalid"));
+            assertEquals(0,scalar("SELECT count(*) FROM orders.organization_support_assignment"));assertEquals(1,scalar("SELECT count(*) FROM orders.organization_support_receipt"));
+        }
+    }
+    @Test void organizationSupportSchemaIsForwardOnlyAndDisabledByDefault()throws Exception{
+        assertEquals(12,businessScalar("SELECT count(*) FROM information_schema.tables WHERE table_schema='orders' AND (table_name LIKE 'organization_support_%' OR table_name='support_operator_audit')"));
+        assertEquals(0,scalar("SELECT count(*) FROM orders.organization_support_staff_scope"));
+        customerFixture(true);UUID org=id(9201);businessShippingOwner(org);
+        businessCommand(UUID.randomUUID(),"GRANT",org,A,"OWNER","'dashboard.read','support.read','support.write','support.assign','support.reports.read','support.notifications.manage'");
+        try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var c=customerHttpContext(NOW,smtp(inbox,NOW),true)){
+            var mvc=httpMvc(c);var owner=profileBrowser(mvc);
+            assertEquals(503,httpRead(mvc,businessShippingBase(org)+"/support-tickets",owner.access()).getStatus());
+        }
+        assertEquals(0,scalar("SELECT count(*) FROM orders.organization_support_ticket"));
     }
 
 }

@@ -1,3 +1,4 @@
+import { OrganizationSupportDesk } from './OrganizationSupportDesk';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { CustomerApiError, customerClient } from './client';
@@ -96,6 +97,10 @@ export function CustomerSupportTickets() {
 
 /** Bounded staff workbench, no self-grant or arbitrary state editor. Backend rechecks every command. */
 export function SupportWorkbench({ subject }: { subject: Subject }) {
+  const [params] = useSearchParams();
+  return params.has('organization') ? <OrganizationSupportDesk subject={subject} /> : <PersonalSupportWorkbench subject={subject} />;
+}
+function PersonalSupportWorkbench({ subject }: { subject: Subject }) {
   const [params, setParams] = useSearchParams(), target = params.get('case'), [queue, setQueue] = useState<SupportPage>(), [data, setData] = useState<SupportDetail>(), [error, setError] = useState(''), [message, setMessage] = useState(''), [revision, setRevision] = useState(0), [busy, setBusy] = useState(false);
   const queuePage = /^\d{1,5}$/.test(params.get('page') ?? '') ? Number(params.get('page')) : 0;
   const pending = useRef<{ key: string; id: string; version: number; action: string; message: string } | undefined>(undefined); const [unknown, setUnknown] = useState(false), running = useRef(false);
@@ -108,7 +113,7 @@ export function SupportWorkbench({ subject }: { subject: Subject }) {
     finally { running.current = false; setBusy(false); }
   }
   const labels: Record<string, string> = { START: 'Bắt đầu xử lý', REQUEST_INFORMATION: 'Yêu cầu bổ sung', RESOLVE: 'Gửi kết quả giải quyết', REOPEN: 'Chấp nhận xem xét lại' };
-  return <section className="sa-page"><div className="pw-page-heading"><div><h1 tabIndex={-1}>Xử lý hỗ trợ</h1><p>Chỉ dành cho Staff được cấp quyền và phân công hiện hành.</p></div><Link to="/personal/support">Hỗ trợ cá nhân</Link></div><section className="pw-panel">{error && <p role="alert">{error}</p>}{unknown && <button className="pw-primary" disabled={busy} onClick={() => { const p = pending.current; if (p) void command(p.id, p.version, p.action, true); }}>Gửi lại đúng thao tác</button>}
+  return <section className="sa-page"><div className="pw-page-heading"><div><h1 tabIndex={-1}>Xử lý hỗ trợ</h1><p>Chỉ dành cho Staff được cấp quyền và phân công hiện hành.</p></div><div className="sa-links"><Link to="/personal/support">Hỗ trợ cá nhân</Link><Link to="/operations/support?organization=">Hỗ trợ doanh nghiệp</Link></div></div><section className="pw-panel">{error && <p role="alert">{error}</p>}{unknown && <button className="pw-primary" disabled={busy} onClick={() => { const p = pending.current; if (p) void command(p.id, p.version, p.action, true); }}>Gửi lại đúng thao tác</button>}
     {!target ? <><h2>Hàng đợi yêu cầu mới</h2>{queue && queue.page === queuePage && !error ? <ul className="su-ticket-list">{queue.items.map(ticket => <li key={ticket.id}><div><strong>{ticket.subject}</strong><span className="su-code">{ticket.code}</span></div><button className="pw-secondary" disabled={busy || unknown} onClick={() => { void command(ticket.id, ticket.version, 'ASSIGN'); }}>Nhận xử lý</button></li>)}</ul> : !error && <p role="status">Đang tải hàng đợi…</p>}<div className="sa-links"><button className="pw-secondary" disabled={busy || unknown || !queuePage} onClick={() => setParams({ page: String(queuePage - 1) })}>Trang trước</button><span>Trang {queuePage + 1}</span><button className="pw-secondary" disabled={busy || unknown || !!error || queue?.page !== queuePage || !queue?.hasNext} onClick={() => setParams({ page: String(queuePage + 1) })}>Trang sau</button></div></> : data && data.ticket.id === target && !error ? <><h2>{data.ticket.subject}</h2><Conversation data={data} /><label htmlFor="staff-support-message">Nội dung công khai cho khách hàng</label><textarea id="staff-support-message" rows={4} maxLength={4000} disabled={busy || unknown} value={message} onChange={event => setMessage(event.target.value)} /><div className="sa-links">{data.allowedActions.map(action => <button key={action} className="pw-secondary" disabled={busy || unknown || !message.trim()} onClick={() => { void command(data.ticket.id, data.ticket.version, action); }}>{labels[action]}</button>)}</div><p>Không ghi nhận thanh toán, giao hàng, hủy đơn hoặc bồi thường tại đây.</p></> : !error && <p role="status">Đang tải yêu cầu được phân công…</p>}
     {!unknown && <div className="sa-links"><button className="pw-secondary" disabled={busy} onClick={() => setRevision(v => v + 1)}>Tải lại dữ liệu hỗ trợ</button>{target && <button className="pw-secondary" disabled={busy} onClick={() => { setData(undefined); setParams({}); }}>Về hàng đợi</button>}</div>}
   </section></section>;

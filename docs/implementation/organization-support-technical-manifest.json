@@ -1,0 +1,1166 @@
+{
+  "schema_version": 1,
+  "id": "ORG-SUPPORT-V1-TECHNICAL-2026-11-16",
+  "baseline": "c8cdfa335e31596116cf0d7626b81ef0d40dee78",
+  "authority": {
+    "business_scope": "OWNER_APPROVED_GO_WITH_CONDITIONS",
+    "technical_contract": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+    "source_implementation_allowed": "existing approved API hub only",
+    "test_db_v33": "allowed only after exact technical confirmation; NOT_EXECUTED",
+    "localhost_migration": "NOT_AUTHORIZED",
+    "localhost_grants": "NOT_AUTHORIZED",
+    "production": "DENIED",
+    "merge": "NOT_AUTHORIZED",
+    "business_decision_date": "2026-11-17",
+    "technical_confirmation_not_implied_by_business_approval": true
+  },
+  "existing_reuse": [
+    {
+      "item": "CustomerAdmission current Identity/session/TLS/CSRF",
+      "status": "REUSE_EXISTING_ACCEPTED_CONTRACT"
+    },
+    {
+      "item": "BusinessWorkspaces current Organization/Membership/role/permission/facility admission",
+      "status": "REUSE_EXISTING_ACCEPTED_CONTRACT"
+    },
+    {
+      "item": "BusinessShipments get unchanged immutable Org snapshot",
+      "status": "REUSE_EXISTING_ACCEPTED_CONTRACT"
+    },
+    {
+      "item": "OSM management unchanged query/permission contract",
+      "status": "REUSE_EXISTING_ACCEPTED_CONTRACT"
+    },
+    {
+      "item": "Personal Support state policy and message validation (no owner variant change)",
+      "status": "REUSE_EXISTING_ACCEPTED_CONTRACT"
+    },
+    {
+      "item": "Existing receipt key ring via domain-separated HMAC (no new secret/provider)",
+      "status": "REUSE_EXISTING_ACCEPTED_CONTRACT"
+    },
+    {
+      "item": "Existing Support operator/Staff patterns, without inherited Business grant",
+      "status": "REUSE_EXISTING_ACCEPTED_CONTRACT"
+    },
+    {
+      "item": "WFP facility master read and current member eligibility APIs",
+      "status": "REUSE_EXISTING_ACCEPTED_CONTRACT"
+    }
+  ],
+  "enums": {
+    "TicketState": [
+      "NEW",
+      "IN_PROGRESS",
+      "NEEDS_INFORMATION",
+      "RESOLVED",
+      "CLOSED"
+    ],
+    "TicketCategory": [
+      "ACCOUNT_HELP",
+      "SHIPMENT_TRACE",
+      "DAMAGE_REPORT",
+      "LOSS_REPORT",
+      "FEE_REVIEW",
+      "OTHER"
+    ]
+  },
+  "new_api_operations": [
+    {
+      "id": "OSC-API-01",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "method": "GET",
+      "path": "/api/v1/merchant-organizations/{organizationId}/support-tickets",
+      "request": "TicketFilters",
+      "response": "TicketPage",
+      "authority": "support.read",
+      "if_match": null,
+      "read_only": true,
+      "idempotency_key": false
+    },
+    {
+      "id": "OSC-API-02",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "method": "POST",
+      "path": "/api/v1/merchant-organizations/{organizationId}/support-tickets",
+      "request": "CreateTicket",
+      "response": "TicketDetail",
+      "authority": "support.read + support.write; linked Shipment requires shipment.draft.read",
+      "if_match": null,
+      "read_only": false,
+      "idempotency_key": true
+    },
+    {
+      "id": "OSC-API-03",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "method": "GET",
+      "path": "/api/v1/merchant-organizations/{organizationId}/support-tickets/{id}",
+      "request": null,
+      "response": "TicketDetail",
+      "authority": "support.read",
+      "if_match": null,
+      "read_only": true,
+      "idempotency_key": false
+    },
+    {
+      "id": "OSC-API-04",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "method": "POST",
+      "path": "/api/v1/merchant-organizations/{organizationId}/support-tickets/search",
+      "request": "TicketSearch",
+      "response": "TicketPage",
+      "authority": "support.read",
+      "if_match": null,
+      "read_only": true,
+      "idempotency_key": false
+    },
+    {
+      "id": "OSC-API-05",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "method": "POST",
+      "path": "/api/v1/merchant-organizations/{organizationId}/support-tickets/{id}/replies",
+      "request": "MessageInput",
+      "response": "TicketDetail",
+      "authority": "support.read + support.write",
+      "if_match": "vN",
+      "read_only": false,
+      "idempotency_key": true
+    },
+    {
+      "id": "OSC-API-06",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "method": "POST",
+      "path": "/api/v1/merchant-organizations/{organizationId}/support-tickets/{id}/review-requests",
+      "request": "MessageInput",
+      "response": "TicketDetail",
+      "authority": "support.read + support.write",
+      "if_match": "vN",
+      "read_only": false,
+      "idempotency_key": true
+    },
+    {
+      "id": "OSC-API-07",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "method": "POST",
+      "path": "/api/v1/merchant-organizations/{organizationId}/support-tickets/{id}/acknowledgements",
+      "request": "EmptyObject",
+      "response": "TicketDetail",
+      "authority": "support.read + support.write",
+      "if_match": "vN",
+      "read_only": false,
+      "idempotency_key": true
+    },
+    {
+      "id": "OSC-API-08",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "method": "GET",
+      "path": "/api/v1/merchant-organizations/{organizationId}/support-receipts/{operation}/{key}",
+      "request": null,
+      "response": "Receipt",
+      "authority": "same current Merchant operation/actor/Org/facility binding",
+      "if_match": null,
+      "read_only": true,
+      "idempotency_key": false
+    },
+    {
+      "id": "OSC-API-09",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "method": "GET",
+      "path": "/api/v1/merchant-organizations/{organizationId}/support-tickets/{id}/assignment-candidates",
+      "request": "PageQuery",
+      "response": "AssignmentMemberPage",
+      "authority": "support.read + support.assign",
+      "if_match": null,
+      "read_only": true,
+      "idempotency_key": false
+    },
+    {
+      "id": "OSC-API-10",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "method": "GET",
+      "path": "/api/v1/merchant-organizations/{organizationId}/support-tickets/{id}/assignment",
+      "request": null,
+      "response": "InternalAssignment",
+      "authority": "support.read",
+      "if_match": null,
+      "read_only": true,
+      "idempotency_key": false
+    },
+    {
+      "id": "OSC-API-11",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "method": "PUT",
+      "path": "/api/v1/merchant-organizations/{organizationId}/support-tickets/{id}/assignment",
+      "request": "InternalAssignmentInput",
+      "response": "InternalAssignment",
+      "authority": "support.read + support.assign; eligible target already support.read/write",
+      "if_match": "aN",
+      "read_only": false,
+      "idempotency_key": true
+    },
+    {
+      "id": "OSC-API-12",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "method": "GET",
+      "path": "/api/v1/merchant-organizations/{organizationId}/support-tickets/{id}/internal-history",
+      "request": "PageQuery",
+      "response": "InternalHistoryPage",
+      "authority": "support.read",
+      "if_match": null,
+      "read_only": true,
+      "idempotency_key": false
+    },
+    {
+      "id": "OSC-API-13",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "method": "GET",
+      "path": "/api/v1/merchant-organizations/{organizationId}/support-reports",
+      "request": "ReportFilters",
+      "response": "SupportReport",
+      "authority": "support.read + support.reports.read",
+      "if_match": null,
+      "read_only": true,
+      "idempotency_key": false
+    },
+    {
+      "id": "OSC-API-14",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "method": "GET",
+      "path": "/api/v1/merchant-organizations/{organizationId}/support-notification-preferences",
+      "request": null,
+      "response": "NoticePreferences",
+      "authority": "self + current support.read + support.notifications.manage",
+      "if_match": null,
+      "read_only": true,
+      "idempotency_key": false
+    },
+    {
+      "id": "OSC-API-15",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "method": "PUT",
+      "path": "/api/v1/merchant-organizations/{organizationId}/support-notification-preferences",
+      "request": "NoticePreferencesInput",
+      "response": "NoticePreferences",
+      "authority": "self + current support.read + support.notifications.manage",
+      "if_match": "nN",
+      "read_only": false,
+      "idempotency_key": true
+    },
+    {
+      "id": "OSC-API-16",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "method": "GET",
+      "path": "/api/v1/merchant-organizations/{organizationId}/support-notices",
+      "request": "PageQuery",
+      "response": "NoticePage",
+      "authority": "self + support.read on each referenced Ticket before paging",
+      "if_match": null,
+      "read_only": true,
+      "idempotency_key": false
+    },
+    {
+      "id": "OSC-API-17",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "method": "POST",
+      "path": "/api/v1/merchant-organizations/{organizationId}/support-notices/{id}/read",
+      "request": "EmptyObject",
+      "response": "Notice",
+      "authority": "self + support.read on referenced Ticket",
+      "if_match": "vN",
+      "read_only": false,
+      "idempotency_key": true
+    },
+    {
+      "id": "OSC-API-18",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "method": "GET",
+      "path": "/api/v1/support-operations/organization-queue",
+      "request": "StaffQueueQuery",
+      "response": "TicketPage",
+      "authority": "current SUPPORT_TRIAGE + explicit Organization binding at explicit Organization; metadata only",
+      "if_match": null,
+      "read_only": true,
+      "idempotency_key": false
+    },
+    {
+      "id": "OSC-API-19",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "method": "POST",
+      "path": "/api/v1/support-operations/organization-cases/{id}/assignments",
+      "request": "CarrierAssignmentInput",
+      "response": "TicketSummary",
+      "authority": "current SUPPORT_TRIAGE + explicit Organization binding; target eligible scoped HANDLE",
+      "if_match": "vN",
+      "read_only": false,
+      "idempotency_key": true
+    },
+    {
+      "id": "OSC-API-20",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "method": "GET",
+      "path": "/api/v1/support-operations/organization-cases/{id}",
+      "request": null,
+      "response": "CarrierTicketDetail",
+      "authority": "current SUPPORT_HANDLE + explicit Organization binding + current exact case assignment",
+      "if_match": null,
+      "read_only": true,
+      "idempotency_key": false
+    },
+    {
+      "id": "OSC-API-21",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "method": "POST",
+      "path": "/api/v1/support-operations/organization-cases/{id}/replies",
+      "request": "MessageInput",
+      "response": "CarrierTicketDetail",
+      "authority": "current HANDLE + assignment; IN_PROGRESS only",
+      "if_match": "vN",
+      "read_only": false,
+      "idempotency_key": true
+    },
+    {
+      "id": "OSC-API-22",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "method": "POST",
+      "path": "/api/v1/support-operations/organization-cases/{id}/transitions",
+      "request": "CarrierTransitionInput",
+      "response": "CarrierTicketDetail",
+      "authority": "current HANDLE + assignment + legal transition",
+      "if_match": "vN",
+      "read_only": false,
+      "idempotency_key": true
+    },
+    {
+      "id": "OSC-API-23",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "method": "GET",
+      "path": "/api/v1/support-operations/organization-receipts/{operation}/{key}",
+      "request": null,
+      "response": "Receipt",
+      "authority": "original actor/purpose/Org + current required Staff scope/assignment",
+      "if_match": null,
+      "read_only": true,
+      "idempotency_key": false
+    }
+  ],
+  "new_dtos": [
+    {
+      "name": "TicketFilters",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "page": "integer 0..100000, default0",
+        "size": "literal20",
+        "state": "optional TicketState",
+        "category": "optional TicketCategory",
+        "shipmentId": "optional nonzeroUUID",
+        "facilityId": "optional nonzeroUUID",
+        "creatorId": "optional nonzeroUUID",
+        "assignee": "optional NONE|nonzeroUUID",
+        "requestedPriority": "optional LOW|NORMAL|HIGH",
+        "until": "optional exclusive YYYY-MM-DD, Vietnam, <=tomorrow, max366days",
+        "sort": "UPDATED|NEWEST, default UPDATED, UUID tie-break",
+        "from": "optional YYYY-MM-DD, paired with until"
+      },
+      "id": "OSC-DTO-01"
+    },
+    {
+      "name": "TicketSearch",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "page": "integer 0..100000, default0",
+        "size": "literal20",
+        "state": "optional TicketState",
+        "category": "optional TicketCategory",
+        "shipmentId": "optional nonzeroUUID",
+        "facilityId": "optional nonzeroUUID",
+        "creatorId": "optional nonzeroUUID",
+        "assignee": "optional NONE|nonzeroUUID",
+        "requestedPriority": "optional LOW|NORMAL|HIGH",
+        "until": "optional exclusive YYYY-MM-DD, Vietnam, <=tomorrow, max366days",
+        "sort": "UPDATED|NEWEST, default UPDATED, UUID tie-break",
+        "from": "optional YYYY-MM-DD, paired with until",
+        "search": "required NFC trimmed literal1..160; no controls; subject/code/source reference substring"
+      },
+      "semantics": "read-only POST; Origin/CSRF required, no receipt, no quota write, no meaningfulAction; no search text in URL/logs",
+      "id": "OSC-DTO-02"
+    },
+    {
+      "name": "ReportFilters",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "state": "optional TicketState",
+        "category": "optional TicketCategory",
+        "shipmentId": "optional nonzeroUUID",
+        "facilityId": "optional nonzeroUUID",
+        "creatorId": "optional nonzeroUUID",
+        "assignee": "optional NONE|nonzeroUUID",
+        "requestedPriority": "optional LOW|NORMAL|HIGH",
+        "until": "optional exclusive YYYY-MM-DD, Vietnam, <=tomorrow, max366days",
+        "from": "optional YYYY-MM-DD, paired with until"
+      },
+      "required": [
+        "from",
+        "until"
+      ],
+      "semantics": "all filters AND before full authorized cohort aggregation; no search text",
+      "id": "OSC-DTO-03"
+    },
+    {
+      "name": "PageQuery",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "page": "integer0..100000 default0",
+        "size": "literal20"
+      },
+      "id": "OSC-DTO-04"
+    },
+    {
+      "name": "StaffQueueQuery",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "page": "integer0..100000 default0",
+        "size": "literal20",
+        "organizationId": "required UUID"
+      },
+      "id": "OSC-DTO-05"
+    },
+    {
+      "name": "CreateTicket",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "kind": "GENERAL|SHIPMENT",
+        "shipmentId": "UUID|null",
+        "facilityId": "UUID|null",
+        "category": "TicketCategory",
+        "subject": "NFC trimmed1..160, no controls",
+        "message": "normalized1..4000; newline/tab permitted, other controls denied",
+        "requestedPriority": "LOW|NORMAL|HIGH"
+      },
+      "semantics": "GENERAL shipmentId=null; SHIPMENT same-Org source required, facility derived when input=null, non-null mismatch rejected; source binding immutable",
+      "id": "OSC-DTO-06"
+    },
+    {
+      "name": "MessageInput",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "message": "normalized1..4000"
+      },
+      "id": "OSC-DTO-07"
+    },
+    {
+      "name": "EmptyObject",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "fields": {},
+      "semantics": "strict {}",
+      "id": "OSC-DTO-08"
+    },
+    {
+      "name": "InternalAssignmentInput",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "assigneeAccountId": "UUID|null"
+      },
+      "id": "OSC-DTO-09"
+    },
+    {
+      "name": "CarrierAssignmentInput",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "assigneeAccountId": "required UUID"
+      },
+      "id": "OSC-DTO-10"
+    },
+    {
+      "name": "CarrierTransitionInput",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "action": "START|REQUEST_INFORMATION|RESOLVE|REOPEN",
+        "message": "normalized1..4000"
+      },
+      "id": "OSC-DTO-11"
+    },
+    {
+      "name": "TicketSummary",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "id": "UUID",
+        "code": "string AP-OST- followed by32lowercaseUUIDhex; unique",
+        "organizationId": "UUID",
+        "facilityId": "UUID|null",
+        "creatorAccountId": "UUID",
+        "kind": "GENERAL|SHIPMENT",
+        "shipmentId": "UUID|null",
+        "category": "TicketCategory",
+        "subject": "normalized string1..160",
+        "state": "TicketState",
+        "version": "positive int64",
+        "createdAt": "UTC instant",
+        "updatedAt": "UTC instant >=createdAt",
+        "requestedPriority": "LOW|NORMAL|HIGH",
+        "priority": "literal NORMAL",
+        "responseDueAt": "null",
+        "teamLabel": "null|ArgoPost Support",
+        "internalAssigneeAccountId": "UUID|null"
+      },
+      "id": "OSC-DTO-12"
+    },
+    {
+      "name": "TicketPage",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "items": "TicketSummary[0..20]",
+        "page": "requested integer",
+        "size": "20",
+        "hasNext": "boolean"
+      },
+      "semantics": "current scope AND filters before pagination; no implied total",
+      "id": "OSC-DTO-13"
+    },
+    {
+      "name": "PublicMessage",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "id": "UUID",
+        "authorKind": "MERCHANT|SUPPORT",
+        "message": "string1..4000",
+        "createdAt": "UTC instant",
+        "eventType": "CREATE|REPLY|STAFF_ASSIGNED|START|STAFF_REPLY|REQUEST_INFORMATION|RESOLVE|REQUEST_REVIEW|REOPEN|ACKNOWLEDGE"
+      },
+      "id": "OSC-DTO-14"
+    },
+    {
+      "name": "TicketDetail",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "flat_extends": "TicketSummary",
+      "fields": {
+        "publicMessages": "ordered PublicMessage[]",
+        "internalAssignment": "InternalAssignment",
+        "allowedActions": "server-derived subset REPLY|REQUEST_REVIEW|ACKNOWLEDGE|ASSIGN"
+      },
+      "semantics": "no private Staff note/identity/audit or compensation fields",
+      "id": "OSC-DTO-15"
+    },
+    {
+      "name": "CarrierTicketDetail",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "flat_extends": "TicketSummary",
+      "fields": {
+        "publicMessages": "ordered PublicMessage[]",
+        "internalAssignment": "InternalAssignment",
+        "allowedActions": "server-derived subset START|REPLY|REQUEST_INFORMATION|RESOLVE|REOPEN"
+      },
+      "semantics": "only current assigned Staff; no new Carrier shipping/Finance authority",
+      "id": "OSC-DTO-16"
+    },
+    {
+      "name": "Receipt",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "operationId": "exact permitted operation",
+        "targetId": "UUID",
+        "outcome": "literal COMMITTED",
+        "version": "nonnegative int64"
+      },
+      "semantics": "Merchant operations CREATE|REPLY|REQUEST_REVIEW|ACKNOWLEDGE|ASSIGN|PREFERENCES|READ_NOTICE; Carrier operations CARRIER_ASSIGN|CARRIER_REPLY|CARRIER_TRANSITION; purpose-bound HMAC, no bodies",
+      "id": "OSC-DTO-17"
+    },
+    {
+      "name": "InternalAssignment",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "ticketId": "UUID",
+        "organizationId": "UUID",
+        "assigneeAccountId": "UUID|null",
+        "version": "nonnegative int64",
+        "updatedAt": "UTC instant|null"
+      },
+      "semantics": "virtual a0 unassigned/no write; one active assignee, changes increment1",
+      "id": "OSC-DTO-18"
+    },
+    {
+      "name": "AssignmentMember",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "accountId": "UUID",
+        "membershipId": "UUID",
+        "displayName": "string1..160"
+      },
+      "id": "OSC-DTO-19"
+    },
+    {
+      "name": "AssignmentMemberPage",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "items": "AssignmentMember[0..20]",
+        "page": "integer",
+        "size": "20",
+        "hasNext": "boolean"
+      },
+      "id": "OSC-DTO-20"
+    },
+    {
+      "name": "InternalHistoryEvent",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "id": "UUID",
+        "operation": "ASSIGNED|REASSIGNED|UNASSIGNED",
+        "actorAccountId": "UUID",
+        "priorAssigneeAccountId": "UUID|null",
+        "assigneeAccountId": "UUID|null",
+        "version": "positive int64",
+        "occurredAt": "UTC instant"
+      },
+      "id": "OSC-DTO-21"
+    },
+    {
+      "name": "InternalHistoryPage",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "items": "InternalHistoryEvent[0..20]",
+        "page": "integer",
+        "size": "20",
+        "hasNext": "boolean"
+      },
+      "id": "OSC-DTO-22"
+    },
+    {
+      "name": "TimeSamples",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "sampleCount": "decimal integer string",
+        "totalMs": "decimal integer string",
+        "minMs": "decimal integer string|null",
+        "maxMs": "decimal integer string|null"
+      },
+      "semantics": "zero samples: total0,min/max null; durations from actual persisted events only",
+      "id": "OSC-DTO-23"
+    },
+    {
+      "name": "SupportReport",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "schemaVersion": "literal ORGANIZATION_SUPPORT_REPORT_1",
+        "organizationId": "UUID",
+        "generatedAt": "UTC instant",
+        "timeZone": "Asia/Ho_Chi_Minh",
+        "period": "{from:YYYY-MM-DD,until:exclusive YYYY-MM-DD}",
+        "totalTickets": "decimal integer string",
+        "byState": "map every TicketState->decimal integer string",
+        "byCategory": "map every TicketCategory->decimal integer string",
+        "byRequestedPriority": "map LOW|NORMAL|HIGH->decimal integer string",
+        "firstResponse": "TimeSamples",
+        "firstResolution": "TimeSamples",
+        "slaState": "UNPUBLISHED"
+      },
+      "semantics": "Ticket creation cohort/current state, substantive SUPPORT reply only, no Merchant message/assignment counted as Carrier response; first resolution explicitly distinct from final closure",
+      "id": "OSC-DTO-24"
+    },
+    {
+      "name": "NoticePreferencesInput",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "enabled": "boolean",
+        "eventTypes": "unique subset of ASSIGNMENT|REPLY|NEEDS_INFORMATION|RESOLUTION|REVIEW"
+      },
+      "id": "OSC-DTO-25"
+    },
+    {
+      "name": "NoticePreferences",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "enabled": "boolean",
+        "eventTypes": "NoticePreferencesInput.eventTypes",
+        "version": "nonnegative int64",
+        "updatedAt": "UTC instant|null"
+      },
+      "semantics": "self-only virtual n0 disabled, no write on GET",
+      "id": "OSC-DTO-26"
+    },
+    {
+      "name": "Notice",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "id": "UUID",
+        "organizationId": "UUID",
+        "ticketId": "UUID",
+        "eventId": "UUID",
+        "type": "ASSIGNMENT|REPLY|NEEDS_INFORMATION|RESOLUTION|REVIEW",
+        "createdAt": "UTC instant",
+        "readAt": "UTC instant|null",
+        "version": "1|2"
+      },
+      "id": "OSC-DTO-27"
+    },
+    {
+      "name": "NoticePage",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "fields": {
+        "items": "Notice[0..20]",
+        "page": "integer",
+        "size": "20",
+        "hasNext": "boolean"
+      },
+      "id": "OSC-DTO-28"
+    }
+  ],
+  "new_permissions": [
+    {
+      "name": "support.read",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "principal": "current ACTIVE Merchant member, eligible verified Identity; admitted current role OWNER|MANAGER|OPERATOR is not an implicit grant",
+      "scopes": [
+        "ORGANIZATION",
+        "FACILITY"
+      ],
+      "purpose": "read Ticket/public conversation/current internal assignment",
+      "requires": null,
+      "automatic_grants": false,
+      "id": "OSC-PERM-01"
+    },
+    {
+      "name": "support.write",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "principal": "current ACTIVE Merchant member, eligible verified Identity; admitted current role OWNER|MANAGER|OPERATOR is not an implicit grant",
+      "scopes": [
+        "ORGANIZATION",
+        "FACILITY"
+      ],
+      "purpose": "create/reply/review/acknowledge; never Staff transitions",
+      "requires": "matching support.read",
+      "automatic_grants": false,
+      "id": "OSC-PERM-02"
+    },
+    {
+      "name": "support.assign",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "principal": "current ACTIVE Merchant member, eligible verified Identity; admitted current role OWNER|MANAGER|OPERATOR is not an implicit grant",
+      "scopes": [
+        "ORGANIZATION",
+        "FACILITY"
+      ],
+      "purpose": "internal Merchant assignment only",
+      "requires": "matching support.read",
+      "automatic_grants": false,
+      "id": "OSC-PERM-03"
+    },
+    {
+      "name": "support.reports.read",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "principal": "current ACTIVE Merchant member, eligible verified Identity; admitted current role OWNER|MANAGER|OPERATOR is not an implicit grant",
+      "scopes": [
+        "ORGANIZATION",
+        "FACILITY"
+      ],
+      "purpose": "read actual support response reports",
+      "requires": "matching support.read",
+      "automatic_grants": false,
+      "id": "OSC-PERM-04"
+    },
+    {
+      "name": "support.notifications.manage",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "principal": "current ACTIVE Merchant member, eligible verified Identity; admitted current role OWNER|MANAGER|OPERATOR is not an implicit grant",
+      "scopes": [
+        "ORGANIZATION",
+        "FACILITY"
+      ],
+      "purpose": "own in-app preferences only",
+      "requires": "matching support.read",
+      "automatic_grants": false,
+      "id": "OSC-PERM-05"
+    },
+    {
+      "name": "SUPPORT_TRIAGE",
+      "status": "EXISTING_CODE_REUSED_NEW_ORG_BINDING_PENDING",
+      "principal": "existing canonical Support Staff grant + explicit current Organization binding + case assignment for HANDLE",
+      "scopes": [
+        "existing canonical grant restricted by explicit ORGANIZATION binding"
+      ],
+      "purpose": "triage/assign",
+      "automatic_grants": false,
+      "id": "OSC-REUSE-STAFF-01"
+    },
+    {
+      "name": "SUPPORT_HANDLE",
+      "status": "EXISTING_CODE_REUSED_NEW_ORG_BINDING_PENDING",
+      "principal": "existing canonical Support Staff grant + explicit current Organization binding + case assignment for HANDLE",
+      "scopes": [
+        "existing canonical grant restricted by explicit ORGANIZATION binding"
+      ],
+      "purpose": "current assigned case read/reply/transition",
+      "automatic_grants": false,
+      "id": "OSC-REUSE-STAFF-02"
+    }
+  ],
+  "new_tables": [
+    {
+      "name": "orders.organization_support_ticket",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "columns": {
+        "id": "UUID PK",
+        "organization_id": "UUID NOT NULL",
+        "facility_id": "UUID NULL",
+        "creator_account_id": "UUID NOT NULL",
+        "code": "VARCHAR(39) NOT NULL UNIQUE",
+        "kind": "VARCHAR(8) NOT NULL",
+        "shipment_id": "UUID NULL",
+        "category": "VARCHAR(24) NOT NULL",
+        "subject": "VARCHAR(160) NOT NULL",
+        "state": "VARCHAR(20) NOT NULL",
+        "version": "BIGINT >0",
+        "created_at": "TIMESTAMPTZ NOT NULL",
+        "updated_at": "TIMESTAMPTZ NOT NULL",
+        "requested_priority": "VARCHAR(6) NOT NULL",
+        "resolution_version": "BIGINT NULL",
+        "review_pending": "BOOLEAN NOT NULL DEFAULT FALSE"
+      },
+      "constraints": [
+        "same-Org/facility/source Shipment FK + nullable facility exact-binding guard",
+        "immutable kind/Org/facility/Shipment/creator",
+        "same Ticket/org unique key for children",
+        "legal state/version; mandatory message/audit/receipt on each Ticket mutation; no new SLA/Claim amounts"
+      ],
+      "id": "OSC-DB-01"
+    },
+    {
+      "name": "orders.organization_support_message",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "columns": {
+        "id": "UUID PK",
+        "organization_id": "UUID NOT NULL",
+        "ticket_id": "UUID NOT NULL",
+        "ticket_version": "BIGINT NOT NULL",
+        "actor_account_id": "UUID NOT NULL",
+        "author_kind": "VARCHAR(8) NOT NULL",
+        "event_type": "VARCHAR(24) NOT NULL",
+        "message": "VARCHAR(4000) NOT NULL",
+        "created_at": "TIMESTAMPTZ NOT NULL"
+      },
+      "constraints": [
+        "FK same Ticket/Org",
+        "UNIQUE(ticket_id,ticket_version)",
+        "append-only; actor/time mandatory; internal notes excluded"
+      ],
+      "id": "OSC-DB-02"
+    },
+    {
+      "name": "orders.organization_support_assignment",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "columns": {
+        "ticket_id": "UUID PK",
+        "organization_id": "UUID NOT NULL",
+        "assignee_account_id": "UUID NULL",
+        "version": "BIGINT >0",
+        "updated_at": "TIMESTAMPTZ NOT NULL"
+      },
+      "constraints": [
+        "same Ticket/Org",
+        "same-Org membership of target and current exact-scope eligibility",
+        "immutable Ticket/Org; version+1 with event/receipt evidence"
+      ],
+      "id": "OSC-DB-03"
+    },
+    {
+      "name": "orders.organization_support_assignment_event",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "columns": {
+        "id": "UUID PK",
+        "organization_id": "UUID NOT NULL",
+        "ticket_id": "UUID NOT NULL",
+        "operation": "VARCHAR(12) NOT NULL",
+        "actor_account_id": "UUID NOT NULL",
+        "prior_assignee_account_id": "UUID NULL",
+        "assignee_account_id": "UUID NULL",
+        "prior_version": "BIGINT >=0",
+        "new_version": "BIGINT >0",
+        "occurred_at": "TIMESTAMPTZ NOT NULL"
+      },
+      "constraints": [
+        "same Ticket/Org",
+        "append-only; unique Ticket/new_version; no-op forbidden; new=prior+1"
+      ],
+      "id": "OSC-DB-04"
+    },
+    {
+      "name": "orders.organization_support_case_assignment",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "columns": {
+        "id": "UUID PK",
+        "organization_id": "UUID NOT NULL",
+        "ticket_id": "UUID NOT NULL",
+        "assignee_account_id": "UUID NOT NULL",
+        "state": "VARCHAR(8) NOT NULL CHECK ACTIVE|REVOKED",
+        "version": "BIGINT >0",
+        "assigned_by": "UUID NOT NULL",
+        "assigned_at": "TIMESTAMPTZ NOT NULL",
+        "revoked_at": "TIMESTAMPTZ NULL"
+      },
+      "constraints": [
+        "separate from internal assignment",
+        "one ACTIVE per Ticket",
+        "same Ticket/Org, current scoped HANDLE; audited triage actor/time; historic assignment retained"
+      ],
+      "id": "OSC-DB-05"
+    },
+    {
+      "name": "orders.organization_support_staff_scope",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "columns": {
+        "organization_id": "UUID NOT NULL",
+        "grant_id": "UUID NOT NULL REFERENCES existing orders.support_staff_grant(id)",
+        "account_id": "UUID NOT NULL",
+        "permission": "VARCHAR(20) NOT NULL CHECK SUPPORT_TRIAGE|SUPPORT_HANDLE",
+        "state": "VARCHAR(8) NOT NULL CHECK ACTIVE|REVOKED",
+        "version": "BIGINT >0",
+        "effective_from": "TIMESTAMPTZ NOT NULL",
+        "updated_at": "TIMESTAMPTZ NOT NULL"
+      },
+      "constraints": [
+        "PK(org,account,permission)",
+        "same canonical grant/account/permission FK; source grant must still be ACTIVE",
+        "additional scope restriction only; no independent grant or auto-grant",
+        "operator-only binding changes with audit; role alone or Personal grant without binding never enables Organization cases"
+      ],
+      "id": "OSC-DB-06"
+    },
+    {
+      "name": "orders.organization_support_receipt",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "columns": {
+        "id": "UUID PK",
+        "organization_id": "UUID NOT NULL",
+        "actor_account_id": "UUID NOT NULL",
+        "operation": "VARCHAR(24) NOT NULL",
+        "operation_key": "UUID NOT NULL",
+        "target_kind": "VARCHAR(16) NOT NULL CHECK TICKET|PREFERENCES|NOTICE",
+        "ticket_id": "UUID NULL",
+        "preference_account_id": "UUID NULL",
+        "notice_id": "UUID NULL",
+        "target_id": "UUID NOT NULL",
+        "original_version": "BIGINT >=0",
+        "result_version": "BIGINT >=0",
+        "fingerprint_key_id": "VARCHAR(64) NOT NULL",
+        "fingerprint": "BYTEA length32",
+        "committed_at": "TIMESTAMPTZ NOT NULL"
+      },
+      "constraints": [
+        "UNIQUE(org,actor,operation,key)",
+        "exclusive variant CHECK + real same-Org target FKs",
+        "purpose/actor/resource/version/payload HMAC; append-only, replay requires current authority"
+      ],
+      "id": "OSC-DB-07"
+    },
+    {
+      "name": "orders.organization_support_audit",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "columns": {
+        "id": "UUID PK",
+        "organization_id": "UUID NOT NULL",
+        "ticket_id": "UUID NULL",
+        "target_kind": "VARCHAR(16) NOT NULL CHECK TICKET|PREFERENCES|NOTICE",
+        "target_id": "UUID NOT NULL",
+        "actor_account_id": "UUID NOT NULL",
+        "operation": "VARCHAR(24) NOT NULL",
+        "request_id": "UUID NOT NULL",
+        "prior_version": "BIGINT >=0",
+        "new_version": "BIGINT >=0",
+        "occurred_at": "TIMESTAMPTZ NOT NULL"
+      },
+      "constraints": [
+        "append-only mandatory metadata, no raw message/subject/contact/token",
+        "same-Org target variants and operation binding"
+      ],
+      "id": "OSC-DB-08"
+    },
+    {
+      "name": "orders.organization_support_window",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "columns": {
+        "organization_id": "UUID NOT NULL",
+        "actor_account_id": "UUID NOT NULL",
+        "window_start": "TIMESTAMPTZ NOT NULL",
+        "kind": "VARCHAR(16) NOT NULL CHECK CREATE|CONVERSATION",
+        "count": "INTEGER >0"
+      },
+      "constraints": [
+        "PK(org,actor,window_start,kind)",
+        "atomic5 creates /20 conversation commands per15min; no increment for valid replay"
+      ],
+      "id": "OSC-DB-09"
+    },
+    {
+      "name": "orders.organization_support_notification_preference",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "columns": {
+        "organization_id": "UUID NOT NULL",
+        "account_id": "UUID NOT NULL",
+        "enabled": "BOOLEAN NOT NULL",
+        "event_types": "TEXT[] unique allowed enum",
+        "version": "BIGINT >0",
+        "updated_at": "TIMESTAMPTZ NOT NULL"
+      },
+      "constraints": [
+        "PK(org,account)",
+        "self-owned only; virtual disabled n0 has no stored row",
+        "version+1 with audit/receipt"
+      ],
+      "id": "OSC-DB-10"
+    },
+    {
+      "name": "orders.organization_support_notice",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "columns": {
+        "id": "UUID PK",
+        "organization_id": "UUID NOT NULL",
+        "ticket_id": "UUID NOT NULL",
+        "event_id": "UUID NOT NULL",
+        "recipient_account_id": "UUID NOT NULL",
+        "type": "VARCHAR(24) NOT NULL CHECK Notice.type",
+        "created_at": "TIMESTAMPTZ NOT NULL",
+        "read_at": "TIMESTAMPTZ NULL",
+        "version": "BIGINT 1|2"
+      },
+      "constraints": [
+        "FK same-Org Ticket + committed public/internal event",
+        "UNIQUE(event_id,recipient_account_id)",
+        "current subscribed readable recipient; unread1/read2 only, no duplicated replay notice"
+      ],
+      "id": "OSC-DB-11"
+    },
+    {
+      "name": "orders.support_operator_audit",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "columns": {
+        "id": "UUID PK",
+        "request_id": "UUID NOT NULL UNIQUE",
+        "organization_id": "UUID NOT NULL",
+        "target_account_id": "UUID NOT NULL",
+        "permission": "VARCHAR(20) NOT NULL CHECK SUPPORT_TRIAGE|SUPPORT_HANDLE",
+        "action": "VARCHAR(8) NOT NULL CHECK BIND|UNBIND",
+        "reason": "VARCHAR(300) NOT NULL",
+        "operator_principal": "TEXT NOT NULL",
+        "occurred_at": "TIMESTAMPTZ NOT NULL",
+        "request_digest": "BYTEA length32",
+        "prior_grant_id": "UUID NULL REFERENCES canonical support_staff_grant",
+        "target_grant_id": "UUID NOT NULL REFERENCES canonical support_staff_grant",
+        "prior_version": "BIGINT >=0",
+        "result_version": "BIGINT >0"
+      },
+      "constraints": [
+        "append-only, original result required for matching replay",
+        "operator only, runtime no read/write/execute grant"
+      ],
+      "id": "OSC-DB-12"
+    }
+  ],
+  "migration": {
+    "name": "V33__organization_support_tickets.sql",
+    "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+    "created": false,
+    "executed": false,
+    "existing_migrations_max": 32,
+    "preserve": "V1-V32 byte-for-byte"
+  },
+  "existing_relations_to_extend": [
+    {
+      "name": "merchant.member_grant",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "change": "add exactly5 Merchant permissions to current CHECK and FACILITY allowlist; no backfill",
+      "id": "OSC-AMEND-01"
+    },
+    {
+      "name": "merchant.configure_local_business_permissions",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "change": "extend exact5 rights only; keep signature/audit and all old rights",
+      "id": "OSC-AMEND-02"
+    },
+    {
+      "name": "merchant.configure_local_facility_grants",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "change": "extend exact5 rights only; keep signature/audit, no auto-grant",
+      "id": "OSC-AMEND-03"
+    },
+    {
+      "name": "orders.support_staff_grant",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "change": "add UNIQUE(id,account_id,permission) only if needed for binding FK; keep current codes, existing active uniqueness, checks/rows/semantics; no grant created",
+      "id": "OSC-AMEND-04"
+    }
+  ],
+  "new_operator_functions": [
+    {
+      "name": "orders.configure_local_organization_support_staff",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "arguments": [
+        "request UUID",
+        "action BIND|UNBIND",
+        "organization UUID",
+        "account UUID",
+        "permission existing SUPPORT_TRIAGE|SUPPORT_HANDLE",
+        "reason string1..300"
+      ],
+      "scope": "offline Local/Test operator role only; BIND requires eligible target already holding canonical ACTIVE grant; UNBIND can revoke an existing binding even after target/global grant revocation; runtime/public EXECUTE denied",
+      "id": "OSC-OPERATOR-01",
+      "returns": {
+        "requestId": "UUID",
+        "outcome": "BOUND|UNBOUND",
+        "version": "positive int64",
+        "organizationId": "UUID",
+        "accountId": "UUID",
+        "permission": "existing SUPPORT_TRIAGE|SUPPORT_HANDLE"
+      }
+    }
+  ],
+  "new_configuration": [
+    {
+      "name": "support.tickets.organization-enabled",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "default": false,
+      "guards": "existing support.tickets.enabled && environment LOCAL|TEST && customer.rollout SANDBOX && not prod/production",
+      "id": "OSC-CONFIG-01"
+    }
+  ],
+  "common_wire_guards": "strict JSON/query keys, TLS/Bearer/admission/no-store; Origin/CSRF for mutations and read-only search POST; no credentials/PII in URLs/logs; no blind POST retry; scoped actor/purpose receipts",
+  "delivery_exclusions": [
+    "Claim/Compensation",
+    "Shipment mutation/cancel/retry/return",
+    "Evidence upload/download contract",
+    "COD/Finance/Carrier shipping authority",
+    "published SLA/due dates",
+    "email/SMS/Push",
+    "real-account grant or localhost migration",
+    "production activation"
+  ],
+  "implementation_status": {
+    "new_backend_api": "NOT_STARTED_AWAITING_TECHNICAL_CONFIRMATION",
+    "new_dto_runtime": "NOT_STARTED_AWAITING_TECHNICAL_CONFIRMATION",
+    "new_schema": "NOT_STARTED_AWAITING_TECHNICAL_CONFIRMATION",
+    "new_permission_allowlists": "NOT_STARTED_AWAITING_TECHNICAL_CONFIRMATION",
+    "new_migration_tests": "NOT_STARTED_AWAITING_TECHNICAL_CONFIRMATION"
+  },
+  "module_contracts": [
+    {
+      "name": "merchant.api.customer.BusinessWorkspaces.Scope",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "add_methods": [
+        "boolean eligibleSupportAssignee(UUID account, UUID facility)",
+        "List<AssignmentMember> supportAssignmentMembers(UUID facility, int page)"
+      ],
+      "preserve": "all existing scope methods and current admission unchanged; safe discovery followed by Identity target locking",
+      "id": "OSC-MODULE-01"
+    },
+    {
+      "name": "orders.api.OrganizationSupportTickets",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "methods": "typed module operations corresponding exactly to OSC-API-01..23 using the manifest DTO definitions",
+      "ownership": "same Orders Support domain; no alternate Identity/Support Staff grant engine",
+      "id": "OSC-MODULE-02"
+    },
+    {
+      "name": "orders.internal.domain.SupportCasePolicy",
+      "status": "PENDING_EXPLICIT_TECHNICAL_CONFIRMATION",
+      "change": "shared pure Personal/Organization text/category/state policy with Personal regression; canonical grant checks reused, Organization binding adds restriction only",
+      "id": "OSC-MODULE-03"
+    }
+  ]
+}
