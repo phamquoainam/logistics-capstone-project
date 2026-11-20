@@ -1,5 +1,6 @@
 package com.elogistic.backend.workflow.internal.web;
 import com.elogistic.backend.identity.api.customer.*;
+import com.elogistic.backend.identity.api.staff.*;
 import com.elogistic.backend.orders.api.SupportTickets;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
@@ -14,13 +15,24 @@ import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.core.StreamReadFeature;
 import static com.elogistic.backend.workflow.internal.web.CustomerProfileHttp.problem;
 
-/** Both route groups are protected by the existing Customer guard; Orders checks case authority again. */
+/** Customer-owned tickets retain Customer admission; CSKH operations use dedicated Staff admission. */
 @RestController @Profile("customer")
 public final class SupportTicketHttp {
     private static final String PATH="/api/v1/customer/support-tickets",STAFF="/api/v1/support-operations";
     private static final JsonMapper JSON=JsonMapper.builder().enable(StreamReadFeature.STRICT_DUPLICATE_DETECTION).build();
     private final CustomerAdmission admission;private final CustomerRequestContext requests;private final SupportTickets tickets;
-    public SupportTicketHttp(CustomerAdmission admission,CustomerRequestContext requests,SupportTickets tickets){this.admission=admission;this.requests=requests;this.tickets=tickets;}
+    private final StaffAdmission staff;private final StaffRequestContext staffRequests;
+    public SupportTicketHttp(CustomerAdmission admission,CustomerRequestContext requests,SupportTickets tickets){this(admission,requests,tickets,null,null);}
+    @org.springframework.beans.factory.annotation.Autowired
+    public SupportTicketHttp(CustomerAdmission admission,CustomerRequestContext requests,SupportTickets tickets,StaffAdmission staff,StaffRequestContext staffRequests){this.admission=admission;this.requests=requests;this.tickets=tickets;this.staff=staff;this.staffRequests=staffRequests;}
+    private <T>T staffExecute(Set<UUID> referenced,Function<SupportTickets.Access,T> work){
+        if(staff==null||staffRequests==null)throw problem(503,"STAFF_UNAVAILABLE");
+        var r=staffRequests.current();try{return staff.execute(r.encodedAccess(),r.requestId(),referenced,c->work.apply(new SupportTickets.Access(){
+            public UUID accountId(){requireCurrent();return c.actor().accountId();}public UUID requestId(){requireCurrent();return c.requestId();}
+            public void requireCurrent(){staff.requireCurrent(c);}public void meaningfulAction(){staff.meaningfulAction(c);}
+            public boolean eligibleAccount(UUID id){requireCurrent();return c.subjects().containsKey(id)&&c.subjects().get(id).eligible()&&c.subjects().get(id).principalType()==StaffAdmission.PrincipalType.STAFF;}
+        }));}catch(SupportTickets.Failure rejected){throw problem(switch(rejected.code()){case "VALIDATION_FAILED"->400;case "RESOURCE_NOT_FOUND"->404;case "SUPPORT_AUTHORITY_REQUIRED","SUPPORT_ASSIGNMENT_REQUIRED"->403;case "PRECONDITION_STALE","IDEMPOTENCY_CONFLICT","SUPPORT_STATE_CONFLICT"->409;case "RATE_LIMITED"->429;default->503;},rejected.code());}
+    }
     private <T>T execute(Set<UUID> referenced,Function<SupportTickets.Access,T> work){
         var request=requests.current();try{return admission.execute(request.encodedAccess(),request.requestId(),referenced,c->work.apply(new SupportTickets.Access(){public UUID accountId(){requireCurrent();return c.actor().accountId();}public UUID requestId(){requireCurrent();return c.requestId();}public void requireCurrent(){admission.requireCurrent(c);}public void meaningfulAction(){admission.meaningfulAction(c);}public boolean eligibleAccount(UUID id){requireCurrent();return c.subjects().containsKey(id)&&c.subjects().get(id).eligible();}}));}
         catch(SupportTickets.Failure rejected){int status=switch(rejected.code()){case "VALIDATION_FAILED"->400;case "RESOURCE_NOT_FOUND"->404;case "SUPPORT_AUTHORITY_REQUIRED","SUPPORT_ASSIGNMENT_REQUIRED"->403;case "PRECONDITION_STALE","IDEMPOTENCY_CONFLICT","SUPPORT_STATE_CONFLICT"->409;case "RATE_LIMITED"->429;default->503;};throw problem(status,rejected.code());}
@@ -34,10 +46,10 @@ public final class SupportTicketHttp {
     @PostMapping(PATH+"/{id}/acknowledgements") public ResponseEntity<SupportTickets.Detail> acknowledge(@PathVariable String id,HttpServletRequest r)throws IOException{return customerCommand(id,r,"ACKNOWLEDGE");}
     private ResponseEntity<SupportTickets.Detail> customerCommand(String id,HttpServletRequest r,String operation)throws IOException{UUID key=key(r),target=uuid(id);long version=version(r);String message;if(operation.equals("ACKNOWLEDGE")){if(r.getInputStream().read()!=-1)throw problem(400,"VALIDATION_FAILED");message=null;}else message=string(body(r,Set.of("message"),Set.of("message")),"message");String value=message;return response(execute(a->tickets.customerCommand(a,target,operation,value,version,key)));}
     @GetMapping("/api/v1/customer/support-receipts/{operation}/{key}") public SupportTickets.Receipt receipt(@PathVariable String operation,@PathVariable String key){return execute(a->tickets.receipt(a,operation,uuid(key)));}
-    @GetMapping(STAFF+"/queue") public SupportTickets.Page queue(HttpServletRequest r){query(r,Set.of("page","size"));return execute(a->tickets.queue(a,page(r)));}
-    @GetMapping(STAFF+"/cases/{id}") public ResponseEntity<SupportTickets.Detail> assigned(@PathVariable String id){return response(execute(a->tickets.assigned(a,uuid(id))));}
-    @PostMapping(STAFF+"/cases/{id}/assignments") public ResponseEntity<SupportTickets.Summary> assign(@PathVariable String id,HttpServletRequest r)throws IOException{UUID key=key(r),target=uuid(id),assignee=uuid(string(body(r,Set.of("assigneeAccountId"),Set.of("assigneeAccountId")),"assigneeAccountId"));long version=version(r);var result=execute(Set.of(assignee),a->tickets.assign(a,target,assignee,version,key));return ResponseEntity.ok().eTag(etag(result.version())).body(result);}
-    @PostMapping(STAFF+"/cases/{id}/transitions") public ResponseEntity<SupportTickets.Detail> transition(@PathVariable String id,HttpServletRequest r)throws IOException{UUID key=key(r),target=uuid(id);long version=version(r);var v=body(r,Set.of("action","message"),Set.of("action","message"));return response(execute(a->tickets.transition(a,target,string(v,"action"),string(v,"message"),version,key)));}
+    @GetMapping(STAFF+"/queue") public SupportTickets.Page queue(HttpServletRequest r){query(r,Set.of("page","size"));return staffExecute(Set.of(),a->tickets.queue(a,page(r)));}
+    @GetMapping(STAFF+"/cases/{id}") public ResponseEntity<SupportTickets.Detail> assigned(@PathVariable String id){return response(staffExecute(Set.of(),a->tickets.assigned(a,uuid(id))));}
+    @PostMapping(STAFF+"/cases/{id}/assignments") public ResponseEntity<SupportTickets.Summary> assign(@PathVariable String id,HttpServletRequest r)throws IOException{UUID key=key(r),target=uuid(id),assignee=uuid(string(body(r,Set.of("assigneeAccountId"),Set.of("assigneeAccountId")),"assigneeAccountId"));long version=version(r);var result=staffExecute(Set.of(assignee),a->tickets.assign(a,target,assignee,version,key));return ResponseEntity.ok().eTag(etag(result.version())).body(result);}
+    @PostMapping(STAFF+"/cases/{id}/transitions") public ResponseEntity<SupportTickets.Detail> transition(@PathVariable String id,HttpServletRequest r)throws IOException{UUID key=key(r),target=uuid(id);long version=version(r);var v=body(r,Set.of("action","message"),Set.of("action","message"));return response(staffExecute(Set.of(),a->tickets.transition(a,target,string(v,"action"),string(v,"message"),version,key)));}
     private static ResponseEntity<SupportTickets.Detail> response(SupportTickets.Detail d){return ResponseEntity.ok().eTag(etag(d.ticket().version())).body(d);}
     private static String etag(long version){return "\"v"+version+"\"";}
     private static String string(JsonNode v,String field){if(!v.get(field).isString())throw problem(400,"VALIDATION_FAILED");return v.get(field).asString();}

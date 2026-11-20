@@ -207,6 +207,30 @@ def local_link_errors(path,text):
         if bad:errors.append(path.relative_to(ROOT).as_posix()+' -> '+target)
     return errors
 
+def reviewed_staff_bootstrap_only(name):
+    """Owner ACL-05 amendment: two bootstrap hooks, byte-identical ownership/privacy protocol.
+
+    Pin the prior protocol independently of the editable source inventory. Removing,
+    moving or changing any original code, or adding any other line, still fails.
+    """
+    protocols={
+        'app/backend/src/test/java/com/elogistic/backend/testsupport/PostgresTestcontainersSupport.java':(
+            '825f33bb432fc30338a1ac3e2164ca74679608282d61e9931b9dc9b4e7749fa8',
+            (b'            StaffRoleTestBootstrap.roles(c, owner);\n',b'            StaffRoleTestBootstrap.database(c, owner);\n')),
+        'scripts/ci/prepare-postgres.py':(
+            '52f33ac42651f5415c1ed0d7ca87ab28c3876bc8ef939b557c79429710374c47',
+            (b"    sql += __import__('staff_role_prerequisites').roles(owner)\n",b"{__import__('staff_role_prerequisites').database(owner)}\n"))
+    }
+    if name not in protocols:return False
+    expected,hooks=protocols[name]
+    try:
+        source=(ROOT/name).read_bytes().replace(b'\r\n',b'\n')
+        for hook in hooks:
+            if source.count(hook)!=1:return False
+            source=source.replace(hook,b'',1)
+        return hashlib.sha256(source).hexdigest()==expected
+    except OSError:return False
+
 def implementation_source_errors(changed,scope):
     """Explicit Owner-authorized source manifest; docs-only default protection stays intact."""
     errors=[]
@@ -222,7 +246,7 @@ def implementation_source_errors(changed,scope):
         if name.startswith(('contracts/openapi/identity-access','specs/001-platform-foundation/','specs/002-identity-access/')) or re.match(r'app/backend/src/main/resources/db/migration/V[1-6]__',name):
             errors.append('immutable accepted source '+name)
         if name.endswith(('PostgresTestcontainersSupport.java','TestcontainersRuntimePolicy.java')) or name in {'scripts/ci/run-backend.sh','scripts/ci/prepare-postgres.py'}:
-            errors.append('runtime ownership/privacy protocol is not an inventory amendment '+name)
+            if not reviewed_staff_bootstrap_only(name):errors.append('runtime ownership/privacy protocol is not an inventory amendment '+name)
     return errors
 
 def run(implementation=False):

@@ -4,6 +4,7 @@ import importlib.util
 import json
 from pathlib import Path
 import unittest
+from unittest.mock import patch
 
 PATH = Path(__file__).with_name("validate.py")
 spec = importlib.util.spec_from_file_location("v3_validate", PATH)
@@ -12,6 +13,17 @@ spec.loader.exec_module(v)
 
 
 class MappingIntegrityTests(unittest.TestCase):
+    def test_reviewed_staff_bootstrap_does_not_change_runtime_protocol(self):
+        path='app/backend/src/test/java/com/elogistic/backend/testsupport/PostgresTestcontainersSupport.java'
+        source=(v.ROOT/path).read_bytes()
+        self.assertTrue(v.reviewed_staff_bootstrap_only(path))
+        for mutated in (source+b'\n// unrelated change\n',source.replace(b'StaffRoleTestBootstrap.roles(c, owner);',b'StaffRoleTestBootstrap.roles(c, owner);\n            StaffRoleTestBootstrap.roles(c, owner);'),source.replace(b'StaffRoleTestBootstrap.database(c, owner);',b'// skipped'),b'// ownership cleanup removed\n'):
+            with patch.object(Path,'read_bytes',return_value=mutated):self.assertFalse(v.reviewed_staff_bootstrap_only(path))
+        self.assertFalse(v.reviewed_staff_bootstrap_only('scripts/ci/run-backend.sh'))
+        self.assertTrue(v.reviewed_staff_bootstrap_only('scripts/ci/prepare-postgres.py'))
+        source=(v.ROOT/'scripts/ci/prepare-postgres.py').read_bytes()
+        with patch.object(Path,'read_bytes',return_value=source+b'\n# cleanup bypass\n'):
+            self.assertFalse(v.reviewed_staff_bootstrap_only('scripts/ci/prepare-postgres.py'))
     def test_implementation_manifest_requires_owner_source_and_declared_scope(self):
         path='app/backend/src/main/java/com/elogistic/backend/identity/internal/domain/CustomerEmail.java'
         scope=dict(authority='OWNER-S003-FULL-2026-10-27',baseline='715a41139f9724cbd3f20526786a61f673393564',paths=[path])

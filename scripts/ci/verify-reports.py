@@ -552,6 +552,26 @@ SUREFIRE_NAMES = {
 }
 
 
+# Owner standing source/test additions; collector/privacy functions remain byte-for-byte AST equivalent.
+CSKH_CLAIM_PG_REQUIRED = ['staffAuthorityBrowserUsesActualHttpsPostgresAndSmtp', 'staffCanonicalConcurrentReceiptLateFailureAndRevokedOperatorCannotBypassAuthority', 'staffResendInvalidatesOldProofAndConcurrentActivationHasOneReceipt', 'staffOutboxLeaseRecoveryExhaustionAndCancellationStayPurposeBound', 'staffExpiredCancelledAndLateAuditFailureCannotActivateIdentity', 'staffOfflineResendQuotaCountsCommittedRequestsAndPreservesExactReplay', 'claimIntakeHttpPersistsBoundHistoryAndNeverDecidesCompensation', 'claimEvidenceRequiresPersistedReservationScreeningAndCurrentAuthority', 'claimEvidenceHttpScreensPersistsRetriesAndDeniesRevocationAfterExternalIo', 'claimReportsAndNoticesUseActualScopedEventsAndTransactionalPreferences', 'claimIntakeBrowserUsesRealMerchantStaffAndPostgres', 'claimIntakeConcurrentReplayLateFailureAndCurrentMembershipAreEnforced', 'claimIntakeRejectsGeneralAndForeignTicketsAndIsDisabledByDefault']
+CUSTOMER_ADMISSION_PG_REQUIRED += CSKH_CLAIM_PG_REQUIRED
+CSKH_CLAIM_PG_INSERTIONS = [('customerEntryBrowserUsesActualHttpsPostgresAndSmtp', ['staffAuthorityBrowserUsesActualHttpsPostgresAndSmtp']), ('supportTicketConversationRequiresCurrentOwnerAndAssignedStaff', ['staffCanonicalConcurrentReceiptLateFailureAndRevokedOperatorCannotBypassAuthority', 'staffResendInvalidatesOldProofAndConcurrentActivationHasOneReceipt', 'staffOutboxLeaseRecoveryExhaustionAndCancellationStayPurposeBound', 'staffExpiredCancelledAndLateAuditFailureCannotActivateIdentity', 'staffOfflineResendQuotaCountsCommittedRequestsAndPreservesExactReplay']), ('organizationSupportReplayQuotaAndLateFailureAreAtomic', ['claimIntakeHttpPersistsBoundHistoryAndNeverDecidesCompensation', 'claimEvidenceRequiresPersistedReservationScreeningAndCurrentAuthority', 'claimEvidenceHttpScreensPersistsRetriesAndDeniesRevocationAfterExternalIo', 'claimReportsAndNoticesUseActualScopedEventsAndTransactionalPreferences', 'claimIntakeBrowserUsesRealMerchantStaffAndPostgres', 'claimIntakeConcurrentReplayLateFailureAndCurrentMembershipAreEnforced', 'claimIntakeRejectsGeneralAndForeignTicketsAndIsDisabledByDefault'])]
+for _anchor, _methods in CSKH_CLAIM_PG_INSERTIONS:
+    _at = REQUIRED[IDENTITY_GRANTS].index(_anchor) if _anchor is not None else len(REQUIRED[IDENTITY_GRANTS])
+    REQUIRED[IDENTITY_GRANTS][_at:_at] = _methods
+CSKH_CLAIM_MIGRATION_REQUIRED = ['staffMigrationFailureRollsBackDefinitionAndHistoryWithoutRepair', 'claimIntakeV38StartsEmptyPreservesPriorChecksumsAndRejectsFinancialStates', 'staffRoleBootstrapPreservesMigrationAndRuntimeLeastPrivilege', 'staffV36StartsDisabledAndRejectsRawAuthorityWrites', 'staffV36ProvisionRequiresSealAndReplaysWithoutNewAuthority', 'staffV37CanonicalReceiptsAreRevokeSafeAndNotOrganizationAuthority', 'staffV36RealCryptoActivationAndSessionAudienceStayIsolated']
+CUSTOMER_MIGRATION_PG_REQUIRED += CSKH_CLAIM_MIGRATION_REQUIRED
+REQUIRED[IDENTITY_MIGRATION] = CSKH_CLAIM_MIGRATION_REQUIRED + REQUIRED[IDENTITY_MIGRATION]
+REQUIRED['com.elogistic.backend.identity.internal.ProductionStaffConfigurationTests'] = ['defaultsDoNotRequireOrGenerateAnySecret', 'explicitEnablementRequiresAllIndependentIsolationGates']
+REQUIRED['com.elogistic.backend.identity.internal.infrastructure.StaffInvitationProtectionTests'] = ['staffFormatTwoIsPurposeSeparatedFromLegacySystemContextAndFingerprint', 'staffContextRequiresExplicitPurposeAndNoSystemRealm']
+REQUIRED['com.elogistic.backend.identity.internal.web.ProductionStaffGuardTests'] = ['disabledBoundaryFailsClosedBeforeAuthenticationOrController', 'invitationAcceptRequiresTlsOriginStaffCsrfExactBodyAndRequestKey', 'runtimeEnvironmentFailureDoesNotIssueCsrfOrReadTokens']
+REQUIRED['com.elogistic.backend.orders.internal.domain.ClaimIntakePolicyTests'] = ['allegationsAndDocumentReviewNeverBecomeAnAwardOrCarrierState', 'textIsMeasuredInUnicodeCodePointsAndDoesNotSilentlyTruncate']
+REQUIRED['com.elogistic.backend.platform.internal.infrastructure.ReservedEvidenceBlobTests'] = ['serverReservationCreatesOnceAndExactRetryDoesNotOverwrite', 'reservationRejectsInvalidSizeKeyAndNonProgressingInput']
+REQUIRED['com.elogistic.backend.platform.internal.infrastructure.S3PrivateEvidenceStoreTests'] = ['privateReservedUploadUsesConditionalSseWriteAndIntegrityCheckedRead', 'exactConditionalRetryReadsExistingContentButNeverOverwritesDifferentContent', 'wrongContentEncryptionMetadataOrLengthFailsClosed']
+REQUIRED['com.elogistic.backend.platform.internal.infrastructure.ClamAvEvidenceScreeningTests'] = ['realClamInstreamProtocolAndMimeValidationAreFailClosed', 'mismatchedPolyglotAndActivePdfNeverReachScanner']
+REQUIRED['com.elogistic.backend.platform.internal.infrastructure.S3PrivateEvidenceHttpTests'] = ['sdkPerformsPrivateConditionalWriteAndIntegrityReadOverHttp']
+REQUIRED['com.elogistic.backend.platform.internal.infrastructure.PrivateEvidenceConfigurationTests'] = ['disabledConfigurationRequiresNoCredentialProviderOrStoragePath', 'explicitEnablementRejectsProductionAndMissingIndependentGates']
+
 def expected_suites(mode):
     return {k: v for k, v in REQUIRED.items()
             if (k in FOUNDATION_ONLY if mode == 'foundation' else mode != 'architecture' or '.architecture.' in k)

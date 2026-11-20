@@ -28,6 +28,10 @@ public final class IdentitySessions implements IdentitySessionCommands {
     public static IdentitySessions customer(IdentitySessionStore store, SessionCredentials credentials, SessionAdmission admission, Clock clock) {
         return new IdentitySessions(store, credentials, admission, clock, true);
     }
+    /** Fixed Staff composition reuses the same credential/session engine with exact email syntax. */
+    public static IdentitySessions staff(IdentitySessionStore store, SessionCredentials credentials, SessionAdmission admission, Clock clock) {
+        return new IdentitySessions(store, credentials, admission, clock, true);
+    }
     private Instant now() { return clock.instant().truncatedTo(ChronoUnit.MICROS); }
     private static IdentityCommandFailure fail(IdentityCommandFailure.Code code) { return new IdentityCommandFailure(code); }
     @Override public Result loginIdentity(Login c) {

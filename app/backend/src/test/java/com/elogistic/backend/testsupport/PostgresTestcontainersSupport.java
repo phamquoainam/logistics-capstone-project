@@ -225,6 +225,7 @@ public final class PostgresTestcontainersSupport {
             s.execute("CREATE ROLE "+migrator+" LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE PASSWORD '"+migrationPassword+"'");
             s.execute("CREATE ROLE "+runtime+" LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE PASSWORD '"+runtimePassword+"'");
             s.execute("GRANT "+owner+" TO "+migrator);
+            StaffRoleTestBootstrap.roles(c, owner);
             s.execute("CREATE DATABASE "+name+" OWNER "+owner);
             s.execute("REVOKE ALL ON DATABASE "+name+" FROM PUBLIC");
             s.execute("GRANT CONNECT ON DATABASE "+name+" TO "+migrator+","+runtime);
@@ -233,6 +234,7 @@ public final class PostgresTestcontainersSupport {
         try(Connection c=DriverManager.getConnection(url,pg.getUsername(),pg.getPassword());Statement s=c.createStatement()) {
             s.execute("REVOKE ALL ON SCHEMA public FROM PUBLIC");
             s.execute("CREATE SCHEMA platform AUTHORIZATION "+owner);
+            StaffRoleTestBootstrap.database(c, owner);
         }
         return new Database(name,owner,migrator,runtime,migrationPassword,runtimePassword,pg);
     }

@@ -1,5 +1,22 @@
 # CSKH Staff Authority — hợp đồng amendment đề xuất
 
+## Current Owner-authorized source/test amendment — 2026-11-19
+
+The Owner's Organization Support & Claims directive authorizes source/test and
+the exact ACL-05 resolution: privileged bootstrap of the three approved NOLOGIN
+roles on an isolated PG18 test cluster, outside Flyway. Owner/migrator stay
+NOCREATEROLE; runtime/operator cannot SET ROLE to either writer. Temporary writer
+schema CREATE permits only function ownership transfer and is revoked in the
+migration transaction. V36/V37 validate prerequisites, never CREATE ROLE.
+
+This supersedes only the prior role-creation placement and implementation-pending
+boundary below. Original approved manifest `acf43f4e…71ebb4` is preserved outside
+the repository; updated manifest SHA-256 is
+`1fb62f5260b036c9526f56d1ff4addf1cc4414d45f17ddacb69a77a74d4b5b23`.
+The original review content below remains historical. Demo/Production deployment,
+provisioning, grants, binding, runtime activation and Git publication remain excluded.
+Actual progress and failures belong in [execution evidence](cskh-staff-authority-execution.md).
+
 Ngày: 2026-11-18. Trạng thái: **[PROPOSED] — TECHNICAL DESIGN ONLY**.
 Checkpoint: `CSKH_STAFF_AUTHORITY_TECHNICAL_REVIEW_READY`.
 

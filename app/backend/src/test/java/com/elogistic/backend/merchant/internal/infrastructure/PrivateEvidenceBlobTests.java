@@ -1,6 +1,7 @@
 package com.elogistic.backend.merchant.internal.infrastructure;
 
 import com.elogistic.backend.merchant.internal.application.port.PrivateEvidenceBlobs;
+import com.elogistic.backend.platform.internal.infrastructure.FileSystemPrivateEvidenceStore;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
@@ -13,9 +14,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class PrivateEvidenceBlobTests {
     @TempDir Path temporary;
-    private FileSystemPrivateEvidenceBlobs store;private Path root;
+    private FileSystemPrivateEvidenceStore store;private Path root;
     private static final byte[] DATA="Synthetic private evidence bytes".getBytes(StandardCharsets.US_ASCII);
-    @BeforeEach void setup(){root=temporary.resolve("private-evidence");store=new FileSystemPrivateEvidenceBlobs(root,List.of(temporary.resolve("public")));}
+    @BeforeEach void setup(){root=temporary.resolve("private-evidence");store=new FileSystemPrivateEvidenceStore(root,List.of(temporary.resolve("public")));}
     private PrivateEvidenceBlobs.Blob put(){return store.put(new ByteArrayInputStream(DATA));}
     private long count()throws IOException{try(var files=Files.list(root)){return files.filter(path->!path.getFileName().toString().equals(".private-evidence-identity")).count();}}
     @Test void privateQuarantineRoundTripHasServerKeyExactDigestAndDefensiveContent()throws Exception{
@@ -39,8 +40,8 @@ class PrivateEvidenceBlobTests {
     }
     @Test void publicRelativeOrMissingParentRootCannotBeConfigured()throws Exception{
         var publicRoot=Files.createDirectory(temporary.resolve("public-root"));
-        for(Path invalid:List.of(Path.of("relative-root"),publicRoot,publicRoot.resolve("private"),temporary.resolve("missing-parent").resolve("root")))assertEquals("PRIVATE_EVIDENCE_STORAGE_CONFIGURATION_INVALID",assertThrows(IllegalStateException.class,()->new FileSystemPrivateEvidenceBlobs(invalid,List.of(publicRoot)),invalid.toString()).getMessage());
-        assertThrows(IllegalStateException.class,()->new FileSystemPrivateEvidenceBlobs(root,List.of()));assertThrows(IllegalStateException.class,()->new FileSystemPrivateEvidenceBlobs(root,List.of(Path.of("relative-public"))));assertEquals(0,count());
+        for(Path invalid:List.of(Path.of("relative-root"),publicRoot,publicRoot.resolve("private"),temporary.resolve("missing-parent").resolve("root")))assertEquals("PRIVATE_EVIDENCE_STORAGE_CONFIGURATION_INVALID",assertThrows(IllegalStateException.class,()->new FileSystemPrivateEvidenceStore(invalid,List.of(publicRoot)),invalid.toString()).getMessage());
+        assertThrows(IllegalStateException.class,()->new FileSystemPrivateEvidenceStore(root,List.of()));assertThrows(IllegalStateException.class,()->new FileSystemPrivateEvidenceStore(root,List.of(Path.of("relative-public"))));assertEquals(0,count());
     }
     @Test void insecureExistingPermissionsAreRejectedWithoutRepairOrContentLoss()throws Exception{
         var blob=put();var posix=Files.getFileAttributeView(root,PosixFileAttributeView.class,LinkOption.NOFOLLOW_LINKS);
@@ -48,7 +49,7 @@ class PrivateEvidenceBlobTests {
         else{var acl=Files.getFileAttributeView(root,AclFileAttributeView.class,LinkOption.NOFOLLOW_LINKS);assertNotNull(acl);var original=acl.getAcl();var changed=new ArrayList<>(original);changed.add(AclEntry.newBuilder().setType(AclEntryType.DENY).setPrincipal(acl.getOwner()).setPermissions(AclEntryPermission.WRITE_DATA).build());try{acl.setAcl(changed);deniedExisting(blob);assertEquals(changed,acl.getAcl());}finally{acl.setAcl(original);}}
         try(var content=store.read(blob)){assertArrayEquals(DATA,content.bytes());}
     }
-    private void deniedExisting(PrivateEvidenceBlobs.Blob blob){assertThrows(IllegalStateException.class,()->new FileSystemPrivateEvidenceBlobs(root,List.of(temporary.resolve("public"))));assertThrows(PrivateEvidenceBlobs.Unavailable.class,this::put);assertThrows(PrivateEvidenceBlobs.Unavailable.class,()->store.read(blob));}
+    private void deniedExisting(PrivateEvidenceBlobs.Blob blob){assertThrows(IllegalStateException.class,()->new FileSystemPrivateEvidenceStore(root,List.of(temporary.resolve("public"))));assertThrows(PrivateEvidenceBlobs.Unavailable.class,this::put);assertThrows(PrivateEvidenceBlobs.Unavailable.class,()->store.read(blob));}
     @Test void nonRegularObjectsAndPosixLinksCannotBeReadAsEvidence()throws Exception{
         var blob=put();Path path=root.resolve(blob.key().toString());Files.delete(path);Files.createDirectory(path);assertThrows(PrivateEvidenceBlobs.Unavailable.class,()->store.read(blob));Files.delete(path);
         if(Files.getFileAttributeView(root,PosixFileAttributeView.class)!=null){Path foreign=temporary.resolve("foreign");Files.write(foreign,DATA);Files.setPosixFilePermissions(foreign,PosixFilePermissions.fromString("rw-------"));Files.createSymbolicLink(path,foreign);try{assertThrows(PrivateEvidenceBlobs.Unavailable.class,()->store.read(blob));}finally{Files.delete(path);}Files.createLink(path,foreign);try{assertThrows(PrivateEvidenceBlobs.Unavailable.class,()->store.read(blob));}finally{Files.delete(path);}assertArrayEquals(DATA,Files.readAllBytes(foreign));}
@@ -58,7 +59,7 @@ class PrivateEvidenceBlobTests {
         assertThrows(IllegalArgumentException.class,()->new PrivateEvidenceBlobs.Blob(null,1,"0".repeat(64)));assertThrows(IllegalArgumentException.class,()->new PrivateEvidenceBlobs.Blob(UUID.randomUUID(),0,"0".repeat(64)));assertThrows(IllegalArgumentException.class,()->new PrivateEvidenceBlobs.Blob(UUID.randomUUID(),1,"../private-path"));assertThrows(PrivateEvidenceBlobs.Rejected.class,()->store.put(null));assertThrows(PrivateEvidenceBlobs.Unavailable.class,()->store.read(null));assertEquals("PrivateEvidenceBlob[redacted]",put().toString());
     }
     @Test void privateRootIdentitySurvivesRestartButTamperingFailsClosed()throws Exception{
-        var blob=put();var restarted=new FileSystemPrivateEvidenceBlobs(root,List.of(temporary.resolve("public")));try(var content=restarted.read(blob)){assertArrayEquals(DATA,content.bytes());}
+        var blob=put();var restarted=new FileSystemPrivateEvidenceStore(root,List.of(temporary.resolve("public")));try(var content=restarted.read(blob)){assertArrayEquals(DATA,content.bytes());}
         Path marker=root.resolve(".private-evidence-identity");byte[] original=Files.readAllBytes(marker);byte[] changed=original.clone();changed[0]^=1;
         try{Files.write(marker,changed,StandardOpenOption.WRITE,StandardOpenOption.TRUNCATE_EXISTING);assertThrows(PrivateEvidenceBlobs.Unavailable.class,()->store.read(blob));assertThrows(PrivateEvidenceBlobs.Unavailable.class,this::put);}finally{Files.write(marker,original,StandardOpenOption.WRITE,StandardOpenOption.TRUNCATE_EXISTING);Arrays.fill(original,(byte)0);Arrays.fill(changed,(byte)0);}
         try(var content=store.read(blob)){assertArrayEquals(DATA,content.bytes());}

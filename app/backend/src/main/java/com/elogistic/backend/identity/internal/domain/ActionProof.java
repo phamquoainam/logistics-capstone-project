@@ -10,7 +10,7 @@ import static com.elogistic.backend.identity.internal.domain.DomainViolation.Rea
 public record ActionProof(UUID id, UUID accountId, Purpose purpose, Instant createdAt,
                           Instant expiresAt, State state, Instant endedAt) {
     public enum Purpose {
-        INVITATION(Duration.ofHours(24)), RECOVERY(Duration.ofMinutes(15));
+        INVITATION(Duration.ofHours(24)), RECOVERY(Duration.ofMinutes(15)), STAFF_INV(Duration.ofHours(24));
         private final Duration lifetime;
         Purpose(Duration lifetime) { this.lifetime = lifetime; }
         public Duration lifetime() { return lifetime; }

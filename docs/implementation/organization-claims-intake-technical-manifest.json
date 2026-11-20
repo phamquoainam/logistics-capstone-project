@@ -1,0 +1,389 @@
+{
+  "schema_version": 1,
+  "authority": "Owner Organization Support & Claims standing source/test authorization; explicit intake/evidence first, compensation BLOCKED",
+  "status": "SOURCE_TEST_ONLY; no demo/Production deployment or grants",
+  "ids": "OCI-* are new bounded intake implementation IDs, not commercial Claim acceptance",
+  "apis": [
+    {
+      "id": "OCI-API-01",
+      "method": "GET",
+      "path": "/api/v1/merchant-organizations/{organizationId}/claim-intakes",
+      "authority": "support.read; current scoped Membership",
+      "errors": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        422,
+        428,
+        503
+      ]
+    },
+    {
+      "id": "OCI-API-02",
+      "method": "POST",
+      "path": "/api/v1/merchant-organizations/{organizationId}/claim-intakes",
+      "authority": "support.read + support.write; real SHIPMENT Ticket",
+      "errors": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        422,
+        428,
+        503
+      ]
+    },
+    {
+      "id": "OCI-API-03",
+      "method": "GET",
+      "path": "/api/v1/merchant-organizations/{organizationId}/claim-intakes/{id}",
+      "authority": "support.read + linked Ticket access",
+      "errors": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        422,
+        428,
+        503
+      ]
+    },
+    {
+      "id": "OCI-API-04",
+      "method": "POST",
+      "path": "/api/v1/merchant-organizations/{organizationId}/claim-intakes/{id}/supplements",
+      "authority": "support.write; ETag/idempotency",
+      "errors": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        422,
+        428,
+        503
+      ]
+    },
+    {
+      "id": "OCI-API-05",
+      "method": "GET",
+      "path": "/api/v1/merchant-organizations/{organizationId}/claim-intake-receipts/{operation}/{key}",
+      "authority": "original actor + current write access",
+      "errors": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        422,
+        428,
+        503
+      ]
+    },
+    {
+      "id": "OCI-API-06",
+      "method": "GET",
+      "path": "/api/v1/merchant-organizations/{organizationId}/claim-intake-reports",
+      "authority": "support.reports.read intersect support.read",
+      "errors": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        422,
+        428,
+        503
+      ]
+    },
+    {
+      "id": "OCI-API-07",
+      "method": "GET",
+      "path": "/api/v1/merchant-organizations/{organizationId}/claim-intake-notices",
+      "authority": "current recipient only + current scoped read",
+      "errors": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        422,
+        428,
+        503
+      ]
+    },
+    {
+      "id": "OCI-API-08",
+      "method": "GET",
+      "path": "/api/v1/merchant-organizations/{organizationId}/claim-intakes/{id}/evidence",
+      "authority": "current scoped read",
+      "errors": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        422,
+        428,
+        503
+      ]
+    },
+    {
+      "id": "OCI-API-09",
+      "method": "POST",
+      "path": "/api/v1/merchant-organizations/{organizationId}/claim-intakes/{id}/evidence-reservations",
+      "authority": "current write; ETag + key + server reservation",
+      "errors": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        422,
+        428,
+        503
+      ]
+    },
+    {
+      "id": "OCI-API-10",
+      "method": "PUT",
+      "path": "/api/v1/merchant-organizations/{organizationId}/claim-intakes/{id}/evidence/{evidenceId}",
+      "authority": "original reservation actor + current write; digest + scanner",
+      "errors": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        422,
+        428,
+        503
+      ]
+    },
+    {
+      "id": "OCI-API-11",
+      "method": "GET",
+      "path": "/api/v1/merchant-organizations/{organizationId}/claim-intakes/{id}/evidence/{evidenceId}",
+      "authority": "current read; CLEAN only; recheck after I/O",
+      "errors": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        422,
+        428,
+        503
+      ]
+    },
+    {
+      "id": "OCI-API-12",
+      "method": "GET",
+      "path": "/api/v1/support-operations/organization-cases/{id}/claim-intakes",
+      "authority": "fixed Staff admission + SUPPORT_HANDLE + Organization binding + exact Ticket assignment",
+      "errors": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        422,
+        428,
+        503
+      ]
+    },
+    {
+      "id": "OCI-API-13",
+      "method": "GET",
+      "path": "/api/v1/support-operations/organization-claim-intakes/{id}",
+      "authority": "same assigned Staff authority",
+      "errors": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        422,
+        428,
+        503
+      ]
+    },
+    {
+      "id": "OCI-API-14",
+      "method": "POST",
+      "path": "/api/v1/support-operations/organization-claim-intakes/{id}/commands",
+      "authority": "same assigned Staff authority; document review only",
+      "errors": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        422,
+        428,
+        503
+      ]
+    },
+    {
+      "id": "OCI-API-15",
+      "method": "GET",
+      "path": "/api/v1/support-operations/organization-claim-intakes/{id}/evidence",
+      "authority": "same assigned Staff authority",
+      "errors": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        422,
+        428,
+        503
+      ]
+    },
+    {
+      "id": "OCI-API-16",
+      "method": "GET",
+      "path": "/api/v1/support-operations/organization-claim-intakes/{id}/evidence/{evidenceId}",
+      "authority": "same assigned Staff authority; CLEAN; recheck after I/O",
+      "errors": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        422,
+        428,
+        503
+      ]
+    }
+  ],
+  "dto_records": {
+    "OrganizationClaimIntakes": [
+      [
+        "Create",
+        "UUID ticketId,String category,String narrative"
+      ],
+      [
+        "Summary",
+        "UUID id,UUID organizationId,UUID facilityId,UUID ticketId,UUID shipmentId,UUID creatorAccountId,String category,String state,long version,Instant createdAt,Instant updatedAt,String eligibility,String compensation"
+      ],
+      [
+        "Event",
+        "UUID id,String authorKind,String operation,String message,long version,Instant occurredAt"
+      ],
+      [
+        "Detail",
+        "Summary intake,List<Event> events,Set<String> allowedActions"
+      ],
+      [
+        "Page",
+        "List<Summary> items,int page,int size,boolean hasNext"
+      ],
+      [
+        "Receipt",
+        "UUID operationId,UUID targetId,String outcome,long version"
+      ],
+      [
+        "Report",
+        "String schemaVersion,UUID organizationId,Instant generatedAt,String total,Map<String,String> byState,Map<String,String> byCategory,String cleanEvidence,OrganizationSupportTickets.TimeSamples firstStaffResponse,OrganizationSupportTickets.TimeSamples intakeClosure,String slaState,String compensation"
+      ],
+      [
+        "Notice",
+        "UUID id,UUID intakeId,UUID ticketId,UUID eventId,String type,Instant createdAt"
+      ],
+      [
+        "Notices",
+        "List<Notice> items,int page,boolean hasNext"
+      ]
+    ],
+    "OrganizationClaimEvidence": [
+      [
+        "Input",
+        "String mime,long bytes,String sha256"
+      ],
+      [
+        "Evidence",
+        "UUID id,UUID intakeId,String mime,long bytes,String sha256,String state,Instant createdAt,Instant attachedAt,long version"
+      ],
+      [
+        "Permit",
+        "UUID organizationId,UUID actorId,Evidence evidence,UUID objectKey"
+      ]
+    ]
+  },
+  "server_only_record": "OrganizationClaimEvidence.Permit is not HTTP serialized; objectKey never leaves Backend",
+  "migration": {
+    "version": "38",
+    "path": "app/backend/src/main/resources/db/migration/V38__organization_claim_intake.sql",
+    "sha256": "e53544089747502cd9958a02b9508d35ef2508824d6118a152a0949bc980ae6a",
+    "deployment": "owned isolated PG18 only; V1-V35 unchanged; V36/V37 prerequisites; no V33 placeholder"
+  },
+  "tables": [
+    {
+      "id": "OCI-DB-01",
+      "table": "orders.organization_claim_intake",
+      "pk": "id",
+      "invariants": "same Org/Shipment/Ticket composite FKs; creator Membership; immutable identity; legal state/version; one open case per Org/Shipment/category"
+    },
+    {
+      "id": "OCI-DB-02",
+      "table": "orders.organization_claim_intake_event",
+      "pk": "id",
+      "invariants": "append-only, unique (intake_id,new_version), version/state chain, actor and current Merchant or assigned Staff authority"
+    },
+    {
+      "id": "OCI-DB-03",
+      "table": "orders.organization_claim_intake_receipt",
+      "pk": "id",
+      "invariants": "unique (Org,actor,operation,key), HMAC input binding, event composite FK, append-only, atomic deferred evidence"
+    },
+    {
+      "id": "OCI-DB-04",
+      "table": "orders.organization_claim_evidence",
+      "pk": "id",
+      "invariants": "server object UUID; same Org/case/creator; immutable MIME/bytes/SHA/HMAC; unique reservation key and reserved/attached event version; RESERVED->CLEAN; quota; correlated current-transaction events"
+    },
+    {
+      "id": "OCI-DB-05",
+      "table": "orders.organization_claim_notice",
+      "pk": "id",
+      "invariants": "real same-case event + current recipient Membership/pref/read scope; unique event/recipient; immutable; excludes self; actual event timestamp"
+    }
+  ],
+  "permissions": "No new grant or role template; reuse scoped support.read/write/reports.read and existing notification preferences. Staff SUPPORT_HANDLE is document review authority only.",
+  "transaction": "Identity/Organization current admission and existing lock order; atomic intake/event/receipt/notice/metadata. External scanner/storage I/O outside transaction, then reauthorize/finalize.",
+  "replay": "actor/Org/operation/key/input bound; reserve includes keyed exact metadata fingerprint. PUT is immutable resource/content bound and can safely finish after an uncertain DB/storage outcome. Revoke denies finalize/read, orphan remains private.",
+  "providers": {
+    "s3": "existing AWS SDK + default credentials chain; approved development bucket/region; no endpoint override, ACL/public URL/Delete; SSE-S3, conditional write and SHA-256",
+    "filesystem": "existing hardened engine moved to platform; mandatory explicit effective public/static/dev-server roots; no overwrite, traversal or link substitution",
+    "screening": "strict bounded PNG/JPEG/passive unencrypted PDF + ClamAV INSTREAM with total deadline; fail closed; no ImageIO disk cache"
+  },
+  "technical_limits": {
+    "file_bytes": 5242880,
+    "files_per_case": 10,
+    "case_bytes": 26214400,
+    "reservation_minutes": 15,
+    "pdf_pages": 20,
+    "image_pixels": 10000000
+  },
+  "policy_blocked": [
+    "commercial eligibility",
+    "submission/appeal windows",
+    "compensation assessment/award/approval",
+    "payout/refund/PAID",
+    "commercial SLA commitments",
+    "automatic retention/deletion of business objects"
+  ],
+  "out_of_scope": [
+    "Shipment mutation",
+    "Carrier acceptance/custody/tracking",
+    "COD/Finance ledger",
+    "Customer/Owner relabel",
+    "real grants/bindings/activation"
+  ],
+  "verification_report": "docs/implementation/organization-claims-intake-execution.md"
+}

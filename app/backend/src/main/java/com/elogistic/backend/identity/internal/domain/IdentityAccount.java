@@ -65,8 +65,18 @@ public record IdentityAccount(UUID id, Username username, Status status, Activat
 
     /** Application must hash the validated password and commit account + consumed proof atomically. */
     public ProofChange activate(ActionProof invitation, String password, long expected, Instant now) {
+        return activateInvitation(invitation,password,expected,now,ActionProof.Purpose.INVITATION);
+    }
+
+    /** Dedicated Staff path: principal eligibility is checked by the Identity-owned adapter/DB. */
+    public ProofChange activateStaffInvitation(ActionProof invitation, String password, long expected, Instant now) {
+        require(grants.isEmpty(), AUTHORITY_REQUIRED);
+        return activateInvitation(invitation,password,expected,now,ActionProof.Purpose.STAFF_INV);
+    }
+
+    private ProofChange activateInvitation(ActionProof invitation,String password,long expected,Instant now,ActionProof.Purpose purpose) {
         require(invitation != null, PROOF_INVALID);
-        ActionProof consumed = invitation.consume(ActionProof.Purpose.INVITATION, id, now);
+        ActionProof consumed = invitation.consume(purpose, id, now);
         version.requireExpected(expected);
         require(status == Status.PENDING_ACTIVATION, INVALID_STATE);
         PasswordPolicy.validateNew(password);

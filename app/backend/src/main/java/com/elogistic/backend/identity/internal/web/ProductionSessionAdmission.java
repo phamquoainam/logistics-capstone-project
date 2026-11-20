@@ -8,15 +8,20 @@ public final class ProductionSessionAdmission implements SessionAdmission {
     private final ThreadLocal<State> current=new ThreadLocal<>();
     private final IdentityBrowserState browser;private final IdentityRateLimiter limiter;
     private final boolean customer;
+    private final String subjectPrefix;
     public ProductionSessionAdmission(IdentityBrowserState browser,IdentityRateLimiter limiter){this(browser,limiter,false);}
-    public ProductionSessionAdmission(IdentityBrowserState browser,IdentityRateLimiter limiter,boolean customer){this.browser=Objects.requireNonNull(browser);this.limiter=Objects.requireNonNull(limiter);this.customer=customer;}
+    public ProductionSessionAdmission(IdentityBrowserState browser,IdentityRateLimiter limiter,boolean customer){this(browser,limiter,customer,"");}
+    public ProductionSessionAdmission(IdentityBrowserState browser,IdentityRateLimiter limiter,boolean customer,String subjectPrefix){
+        if(!Set.of("","STAFF:").contains(subjectPrefix) || customer&&!subjectPrefix.isEmpty())throw new IllegalArgumentException("SESSION_PURPOSE_INVALID");
+        this.browser=Objects.requireNonNull(browser);this.limiter=Objects.requireNonNull(limiter);this.customer=customer;this.subjectPrefix=subjectPrefix;
+    }
     AutoCloseable enter(UUID request,String cookie,String challenge){
         if(request==null||current.get()!=null)throw invalid();current.set(new State(request,cookie,challenge));return ()->current.remove();
     }
     @Override public void authorize(Operation operation,UUID request,UUID session,boolean present){
         State s=current.get();if(s==null||!s.request.equals(request)||operation==null||present!=(session!=null))throw invalid();
         browser.verify(s.cookie,s.challenge,session,operation==Operation.LOGIN);
-        if(operation==Operation.REFRESH)limiter.reserve(List.of(new IdentityRateLimiter.Subject(customer?IdentityRateLimiter.Policy.CUSTOMER_REFRESH_SESSION:IdentityRateLimiter.Policy.REFRESH_SESSION,session.toString())));
+        if(operation==Operation.REFRESH)limiter.reserve(List.of(new IdentityRateLimiter.Subject(customer?IdentityRateLimiter.Policy.CUSTOMER_REFRESH_SESSION:IdentityRateLimiter.Policy.REFRESH_SESSION,subjectPrefix+session)));
     }
     private static IdentityCommandFailure invalid(){return new IdentityCommandFailure(IdentityCommandFailure.Code.CSRF_REJECTED);}
 }
