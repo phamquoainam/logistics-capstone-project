@@ -1141,12 +1141,13 @@
       "test": "scripts/ci/test_verify_reports.py",
       "new_fixed_pg_methods": 13,
       "new_fixed_migration_methods": 7,
-      "new_fixed_unit_cases": 19,
+      "new_fixed_unit_cases": 20,
       "reference_fixture_totals": {
-        "h2": 721,
-        "postgres": 1226
+        "h2": 722,
+        "postgres": 1227
       },
-      "protocol": "Original Postgres ownership/privacy protocol unchanged except the two independently hash-verified prerequisite hooks."
+      "protocol": "Original Postgres ownership/privacy protocol unchanged except the two independently hash-verified prerequisite hooks.",
+      "ci_correction": "PR #50 CI exposed omitted staffUsesFixedAudienceAndRejectsCustomerAndSystemTokens in fixed Customer configuration inventory; add it as mandatory and test exact source inventory plus missing/skip/failure/error denial. Collector functions unchanged."
     }
   }
 }

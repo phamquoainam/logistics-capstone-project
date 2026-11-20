@@ -13,7 +13,7 @@ Original Owner-approved manifest SHA-256:
 The original bytes and WIP remain in verified private archives recorded below.
 Current manifest includes the subsequent standing-authorized bootstrap, precise
 source/runtime deltas and mandatory fixed report inventory; its SHA-256 is
-`1fb62f5260b036c9526f56d1ff4addf1cc4414d45f17ddacb69a77a74d4b5b23`.
+`1dde941494487dff283c323eaaa2ee043790d51ce976b8032f86a7f4925bf67e`.
 
 ### Source diff and boundaries
 
@@ -316,3 +316,19 @@ Current source/doc WIP is the bounded Staff + Claim intake/evidence implementati
 above. It will be integrated through a PR and current revision CI, without force
 push, squash/rebase, branch deletion or branch-protection bypass. No CI outcome or
 merge is claimed in this pre-publication record.
+
+### PR #50 fixed-inventory CI correction
+
+First PR integration run `44748213433`, head `223d1508aa8c7085ac0d8d2fc9befa82bde650b1`,
+synthetic merge `318e6d506794cba0b865ca17fe5369169282f2e0`:
+Architecture PASS; H2 collector FAIL with 718 recorded passed cases, zero test
+failures/errors, 17 allowed skips. The sixth Customer configuration case
+`staffUsesFixedAudienceAndRejectsCustomerAndSystemTokens` was omitted from the
+finite required inventory, causing the report parser to reject that suite.
+This is an inventory defect, not an H2 application assertion failure.
+
+TDD: two new report-policy regressions failed before the correction; both plus
+the exact reference-report totals test PASS after appending the omitted case.
+No collector/privacy function changed, no test was skipped or weakened. Golden
+fixture totals become H2=722/PG=1227; these remain synthetic policy-fixture counts,
+not observed full backend execution totals. Full current-revision CI is pending.

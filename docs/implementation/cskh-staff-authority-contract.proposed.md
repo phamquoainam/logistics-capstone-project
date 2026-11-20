@@ -12,7 +12,7 @@ migration transaction. V36/V37 validate prerequisites, never CREATE ROLE.
 This supersedes only the prior role-creation placement and implementation-pending
 boundary below. Original approved manifest `acf43f4e…71ebb4` is preserved outside
 the repository; updated manifest SHA-256 is
-`1fb62f5260b036c9526f56d1ff4addf1cc4414d45f17ddacb69a77a74d4b5b23`.
+`1dde941494487dff283c323eaaa2ee043790d51ce976b8032f86a7f4925bf67e`.
 The original review content below remains historical. Demo/Production deployment,
 provisioning, grants, binding, runtime activation and Git publication remain excluded.
 Actual progress and failures belong in [execution evidence](cskh-staff-authority-execution.md).

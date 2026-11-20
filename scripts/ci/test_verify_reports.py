@@ -284,8 +284,8 @@ class ReportGuardTests(unittest.TestCase):
         for name, methods in reports.S2_REQUIRED.items():
             self.assertEqual(len(methods), len(set(methods)), name)
         # Prior cases retained; local S3/SMTP adds two exact unit identities.
-        for mode, passed, skipped in [('architecture', 23, 0), ('h2', 721, 17),
-                                      ('postgres', 1226, 5), ('foundation', 5, 0)]:
+        for mode, passed, skipped in [('architecture', 23, 0), ('h2', 722, 17),
+                                      ('postgres', 1227, 5), ('foundation', 5, 0)]:
             with self.subTest(mode=mode):
                 self.fixture(mode)
                 self.assertTrue(self.check(mode))
@@ -1871,6 +1871,42 @@ class MerchantReportingInventoryTests(unittest.TestCase):
                             suite.set({'skipped': 'skipped', 'failure': 'failures', 'error': 'errors'}[outcome], '1')
                         self.save(suite)
                         self.assertFalse(self.check(mode))
+            path.write_bytes(original)
+            self.assertTrue(self.check(mode))
+
+class StaffConfigurationInventoryTests(unittest.TestCase):
+    setUp = ReportGuardTests.setUp
+    fixture = ReportGuardTests.fixture
+    save = ReportGuardTests.save
+    check = ReportGuardTests.check
+
+    def test_customer_configuration_inventory_matches_all_source_cases(self):
+        root = Path(__file__).resolve().parents[2]
+        suffix = 'identity.internal.ProductionCustomerConfigurationTests'
+        source = (root / ('app/backend/src/test/java/com/elogistic/backend/' + suffix.replace('.', '/') + '.java')).read_text(encoding='utf-8')
+        methods = re.findall(r'@Test\s+void\s+(\w+)\s*\(', source)
+        self.assertEqual(methods, reports.CUSTOMER_ADMISSION_UNIT_REQUIRED[suffix])
+        self.assertEqual(methods, reports.REQUIRED[reports.BASE + suffix])
+
+    def test_staff_audience_case_cannot_be_missing_skipped_or_failed(self):
+        cls = reports.BASE + 'identity.internal.ProductionCustomerConfigurationTests'
+        method = 'staffUsesFixedAudienceAndRejectsCustomerAndSystemTokens'
+        self.assertIn(method, reports.REQUIRED[cls])
+        for mode in ('h2', 'postgres'):
+            self.fixture(mode)
+            path = self.source / ('TEST-' + cls + '.xml')
+            original = path.read_bytes()
+            for outcome in ('missing', 'skipped', 'failure', 'error'):
+                with self.subTest(mode=mode, outcome=outcome):
+                    suite = ET.fromstring(original)
+                    case = next(c for c in suite if c.get('name') == method)
+                    if outcome == 'missing':
+                        suite.remove(case); suite.set('tests', str(len(suite.findall('testcase'))))
+                    else:
+                        ET.SubElement(case, outcome)
+                        suite.set({'skipped': 'skipped', 'failure': 'failures', 'error': 'errors'}[outcome], '1')
+                    self.save(suite)
+                    self.assertFalse(self.check(mode))
             path.write_bytes(original)
             self.assertTrue(self.check(mode))
 
