@@ -1,6 +1,6 @@
-package com.elogistic.backend.merchant.internal.infrastructure;
+package com.elogistic.backend.platform.internal.infrastructure;
 
-import com.elogistic.backend.merchant.internal.application.port.PrivateEvidenceBlobs;
+import com.elogistic.backend.platform.api.PrivateEvidenceStore;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -10,13 +10,13 @@ import java.security.MessageDigest;
 import java.util.*;
 
 /** Owner-approved SANDBOX filesystem adapter. No HTTP/static handler, scanner verdict or destructive purge. */
-public final class FileSystemPrivateEvidenceBlobs implements PrivateEvidenceBlobs {
+public final class FileSystemPrivateEvidenceStore implements PrivateEvidenceStore {
     private static final Set<PosixFilePermission> DIRECTORY=PosixFilePermissions.fromString("rwx------"),FILE=PosixFilePermissions.fromString("rw-------");
     private static final Set<AclEntryPermission> ACL=EnumSet.allOf(AclEntryPermission.class);
     private final Path root;private final UserPrincipal owner;private final boolean posix;
     private final Object rootKey;private final byte[] rootIdentity;
     private static final String IDENTITY=".private-evidence-identity";
-    public FileSystemPrivateEvidenceBlobs(Path root,List<Path> publicRoots){
+    public FileSystemPrivateEvidenceStore(Path root,List<Path> publicRoots){
         try{
             if(root==null || !root.isAbsolute() || publicRoots==null || publicRoots.isEmpty())throw new IOException();
             this.root=root.normalize();if(this.root.getParent()==null)throw new IOException();
@@ -89,10 +89,11 @@ public final class FileSystemPrivateEvidenceBlobs implements PrivateEvidenceBlob
         if(posix && ((Number)Files.getAttribute(path,"unix:nlink",LinkOption.NOFOLLOW_LINKS)).longValue()!=1)throw new IOException();
         return attrs;
     }
-    @Override public Blob put(InputStream source){
+    @Override public Blob put(InputStream source){return write(UUID.randomUUID(),source);}
+    private Blob write(UUID key,InputStream source){
         if(source==null)throw new Rejected();Path path=null;Object createdKey=null;FileTime createdTime=null;boolean owned=false,complete=false;byte[] buffer=new byte[8192];
         try{
-            root();UUID key=UUID.randomUUID();path=root.resolve(key.toString());
+            root();path=root.resolve(key.toString());
             var options=Set.<OpenOption>of(StandardOpenOption.CREATE_NEW,StandardOpenOption.WRITE,StandardOpenOption.SYNC,LinkOption.NOFOLLOW_LINKS);
             MessageDigest digest=MessageDigest.getInstance("SHA-256");long bytes=0;int empty=0;
             try(FileChannel channel=posix?FileChannel.open(path,options,PosixFilePermissions.asFileAttribute(FILE)):FileChannel.open(path,options)){
@@ -117,6 +118,34 @@ public final class FileSystemPrivateEvidenceBlobs implements PrivateEvidenceBlob
             }catch(IOException unavailable){/* Private owned orphan remains unavailable; no false confirmed deletion. */}
         }
     }
+    @Override public Blob put(UUID reservation,InputStream source){
+        if(reservation==null||reservation.equals(new UUID(0,0))||source==null)throw new Rejected();
+        byte[] bytes=null;Path staged=null;Object stagedKey=null;FileTime stagedTime=null;
+        try{
+            bytes=PrivateEvidenceBytes.read(source);var expected=new Blob(reservation,bytes.length,HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes)));
+            root();Path destination=root.resolve(reservation.toString());
+            if(Files.exists(destination,LinkOption.NOFOLLOW_LINKS)){
+                try(var existing=read(expected)){return expected;}
+            }
+            UUID temporary=UUID.randomUUID();write(temporary,new ByteArrayInputStream(bytes));
+            staged=root.resolve(temporary.toString());var created=file(staged);stagedKey=created.fileKey();stagedTime=created.creationTime();
+            // Expose only fully written/fsynced content; createLink never replaces another reservation.
+            try{Files.createLink(destination,staged);}
+            catch(FileAlreadyExistsException raced){try(var existing=read(expected)){return expected;}}
+            root();var target=Files.readAttributes(destination,BasicFileAttributes.class,LinkOption.NOFOLLOW_LINKS);
+            if(target.isSymbolicLink()||!Objects.equals(stagedKey,target.fileKey())||!stagedTime.equals(target.creationTime()))throw new IOException();
+            Files.delete(staged);staged=null;
+            if(posix)try(var directory=FileChannel.open(root,StandardOpenOption.READ)){directory.force(true);}
+            try(var existing=read(expected)){return expected;}
+        }catch(Rejected rejected){throw rejected;}catch(Exception unavailable){throw new Unavailable();}
+        finally{
+            if(bytes!=null)Arrays.fill(bytes,(byte)0);
+            if(staged!=null)try{
+                root();var current=Files.readAttributes(staged,BasicFileAttributes.class,LinkOption.NOFOLLOW_LINKS);
+                if(current.isRegularFile()&&!current.isSymbolicLink()&&Objects.equals(stagedKey,current.fileKey())&&stagedTime.equals(current.creationTime()))Files.delete(staged);
+            }catch(Exception retained){/* Private staged orphan remains denied; never delete another object. */}
+        }
+    }
     @Override public Content read(Blob expected){
         if(expected==null)throw new Unavailable();byte[] bytes=null;
         try{
@@ -133,5 +162,5 @@ public final class FileSystemPrivateEvidenceBlobs implements PrivateEvidenceBlob
             return new Content(bytes);
         }catch(Exception unavailable){throw new Unavailable();}finally{if(bytes!=null)Arrays.fill(bytes,(byte)0);}
     }
-    @Override public String toString(){return "FileSystemPrivateEvidenceBlobs[redacted]";}
+    @Override public String toString(){return "FileSystemPrivateEvidenceStore[redacted]";}
 }

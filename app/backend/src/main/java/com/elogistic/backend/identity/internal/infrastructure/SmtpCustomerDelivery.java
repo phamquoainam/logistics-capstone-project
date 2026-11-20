@@ -76,6 +76,40 @@ public final class SmtpCustomerDelivery implements CustomerDeliveryTransport {
                 try{if(decoded.length!=32 || !Arrays.equals(token,Base64.getUrlEncoder().withoutPadding().encode(decoded)))return outcome(Kind.BLOCKED);}
                 finally{Arrays.fill(decoded,(byte)0);}
             }
+            final byte[] mailToken=token;
+            return sendPrepared(intent.id(),intent.destination(),message->{
+            boolean membership=intent.proof().purpose()==CustomerProof.Purpose.MERCHANT_MEMBERSHIP;
+            boolean recovery=intent.proof().purpose()==CustomerProof.Purpose.CUSTOMER_RECOVERY;
+            message.setSubject(recovery?"movapost. - Xác minh khôi phục mật khẩu":"movapost. - Xác minh địa chỉ email","UTF-8");message.setSentDate(Date.from(clock.instant()));
+            String path=switch(intent.proof().purpose()){
+                case CUSTOMER_ENROLLMENT->"/verify-email";case CUSTOMER_RECOVERY->"/recover/confirm";case MERCHANT_MEMBERSHIP->"/organization-invitations/"+intent.proof().subjectId();
+                case SECURITY_EMAIL_CHANGE->"/personal/security";case BUSINESS_CONTACT->"/personal/profile";case LEGACY_CUSTOMER_LINK->"/personal/security/link-customer";
+                default->throw configuration();
+            };
+            String link=settings.portalOrigin()+path+"#proofId="+intent.proof().id()
+                +(intent.proof().emailOtp()?"&expiresAt="+intent.proof().expiresAt():"&proof="+new String(mailToken,StandardCharsets.US_ASCII));
+            if(membership)link=settings.portalOrigin()+path+"#proof="+new String(mailToken,StandardCharsets.US_ASCII);
+            boolean otp=intent.proof().emailOtp();
+            String code=otp?new String(mailToken,0,6,StandardCharsets.US_ASCII):"";
+            String title=recovery?"Xác minh khôi phục mật khẩu":"Xác minh địa chỉ email của bạn";
+            String instruction=recovery?"Vui lòng nhập mã xác minh sau vào màn hình khôi phục để đặt mật khẩu mới.":"Vui lòng nhập mã xác minh sau vào màn hình đăng ký để kích hoạt tài khoản.";
+            String content=otp
+                ?"movapost.\n"+title+"\n\n"+(recovery?"":"Chào mừng bạn đến với movapost.\n\n")+instruction+"\n\n"+code+"\nMã có hiệu lực trong 2 phút.\n\nNếu bạn không thực hiện yêu cầu này, hãy bỏ qua email.\n\nmovapost. — Gửi niềm tin, nối hành trình."
+                :"movapost.\n"+title+"\n\nMở liên kết sau để tiếp tục:\n"+link+"\nNếu bạn không thực hiện yêu cầu này, hãy bỏ qua email.";
+            if(membership){message.setSubject("ArgoPost - Lời mời tham gia doanh nghiệp","UTF-8");content="ArgoPost\nLời mời tham gia doanh nghiệp\n\nBạn được mời tham gia một doanh nghiệp trên ArgoPost. Mở lời mời và xác nhận bằng tài khoản đã xác minh chính địa chỉ email nhận thư này. Nếu chưa có tài khoản, hãy đăng ký và xác minh email trước.\n\n"+link+"\n\nLời mời có hiệu lực trong72 giờ và chỉ dùng một lần. Không chia sẻ liên kết này. Nếu không mong đợi lời mời, bạn có thể từ chối hoặc bỏ qua.\n\nArgoPost — Gửi niềm tin, nối hành trình.";}
+            if(otp){
+                var plain=new MimeBodyPart();plain.setText(content,"UTF-8");
+                var html=new MimeBodyPart();html.setContent("<!doctype html><html lang=\"vi\"><body style=\"margin:0;background:#f4f6fa;font-family:Arial,sans-serif;color:#192d4b\"><table role=\"presentation\" style=\"max-width:560px;width:100%;margin:32px auto;background:#fff;border-radius:12px\"><tr><td style=\"padding:32px\"><div style=\"font-size:28px;font-weight:800;letter-spacing:-1px\"><span style=\"color:#1955a6\">mova</span><span style=\"color:#ef751b\">post.</span></div><h1 style=\"font-size:21px;margin:28px 0 16px\">"+title+"</h1>"+(recovery?"":"<p>Chào mừng bạn đến với movapost.</p>")+"<p style=\"line-height:1.7\">"+instruction+"</p><div style=\"background:#fff5eb;border-radius:8px;text-align:center;padding:22px;margin:24px 0\"><strong style=\"font-size:34px;letter-spacing:8px;color:#192d4b\">"+code+"</strong><p style=\"font-size:13px;color:#67748a;margin:12px 0 0\">Có hiệu lực trong 2 phút</p></div><p style=\"font-size:14px;line-height:1.7\">Nếu bạn không thực hiện yêu cầu này, hãy bỏ qua email.</p><p style=\"border-top:1px solid #e9edf3;padding-top:22px;font-size:12px;color:#67748a\">movapost. — Gửi niềm tin, nối hành trình.</p></td></tr></table></body></html>","text/html; charset=UTF-8");
+                var alternatives=new MimeMultipart("alternative");alternatives.addBodyPart(plain);alternatives.addBodyPart(html);message.setContent(alternatives);
+            }else message.setText(content,"UTF-8");
+            });
+        }catch(RuntimeException blocked){return outcome(Kind.BLOCKED);}
+        finally{if(token!=null)Arrays.fill(token,(byte)0);}
+    }
+    @FunctionalInterface private interface MailContent {void apply(MimeMessage message)throws MessagingException;}
+    private Outcome sendPrepared(UUID id,String destination,MailContent content){
+        if(wireLoggingEnabled())return outcome(Kind.BLOCKED);
+        try{
             Properties properties=new Properties();
             properties.setProperty("mail.smtp.connectiontimeout","3000");properties.setProperty("mail.smtp.timeout","3000");properties.setProperty("mail.smtp.writetimeout","3000");
             properties.setProperty("mail.smtp.ssl.checkserveridentity","true");properties.setProperty("mail.smtp.ssl.protocols","TLSv1.3 TLSv1.2");
@@ -89,40 +123,31 @@ public final class SmtpCustomerDelivery implements CustomerDeliveryTransport {
             if(settings.mode()!=Mode.TEST_LOOPBACK){sender.setUsername(settings.username());sender.setPassword(settings.password());}
             sender.setJavaMailProperties(properties);
             Session session=sender.getSession();session.setDebug(false);session.setDebugOut(new PrintStream(OutputStream.nullOutputStream()));
-            String domain=settings.sender().substring(settings.sender().lastIndexOf('@')+1),messageId="<"+intent.id()+"@"+domain+">";
+            String domain=settings.sender().substring(settings.sender().lastIndexOf('@')+1),messageId="<"+id+"@"+domain+">";
             MimeMessage message=new MimeMessage(session){@Override protected void updateMessageID()throws MessagingException{setHeader("Message-ID",messageId);}};
-            message.setFrom(new InternetAddress(settings.sender(),true));message.setRecipient(jakarta.mail.Message.RecipientType.TO,new InternetAddress(intent.destination(),true));
-            boolean membership=intent.proof().purpose()==CustomerProof.Purpose.MERCHANT_MEMBERSHIP;
-            boolean recovery=intent.proof().purpose()==CustomerProof.Purpose.CUSTOMER_RECOVERY;
-            message.setSubject(recovery?"movapost. - Xác minh khôi phục mật khẩu":"movapost. - Xác minh địa chỉ email","UTF-8");message.setSentDate(Date.from(clock.instant()));
-            String path=switch(intent.proof().purpose()){
-                case CUSTOMER_ENROLLMENT->"/verify-email";case CUSTOMER_RECOVERY->"/recover/confirm";case MERCHANT_MEMBERSHIP->"/organization-invitations/"+intent.proof().subjectId();
-                case SECURITY_EMAIL_CHANGE->"/personal/security";case BUSINESS_CONTACT->"/personal/profile";case LEGACY_CUSTOMER_LINK->"/personal/security/link-customer";
-                default->throw configuration();
-            };
-            String link=settings.portalOrigin()+path+"#proofId="+intent.proof().id()
-                +(intent.proof().emailOtp()?"&expiresAt="+intent.proof().expiresAt():"&proof="+new String(token,StandardCharsets.US_ASCII));
-            if(membership)link=settings.portalOrigin()+path+"#proof="+new String(token,StandardCharsets.US_ASCII);
-            boolean otp=intent.proof().emailOtp();
-            String code=otp?new String(token,0,6,StandardCharsets.US_ASCII):"";
-            String title=recovery?"Xác minh khôi phục mật khẩu":"Xác minh địa chỉ email của bạn";
-            String instruction=recovery?"Vui lòng nhập mã xác minh sau vào màn hình khôi phục để đặt mật khẩu mới.":"Vui lòng nhập mã xác minh sau vào màn hình đăng ký để kích hoạt tài khoản.";
-            String content=otp
-                ?"movapost.\n"+title+"\n\n"+(recovery?"":"Chào mừng bạn đến với movapost.\n\n")+instruction+"\n\n"+code+"\nMã có hiệu lực trong 2 phút.\n\nNếu bạn không thực hiện yêu cầu này, hãy bỏ qua email.\n\nmovapost. — Gửi niềm tin, nối hành trình."
-                :"movapost.\n"+title+"\n\nMở liên kết sau để tiếp tục:\n"+link+"\nNếu bạn không thực hiện yêu cầu này, hãy bỏ qua email.";
-            if(membership){message.setSubject("ArgoPost - Lời mời tham gia doanh nghiệp","UTF-8");content="ArgoPost\nLời mời tham gia doanh nghiệp\n\nBạn được mời tham gia một doanh nghiệp trên ArgoPost. Mở lời mời và xác nhận bằng tài khoản đã xác minh chính địa chỉ email nhận thư này. Nếu chưa có tài khoản, hãy đăng ký và xác minh email trước.\n\n"+link+"\n\nLời mời có hiệu lực trong72 giờ và chỉ dùng một lần. Không chia sẻ liên kết này. Nếu không mong đợi lời mời, bạn có thể từ chối hoặc bỏ qua.\n\nArgoPost — Gửi niềm tin, nối hành trình.";}
-            if(otp){
-                var plain=new MimeBodyPart();plain.setText(content,"UTF-8");
-                var html=new MimeBodyPart();html.setContent("<!doctype html><html lang=\"vi\"><body style=\"margin:0;background:#f4f6fa;font-family:Arial,sans-serif;color:#192d4b\"><table role=\"presentation\" style=\"max-width:560px;width:100%;margin:32px auto;background:#fff;border-radius:12px\"><tr><td style=\"padding:32px\"><div style=\"font-size:28px;font-weight:800;letter-spacing:-1px\"><span style=\"color:#1955a6\">mova</span><span style=\"color:#ef751b\">post.</span></div><h1 style=\"font-size:21px;margin:28px 0 16px\">"+title+"</h1>"+(recovery?"":"<p>Chào mừng bạn đến với movapost.</p>")+"<p style=\"line-height:1.7\">"+instruction+"</p><div style=\"background:#fff5eb;border-radius:8px;text-align:center;padding:22px;margin:24px 0\"><strong style=\"font-size:34px;letter-spacing:8px;color:#192d4b\">"+code+"</strong><p style=\"font-size:13px;color:#67748a;margin:12px 0 0\">Có hiệu lực trong 2 phút</p></div><p style=\"font-size:14px;line-height:1.7\">Nếu bạn không thực hiện yêu cầu này, hãy bỏ qua email.</p><p style=\"border-top:1px solid #e9edf3;padding-top:22px;font-size:12px;color:#67748a\">movapost. — Gửi niềm tin, nối hành trình.</p></td></tr></table></body></html>","text/html; charset=UTF-8");
-                var alternatives=new MimeMultipart("alternative");alternatives.addBodyPart(plain);alternatives.addBodyPart(html);message.setContent(alternatives);
-            }else message.setText(content,"UTF-8");
-            message.saveChanges();
-            sender.send(message);
-            return new Outcome(Kind.ACCEPTED_BY_PROVIDER,(testTransport()?"TEST:":"SMTP:")+intent.id(),testTransport());
+            message.setFrom(new InternetAddress(settings.sender(),true));message.setRecipient(jakarta.mail.Message.RecipientType.TO,new InternetAddress(destination,true));
+            content.apply(message);message.saveChanges();sender.send(message);
+            return new Outcome(Kind.ACCEPTED_BY_PROVIDER,(testTransport()?"TEST:":"SMTP:")+id,testTransport());
         }catch(MailAuthenticationException blocked){return outcome(Kind.BLOCKED);}
         catch(MailException failed){return outcome(failureKind(failed));}
         catch(MessagingException | RuntimeException blocked){return outcome(Kind.BLOCKED);}
-        finally{if(token!=null)Arrays.fill(token,(byte)0);}
+    }
+    /** Same configured JavaMailSender/TLS policy and bounded outcomes, fixed Staff invitation purpose. */
+    public Outcome sendStaffInvitation(JdbcInvitationOutbox.Delivery delivery){
+        if(delivery==null||delivery.purpose()!=ActionProof.Purpose.STAFF_INV||wireLoggingEnabled())return outcome(Kind.BLOCKED);
+        byte[] token=delivery.token().clone();
+        try{
+            byte[] decoded=Base64.getUrlDecoder().decode(token);
+            try{if(decoded.length!=32||!Arrays.equals(token,Base64.getUrlEncoder().withoutPadding().encode(decoded)))return outcome(Kind.BLOCKED);}
+            finally{Arrays.fill(decoded,(byte)0);}
+            new CustomerEmail(delivery.destination());
+            String link=settings.portalOrigin()+"/staff/activate#proofId="+delivery.proofId()+"&token="+new String(token,StandardCharsets.US_ASCII);
+            return sendPrepared(delivery.messageId(),delivery.destination(),message->{
+                message.setSubject("ArgoPost — Kích hoạt tài khoản CSKH","UTF-8");message.setSentDate(Date.from(clock.instant()));
+                message.setText("ArgoPost\nKích hoạt tài khoản CSKH\n\nBạn được mời sử dụng không gian CSKH ArgoPost. Mở liên kết dưới đây để xác minh email và đặt mật khẩu:\n\n"+link+"\n\nLiên kết có hiệu lực trong 24 giờ, chỉ sử dụng một lần. Không chia sẻ liên kết. Nếu không mong đợi lời mời, hãy bỏ qua email.\n\nArgoPost — Gửi niềm tin, nối hành trình.","UTF-8");
+            });
+        }catch(RuntimeException invalid){return outcome(Kind.BLOCKED);}
+        finally{Arrays.fill(token,(byte)0);}
     }
     @Override public String toString(){return "SmtpCustomerDelivery[redacted]";}
 }

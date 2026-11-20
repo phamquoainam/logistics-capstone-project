@@ -60,14 +60,7 @@ public final class CustomerAdmissions implements CustomerAdmission {
         return result;
     }
     private void admit(CustomerAccessVerifier.Claim claim,IdentityAccount account,IdentitySession session) {
-        Instant time=clock.instant();
-        try {session.admit(account,time);}catch(DomainViolation rejected){throw invalid();}
-        if(claim.authVersion()!=account.version().authVersion() || !claim.accountId().equals(session.accountId())
-            || !claim.sessionId().equals(session.id()) || claim.issuedAt()==null || claim.expiresAt()==null
-            || time.isBefore(claim.issuedAt()) || !time.isBefore(claim.expiresAt())
-            || claim.issuedAt().isBefore(session.createdAt().truncatedTo(ChronoUnit.SECONDS))
-            || !claim.expiresAt().isAfter(claim.issuedAt()) || claim.expiresAt().isAfter(claim.issuedAt().plusSeconds(900))
-            || claim.expiresAt().isAfter(session.absoluteExpiresAt()) || claim.expiresAt().isAfter(session.idleExpiresAt()))throw invalid();
+        IdentityAccessRules.admit(claim,account,session,clock.instant());
     }
     @Override public void requireCurrent(Context context) {
         State state=current.get();if(state==null || state.context!=context)throw invalid();

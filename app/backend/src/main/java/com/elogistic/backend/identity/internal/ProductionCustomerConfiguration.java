@@ -28,14 +28,22 @@ public class ProductionCustomerConfiguration {
             || !"SANDBOX".equals(environment.getRequiredProperty("customer.rollout"))
             || !"NONE".equalsIgnoreCase(environment.getProperty("server.forward-headers-strategy","NONE")))throw new IllegalStateException("CUSTOMER_SANDBOX_PROFILE_ISOLATION_REQUIRED");
     }
-    private static byte[] secret(String value){
+    static byte[] secret(String value){
         byte[] decoded=Base64.getDecoder().decode(value);if(!Base64.getEncoder().encodeToString(decoded).equals(value) || decoded.length!=32 || Arrays.equals(decoded,new byte[32]))throw new IllegalArgumentException();return decoded;
     }
-    private static Map<String,byte[]> ring(String value){
+    static Map<String,byte[]> ring(String value){
         var root=JSON.readTree(value);if(root==null || !root.isObject() || root.isEmpty() || root.size()>16)throw new IllegalArgumentException();
         Map<String,byte[]> ring=new HashMap<>();for(var entry:root.properties()){if(!entry.getValue().isString())throw new IllegalArgumentException();ring.put(entry.getKey(),secret(entry.getValue().asString()));}return ring;
     }
     static ProductionAccessTokens customerTokens(Environment environment,Clock clock){
+        return purposeTokens(environment,clock,null);
+    }
+    static ProductionAccessTokens staffTokens(Environment environment,Clock clock){
+        String audience="argopost-local-support-staff";
+        if(audience.equals(environment.getRequiredProperty("customer.security.audience"))||audience.equals(environment.getRequiredProperty("identity.security.audience")))throw new IllegalStateException("STAFF_JWT_PURPOSE_CONFIGURATION_INVALID");
+        return purposeTokens(environment,clock,audience);
+    }
+    private static ProductionAccessTokens purposeTokens(Environment environment,Clock clock,String fixedAudience){
         try{
             String issuer=environment.getRequiredProperty("customer.security.issuer"),audience=environment.getRequiredProperty("customer.security.audience"),kid=environment.getRequiredProperty("customer.security.current-kid");
             if(issuer.equals(environment.getRequiredProperty("identity.security.issuer")) || audience.equals(environment.getRequiredProperty("identity.security.audience")))throw new IllegalArgumentException();
@@ -49,7 +57,7 @@ public class ProductionCustomerConfiguration {
                 publicKeys.put(key.getKeyID(),publicKey);
                 if(kid.equals(key.getKeyID())){if(!rsa.isPrivate())throw new IllegalArgumentException();signer=rsa.toRSAPrivateKey();}else if(rsa.isPrivate())throw new IllegalArgumentException();
             }
-            return new ProductionAccessTokens(issuer,audience,kid,signer,publicKeys,clock);
+            return new ProductionAccessTokens(issuer,fixedAudience==null?audience:fixedAudience,kid,signer,publicKeys,clock);
         }catch(Exception invalid){throw new IllegalStateException("CUSTOMER_JWT_PURPOSE_CONFIGURATION_INVALID");}
     }
     @Bean @DependsOnDatabaseInitialization
@@ -62,13 +70,16 @@ public class ProductionCustomerConfiguration {
             if(Arrays.equals(limiter,systemLimiter))throw new IllegalArgumentException();
             for(byte[] key:verifiers.values())if(Arrays.equals(limiter,key))throw new IllegalArgumentException();for(byte[] key:encryptors.values())if(Arrays.equals(limiter,key))throw new IllegalArgumentException();
             var protection=new ProtectedCustomerProofs(verifiers,environment.getRequiredProperty("customer.security.current-proof-key"),encryptors,environment.getRequiredProperty("customer.security.current-encryption-key"));
-            var mode=SmtpCustomerDelivery.Mode.valueOf(environment.getRequiredProperty("customer.smtp.mode"));boolean loopback=mode==SmtpCustomerDelivery.Mode.TEST_LOOPBACK;
-            var domains=new HashSet<>(Arrays.asList(environment.getRequiredProperty("customer.smtp.approved-sender-domains").split(",",-1)));
-            var smtp=new SmtpCustomerDelivery(new SmtpCustomerDelivery.Settings(environment.getRequiredProperty("customer.smtp.host"),environment.getRequiredProperty("customer.smtp.port",Integer.class),mode,
-                loopback?null:environment.getRequiredProperty("customer.smtp.username"),loopback?null:environment.getRequiredProperty("customer.smtp.password"),environment.getRequiredProperty("customer.smtp.sender"),domains,environment.getRequiredProperty("customer.security.origin"),true),clock);
+            var smtp=customerTransport(environment,clock);
             return ProductionCustomerComposition.create(source,tokens,protection,new JdbcIdentityRateLimiter(source,limiter),smtp,environment.getRequiredProperty("customer.security.origin"),clock,()->membershipAuthority.getIfAvailable(()->(i,p,o,a,n,e)->false));
         }catch(Exception invalid){throw new IllegalStateException("CUSTOMER_RUNTIME_CONFIGURATION_INVALID");}
         finally{verifiers.values().forEach(key->Arrays.fill(key,(byte)0));encryptors.values().forEach(key->Arrays.fill(key,(byte)0));if(limiter!=null)Arrays.fill(limiter,(byte)0);if(systemLimiter!=null)Arrays.fill(systemLimiter,(byte)0);}
+    }
+    static SmtpCustomerDelivery customerTransport(Environment environment,Clock clock){
+        var mode=SmtpCustomerDelivery.Mode.valueOf(environment.getRequiredProperty("customer.smtp.mode"));boolean loopback=mode==SmtpCustomerDelivery.Mode.TEST_LOOPBACK;
+            var domains=new HashSet<>(Arrays.asList(environment.getRequiredProperty("customer.smtp.approved-sender-domains").split(",",-1)));
+            return new SmtpCustomerDelivery(new SmtpCustomerDelivery.Settings(environment.getRequiredProperty("customer.smtp.host"),environment.getRequiredProperty("customer.smtp.port",Integer.class),mode,
+                loopback?null:environment.getRequiredProperty("customer.smtp.username"),loopback?null:environment.getRequiredProperty("customer.smtp.password"),environment.getRequiredProperty("customer.smtp.sender"),domains,environment.getRequiredProperty("customer.security.origin"),true),clock);
     }
     @Bean CustomerAdmission customerAdmission(ProductionCustomerComposition.Services services){return services.customers();}
     @Bean CustomerMemberNames customerMemberNames(DataSource source,CustomerAdmission admission){return new JdbcCustomerMemberNames(source,admission);}

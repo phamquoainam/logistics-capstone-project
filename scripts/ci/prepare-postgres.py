@@ -81,6 +81,7 @@ CREATE ROLE {migrator} LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE PASSWORD '{migr
 CREATE ROLE {runtime} LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE PASSWORD '{runtime_password}';
 GRANT {owner} TO {migrator};
 """
+    sql += __import__('staff_role_prerequisites').roles(owner)
     for db in (database, upgrade):
         sql += rf"""CREATE DATABASE {db} OWNER {owner};
 REVOKE ALL ON DATABASE {db} FROM PUBLIC;
@@ -88,6 +89,7 @@ GRANT CONNECT ON DATABASE {db} TO {migrator}, {runtime};
 \connect {db}
 REVOKE ALL ON SCHEMA public FROM PUBLIC;
 CREATE SCHEMA platform AUTHORIZATION {owner};
+{__import__('staff_role_prerequisites').database(owner)}
 \connect postgres
 """
     docker('exec', '-i', name, 'psql', '-X', '-p', '5433', '-v', 'ON_ERROR_STOP=1',

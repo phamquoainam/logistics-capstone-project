@@ -1663,3 +1663,66 @@ grants, enabled feature or live SMTP/UAT evidence. No database/credential access
 backup/restore repetition, runtime restart, commit/push/merge in this checkpoint.
 Historical original full Team PG run 1 FAIL/focused rerun 10/10 PASS remains;
 no full PostgreSQL/GitHub CI PASS claimed. CSKH-T-01..10 are unexecuted test plans.
+
+## CSKH-IMPLEMENT-01 approved artifact and preflight, 2026-11-19
+
+Owner source/test approval binds the revised exact manifest SHA-256
+`acf43f4ed06ac77bf3c405376adc2d7d9e0aa7db2598782b59eef35f4971ebb4`.
+Actual manifest bytes match; JSON delta is only CSKH-ACL-02.grants. Historical
+approval-pending statements above describe their original checkpoints and do not
+override this approval. Original Git blob/CRLF reconstruction and all four incoming
+WIP paths were preserved with archive CRC/read-back SHA-256 verification outside
+the repository. Frozen V34/V35/Support-manifest hashes match; V36/V37 remain free.
+
+Execution is **BLOCKED at slice A preflight**, not SOURCE_TEST_READY: the Docker
+CLI finds no running Linux Engine, and approved ACL-05 role creation in the Flyway
+transaction conflicts with accepted NOCREATEROLE owner/migrator prerequisites.
+This authority mismatch is established from source, not a claimed executed SQL
+failure. No role escalation, alternative migration authority, historical migration
+edit or application implementation was attempted. CSKH-T-01–10 are NOT RUN.
+
+Exact evidence, preservation location and the minimal bootstrap/ownership
+prerequisite delta are in the
+[CSKH execution report](../implementation/cskh-staff-authority-execution.md).
+No demo DB/provision/grant/binding/activation/restart or commit/push/merge occurred.
+
+This execution's docs validator exits 1: unchanged historical CSKH technical
+review contains corrupt authored text, and incoming root `README-unblock.md` is
+undeclared implementation source. Exact diagnostics are retained in the execution
+report; no docs-validator PASS or CSKH application-test PASS is claimed.
+
+Subsequent Owner-started Docker Engine verification: `version`/`info` exit 0,
+Client/Server 29.6.2 Linux amd64. Engine blocker resolved without container mutation;
+ACL-05/bootstrap authority dependency remains BLOCKED. CSKH-T-01–10 still NOT RUN.
+
+## CSKH Staff and Claims intake source/test closure - 2026-11-20
+
+Current bounded checkpoint: **CSKH_STAFF_AUTHORITY_SOURCE_TEST_READY**.
+The historical preflight/Docker/ACL blockers above were resolved by subsequent
+explicit Owner standing authorization; they are retained as history, not current
+blockers. [Staff execution](../implementation/cskh-staff-authority-execution.md)
+contains the CSKH-T-01..10 matrix, exact changed manifest hash, failures and reruns.
+
+| Capability / source ownership | Data / authority | Executed evidence |
+| --- | --- | --- |
+| Dedicated CSKH Identity (Identity, workflow, Staff UI) | V36 sealed pending principal; genuine invitation/password activation; fixed Staff audience; no SYSTEM/Customer/Owner substitution | Staff crypto/outbox/HTTP and real SMTP/HTTPS/PG Browser PASS |
+| Canonical request-bound Support grants (Orders) | V37 exact operator/environment/request receipt; current admission; legacy deny-only; revoke safe | Direct-DML/ACL, concurrent replay, late rollback and binding denial PASS |
+| Organization Support compatibility | Existing V35 Tenant/Ticket/assignment authority, Merchant notices and preferences retained | Current Staff/Customer/Personal/Team regression; all 19 existing Browser journeys PASS |
+| Claim document intake (Orders/workflow) | V38 real same-Organization Shipment + Ticket; immutable events/receipt; no award or Carrier mutation | Intake HTTP, concurrency, direct DML, scope/revoke/late-failure PASS |
+| Private evidence (Platform storage/scanner; Orders metadata) | Persisted server UUID/content reservation; bounded screen; current auth on read/finalize; recoverable private orphan | Real HTTP/PG/private filesystem, controlled S3 SDK/INSTREAM transports; upload/download Browser PASS |
+| Intake reporting/notifications | Full scoped cohort and actual timestamps; existing preferences; unique event/recipient | Report/notice/warehouse/rollback/replay and Browser deep-link tests PASS |
+
+Affected final run: 382 PASS/1 obsolete-navigation FAIL out of 383, zero skips;
+72/72 migration cases PASS. Corrected Browser rerun: 1/1 JUnit and all 19 UI cases
+PASS. Final Claims mobile/evidence Browser rerun: 1/1 PASS. No production logic
+changed between those reruns. Frontend typecheck/lint/build and 13 focused unit
+tests PASS; report/bootstrap/validator Python tests 187/187 PASS. Accepted collector
+function ASTs and pinned ownership protocol remain intact. No full-suite/CI claim.
+
+V1-V35 unchanged, no V33 placeholder; V36-V38 executed only on owned PG18 test
+databases. Existing demo data/Staff grants/bindings/flags/runtime untouched.
+Commercial Claim eligibility/windows/appeal/SoD/compensation and financial execution
+remain BLOCKED. Live AWS/ClamAV and deployment acceptance remain NOT VERIFIED.
+[Claims manifest](../implementation/organization-claims-intake-technical-manifest.json)
+and [evidence report](../implementation/organization-claims-intake-execution.md)
+separate the delivered intake slice from full commercial Claims acceptance.

@@ -47,9 +47,16 @@ public final class InvitationProtection {
 
     /** Immutable non-secret AAD. Destination is private contact data: never log this object. */
     public record Context(UUID messageId,UUID proofId,UUID accountId,UUID realmId,String destination,
-                          Instant createdAt,Instant expiresAt,String verifierKeyId,String encryptionKeyId) {
+                          Instant createdAt,Instant expiresAt,String verifierKeyId,String encryptionKeyId,ActionProof.Purpose purpose) {
+        /** Existing format-1 callers retain their exact purpose and authenticated byte encoding. */
+        public Context(UUID messageId,UUID proofId,UUID accountId,UUID realmId,String destination,
+                       Instant createdAt,Instant expiresAt,String verifierKeyId,String encryptionKeyId) {
+            this(messageId,proofId,accountId,realmId,destination,createdAt,expiresAt,verifierKeyId,encryptionKeyId,ActionProof.Purpose.INVITATION);
+        }
         public Context {
-            if(messageId==null || proofId==null || accountId==null || realmId==null || destination==null || destination.isEmpty()
+            if(messageId==null || proofId==null || accountId==null || destination==null || destination.isEmpty()
+                || purpose==null || !Set.of(ActionProof.Purpose.INVITATION,ActionProof.Purpose.STAFF_INV).contains(purpose)
+                || (purpose==ActionProof.Purpose.INVITATION ? realmId==null : realmId!=null)
                 || createdAt==null || expiresAt==null || !createdAt.equals(createdAt.truncatedTo(ChronoUnit.MICROS))
                 || !expiresAt.equals(createdAt.plusSeconds(86400)) || !validId(verifierKeyId) || !validId(encryptionKeyId)) throw rejected();
         }
@@ -58,6 +65,10 @@ public final class InvitationProtection {
     public Context context(ActionProof proof,UUID realm,String destination) {
         if(proof==null || proof.purpose()!=ActionProof.Purpose.INVITATION || proof.state()!=ActionProof.State.AVAILABLE)throw rejected();
         return new Context(UUID.randomUUID(),proof.id(),proof.accountId(),realm,destination,proof.createdAt(),proof.expiresAt(),verifierId,encryptionId);
+    }
+    public Context staffContext(UUID message,ActionProof proof,String destination) {
+        if(proof==null || proof.purpose()!=ActionProof.Purpose.STAFF_INV || proof.state()!=ActionProof.State.AVAILABLE)throw rejected();
+        return new Context(message,proof.id(),proof.accountId(),null,destination,proof.createdAt(),proof.expiresAt(),verifierId,encryptionId,ActionProof.Purpose.STAFF_INV);
     }
     /** Holds protected buffers only, no token. No plaintext enters the JDBC boundary. */
     public static final class Sealed implements AutoCloseable {
@@ -77,7 +88,7 @@ public final class InvitationProtection {
         byte[] entropy=new byte[32],token=null,nonce=new byte[12],hash=null,ciphertext=null;
         try {
             random.nextBytes(entropy);token=Base64.getUrlEncoder().withoutPadding().encode(entropy);random.nextBytes(nonce);
-            hash=verifier(c.proofId(),c.accountId(),ActionProof.Purpose.INVITATION,c.createdAt(),c.expiresAt(),c.verifierKeyId(),token);
+            hash=verifier(c.proofId(),c.accountId(),c.purpose(),c.createdAt(),c.expiresAt(),c.verifierKeyId(),token);
             ciphertext=crypt(Cipher.ENCRYPT_MODE,c,nonce,token);
             return new Sealed(hash,nonce,ciphertext);
         } catch(RuntimeException failure) {wipe(hash);wipe(nonce);wipe(ciphertext);throw failure;}
@@ -85,7 +96,7 @@ public final class InvitationProtection {
     }
     /** Caller must verify current DB proof state and atomically consume it in the later activation transaction. */
     public boolean matches(ActionProof proof,String keyId,byte[] supplied,byte[] expected,Instant now) {
-        if(proof==null || proof.purpose()!=ActionProof.Purpose.INVITATION || proof.state()!=ActionProof.State.AVAILABLE
+        if(proof==null || !Set.of(ActionProof.Purpose.INVITATION,ActionProof.Purpose.STAFF_INV).contains(proof.purpose()) || proof.state()!=ActionProof.State.AVAILABLE
             || now==null || now.isBefore(proof.createdAt()) || !now.isBefore(proof.expiresAt())
             || expected==null || expected.length!=32 || !validId(keyId) || !verifiers.containsKey(keyId) || !canonicalToken(supplied))return false;
         byte[] actual=verifier(proof.id(),proof.accountId(),proof.purpose(),proof.createdAt(),proof.expiresAt(),keyId,supplied);
@@ -98,7 +109,7 @@ public final class InvitationProtection {
         byte[] encoded=password.getBytes(StandardCharsets.UTF_8);
         try {
             Mac mac=Mac.getInstance("HmacSHA256");mac.init(verifiers.get(keyId));
-            mac.update(contextBytes("identity-invitation-acceptance-fingerprint-v1",proof.id(),proof.accountId(),proof.purpose().name(),proof.createdAt(),proof.expiresAt(),keyId));
+            mac.update(contextBytes(proof.purpose()==ActionProof.Purpose.STAFF_INV?"identity-staff-invitation-acceptance-fingerprint-v2":"identity-invitation-acceptance-fingerprint-v1",proof.id(),proof.accountId(),proof.purpose().name(),proof.createdAt(),proof.expiresAt(),keyId));
             mac.update(token);return mac.doFinal(encoded);
         }catch(GeneralSecurityException failure){throw rejected();}
         finally {wipe(encoded);}
@@ -122,7 +133,7 @@ public final class InvitationProtection {
     private byte[] verifier(UUID proof,UUID account,ActionProof.Purpose purpose,Instant created,Instant expires,String keyId,byte[] token) {
         try {
             Mac mac=Mac.getInstance("HmacSHA256");mac.init(verifiers.get(keyId));
-            mac.update(contextBytes("identity-invitation-verifier-v1",proof,account,purpose.name(),created,expires,keyId));
+            mac.update(contextBytes(purpose==ActionProof.Purpose.STAFF_INV?"identity-staff-invitation-verifier-v2":"identity-invitation-verifier-v1",proof,account,purpose.name(),created,expires,keyId));
             return mac.doFinal(token);
         }catch(GeneralSecurityException | IllegalArgumentException failure){throw rejected();}
     }
@@ -130,8 +141,9 @@ public final class InvitationProtection {
         try {
             var key=encryptors.get(c.encryptionKeyId());if(key==null)throw rejected();
             Cipher cipher=Cipher.getInstance("AES/GCM/NoPadding");cipher.init(mode,key,new GCMParameterSpec(128,nonce));
-            cipher.updateAAD(contextBytes("identity-invitation-delivery-v1",c.messageId(),c.proofId(),c.accountId(),c.realmId(),
-                "INVITATION",c.destination(),c.createdAt(),c.expiresAt(),c.verifierKeyId(),c.encryptionKeyId()));
+            boolean staff=c.purpose()==ActionProof.Purpose.STAFF_INV;
+            cipher.updateAAD(contextBytes(staff?"identity-staff-invitation-delivery-v2":"identity-invitation-delivery-v1",c.messageId(),c.proofId(),c.accountId(),staff?"NO_REALM":c.realmId(),
+                c.purpose().name(),c.destination(),c.createdAt(),c.expiresAt(),c.verifierKeyId(),c.encryptionKeyId()));
             return cipher.doFinal(input);
         }catch(GeneralSecurityException | IllegalArgumentException failure){throw rejected();}
     }

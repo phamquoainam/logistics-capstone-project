@@ -51,4 +51,14 @@ class ProductionCustomerConfigurationTests {
         String customerAccess=customerTokens.issue(grant),systemAccess=systemTokens.issue(grant);assertEquals(grant.accountId(),customerTokens.verify(customerAccess).accountId());assertEquals(grant.accountId(),systemTokens.verify(systemAccess).accountId());
         assertThrows(IdentityCommandFailure.class,()->customerTokens.verify(systemAccess));assertThrows(IdentityCommandFailure.class,()->systemTokens.verify(customerAccess));
     }
+    @Test void staffUsesFixedAudienceAndRejectsCustomerAndSystemTokens(){
+        var env=environment();var staffTokens=ProductionCustomerConfiguration.staffTokens(env,CLOCK);
+        var customerTokens=ProductionCustomerConfiguration.customerTokens(env,CLOCK);
+        var grant=new IdentitySessionCommands.AccessGrant(UUID.randomUUID(),UUID.randomUUID(),1,CLOCK.instant(),CLOCK.instant().plusSeconds(900));
+        String staff=staffTokens.issue(grant),customer=customerTokens.issue(grant);
+        assertEquals(grant.accountId(),staffTokens.verify(staff).accountId());
+        assertThrows(IdentityCommandFailure.class,()->staffTokens.verify(customer));assertThrows(IdentityCommandFailure.class,()->customerTokens.verify(staff));
+        env.setProperty("customer.security.audience","argopost-local-support-staff");
+        assertThrows(IllegalStateException.class,()->ProductionCustomerConfiguration.staffTokens(env,CLOCK));
+    }
 }

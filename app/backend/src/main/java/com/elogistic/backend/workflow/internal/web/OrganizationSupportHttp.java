@@ -3,6 +3,7 @@ package com.elogistic.backend.workflow.internal.web;
 import com.elogistic.backend.orders.api.OrganizationSupportTickets;
 import com.elogistic.backend.orders.api.OrganizationSupportTickets.*;
 import com.elogistic.backend.identity.api.customer.*;
+import com.elogistic.backend.identity.api.staff.*;
 import com.elogistic.backend.merchant.api.customer.BusinessWorkspaces;
 import jakarta.servlet.http.*;
 import java.io.IOException;
@@ -23,21 +24,25 @@ public final class OrganizationSupportHttp {
     private static final String BASE="/api/v1/merchant-organizations/{organizationId}",TICKETS=BASE+"/support-tickets",STAFF="/api/v1/support-operations";
     private static final Set<String> FILTERS=Set.of("page","size","state","category","shipmentId","facilityId","creatorId","assignee","requestedPriority","from","until","sort");
     private static final JsonMapper JSON=JsonMapper.builder().enable(StreamReadFeature.STRICT_DUPLICATE_DETECTION).build();
-    private final BusinessPreparationHttp business;private final OrganizationSupportTickets tickets;private final CustomerAdmission admission;private final CustomerRequestContext requests;private final CustomerMemberNames names;
-    public OrganizationSupportHttp(BusinessPreparationHttp business,OrganizationSupportTickets tickets,CustomerAdmission admission,CustomerRequestContext requests,CustomerMemberNames names){this.business=business;this.tickets=tickets;this.admission=admission;this.requests=requests;this.names=names;}
+    private final BusinessPreparationHttp business;private final OrganizationSupportTickets tickets;private final CustomerMemberNames names;
+    private final StaffAdmission staffAdmission;private final StaffRequestContext staffRequests;
+    /** Existing Merchant-only callers retain their API; absent Staff assembly is fail-closed. */
+    public OrganizationSupportHttp(BusinessPreparationHttp business,OrganizationSupportTickets tickets,CustomerAdmission admission,CustomerRequestContext requests,CustomerMemberNames names){this(business,tickets,names,null,null);}
+    @org.springframework.beans.factory.annotation.Autowired
+    public OrganizationSupportHttp(BusinessPreparationHttp business,OrganizationSupportTickets tickets,CustomerMemberNames names,StaffAdmission staffAdmission,StaffRequestContext staffRequests){this.business=business;this.tickets=tickets;this.names=names;this.staffAdmission=staffAdmission;this.staffRequests=staffRequests;}
     @ModelAttribute public void noStore(HttpServletResponse response){response.setHeader("Cache-Control","no-store");}
     private <T>T errors(java.util.function.Supplier<T> action){try{return action.get();}catch(Failure rejected){throw problem(switch(rejected.getMessage()){case "VALIDATION_FAILED"->400;case "RESOURCE_NOT_FOUND"->404;case "SUPPORT_AUTHORITY_REQUIRED","SUPPORT_ASSIGNMENT_REQUIRED"->403;case "PRECONDITION_STALE","IDEMPOTENCY_CONFLICT","SUPPORT_STATE_CONFLICT","ASSIGNMENT_NO_CHANGE"->409;case "RATE_LIMITED"->429;default->503;},rejected.getMessage());}}
-    private <T>T execute(String org,Set<UUID> references,Function<Access,T> work){return errors(()->business.executeWithContext(org,references,(a,c)->work.apply(new Access(){
+    <T>T execute(String org,Set<UUID> references,Function<Access,T> work){return errors(()->business.executeWithContext(org,references,(a,c)->work.apply(new Access(){
         public UUID actorAccountId(){return a.actorAccountId();}public UUID requestId(){return a.requestId();}public BusinessWorkspaces.Scope scope(){return a.scope();}
         public void requireCurrent(){a.requireCurrent();}public void meaningfulAction(){a.meaningfulAction();}
         public boolean eligibleAccount(UUID id){requireCurrent();return c.subjects().containsKey(id)&&c.subjects().get(id).eligible();}
         public Map<UUID,String> displayNames(Set<UUID> ids){return names.read(c,ids);}
         public Set<UUID> eligibleAccounts(Set<UUID> ids){return names.eligibleAccounts(c,ids);}
     })));}
-    private <T>T execute(String org,Function<Access,T> work){return execute(org,Set.of(),work);}
+    <T>T execute(String org,Function<Access,T> work){return execute(org,Set.of(),work);}
     private <T>T target(String org,UUID target,Set<UUID> additional,Function<Access,T> work){var refs=new HashSet<>(execute(org,a->tickets.references(a,target)));refs.addAll(additional);return execute(org,refs,work);}
-    private <T>T staff(Set<UUID> refs,Function<StaffAccess,T> work){return errors(()->{var r=requests.current();return admission.execute(r.encodedAccess(),r.requestId(),refs,c->work.apply(new StaffAccess(){
-        public UUID accountId(){requireCurrent();return c.actor().accountId();}public UUID requestId(){requireCurrent();return c.requestId();}public void requireCurrent(){admission.requireCurrent(c);}public void meaningfulAction(){admission.meaningfulAction(c);}
+    <T>T staff(Set<UUID> refs,Function<StaffAccess,T> work){return errors(()->{if(staffAdmission==null||staffRequests==null)throw problem(503,"STAFF_UNAVAILABLE");var r=staffRequests.current();return staffAdmission.execute(r.encodedAccess(),r.requestId(),refs,c->work.apply(new StaffAccess(){
+        public UUID accountId(){requireCurrent();return c.actor().accountId();}public UUID requestId(){requireCurrent();return c.requestId();}public void requireCurrent(){staffAdmission.requireCurrent(c);}public void meaningfulAction(){staffAdmission.meaningfulAction(c);}
         public boolean eligibleAccount(UUID id){requireCurrent();return c.subjects().containsKey(id)&&c.subjects().get(id).eligible();}
     }));});}
     private <T>T staffTarget(UUID id,boolean triage,Set<UUID> additional,Function<StaffAccess,T> work){var refs=new HashSet<>(staff(Set.of(),a->tickets.staffReferences(a,id,triage)));refs.addAll(additional);return staff(refs,work);}

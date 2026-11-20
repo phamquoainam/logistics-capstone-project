@@ -1,3 +1,11 @@
+> Current source/test amendment, 2026-11-20: the historical design-only review
+> below is superseded for implementation by the approved manifest and subsequent
+> Owner standing authorization. Original approved bytes remain archived.
+> Current amended manifest SHA-256: `c6a784d48e827330fee46e09175c27939238c259680c2f54487ab1ef1ec3409c`.
+> Exact ACL bootstrap, runtime and fixed test-inventory deltas are in that JSON;
+> actual results and remaining gates are in [execution evidence](cskh-staff-authority-execution.md).
+> No demo/Production deployment, provisioning/grants or Git publication is authorized.
+
 # CSKH Staff Authority — technical review checkpoint
 
 Ngày: 2026-11-18.
@@ -141,16 +149,11 @@ Không cần duyệt lại Organization Support nghiệp vụ/API đã được 
 technical review READY không gỡ execution block: provisioning, grants, Organization
 binding, activation và UAT vẫn chưa được thực hiện hoặc tuyên bố PASS.
 
-### K?t qu? ki?m ch?ng thi?t k? ?? ch?y
+### Historical design verification record
 
-- JSON parse, stable unique IDs, [PROPOSED] status, API uniqueness, cross-reference
-  v? source-path/hash consistency: PASS.
-- `python -B docs/reconciliation/v3/validate.py --implementation`: exit 0,
-  `errors=[]`, semantic ownership CONSISTENT, 182 changed Markdown ???c ki?m tra.
-  Gi? nguy?n 10 pre-existing broken links ???c validator ph?n lo?i; kh?ng tuy?n b?
-  ?? s?a c?c li?n k?t l?ch s? ??. Ch? ?? implementation ch? nh?n di?n WIP ngu?n
-  ???c Owner cho ph?p tr??c ??y, kh?ng c?p th?m implementation authority ? task n?y.
-- `git diff --check`: exit 0; ch? c? Git line-ending notices tr?n WIP hi?n h?u.
-- Local links/hash review v? preservation fingerprints ???c ??i chi?u cu?i checkpoint.
-- Kh?ng ch?y PostgreSQL/HTTP/Browser/full suite/CI m?i: design-only scope, kh?ng c?
-  application source thay ??i. CSKH-T-01?10 v?n ch?a th?c thi.
+The previous design checkpoint recorded JSON/ID/source-path checks, the docs
+validator and git diff checks as PASS, with ten pre-existing broken links retained.
+That historical record did not execute PostgreSQL, HTTP, Browser or CI tests and
+is not evidence for the new Staff implementation. The original authored artifact
+is preserved in the checkpoint archive. Current evidence is in
+[cskh-staff-authority-execution.md](cskh-staff-authority-execution.md).

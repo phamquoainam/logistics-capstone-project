@@ -20,6 +20,49 @@ class PostgresTestcontainersTests {
 
     @AfterAll static void verifyFinalPolicy() throws Exception { PostgresTestcontainersSupport.verifyRuntime(POSTGRES); }
 
+    @Test void ownedDatabaseReleaseRetainsNeighborAndRefusesMismatchedIdentity() throws Exception {
+        Database first=PostgresTestcontainersSupport.database(POSTGRES), neighbor=PostgresTestcontainersSupport.database(POSTGRES);
+        marker(neighbor);
+        for(String name:List.of("elogistics_dev","postgres","task_c_invalid",first.name()+"; SELECT 1")) {
+            Database foreign=new Database(name,first.owner(),first.migrator(),first.runtime(),first.migrationPassword(),first.runtimePassword(),POSTGRES);
+            assertThrows(IllegalArgumentException.class,()->com.elogistic.backend.testsupport.OwnedTestDatabase.release(foreign));
+        }
+        Database mismatch=new Database(first.name(),neighbor.owner(),first.migrator(),first.runtime(),first.migrationPassword(),first.runtimePassword(),POSTGRES);
+        assertThrows(IllegalArgumentException.class,()->com.elogistic.backend.testsupport.OwnedTestDatabase.release(mismatch));
+        com.elogistic.backend.testsupport.OwnedTestDatabase.release(first);
+        com.elogistic.backend.testsupport.OwnedTestDatabase.release(first);
+        try(var admin=DriverManager.getConnection(PostgresTestcontainersSupport.currentUrl(POSTGRES,"postgres"),POSTGRES.getUsername(),POSTGRES.getPassword());var q=admin.prepareStatement("SELECT count(*) FROM pg_database WHERE datname=?")) {
+            q.setString(1,first.name());try(var rows=q.executeQuery()){assertTrue(rows.next());assertEquals(0,rows.getInt(1));}
+        }
+        assertMarker(neighbor);
+        com.elogistic.backend.testsupport.OwnedTestDatabase.release(neighbor);
+    }
+
+    @Test void ownedDatabaseReleaseRefusesLiveConnectionsAndChangedOwner() throws Exception {
+        Database target=PostgresTestcontainersSupport.database(POSTGRES), neighbor=PostgresTestcontainersSupport.database(POSTGRES);
+        try(var active=target.runtimeConnection()) {
+            assertThrows(IllegalStateException.class,()->com.elogistic.backend.testsupport.OwnedTestDatabase.release(target));
+            assertTrue(active.isValid(2));
+        }
+        try(var admin=DriverManager.getConnection(PostgresTestcontainersSupport.currentUrl(POSTGRES,"postgres"),POSTGRES.getUsername(),POSTGRES.getPassword());var q=admin.createStatement()) {
+            q.execute("ALTER DATABASE "+target.name()+" OWNER TO "+neighbor.owner());
+            try { assertThrows(IllegalStateException.class,()->com.elogistic.backend.testsupport.OwnedTestDatabase.release(target)); }
+            finally { q.execute("ALTER DATABASE "+target.name()+" OWNER TO "+target.owner()); }
+        }
+        com.elogistic.backend.testsupport.OwnedTestDatabase.release(target);
+        com.elogistic.backend.testsupport.OwnedTestDatabase.release(neighbor);
+    }
+
+    @Test void ownedDatabaseReleaseWaitsForOwnerToCloseConnectionWithoutForce() throws Exception {
+        Database target=PostgresTestcontainersSupport.database(POSTGRES);
+        try(var scheduler=java.util.concurrent.Executors.newSingleThreadScheduledExecutor();var connection=target.runtimeConnection()) {
+            var closed=scheduler.schedule(()->{connection.close();return true;},2,java.util.concurrent.TimeUnit.SECONDS);
+            com.elogistic.backend.testsupport.OwnedTestDatabase.release(target);
+            assertTrue(closed.isDone(),"Cleanup must wait for the connection owner, never terminate its session");
+            assertTrue(closed.get(5,java.util.concurrent.TimeUnit.SECONDS));
+        } finally { com.elogistic.backend.testsupport.OwnedTestDatabase.release(target); }
+    }
+
     @Test void actualPostgres18UsesPinnedIsolatedContainer() throws Exception {
         PostgresTestcontainersSupport.verifyRuntime(POSTGRES);
         try(Connection c=DriverManager.getConnection(PostgresTestcontainersSupport.currentUrl(POSTGRES,"postgres"),POSTGRES.getUsername(),POSTGRES.getPassword());Statement s=c.createStatement()) {
@@ -32,8 +75,8 @@ class PostgresTestcontainersTests {
         Database db=PostgresTestcontainersSupport.database(POSTGRES);
         Flyway flyway=db.flyway("latest");assertEquals(0,flyway.info().applied().length);
         // Retain the report-policy method identity and assert the complete current stream.
-        assertEquals(34,flyway.migrate().migrationsExecuted);assertTrue(flyway.validateWithResult().validationSuccessful);
-        assertEquals(List.of("1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","34","35"),Arrays.stream(flyway.info().applied()).map(m->m.getVersion().toString()).toList());
+        assertEquals(37,flyway.migrate().migrationsExecuted);assertTrue(flyway.validateWithResult().validationSuccessful);
+        assertEquals(List.of("1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","34","35","36","37","38"),Arrays.stream(flyway.info().applied()).map(m->m.getVersion().toString()).toList());
     }
 
     private List<String> checksums(Flyway flyway) { return Arrays.stream(flyway.info().applied()).map(m->m.getVersion()+":"+m.getChecksum()).toList(); }
@@ -68,9 +111,9 @@ class PostgresTestcontainersTests {
             s.execute("SET ROLE "+db.owner());
             try(ResultSet r=s.executeQuery("SELECT current_user")) { assertTrue(r.next());assertEquals(db.owner(),r.getString(1)); }
             try(ResultSet r=s.executeQuery("SELECT count(*) FROM pg_namespace WHERE nspowner=(SELECT oid FROM pg_roles WHERE rolname='"+db.owner()+"') AND nspname IN ('platform','identity','merchant','orders','pricing','warehouse','dispatch','finance','routing','notification')")) { assertTrue(r.next());assertEquals(10,r.getInt(1)); }
-            // Complete V1-V32 plus V34/V35 inventory, retaining every prior object and fourteen Facility/work tables.
-            try(ResultSet r=s.executeQuery("SELECT count(*) FROM pg_tables WHERE tableowner='"+db.owner()+"' AND schemaname IN ('platform','identity','merchant','orders','pricing','finance','dispatch','notification')")) { assertTrue(r.next());assertEquals(131,r.getInt(1)); }
-            Set<String> expectedTables=Set.of("orders.organization_support_ticket","orders.organization_support_message","orders.organization_support_assignment","orders.organization_support_assignment_event","orders.organization_support_case_assignment","orders.organization_support_staff_scope","orders.organization_support_notification_preference","orders.organization_support_notice","orders.organization_support_receipt","orders.organization_support_audit","orders.organization_support_window","orders.support_operator_audit","merchant.team_policy","merchant.team_invitation","merchant.team_invitation_grant","merchant.team_audit","merchant.team_command_receipt","merchant.facility_default","merchant.facility_team","merchant.facility_responsibility","merchant.facility_version","merchant.facility_command_receipt","merchant.facility_audit","merchant.facility_grant_audit","orders.merchant_parcel_preparation","orders.merchant_preparation_check","orders.merchant_handover_preparation","orders.merchant_handover_shipment","orders.merchant_handover_check","orders.merchant_facility_work_event","orders.merchant_facility_work_receipt","merchant.organization_contact","merchant.organization_contact_version","merchant.organization_contact_default","merchant.organization_contact_command_receipt","merchant.organization_contact_audit","merchant.organization_contact_import_job","merchant.organization_contact_import_row","merchant.organization_contact_export_audit","orders.organization_action_task","orders.organization_action_event","orders.organization_action_command_receipt","notification.organization_action_notice","orders.organization_report_export_audit","orders.organization_shipment_assignment","orders.organization_shipment_assignment_event","orders.organization_shipment_assignment_receipt","orders.organization_shipment_export_audit","platform.flyway_schema_history", "identity.demo_account",
+            // Exact V1-V32/V34-V38 inventory; preserve all prior objects and add only the nine Staff/Claim tables.
+            try(ResultSet r=s.executeQuery("SELECT count(*) FROM pg_tables WHERE tableowner='"+db.owner()+"' AND schemaname IN ('platform','identity','merchant','orders','pricing','finance','dispatch','notification')")) { assertTrue(r.next());assertEquals(140,r.getInt(1)); }
+            Set<String> expectedTables=Set.of("identity.local_staff_environment","identity.local_staff_principal","identity.local_staff_operator_receipt","orders.support_grant_operator_receipt","orders.organization_claim_intake","orders.organization_claim_intake_event","orders.organization_claim_intake_receipt","orders.organization_claim_evidence","orders.organization_claim_notice","orders.organization_support_ticket","orders.organization_support_message","orders.organization_support_assignment","orders.organization_support_assignment_event","orders.organization_support_case_assignment","orders.organization_support_staff_scope","orders.organization_support_notification_preference","orders.organization_support_notice","orders.organization_support_receipt","orders.organization_support_audit","orders.organization_support_window","orders.support_operator_audit","merchant.team_policy","merchant.team_invitation","merchant.team_invitation_grant","merchant.team_audit","merchant.team_command_receipt","merchant.facility_default","merchant.facility_team","merchant.facility_responsibility","merchant.facility_version","merchant.facility_command_receipt","merchant.facility_audit","merchant.facility_grant_audit","orders.merchant_parcel_preparation","orders.merchant_preparation_check","orders.merchant_handover_preparation","orders.merchant_handover_shipment","orders.merchant_handover_check","orders.merchant_facility_work_event","orders.merchant_facility_work_receipt","merchant.organization_contact","merchant.organization_contact_version","merchant.organization_contact_default","merchant.organization_contact_command_receipt","merchant.organization_contact_audit","merchant.organization_contact_import_job","merchant.organization_contact_import_row","merchant.organization_contact_export_audit","orders.organization_action_task","orders.organization_action_event","orders.organization_action_command_receipt","notification.organization_action_notice","orders.organization_report_export_audit","orders.organization_shipment_assignment","orders.organization_shipment_assignment_event","orders.organization_shipment_assignment_receipt","orders.organization_shipment_export_audit","platform.flyway_schema_history", "identity.demo_account",
                 "merchant.demo_merchant", "orders.demo_shipment", "orders.demo_event", "orders.demo_operation",
                 "identity.user_account", "identity.account_grant", "identity.auth_session", "identity.refresh_token",
                 "identity.action_proof", "identity.csrf_binding", "identity.command_receipt", "identity.audit_entry", "identity.realm", "identity.invitation_outbox", "identity.rate_limit_subject", "identity.rate_limit_attempt", "identity.customer_identifier", "identity.customer_auth_session", "identity.customer_refresh_token", "identity.customer_csrf_binding", "identity.customer_enrollment", "identity.customer_phone_contact", "identity.customer_proof", "identity.customer_delivery", "identity.customer_command_receipt", "identity.customer_proof_receipt", "identity.customer_security_receipt", "identity.customer_owner_consent_receipt",

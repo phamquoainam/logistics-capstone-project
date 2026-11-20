@@ -693,7 +693,7 @@
       "status": "[PROPOSED]",
       "role": "identity_staff_writer",
       "attributes": "NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS",
-      "grants": "Own only Identity SQL-01..05; exact SELECT and account activation/status/version columns; INSERT principal/receipts/proof/outbox/audit, guarded update fields for Staff paths; read physical DB identity. No Customer identifiers, account_grant, realm or Merchant DML. No runtime/operator membership or SET ROLE privilege."
+      "grants": "Own Identity SECURITY DEFINER SQL-01..06 and SQL-10; SQL-09 remains SECURITY INVOKER under the authorized deployment principal. Grant only exact SELECT and account activation/status/version columns; INSERT principal/receipts/proof/outbox/audit, guarded UPDATE fields for Staff paths; read physical DB identity. No Customer identifiers, account_grant, realm or Merchant DML. No runtime/operator membership or SET ROLE privilege."
     },
     {
       "id": "CSKH-ACL-03",
@@ -714,7 +714,7 @@
       "status": "[PROPOSED]",
       "role": "migration/deployment owner",
       "attributes": "Existing trusted DDL authority, not an application actor",
-      "grants": "Create roles/functions/constraints in migration transaction; no runtime secrets, default operator membership or enabled environment. Future explicit activation binds physical DB/environment + identity audit under existing migrator authority. Superuser/schema-owner malicious DDL is outside application threat boundary, never an allowed provisioning workaround."
+      "grants": "Trusted privileged administrator bootstraps exactly the three approved NOLOGIN roles on the isolated PostgreSQL18 test cluster, outside Flyway; grant only non-inherited SET membership to the migration owner for controlled function ownership transfer and pg_control_system EXECUTE to identity_staff_writer in the isolated database. Preserve owner/migrator NOCREATEROLE/NOSUPERUSER; no runtime/operator membership or SET to writer roles. V36/V37 validate prerequisites and create only functions/constraints/data schema, never CREATE ROLE. Writer schema CREATE is temporary only for ownership transfer and revoked in the migration transaction. No automatic operator login membership or enabled environment. Demo/Production bootstrap remains unauthorized."
     }
   ],
   "replay": {
@@ -1058,5 +1058,103 @@
       ],
       "delta": "No path/DTO/business transition change; Staff audience/session/CSRF + typed context admission replaces Customer admission only on these existing V35 Staff operations. Canonical permission, Org binding, current actor eligibility and handler assignment remain mandatory."
     }
-  ]
+  ],
+  "authority_amendment": {
+    "id": "CSKH-ACL05-BOOTSTRAP-01",
+    "status": "OWNER_AUTHORIZED_SOURCE_TEST_ONLY",
+    "authority": "Owner directive Organization Support & Claims, 2026-11-19",
+    "previous_approved_manifest_sha256": "acf43f4ed06ac77bf3c405376adc2d7d9e0aa7db2598782b59eef35f4971ebb4",
+    "changes": [
+      "ACL-05 cluster role bootstrap moved outside Flyway to isolated trusted test administrator",
+      "V36/V37 fail closed on missing/unsafe prerequisites; no CREATE ROLE",
+      "Existing owner/migrator stay NOCREATEROLE; no runtime/operator writer membership"
+    ],
+    "deployment": "No demo/Production mutation, role bootstrap, grant, binding or activation authorized"
+  },
+  "source_test_execution": {
+    "authority": "Owner Organization Support & Claims standing source/test authorization 2026-11-19",
+    "status": "IMPLEMENTING; not final acceptance; no demo/Production deployment",
+    "prior_approved_sha256": "acf43f4ed06ac77bf3c405376adc2d7d9e0aa7db2598782b59eef35f4971ebb4",
+    "prior_acl05_amendment_sha256": "069d6ca2fbe5d723264d0a936d3f516093e62d33748dbb17395ac25b67b0fec0",
+    "exact_deltas": [
+      {
+        "id": "CSKH-SQL-11",
+        "signature": "identity.local_support_staff_invitation_destination(UUID) RETURNS TEXT",
+        "authority": "offline operator only",
+        "reason": "RESEND DTO has no destination; operator cannot SELECT private account/receipt tables. Helper requires current operator, physical environment and exact current-transaction reservation; returns destination solely for cryptographic AAD sealing, never CLI/report/receipt."
+      },
+      {
+        "id": "CSKH-SQL-12",
+        "signature": "identity.local_staff_environment_matches(TEXT) RETURNS BOOLEAN",
+        "authority": "runtime read-only",
+        "reason": "Exact LOCAL/TEST configuration must match physically bound environment without exposing environment table or system identifiers."
+      },
+      {
+        "id": "CSKH-COMPAT-01",
+        "reason": "V37 retires Customer-backed canonical Staff grants. Preserve existing Personal Support CSKH functionality by moving only its existing four operations to fixed Staff admission and existing Staff client/desk. Customer self routes/data/DTO and case authority unchanged. Exact Staff matchers only; never whole support prefix.",
+        "paths": [
+          "GET /api/v1/support-operations/queue",
+          "GET /api/v1/support-operations/cases/{id}",
+          "POST /api/v1/support-operations/cases/{id}/assignments",
+          "POST /api/v1/support-operations/cases/{id}/transitions"
+        ]
+      },
+      {
+        "id": "CSKH-CLI-01",
+        "reason": "Retire old schema-owner SET ROLE/three-argument script path. Mandatory RequestId/reason/independent explicit operator credential; check NOCREATEROLE and no SET to writers before five-argument operator; script not executed on demo."
+      }
+    ],
+    "reviewed_test_bootstrap": {
+      "path": "app/backend/src/test/java/com/elogistic/backend/testsupport/PostgresTestcontainersSupport.java",
+      "unchanged_protocol_sha256_lf": "825f33bb432fc30338a1ac3e2164ca74679608282d61e9931b9dc9b4e7749fa8",
+      "only_added_lines": [
+        "            StaffRoleTestBootstrap.roles(c, owner);",
+        "            StaffRoleTestBootstrap.database(c, owner);"
+      ],
+      "scope": "Only owned isolated PostgreSQL18 fixture; no runtime ownership/privacy cleanup code changed."
+    },
+    "application_port": {
+      "id": "CSKH-PORT-01",
+      "path": "identity.internal.application.port.StaffInvitationActivation",
+      "purpose": "Keep HTTP guard dependent on an application port; JDBC activation implements it. No new HTTP authority or DTO."
+    },
+    "offline_resend_quota": {
+      "id": "CSKH-QUOTA-01",
+      "limits": "3 committed resends per account/hour, 20 per current operator/hour",
+      "semantics": "Administration lock; exact committed replay checked before quota. No invented browser IP for offline operator."
+    },
+    "reviewed_ci_bootstrap": {
+      "path": "scripts/ci/prepare-postgres.py",
+      "unchanged_protocol_sha256_lf": "52f33ac42651f5415c1ed0d7ca87ab28c3876bc8ef939b557c79429710374c47",
+      "helper": "scripts/ci/staff_role_prerequisites.py",
+      "only_added_lines": [
+        "    sql += __import__('staff_role_prerequisites').roles(owner)",
+        "{__import__('staff_role_prerequisites').database(owner)}"
+      ],
+      "scope": "Exact three isolated-cluster prerequisites; no ownership, protocol, cleanup or report policy changes."
+    },
+    "required_report_inventory": {
+      "id": "CSKH-CI-02",
+      "authority": "Owner standing source/test authorization; actual CI dependency, no collector weakening",
+      "reason": "New fixed Staff/Claims tests must be required, source-ordered and fail on missing/skipped reports; preserve every accepted collector/privacy function AST. Reference fake-report counts are not actual full-suite execution evidence.",
+      "collector": "scripts/ci/verify-reports.py",
+      "test": "scripts/ci/test_verify_reports.py",
+      "new_fixed_pg_methods": 13,
+      "new_fixed_migration_methods": 7,
+      "new_fixed_unit_cases": 20,
+      "reference_fixture_totals": {
+        "h2": 722,
+        "postgres": 1230
+      },
+      "protocol": "Original Postgres ownership/privacy protocol unchanged except the two independently hash-verified prerequisite hooks.",
+      "ci_correction": "PR #50 CI exposed omitted staffUsesFixedAudienceAndRejectsCustomerAndSystemTokens in fixed Customer configuration inventory; add it as mandatory and test exact source inventory plus missing/skip/failure/error denial. Collector functions unchanged.",
+      "owned_database_release_pg_cases": [
+        "ownedDatabaseReleaseRetainsNeighborAndRefusesMismatchedIdentity",
+        "ownedDatabaseReleaseRefusesLiveConnectionsAndChangedOwner",
+        "ownedDatabaseReleaseWaitsForOwnerToCloseConnectionWithoutForce"
+      ],
+      "test_resource_correction": "CI 44756480373 classified 35 errors DISK_FULL. Release each completed IdentityGrantApplicationTests database only after the existing complete owned-container/volume/run proof, exact factory name/role binding and current catalog owner, with no live sessions; non-FORCE drop only. No runtime/SQL migration/credential/container protocol changes.",
+      "owned_database_close_wait": "Bounded 3-second wait for connections to be closed by their owner, followed by catalog-owner recheck. Persistent sessions still deny deletion; no FORCE/termination and no business/test assertion timeout change."
+    }
+  }
 }

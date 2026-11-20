@@ -24,7 +24,7 @@ public final class JdbcIdentityBrowserState implements IdentityBrowserState,Cust
         UUID session=null;
         if(refresh!=null){
             byte[] h;try{h=hash(refresh);}catch(IdentityCommandFailure invalid){h=null;}
-            if(h!=null)try(Connection c=source.getConnection();PreparedStatement s=c.prepareStatement("SELECT session_id FROM "+storage.refresh+" WHERE token_hash=?")){
+            if(h!=null)try(Connection c=source.getConnection();PreparedStatement s=c.prepareStatement("SELECT r.session_id FROM "+storage.refresh+" r JOIN "+storage.session+" s ON s.id=r.session_id WHERE r.token_hash=? AND "+storage.audiencePredicate("s"))){
                 s.setQueryTimeout(2);s.setBytes(1,h);try(ResultSet r=s.executeQuery()){if(r.next())session=r.getObject(1,UUID.class);}
             }catch(SQLException e){throw new IdentityRateLimiter.Unavailable();}
         }
@@ -35,8 +35,10 @@ public final class JdbcIdentityBrowserState implements IdentityBrowserState,Cust
         try(Connection c=source.getConnection()){
             c.setAutoCommit(false);try{budget(c);
                 if(previous!=null){byte[] old;try{old=hash(previous);}catch(IdentityCommandFailure invalid){old=null;}
-                    if(old!=null)try(PreparedStatement s=c.prepareStatement("UPDATE "+storage.csrf+" SET revoked_at=clock_timestamp() WHERE cookie_hash=? AND revoked_at IS NULL")){s.setBytes(1,old);s.executeUpdate();}}
-                try(PreparedStatement s=c.prepareStatement("INSERT INTO "+storage.csrf+" VALUES (?,?,?,?,clock_timestamp(),clock_timestamp()+INTERVAL '15 minutes',NULL)")){
+                    if(old!=null)try(PreparedStatement s=c.prepareStatement("UPDATE "+storage.csrf+" SET revoked_at=clock_timestamp() WHERE cookie_hash=? AND revoked_at IS NULL AND "+storage.audiencePredicate(""))){s.setBytes(1,old);s.executeUpdate();}}
+                String column=storage==IdentitySessionStorage.CUSTOMER?"":",audience";
+                String value=storage==IdentitySessionStorage.CUSTOMER?"":",'"+storage.name()+"'";
+                try(PreparedStatement s=c.prepareStatement("INSERT INTO "+storage.csrf+"(id,cookie_hash,challenge_hash,session_id,created_at,expires_at,revoked_at"+column+") VALUES (?,?,?,?,clock_timestamp(),clock_timestamp()+INTERVAL '15 minutes',NULL"+value+")")){
                     s.setObject(1,UUID.randomUUID());s.setBytes(2,hash(cookie));s.setBytes(3,hash(challenge));s.setObject(4,session);s.executeUpdate();}
                 c.commit();return new Challenge(cookie,challenge);
             }catch(SQLException|RuntimeException e){c.rollback();throw e;}
@@ -44,7 +46,7 @@ public final class JdbcIdentityBrowserState implements IdentityBrowserState,Cust
     }
     @Override public void verify(String cookie,String challenge,UUID session,boolean login){
         byte[] a=hash(cookie),b=hash(challenge);
-        try(Connection c=source.getConnection();PreparedStatement s=c.prepareStatement("SELECT session_id FROM "+storage.csrf+" WHERE cookie_hash=? AND challenge_hash=? AND revoked_at IS NULL AND expires_at>clock_timestamp()")){
+        try(Connection c=source.getConnection();PreparedStatement s=c.prepareStatement("SELECT session_id FROM "+storage.csrf+" WHERE cookie_hash=? AND challenge_hash=? AND revoked_at IS NULL AND expires_at>clock_timestamp() AND "+storage.audiencePredicate(""))){
             s.setQueryTimeout(2);s.setBytes(1,a);s.setBytes(2,b);
             try(ResultSet r=s.executeQuery()){if(!r.next()||(!login&&!Objects.equals(session,r.getObject(1,UUID.class))))throw invalid();}
         }catch(SQLException e){throw new IdentityRateLimiter.Unavailable();}

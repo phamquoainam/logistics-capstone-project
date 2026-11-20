@@ -12,9 +12,10 @@ import tools.jackson.core.StreamReadFeature;
 
 /** Four exact accepted browser operations, isolated from Bearer-only administration. */
 public final class ProductionAuthenticationHttp {
-    public enum Transport {SYSTEM,CUSTOMER}
+    public enum Transport {SYSTEM,CUSTOMER,STAFF}
     private final String csrfCookie,refreshCookie,prefix,identifierField;
     private final boolean customer;
+    private final boolean staff;
     private static final JsonMapper JSON=JsonMapper.builder().enable(StreamReadFeature.STRICT_DUPLICATE_DETECTION).build();
     private final IdentitySessionCommands sessions;private final ProductionSessionAdmission admission;
     private final IdentityBrowserState browser;private final IdentityRateLimiter limiter;private final ProductionAccessTokens tokens;
@@ -23,10 +24,10 @@ public final class ProductionAuthenticationHttp {
         this(sessions,admission,browser,limiter,tokens,origin,clock,Transport.SYSTEM);
     }
     public ProductionAuthenticationHttp(IdentitySessionCommands sessions,ProductionSessionAdmission admission,IdentityBrowserState browser,IdentityRateLimiter limiter,ProductionAccessTokens tokens,String origin,Clock clock,Transport transport){
-        this.sessions=sessions;this.admission=admission;this.browser=browser;this.limiter=limiter;this.tokens=tokens;this.origin=transport==Transport.CUSTOMER?ProductionCustomerRequestAdmission.requireOrigin(origin):origin;this.clock=clock;
-        customer=Objects.requireNonNull(transport)==Transport.CUSTOMER;prefix=customer?"/api/v1/customer-auth":"/api/v1/auth";
-        csrfCookie=customer?"__Host-elogistics.customer.csrf":"__Host-elogistics.csrf";
-        refreshCookie=customer?"__Host-elogistics.customer.refresh":"__Host-elogistics.refresh";identifierField=customer?"email":"username";
+        this.sessions=sessions;this.admission=admission;this.browser=browser;this.limiter=limiter;this.tokens=tokens;this.origin=transport!=Transport.SYSTEM?ProductionCustomerRequestAdmission.requireOrigin(origin):origin;this.clock=clock;
+        customer=Objects.requireNonNull(transport)==Transport.CUSTOMER;staff=transport==Transport.STAFF;prefix=staff?"/api/v1/staff-auth":customer?"/api/v1/customer-auth":"/api/v1/auth";
+        csrfCookie=staff?"__Host-argopost.staff.csrf":customer?"__Host-elogistics.customer.csrf":"__Host-elogistics.csrf";
+        refreshCookie=staff?"__Host-argopost.staff.refresh":customer?"__Host-elogistics.customer.refresh":"__Host-elogistics.refresh";identifierField=customer||staff?"email":"username";
     }
     public boolean matches(HttpServletRequest r){String p=r.getRequestURI().substring(r.getContextPath().length());return (r.getMethod().equals("GET")&&p.equals(prefix+"/csrf"))||(r.getMethod().equals("POST")&&Set.of(prefix+"/login",prefix+"/refresh",prefix+"/logout").contains(p));}
     public void handle(HttpServletRequest request,HttpServletResponse response)throws IOException {
@@ -42,9 +43,9 @@ public final class ProductionAuthenticationHttp {
                 if(login){
                     admission.authorize(SessionAdmission.Operation.LOGIN,requestId,null,false);
                     var input=credentials(request);String username=input.get(identifierField).asString(),password=input.get("password").asString();
-                    try{if(customer)new CustomerEmail(username);else new Username(username);PasswordPolicy.validateLogin(password);}catch(DomainViolation e){throw new IdentityCommandFailure(IdentityCommandFailure.Code.VALIDATION_FAILED);}
+                    try{if(customer||staff)new CustomerEmail(username);else new Username(username);PasswordPolicy.validateLogin(password);}catch(DomainViolation e){throw new IdentityCommandFailure(IdentityCommandFailure.Code.VALIDATION_FAILED);}
                     String ip=clientAddress(request);
-                    var reservation=limiter.reserve(List.of(new IdentityRateLimiter.Subject(customer?IdentityRateLimiter.Policy.CUSTOMER_LOGIN_EMAIL:IdentityRateLimiter.Policy.LOGIN_ACCOUNT,username),new IdentityRateLimiter.Subject(customer?IdentityRateLimiter.Policy.CUSTOMER_LOGIN_IP:IdentityRateLimiter.Policy.LOGIN_IP,ip)));
+                    var reservation=limiter.reserve(List.of(new IdentityRateLimiter.Subject(customer?IdentityRateLimiter.Policy.CUSTOMER_LOGIN_EMAIL:IdentityRateLimiter.Policy.LOGIN_ACCOUNT,staff?"STAFF:"+username:username),new IdentityRateLimiter.Subject(customer?IdentityRateLimiter.Policy.CUSTOMER_LOGIN_IP:IdentityRateLimiter.Policy.LOGIN_IP,staff?"STAFF:"+ip:ip)));
                     IdentitySessionCommands.Result result;
                     try{result=sessions.loginIdentity(new IdentitySessionCommands.Login(username,password,requestId));}
                     catch(IdentityCommandFailure rejected){if(rejected.code()==IdentityCommandFailure.Code.INVALID_CREDENTIALS)reservation.finishLogin(false);throw rejected;}
@@ -67,7 +68,7 @@ public final class ProductionAuthenticationHttp {
             else if(logout){status=403;code="CSRF_REJECTED";}
             else{status=401;if(!code.equals("REFRESH_REPLAY"))code="SESSION_INVALID";}
             deny(response,status,code);
-        }catch(Exception e){deny(response,503,"SERVICE_UNAVAILABLE");}
+        }catch(Exception e){deny(response,503,staff?"STAFF_UNAVAILABLE":"SERVICE_UNAVAILABLE");}
     }
     private tools.jackson.databind.JsonNode credentials(HttpServletRequest request)throws IOException{
         try{
@@ -80,7 +81,7 @@ public final class ProductionAuthenticationHttp {
         // Construct signing/body BEFORE writing cookies. Never publish an incomplete credential pair.
         String access;try{access=tokens.issue(result.access());}catch(IdentityCommandFailure invalid){throw new IdentityRateLimiter.Unavailable();}long remaining=Duration.between(clock.instant(),result.absoluteExpiresAt()).getSeconds();if(remaining<=0)throw new IdentityRateLimiter.Unavailable();
         int seconds=(int)(result.access().expiresAt().getEpochSecond()-result.access().issuedAt().getEpochSecond());
-        String body=JSON.writeValueAsString(customer?Map.of("accessToken",access,"expiresAt",result.access().expiresAt().toString(),"accountId",result.access().accountId()):Map.of("accessToken",access,"tokenType","Bearer","expiresIn",seconds,"sessionExpiresAt",result.absoluteExpiresAt().toString(),"user",result.user()));
+        String body=JSON.writeValueAsString(customer||staff?Map.of("accessToken",access,"expiresAt",result.access().expiresAt().toString(),"accountId",result.access().accountId()):Map.of("accessToken",access,"tokenType","Bearer","expiresIn",seconds,"sessionExpiresAt",result.absoluteExpiresAt().toString(),"user",result.user()));
         byte[] raw=result.refreshToken();try{setCookie(response,refreshCookie,new String(raw,StandardCharsets.US_ASCII),Math.min(28800,remaining));}finally{Arrays.fill(raw,(byte)0);}
         if(csrf!=null)setCookie(response,csrfCookie,csrf.cookie(),900);
         response.setStatus(200);response.setContentType("application/json;charset=UTF-8");response.getWriter().write(body);

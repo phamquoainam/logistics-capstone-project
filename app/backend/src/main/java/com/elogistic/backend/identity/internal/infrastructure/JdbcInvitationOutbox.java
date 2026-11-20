@@ -31,11 +31,15 @@ public final class JdbcInvitationOutbox {
     /** Authorized worker owns the returned transient buffer and must close it in all paths. */
     public static final class Delivery implements AutoCloseable {
         private final UUID messageId;
+        private final UUID proofId;
+        private final ActionProof.Purpose purpose;
         private final String destination;
         private final byte[] token;
         private boolean closed;
-        private Delivery(UUID id,String destination,byte[] token){this.messageId=id;this.destination=destination;this.token=token;}
+        private Delivery(UUID id,UUID proofId,ActionProof.Purpose purpose,String destination,byte[] token){this.messageId=id;this.proofId=proofId;this.purpose=purpose;this.destination=destination;this.token=token;}
         public UUID messageId(){return messageId;}
+        public UUID proofId(){return proofId;}
+        public ActionProof.Purpose purpose(){return purpose;}
         public String destination(){if(closed)throw rejected();return destination;}
         /** Owned buffer, not a String. Do not log, put into diagnostics or retain after sending. */
         public byte[] token(){if(closed)throw rejected();return token;}
@@ -48,9 +52,17 @@ public final class JdbcInvitationOutbox {
     private final InvitationProtection protection;
     private final Policy policy;
     private final Clock clock;
+    private final String eligibility;
+    private final String selectedPurpose;
     public JdbcInvitationOutbox(DataSource runtime,InvitationProtection protection,Policy policy,Clock clock) {
+        this(runtime,protection,policy,clock,ActionProof.Purpose.INVITATION);
+    }
+    public JdbcInvitationOutbox(DataSource runtime,InvitationProtection protection,Policy policy,Clock clock,ActionProof.Purpose purpose) {
+        if(purpose!=ActionProof.Purpose.INVITATION && purpose!=ActionProof.Purpose.STAFF_INV)throw rejected();
         dataSource=Objects.requireNonNull(runtime);jdbc=new JdbcTemplate(runtime);transactions=new JdbcIdentityGrantStore(runtime);
         this.protection=Objects.requireNonNull(protection);this.policy=Objects.requireNonNull(policy);this.clock=Objects.requireNonNull(clock);
+        eligibility=purpose==ActionProof.Purpose.INVITATION?ELIGIBLE:STAFF_ELIGIBLE;
+        selectedPurpose=purpose.name();
     }
     private Instant now(){return clock.instant().truncatedTo(ChronoUnit.MICROS);}
     private static Timestamp stamp(Instant value){return Timestamp.from(value);}
@@ -67,17 +79,18 @@ public final class JdbcInvitationOutbox {
     }
     // Current state, not a stale queued snapshot, gates every open/claim. No external authority inference.
     private static final String ELIGIBLE="EXISTS (SELECT 1 FROM identity.action_proof p JOIN identity.user_account a ON a.id=p.account_id JOIN identity.realm r ON r.id=o.realm_id WHERE p.id=o.proof_id AND p.account_id=o.account_id AND p.purpose='INVITATION' AND p.consumed_at IS NULL AND p.revoked_at IS NULL AND a.status='PENDING_ACTIVATION' AND NOT a.email_verified AND a.password_hash IS NULL AND a.email=o.destination AND r.status='ACTIVE' AND EXISTS (SELECT 1 FROM identity.account_grant g WHERE g.account_id=a.id AND g.role_code='IDENTITY_MANAGEMENT' AND g.scope_type='IDENTITY' AND g.scope_id=r.id) AND NOT EXISTS (SELECT 1 FROM identity.account_grant g WHERE g.account_id=a.id AND (g.role_code<>'IDENTITY_MANAGEMENT' OR g.scope_type<>'IDENTITY' OR g.scope_id<>r.id)))";
+    private static final String STAFF_ELIGIBLE="identity.local_staff_environment_matches() AND EXISTS (SELECT 1 FROM identity.action_proof p JOIN identity.user_account a ON a.id=p.account_id JOIN identity.local_staff_principal s ON s.account_id=a.id WHERE p.id=o.proof_id AND p.account_id=o.account_id AND p.purpose='STAFF_INV' AND o.purpose='STAFF_INV' AND o.realm_id IS NULL AND o.format_version=2 AND p.consumed_at IS NULL AND p.revoked_at IS NULL AND s.state='PENDING' AND a.status='PENDING_ACTIVATION' AND NOT a.email_verified AND a.password_hash IS NULL AND a.email COLLATE \"C\"=o.destination COLLATE \"C\" AND s.exact_email=o.destination COLLATE \"C\")";
 
     /** Bounded 100-row maintenance; removes only protected payloads, never accounts/proofs/audit. */
     public int purge(){return transaction(()->purge(now()));}
     private int purge(Instant now) {
-        return jdbc.update("WITH obsolete AS (SELECT o.id FROM identity.invitation_outbox o WHERE o.status IN ('PENDING','LEASED') AND (o.expires_at<=? OR NOT ("+ELIGIBLE+") OR (o.attempts>=? AND (o.status='PENDING' OR o.lease_until<=?))) ORDER BY o.id LIMIT 100 FOR UPDATE OF o SKIP LOCKED) UPDATE identity.invitation_outbox o SET status=CASE WHEN o.expires_at<=? OR NOT ("+ELIGIBLE+") THEN 'EXPIRED' ELSE 'FAILED' END,last_outcome=CASE WHEN o.expires_at<=? OR NOT ("+ELIGIBLE+") THEN 'NOT_ELIGIBLE' ELSE 'ATTEMPTS_EXHAUSTED' END,nonce=NULL,ciphertext=NULL,lease_id=NULL,lease_until=NULL,finished_at=? FROM obsolete b WHERE o.id=b.id",
+        return jdbc.update("WITH obsolete AS (SELECT o.id FROM identity.invitation_outbox o WHERE o.purpose='"+selectedPurpose+"' AND o.status IN ('PENDING','LEASED') AND (o.expires_at<=? OR NOT ("+eligibility+") OR (o.attempts>=? AND (o.status='PENDING' OR o.lease_until<=?))) ORDER BY o.id LIMIT 100 FOR UPDATE OF o SKIP LOCKED) UPDATE identity.invitation_outbox o SET status=CASE WHEN o.expires_at<=? OR NOT ("+eligibility+") THEN 'EXPIRED' ELSE 'FAILED' END,last_outcome=CASE WHEN o.expires_at<=? OR NOT ("+eligibility+") THEN 'NOT_ELIGIBLE' ELSE 'ATTEMPTS_EXHAUSTED' END,nonce=NULL,ciphertext=NULL,lease_id=NULL,lease_until=NULL,finished_at=? FROM obsolete b WHERE o.id=b.id",
             stamp(now),policy.maxAttempts(),stamp(now),stamp(now),stamp(now),stamp(now));
     }
     public Optional<Lease> claim() {
         return transaction(()->{
             Instant now=now();purge(now);
-            var candidates=jdbc.query("SELECT o.id,o.expires_at FROM identity.invitation_outbox o WHERE o.created_at<=? AND o.expires_at>? AND o.attempts<? AND o.next_attempt_at<=? AND (o.status='PENDING' OR (o.status='LEASED' AND o.lease_until<=?)) AND "+ELIGIBLE+" ORDER BY o.next_attempt_at,o.id LIMIT 1 FOR UPDATE OF o SKIP LOCKED",
+            var candidates=jdbc.query("SELECT o.id,o.expires_at FROM identity.invitation_outbox o WHERE o.created_at<=? AND o.expires_at>? AND o.attempts<? AND o.next_attempt_at<=? AND (o.status='PENDING' OR (o.status='LEASED' AND o.lease_until<=?)) AND "+eligibility+" ORDER BY o.next_attempt_at,o.id LIMIT 1 FOR UPDATE OF o SKIP LOCKED",
                 (r,n)->new Lease(r.getObject(1,UUID.class),UUID.randomUUID(),r.getTimestamp(2).toInstant()),stamp(now),stamp(now),policy.maxAttempts(),stamp(now),stamp(now));
             if(candidates.isEmpty())return Optional.empty();
             var c=candidates.getFirst();Instant until=now.plus(policy.lease());if(until.isAfter(c.until()))until=c.until();
@@ -90,14 +103,14 @@ public final class JdbcInvitationOutbox {
         Objects.requireNonNull(lease);
         return transaction(()->{
             Instant now=now();
-            var rows=jdbc.query("SELECT o.*,p.token_hash FROM identity.invitation_outbox o JOIN identity.action_proof p ON p.id=o.proof_id WHERE o.id=? AND o.lease_id=? AND o.status='LEASED' AND o.lease_until>? AND o.created_at<=? AND o.expires_at>? AND "+ELIGIBLE+" FOR UPDATE OF o",
+            var rows=jdbc.query("SELECT o.*,p.token_hash FROM identity.invitation_outbox o JOIN identity.action_proof p ON p.id=o.proof_id WHERE o.id=? AND o.lease_id=? AND o.status='LEASED' AND o.lease_until>? AND o.created_at<=? AND o.expires_at>? AND "+eligibility+" FOR UPDATE OF o",
                 (r,n)->{
-                    var c=new InvitationProtection.Context(r.getObject("id",UUID.class),r.getObject("proof_id",UUID.class),r.getObject("account_id",UUID.class),r.getObject("realm_id",UUID.class),r.getString("destination"),r.getTimestamp("created_at").toInstant(),r.getTimestamp("expires_at").toInstant(),r.getString("verifier_key_id"),r.getString("encryption_key_id"));
+                    var c=new InvitationProtection.Context(r.getObject("id",UUID.class),r.getObject("proof_id",UUID.class),r.getObject("account_id",UUID.class),r.getObject("realm_id",UUID.class),r.getString("destination"),r.getTimestamp("created_at").toInstant(),r.getTimestamp("expires_at").toInstant(),r.getString("verifier_key_id"),r.getString("encryption_key_id"),ActionProof.Purpose.valueOf(r.getString("purpose")));
                     byte[] token=protection.open(c,r.getBytes("nonce"),r.getBytes("ciphertext"),now);
                     try {
-                        var proof=new ActionProof(c.proofId(),c.accountId(),ActionProof.Purpose.INVITATION,c.createdAt(),c.expiresAt(),ActionProof.State.AVAILABLE,null);
+                        var proof=new ActionProof(c.proofId(),c.accountId(),c.purpose(),c.createdAt(),c.expiresAt(),ActionProof.State.AVAILABLE,null);
                         if(!protection.matches(proof,c.verifierKeyId(),token,r.getBytes("token_hash"),now))throw rejected();
-                        return new Delivery(c.messageId(),c.destination(),token);
+                        return new Delivery(c.messageId(),c.proofId(),c.purpose(),c.destination(),token);
                     }catch(RuntimeException failure){InvitationProtection.wipe(token);throw failure;}
                 },lease.messageId(),lease.leaseId(),stamp(now),stamp(now),stamp(now));
             if(rows.size()!=1)throw rejected();return rows.getFirst();
@@ -108,7 +121,7 @@ public final class JdbcInvitationOutbox {
         Objects.requireNonNull(lease);Objects.requireNonNull(outcome);
         transaction(()->{
             Instant now=now();purge(now);
-            var attempts=jdbc.query("SELECT attempts FROM identity.invitation_outbox WHERE id=? AND lease_id=? AND status='LEASED' AND lease_until>? AND expires_at>? FOR UPDATE",
+            var attempts=jdbc.query("SELECT attempts FROM identity.invitation_outbox WHERE purpose='"+selectedPurpose+"' AND id=? AND lease_id=? AND status='LEASED' AND lease_until>? AND expires_at>? FOR UPDATE",
                 (r,n)->r.getInt(1),lease.messageId(),lease.leaseId(),stamp(now),stamp(now));
             if(attempts.size()!=1)throw rejected();
             boolean retry=outcome==Outcome.TRANSIENT_FAILURE && attempts.getFirst()<policy.maxAttempts();
