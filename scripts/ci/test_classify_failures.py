@@ -50,6 +50,8 @@ class SafeFailureClassificationTests(unittest.TestCase):
 
     def test_resource_and_sql_error_kinds_are_finite(self):
         for message, expected in [
+            ('TEST_DATABASE_STILL_CONNECTED', 'TEST_DATABASE_IN_USE'),
+            ('TEST_DATABASE_OWNER_CHANGED', 'TEST_DATABASE_OWNER_CHANGED'),
             ('No space left on device', 'DISK_FULL'),
             ('remaining connection slots are reserved', 'PG_CONNECTION_LIMIT'),
             ('too many clients already', 'PG_CONNECTION_LIMIT'),

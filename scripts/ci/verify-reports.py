@@ -12,7 +12,8 @@ import xml.etree.ElementTree as ET
 BASE = 'com.elogistic.backend.'
 REQUIRED = {
     BASE + 'demo.PostgresTestcontainersTests': '''ownedDatabaseReleaseRetainsNeighborAndRefusesMismatchedIdentity
-ownedDatabaseReleaseRefusesLiveConnectionsAndChangedOwner actualPostgres18UsesPinnedIsolatedContainer coldStartAppliesV1AndV2
+ownedDatabaseReleaseRefusesLiveConnectionsAndChangedOwner ownedDatabaseReleaseWaitsForOwnerToCloseConnectionWithoutForce
+actualPostgres18UsesPinnedIsolatedContainer coldStartAppliesV1AndV2
 validateAndRerunPreserveDataAndChecksums upgradeV1ToV2PreservesExistingData schemasAndObjectsBelongToOwner
 runtimeCannotDdlAssumeOwnerOrReadHistory restartPreservesCommittedDataAndHistory'''.split(),
     BASE + 'testsupport.TestcontainersRuntimePolicyTests': '''pinsApprovedImagesAndRejectsUnknownImages

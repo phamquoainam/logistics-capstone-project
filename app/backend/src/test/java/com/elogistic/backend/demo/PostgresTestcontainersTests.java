@@ -53,6 +53,16 @@ class PostgresTestcontainersTests {
         com.elogistic.backend.testsupport.OwnedTestDatabase.release(neighbor);
     }
 
+    @Test void ownedDatabaseReleaseWaitsForOwnerToCloseConnectionWithoutForce() throws Exception {
+        Database target=PostgresTestcontainersSupport.database(POSTGRES);
+        try(var scheduler=java.util.concurrent.Executors.newSingleThreadScheduledExecutor();var connection=target.runtimeConnection()) {
+            var closed=scheduler.schedule(()->{connection.close();return true;},2,java.util.concurrent.TimeUnit.SECONDS);
+            com.elogistic.backend.testsupport.OwnedTestDatabase.release(target);
+            assertTrue(closed.isDone(),"Cleanup must wait for the connection owner, never terminate its session");
+            assertTrue(closed.get(5,java.util.concurrent.TimeUnit.SECONDS));
+        } finally { com.elogistic.backend.testsupport.OwnedTestDatabase.release(target); }
+    }
+
     @Test void actualPostgres18UsesPinnedIsolatedContainer() throws Exception {
         PostgresTestcontainersSupport.verifyRuntime(POSTGRES);
         try(Connection c=DriverManager.getConnection(PostgresTestcontainersSupport.currentUrl(POSTGRES,"postgres"),POSTGRES.getUsername(),POSTGRES.getPassword());Statement s=c.createStatement()) {

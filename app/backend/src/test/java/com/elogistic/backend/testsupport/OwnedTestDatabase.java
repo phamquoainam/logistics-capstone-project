@@ -31,11 +31,25 @@ public final class OwnedTestDatabase {
                         throw new IllegalStateException("TEST_DATABASE_OWNER_CHANGED");
                 }
             }
-            try (var query = admin.prepareStatement("SELECT count(*) FROM pg_stat_activity WHERE datname=?")) {
+            long deadline = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(3);
+            while (true) {
+                try (var query = admin.prepareStatement("SELECT count(*) FROM pg_stat_activity WHERE datname=?")) {
+                    query.setString(1, db.name());
+                    try (var rows = query.executeQuery()) {
+                        if (!rows.next()) throw new IllegalStateException("TEST_DATABASE_ACTIVITY_UNAVAILABLE");
+                        if (rows.getInt(1) == 0) break;
+                    }
+                }
+                if (System.nanoTime() >= deadline) throw new IllegalStateException("TEST_DATABASE_STILL_CONNECTED");
+                try { Thread.sleep(25); }
+                catch (InterruptedException interrupted) { Thread.currentThread().interrupt(); throw interrupted; }
+            }
+            // Recheck ownership after waiting; a concurrent owner change must retain the database.
+            try (var query = admin.prepareStatement("SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname=?")) {
                 query.setString(1, db.name());
                 try (var rows = query.executeQuery()) {
-                    if (!rows.next() || rows.getInt(1) != 0)
-                        throw new IllegalStateException("TEST_DATABASE_STILL_CONNECTED");
+                    if (!rows.next()) return;
+                    if (!db.owner().equals(rows.getString(1))) throw new IllegalStateException("TEST_DATABASE_OWNER_CHANGED");
                 }
             }
             // Identifiers have the exact factory grammar and matching physical catalog owner.

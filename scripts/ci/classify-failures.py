@@ -11,6 +11,9 @@ import xml.etree.ElementTree as ET
 
 
 KINDS = (
+    ('TEST_DATABASE_IN_USE', ('test_database_still_connected', 'is being accessed by other users')),
+    ('TEST_DATABASE_OWNER_CHANGED', ('test_database_owner_changed',)),
+    ('TEST_DATABASE_TARGET_DENIED', ('owned_test_database_required', 'owned_test_database_binding_required')),
     ('PG_SHARED_MEMORY', ('out of shared memory',)),
     ('DISK_FULL', ('no space left on device',)),
     ('PG_CONNECTION_LIMIT', ('remaining connection slots are reserved', 'too many clients already')),

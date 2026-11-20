@@ -1144,15 +1144,17 @@
       "new_fixed_unit_cases": 20,
       "reference_fixture_totals": {
         "h2": 722,
-        "postgres": 1229
+        "postgres": 1230
       },
       "protocol": "Original Postgres ownership/privacy protocol unchanged except the two independently hash-verified prerequisite hooks.",
       "ci_correction": "PR #50 CI exposed omitted staffUsesFixedAudienceAndRejectsCustomerAndSystemTokens in fixed Customer configuration inventory; add it as mandatory and test exact source inventory plus missing/skip/failure/error denial. Collector functions unchanged.",
       "owned_database_release_pg_cases": [
         "ownedDatabaseReleaseRetainsNeighborAndRefusesMismatchedIdentity",
-        "ownedDatabaseReleaseRefusesLiveConnectionsAndChangedOwner"
+        "ownedDatabaseReleaseRefusesLiveConnectionsAndChangedOwner",
+        "ownedDatabaseReleaseWaitsForOwnerToCloseConnectionWithoutForce"
       ],
-      "test_resource_correction": "CI 44756480373 classified 35 errors DISK_FULL. Release each completed IdentityGrantApplicationTests database only after the existing complete owned-container/volume/run proof, exact factory name/role binding and current catalog owner, with no live sessions; non-FORCE drop only. No runtime/SQL migration/credential/container protocol changes."
+      "test_resource_correction": "CI 44756480373 classified 35 errors DISK_FULL. Release each completed IdentityGrantApplicationTests database only after the existing complete owned-container/volume/run proof, exact factory name/role binding and current catalog owner, with no live sessions; non-FORCE drop only. No runtime/SQL migration/credential/container protocol changes.",
+      "owned_database_close_wait": "Bounded 3-second wait for connections to be closed by their owner, followed by catalog-owner recheck. Persistent sessions still deny deletion; no FORCE/termination and no business/test assertion timeout change."
     }
   }
 }

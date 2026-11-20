@@ -13,7 +13,7 @@ Original Owner-approved manifest SHA-256:
 The original bytes and WIP remain in verified private archives recorded below.
 Current manifest includes the subsequent standing-authorized bootstrap, precise
 source/runtime deltas and mandatory fixed report inventory; its SHA-256 is
-`ad6af1eb97fa453419c962255db0a84b5f478a470441704929cc166a6dc8a15c`.
+`c6a784d48e827330fee46e09175c27939238c259680c2f54487ab1ef1ec3409c`.
 
 ### Source diff and boundaries
 
@@ -385,3 +385,26 @@ Two cleanup negative/positive cases become mandatory finite CI inventory; synthe
 PG reference total 1229, H2 722. Full exact-head CI still required before merge.
 Owner machine free space was read-only verified at about 0.52 GiB on C; no full
 local stress run or filesystem/Docker-volume cleanup was attempted.
+
+### Follow-up cleanup connection-close race
+
+Run `44761278906`, head `e02388af1847bfec5d5bdd2dcc08565ab707000d`: actual
+1222 PASS, zero assertion failures, 7 errors, 5 allowed skips; no DISK_FULL remains.
+The seven session/concurrency cases PASS 7/7 in isolated reproduction
+`999fbf9c0e43439baf855ab318b93753`. They are not claimed resolved from that alone.
+
+A controlled owner-closes-connection regression then reproduces premature cleanup
+rejection: `b37ee5e9d57d42858542f8ad18e991c4`, 1 ERROR, exact safe root marker
+TEST_DATABASE_STILL_CONNECTED. Cleanup now waits at most three seconds for the
+connection owner to close normally, then rechecks catalog ownership. A persistent
+connection still denies deletion; there is no FORCE, signal, session termination,
+runtime privilege or test assertion relaxation. The new regression additionally
+asserts cleanup waited for the scheduled owner closure rather than killing it.
+See [PostgreSQL DROP DATABASE semantics](https://www.postgresql.org/docs/18/sql-dropdatabase.html).
+
+`3c95994a10764650ab4fb16b9ed4d8a8`: 10/10 real PG18 cases PASS, comprising all
+seven CI-error methods and all three release safety/replay/wait cases. Mandatory
+inventory adds the third release case (synthetic PG total 1230, H2 unchanged 722).
+Finite safe diagnostic codes now distinguish cleanup-in-use/owner/target failures;
+raw messages and credentials remain private. Full exact-head CI is still required
+before merge; no full-suite PASS is inferred from focused reproduction.

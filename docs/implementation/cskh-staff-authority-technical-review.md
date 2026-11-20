@@ -1,7 +1,7 @@
 > Current source/test amendment, 2026-11-20: the historical design-only review
 > below is superseded for implementation by the approved manifest and subsequent
 > Owner standing authorization. Original approved bytes remain archived.
-> Current amended manifest SHA-256: `ad6af1eb97fa453419c962255db0a84b5f478a470441704929cc166a6dc8a15c`.
+> Current amended manifest SHA-256: `c6a784d48e827330fee46e09175c27939238c259680c2f54487ab1ef1ec3409c`.
 > Exact ACL bootstrap, runtime and fixed test-inventory deltas are in that JSON;
 > actual results and remaining gates are in [execution evidence](cskh-staff-authority-execution.md).
 > No demo/Production deployment, provisioning/grants or Git publication is authorized.
