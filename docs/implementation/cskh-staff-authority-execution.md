@@ -332,3 +332,29 @@ the exact reference-report totals test PASS after appending the omitted case.
 No collector/privacy function changed, no test was skipped or weakened. Golden
 fixture totals become H2=722/PG=1227; these remain synthetic policy-fixture counts,
 not observed full backend execution totals. Full current-revision CI is pending.
+
+### Exact-head PostgreSQL CI findings after inventory correction
+
+Run `44750213467`, head `fd58c11011385ed50f6fa6eeef22a7f073ca6376`:
+Architecture PASS; H2 actual 722 PASS/17 allowed skips, no failure/error.
+PostgreSQL job was cancelled by the 30-minute execution limit. Its retained
+sanitized report records 1187 PASS, 5 FAIL, 35 ERROR and 5 allowed skips; this is
+not a PostgreSQL PASS and PR #50 is not merged.
+
+Two Foundation suites still expected the V35 stream/131 tables. Reproduction
+`e47adf6e57434add81a10737a5302814` failed both targeted assertions. Corrected exact
+stream V1-V32/V34-V38 (37 migrations) and 140 owner-owned tables, explicitly adding
+all nine Staff/Claim tables while retaining the old object/FK/privilege checks.
+The complete Testcontainers foundation suite then PASS 7/7 in
+`f2f9ce9c865e42809a5599cab11303d8`. No migration or runtime invariant was changed.
+
+Four representative CI error methods PASS 4/4 when run on isolated PG18 in
+`9fa82033d9b44a04907e44a577aeb799`. This does not establish the cause of the other
+CI errors or turn the full run into PASS. Existing artifacts deliberately omit
+private stacks. A separate bounded diagnostic helper now classifies known error
+kinds from private Surefire XML in memory and emits only fixed enums plus exact
+already-approved test identifiers. Unknown messages/identifiers, stack contents,
+properties and credentials are never emitted. Four synthetic privacy/bounds tests
+PASS. The helper is diagnostic only, cannot change gate outcome, and leaves the
+accepted collector, private-log policy and runtime ownership protocol unchanged.
+The existing 30-minute limit is unchanged until there is causal evidence.
