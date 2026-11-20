@@ -343,6 +343,7 @@
     "app/backend/src/test/java/com/elogistic/backend/pricing/internal/domain/RoadPilotCandidateTests.java",
     "app/backend/src/test/java/com/elogistic/backend/pricing/internal/domain/RoadTariffCalculationTests.java",
     "app/backend/src/test/java/com/elogistic/backend/testsupport/ClamAvTestDaemon.java",
+    "app/backend/src/test/java/com/elogistic/backend/testsupport/OwnedTestDatabase.java",
     "app/backend/src/test/java/com/elogistic/backend/testsupport/PostgresTestcontainersSupport.java",
     "app/backend/src/test/java/com/elogistic/backend/testsupport/StaffRoleTestBootstrap.java",
     "app/frontend/mobile/.gitignore",

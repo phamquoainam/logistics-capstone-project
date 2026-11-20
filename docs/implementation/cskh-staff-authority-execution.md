@@ -13,7 +13,7 @@ Original Owner-approved manifest SHA-256:
 The original bytes and WIP remain in verified private archives recorded below.
 Current manifest includes the subsequent standing-authorized bootstrap, precise
 source/runtime deltas and mandatory fixed report inventory; its SHA-256 is
-`1dde941494487dff283c323eaaa2ee043790d51ce976b8032f86a7f4925bf67e`.
+`ad6af1eb97fa453419c962255db0a84b5f478a470441704929cc166a6dc8a15c`.
 
 ### Source diff and boundaries
 
@@ -358,3 +358,30 @@ properties and credentials are never emitted. Four synthetic privacy/bounds test
 PASS. The helper is diagnostic only, cannot change gate outcome, and leaves the
 accepted collector, private-log policy and runtime ownership protocol unchanged.
 The existing 30-minute limit is unchanged until there is causal evidence.
+
+### Confirmed runner storage exhaustion and bounded fixture release
+
+Run `44756480373`, head `3fb22952384e7920e57e9bf94b3c7745c591a42c`, completed
+normally in about 18 minutes: 1191 PASS, 1 FAIL, 35 ERROR, 5 allowed skips. All
+Foundation assertions and all 19 Customer Browser journeys PASS. The safe classifier
+identifies all 35 errors as DISK_FULL, zero unknown/unavailable diagnostics. The
+single assertion is Draft isolation at the boundary before the 35 late fixture
+errors; it PASS unchanged when reproduced separately below.
+
+The fixture factory creates a new database per Identity test but previously kept
+all 408 until container shutdown. V36-V38 increased the per-database footprint.
+Add a separate test-only release helper and AfterEach hook: reuse the complete
+accepted owned container/volume/run/session proof and current loopback mapping;
+require exact task_c/owner/migrator/runtime UUID suffix bindings and current catalog
+owner; refuse live connections or changed ownership. DROP DATABASE is non-FORCE;
+no session termination, role/container/volume deletion, developer URL or demo access.
+The original factory/ownership/privacy protocol is unchanged. No migration/runtime
+SQL, assertions, test coverage, timeout or fsync policy was weakened.
+
+Real isolated PG18 checks in `06f3f673e1a8479eb5c0d6763785976c`: 3/3 PASS, including
+foreign/invalid/mismatched target denial, neighboring data preservation, replay,
+live-connection/changed-owner denial and the unchanged Draft isolation test.
+Two cleanup negative/positive cases become mandatory finite CI inventory; synthetic
+PG reference total 1229, H2 722. Full exact-head CI still required before merge.
+Owner machine free space was read-only verified at about 0.52 GiB on C; no full
+local stress run or filesystem/Docker-volume cleanup was attempted.

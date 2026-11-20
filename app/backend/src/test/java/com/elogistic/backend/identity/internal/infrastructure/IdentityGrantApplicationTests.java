@@ -55,6 +55,9 @@ class IdentityGrantApplicationTests {
         service = useCase(authority);
     }
     @AfterAll static void verifyPolicy() throws Exception { PostgresTestcontainersSupport.verifyRuntime(POSTGRES); }
+    @AfterEach void releaseCompletedOwnedDatabase() throws Exception {
+        if (db != null) com.elogistic.backend.testsupport.OwnedTestDatabase.release(db);
+    }
     private static UUID id(int n) { return UUID.fromString(String.format("10000000-0000-4000-8000-%012d", n)); }
     private static Grant grant(GrantData g) { return new Grant(new RoleCode(g.role()), new ResourceScope(ResourceScope.Type.valueOf(g.scopeType()), g.scopeId())); }
     private ReplaceIdentityGrants useCase(GrantAuthority provider) {

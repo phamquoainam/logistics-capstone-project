@@ -20,6 +20,39 @@ class PostgresTestcontainersTests {
 
     @AfterAll static void verifyFinalPolicy() throws Exception { PostgresTestcontainersSupport.verifyRuntime(POSTGRES); }
 
+    @Test void ownedDatabaseReleaseRetainsNeighborAndRefusesMismatchedIdentity() throws Exception {
+        Database first=PostgresTestcontainersSupport.database(POSTGRES), neighbor=PostgresTestcontainersSupport.database(POSTGRES);
+        marker(neighbor);
+        for(String name:List.of("elogistics_dev","postgres","task_c_invalid",first.name()+"; SELECT 1")) {
+            Database foreign=new Database(name,first.owner(),first.migrator(),first.runtime(),first.migrationPassword(),first.runtimePassword(),POSTGRES);
+            assertThrows(IllegalArgumentException.class,()->com.elogistic.backend.testsupport.OwnedTestDatabase.release(foreign));
+        }
+        Database mismatch=new Database(first.name(),neighbor.owner(),first.migrator(),first.runtime(),first.migrationPassword(),first.runtimePassword(),POSTGRES);
+        assertThrows(IllegalArgumentException.class,()->com.elogistic.backend.testsupport.OwnedTestDatabase.release(mismatch));
+        com.elogistic.backend.testsupport.OwnedTestDatabase.release(first);
+        com.elogistic.backend.testsupport.OwnedTestDatabase.release(first);
+        try(var admin=DriverManager.getConnection(PostgresTestcontainersSupport.currentUrl(POSTGRES,"postgres"),POSTGRES.getUsername(),POSTGRES.getPassword());var q=admin.prepareStatement("SELECT count(*) FROM pg_database WHERE datname=?")) {
+            q.setString(1,first.name());try(var rows=q.executeQuery()){assertTrue(rows.next());assertEquals(0,rows.getInt(1));}
+        }
+        assertMarker(neighbor);
+        com.elogistic.backend.testsupport.OwnedTestDatabase.release(neighbor);
+    }
+
+    @Test void ownedDatabaseReleaseRefusesLiveConnectionsAndChangedOwner() throws Exception {
+        Database target=PostgresTestcontainersSupport.database(POSTGRES), neighbor=PostgresTestcontainersSupport.database(POSTGRES);
+        try(var active=target.runtimeConnection()) {
+            assertThrows(IllegalStateException.class,()->com.elogistic.backend.testsupport.OwnedTestDatabase.release(target));
+            assertTrue(active.isValid(2));
+        }
+        try(var admin=DriverManager.getConnection(PostgresTestcontainersSupport.currentUrl(POSTGRES,"postgres"),POSTGRES.getUsername(),POSTGRES.getPassword());var q=admin.createStatement()) {
+            q.execute("ALTER DATABASE "+target.name()+" OWNER TO "+neighbor.owner());
+            try { assertThrows(IllegalStateException.class,()->com.elogistic.backend.testsupport.OwnedTestDatabase.release(target)); }
+            finally { q.execute("ALTER DATABASE "+target.name()+" OWNER TO "+target.owner()); }
+        }
+        com.elogistic.backend.testsupport.OwnedTestDatabase.release(target);
+        com.elogistic.backend.testsupport.OwnedTestDatabase.release(neighbor);
+    }
+
     @Test void actualPostgres18UsesPinnedIsolatedContainer() throws Exception {
         PostgresTestcontainersSupport.verifyRuntime(POSTGRES);
         try(Connection c=DriverManager.getConnection(PostgresTestcontainersSupport.currentUrl(POSTGRES,"postgres"),POSTGRES.getUsername(),POSTGRES.getPassword());Statement s=c.createStatement()) {
