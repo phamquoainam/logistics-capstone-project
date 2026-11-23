@@ -9,6 +9,31 @@ approved real isolated deployment/UAT is recorded in
 
 ## Current completion record (supersedes historical continuation below)
 
+### PR integration regression correction — 2026-11-23
+
+PR51 first integration run45106846643 at HEAD63e7365 / merge revision80014fa:
+Architecture and H2 PASS; full PostgreSQL FAIL (1263 executed,1246 passed,
+17 failures,0 errors,5 expected skips). This result is retained, not replaced by
+the earlier focused source/test or live UAT acceptance.
+
+Sanitized reports identified stale Foundation migration inventories and repeat
+upgrade assertions. Isolated reproduction `.demo/cskh-focused-0619affe50614f85a710140238387676`
+ran three affected cases, all failed: expected37 vs actual39 migrations;
+expected140 vs actual143 owner tables; repeat migrate expected2 vs actual0.
+The latest stream correctly has V39/V40 and three Admin tables. Twelve repeat
+migration assertions had incorrectly advanced zero to two while first-upgrade
+counts were updated. This is a regression-test defect, not a schema/runtime defect.
+
+Correction is limited to three test files: PostgresTestcontainersTests,
+PostgresFoundationTests and IdentityMigrationTests. Exact version lists now
+include39/40 (still no33), exact table inventory includes the three Admin tables,
+and repeat migrate is strictly zero. Checksum/data preservation, owner equality,
+ACL/security assertions and all historical SQL remain unchanged. Focused rerun
+`.demo/cskh-focused-8a95e65cc76c49228d10ef806d13c9ea` PASS15/15, Maven0,
+no skips/errors/failures, source unchanged during execution. The two external
+Foundation cases and full regression still require new exact-revision CI before
+merge; no old-head PASS is substituted.
+
 The exact parent manifest remains byte-identical. Owner separately approved both
 AON-ACL-01 and AON-ACL-02, source/test only. V39/V40, offline adapters, protected
 SMTP, activation UI and Dashboard integration are implemented. At this source/test

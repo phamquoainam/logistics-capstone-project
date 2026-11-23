@@ -1889,6 +1889,13 @@ ADMIN_DASHBOARD_LOCAL_UAT_READY and GitHub CI PASS are not claimed.
 
 ### Admin isolated live UAT closure — ADMIN_DASHBOARD_LOCAL_UAT_READY
 
+Subsequent PR51 integration initially failed17 PostgreSQL regression cases from
+stale37-migration/140-table inventories and incorrectly incremented repeat-migrate
+assertions. Three representative isolated cases reproduced all three expected/
+actual mismatches. Test-only correction retains exact ownership, history, data
+and no-op guarantees; no migration/runtime/authority change. Required CI must
+verify the corrected revision independently of earlier bounded UAT acceptance.
+
 Supersedes the historical runtime blocker above under exact Owner deployment
 manifest9e0773d7... on127.0.0.1:5543/argopost_admin_uat_15f3f2a22479.
 Automatic review restored; bounded Hikari config correction succeeded, actual
