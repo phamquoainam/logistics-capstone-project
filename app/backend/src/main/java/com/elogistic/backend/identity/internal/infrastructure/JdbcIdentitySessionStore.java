@@ -15,9 +15,14 @@ public final class JdbcIdentitySessionStore implements IdentitySessionStore {
     private final JdbcIdentityGrantStore store;
     private final JdbcTemplate jdbc;
     private final IdentitySessionStorage storage;
+    private final AdminSessionPolicy adminPolicy;
     public JdbcIdentitySessionStore(DataSource runtime) {this(runtime,IdentitySessionStorage.SYSTEM);}
     public JdbcIdentitySessionStore(DataSource runtime,IdentitySessionStorage storage) {
-        this.storage=Objects.requireNonNull(storage);store=new JdbcIdentityGrantStore(runtime,storage);jdbc=new JdbcTemplate(runtime);
+        this(runtime,storage,AdminSessionPolicy.disabled(runtime));
+    }
+    public JdbcIdentitySessionStore(DataSource runtime,AdminSessionPolicy adminPolicy){this(runtime,IdentitySessionStorage.SYSTEM,adminPolicy);}
+    public JdbcIdentitySessionStore(DataSource runtime,IdentitySessionStorage storage,AdminSessionPolicy adminPolicy) {
+        this.storage=Objects.requireNonNull(storage);this.adminPolicy=Objects.requireNonNull(adminPolicy);store=new JdbcIdentityGrantStore(runtime,storage);jdbc=new JdbcTemplate(runtime);
     }
     private static Timestamp stamp(Instant t) {return Timestamp.from(t);}
     private static void one(int count) {if(count!=1)throw new IllegalStateException("SESSION_WRITE_REJECTED");}
@@ -41,7 +46,7 @@ public final class JdbcIdentitySessionStore implements IdentitySessionStore {
                 if(storage==IdentitySessionStorage.STAFF)return Boolean.TRUE.equals(jdbc.queryForObject("SELECT identity.support_staff_eligible(?)",Boolean.class,account));
                 if(storage==IdentitySessionStorage.CUSTOMER)return Boolean.TRUE.equals(jdbc.queryForObject("SELECT EXISTS(SELECT 1 FROM identity.customer_identifier c JOIN identity.user_account a ON a.id=c.account_id WHERE a.id=? AND c.status='ACTIVE' AND c.exact_email=a.email COLLATE \"C\" AND a.email_verified AND a.status='ACTIVE')",Boolean.class,account));
                 // Bounded approved Identity Management pair only; external owner authority is not invented.
-                return Boolean.TRUE.equals(jdbc.queryForObject("SELECT count(*)=1 AND COALESCE(bool_and(g.role_code='IDENTITY_MANAGEMENT' AND g.scope_type='IDENTITY' AND r.status='ACTIVE'),FALSE) FROM identity.account_grant g LEFT JOIN identity.realm r ON r.id=g.identity_realm_id WHERE g.account_id=?",Boolean.class,account));
+                return Boolean.TRUE.equals(jdbc.queryForObject("SELECT count(*)=1 AND COALESCE(bool_and(g.role_code='IDENTITY_MANAGEMENT' AND g.scope_type='IDENTITY' AND r.status='ACTIVE'),FALSE) FROM identity.account_grant g LEFT JOIN identity.realm r ON r.id=g.identity_realm_id WHERE g.account_id=?",Boolean.class,account))||adminPolicy.current(account).isPresent();
             }
             public Optional<Refresh> findRefresh(byte[] digest) {
                 return jdbc.query("SELECT r.id,r.session_id,r.expires_at,r.consumed_at,r.revoked_at FROM "+storage.refresh+" r JOIN "+storage.session+" s ON s.id=r.session_id WHERE r.token_hash=? AND "+storage.audiencePredicate("s")+" FOR UPDATE OF r",(r,n)->{

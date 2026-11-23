@@ -42,7 +42,7 @@ class IdentityGrantApplicationTests {
 
     @BeforeEach void fixture() throws Exception {
         db = PostgresTestcontainersSupport.database(POSTGRES);
-        assertEquals(37, db.flyway("latest", SCOPE).migrate().migrationsExecuted);
+        assertEquals(39, db.flyway("latest", SCOPE).migrate().migrationsExecuted);
         account(A, "ACTIVE", List.of(ADMIN)); account(B, "ACTIVE", List.of(ADMIN)); account(T, "ACTIVE", List.of(GX));
         session(S, A); session(AS, B); session(TS, T);
         execute("INSERT INTO identity.refresh_token(id,session_id,token_hash,issued_at,expires_at) VALUES ('" + id(20) + "','" + TS + "',decode(repeat('01',32),'hex'),TIMESTAMPTZ '2026-10-21 00:00:00Z',TIMESTAMPTZ '2026-10-21 08:00:00Z')");
@@ -55,6 +55,22 @@ class IdentityGrantApplicationTests {
         service = useCase(authority);
     }
     @AfterAll static void verifyPolicy() throws Exception { PostgresTestcontainersSupport.verifyRuntime(POSTGRES); }
+    // ADM-02–08 uses this existing owned lifecycle. No new suite alias or ownership/cleanup protocol change.
+    private com.elogistic.backend.workflow.internal.web.AdminDashboardPostgresCases adminDashboardCases() throws Exception {
+        return new com.elogistic.backend.workflow.internal.web.AdminDashboardPostgresCases(db,SCOPE);
+    }
+    @Test void adminDashboardTwoConnectionPoolAndUnavailableDatabase()throws Exception{try(var cases=adminDashboardCases()){cases.twoConnectionPoolExhaustionFailsClosedAndRecovers();}}
+    @Test void adminDashboardInvitationHttpSecurityAndRealLogin()throws Exception{try(var cases=adminDashboardCases()){cases.invitationHttpUsesSystemCsrfAndRealProofBeforeLogin();}}
+    @Test void adminDashboardSixApisAndSystemAdmission() throws Exception {try(var cases=adminDashboardCases()){cases.sixApisHaveRealCurrentSystemAdmissionAndNoImplicitRootAuthority();}}
+    @Test void adminDashboardCanonicalCohortAndPii() throws Exception {try(var cases=adminDashboardCases()){cases.canonicalBookingsParcelsAcceptanceFeesAndDrillthroughReconcileWithoutPii();}}
+    @Test void adminDashboardGranularPermissionIsolation() throws Exception {try(var cases=adminDashboardCases()){cases.granularPermissionsDenyBeforeFetchingAndCannotLeakFinancialOrTechnicalData();}}
+    @Test void adminDashboardDefaultOffAndRevocation() throws Exception {try(var cases=adminDashboardCases()){cases.defaultOffProductionCustomerMixedAndRevokedPermissionsFailClosed();}}
+    @Test void adminDashboardSnapshotTamperReplayAndDrift() throws Exception {try(var cases=adminDashboardCases()){cases.queryTamperActorReplayAndLateCohortChangeDoNotReturnMismatchedCounts();}}
+    @Test void adminDashboardReadOnlyAndScopeLifetime() throws Exception {try(var cases=adminDashboardCases()){cases.statelessReadContextCannotEscapeAndPostgresReadOnlyCannotWrite();}}
+    @Test void adminDashboardRealHttpsBrowserAndPostgres() throws Exception {try(var cases=adminDashboardCases()){cases.realHttpsBrowserUsesSourceAndPostgresWithoutFixtureInterception();}}
+    @Test void adminDashboardConcurrentAuthoritySnapshot() throws Exception {try(var cases=adminDashboardCases()){cases.concurrentAuthorityChangeCannotUseAPreLockSnapshot();}}
+    @Test void adminDashboardPartialRevocationAndAudience() throws Exception {try(var cases=adminDashboardCases()){cases.partialRevocationInvalidatesSnapshotsAndOtherAudiencesAreRejected();}}
+    @Test void adminDashboardBusinessAndPersonalCohort() throws Exception {try(var cases=adminDashboardCases()){cases.businessAndPersonalBookingsShareFactsWithoutMerchantMembershipSubstitution();}}
     @AfterEach void releaseCompletedOwnedDatabase() throws Exception {
         if (db != null) com.elogistic.backend.testsupport.OwnedTestDatabase.release(db);
     }

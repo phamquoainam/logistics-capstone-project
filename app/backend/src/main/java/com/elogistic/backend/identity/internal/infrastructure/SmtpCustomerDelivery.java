@@ -149,5 +149,24 @@ public final class SmtpCustomerDelivery implements CustomerDeliveryTransport {
         }catch(RuntimeException invalid){return outcome(Kind.BLOCKED);}
         finally{Arrays.fill(token,(byte)0);}
     }
+    /** AON protected format1 invitation. Generated login appears only in this private email. */
+    public Outcome sendAdminInvitation(JdbcInvitationOutbox.Delivery delivery){
+        if(delivery==null||delivery.purpose()!=ActionProof.Purpose.INVITATION||wireLoggingEnabled())return outcome(Kind.BLOCKED);
+        byte[] token=null;
+        try{
+            String username=delivery.loginUsername();
+            if(!username.matches("(?:admin|root)_[a-f0-9]{32}"))return outcome(Kind.BLOCKED);
+            token=delivery.token().clone();byte[] decoded=Base64.getUrlDecoder().decode(token);
+            try{if(decoded.length!=32||!Arrays.equals(token,Base64.getUrlEncoder().withoutPadding().encode(decoded)))return outcome(Kind.BLOCKED);}
+            finally{Arrays.fill(decoded,(byte)0);}
+            new CustomerEmail(delivery.destination());
+            String link=settings.portalOrigin()+"/admin/activate#proofId="+delivery.proofId()+"&token="+new String(token,StandardCharsets.US_ASCII);
+            return sendPrepared(delivery.messageId(),delivery.destination(),message->{
+                message.setSubject("ArgoPost — Xác minh tài khoản quản trị","UTF-8");message.setSentDate(Date.from(clock.instant()));
+                message.setText("ArgoPost\nXác minh tài khoản quản trị\n\nBạn được mời sử dụng tài khoản quản trị ArgoPost. Mở liên kết dưới đây để xác minh email và đặt mật khẩu:\n\n"+link+"\n\nTên đăng nhập: "+username+"\n\nLiên kết có hiệu lực trong 24 giờ, chỉ sử dụng một lần. Không chia sẻ liên kết này. Nếu không mong đợi lời mời, hãy bỏ qua email.\n\nArgoPost — Logistics without limits.","UTF-8");
+            });
+        }catch(RuntimeException invalid){return outcome(Kind.BLOCKED);}
+        finally{if(token!=null)Arrays.fill(token,(byte)0);}
+    }
     @Override public String toString(){return "SmtpCustomerDelivery[redacted]";}
 }

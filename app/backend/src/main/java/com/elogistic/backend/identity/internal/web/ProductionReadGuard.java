@@ -16,6 +16,8 @@ public final class ProductionReadGuard extends OncePerRequestFilter {
     private final IdentityCurrentSessionCommands sessions;
     private final String origin;
     private ProductionAuthenticationHttp authentication;
+    private ProductionAdminInvitationHttp invitations=ProductionAdminInvitationHttp.disabled();
+    public ProductionReadGuard invitations(ProductionAdminInvitationHttp invitations){this.invitations=Objects.requireNonNull(invitations);return this;}
     public ProductionReadGuard browser(ProductionAuthenticationHttp authentication){this.authentication=Objects.requireNonNull(authentication);return this;}
     public ProductionReadGuard(ProductionAccessTokens tokens,ProductionAccessAdmission admission,IdentityCurrentSessionCommands sessions,String origin) {
         this.tokens=Objects.requireNonNull(tokens);this.admission=Objects.requireNonNull(admission);this.sessions=Objects.requireNonNull(sessions);
@@ -27,6 +29,7 @@ public final class ProductionReadGuard extends OncePerRequestFilter {
     @Override protected void doFilterInternal(HttpServletRequest request,HttpServletResponse response,FilterChain chain) throws ServletException,IOException {
         UUID requestId=UUID.randomUUID();response.setHeader("Cache-Control","no-store");response.setHeader("X-Request-Id",requestId.toString());
         response.setHeader("X-Content-Type-Options","nosniff");response.setHeader("Referrer-Policy","no-referrer");
+        if(invitations.matches(request)){invitations.handle(request,response,requestId);return;}
         if(authentication!=null && authentication.matches(request)){authentication.handle(request,response);return;}
         try {
             if(!request.isSecure() || !allowedMethod(request)){deny(response,401,"SESSION_INVALID");return;}

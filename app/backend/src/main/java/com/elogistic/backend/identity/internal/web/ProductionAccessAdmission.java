@@ -33,4 +33,5 @@ public final class ProductionAccessAdmission implements CurrentSessionAdmission 
         try{sessions.recordMeaningfulActivity(state.requestId());}finally{current.set(state);}
     }
     UUID requestId(){State state=current.get();if(state==null)throw ProductionAccessTokens.invalid();return state.requestId();}
+    public UUID currentRequestId(){return requestId();}
 }

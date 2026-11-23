@@ -1,0 +1,201 @@
+{
+  "schema_version": 1,
+  "record_id": "ARGOPOST-ADMIN-UAT-15F3F2A22479",
+  "status": "PENDING_OWNER_EXACT_DEPLOYMENT_APPROVAL",
+  "prepared_at_utc": "2026-11-22T16:13:00.662299+00:00",
+  "prepared_on_owner_timezone": "2026-11-22 Asia/Saigon",
+  "deployment_id": "e9e6c0e4-8266-4c54-88b8-1bfc7ed3f3d0",
+  "scope": "Fresh isolated PostgreSQL18 LOCAL UAT only. No demo/shared/Production.",
+  "authority": {
+    "preparation": "Owner directive ADMIN LOCAL/TEST DEPLOYMENT & UAT; empty infrastructure creation only",
+    "technical_manifest_sha256": "025ae708cb97c01cf966a695402f730d5073364d7b0352298b7a27a644c9f0bc",
+    "source_checkpoint": "ADMIN_ONBOARDING_SOURCE_TEST_READY",
+    "separate_exact_execution_approval_required": true,
+    "technical_scope_reapproval_required": false
+  },
+  "target": {
+    "container": "argopost-admin-uat-pg18-15f3f2a22479",
+    "container_id": "c1151578cda4e5df4758d9b6e855548c08d976ccefd90fc7f4e91506fef4ad34",
+    "volume": "argopost_admin_uat_15f3f2a22479_pgdata",
+    "image": "postgres:18.6-bookworm@sha256:afc7e2d441324c0388fa80c3d24f733b4194a4eb7f47dd8ee2b08eb1a24a647c",
+    "image_id": "sha256:afc7e2d441324c0388fa80c3d24f733b4194a4eb7f47dd8ee2b08eb1a24a647c",
+    "host": "127.0.0.1",
+    "port": 5543,
+    "database": "argopost_admin_uat_15f3f2a22479",
+    "database_oid": "16384",
+    "system_identifier": "7711028187818553388",
+    "current_owner": "postgres",
+    "health": "healthy",
+    "current_application_tables": 0,
+    "current_custom_roles": 0,
+    "current_flyway": "ABSENT_EMPTY_TARGET",
+    "system_realm_id_for_v4_placeholder": "394516b0-a637-4238-b55f-498e0f9d14d3",
+    "system_realm_created": false,
+    "recovery_database": "argopost_admin_uat_15f3f2a22479_recovery"
+  },
+  "runtime": {
+    "frontend_origin": "https://localhost:5273",
+    "backend_origin": "https://localhost:9443",
+    "proxy_api_origin": "https://127.0.0.1:9443",
+    "listen_address": "127.0.0.1",
+    "dedicated_browser_profile_required": true,
+    "profiles": [
+      "identity",
+      "customer",
+      "postgres"
+    ],
+    "hikari_maximum_pool_size": 4,
+    "hikari_connection_timeout_ms": 2000,
+    "forward_headers_strategy": "NONE",
+    "certificate_thumbprint": "7E6B44BD8772608CB2230A96864B9A706F486173",
+    "certificate_source": "Existing localhost certificate reused read-only; no regeneration/trust mutation",
+    "smtp": "Existing JavaMailSender Gmail STARTTLS smtp.gmail.com:587; Windows DPAPI secret loaded only after approval",
+    "gmail_secret_decrypted": false,
+    "current_admin_flags": "ALL_DISABLED",
+    "started": false
+  },
+  "operators": {
+    "bootstrap": "Existing postgres login only inside this newly initialized isolated cluster; offline prerequisite step only",
+    "schema_owner": {
+      "name": "argopost_admin_owner_15f3f2a22479",
+      "login": false,
+      "attributes": [
+        "NOSUPERUSER",
+        "NOCREATEDB",
+        "NOCREATEROLE",
+        "NOREPLICATION",
+        "NOBYPASSRLS"
+      ]
+    },
+    "migrator": {
+      "name": "argopost_admin_migrator_15f3f2a22479",
+      "member_of": "argopost_admin_owner_15f3f2a22479",
+      "inherit": false,
+      "set_role": true,
+      "no_create_role": true
+    },
+    "runtime": {
+      "name": "argopost_admin_runtime_15f3f2a22479",
+      "member_of": [],
+      "no_schema_ownership": true,
+      "no_create_role": true
+    },
+    "admin": {
+      "login": "argopost_admin_op_15f3f2a22479",
+      "member_of": [
+        "elogistics_local_admin_operator"
+      ],
+      "inherit": true,
+      "set_role": false,
+      "created": false
+    },
+    "realm": {
+      "login": "argopost_realm_op_15f3f2a22479",
+      "member_of": [
+        "elogistics_local_realm_operator"
+      ],
+      "inherit": true,
+      "set_role": false,
+      "created": false
+    },
+    "no_login_prerequisites": [
+      "elogistics_local_staff_operator",
+      "identity_staff_writer",
+      "support_grant_writer",
+      "elogistics_local_admin_operator",
+      "identity_admin_writer",
+      "elogistics_local_realm_operator"
+    ],
+    "writer_set_memberships": "Schema owner only; no runtime or operator writer membership",
+    "staff_support_operator_login_or_grants_created": false,
+    "membership_approval": "PENDING"
+  },
+  "mailboxes": {
+    "private_exact_selection_file": ".demo/admin-uat-15f3f2a22479/mailbox-selection.json",
+    "selection_file_sha256": "7a4f9c775f85eee8b181da07866760346836b7f4b05c43883cffe1a15ac19087",
+    "owner_selected_two_distinct_mailboxes": true,
+    "not_in_git": true,
+    "no_delivery_sent": true
+  },
+  "admin_read_permissions": [
+    "ADMIN_DASHBOARD_READ",
+    "ADMIN_MERCHANT_READ",
+    "ADMIN_NETWORK_READ",
+    "ADMIN_SHIPMENT_READ",
+    "ADMIN_FINANCE_READ",
+    "ADMIN_TECHNICAL_READ"
+  ],
+  "initial_root_grants": "Only canonical IDENTITY_MANAGEMENT pair from unchanged V4 via V40; separate from Admin READ account",
+  "artifacts": {
+    "git_branch": "feature/argopost-admin-dashboard",
+    "git_head": "d7329a84822f88a1c01e70a0e23b065123860410",
+    "uncommitted_source": true,
+    "source_fingerprints_file": ".demo/admin-uat-15f3f2a22479/source-fingerprints.json",
+    "source_fingerprints_sha256": "0d59beab3377bbd1a51335531c8f9a03260d99e421e31c726e48b714bedd4ddd",
+    "backend_jar_sha256": "7415fb2995073b3ee52c060c2e69a45fa6dd17c58b016c19de2137193c5bed80",
+    "packaged_all_39_migrations_match_source": true,
+    "v39_sha256": "48510ec55434143218c222782d9e7e89ccc553585ce12ab638c733e52ec95fbd",
+    "v40_sha256": "7c663b1df790bc26eaa020c366c4784c89e76a6979d10377bd8043d4422e486c",
+    "private_prerequisite_sql": ".demo/admin-uat-15f3f2a22479/privileged-prerequisites.PENDING.sql",
+    "private_prerequisite_sql_sha256": "bb9792c0c0250e23772e040b4b276daa2f0f39cbe91e7b0d79ca3e18a26f9d9d"
+  },
+  "recovery": {
+    "file": "empty-target-before-bootstrap.dump",
+    "sha256": "a75e12bf1f95d744b0ea3a86ecef444405aaa73f3c992504a2fdb335e3f26ecc",
+    "bytes": 981,
+    "archiveListVerified": true,
+    "restoreRehearsal": "NOT_RUN_PENDING_TARGET_AUTHORIZATION"
+  },
+  "approved_preparation_observed": [
+    "Empty new target only; labels volume host port and physical identity verified",
+    "Private current-Windows-user/SYSTEM/Administrators ACL; no Everyone or sandbox read grant",
+    "New target-specific keyrings and DB login secrets prepared; no grants executed",
+    "Existing demo WIP/migrations/config/certificate untouched"
+  ],
+  "pending_exact_execution": [
+    "Restore empty baseline into exact recovery DB, compare schema and zero application data before privileged bootstrap",
+    "Trusted prerequisite SQL creates only listed NOLOGIN/login roles and exact memberships; database PUBLIC/connect and pg_control_system ACL hardening only on this new cluster",
+    "Apply all39 current migration files V1-V40 without V33 placeholder; validate checksums; no repair/clean/history edits",
+    "Bind exact physical target and realm via canonical operator; no direct DML account/grant mutations",
+    "Start owned HTTPS backend/frontend using target-only secrets; enable Admin onboarding/delivery/first-bootstrap locally after compatibility checks",
+    "Initial Root invitation to selected mailbox; Owner genuine verification and password; canonical V40 activation only then",
+    "Provision separate Admin with exactly six selected READ permissions; Owner genuine mailbox verification and login",
+    "Real HTTP/Browser UAT, current permission denial/revocation, logout, target-only disable/rollback rehearsal; no invented business facts"
+  ],
+  "forbidden": [
+    "demo/shared/Production changes",
+    "existing Root or Customer/Staff conversion",
+    "Staff/Carrier/Finance write or extra operator membership",
+    "credential/proof/private key logging",
+    "commit/push/merge",
+    "destructive rollback/reset or unapproved replacement Root"
+  ],
+  "execution_approval": {
+    "owner_approved": false,
+    "hash_bound_to_record": true
+  },
+  "preflight": {
+    "gmail_starttls": {
+      "verified": true,
+      "tls": "TLSv1.3",
+      "authenticated": false,
+      "email_sent": false
+    },
+    "host_postgres_tcp": "SASL_SCRAM_CHALLENGE_CONFIRMED_NO_PASSWORD_SENT",
+    "certificate_trusted_current_user": true,
+    "certificate_not_after_utc": "2029-01-31T17:32:04Z",
+    "ports_reserved_by_manifest": [
+      5543,
+      9443,
+      5273
+    ],
+    "no_full_regression_rerun": "Source unchanged; accepted source/test evidence retained; preparation/integrity checks only"
+  },
+  "uat_plan": {
+    "permission_revocation": "Canonical replace six READ grants with five retaining ADMIN_DASHBOARD_READ, verify stale session denial and excluded API403, then restore six using current version and new audited request; no terminally revoking the only working Admin.",
+    "rollback_rehearsal": "Target-only reversible flag-off and controlled owned-process stop/restart, verify denied requests then resume after config/physical binding verification. Terminal realm disable is destructive to usability and is not automatically executed.",
+    "terminal_revocation": "Already source-tested; not execute on sole Admin or only realm without explicit target disposition.",
+    "business_data": "No imported demo PII or SQL KPI seed. New target starts with zero Shipments. Real empty cohort is testable; positive aggregation/drill-through requires separately authorized canonical source facts and is not claimed from empty data.",
+    "ready_gate": "Keep ADMIN_DASHBOARD_LOCAL_UAT_READY false until real mailbox onboarding/login/live UAT and chosen rollback checks actually pass; record positive-data limitations explicitly."
+  }
+}

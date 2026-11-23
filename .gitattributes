@@ -1,2 +1,9 @@
 scripts/ci/test_verify_reports.py -text
 scripts/ci/verify-reports.py -text
+
+# Preserve exact Owner-approved artifact bytes across Windows and CI checkouts.
+docs/implementation/admin-dashboard-contract.proposed.md text eol=lf
+docs/implementation/admin-onboarding-technical-manifest.proposed.json text eol=lf
+docs/implementation/admin-uat-deployment-manifest.json -text
+app/backend/src/main/resources/db/migration/V39__isolated_admin_onboarding.sql text eol=lf
+app/backend/src/main/resources/db/migration/V40__isolated_system_first_bootstrap.sql text eol=lf

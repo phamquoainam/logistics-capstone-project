@@ -1726,3 +1726,190 @@ remain BLOCKED. Live AWS/ClamAV and deployment acceptance remain NOT VERIFIED.
 [Claims manifest](../implementation/organization-claims-intake-technical-manifest.json)
 and [evidence report](../implementation/organization-claims-intake-execution.md)
 separate the delivered intake slice from full commercial Claims acceptance.
+
+## 2026-11-21 — Admin Portal initial authentication boundary
+
+REQ-V3-BC-031 / Spec027: frontend contract slice only, not full acceptance.
+New `/admin/login` uses accepted SYSTEM auth/CSRF/refresh/current-account/logout;
+no demo ADMIN, Customer or SUPPORT-purpose Staff substitution. Frontend contract
+tests: 11 Admin + 4 Staff + 19 Customer = 34 PASS. Intercepted browser tests:
+7 Admin + 36 Customer/Public = 43 PASS; these are not live Backend/PostgreSQL UAT.
+Typecheck, lint, demo build and browser-owned Customer build PASS. Backend,
+historical migrations, real account grants and SYSTEM activation unchanged.
+
+REQ-V3-BC-031 / BC-035: business-read authority and scoped KPI/drill-through remain
+AWAITING_TECHNICAL_APPROVAL; no canonical task marked DONE. See
+[bounded contract](../implementation/admin-dashboard-contract.proposed.md) and
+[execution evidence](../implementation/admin-portal-execution.md). No claim that
+Identity-management grants authorize Carrier/Finance metrics, no simulated network
+as official network, and no UNPAID-as-revenue inference.
+
+## 2026-11-22 — Owner-approved bounded Admin source/test delivery
+
+REQ-V3-BC-031 / BC-035, ADM-02–08:
+**ADMIN_DASHBOARD_SOURCE_TEST_READY**. The exact-hash Owner approval supersedes
+the earlier pending technical decision above; original contract bytes preserved.
+Six persisted read permissions, six GET APIs, owner-local public ports composed
+in one read-only repeatable-read callback, exact canonical Booking/Parcel/UNPAID
+metrics, authenticated15-minute same-cohort drill-through and responsive Admin UI.
+No implicit business permission from Root/IAM, Merchant, Customer or CSKH authority.
+
+Observed: complete Backend H2730PASS/17 profile SKIP after Windows Temp ACL rerun;
+Architecture23PASS included. Isolated PG18 Admin/security/Identity12/12PASS and
+additional Customer/CSKH HTTP regression2/2PASS; actual HTTPS Browser4/4PASS.
+Frontend contracts40PASS and intercepted Customer/Public/Admin UI47PASS; lint,
+typecheck and both build modes PASS. Report-policy: original127 unaffected methods
+PASS, seven inventory-affected methods plus two new negatives rerun9/9PASS; no
+single-run full-policy PASS claim. Implementation validator zero errors, semantic
+ownership CONSISTENT, ten preexisting broken links retained. No full PG/CI claim.
+
+Source/test tasks ADM-01–08 DONE within this bounded approval. Full BC-031/035
+acceptance, real Admin onboarding/deployment and unsourced business workflows are
+not inferred. Merchant submission/review, official network, advanced lifecycle,
+SLA/priority, collection/COD/reconciliation and absent telemetry remain unavailable.
+All37 migrations and original WIP preserved; no real account/grant/SYSTEM activation
+or demo/runtime change. No commit/push/merge.
+See [execution evidence](../implementation/admin-portal-execution.md) and
+[ADR-0016](../architecture/decisions/ADR-0016-bounded-carrier-admin-reads.md).
+
+## 2026-11-22 — Admin real-onboarding readiness boundary
+
+Previous ADM-01–08 source/test acceptance remains unchanged. Real Local/Test
+onboarding is BLOCKED_AUTHORITY: ordinary provisioning/invitation admits only the
+management pair, not the read-only Admin set. A first SYSTEM realm also needs a
+genuine initial verification path, not fixture activation. No existing Customer,
+Staff or Root is converted or granted new privileges.
+
+[One technical delta](../implementation/admin-onboarding-technical-review.md)
+specifies proposed V39 core issuance/verification and separately sensitive optional
+V40 first bootstrap for a NEW isolated realm only. Neither is implemented/approved
+by this preparation. The [runbook](../implementation/admin-local-readiness-runbook.md)
+and [coverage](../implementation/admin-local-functional-coverage.csv) distinguish
+DONE source capabilities from BLOCKED real UAT and UNAVAILABLE business sources.
+
+Read-only Docker discovery found the existing demo container exited; SQL/Flyway/
+realm state was not reverified. No container start, database/Root/grant/flag/runtime
+change or Git publication.46 WIP files and37 migration hashes preserved. Manifest
+and Markdown/CSV consistency checks run; no repeated old suite or fabricated live
+onboarding/rollback result. ADMIN_DASHBOARD_LOCAL_UAT_READY is not claimed.
+
+## 2026-11-22 — AON Option B source/test starts, narrow ACL dependency blocked
+
+Historical start checkpoint below is superseded by the source/test closure at
+the end of this section; its failed evidence is preserved.
+
+Owner approved exact manifest025ae708... for V39/V40 source/test.51 WIP paths and
+all37 prior migrations preserved. Fixed NOLOGIN prerequisite generators have
+4/4 Python checks PASS; existing outer ownership/bootstrap hooks remain intact.
+New V39 schema/guard prototype and two mandatory migration/regression cases are
+WIP, not complete implementation. V40/operator/HTTP/Browser remain unfinished.
+
+PG18 TDD observed missing target40; a trigger NEW-record error was corrected.
+Catalog tests then caught ineffective ACL-after-owner-transfer; fixing order
+correctly revoked PUBLIC access but exposed a legitimate Staff writer call denied
+by local_admin_registered. The mandatory focused regression remains FAIL and
+blocks source/test readiness. No test/assertion bypass or extra ACL was applied.
+Automatic review rejected a broader SECURITY DEFINER/xmin guard rewrite; it was
+not applied. See [execution](../implementation/admin-onboarding-execution.md) and
+[exact AON-ACL-01 proposal](../implementation/admin-onboarding-staff-predicate-acl.delta.md).
+No real grants, Root/realm activation, demo/Production migration or publication.
+
+### AON Option B closure — ADMIN_ONBOARDING_SOURCE_TEST_READY
+
+Exact immutable parent manifest025ae708... and Owner-approved AON-ACL-01/02
+implemented within source/test boundary. V39/V40 + dedicated offline Admin/Root
+operators + protected SMTP + real Identity activation/SYSTEM session + activation
+UI and Dashboard now have actual owned PostgreSQL18/HTTPS fixture evidence.
+No rejected broad definer/xmin provenance rewrite was used.
+
+AON-T-01–10 PASS: current physical binding/ACL/direct-DML denial, transactional
+proof/outbox/audit/receipt, replay/current revoked operator/concurrency, quotas,
+genuine proof before V4 realm activation, six READ APIs/snapshots and terminal
+disable/revocation. Consolidated41/41 PG cases plus final affected5/5 PASS;
+actual HTTPS Browser5/5, frontend unit21/21/UI13/13, typecheck/lint/two builds PASS.
+Final fresh H2 collector731 PASS/17 expected skips, architecture23/23,
+report-policy136/136, prerequisite4/4 and contract validator530/530 PASS.
+Repository ownership CONSISTENT; ten preexisting link findings retained.
+Privacy audit and owned test-resource absence checks PASS.
+
+Final DTO Unicode validation was TDD RED→GREEN within approved exact UTF8/no-NUL
+contract. A mixed-report H2 collection was rejected, preserved and rerun with
+fresh build output; no test/collector weakening. Historical ACL failures remain
+evidence, not relabeled PASS. Complete gate mapping, source hashes and commands:
+[execution](../implementation/admin-onboarding-execution.md).
+
+All51 starting WIP archive entries and37 prior migrations verified unchanged;
+parent manifest bytes preserved, no V33 placeholder. Branch/HEAD unchanged,
+no staged changes or Git publication. No demo/shared/Production mutation, real
+Root/Admin/grants/operator membership, deployment or feature activation.
+Real isolated target/operator/selected READ set and controlled-mailbox UAT remain
+the next separately authorized deployment dependency; runbook/coverage prepared.
+No full PostgreSQL-suite, GitHub CI or ADMIN_DASHBOARD_LOCAL_UAT_READY claim.
+
+### Admin isolated Local/Test preparation — exact execution approval pending
+
+Owner authorized new empty infrastructure and consolidated approval preparation.
+Created only container `argopost-admin-uat-pg18-15f3f2a22479`, new dedicated volume
+and DB `argopost_admin_uat_15f3f2a22479` on127.0.0.1:5543. Pinned PG18.6 healthy,
+physical OID/system identifier verified; zero app tables/custom roles/Flyway history.
+Baseline custom dump/list PASS; restore rehearsal NOT RUN. Gmail verified STARTTLS
+TLS1.3 handshake only, no AUTH/email. Existing trusted localhost cert read-only;
+new target keyrings/config private and all Admin flags off. Owner-selected Root/
+Admin mailboxes are private/hash-bound, not stored in Git. No application/source
+logic, old migration, demo/runtime, existing Root or grant changed.
+
+[Exact target/operator approval record](../implementation/admin-uat-deployment-approval.md)
+binds container/volume/database/realm, distinct pending operator logins/memberships,
+selected six READ grants, private mailbox selection, source/JAR checksums and safe
+rollback/UAT sequence. It remains PENDING OWNER APPROVAL per Owner directive step5.
+No privileged bootstrap, migration, membership, provisioning, SYSTEM activation,
+application deployment, SMTP delivery or real Browser UAT before that decision.
+No repeated already-passing source suites or false Local UAT READY/CI claim.
+
+### Admin real target deployment — partial execution and runtime blocker
+
+Owner approved immutable deployment manifest9e0773d7...; no repeat deployment or
+technical approval is needed.12 integrity checks PASS. CRLF executable SQL matches
+JSON hashbb9792c0...; stale Markdown LF hash corrected without editing SQL/manifest.
+Exact recovery restore PASS;11 new roles/six custom memberships audited;39 migration
+versions1–40 except33 applied successfully; physical environment bound canonically.
+Initial Root `b7d9f111-db7e-4374-a412-3b84dbe74eec` is pending, generated by actual
+canonical provisioning. Same request replay returns same result. SYSTEM remains
+unactivated; no dedicated READ Admin or genuine mailbox acceptance yet.
+
+HTTPS Backend startup failed binding Hikari data-source properties to an already
+sealed pool. Extra underscores in compound Hikari environment names are the
+bounded candidate cause; correction and verification have NOT run. Automatic
+approval review failed from usage limit before executing that config patch/restart.
+No bypass, alternate privileged edit or false retry PASS. Workspace evidence and
+coverage updated; source/JAR and historical migrations preserved. See
+[actual execution](../implementation/admin-uat-deployment-execution.md).
+Real SMTP delivery/login/Browser/permission/rollback acceptance remains incomplete;
+ADMIN_DASHBOARD_LOCAL_UAT_READY and GitHub CI PASS are not claimed.
+
+### Admin isolated live UAT closure — ADMIN_DASHBOARD_LOCAL_UAT_READY
+
+Supersedes the historical runtime blocker above under exact Owner deployment
+manifest9e0773d7... on127.0.0.1:5543/argopost_admin_uat_15f3f2a22479.
+Automatic review restored; bounded Hikari config correction succeeded, actual
+pool4/2000ms and JDBC PG18 runtime role verified.39 migrations validated;12 callable
+SQL privilege denials and20 function ACL signatures verified. Real Gmail delivery,
+Owner genuine Root/Admin verification, canonical SYSTEM activation and six READ
+Admin admission observed. Root retains only IAM, no implicit Dashboard access.
+
+Real isolated Chrome/HTTPS UAT23/23 PASS: six API outcomes, actual empty source
+cohort and same-snapshot drill, filters, responsive states, session refresh,
+canonical Finance reduction/restoration with genuine re-logins, target-only
+flag-off denial/restore, natural915039ms access expiry, valid refresh recovery and
+actual logout/protected-route/API denial. No fake clock or deadline mutation.
+See [execution](../implementation/admin-uat-deployment-execution.md) and
+[coverage](../implementation/admin-local-functional-coverage.csv).
+
+Six operator receipts have audit references; exactly two verified accounts,
+Root one IAM/Admin six READ grants; mail payloads erased.575 source fingerprints,
+37 historical migrations and original51-entry WIP ZIP CRC/hash preserved.
+Implementation validator PASS/ownership CONSISTENT;10 preexisting links retained.
+No source/JAR alteration in deployment, no staged changes or commit/push/merge.
+Demo/shared/Production unchanged. Readiness is bounded to this real empty cohort:
+positive-data aggregation NOT VERIFIED; missing canonical Merchant/Network/Carrier/
+SLA/Finance/telemetry sources remain UNAVAILABLE. No full PG suite/GitHub CI claim.
