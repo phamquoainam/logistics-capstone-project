@@ -25,6 +25,8 @@ public final class ProductionCustomerRequestAdmission implements CustomerRequest
     }
     private static IdentityCommandFailure invalid(){return new IdentityCommandFailure(IdentityCommandFailure.Code.SESSION_INVALID);}
     @Override public Request current(){State state=current.get();if(state==null)throw invalid();return state.request;}
+    /** Trusted actual servlet peer; never X-Forwarded-For or a caller DTO. */
+    public String peerAddress(){var state=current.get();if(state==null)throw invalid();authorize(state.request.requestId(),state.session);return ProductionAuthenticationHttp.clientAddress(state.http);}
     public IdentityRateLimiter.Reservation reservePassword(IdentityRateLimiter limiter,String exactEmail){
         State state=current.get();if(state==null || !state.http.getMethod().equals("POST")
             || !state.http.getRequestURI().substring(state.http.getContextPath().length()).equals("/api/v1/customer-auth/reauthentication"))throw invalid();

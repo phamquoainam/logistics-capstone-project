@@ -8,6 +8,7 @@ $statePath = Join-Path $privateRoot 'processes.json'
 $jar = Join-Path $root 'app/backend/target/backend-0.0.1-SNAPSHOT.jar'
 $frontend = Join-Path $root 'app/frontend/web'
 $postgresSettingsPath = Join-Path $root '.demo/postgres/settings.json'
+$artifactPath = Join-Path $PSScriptRoot 'local-backend-artifact.json'
 
 function Require-File([string]$path, [string]$code) { if (!(Test-Path -LiteralPath $path -PathType Leaf)) { throw $code } }
 function Docker-Path {
@@ -88,6 +89,49 @@ function Save-Process($backendRecord, $frontendRecord) {
         backend=$backendRecord
         frontend=$frontendRecord
     } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $statePath -Encoding UTF8
+}
+function Read-BackendArtifact {
+    Require-File $artifactPath 'LOCAL_BACKEND_ARTIFACT_MANIFEST_MISSING'
+    $artifact = Get-Content -LiteralPath $artifactPath -Raw | ConvertFrom-Json
+    if ($artifact.path -ne '.demo/local-runtime/backend-v40.jar' -or $artifact.sha256 -notmatch '^[a-f0-9]{64}$' -or $artifact.databaseVersion -ne '35') { throw 'LOCAL_BACKEND_ARTIFACT_MANIFEST_INVALID' }
+    $candidate = Join-Path $root $artifact.path
+    Require-File $candidate 'LOCAL_VERIFIED_BACKEND_MISSING; restore the previously verified artifact; do not build/migrate WIP onto demo.'
+    if ((Get-FileHash -LiteralPath $candidate -Algorithm SHA256).Hash -ne $artifact.sha256) { throw 'LOCAL_BACKEND_ARTIFACT_HASH_MISMATCH' }
+    return $candidate
+}
+function Assert-DemoHistory([string[]]$history) {
+    if ($history.Count -ne 1 -or $history[0].Trim() -ne 'elogistics_dev|35|0') { throw 'LOCAL_DATABASE_BASELINE_MISMATCH; no migration performed.' }
+}
+function Clear-StaleProcessState {
+    if (!(Test-Path -LiteralPath $statePath)) { return }
+    $state = Get-Content -LiteralPath $statePath -Raw | ConvertFrom-Json
+    if ($null -ne (Owned-Process $state.backend) -or $null -ne (Owned-Process $state.frontend)) { throw 'LOCAL_STATE_EXISTS; inspect status or stop before restart.' }
+    # Preserve stale evidence; never terminate a process solely because its PID was reused.
+    $archive = $statePath + '.stale-' + [Guid]::NewGuid().ToString('N')
+    Move-Item -LiteralPath $statePath -Destination $archive
+    Write-Output 'STALE_LOCAL_PROCESS_RECORD_ARCHIVED'
+}
+function Prepare-ExistingDatabase {
+    $docker = Docker-Path
+    $existing = & $docker inspect elogistics-d1-postgres18 --format '{{json .}}' 2>$null
+    if ($LASTEXITCODE -ne 0) { throw 'LOCAL_EXISTING_POSTGRES_REQUIRED; no container will be created.' }
+    $container = $existing | ConvertFrom-Json
+    if ($container.Config.Labels.'com.docker.compose.project' -ne 'elogistics-d1' -or @($container.Mounts | Where-Object { $_.Type -eq 'volume' -and $_.Name -eq 'elogistics_d1_pg18_dev_data' -and $_.Destination -eq '/var/lib/postgresql' }).Count -ne 1 -or @($container.HostConfig.PortBindings.'5432/tcp' | Where-Object { $_.HostIp -eq '127.0.0.1' -and $_.HostPort -eq '5433' }).Count -ne 1) { throw 'POSTGRES_CONTAINER_OWNERSHIP_MISMATCH' }
+    if ($container.State.Status -ne 'running') {
+        & $docker start $container.Id 1>$null
+        if ($LASTEXITCODE -ne 0) { throw 'POSTGRES_START_FAILED' }
+    }
+    for ($attempt=0; $attempt -lt 60; $attempt++) {
+        $health = & $docker inspect $container.Id --format '{{.State.Health.Status}}' 2>$null
+        if ($LASTEXITCODE -eq 0 -and $health -eq 'healthy') { break }
+        Start-Sleep -Seconds 2
+    }
+    if ($health -ne 'healthy') { throw 'POSTGRES_NOT_HEALTHY' }
+    # Read-only local socket query; no migrator credentials, DDL, seed, repair or build.
+    $history = @(& $docker exec $container.Id psql -X -v ON_ERROR_STOP=1 -U elogistics_bootstrap -d elogistics_dev -Atc "SELECT current_database(), (SELECT version FROM platform.flyway_schema_history WHERE success ORDER BY installed_rank DESC LIMIT 1), (SELECT count(*) FROM platform.flyway_schema_history WHERE NOT success);")
+    if ($LASTEXITCODE -ne 0) { throw 'LOCAL_DATABASE_BASELINE_CHECK_FAILED' }
+    Assert-DemoHistory $history
+    Write-Output 'POSTGRES_V35_VERIFIED; MIGRATIONS_NOT_RUN'
 }
 function Doctor {
     $settings = Read-Settings
@@ -174,9 +218,12 @@ switch ($Action) {
     'start' {
         Doctor
         Require-File $gmailPath 'GMAIL_SECRET_PENDING; run local.cmd gmail before start.'
-        if (Test-Path -LiteralPath $statePath) { throw 'LOCAL_STATE_EXISTS; inspect status or stop before restart.' }
+        $jar = Read-BackendArtifact
+        Clear-StaleProcessState
         $settings = Read-Settings
-        Prepare-Database $settings
+        Prepare-ExistingDatabase
+        Set-ProcessEnvironment $settings
+        $env:PG_MIGRATOR_PASSWORD = $null; $env:PG_MIGRATOR_USER = $null
         $env:PG_MIGRATION_ENABLED = 'false'
         $gmail = Get-Content -LiteralPath $gmailPath -Raw | ConvertFrom-Json
         $secure = ConvertTo-SecureString -String $gmail.dpapi
@@ -187,7 +234,7 @@ switch ($Action) {
         $env:CUSTOMER_SMTP_PASSWORD = $credential.GetNetworkCredential().Password
         $backendRecord = $null; $frontendRecord = $null
         try {
-            $backendProcess = Start-Process -FilePath (Get-Command java).Source -ArgumentList @('-jar',('"'+$jar+'"'),'--spring.profiles.active=identity,customer,postgres','--debug=false','--trace=false') -PassThru -WindowStyle Hidden -RedirectStandardOutput (Join-Path $privateRoot 'backend.out.log') -RedirectStandardError (Join-Path $privateRoot 'backend.err.log')
+            $backendProcess = Start-Process -FilePath (Get-Command java).Source -ArgumentList @('-jar',('"'+$jar+'"'),'--spring.profiles.active=identity,customer,postgres','--spring.flyway.enabled=false','--debug=false','--trace=false') -PassThru -WindowStyle Hidden -RedirectStandardOutput (Join-Path $privateRoot 'backend.out.log') -RedirectStandardError (Join-Path $privateRoot 'backend.err.log')
             $backendRecord = Process-Record $backendProcess 'BACKEND'
             $env:CUSTOMER_SMTP_PASSWORD = $null
             for ($attempt=0; $attempt -lt 60; $attempt++) { if ($null -eq (Owned-Process $backendRecord)) { throw 'BACKEND_EXITED_BEFORE_READY' }; if (Test-Https 'https://127.0.0.1:8443/api/v1/public-media/hero-network.svg') { break }; Start-Sleep -Seconds 2 }

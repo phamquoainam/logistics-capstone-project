@@ -10,24 +10,25 @@ import javax.net.ssl.*;
 import static org.junit.jupiter.api.Assertions.*;
 
     /** Bounded synthetic inbox. Server-side peer disconnect is expected in TLS-denial cases. */
-final class CustomerSmtpTestInbox implements AutoCloseable {
+public final class CustomerSmtpTestInbox implements AutoCloseable {
         final AtomicInteger authentications=new AtomicInteger(),envelopes=new AtomicInteger(),handshakes=new AtomicInteger();
         private final SSLContext serverTls;private final ServerSocket listener;private final ExecutorService executor=Executors.newSingleThreadExecutor();private final Future<?> task;
         private final List<byte[]> inbox=Collections.synchronizedList(new ArrayList<>());
-        CustomerSmtpTestInbox(int connections,boolean starttls,boolean implicit,int recipientCode,SSLContext serverTls)throws Exception{
+        public CustomerSmtpTestInbox(int connections,boolean starttls,boolean implicit,int recipientCode,SSLContext serverTls)throws Exception{
             this(connections,starttls,implicit,recipientCode,serverTls,5000);
         }
-        CustomerSmtpTestInbox(int connections,boolean starttls,boolean implicit,int recipientCode,SSLContext serverTls,int acceptTimeout)throws Exception{
+        public CustomerSmtpTestInbox(int connections,boolean starttls,boolean implicit,int recipientCode,SSLContext serverTls,int acceptTimeout)throws Exception{
             if(acceptTimeout<5000 || acceptTimeout>120000)throw new IllegalArgumentException("SMTP_TEST_ACCEPT_TIMEOUT_INVALID");
             this.serverTls=serverTls;listener=implicit?serverTls.getServerSocketFactory().createServerSocket():new ServerSocket();listener.bind(new InetSocketAddress(InetAddress.getByName("127.0.0.1"),0));listener.setSoTimeout(acceptTimeout);
             task=executor.submit(()->{for(int i=0;i<connections;i++)try(Socket socket=listener.accept()){socket.setSoTimeout(5000);serve(socket,starttls,implicit,recipientCode);}catch(SSLException|SocketException expectedDisconnect){}catch(Exception failure){throw new IllegalStateException("SMTP_TEST_INBOX_FAILED");}});
         }
-        static String plainText(jakarta.mail.Part part)throws Exception{
+        public static String plainText(jakarta.mail.Part part)throws Exception{
             if(part.isMimeType("text/plain"))return (String)part.getContent();
             if(part.isMimeType("multipart/*")){var multipart=(jakarta.mail.Multipart)part.getContent();for(int i=0;i<multipart.getCount();i++){String text=plainText(multipart.getBodyPart(i));if(!text.isEmpty())return text;}}
             return "";
         }
-        int port(){return listener.getLocalPort();}
+        public List<byte[]> received(){synchronized(inbox){return List.copyOf(inbox);}}
+        public int port(){return listener.getLocalPort();}
         private void serve(Socket initial,boolean starttls,boolean implicit,int recipientCode)throws Exception{
             Socket socket=initial;boolean secure=implicit;
             if(implicit){((SSLSocket)socket).startHandshake();handshakes.incrementAndGet();}
@@ -50,7 +51,7 @@ final class CustomerSmtpTestInbox implements AutoCloseable {
             }
         }
         private static void reply(BufferedWriter writer,String response)throws IOException{writer.write(response);writer.write("\r\n");writer.flush();}
-        List<byte[]> messages()throws Exception{task.get(10,TimeUnit.SECONDS);return List.copyOf(inbox);}
+        public List<byte[]> messages()throws Exception{task.get(10,TimeUnit.SECONDS);return List.copyOf(inbox);}
         Optional<byte[]> message(int index){synchronized(inbox){return index>=0 && index<inbox.size()?Optional.of(inbox.get(index).clone()):Optional.empty();}}
         @Override public void close()throws Exception{listener.close();executor.shutdownNow();assertTrue(executor.awaitTermination(6,TimeUnit.SECONDS));for(byte[] bytes:inbox)Arrays.fill(bytes,(byte)0);}
     }

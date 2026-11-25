@@ -16,7 +16,7 @@ import org.springframework.mail.*;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 
 /** Explicit configured JavaMailSender transport. No default credentials, raw wire logging or TLS fallback. */
-public final class SmtpCustomerDelivery implements CustomerDeliveryTransport {
+public final class SmtpCustomerDelivery implements CustomerDeliveryTransport, com.elogistic.backend.platform.api.MerchantNoticeMail {
     public enum Mode {STARTTLS,IMPLICIT_TLS,TEST_LOOPBACK,LOCAL_REAL_SMTP}
     public record Settings(String host,int port,Mode mode,String username,String password,String sender,Set<String> approvedSenderDomains,String portalOrigin,boolean sandbox){
         public Settings{
@@ -44,36 +44,36 @@ public final class SmtpCustomerDelivery implements CustomerDeliveryTransport {
     }
     private static IllegalArgumentException configuration(){return new IllegalArgumentException("CUSTOMER_SMTP_CONFIGURATION_INVALID");}
     private boolean testTransport(){return settings.mode()==Mode.TEST_LOOPBACK;}
-    private Outcome outcome(Kind kind){return new Outcome(kind,null,testTransport());}
+    private CustomerDeliveryTransport.Outcome outcome(CustomerDeliveryTransport.Kind kind){return new CustomerDeliveryTransport.Outcome(kind,null,testTransport());}
     private static boolean wireLoggingEnabled(){
         return Logger.getLogger("org.eclipse.angus.mail.smtp.protocol").isLoggable(Level.FINEST)
             || Logger.getLogger("jakarta.mail").isLoggable(Level.FINEST);
     }
-    private static Kind failureKind(Throwable failure){
+    private static CustomerDeliveryTransport.Kind failureKind(Throwable failure){
         var pending=new ArrayDeque<Throwable>();var seen=Collections.newSetFromMap(new IdentityHashMap<Throwable,Boolean>());pending.add(failure);
         for(int examined=0;!pending.isEmpty() && examined<32;examined++){
             Throwable current=pending.removeFirst();if(!seen.add(current))continue;
             int code=current instanceof SMTPSendFailedException smtp?smtp.getReturnCode():current instanceof SMTPAddressFailedException address?address.getReturnCode():0;
-            if(code>=500)return Kind.PERMANENT_FAILURE;if(code>=400)return Kind.TRANSIENT_FAILURE;
-            if(current instanceof java.net.SocketTimeoutException || current instanceof java.net.ConnectException)return Kind.TRANSIENT_FAILURE;
+            if(code>=500)return CustomerDeliveryTransport.Kind.PERMANENT_FAILURE;if(code>=400)return CustomerDeliveryTransport.Kind.TRANSIENT_FAILURE;
+            if(current instanceof java.net.SocketTimeoutException || current instanceof java.net.ConnectException)return CustomerDeliveryTransport.Kind.TRANSIENT_FAILURE;
             if(current instanceof MailSendException mail)for(Exception nested:mail.getMessageExceptions())if(nested!=null)pending.add(nested);
             if(current instanceof MessagingException mail && mail.getNextException()!=null)pending.add(mail.getNextException());
             if(current.getCause()!=null)pending.add(current.getCause());
         }
-        return Kind.BLOCKED;
+        return CustomerDeliveryTransport.Kind.BLOCKED;
     }
-    @Override public Outcome send(Message intent){
+    @Override public CustomerDeliveryTransport.Outcome send(CustomerDeliveryTransport.Message intent){
         // A process configured to trace protocol bodies cannot handle customer secrets.
-        if(wireLoggingEnabled())return outcome(Kind.BLOCKED);
+        if(wireLoggingEnabled())return outcome(CustomerDeliveryTransport.Kind.BLOCKED);
         byte[] token=null;
         try{
             intent.proof().requireAvailable(clock.instant());token=intent.token();
             if(intent.proof().emailOtp()){
-                if(token.length!=43)return outcome(Kind.BLOCKED);
-                for(int index=0;index<6;index++)if(token[index]<'0' || token[index]>'9')return outcome(Kind.BLOCKED);
+                if(token.length!=43)return outcome(CustomerDeliveryTransport.Kind.BLOCKED);
+                for(int index=0;index<6;index++)if(token[index]<'0' || token[index]>'9')return outcome(CustomerDeliveryTransport.Kind.BLOCKED);
             }else{
                 byte[] decoded=Base64.getUrlDecoder().decode(token);
-                try{if(decoded.length!=32 || !Arrays.equals(token,Base64.getUrlEncoder().withoutPadding().encode(decoded)))return outcome(Kind.BLOCKED);}
+                try{if(decoded.length!=32 || !Arrays.equals(token,Base64.getUrlEncoder().withoutPadding().encode(decoded)))return outcome(CustomerDeliveryTransport.Kind.BLOCKED);}
                 finally{Arrays.fill(decoded,(byte)0);}
             }
             final byte[] mailToken=token;
@@ -89,6 +89,11 @@ public final class SmtpCustomerDelivery implements CustomerDeliveryTransport {
             String link=settings.portalOrigin()+path+"#proofId="+intent.proof().id()
                 +(intent.proof().emailOtp()?"&expiresAt="+intent.proof().expiresAt():"&proof="+new String(mailToken,StandardCharsets.US_ASCII));
             if(membership)link=settings.portalOrigin()+path+"#proof="+new String(mailToken,StandardCharsets.US_ASCII);
+            boolean businessContact=intent.proof().purpose()==CustomerProof.Purpose.BUSINESS_CONTACT;
+            if(businessContact){
+                if(intent.applicationBinding()==null)throw configuration();
+                link=settings.portalOrigin()+path+"#applicationId="+intent.applicationBinding()+"&proofId="+intent.proof().id()+"&proof="+new String(mailToken,StandardCharsets.US_ASCII);
+            }
             boolean otp=intent.proof().emailOtp();
             String code=otp?new String(mailToken,0,6,StandardCharsets.US_ASCII):"";
             String title=recovery?"Xác minh khôi phục mật khẩu":"Xác minh địa chỉ email của bạn";
@@ -97,18 +102,41 @@ public final class SmtpCustomerDelivery implements CustomerDeliveryTransport {
                 ?"movapost.\n"+title+"\n\n"+(recovery?"":"Chào mừng bạn đến với movapost.\n\n")+instruction+"\n\n"+code+"\nMã có hiệu lực trong 2 phút.\n\nNếu bạn không thực hiện yêu cầu này, hãy bỏ qua email.\n\nmovapost. — Gửi niềm tin, nối hành trình."
                 :"movapost.\n"+title+"\n\nMở liên kết sau để tiếp tục:\n"+link+"\nNếu bạn không thực hiện yêu cầu này, hãy bỏ qua email.";
             if(membership){message.setSubject("ArgoPost - Lời mời tham gia doanh nghiệp","UTF-8");content="ArgoPost\nLời mời tham gia doanh nghiệp\n\nBạn được mời tham gia một doanh nghiệp trên ArgoPost. Mở lời mời và xác nhận bằng tài khoản đã xác minh chính địa chỉ email nhận thư này. Nếu chưa có tài khoản, hãy đăng ký và xác minh email trước.\n\n"+link+"\n\nLời mời có hiệu lực trong72 giờ và chỉ dùng một lần. Không chia sẻ liên kết này. Nếu không mong đợi lời mời, bạn có thể từ chối hoặc bỏ qua.\n\nArgoPost — Gửi niềm tin, nối hành trình.";}
+            if(businessContact){
+                message.setSubject("ArgoPost - Xác minh liên hệ doanh nghiệp","UTF-8");
+                content="ArgoPost\nXác minh liên hệ doanh nghiệp\n\nMở liên kết sau để xác minh địa chỉ email liên hệ cho hồ sơ doanh nghiệp của bạn:\n\n"+link+"\n\nLiên kết có hiệu lực trong 15 phút, chỉ sử dụng một lần. Không chia sẻ liên kết. Nếu bạn không yêu cầu xác minh, hãy bỏ qua email.\n\nArgoPost — Gửi niềm tin, nối hành trình.";
+            }
             if(otp){
                 var plain=new MimeBodyPart();plain.setText(content,"UTF-8");
                 var html=new MimeBodyPart();html.setContent("<!doctype html><html lang=\"vi\"><body style=\"margin:0;background:#f4f6fa;font-family:Arial,sans-serif;color:#192d4b\"><table role=\"presentation\" style=\"max-width:560px;width:100%;margin:32px auto;background:#fff;border-radius:12px\"><tr><td style=\"padding:32px\"><div style=\"font-size:28px;font-weight:800;letter-spacing:-1px\"><span style=\"color:#1955a6\">mova</span><span style=\"color:#ef751b\">post.</span></div><h1 style=\"font-size:21px;margin:28px 0 16px\">"+title+"</h1>"+(recovery?"":"<p>Chào mừng bạn đến với movapost.</p>")+"<p style=\"line-height:1.7\">"+instruction+"</p><div style=\"background:#fff5eb;border-radius:8px;text-align:center;padding:22px;margin:24px 0\"><strong style=\"font-size:34px;letter-spacing:8px;color:#192d4b\">"+code+"</strong><p style=\"font-size:13px;color:#67748a;margin:12px 0 0\">Có hiệu lực trong 2 phút</p></div><p style=\"font-size:14px;line-height:1.7\">Nếu bạn không thực hiện yêu cầu này, hãy bỏ qua email.</p><p style=\"border-top:1px solid #e9edf3;padding-top:22px;font-size:12px;color:#67748a\">movapost. — Gửi niềm tin, nối hành trình.</p></td></tr></table></body></html>","text/html; charset=UTF-8");
                 var alternatives=new MimeMultipart("alternative");alternatives.addBodyPart(plain);alternatives.addBodyPart(html);message.setContent(alternatives);
             }else message.setText(content,"UTF-8");
             });
-        }catch(RuntimeException blocked){return outcome(Kind.BLOCKED);}
+        }catch(RuntimeException blocked){return outcome(CustomerDeliveryTransport.Kind.BLOCKED);}
         finally{if(token!=null)Arrays.fill(token,(byte)0);}
     }
+    /** Business status only; no Identity proof or caller-provided body is accepted. */
+    @Override public com.elogistic.backend.platform.api.MerchantNoticeMail.Outcome send(com.elogistic.backend.platform.api.MerchantNoticeMail.Message intent){
+        CustomerDeliveryTransport.Outcome result;
+        try{
+            if(intent==null)throw configuration();new CustomerEmail(intent.destination());
+            String title=switch(intent.template()){
+                case REQUEST_INFORMATION->"H\u1ed3 s\u01a1 c\u1ea7n b\u1ed5 sung th\u00f4ng tin";
+                case REJECTED->"K\u1ebft qu\u1ea3 xem x\u00e9t h\u1ed3 s\u01a1";
+                case APPROVED->"H\u1ed3 s\u01a1 doanh nghi\u1ec7p \u0111\u00e3 \u0111\u01b0\u1ee3c duy\u1ec7t";
+                case WITHDRAWN->"H\u1ed3 s\u01a1 doanh nghi\u1ec7p \u0111\u00e3 r\u00fat";
+            };
+            String link=settings.portalOrigin()+"/personal/applications/"+intent.applicationId();
+            result=sendPrepared(intent.id(),intent.destination(),message->{
+                message.setSubject("ArgoPost - "+title,"UTF-8");message.setSentDate(Date.from(clock.instant()));
+                message.setText("ArgoPost\n"+title+"\n\nVui l\u00f2ng \u0111\u0103ng nh\u1eadp \u0111\u1ec3 xem th\u00f4ng tin h\u1ed3 s\u01a1 v\u00e0 b\u01b0\u1edbc ti\u1ebfp theo:\n"+link+"\n\nTh\u00f4ng b\u00e1o n\u00e0y kh\u00f4ng thay th\u1ebf n\u1ed9i dung quy\u1ebft \u0111\u1ecbnh trong t\u00e0i kho\u1ea3n.\nArgoPost - G\u1eedi ni\u1ec1m tin, n\u1ed1i h\u00e0nh tr\u00ecnh.","UTF-8");
+            });
+        }catch(RuntimeException invalid){result=outcome(CustomerDeliveryTransport.Kind.BLOCKED);}
+        return new com.elogistic.backend.platform.api.MerchantNoticeMail.Outcome(com.elogistic.backend.platform.api.MerchantNoticeMail.Kind.valueOf(result.kind().name()),result.reference(),result.sandbox());
+    }
     @FunctionalInterface private interface MailContent {void apply(MimeMessage message)throws MessagingException;}
-    private Outcome sendPrepared(UUID id,String destination,MailContent content){
-        if(wireLoggingEnabled())return outcome(Kind.BLOCKED);
+    private CustomerDeliveryTransport.Outcome sendPrepared(UUID id,String destination,MailContent content){
+        if(wireLoggingEnabled())return outcome(CustomerDeliveryTransport.Kind.BLOCKED);
         try{
             Properties properties=new Properties();
             properties.setProperty("mail.smtp.connectiontimeout","3000");properties.setProperty("mail.smtp.timeout","3000");properties.setProperty("mail.smtp.writetimeout","3000");
@@ -127,18 +155,18 @@ public final class SmtpCustomerDelivery implements CustomerDeliveryTransport {
             MimeMessage message=new MimeMessage(session){@Override protected void updateMessageID()throws MessagingException{setHeader("Message-ID",messageId);}};
             message.setFrom(new InternetAddress(settings.sender(),true));message.setRecipient(jakarta.mail.Message.RecipientType.TO,new InternetAddress(destination,true));
             content.apply(message);message.saveChanges();sender.send(message);
-            return new Outcome(Kind.ACCEPTED_BY_PROVIDER,(testTransport()?"TEST:":"SMTP:")+id,testTransport());
-        }catch(MailAuthenticationException blocked){return outcome(Kind.BLOCKED);}
+            return new CustomerDeliveryTransport.Outcome(CustomerDeliveryTransport.Kind.ACCEPTED_BY_PROVIDER,(testTransport()?"TEST:":"SMTP:")+id,testTransport());
+        }catch(MailAuthenticationException blocked){return outcome(CustomerDeliveryTransport.Kind.BLOCKED);}
         catch(MailException failed){return outcome(failureKind(failed));}
-        catch(MessagingException | RuntimeException blocked){return outcome(Kind.BLOCKED);}
+        catch(MessagingException | RuntimeException blocked){return outcome(CustomerDeliveryTransport.Kind.BLOCKED);}
     }
     /** Same configured JavaMailSender/TLS policy and bounded outcomes, fixed Staff invitation purpose. */
-    public Outcome sendStaffInvitation(JdbcInvitationOutbox.Delivery delivery){
-        if(delivery==null||delivery.purpose()!=ActionProof.Purpose.STAFF_INV||wireLoggingEnabled())return outcome(Kind.BLOCKED);
+    public CustomerDeliveryTransport.Outcome sendStaffInvitation(JdbcInvitationOutbox.Delivery delivery){
+        if(delivery==null||delivery.purpose()!=ActionProof.Purpose.STAFF_INV||wireLoggingEnabled())return outcome(CustomerDeliveryTransport.Kind.BLOCKED);
         byte[] token=delivery.token().clone();
         try{
             byte[] decoded=Base64.getUrlDecoder().decode(token);
-            try{if(decoded.length!=32||!Arrays.equals(token,Base64.getUrlEncoder().withoutPadding().encode(decoded)))return outcome(Kind.BLOCKED);}
+            try{if(decoded.length!=32||!Arrays.equals(token,Base64.getUrlEncoder().withoutPadding().encode(decoded)))return outcome(CustomerDeliveryTransport.Kind.BLOCKED);}
             finally{Arrays.fill(decoded,(byte)0);}
             new CustomerEmail(delivery.destination());
             String link=settings.portalOrigin()+"/staff/activate#proofId="+delivery.proofId()+"&token="+new String(token,StandardCharsets.US_ASCII);
@@ -146,8 +174,27 @@ public final class SmtpCustomerDelivery implements CustomerDeliveryTransport {
                 message.setSubject("ArgoPost — Kích hoạt tài khoản CSKH","UTF-8");message.setSentDate(Date.from(clock.instant()));
                 message.setText("ArgoPost\nKích hoạt tài khoản CSKH\n\nBạn được mời sử dụng không gian CSKH ArgoPost. Mở liên kết dưới đây để xác minh email và đặt mật khẩu:\n\n"+link+"\n\nLiên kết có hiệu lực trong 24 giờ, chỉ sử dụng một lần. Không chia sẻ liên kết. Nếu không mong đợi lời mời, hãy bỏ qua email.\n\nArgoPost — Gửi niềm tin, nối hành trình.","UTF-8");
             });
-        }catch(RuntimeException invalid){return outcome(Kind.BLOCKED);}
+        }catch(RuntimeException invalid){return outcome(CustomerDeliveryTransport.Kind.BLOCKED);}
         finally{Arrays.fill(token,(byte)0);}
+    }
+    /** AON protected format1 invitation. Generated login appears only in this private email. */
+    public CustomerDeliveryTransport.Outcome sendAdminInvitation(JdbcInvitationOutbox.Delivery delivery){
+        if(delivery==null||delivery.purpose()!=ActionProof.Purpose.INVITATION||wireLoggingEnabled())return outcome(CustomerDeliveryTransport.Kind.BLOCKED);
+        byte[] token=null;
+        try{
+            String username=delivery.loginUsername();
+            if(!username.matches("(?:admin|root)_[a-f0-9]{32}"))return outcome(CustomerDeliveryTransport.Kind.BLOCKED);
+            token=delivery.token().clone();byte[] decoded=Base64.getUrlDecoder().decode(token);
+            try{if(decoded.length!=32||!Arrays.equals(token,Base64.getUrlEncoder().withoutPadding().encode(decoded)))return outcome(CustomerDeliveryTransport.Kind.BLOCKED);}
+            finally{Arrays.fill(decoded,(byte)0);}
+            new CustomerEmail(delivery.destination());
+            String link=settings.portalOrigin()+"/admin/activate#proofId="+delivery.proofId()+"&token="+new String(token,StandardCharsets.US_ASCII);
+            return sendPrepared(delivery.messageId(),delivery.destination(),message->{
+                message.setSubject("ArgoPost — Xác minh tài khoản quản trị","UTF-8");message.setSentDate(Date.from(clock.instant()));
+                message.setText("ArgoPost\nXác minh tài khoản quản trị\n\nBạn được mời sử dụng tài khoản quản trị ArgoPost. Mở liên kết dưới đây để xác minh email và đặt mật khẩu:\n\n"+link+"\n\nTên đăng nhập: "+username+"\n\nLiên kết có hiệu lực trong 24 giờ, chỉ sử dụng một lần. Không chia sẻ liên kết này. Nếu không mong đợi lời mời, hãy bỏ qua email.\n\nArgoPost — Logistics without limits.","UTF-8");
+            });
+        }catch(RuntimeException invalid){return outcome(CustomerDeliveryTransport.Kind.BLOCKED);}
+        finally{if(token!=null)Arrays.fill(token,(byte)0);}
     }
     @Override public String toString(){return "SmtpCustomerDelivery[redacted]";}
 }

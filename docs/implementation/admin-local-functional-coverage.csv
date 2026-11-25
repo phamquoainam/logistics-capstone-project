@@ -1,0 +1,20 @@
+capability_id,capability,source_status,local_acceptance_status,evidence,dependency
+ADM-01,SYSTEM login/session UI,DONE,PASS,admin-uat-deployment-execution.md,Owner genuine verification and Admin login plus real refresh observed
+ADM-02,Current persisted read authorization,DONE,PASS,admin-uat-deployment-execution.md,Real reduction invalidated old session; five-grant Finance403; canonical six-grant restoration and genuine re-login pass
+ADM-03,Six read APIs,DONE,PASS,admin-uat-deployment-execution.md,Real Browser six API baseline pass with truthful source-unavailable responses
+ADM-04,Filters and authenticated snapshot drill-through,DONE,PASS_EMPTY_COHORT,admin-uat-deployment-execution.md,Real filters and authenticated same-snapshot empty drill pass; positive data not yet available
+ADM-05,Shipment Parcel acceptance and exact fees,DONE,PASS_EMPTY_COHORT,admin-uat-deployment-execution.md,Real zero source cohort matches zero metrics; no positive aggregation claim
+ADM-06,Responsive Dashboard loading/error/expiry,DONE,PASS,admin-uat-deployment-execution.md,Actual responsive and negative states plus natural915039ms access expiry refresh recovery and logout401;23/23 live checks
+AON-01,Trusted offline dedicated Admin provision,DONE,PASS,admin-uat-deployment-execution.md,One actual dedicated Admin generated through canonical operator on exact UAT target
+AON-02,Real invitation credential verification,DONE,PASS,admin-uat-deployment-execution.md,Root/Admin Gmail and genuine Owner verification confirmed by persisted proof receipts
+AON-03,Operator issue/replace/revoke read grants,DONE,PASS,admin-uat-deployment-execution.md,Canonical Finance reduction v3 and restoration v4 with audit/receipt and real authorization denial/recovery
+AON-04,Legitimate isolated SYSTEM prerequisite,DONE,PASS,admin-uat-deployment-execution.md,Genuine Initial Root verification and V40/V4 activation observed; first-bootstrap flag now false
+AON-05,Target migration and physical binding,DONE,PASS,admin-uat-deployment-execution.md,Recovery/bootstrap/39 migrations/binding plus explicit validate and actual ACL negative audit pass
+AON-06,Deployment and owned process readiness,DONE,PASS,admin-uat-deployment-execution.md,Owned Backend/Frontend HTTPS ready; effective Hikari4/2000ms and JDBC correct PG18/runtime role
+AON-07,Rollback/disable rehearsal,DONE,PASS,admin-uat-deployment-execution.md,Actual target-only Admin flag-off denial and exact configuration restoration with owned Backend restart; canonical refresh recovered
+ADM-BL-01,Submitted Merchant decisions,UNAVAILABLE,UNAVAILABLE,admin-onboarding-technical-review.md,DRAFT-only existing source is not submitted review lifecycle
+ADM-BL-02,Official Station Hub Partner network,UNAVAILABLE,UNAVAILABLE,admin-onboarding-technical-review.md,SIM points are not official network source
+ADM-BL-03,In transit delivery failure return,UNAVAILABLE,UNAVAILABLE,admin-onboarding-technical-review.md,Missing accepted Carrier lifecycle/event source
+ADM-BL-04,SLA escalation and priority approval queue,UNAVAILABLE,UNAVAILABLE,admin-onboarding-technical-review.md,Missing approved SLA/calendar/decision authority
+ADM-BL-05,Paid COD settlement revenue,UNAVAILABLE,UNAVAILABLE,admin-onboarding-technical-review.md,UNPAID obligations do not prove collection or revenue
+ADM-BL-06,Queue/job/integration telemetry,UNAVAILABLE,UNAVAILABLE,admin-onboarding-technical-review.md,Current responding Admin API is not whole-platform telemetry

@@ -1726,3 +1726,458 @@ remain BLOCKED. Live AWS/ClamAV and deployment acceptance remain NOT VERIFIED.
 [Claims manifest](../implementation/organization-claims-intake-technical-manifest.json)
 and [evidence report](../implementation/organization-claims-intake-execution.md)
 separate the delivered intake slice from full commercial Claims acceptance.
+
+## 2026-11-21 — Admin Portal initial authentication boundary
+
+REQ-V3-BC-031 / Spec027: frontend contract slice only, not full acceptance.
+New `/admin/login` uses accepted SYSTEM auth/CSRF/refresh/current-account/logout;
+no demo ADMIN, Customer or SUPPORT-purpose Staff substitution. Frontend contract
+tests: 11 Admin + 4 Staff + 19 Customer = 34 PASS. Intercepted browser tests:
+7 Admin + 36 Customer/Public = 43 PASS; these are not live Backend/PostgreSQL UAT.
+Typecheck, lint, demo build and browser-owned Customer build PASS. Backend,
+historical migrations, real account grants and SYSTEM activation unchanged.
+
+REQ-V3-BC-031 / BC-035: business-read authority and scoped KPI/drill-through remain
+AWAITING_TECHNICAL_APPROVAL; no canonical task marked DONE. See
+[bounded contract](../implementation/admin-dashboard-contract.proposed.md) and
+[execution evidence](../implementation/admin-portal-execution.md). No claim that
+Identity-management grants authorize Carrier/Finance metrics, no simulated network
+as official network, and no UNPAID-as-revenue inference.
+
+## 2026-11-22 — Owner-approved bounded Admin source/test delivery
+
+REQ-V3-BC-031 / BC-035, ADM-02–08:
+**ADMIN_DASHBOARD_SOURCE_TEST_READY**. The exact-hash Owner approval supersedes
+the earlier pending technical decision above; original contract bytes preserved.
+Six persisted read permissions, six GET APIs, owner-local public ports composed
+in one read-only repeatable-read callback, exact canonical Booking/Parcel/UNPAID
+metrics, authenticated15-minute same-cohort drill-through and responsive Admin UI.
+No implicit business permission from Root/IAM, Merchant, Customer or CSKH authority.
+
+Observed: complete Backend H2730PASS/17 profile SKIP after Windows Temp ACL rerun;
+Architecture23PASS included. Isolated PG18 Admin/security/Identity12/12PASS and
+additional Customer/CSKH HTTP regression2/2PASS; actual HTTPS Browser4/4PASS.
+Frontend contracts40PASS and intercepted Customer/Public/Admin UI47PASS; lint,
+typecheck and both build modes PASS. Report-policy: original127 unaffected methods
+PASS, seven inventory-affected methods plus two new negatives rerun9/9PASS; no
+single-run full-policy PASS claim. Implementation validator zero errors, semantic
+ownership CONSISTENT, ten preexisting broken links retained. No full PG/CI claim.
+
+Source/test tasks ADM-01–08 DONE within this bounded approval. Full BC-031/035
+acceptance, real Admin onboarding/deployment and unsourced business workflows are
+not inferred. Merchant submission/review, official network, advanced lifecycle,
+SLA/priority, collection/COD/reconciliation and absent telemetry remain unavailable.
+All37 migrations and original WIP preserved; no real account/grant/SYSTEM activation
+or demo/runtime change. No commit/push/merge.
+See [execution evidence](../implementation/admin-portal-execution.md) and
+[ADR-0016](../architecture/decisions/ADR-0016-bounded-carrier-admin-reads.md).
+
+## 2026-11-22 — Admin real-onboarding readiness boundary
+
+Previous ADM-01–08 source/test acceptance remains unchanged. Real Local/Test
+onboarding is BLOCKED_AUTHORITY: ordinary provisioning/invitation admits only the
+management pair, not the read-only Admin set. A first SYSTEM realm also needs a
+genuine initial verification path, not fixture activation. No existing Customer,
+Staff or Root is converted or granted new privileges.
+
+[One technical delta](../implementation/admin-onboarding-technical-review.md)
+specifies proposed V39 core issuance/verification and separately sensitive optional
+V40 first bootstrap for a NEW isolated realm only. Neither is implemented/approved
+by this preparation. The [runbook](../implementation/admin-local-readiness-runbook.md)
+and [coverage](../implementation/admin-local-functional-coverage.csv) distinguish
+DONE source capabilities from BLOCKED real UAT and UNAVAILABLE business sources.
+
+Read-only Docker discovery found the existing demo container exited; SQL/Flyway/
+realm state was not reverified. No container start, database/Root/grant/flag/runtime
+change or Git publication.46 WIP files and37 migration hashes preserved. Manifest
+and Markdown/CSV consistency checks run; no repeated old suite or fabricated live
+onboarding/rollback result. ADMIN_DASHBOARD_LOCAL_UAT_READY is not claimed.
+
+## 2026-11-22 — AON Option B source/test starts, narrow ACL dependency blocked
+
+Historical start checkpoint below is superseded by the source/test closure at
+the end of this section; its failed evidence is preserved.
+
+Owner approved exact manifest025ae708... for V39/V40 source/test.51 WIP paths and
+all37 prior migrations preserved. Fixed NOLOGIN prerequisite generators have
+4/4 Python checks PASS; existing outer ownership/bootstrap hooks remain intact.
+New V39 schema/guard prototype and two mandatory migration/regression cases are
+WIP, not complete implementation. V40/operator/HTTP/Browser remain unfinished.
+
+PG18 TDD observed missing target40; a trigger NEW-record error was corrected.
+Catalog tests then caught ineffective ACL-after-owner-transfer; fixing order
+correctly revoked PUBLIC access but exposed a legitimate Staff writer call denied
+by local_admin_registered. The mandatory focused regression remains FAIL and
+blocks source/test readiness. No test/assertion bypass or extra ACL was applied.
+Automatic review rejected a broader SECURITY DEFINER/xmin guard rewrite; it was
+not applied. See [execution](../implementation/admin-onboarding-execution.md) and
+[exact AON-ACL-01 proposal](../implementation/admin-onboarding-staff-predicate-acl.delta.md).
+No real grants, Root/realm activation, demo/Production migration or publication.
+
+### AON Option B closure — ADMIN_ONBOARDING_SOURCE_TEST_READY
+
+Exact immutable parent manifest025ae708... and Owner-approved AON-ACL-01/02
+implemented within source/test boundary. V39/V40 + dedicated offline Admin/Root
+operators + protected SMTP + real Identity activation/SYSTEM session + activation
+UI and Dashboard now have actual owned PostgreSQL18/HTTPS fixture evidence.
+No rejected broad definer/xmin provenance rewrite was used.
+
+AON-T-01–10 PASS: current physical binding/ACL/direct-DML denial, transactional
+proof/outbox/audit/receipt, replay/current revoked operator/concurrency, quotas,
+genuine proof before V4 realm activation, six READ APIs/snapshots and terminal
+disable/revocation. Consolidated41/41 PG cases plus final affected5/5 PASS;
+actual HTTPS Browser5/5, frontend unit21/21/UI13/13, typecheck/lint/two builds PASS.
+Final fresh H2 collector731 PASS/17 expected skips, architecture23/23,
+report-policy136/136, prerequisite4/4 and contract validator530/530 PASS.
+Repository ownership CONSISTENT; ten preexisting link findings retained.
+Privacy audit and owned test-resource absence checks PASS.
+
+Final DTO Unicode validation was TDD RED→GREEN within approved exact UTF8/no-NUL
+contract. A mixed-report H2 collection was rejected, preserved and rerun with
+fresh build output; no test/collector weakening. Historical ACL failures remain
+evidence, not relabeled PASS. Complete gate mapping, source hashes and commands:
+[execution](../implementation/admin-onboarding-execution.md).
+
+All51 starting WIP archive entries and37 prior migrations verified unchanged;
+parent manifest bytes preserved, no V33 placeholder. Branch/HEAD unchanged,
+no staged changes or Git publication. No demo/shared/Production mutation, real
+Root/Admin/grants/operator membership, deployment or feature activation.
+Real isolated target/operator/selected READ set and controlled-mailbox UAT remain
+the next separately authorized deployment dependency; runbook/coverage prepared.
+No full PostgreSQL-suite, GitHub CI or ADMIN_DASHBOARD_LOCAL_UAT_READY claim.
+
+### Admin isolated Local/Test preparation — exact execution approval pending
+
+Owner authorized new empty infrastructure and consolidated approval preparation.
+Created only container `argopost-admin-uat-pg18-15f3f2a22479`, new dedicated volume
+and DB `argopost_admin_uat_15f3f2a22479` on127.0.0.1:5543. Pinned PG18.6 healthy,
+physical OID/system identifier verified; zero app tables/custom roles/Flyway history.
+Baseline custom dump/list PASS; restore rehearsal NOT RUN. Gmail verified STARTTLS
+TLS1.3 handshake only, no AUTH/email. Existing trusted localhost cert read-only;
+new target keyrings/config private and all Admin flags off. Owner-selected Root/
+Admin mailboxes are private/hash-bound, not stored in Git. No application/source
+logic, old migration, demo/runtime, existing Root or grant changed.
+
+[Exact target/operator approval record](../implementation/admin-uat-deployment-approval.md)
+binds container/volume/database/realm, distinct pending operator logins/memberships,
+selected six READ grants, private mailbox selection, source/JAR checksums and safe
+rollback/UAT sequence. It remains PENDING OWNER APPROVAL per Owner directive step5.
+No privileged bootstrap, migration, membership, provisioning, SYSTEM activation,
+application deployment, SMTP delivery or real Browser UAT before that decision.
+No repeated already-passing source suites or false Local UAT READY/CI claim.
+
+### Admin real target deployment — partial execution and runtime blocker
+
+Owner approved immutable deployment manifest9e0773d7...; no repeat deployment or
+technical approval is needed.12 integrity checks PASS. CRLF executable SQL matches
+JSON hashbb9792c0...; stale Markdown LF hash corrected without editing SQL/manifest.
+Exact recovery restore PASS;11 new roles/six custom memberships audited;39 migration
+versions1–40 except33 applied successfully; physical environment bound canonically.
+Initial Root `b7d9f111-db7e-4374-a412-3b84dbe74eec` is pending, generated by actual
+canonical provisioning. Same request replay returns same result. SYSTEM remains
+unactivated; no dedicated READ Admin or genuine mailbox acceptance yet.
+
+HTTPS Backend startup failed binding Hikari data-source properties to an already
+sealed pool. Extra underscores in compound Hikari environment names are the
+bounded candidate cause; correction and verification have NOT run. Automatic
+approval review failed from usage limit before executing that config patch/restart.
+No bypass, alternate privileged edit or false retry PASS. Workspace evidence and
+coverage updated; source/JAR and historical migrations preserved. See
+[actual execution](../implementation/admin-uat-deployment-execution.md).
+Real SMTP delivery/login/Browser/permission/rollback acceptance remains incomplete;
+ADMIN_DASHBOARD_LOCAL_UAT_READY and GitHub CI PASS are not claimed.
+
+### Admin isolated live UAT closure — ADMIN_DASHBOARD_LOCAL_UAT_READY
+
+Subsequent PR51 integration initially failed17 PostgreSQL regression cases from
+stale37-migration/140-table inventories and incorrectly incremented repeat-migrate
+assertions. Three representative isolated cases reproduced all three expected/
+actual mismatches. Test-only correction retains exact ownership, history, data
+and no-op guarantees; no migration/runtime/authority change. Required CI must
+verify the corrected revision independently of earlier bounded UAT acceptance.
+
+Supersedes the historical runtime blocker above under exact Owner deployment
+manifest9e0773d7... on127.0.0.1:5543/argopost_admin_uat_15f3f2a22479.
+Automatic review restored; bounded Hikari config correction succeeded, actual
+pool4/2000ms and JDBC PG18 runtime role verified.39 migrations validated;12 callable
+SQL privilege denials and20 function ACL signatures verified. Real Gmail delivery,
+Owner genuine Root/Admin verification, canonical SYSTEM activation and six READ
+Admin admission observed. Root retains only IAM, no implicit Dashboard access.
+
+Real isolated Chrome/HTTPS UAT23/23 PASS: six API outcomes, actual empty source
+cohort and same-snapshot drill, filters, responsive states, session refresh,
+canonical Finance reduction/restoration with genuine re-logins, target-only
+flag-off denial/restore, natural915039ms access expiry, valid refresh recovery and
+actual logout/protected-route/API denial. No fake clock or deadline mutation.
+See [execution](../implementation/admin-uat-deployment-execution.md) and
+[coverage](../implementation/admin-local-functional-coverage.csv).
+
+Six operator receipts have audit references; exactly two verified accounts,
+Root one IAM/Admin six READ grants; mail payloads erased.575 source fingerprints,
+37 historical migrations and original51-entry WIP ZIP CRC/hash preserved.
+Implementation validator PASS/ownership CONSISTENT;10 preexisting links retained.
+No source/JAR alteration in deployment, no staged changes or commit/push/merge.
+Demo/shared/Production unchanged. Readiness is bounded to this real empty cohort:
+positive-data aggregation NOT VERIFIED; missing canonical Merchant/Network/Carrier/
+SLA/Finance/telemetry sources remain UNAVAILABLE. No full PG suite/GitHub CI claim.
+
+### Internal Administration Console restructuring — 2026-11-23
+
+Owner's two complete DOCX sources reconciled to23 business modules and9 parent
+groups. See [coverage CSV](../implementation/admin-console-functional-coverage.csv),
+[architecture](../implementation/internal-web-admin-architecture.md),
+[roles](../implementation/admin-console-role-capability-mapping.md) and
+[execution evidence](../implementation/admin-console-implementation-execution.md).
+ADR0018 accepts the shared UI boundary with separate canonical admissions.
+
+InternalApp/InternalShell now serve Admin and actual STAFF/SUPPORT workflows;
+Operations remains unavailable, cross-purpose switching denied. Six Dashboard
+tabs reuse approved context/aggregate/list/platform reads and snapshot/cohort
+rules; own account context and read-only Shipment/Finance/platform views work.
+No new Backend production API/DTO/permission/schema or business-source records.
+
+Final frontend unit30/30, UI22/22, architecture/aggregation28/28 PASS. Eight focused
+PG18 cases all have a passing relevant run: initial7/8 plus corrected Admin/Staff
+HTTPS2/2; final Admin HTTPS1/1 with5 Browser cases PASS after visual corrections.
+Initial failures remain documented. Validator PASS, ownership CONSISTENT;39 SQL
+hashes, original51-entry archive and approved manifests preserved. No full suite,
+current-revision CI or new real-target deployment claim; HEAD248d651 unchanged.
+
+Shared shell and existing read slice source/test READY; full ADM-01 and console
+remain PARTIAL. Role-code collision, contexts/scopes, missing canonical sources
+and all6 proposed extensions are tracked in one
+[unapproved amendment](../implementation/admin-console-contract-amendment.proposed.md).
+
+### Administration P0 contract consolidation and READ refinement — 2026-11-23
+
+See [P0 readiness](../implementation/admin-p0-contract-readiness.md),
+[bounded manifest](../implementation/admin-p0-implementation-manifest.proposed.json)
+and [execution evidence](../implementation/admin-p0-implementation-execution.md).
+IWA-01/02 common linking/discovery is deferred; existing SYSTEM/STAFF/Customer
+admissions remain separate. Role semantic aliases resolve documentary R28–R32
+collision without changing IDs or grants. New Merchant submission/review/atomic
+activation, purpose-bound step-up, scoped governance and metadata v2 remain
+PROPOSED and require the single exact-manifest approval.
+
+Existing Admin READ source improved with calendar bucket validation, correct
+grain spark labels and keyboard-accessible permission-aware tabs. Current unit
+32/32, UI24/24, lint/typecheck/build and real PG18/HTTPS Admin Browser5/5 PASS;
+granular permission/snapshot focused PG cases2/2 PASS. Initial2/3 PG attempt and
+test navigation synchronization correction remain recorded. No full-suite/CI or
+new real-target deployment claim. P0-T-01–15 for new authority remain NOT RUN.
+
+All23 module coverage rows retained:8 PARTIAL,5 BLOCKED,3 UNAVAILABLE,1 MISSING,
+6 PROPOSED; no new fully complete module. No new Backend production API/schema,
+permission/grant, migration file, policy publication or demo/UAT mutation.39 SQL
+files and approved parent manifests preserved; WIP archived before edits. No
+commit/push/merge. Next work depends on consolidated technical approval, not
+repeat approval of accepted READ/UI functionality.
+
+
+### Administration P0 implementation - Identity bridge / masked Oversight,2026-11-23
+
+Owner exact-manifest approval90c795bd... and P0-BC-01/02 are recorded in
+[active execution evidence](../implementation/admin-p0-source-test-execution.md).
+P0-IMPL-01 and02 core DONE;06.1 masked Shipment Oversight DONE. This supersedes
+only the approval-pending status above, not its historical evidence. Current
+SYSTEM/STAFF/Customer admission stays separate; no new Identity role/grant code.
+
+New V41 contains three purpose-bound proof/attestation/receipt tables. Focused
+PG18 evidence covers SMTP payload clearing, genuine confirmation, exact email
+consumption, wrong account/session/application, replay, quota, expiry/tamper,
+concurrency, direct-DML receipt binding and physical transaction suspension.
+68 architecture/security/SMTP unit regressions PASS; frontend26 units and23 UI
+units PASS; actual PG18/Spring HTTPS Browser6/6 PASS includes immutable Parcel and
+intake detail with no contact or private-document payload. See execution report
+for exact commands/artifacts and retained failed attempts.
+
+No ADM module status promoted to fully complete. ADM-08 now has a source-backed
+masked detail in addition to the same-cohort list, but advanced Carrier lifecycle
+remains unavailable. ADM-02/03 await V42/V43; ADM-01 v2 metadata/scope/queue is
+incomplete. Full P0-T-01..15, current GitHub CI and real-target UAT are not claimed.
+Historical39 SQL files, approved manifest and WIP archive retain SHA/CRC integrity.
+No demo mutation or commit/push/merge. Exact offline receipt canonicalization
+[P0-OP-01](../implementation/admin-p0-offline-receipt-digest.delta.md) was subsequently approved by Owner for source/test;
+no unapproved key/authority workaround was implemented.
+
+
+P0-IMPL-05.1 subsequently DONE: approved P0-CUST-04/05 Business Contact request and
+confirmation HTTP endpoints now enforce current Customer admission, editable
+self-owned Draft, strict payload/idempotency, CSRF, proof purpose and protected
+SMTP. Two focused PG18 HTTP/quota tests PASS;23 architecture and3 configuration
+negative tests PASS. Production/default-off/V41 startup checks added without
+changing existing Customer activation or any runtime flag. Applicant proof UI
+and submission are still incomplete; this does not make ADM-02 READY.
+
+
+### V42 Merchant Governance continuation -2026-11-24
+
+[Current execution](../implementation/admin-p0-source-test-execution.md): actual
+private evidence, Business Contact consume, immutable Submit, scoped assignment/
+BEGIN/Request Information, archive/withdrawal and protected audit/replay implemented.
+Eight focused PG18/legacy tests PASS; frontend24 unit and38 UI-unit tests PASS.
+These are component gates, not Full P0 acceptance or a deployed feature.
+
+New negative test FAILS both substituted-context denial assertions;
+[P0-CTX-01](../implementation/admin-p0-context-ownership.delta.md) proposes exact
+Identity-issued-context checks. [P0-BC-03](../implementation/admin-p0-submitted-contact-fact.delta.md)
+proposes authoritative submitted contact fact reads. Both remain unimplemented
+pending exact Owner decisions. V42 is not READY; V43, final decision/activation,
+v2 dashboard/queue and full P0 HTTPS remain incomplete. No approved manifest,
+V1-V41, runtime flag, real grant/database or Git publication changed.
+
+
+### P0 remediation continuation2026-11-24 (supersedes pending status above)
+
+Owner approved P0-CTX-01 and P0-BC-03 exactly for isolated source/test. Both are now
+implemented and have passing focused PostgreSQL evidence; the original FAIL
+artifact remains historical. Identity owns exact context/source/lifetime checks;
+Merchant consumes those before reading actor/scope. Business Contact submitted
+fact readers preserve authoritative verification and historical TTL semantics.
+V42 now additionally verifies immutable fact/content, resubmission revision2,
+complete READY, audited evidence disclosure, scoped queue/context/revisions and
+independent rejection with canonical consumed proof, rollback and receipt replay.
+Execution artifacts/counts are in [source/test report](../implementation/admin-p0-source-test-execution.md).
+These component passes do not complete V42/P0: remaining APIs/UI/concurrency,
+V43 atomic activation/lifecycle/notices, metric v2 and full HTTPS E2E are pending.
+No historical migration, approved manifest, real target or Git publication changed.
+
+### P0-POL-UX-01 approved implementation continuation (2026-11-24)
+
+Owner approved the exact self-owned requirements API and structured policy
+statements for isolated source/test. Original publication consentText and parent
+manifest remain preserved. Customer UI now reads the actual policy version,
+requires two explicit unchecked attestations, uploads private screened evidence,
+and performs versioned draft preparation followed by submit/resubmit. Same-key
+lost-response retry preserves the original body/ETag; success requires a canonical
+GET reread. No Organization activation or Membership is implied.
+
+Evidence: four newly written transport tests first failed for missing methods
+(TDD RED), then nine workflow/contact unit tests PASS. Typecheck and lint PASS.
+Three targeted intercepted Customer UI tests PASS, including no-policy denial and
+lost-submission retry. Customer build PASS; pre-existing >500kB chunk advisory
+retained. These UI units do not replace real PG/HTTPS acceptance.
+
+The first requirements PG run (25ec1f57867c4c2fbc9d0ce6495cdf28) was interrupted
+by a Docker InspectContainer hang during fixture cleanup: zero completed fresh
+reports, Maven exit1, sourceUnchanged=true. Only the verified owned Surefire JVM
+was stopped; no database/container/volume was deleted. Owner restarted Docker;
+read-only Engine version29.6.2 responded. Focused rerun
+c148f677979a4b66aba768676126abce remains IN_PROGRESS until observed completion.
+Full V42/V43/P0 remains IN_PROGRESS; no live target or Git publication changes.
+
+
+### P0 notice delivery / atomic activation continuation (2026-11-24)
+
+Owner approved P0-NOTICE-DELIVERY-01 without altering parent manifest bytes.
+Platform MerchantNoticeMail is implemented by the same SmtpCustomerDelivery
+instance/TLS/sendPrepared configuration. Four fixed business status templates
+accept no proof/body/HTML override. Isolated SMTP regression artifact
+251f80bb318c41a9809629502025e588:14/14 PASS. Provider acceptance is not delivery.
+V43 schema/ACL artifact8b339413bc5b4452a9a9729c5a23d3b1:1/1 PASS.
+V43 atomic approval, private event-bound outbox, current exact recipient, replay,
+rollback and post-commit worker are IN_PROGRESS; no full P0/CI/runtime acceptance.
+No shared/UAT database, real grants/email, historical migrations or Git publication.
+
+
+### V43 current evidence continuation (2026-11-24)
+
+205d9171034c4614b36e1b478912645c: actual HTTPS independent Admin approval and
+post-commit existing SMTP loopback1/1 PASS. e27b164838884a52a82d2335f0e09d23:
+notification/current context and recipient, forged bindings, self withdrawal/replay,
+rollback, concurrent workers and bounded5-attempt recovery1/1 PASS. No real mail.
+dacdee56e2094385ab59949708850fb8: scoped Organization directory/lifecycle1/1 PASS
+(domain); P0-GOV13..16 HTTP and affected Business/Team tests IN_PROGRESS, not DONE.
+P0 metadata v2, scope snapshots, canonical queue/audit/work readers and full P0-T
+acceptance remain pending. No full PostgreSQL suite/GitHub CI/runtime UAT claim.
+
+### Owner local preview while P0 is paused (2026-11-24)
+
+Launcher `start` now uses a SHA-pinned previously verified Backend and the existing
+V35 demo database without build/migration. Synthetic focused PowerShell tests,
+actual HTTPS startup/status and read-only V35 history verification PASS. Existing
+PID evidence archived; no P0 migration, new grants or Admin UAT mutation. See
+[local demo checkpoint](../implementation/local-demo-start-checkpoint.md). This is
+runtime readiness for preview, not acceptance/deployment of unfinished V41–V43.
+
+
+### P0 resume: V43 conflict guards, scoped Audit and canonical facts (2026-11-24)
+
+Exact activation SQL conflicts map to approved finite409/422 problems; unrelated
+SQL/security failures still fail closed. Actual PG18 legacy clearance and
+concurrent opposite-decision tests PASS (e399b5164d764ca096ee3d5fa7477b55), activated
+legal-key reuse denial PASS (96a23f27ab65467f972969a826a28ac3), rejection notice
+commit/replay/after-commit dispatch PASS (1760fb0f4d0648c38fa6d23372d3139b). Test
+fixture and compiler failures retained in execution ledger; no assertion relaxed.
+
+P0-READ-02 bounded Audit metadata source/HTTP PASS9b7dace0e2084eb4a7e72ae300567da5;
+audit-only role lacks Merchant detail authority, foreign/escaped/revoked access
+denies. Frontend typecheck/lint,31 unit tests and6 intercepted UI regressions PASS.
+P0-FACTS-CTX-01 Owner approved; canonical first-submission reader/page and genuine
+Identity ownership checks PASS832b6846c2414fe0ad6772940f2c6fc1. Extended current
+context/physical-source/suspension and original READ/COMMAND assertions plus
+Architecture13/13 PASS8b03f519aac54f10b51b2bfd07fdc3c8. Source remains v1-compatible.
+
+Metric core4/4 PASS19da974f92c144d5aeca1ed473fcdad9; later architecture graph failure
+retained, helper moved into Workflow and affected rerun tracked in execution
+report. No full P0, GitHub CI, deployment or new real-target UAT claim. Parent
+manifest unchanged, original103-entry archive SHA/CRC and40 historical migrations
+verified. See [current execution](../implementation/admin-p0-source-test-execution.md).
+
+Final affected architecture/metric rerun d4f1b8002ba04ef9bfce4af93198bc91:15/15 PASS,
+sourceUnchanged=true. This supersedes the graph failure without deleting history.
+P0 remains IN_PROGRESS; no current execution failure is counted as a PASS and no
+old-revision CI result is substituted for current source tests.
+
+
+### Overview ADM-01/17/18 approved-scope checkpoint (2026-11-25)
+
+Executive Dashboard, My Approvals, Operational Risk and Service Health are grouped
+under Overview with current permission-aware navigation. Canonical Dashboard v2
+first-submission/Shipment/fee snapshots and safe drill-through: PG18 registry/HTTP
+5/5 PASS. Work/Audit current identity/scope/eligibility1/1 PASS; architectural
+boundary and metric15/15 PASS retained from unchanged dependencies.
+
+Integrated actual HTTPS Customer submission/contact/evidence/consent -> independent
+review/decision -> atomic Organization/Initial Owner -> Dashboard/Work/Audit/mail
+loopback/mobile/logout PASS. Deterministic advisory-lock contention exposed an
+actual session-storage401 misclassification; corrected narrowly to503, invalid
+session still401. Final affected runner e341ff862d8b40c09d87fdca83db0892:45/45 PASS
+(security44 plus integrated Browser/PG18 case1), sourceUnchanged=true. Explicit UI
+retry preserves key/body/ETag and commits once. Original failure evidence retained.
+
+Final lint/typecheck/customer build and targeted Work/Profile/Authority UI1/1 PASS;
+only same-policy task.read+application.read can see the approval link. Validator
+errors0, ownership CONSISTENT; ten old mobile-path links retained. Manifest,40
+historical V1..V41 migration hashes and103-entry WIP archive preserved. V33 absent.
+
+ADM-01 PARTIAL / ADM-17 PARTIAL / ADM-18 PROPOSED: canonical Network/SLA/advanced
+Finance/telemetry and Admin notification/MFA/session/preferences/general delegation
+contracts remain dependencies. This checkpoint does not accept whole modules,
+full P0-T-01..15, GitHub CI or live deployment. No demo/UAT/Production mutation, real
+mail/grant, commit/push/merge. See [execution evidence](../implementation/admin-p0-source-test-execution.md)
+and [coverage matrix](../implementation/admin-console-functional-coverage.csv).
+
+
+### PR51 failed PostgreSQL integration correction (2026-11-25)
+
+Run45539754551/HEAD36bb401:1314 PASS,4 failure,9 error,5 expected skips; PR remained
+OPEN, no merge occurred. Root causes: old Foundation V40 inventory; schema-owner
+facility fixture could not execute the intentionally runtime-scoped V43 origin
+predicate; stale Browser menu counts/profile path and ambiguous page-level alert.
+Only test fixtures/assertions/selectors corrected. No production ACL, guard, SQL
+migration or business rule changed. Focused PG18 scope2/2 and remaining9/9 PASS,
+including real HTTPS Customer19/19 and Admin6/6 Browser checks; typecheck/lint PASS.
+Exact revision full CI required before merge; historical failure evidence retained
+in [execution report](../implementation/admin-p0-source-test-execution.md).
+
+
+### PR51 CI runtime budget (2026-11-25)
+
+Run45544523333 atb35ab4a was cancelled by the explicit30-minute GitHub job limit,
+not a published test-failure result. Increase only PostgreSQL job budget to45
+minutes; architecture/H2 stay30. Structural YAML comparison PASS: triggers, steps,
+test inventory/assertions, permissions, timeouts within tests and cleanup intact.
+No application/migration/runtime change or new full-suite PASS claim. Owner North
+Star/AGENTS WIP preserved and excluded; current task remains resolving CI + merge.
+See [failure evidence](../implementation/admin-p0-source-test-execution.md).

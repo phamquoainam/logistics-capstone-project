@@ -1,4 +1,6 @@
 import { claimEvidence, claimEvidenceList, evidenceTransfer } from './claim-evidence';
+import { applicationId, parseApplicationRequirements, parseApplicationEvidence } from './application-workflow-data';
+import type { EvidencePurpose } from './application-workflow-data';
 import type { ClaimEvidence } from './claim-evidence';
 import { claimDetail, claimPage, claimReport, claimNotices } from './claim-intake-data';
 import { organizationTicket, organizationTicketPage, organizationTicketDetail, organizationTicketAssignment, organizationSupportReceipt, organizationSupportMembers, organizationSupportHistory, organizationSupportReport, organizationSupportPreferences, organizationSupportNotices, organizationSupportNotice } from './organization-support-data';
@@ -96,9 +98,9 @@ export function createCustomerClient(ports: Ports = { fetch: (...args) => fetch(
   function publish(next: SessionState) { state = Object.freeze(next); listeners.forEach(f => f()); }
   function forget(error: string | null = null) { access = undefined; generation++; pending = undefined; publish({ status: 'guest', subject: null, error }); }
   if (channel) channel.onmessage = () => forget('SESSION_CHANGED');
-  async function request(path: string, method = 'GET', body?: string, headers: Record<string, string> = {}, maximum = 65536): Promise<{ value: unknown; response: Response }> {
+  async function request(path: string, method = 'GET', body?: string | FormData, headers: Record<string, string> = {}, maximum = 65536): Promise<{ value: unknown; response: Response }> {
     let response: Response;
-    try { response = await ports.fetch('/api/v1/' + path, { method, body, headers: body === undefined ? headers : { ...headers, 'Content-Type': 'application/json' }, credentials: 'same-origin', mode: 'same-origin', cache: 'no-store', redirect: 'error', referrerPolicy: 'no-referrer', signal: AbortSignal.timeout(30000) }); }
+    try { response = await ports.fetch('/api/v1/' + path, { method, body, headers: typeof body === 'string' ? { ...headers, 'Content-Type': 'application/json' } : headers, credentials: 'same-origin', mode: 'same-origin', cache: 'no-store', redirect: 'error', referrerPolicy: 'no-referrer', signal: AbortSignal.timeout(30000) }); }
     catch { throw method === 'GET' ? new CustomerApiError('NETWORK_UNAVAILABLE') : unknown(); }
     let value: unknown;
     try {
@@ -173,7 +175,7 @@ export function createCustomerClient(ports: Ports = { fetch: (...args) => fetch(
     for (const name of ['draft', 'submission']) if (name in value && !draft(value[name])) malformed();
     if ('reviewRegionId' in value && (typeof value.reviewRegionId !== 'string' || !uuid.test(value.reviewRegionId))) malformed();
     if ('informationRequest' in value && !characters(value.informationRequest, 1000)) malformed();
-    if (value.state === 'APPROVED' ? typeof value.organizationId !== 'string' || !uuid.test(value.organizationId) : 'organizationId' in value) malformed();
+    if ('organizationId' in value && (value.state !== 'APPROVED' || typeof value.organizationId !== 'string' || !uuid.test(value.organizationId))) malformed();
     return value as MerchantApplication;
   }
   async function applicationWrite(path: string, method: 'POST' | 'PUT', input: ApplicationDraft, key: string, etag?: string): Promise<VersionedApplication> {
@@ -650,6 +652,20 @@ export function createCustomerClient(ports: Ports = { fetch: (...args) => fetch(
       if (!record(value) || !exact(value, ['operationId', 'targetId', 'outcome', 'version']) || value.operationId !== 'updateCustomerProfile' || typeof value.targetId !== 'string' || !uuid.test(value.targetId) || value.outcome !== 'COMMITTED' || !version(value.version)) malformed();
       return { targetId: value.targetId, version: value.version };
     }),
+    requestBusinessContact: (applicationId: string, email: string, key: string) => ports.lock(async () => {
+      if (!uuid.test(applicationId) || !uuid.test(key) || !email || email.length > 254) throw new CustomerApiError('VALIDATION_FAILED');
+      await ensureAccess(); const current = generation, challenge = await csrf();
+      const r = await request('customer/business-contact-proofs', 'POST', JSON.stringify({ applicationId, email }), { Authorization: 'Bearer ' + access!.accessToken, 'X-CSRF-Token': challenge, 'Idempotency-Key': key });
+      if (current !== generation) throw new CustomerApiError('SESSION_CHANGED');
+      try { if (r.response.status !== 202 || r.response.headers.get('Cache-Control') !== 'no-store' || !record(r.value) || !exact(r.value, ['requestId', 'accepted']) || typeof r.value.requestId !== 'string' || !uuid.test(r.value.requestId) || r.value.accepted !== true) malformed(); return { requestId: r.value.requestId, accepted: true }; } catch { throw unknown(); }
+    }),
+    confirmBusinessContact: (applicationId: string, proofId: string, proof: string, key: string) => ports.lock(async () => {
+      if (!uuid.test(applicationId) || !uuid.test(proofId) || !uuid.test(key) || !/^[A-Za-z0-9_-]{43}$/.test(proof)) throw new CustomerApiError('VALIDATION_FAILED');
+      await ensureAccess(); const current = generation, challenge = await csrf();
+      const r = await request('customer/business-contact-confirmations', 'POST', JSON.stringify({ applicationId, proofId, proof }), { Authorization: 'Bearer ' + access!.accessToken, 'X-CSRF-Token': challenge, 'Idempotency-Key': key });
+      if (current !== generation) throw new CustomerApiError('SESSION_CHANGED');
+      try { const v = r.value; if (r.response.status !== 200 || r.response.headers.get('Cache-Control') !== 'no-store' || !record(v) || !exact(v, ['id', 'applicationId', 'verifiedAt', 'expiresAt']) || typeof v.id !== 'string' || !uuid.test(v.id) || v.applicationId !== applicationId || !date(v.verifiedAt) || !date(v.expiresAt) || Date.parse(v.expiresAt) <= Date.parse(v.verifiedAt) || Date.parse(v.expiresAt) - Date.parse(v.verifiedAt) > 900000) malformed(); return { id: v.id, applicationId, verifiedAt: v.verifiedAt, expiresAt: v.expiresAt }; } catch { throw unknown(); }
+    }),
     listApplications: (page = 0, search = '', state = '') => ports.lock(async (): Promise<ApplicationPage> => {
       if (!Number.isSafeInteger(page) || page < 0 || search.length > 160) throw new CustomerApiError('VALIDATION_FAILED');
       await ensureAccess(); const current = generation, query = new URLSearchParams({ page: String(page), size: '20', ...(search ? { search } : {}), ...(state ? { state } : {}) });
@@ -662,6 +678,32 @@ export function createCustomerClient(ports: Ports = { fetch: (...args) => fetch(
       if (!uuid.test(id)) throw new CustomerApiError('VALIDATION_FAILED'); await ensureAccess(); const current = generation;
       const result = await request('merchant-applications/' + id, 'GET', undefined, { Authorization: 'Bearer ' + access!.accessToken });
       if (current !== generation) throw new CustomerApiError('SESSION_CHANGED'); const value = application(result.value), etag = result.response.headers.get('ETag'); if (value.id !== id || etag !== '"v' + value.version + '"') malformed(); return { application: value, etag };
+    }),
+    applicationRequirements: (id: string) => ports.lock(async () => {
+      if (!applicationId(id)) throw new CustomerApiError('VALIDATION_FAILED'); await ensureAccess(); const current = generation;
+      const r = await request('merchant-applications/' + id + '/requirements', 'GET', undefined, { Authorization: 'Bearer ' + access!.accessToken });
+      if (current !== generation) throw new CustomerApiError('SESSION_CHANGED');
+      try { if (r.response.headers.get('Cache-Control') !== 'no-store') malformed(); return parseApplicationRequirements(r.value, id); } catch { throw new CustomerApiError('RESPONSE_INVALID'); }
+    }),
+    readApplicationEvidence: (id: string, evidence: string) => ports.lock(async () => {
+      if (!applicationId(id) || !applicationId(evidence)) throw new CustomerApiError('VALIDATION_FAILED'); await ensureAccess(); const current = generation;
+      const r = await request('merchant-applications/' + id + '/evidence/' + evidence, 'GET', undefined, { Authorization: 'Bearer ' + access!.accessToken });
+      if (current !== generation) throw new CustomerApiError('SESSION_CHANGED');
+      try { const result = parseApplicationEvidence(r.value, id); if (result.id !== evidence || r.response.headers.get('Cache-Control') !== 'no-store' || r.response.headers.get('ETag') !== '"v' + result.version + '"') malformed(); return result; } catch { throw new CustomerApiError('RESPONSE_INVALID'); }
+    }),
+    uploadApplicationEvidence: (id: string, purpose: EvidencePurpose, file: File, key: string) => ports.lock(async () => {
+      if (!applicationId(id) || !applicationId(key) || !['REGISTRATION', 'REPRESENTATIVE_AUTHORIZATION'].includes(purpose) || !(file instanceof File) || file.size < 1 || file.size > 5242880 || !['application/pdf', 'image/png', 'image/jpeg'].includes(file.type)) throw new CustomerApiError('VALIDATION_FAILED');
+      await ensureAccess(); const current = generation, challenge = await csrf(), body = new FormData(); body.append('purpose', purpose); body.append('file', file, 'evidence');
+      const r = await request('merchant-applications/' + id + '/evidence', 'POST', body, { Authorization: 'Bearer ' + access!.accessToken, 'X-CSRF-Token': challenge, 'Idempotency-Key': key });
+      if (current !== generation) throw new CustomerApiError('SESSION_CHANGED');
+      try { const result = parseApplicationEvidence(r.value, id); if (r.response.status !== 201 || r.response.headers.get('Cache-Control') !== 'no-store' || r.response.headers.get('ETag') !== '"v' + result.version + '"' || result.purpose !== purpose) malformed(); return result; } catch { throw unknown(); }
+    }),
+    applicationCommand: (id: string, operation: 'submit' | 'resubmit' | 'withdrawal', value: string, etag: string, key: string) => ports.lock(async (): Promise<VersionedApplication> => {
+      if (!applicationId(id) || !applicationId(key) || !['submit', 'resubmit', 'withdrawal'].includes(operation) || !/^"v[1-9][0-9]*"$/.test(etag) || !value.trim() || [...value].length > (operation === 'withdrawal' ? 300 : 160) || value.normalize('NFC') !== value || /[\p{Cc}\p{Cs}\u2028\u2029]/u.test(value)) throw new CustomerApiError('VALIDATION_FAILED');
+      await ensureAccess(); const current = generation, challenge = await csrf();
+      const r = await request('merchant-applications/' + id + '/' + operation, 'POST', JSON.stringify(operation === 'withdrawal' ? { reason: value } : { organizationDisplayName: value }), { Authorization: 'Bearer ' + access!.accessToken, 'X-CSRF-Token': challenge, 'Idempotency-Key': key, 'If-Match': etag });
+      if (current !== generation) throw new CustomerApiError('SESSION_CHANGED');
+      try { const result = application(r.value); if (result.id !== id || r.response.status !== 200 || r.response.headers.get('Cache-Control') !== 'no-store' || r.response.headers.get('ETag') !== '"v' + result.version + '"') malformed(); return { application: result, etag: '"v' + result.version + '"' }; } catch { throw unknown(); }
     }),
     createApplication: (input: ApplicationDraft, key: string) => ports.lock(() => applicationWrite('merchant-applications', 'POST', input, key)),
     updateApplication: (id: string, input: ApplicationDraft, etag: string, key: string) => ports.lock(() => {

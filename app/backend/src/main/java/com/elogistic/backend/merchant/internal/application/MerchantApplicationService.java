@@ -43,7 +43,7 @@ public final class MerchantApplicationService implements MerchantApplications {
         var previous=store.receipt(context.actor().accountId(),"updateApplicationDraft",key);input(input);
         if(previous.isPresent())return replay(context,"updateApplicationDraft",id,input,expectedVersion,previous.get());
         Set<String> keys=new TreeSet<>();for(var fields:List.of(candidate.input(),input)){String k=MerchantApplicationDraft.businessKey(fields);if(k!=null)keys.add(k);}store.lockKeys(keys);
-        var before=own(context,id,true);if(before.version()!=expectedVersion)throw new OnboardingFailure(PRECONDITION_STALE);
+        var before=own(context,id,true);if(!Set.of("DRAFT","NEEDS_INFORMATION").contains(before.state()))throw new OnboardingFailure(BUSINESS_CONFLICT);if(before.version()!=expectedVersion)throw new OnboardingFailure(PRECONDITION_STALE);
         return write(context,"updateApplicationDraft",key,before,before.replace(input,now()));
     }
     @Override public Application get(CustomerAdmission.Context context,UUID id){admission.requireCurrent(context);var result=own(context,id,false).view();admission.requireCurrent(context);return result;}

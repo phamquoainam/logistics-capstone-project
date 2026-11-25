@@ -36,6 +36,8 @@ final class StaffRoleTestBootstrap {
         } finally {
             admin.setAutoCommit(autoCommit);
         }
+        // Owner AON Option B: exact new prerequisites; outer ownership/lifecycle hooks unchanged.
+        AdminRoleTestBootstrap.roles(admin, owner);
     }
 
     static void database(Connection admin, String owner) throws SQLException {
@@ -43,5 +45,6 @@ final class StaffRoleTestBootstrap {
         try (var statement = admin.createStatement()) {
             statement.execute("GRANT EXECUTE ON FUNCTION pg_catalog.pg_control_system() TO identity_staff_writer," + owner);
         }
+        AdminRoleTestBootstrap.database(admin, owner);
     }
 }

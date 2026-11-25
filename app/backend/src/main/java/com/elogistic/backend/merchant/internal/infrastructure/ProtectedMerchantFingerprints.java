@@ -18,7 +18,7 @@ public final class ProtectedMerchantFingerprints implements MerchantFingerprints
     @Override public String activeKey(){return active;}
     @Override public Set<String> retainedKeys(){return keys.keySet();}
     @Override public byte[] hash(String keyId,String operation,UUID target,long version,String... values){
-        if(keyId==null || operation==null || !operation.matches("[A-Za-z][A-Za-z0-9]{0,79}") || target==null || version<0 || version==0 && !Set.of("createApplicationDraft","createPersonalAddress","organizationContactCREATE","organizationContactDEFAULT","organizationContactIMPORTPREVIEW","merchantFacilityCREATE","merchantFacilityDEFAULT","merchantFacilityRESPONSIBILITY").contains(operation) || values==null || values.length>30 || !keys.containsKey(keyId))throw invalid();
+        if(keyId==null || operation==null || !operation.matches("[A-Za-z][A-Za-z0-9]{0,79}") || target==null || version<0 || version==0 && !Set.of("createApplicationDraft","createPersonalAddress","organizationContactCREATE","organizationContactDEFAULT","organizationContactIMPORTPREVIEW","merchantFacilityCREATE","merchantFacilityDEFAULT","merchantFacilityRESPONSIBILITY","reserveApplicationEvidence","finalizeApplicationEvidence").contains(operation) || values==null || values.length>30 || !keys.containsKey(keyId))throw invalid();
         try{
             Mac mac=Mac.getInstance("HmacSHA256");mac.init(keys.get(keyId));
             update(mac,"merchant-command-fingerprint-v1");update(mac,keyId);update(mac,operation);update(mac,target.toString());mac.update(ByteBuffer.allocate(8).putLong(version).array());

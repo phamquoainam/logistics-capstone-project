@@ -123,6 +123,53 @@ class SmtpCustomerDeliveryTests {
             logger.setLevel(Level.FINEST);assertEquals(CustomerDeliveryTransport.Kind.BLOCKED,adapter(inbox,SmtpCustomerDelivery.Mode.TEST_LOOPBACK,null).send(intent).kind());assertTrue(inbox.messages().isEmpty());
         }finally{logger.setLevel(old);}
     }
+    @Test void merchantNoticesUseFourFixedTemplatesWithoutIdentityProof()throws Exception{
+        try(var inbox=new CustomerSmtpTestInbox(4,false,false,250,serverTls)){
+            com.elogistic.backend.platform.api.MerchantNoticeMail sender=adapter(inbox,SmtpCustomerDelivery.Mode.TEST_LOOPBACK,null);
+            UUID application=UUID.randomUUID();var ids=new ArrayList<UUID>();var intents=new ArrayList<com.elogistic.backend.platform.api.MerchantNoticeMail.Message>();
+            for(var template:com.elogistic.backend.platform.api.MerchantNoticeMail.Template.values()){
+                UUID messageId=UUID.randomUUID();var intent=new com.elogistic.backend.platform.api.MerchantNoticeMail.Message(messageId,application,DESTINATION,template);ids.add(messageId);intents.add(intent);
+                var outcome=sender.send(intent);assertEquals(com.elogistic.backend.platform.api.MerchantNoticeMail.Kind.ACCEPTED_BY_PROVIDER,outcome.kind());
+                assertEquals("TEST:"+messageId,outcome.reference());assertTrue(outcome.sandbox());assertFalse(outcome.toString().contains(messageId.toString()));
+            }
+            var received=inbox.messages();assertEquals(4,received.size());
+            for(int index=0;index<4;index++){
+                var intent=intents.get(index);var messageId=ids.get(index);
+                var mail=new MimeMessage(Session.getInstance(new Properties()),new ByteArrayInputStream(received.get(index)));
+                String content=CustomerSmtpTestInbox.plainText(mail);assertTrue(mail.getSubject().startsWith("ArgoPost"));
+                assertTrue(content.contains(ORIGIN+"/personal/applications/"+application));assertFalse(content.contains("proof"));assertFalse(content.contains("token"));
+                assertEquals("<"+messageId+"@example.invalid>",mail.getMessageID());assertEquals(DESTINATION,mail.getAllRecipients()[0].toString());
+                assertFalse(intent.toString().contains(DESTINATION));
+            }
+            assertEquals(0,inbox.authentications.get());
+        }
+    }
+    @Test void merchantNoticeInvalidInputIsRejectedBeforeSmtp(){
+        var zero=new UUID(0,0);var id=UUID.randomUUID();
+        assertThrows(IllegalArgumentException.class,()->com.elogistic.backend.platform.api.MerchantNoticeMail.Template.valueOf("CUSTOM"));
+        assertThrows(IllegalArgumentException.class,()->new com.elogistic.backend.platform.api.MerchantNoticeMail.Message(id,id,DESTINATION,null));
+        assertThrows(IllegalArgumentException.class,()->new com.elogistic.backend.platform.api.MerchantNoticeMail.Message(zero,id,DESTINATION,com.elogistic.backend.platform.api.MerchantNoticeMail.Template.APPROVED));
+        try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,serverTls)){
+            var sender=adapter(inbox,SmtpCustomerDelivery.Mode.TEST_LOOPBACK,null);
+            var invalid=new com.elogistic.backend.platform.api.MerchantNoticeMail.Message(id,id,"a\\r\\nBcc:evil@example.invalid",com.elogistic.backend.platform.api.MerchantNoticeMail.Template.REJECTED);
+            assertEquals(com.elogistic.backend.platform.api.MerchantNoticeMail.Kind.BLOCKED,sender.send(invalid).kind());assertTrue(inbox.messages().isEmpty());
+        }catch(Exception failure){throw new AssertionError(failure);}
+    }
+    @Test void merchantNoticeRetainsIdentityTlsFailureAndRetrySemantics()throws Exception{
+        var intent=new com.elogistic.backend.platform.api.MerchantNoticeMail.Message(UUID.randomUUID(),UUID.randomUUID(),DESTINATION,com.elogistic.backend.platform.api.MerchantNoticeMail.Template.WITHDRAWN);
+        for(int code:List.of(450,550))try(var inbox=new CustomerSmtpTestInbox(1,false,false,code,serverTls)){
+            var outcome=adapter(inbox,SmtpCustomerDelivery.Mode.TEST_LOOPBACK,null).send(intent);
+            assertEquals(code==450?com.elogistic.backend.platform.api.MerchantNoticeMail.Kind.TRANSIENT_FAILURE:com.elogistic.backend.platform.api.MerchantNoticeMail.Kind.PERMANENT_FAILURE,outcome.kind());assertNull(outcome.reference());assertTrue(inbox.messages().isEmpty());
+        }
+        try(var inbox=new CustomerSmtpTestInbox(1,false,false,250,serverTls)){
+            assertEquals(com.elogistic.backend.platform.api.MerchantNoticeMail.Kind.BLOCKED,adapter(inbox,SmtpCustomerDelivery.Mode.STARTTLS,trustRoots).send(intent).kind());assertEquals(0,inbox.envelopes.get());
+        }
+        try(var inbox=new CustomerSmtpTestInbox(2,true,false,250,serverTls)){
+            var sender=adapter(inbox,SmtpCustomerDelivery.Mode.STARTTLS,trustRoots);assertEquals(sender.send(intent),sender.send(intent));
+            var messages=inbox.messages();assertEquals(2,messages.size());
+            assertEquals(new MimeMessage(Session.getInstance(new Properties()),new ByteArrayInputStream(messages.get(0))).getMessageID(),new MimeMessage(Session.getInstance(new Properties()),new ByteArrayInputStream(messages.get(1))).getMessageID());
+        }
+    }
     @Test void insecureOrUnapprovedSmtpConfigurationCannotEnableProductionFallback(){
         assertThrows(IllegalArgumentException.class,()->new SmtpCustomerDelivery.Settings("smtp.example.invalid",25,SmtpCustomerDelivery.Mode.TEST_LOOPBACK,null,null,"no-reply@example.invalid",Set.of("example.invalid"),ORIGIN,true));
         assertThrows(IllegalArgumentException.class,()->new SmtpCustomerDelivery.Settings("127.0.0.1",25,SmtpCustomerDelivery.Mode.TEST_LOOPBACK,null,null,"no-reply@example.invalid",Set.of("example.invalid"),ORIGIN,false));

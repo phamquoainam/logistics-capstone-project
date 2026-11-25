@@ -1,0 +1,745 @@
+{
+  "schema_version": 1,
+  "id": "ARGOPOST-ADMIN-LOCAL-ONBOARDING-DELTA-1",
+  "status": "PROPOSED",
+  "created_on": "2026-11-22",
+  "baseline": "d7329a84822f88a1c01e70a0e23b065123860410",
+  "source_checkpoint": "ADMIN_DASHBOARD_SOURCE_TEST_READY",
+  "prior_contract_sha256": "69d1ac81606199a2db644d8038553e19fd78bfddb2608e92713b2fa1396e2289",
+  "authority_boundary": "Design only pending exact technical approval. No new source, migration, role creation, operator grant, identity provisioning, environment binding or activation executed.",
+  "decisions": [
+    {
+      "id": "AON-DEC-01",
+      "status": "PROPOSED",
+      "decision": "Approve V39 core source/test with exact new authority/schema/API below; future real target/selected READ set remain explicit, never default all six."
+    },
+    {
+      "id": "AON-DEC-02",
+      "status": "PROPOSED",
+      "decision": "Choose existing genuinely ACTIVE approved isolated SYSTEM realm (no Root changes) OR separately approve optional V40 first-bootstrap verification for a new dedicated isolated DB. V40 never runs on elogistics_dev/shared/Production or an existing Root. No automatic selection."
+    },
+    {
+      "id": "AON-DEC-03",
+      "status": "PROPOSED",
+      "decision": "No shared/demo activation authorized. One later isolated execution record must bind exact cluster/database/volume/realm/operator login/mailbox and selected permission set. Current directive permits isolated deployment only once these prerequisites and authority are valid; no routine repeated approval."
+    }
+  ],
+  "reuse": [
+    {
+      "symbol": "IdentityAccount.activate/PasswordPolicy/ProtectedInvitationCredentials/InvitationProtection",
+      "proof": "Existing INVITATION24h/format1 cryptography and password semantics are reusable; no new purpose, token engine, session tables or permission codes."
+    },
+    {
+      "symbol": "identity.account_grant / identity.command_receipt / identity.audit_entry",
+      "proof": "Canonical stores retained. Existing PROOF acceptIdentityInvitation receipts reused; separate offline receipts required because ACTOR receipts require a human Identity actor and existing operation CHECKs do not describe offline session_user."
+    },
+    {
+      "symbol": "identity.bootstrap_system_realm_admin/activate_system_realm (V4)",
+      "proof": "Existing owner-only checks remain byte-identical. Optional wrappers may call them only after a separately approved bound isolated bootstrap; they are not public/runtime/admin-grant authority."
+    },
+    {
+      "symbol": "Existing SYSTEM auth and six Dashboard GET APIs",
+      "proof": "Wire unchanged, no implicit IAM rights. New activation route/HTTP operation only if approved."
+    }
+  ],
+  "roles": [
+    {
+      "id": "AON-ROLE-01",
+      "name": "elogistics_local_admin_operator",
+      "purpose": "Offline dedicated Admin provisioning/permission lifecycle only.",
+      "attributes": "NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS",
+      "membership": "No automatic login membership. session_user must be an independently approved nonsuperuser login member; no writer SET/INHERIT.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "AON-ROLE-02",
+      "name": "identity_admin_writer",
+      "purpose": "NOLOGIN least-privilege function owner, not schema owner; cannot change realm or management grants.",
+      "attributes": "NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS",
+      "membership": "Runtime/operator cannot SET ROLE or inherit. Existing owner can SET only through approved privileged isolated-cluster bootstrap.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "AON-ROLE-03",
+      "name": "elogistics_local_realm_operator",
+      "purpose": "OPTIONAL separately approved first SYSTEM bootstrap/activation/disable on fresh dedicated isolated UAT DB only; never an Admin operator implication.",
+      "attributes": "NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS",
+      "membership": "No automatic login membership; distinct role authorization from AON-ROLE-01.",
+      "status": "PROPOSED"
+    }
+  ],
+  "tables": [
+    {
+      "id": "AON-DB-01",
+      "name": "identity.local_admin_environment",
+      "columns": [
+        "singleton BOOLEAN PRIMARY KEY CHECK(singleton)",
+        "deployment_id UUID NOT NULL UNIQUE",
+        "realm_id UUID NOT NULL UNIQUE REFERENCES identity.realm(id)",
+        "environment VARCHAR(5) NOT NULL CHECK IN ('LOCAL','TEST')",
+        "purpose VARCHAR(24) NOT NULL CHECK = 'ADMIN_ISOLATED_UAT'",
+        "database_name TEXT NOT NULL",
+        "database_oid OID NOT NULL",
+        "system_identifier TEXT NOT NULL",
+        "state VARCHAR(8) NOT NULL CHECK IN ('ACTIVE','DISABLED')",
+        "bound_request_id UUID NOT NULL UNIQUE",
+        "bound_at TIMESTAMPTZ NOT NULL",
+        "disabled_at TIMESTAMPTZ"
+      ],
+      "constraints": [
+        "Singleton; all physical identity/purpose/realm fields immutable; terminal disable only controlled function; no truncate/delete.",
+        "Bound request FK to local_admin_operator_receipt DEFERRABLE INITIALLY DEFERRED; verified matching audit/receipt required.",
+        "No default/shared database inference; copied/restored identity mismatch denies."
+      ],
+      "status": "PROPOSED"
+    },
+    {
+      "id": "AON-DB-02",
+      "name": "identity.local_admin_principal",
+      "columns": [
+        "account_id UUID PRIMARY KEY REFERENCES identity.user_account(id)",
+        "realm_id UUID NOT NULL REFERENCES identity.realm(id)",
+        "exact_email VARCHAR(254) COLLATE \"C\" NOT NULL UNIQUE",
+        "state VARCHAR(8) NOT NULL CHECK IN ('PENDING','ACTIVE','REVOKED')",
+        "version BIGINT NOT NULL CHECK(version>0)",
+        "provision_request_id UUID NOT NULL UNIQUE",
+        "last_request_id UUID NOT NULL",
+        "created_at TIMESTAMPTZ NOT NULL",
+        "updated_at TIMESTAMPTZ NOT NULL"
+      ],
+      "constraints": [
+        "Reuse existing V36 UNIQUE user_account(id,email) composite FK(account_id,exact_email); do not replace constraint.",
+        "UNIQUE(account_id,realm_id) for receipt correlation. Provision/last request FKs deferrable to operator receipt.",
+        "Initial state PENDING/version1; immutable account/realm/email; account and marker transition/version agreement; no deletion or reactivation.",
+        "Marker target cannot equal realm.bootstrap_account_id or have Customer identifier, Support registration or Merchant Membership. All current grants exact approved READ set in same realm; ENTRY required except terminal REVOKED (no grants)."
+      ],
+      "status": "PROPOSED"
+    },
+    {
+      "id": "AON-DB-03",
+      "name": "identity.local_admin_operator_receipt",
+      "columns": [
+        "request_id UUID PRIMARY KEY",
+        "deployment_id UUID NOT NULL",
+        "realm_id UUID NOT NULL REFERENCES identity.realm(id)",
+        "operator_principal TEXT NOT NULL",
+        "operator_oid OID NOT NULL",
+        "database_name TEXT NOT NULL",
+        "operation VARCHAR(24) NOT NULL",
+        "input_digest BYTEA NOT NULL CHECK(octet_length(input_digest)=32)",
+        "account_id UUID REFERENCES identity.user_account(id)",
+        "proof_id UUID REFERENCES identity.action_proof(id) DEFERRABLE INITIALLY DEFERRED",
+        "message_id UUID REFERENCES identity.invitation_outbox(id) DEFERRABLE INITIALLY DEFERRED",
+        "original_version BIGINT",
+        "committed_version BIGINT",
+        "committed_outcome VARCHAR(32) NOT NULL",
+        "audit_id UUID NOT NULL UNIQUE REFERENCES identity.audit_entry(id) DEFERRABLE INITIALLY DEFERRED",
+        "created_at TIMESTAMPTZ NOT NULL"
+      ],
+      "constraints": [
+        "Append-only, no expiry-based request reuse or direct runtime/operator INSERT/UPDATE/DELETE/TRUNCATE.",
+        "Exact operation allowlist: ENV_BIND,ENV_DISABLE,PROVISION,RESEND,CANCEL,SET_PERMISSIONS,REVOKE; optional V40 adds REALM_BOOTSTRAP,REALM_RESEND,REALM_CANCEL,REALM_ACTIVATE,REALM_DISABLE.",
+        "CHECK nullability by operation: pending issue/resend requires account/proof/message; environment/realm-only mutations require no invitation values except REALM_BOOTSTRAP/RESEND; version transitions exact.",
+        "Same physical transaction audit/target/receipt/outbox evidence; no plaintext token/password/hash of password or email in public operator output.",
+        "deployment_id FK -> local_admin_environment(deployment_id), DEFERRABLE INITIALLY DEFERRED. Replay binds both session_user name and current role OID; dropped/recreated login name cannot inherit another operator receipt."
+      ],
+      "status": "PROPOSED"
+    }
+  ],
+  "sql": [
+    {
+      "id": "AON-SQL-01",
+      "status": "PROPOSED",
+      "migration": "V39",
+      "signature": "identity.bind_local_admin_environment(p_request UUID,p_realm UUID,p_environment TEXT,p_reason TEXT) RETURNS TABLE(request_id UUID,realm_id UUID,environment TEXT,current_state TEXT,replayed BOOLEAN)",
+      "execute": "AON-ROLE-01",
+      "semantics": "Bind immutable dedicated UAT physical identity once; fixed purpose ADMIN_ISOLATED_UAT, LOCAL/TEST only. Verify nonsuperuser caller, database name argopost_admin_uat_<12 lower hex>, actual database OID/name/system identifier, registered SYSTEM realm. Reject elogistics_dev/shared/Production and rebind."
+    },
+    {
+      "id": "AON-SQL-02",
+      "status": "PROPOSED",
+      "migration": "V39",
+      "signature": "identity.local_admin_environment_matches(p_environment TEXT) RETURNS BOOLEAN",
+      "execute": "runtime, AON-ROLE-01, AON-ROLE-03",
+      "semantics": "Boolean-only SECURITY DEFINER reader, no arbitrary catalog or row output; compare persisted physical identity and ACTIVE binding; missing/disabled/copied DB fails closed."
+    },
+    {
+      "id": "AON-SQL-03",
+      "status": "PROPOSED",
+      "migration": "V39",
+      "signature": "identity.provision_local_admin(p_request UUID,p_realm UUID,p_display_name TEXT,p_email TEXT,p_permissions TEXT[],p_reason TEXT) RETURNS TABLE(account_id UUID,proof_id UUID,message_id UUID,created_at TIMESTAMPTZ,expires_at TIMESTAMPTZ,replayed BOOLEAN,current_principal_state TEXT)",
+      "execute": "AON-ROLE-01",
+      "semantics": "Require bound ACTIVE SYSTEM realm, canonical sorted unique nonempty read set including ENTRY, no other codes; generate new account/proof/message UUID and login username admin_<32hex>. No existing-account argument or takeover. Create PENDING/UNVERIFIED/no credential plus grants, marker, proof reservation, audit/receipt; must seal in same physical transaction."
+    },
+    {
+      "id": "AON-SQL-04",
+      "status": "PROPOSED",
+      "migration": "V39",
+      "signature": "identity.seal_local_admin_invitation(p_request UUID,p_verifier_key_id TEXT,p_encryption_key_id TEXT,p_token_hash BYTEA,p_nonce BYTEA,p_ciphertext BYTEA) RETURNS VOID",
+      "execute": "AON-ROLE-01",
+      "semantics": "Require same operator/request/database/reservation in same uncommitted physical transaction, correct lengths and current key IDs. Persist existing INVITATION format1 proof and protected outbox. Deferred evidence denies unsealed commit. No plaintext token parameter."
+    },
+    {
+      "id": "AON-SQL-05",
+      "status": "PROPOSED",
+      "migration": "V39",
+      "signature": "identity.disposition_local_admin_invitation(p_request UUID,p_account UUID,p_expected_version BIGINT,p_action TEXT,p_reason TEXT) RETURNS TABLE(account_id UUID,proof_id UUID,message_id UUID,created_at TIMESTAMPTZ,expires_at TIMESTAMPTZ,replayed BOOLEAN,current_principal_state TEXT)",
+      "execute": "AON-ROLE-01",
+      "semantics": "RESEND or CANCEL only on marked pending account. Replay lookup before expected-version/state check after current operator/environment authorization. RESEND invalidates old proof/payload and requires seal same transaction. Existing resend ceiling3/account/hour and20/operator/hour, committed receipts; replay does not consume quota. CANCEL terminally revokes marker, disables account, revokes proofs/sessions, no identity reuse."
+    },
+    {
+      "id": "AON-SQL-06",
+      "status": "PROPOSED",
+      "migration": "V39",
+      "signature": "identity.local_admin_invitation_destination(p_request UUID) RETURNS TEXT",
+      "execute": "AON-ROLE-01",
+      "semantics": "Private input for same operator's live PROVISION/RESEND reservation only; cannot enumerate targets or use on committed replay to reissue mail."
+    },
+    {
+      "id": "AON-SQL-07",
+      "status": "PROPOSED",
+      "migration": "V39",
+      "signature": "identity.configure_local_admin_permissions(p_request UUID,p_account UUID,p_expected_version BIGINT,p_permissions TEXT[],p_reason TEXT) RETURNS TABLE(request_id UUID,account_id UUID,committed_version BIGINT,current_version BIGINT,current_state TEXT,replayed BOOLEAN)",
+      "execute": "AON-ROLE-01",
+      "semantics": "ACTIVE marked Admin only, exact six-code subset with mandatory ENTRY. Never management/root/Staff/Customer. Replace only Admin grants, bump account/version/auth_version, revoke SYSTEM sessions and pending proofs transactionally. Pending grant changes reject; require explicitly reviewed original selection, no hidden resend."
+    },
+    {
+      "id": "AON-SQL-08",
+      "status": "PROPOSED",
+      "migration": "V39",
+      "signature": "identity.revoke_local_admin(p_request UUID,p_account UUID,p_expected_version BIGINT,p_reason TEXT) RETURNS TABLE(request_id UUID,account_id UUID,committed_version BIGINT,current_version BIGINT,current_state TEXT,replayed BOOLEAN)",
+      "execute": "AON-ROLE-01",
+      "semantics": "Terminal marked-principal revocation; disable only that account, remove its read grants, bump versions, revoke SYSTEM sessions/proofs and erase live outbox payload. Never Initial Root, Customer/Staff or other targets. No resume implicit in replay."
+    },
+    {
+      "id": "AON-SQL-09",
+      "status": "PROPOSED",
+      "migration": "V39",
+      "signature": "identity.accept_local_admin_invitation(p_proof UUID,p_key UUID,p_fingerprint BYTEA,p_password_verifier TEXT,p_request UUID) RETURNS VOID",
+      "execute": "runtime",
+      "semantics": "After reused Identity application cryptographically verifies supplied proof/password: guarded atomic account+marker activation, proof consumption, session invalidation, existing acceptIdentityInvitation receipt and audit; no grants issuance, no realm activation. Exact consumed-proof replay checks current eligibility and committed version; different fingerprint rejects."
+    },
+    {
+      "id": "AON-SQL-10",
+      "status": "PROPOSED",
+      "migration": "V39",
+      "signature": "identity.disable_local_admin_environment(p_request UUID,p_realm UUID,p_reason TEXT) RETURNS TABLE(request_id UUID,realm_id UUID,current_state TEXT,replayed BOOLEAN)",
+      "execute": "AON-ROLE-01",
+      "semantics": "Dedicated bound environment only; terminal fail-closed admission kill switch, receipt/audit. Does not change realm/Root or management grants; not a replacement for stopping SYSTEM HTTP runtime."
+    },
+    {
+      "id": "AON-SQL-11",
+      "status": "PROPOSED",
+      "migration": "V40_OPTIONAL",
+      "signature": "identity.provision_local_realm_bootstrap(p_request UUID,p_realm UUID,p_display_name TEXT,p_email TEXT,p_reason TEXT) RETURNS TABLE(account_id UUID,proof_id UUID,message_id UUID,created_at TIMESTAMPTZ,expires_at TIMESTAMPTZ,replayed BOOLEAN,current_principal_state TEXT)",
+      "execute": "AON-ROLE-03",
+      "semantics": "Fresh bound isolated DB only, realm INACTIVE/never activated/no bootstrap binding; generate account UUID and username, call existing V4 bootstrap_system_realm_admin under bounded schema-owner definer wrapper, reserve genuine INVITATION. Initial Root gets only the existing exact IAM pair, never read grants; NOT a dedicated Admin target. Separately approved exceptional authority, not part of Admin operator."
+    },
+    {
+      "id": "AON-SQL-12",
+      "status": "PROPOSED",
+      "migration": "V40_OPTIONAL",
+      "signature": "identity.seal_local_realm_bootstrap_invitation(p_request UUID,p_verifier_key_id TEXT,p_encryption_key_id TEXT,p_token_hash BYTEA,p_nonce BYTEA,p_ciphertext BYTEA) RETURNS VOID",
+      "execute": "AON-ROLE-03",
+      "semantics": "Same operator/reservation/transaction and protected format1; exact bound pending Root in never-activated isolated realm only. Ordinary IAM and Admin eligibility unchanged."
+    },
+    {
+      "id": "AON-SQL-13",
+      "status": "PROPOSED",
+      "migration": "V40_OPTIONAL",
+      "signature": "identity.local_realm_bootstrap_invitation_destination(p_request UUID) RETURNS TEXT",
+      "execute": "AON-ROLE-03",
+      "semantics": "Same private reservation restriction as SQL06; no target enumeration."
+    },
+    {
+      "id": "AON-SQL-14",
+      "status": "PROPOSED",
+      "migration": "V40_OPTIONAL",
+      "signature": "identity.accept_local_realm_bootstrap_invitation(p_proof UUID,p_key UUID,p_fingerprint BYTEA,p_password_verifier TEXT,p_request UUID) RETURNS VOID",
+      "execute": "runtime",
+      "semantics": "Only exact wrapper-created bootstrap binding, never-activated realm, exact existing IAM grant and authenticated format1 proof. Reused password/proof engine; activate account, not realm. Atomic proof/credential/receipt/audit; no bypass/fake verification. Existing Root and ordinary invitation paths unchanged."
+    },
+    {
+      "id": "AON-SQL-15",
+      "status": "PROPOSED",
+      "migration": "V40_OPTIONAL",
+      "signature": "identity.activate_local_system_realm(p_request UUID,p_realm UUID,p_reason TEXT) RETURNS TABLE(request_id UUID,realm_id UUID,current_state TEXT,replayed BOOLEAN)",
+      "execute": "AON-ROLE-03",
+      "semantics": "After genuine Root verification, invoke existing V4 activate_system_realm; retain all V4 checks/metadata. Durable receipt replay never reactivates after later disable. Never applies shared/demo/Production."
+    },
+    {
+      "id": "AON-SQL-16",
+      "status": "PROPOSED",
+      "migration": "V40_OPTIONAL",
+      "signature": "identity.disable_local_system_realm(p_request UUID,p_realm UUID,p_reason TEXT) RETURNS TABLE(request_id UUID,realm_id UUID,current_state TEXT,replayed BOOLEAN)",
+      "execute": "AON-ROLE-03",
+      "semantics": "Bound dedicated UAT realm only, population lock and audit/receipt; ACTIVE to INACTIVE, preserve immutable bootstrap binding and first activated_at; revoke that realm's SYSTEM sessions. No automatic reactivation."
+    },
+    {
+      "id": "AON-SQL-17",
+      "status": "PROPOSED",
+      "migration": "V40_OPTIONAL",
+      "signature": "identity.disposition_local_realm_bootstrap_invitation(p_request UUID,p_realm UUID,p_action TEXT,p_reason TEXT) RETURNS TABLE(account_id UUID,proof_id UUID,message_id UUID,created_at TIMESTAMPTZ,expires_at TIMESTAMPTZ,replayed BOOLEAN,current_principal_state TEXT)",
+      "execute": "AON-ROLE-03",
+      "semantics": "RESEND/CANCEL only exact pending bootstrap account before first realm activation. Resend same bound account with existing quota/crypto; CANCEL leaves immutable bootstrap binding in quarantined INACTIVE realm, no account substitution or automatic rebootstrap."
+    },
+    {
+      "id": "AON-SQL-18",
+      "status": "PROPOSED",
+      "migration": "V39",
+      "signature": "identity.local_admin_operator_status(p_account UUID) RETURNS TABLE(account_id UUID,realm_id UUID,current_state TEXT,current_version BIGINT,current_permissions TEXT[])",
+      "execute": "AON-ROLE-01",
+      "semantics": "Current environment/operator admission first; one explicitly selected marked Admin only; no Root/Customer/Staff enumeration or email/proof/secret output. Supplies expected version, never runtime authority."
+    },
+    {
+      "id": "AON-SQL-19",
+      "status": "PROPOSED",
+      "migration": "V39",
+      "signature": "identity.local_admin_registered(p_account UUID) RETURNS BOOLEAN",
+      "execute": "runtime, identity_admin_writer, existing constrained Merchant writer",
+      "semantics": "Boolean marker existence including revoked identities for mutual-exclusion guards; no private row or authority returned."
+    },
+    {
+      "id": "AON-SQL-20",
+      "status": "PROPOSED",
+      "migration": "V39",
+      "signature": "identity.local_admin_eligible(p_account UUID,p_realm UUID) RETURNS BOOLEAN",
+      "execute": "runtime, identity_admin_writer",
+      "semantics": "Boolean current ACTIVE marker/account and exact realm plus dedicated physical environment admission. Used inside existing Admin current persisted check; never grant authority from boolean alone."
+    }
+  ],
+  "http": [
+    {
+      "id": "AON-API-01",
+      "status": "PROPOSED",
+      "method": "POST",
+      "path": "/api/v1/auth/admin-invitations/accept",
+      "dto": "AON-DTO-05",
+      "response": "204 no body, no login/session; generic error codes",
+      "security": "HTTPS + exact Origin + existing SYSTEM preauth CSRF cookie/header; no query parameters, bearer substitute or cross-audience cookies. Idempotency-Key UUID; server request correlation. Max16KiB exact JSON keys proofId/token/password. Existing INVITATION_TOKEN5/900s + RESEND_IP20/3600s under ADMIN namespace. Reject noncanonical UUID/base64url/duplicate fields/headers. Only cryptographically authenticated stored Admin marker OR explicitly approved local initial-bootstrap record can choose an adapter; browser cannot select purpose/realm/role."
+    }
+  ],
+  "interfaces": [
+    {
+      "id": "AON-IF-01",
+      "status": "PROPOSED",
+      "symbol": "LocalAdminProvisioner",
+      "signature": "provision(OfflineAdminProvision); disposition(OfflineAdminInvitationDisposition); configure(OfflineAdminPermissions); revoke(OfflineAdminRevoke); status(UUID accountId)",
+      "semantics": "Offline-only unregistered operator DataSource. Own physical transaction, request+seal+audit+receipt, reused InvitationProtection. No credential argument, direct DML or console token/PII."
+    },
+    {
+      "id": "AON-IF-02",
+      "status": "PROPOSED",
+      "symbol": "LocalAdminInvitationActivation",
+      "signature": "accept(UUID proofId, byte[] token, String password, UUID operationKey, UUID requestId) : void",
+      "semantics": "Reuse IdentityInvitationCommands/AcceptIdentityInvitation, protected credentials and domain activation. Adapter maps guarded persistence for marked Admin; optional bootstrap adapter only V40-enabled. Do not widen ordinary IAM eligibility or Staff activation."
+    },
+    {
+      "id": "AON-IF-03",
+      "status": "PROPOSED",
+      "symbol": "AdminInvitationDeliveryWorker + SmtpCustomerDelivery.sendAdminInvitation(JdbcInvitationOutbox.Delivery)",
+      "signature": "runOne() : boolean; sendAdminInvitation(Delivery) : existing DeliveryOutcome",
+      "semantics": "Reuse canonical outbox and JavaMailSender transport, extend owner-local eligibility only for marked Admin/optional exact bootstrap; explicit gate default off. Valid HTTPS frontend fragment link, login username in private email; no outbox raw URL/second SMTP provider. SMTP acceptance is not inbox proof."
+    },
+    {
+      "id": "AON-IF-04",
+      "status": "PROPOSED",
+      "symbol": "AdminSessionPolicy.current",
+      "signature": "unchanged Java/HTTP signature; add current ACTIVE local_admin_principal + dedicated physical environment predicate",
+      "semantics": "Approved hardening depends on V39. Default off remains compatible without new schema. Old IAM/Root path, six READ codes and all existing Customer/Staff semantics unchanged."
+    },
+    {
+      "id": "AON-IF-05",
+      "status": "PROPOSED",
+      "symbol": "Optional LocalRealmBootstrapProvisioner",
+      "signature": "provision(OfflineRealmBootstrap); disposition(OfflineRealmInvitationDisposition); activate(OfflineRealmCommand); disable(OfflineRealmCommand)",
+      "semantics": "Separately configured offline Realm operator only, never runtime bean or implicit Admin operator. Uses only SQL11-17, bounded schema-owner wrappers for V4 calls, no general SQL executor."
+    }
+  ],
+  "dtos": [
+    {
+      "id": "AON-DTO-01",
+      "status": "PROPOSED",
+      "name": "OfflineAdminProvision",
+      "fields": {
+        "requestId": "UUID",
+        "realmId": "UUID",
+        "displayName": "Exact UTF8 String1..160 codepoints, no NUL/normalization",
+        "email": "Exact CustomerEmail String1..254 chars, no normalization; Owner-controlled mailbox",
+        "permissions": "Set<String> exact six READ codes, ENTRY mandatory",
+        "reason": "String10..500, no secrets"
+      }
+    },
+    {
+      "id": "AON-DTO-02",
+      "status": "PROPOSED",
+      "name": "OfflineAdminInvitationDisposition",
+      "fields": {
+        "requestId": "UUID",
+        "accountId": "UUID",
+        "expectedVersion": "positive long",
+        "action": "RESEND|CANCEL",
+        "reason": "String10..500"
+      }
+    },
+    {
+      "id": "AON-DTO-03",
+      "status": "PROPOSED",
+      "name": "OfflineAdminPermissions",
+      "fields": {
+        "requestId": "UUID",
+        "accountId": "UUID",
+        "expectedVersion": "positive long",
+        "permissions": "Set<String> exact finite codes, ENTRY mandatory",
+        "reason": "String10..500"
+      }
+    },
+    {
+      "id": "AON-DTO-04",
+      "status": "PROPOSED",
+      "name": "OfflineAdminRevoke",
+      "fields": {
+        "requestId": "UUID",
+        "accountId": "UUID",
+        "expectedVersion": "positive long",
+        "reason": "String10..500"
+      }
+    },
+    {
+      "id": "AON-DTO-05",
+      "status": "PROPOSED",
+      "name": "AdminInvitationAcceptance",
+      "fields": {
+        "proofId": "nonzero canonical UUID",
+        "token": "43 ASCII canonical base64url characters",
+        "password": "PasswordPolicy15..72 codepoints and <=72 UTF8 bytes"
+      },
+      "headers": {
+        "Idempotency-Key": "nonzero UUID",
+        "X-CSRF-Token": "existing SYSTEM challenge",
+        "Origin": "exact frontend HTTPS origin"
+      },
+      "redaction": "No toString/logging/telemetry/body artifact; wipe owned buffers."
+    },
+    {
+      "id": "AON-DTO-06",
+      "status": "PROPOSED",
+      "name": "OfflineAdminReceipt",
+      "fields": {
+        "requestId": "UUID",
+        "accountId": "UUID",
+        "committedOutcome": "finite string",
+        "committedVersion": "positive long or null",
+        "currentVersion": "positive long or null",
+        "currentState": "finite string",
+        "replayed": "boolean"
+      },
+      "redaction": "No username/email/proof/token/password/key or database credential in public output."
+    },
+    {
+      "id": "AON-DTO-07",
+      "status": "PROPOSED",
+      "name": "OfflineRealmBootstrap",
+      "fields": {
+        "requestId": "UUID",
+        "realmId": "UUID",
+        "displayName": "Exact UTF8 String1..160 codepoints, no NUL/normalization",
+        "email": "Exact CustomerEmail String1..254 chars, no normalization; Owner-controlled mailbox",
+        "reason": "String10..500"
+      },
+      "boundary": "Only optional V40, new isolated Root; not Admin provisioning."
+    },
+    {
+      "id": "AON-DTO-08",
+      "status": "PROPOSED",
+      "name": "OfflineRealmInvitationDisposition",
+      "fields": {
+        "requestId": "UUID",
+        "realmId": "UUID",
+        "action": "RESEND|CANCEL",
+        "reason": "String10..500"
+      }
+    },
+    {
+      "id": "AON-DTO-09",
+      "status": "PROPOSED",
+      "name": "OfflineRealmCommand",
+      "fields": {
+        "requestId": "UUID",
+        "realmId": "UUID",
+        "reason": "String10..500"
+      }
+    },
+    {
+      "id": "AON-DTO-10",
+      "status": "PROPOSED",
+      "name": "OfflineAdminStatus",
+      "fields": {
+        "accountId": "UUID",
+        "realmId": "UUID",
+        "currentState": "PENDING|ACTIVE|REVOKED",
+        "currentVersion": "positive long",
+        "currentPermissions": "sorted exact canonical READ codes"
+      }
+    },
+    {
+      "id": "AON-DTO-11",
+      "status": "PROPOSED",
+      "name": "OfflineRealmReceipt",
+      "fields": {
+        "requestId": "UUID",
+        "realmId": "UUID",
+        "accountId": "UUID or null",
+        "committedOutcome": "finite string",
+        "currentState": "finite string",
+        "replayed": "boolean"
+      },
+      "redaction": "No mailbox, proof/token, password or credential."
+    }
+  ],
+  "amendments": [
+    {
+      "id": "AON-AMEND-01",
+      "status": "PROPOSED",
+      "change": "New V39 only (free after current V38; recheck immediately before implementation). Three new Identity tables and guard/helper functions; canonical grants/proofs/outbox/audit/activation receipts retained. Existing migrations byte-unchanged."
+    },
+    {
+      "id": "AON-AMEND-02",
+      "status": "PROPOSED",
+      "change": "Add provenance/transition/deferred-evidence guards on marked Admin user_account/account_grant/action_proof/invitation_outbox and mutual-exclusion guards with customer_identifier/local_staff_principal/merchant.membership. No existing Customer/Staff/IAM rows rewritten; runtime cannot direct-write marked identity/grants/receipt. Lock order population -> request serialization -> realm -> account -> proof/receipt; no cross-owner lock inversion."
+    },
+    {
+      "id": "AON-AMEND-03",
+      "status": "PROPOSED",
+      "change": "Finite new SQL privileges: writer SELECT necessary existing Identity rows; INSERT pending account/grants/proof/outbox/audit/receipt; column-limited UPDATE credential/state/version/proof/outbox; DELETE only marked Admin grants within guarded replace/revoke. No TRUNCATE, realm UPDATE, DDL, owner role or Support/Merchant/Finance grants. Runtime only admitted boolean read + guarded SQL09, plus existing constrained session/outbox operations. PUBLIC denied all new objects by default. Runtime/guard callers get only SQL19/20 boolean EXECUTE, no SELECT on private marker/environment/operator receipts."
+    },
+    {
+      "id": "AON-AMEND-04",
+      "status": "PROPOSED",
+      "change": "Optional V40 extends receipt operation allowlist, adds explicit pre-activation bootstrap-only outbox/acceptance eligibility. Ordinary existing management invitations still require ACTIVE realm, and Admin invitations always require ACTIVE realm. No general INACTIVE exception; initial Root state/grants managed only through existing V4 checks plus explicit wrapper scope."
+    },
+    {
+      "id": "AON-AMEND-05",
+      "status": "PROPOSED",
+      "change": "New authority roles are registered by separately approved privileged isolated-cluster prerequisites, never CREATE ROLE in Flyway; no automatic membership to migrator/runtime or developer. Exact prerequisite generator must preserve existing pinned ownership/lifecycle/bootstrap collector functions; any hook delta separately explicit in implementation review."
+    },
+    {
+      "id": "AON-AMEND-06",
+      "status": "PROPOSED",
+      "change": "New browser route /admin/activate captures fragment before auth restore/analytics, immediately scrubs history, keeps proof/token in memory; success redirects to /admin/login, no automatic session. No changes to six Dashboard APIs or Customer/Staff activation routes."
+    },
+    {
+      "id": "AON-AMEND-07",
+      "status": "PROPOSED",
+      "change": "Isolated privileged prerequisites additionally grant EXECUTE pg_catalog.pg_control_system() only to identity_admin_writer and existing schema owner; runtime/operator get boolean predicate only. No writer SET/INHERIT to runtime/operator. Optional V40 bounded wrapper functions owned by Identity schema owner are the sole exception, not schema-owner login or general SQL executor."
+    }
+  ],
+  "replay_and_integrity": {
+    "authorization": "Recheck current nonsuperuser session_user membership, bound environment/realm and allowed target before receipt access. User strings/GUC/SET ROLE alone confer nothing. Persist and compare current login role OID as well as name; role-name reuse alone cannot authorize a receipt.",
+    "digest": "SHA256 of versioned canonical operation+deployment+realm+target+expectedVersion+sorted exact permissions+canonical validated input+reason; operator/session_user and request binding persisted. No password/secret in offline command.",
+    "replay": "Same request+same operator/input returns committed metadata with current state, before stale expectedVersion or consumed-proof rejection; different input conflict; different/revoked operator deny. Replay after revoke/disable never creates grant/proof/activation.",
+    "atomicity": "Account/marker/grants/proof/protected intent/audit/receipt in one physical transaction; receipt and deferred evidence cannot be forged by runtime/direct DML. Failure rolls back all; SMTP outside transaction.",
+    "crypto_trust": "Existing Identity application authenticates HMAC proof and PasswordPolicy before guarded SQL activation. SQL enforces relational/provenance consistency, not possession of an external HMAC key. Do not claim DB CHECKs verify raw tokens; compromised application/key-holder remains outside DB-only disclosure protection.",
+    "digest_encoding": "Authoritative SQL digest: sha256(convert_to(jsonb_build_object('v',1,'operation',operation,'deploymentId',deployment_id,'databaseName',current_database(),'realmId',realm_id,'targetId',target_id,'expectedVersion',expected_version,'displayName',display_name,'email',email,'permissions',sorted_permissions,'action',action,'reason',reason)::text,'UTF8')). Inapplicable keys remain JSON null, permissions sorted C, no normalization. Java never supplies a trusted digest. Request ID is the durable receipt PK/correlation, not authority and not part of the payload hash."
+  },
+  "config": [
+    {
+      "id": "AON-CFG-01",
+      "status": "PROPOSED",
+      "key": "identity.admin-onboarding.enabled",
+      "default": false,
+      "boundary": "Local/Test SANDBOX + physically bound dedicated UAT only; must not enable shared demo or Production."
+    },
+    {
+      "id": "AON-CFG-02",
+      "status": "PROPOSED",
+      "key": "identity.admin-invitations.delivery-enabled",
+      "default": false,
+      "boundary": "Existing protected invitation key rings and JavaMailSender config, controlled Owner mailbox, fixed HTTPS origin; CI test transport only."
+    },
+    {
+      "id": "AON-CFG-03",
+      "status": "PROPOSED",
+      "key": "identity.local-realm-bootstrap.enabled",
+      "default": false,
+      "boundary": "Optional V40 only; never enables realm automatically; offline operator still required."
+    },
+    {
+      "id": "AON-CFG-04",
+      "status": "PROPOSED",
+      "key": "identity.admin-dashboard.enabled / identity.admin-dashboard.environment",
+      "default": "false / DISABLED",
+      "boundary": "Existing approved flags. Hikari maximumPoolSize>=2, bounded acquisition/statement timeouts; isolated process only. Actual readiness, not configured metadata alone."
+    }
+  ],
+  "tests": [
+    {
+      "id": "AON-T-01",
+      "status": "PROPOSED",
+      "scope": "V39/V40 cold/upgrade/Flyway validate; all prior migrations and seeded canonical data unchanged; roles/ACL negative direct-DML and SET ROLE; owned database lifecycle/privacy.",
+      "observed": "NOT_RUN_NEW_SCOPE"
+    },
+    {
+      "id": "AON-T-02",
+      "status": "PROPOSED",
+      "scope": "Admin provision/seal transactional rollback; unique verified/pending Customer/Staff email collisions; no existing account conversion; generated IDs and exact READ permissions only.",
+      "observed": "NOT_RUN_NEW_SCOPE"
+    },
+    {
+      "id": "AON-T-03",
+      "status": "PROPOSED",
+      "scope": "Actual protected SMTP invitation, verified mailbox receipt, proof acceptance, credential setup and real SYSTEM login; no seeded ACTIVE/verified test account accepted as live UAT.",
+      "observed": "NOT_RUN_NEW_SCOPE"
+    },
+    {
+      "id": "AON-T-04",
+      "status": "PROPOSED",
+      "scope": "Same-key replay/lost response/input mismatch/current revoked operator and different operator; concurrent request/activation; replay after grant revoke cannot re-enable.",
+      "observed": "NOT_RUN_NEW_SCOPE"
+    },
+    {
+      "id": "AON-T-05",
+      "status": "PROPOSED",
+      "scope": "Expired/cancelled/resend old proof; 3/account/hour and20/operator/hour committed quota; worker leases, crash/redelivery, erasure and current environment/realm eligibility.",
+      "observed": "NOT_RUN_NEW_SCOPE"
+    },
+    {
+      "id": "AON-T-06",
+      "status": "PROPOSED",
+      "scope": "Current permission/version/session revocation; unknown/mixed realm/grant, Customer/Staff/Root and cross-tenant denial; six APIs, exact counts/BigInteger/snapshot tamper/expiry/drift.",
+      "observed": "NOT_RUN_NEW_SCOPE"
+    },
+    {
+      "id": "AON-T-07",
+      "status": "PROPOSED",
+      "scope": "HTTPS/Origin/SYSTEM preauth CSRF/body/duplicate headers/query proof denial; no token storage/logging; Admin activation desktop/mobile and login/logout/expiry.",
+      "observed": "NOT_RUN_NEW_SCOPE"
+    },
+    {
+      "id": "AON-T-08",
+      "status": "PROPOSED",
+      "scope": "Pool two-connection availability, lock-before-snapshot ordering, timeouts/unavailable DB, owned process readiness and controlled stop; no stale artifact.",
+      "observed": "NOT_RUN_NEW_SCOPE"
+    },
+    {
+      "id": "AON-T-09",
+      "status": "PROPOSED",
+      "scope": "Feature off, environment disable, terminal Admin revoke and optional realm disable rollback rehearsal; no down migration/repair/Root takeover/shared database changes.",
+      "observed": "NOT_RUN_NEW_SCOPE"
+    },
+    {
+      "id": "AON-T-10",
+      "status": "PROPOSED",
+      "scope": "Optional first Root workflow: exact new isolated never-activated realm, no existing Root changes; real proof required before V4 activation; no Admin-to-IAM escalation/rebootstrap/reactivation.",
+      "observed": "NOT_RUN_NEW_SCOPE"
+    }
+  ],
+  "deployment": {
+    "current_status": "BLOCKED_AUTHORITY_AND_EXACT_ISOLATED_TARGET",
+    "shared_database": "127.0.0.1:5433/elogistics_dev explicitly excluded",
+    "observed_shared_container": "elogistics-d1-postgres18 exited; no SQL executed, no start/restart",
+    "migration_history_live": "NOT_REVERIFIED_CONTAINER_STOPPED",
+    "new_real_admin": "NOT_CREATED",
+    "operator_roles": "NOT_CREATED_OR_GRANTED",
+    "feature_activation": "NOT_EXECUTED",
+    "live_onboarding": "NOT_RUN",
+    "live_uat": "NOT_RUN",
+    "rollback_rehearsal": "NOT_RUN",
+    "source_test_baseline": "Retain previous ADM01-08 evidence; not live onboarding acceptance."
+  },
+  "guards": [
+    {
+      "id": "AON-GUARD-01",
+      "status": "PROPOSED",
+      "signature": "identity.guard_local_admin_environment() RETURNS TRIGGER",
+      "semantics": "Writer-only initial bind/terminal disable; immutable physical identity; no delete.",
+      "privilege": "No direct public/runtime/operator EXECUTE. BEFORE provenance SECURITY INVOKER; deferred reader may be SECURITY DEFINER with fixed pg_catalog,identity search_path. Never infer caller authority from definer identity."
+    },
+    {
+      "id": "AON-GUARD-02",
+      "status": "PROPOSED",
+      "signature": "identity.guard_local_admin_principal() RETURNS TRIGGER",
+      "semantics": "Writer-only state/version/provenance; immutable identity and realm; no Root/Customer/Staff/Merchant conversion.",
+      "privilege": "No direct public/runtime/operator EXECUTE. BEFORE provenance SECURITY INVOKER; deferred reader may be SECURITY DEFINER with fixed pg_catalog,identity search_path. Never infer caller authority from definer identity."
+    },
+    {
+      "id": "AON-GUARD-03",
+      "status": "PROPOSED",
+      "signature": "identity.guard_local_admin_account() RETURNS TRIGGER",
+      "semantics": "Marked account credential/state/version writes only controlled writer; unchanged unmarked user behavior; before-delete deny.",
+      "privilege": "No direct public/runtime/operator EXECUTE. BEFORE provenance SECURITY INVOKER; deferred reader may be SECURITY DEFINER with fixed pg_catalog,identity search_path. Never infer caller authority from definer identity."
+    },
+    {
+      "id": "AON-GUARD-04",
+      "status": "PROPOSED",
+      "signature": "identity.guard_local_admin_grant() RETURNS TRIGGER",
+      "semantics": "Marked target exact same-realm READ set only under writer; no runtime/operator grant DML or IAM grant; deferred complete set.",
+      "privilege": "No direct public/runtime/operator EXECUTE. BEFORE provenance SECURITY INVOKER; deferred reader may be SECURITY DEFINER with fixed pg_catalog,identity search_path. Never infer caller authority from definer identity."
+    },
+    {
+      "id": "AON-GUARD-05",
+      "status": "PROPOSED",
+      "signature": "identity.guard_local_admin_exclusion() RETURNS TRIGGER",
+      "semantics": "BEFORE Customer identifier/Staff principal/Merchant Membership insert/update denies marked Admin; provision checks pending enrollment/exact occupied email under population lock.",
+      "privilege": "No direct public/runtime/operator EXECUTE. BEFORE provenance SECURITY INVOKER; deferred reader may be SECURITY DEFINER with fixed pg_catalog,identity search_path. Never infer caller authority from definer identity."
+    },
+    {
+      "id": "AON-GUARD-06",
+      "status": "PROPOSED",
+      "signature": "identity.guard_local_admin_delivery() RETURNS TRIGGER",
+      "semantics": "Marked proof/outbox identity and AAD immutable; identity writes writer-only; ordinary worker only existing lease/retry/terminal fields.",
+      "privilege": "No direct public/runtime/operator EXECUTE. BEFORE provenance SECURITY INVOKER; deferred reader may be SECURITY DEFINER with fixed pg_catalog,identity search_path. Never infer caller authority from definer identity."
+    },
+    {
+      "id": "AON-GUARD-07",
+      "status": "PROPOSED",
+      "signature": "identity.guard_local_admin_operator_receipt() RETURNS TRIGGER",
+      "semantics": "Writer-only append, no update/delete; optional Root wrapper operations exact scope, no caller identity input.",
+      "privilege": "No direct public/runtime/operator EXECUTE. BEFORE provenance SECURITY INVOKER; deferred reader may be SECURITY DEFINER with fixed pg_catalog,identity search_path. Never infer caller authority from definer identity."
+    },
+    {
+      "id": "AON-GUARD-08",
+      "status": "PROPOSED",
+      "signature": "identity.check_local_admin_evidence() RETURNS TRIGGER",
+      "semantics": "Deferred account/marker/grant/proof/outbox/audit/receipt correlation; deny unsealed/partial commit; exact version/authVersion/state agreement.",
+      "privilege": "No direct public/runtime/operator EXECUTE. BEFORE provenance SECURITY INVOKER; deferred reader may be SECURITY DEFINER with fixed pg_catalog,identity search_path. Never infer caller authority from definer identity."
+    },
+    {
+      "id": "AON-GUARD-09",
+      "status": "PROPOSED",
+      "signature": "identity.guard_local_admin_truncate() RETURNS TRIGGER",
+      "semantics": "Statement BEFORE TRUNCATE deny on three new tables.",
+      "privilege": "No direct public/runtime/operator EXECUTE. BEFORE provenance SECURITY INVOKER; deferred reader may be SECURITY DEFINER with fixed pg_catalog,identity search_path. Never infer caller authority from definer identity."
+    },
+    {
+      "id": "AON-GUARD-10",
+      "status": "PROPOSED",
+      "signature": "identity.check_local_realm_bootstrap_evidence() RETURNS TRIGGER",
+      "semantics": "Optional V40 only: fresh Root bootstrap binding, exact management grant, genuine proof/credential/receipt required; no Root replacement.",
+      "privilege": "No direct public/runtime/operator EXECUTE. BEFORE provenance SECURITY INVOKER; deferred reader may be SECURITY DEFINER with fixed pg_catalog,identity search_path. Never infer caller authority from definer identity."
+    },
+    {
+      "id": "AON-GUARD-11",
+      "status": "PROPOSED",
+      "signature": "merchant.reject_local_admin_membership() RETURNS TRIGGER",
+      "semantics": "Merchant-owned BEFORE Membership INSERT/UPDATE uses Identity boolean registration port SQL19; prevents membership on any marked Admin without reading private Identity tables. No existing Membership is changed.",
+      "privilege": "No public/runtime/operator direct EXECUTE; trusted trigger and narrow Identity boolean helper only."
+    }
+  ],
+  "permission_codes": [
+    "ADMIN_DASHBOARD_READ",
+    "ADMIN_MERCHANT_READ",
+    "ADMIN_NETWORK_READ",
+    "ADMIN_SHIPMENT_READ",
+    "ADMIN_FINANCE_READ",
+    "ADMIN_TECHNICAL_READ"
+  ],
+  "input_validation": {
+    "ids": "Nonzero canonical UUID; version positive BIGINT; reject duplicate/unknown DTO fields; server-generated target/correlation, never browser account/role/purpose choice.",
+    "displayName": "Exact UTF8 text1..160 Unicode codepoints, no NUL, no trimming/casefolding; same ProvisionInput character constraints.",
+    "email": "Exact CustomerEmail1..254 characters, no normalization; existing occupied user_account/customer_enrollment comparison under population lock.",
+    "password": "Existing PasswordPolicy:15..72 Unicode codepoints and <=72 UTF8 bytes, valid Unicode; BCrypt12 and existing secret buffers; never an offline provisioning input.",
+    "permissions": "1..6 distinct exact approved codes, ADMIN_DASHBOARD_READ mandatory; no casing aliases/duplicates/nulls, array sorted with C collation for digest.",
+    "reason": "Exact UTF8 text10..500 codepoints, no NUL/secrets; no silent trim."
+  }
+}

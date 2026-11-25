@@ -33,6 +33,16 @@ test('dedicated Staff activates from actual SMTP then uses isolated HTTPS sessio
   const denied = await page.request.get('/api/v1/customer-auth/me', { headers: { Authorization: 'Bearer ' + access, Origin: origin } }); expect(denied.status()).toBe(401);
   const deniedQueue = await page.request.get('/api/v1/support-operations/organization-queue?organizationId=10000000-0000-4000-8000-000000000099', { headers: { Authorization: 'Bearer ' + access, Origin: origin } }); expect(deniedQueue.status()).toBe(403);
   await page.reload(); await expect(page.getByRole('heading', { name: 'Hỗ trợ doanh nghiệp', exact: true })).toBeVisible();
+  await page.goto('/finance');
+  await expect(page.getByRole('heading', { name: 'Hỗ trợ doanh nghiệp', exact: true })).toBeVisible();
+  await expect(page.locator('.iw-footer')).toContainText('SUPPORT context');
+  await page.locator('.iw-portals>summary').click();
+  await expect(page.getByRole('button', { name: /^Administration Console/ })).toBeDisabled();
+  await expect(page.getByRole('button', { name: /^Carrier Operations/ })).toBeDisabled();
+  const adminDenied = await page.request.get('/api/v1/admin/dashboard/context', { headers: { Authorization: 'Bearer ' + access, Origin: origin } });
+  expect([401, 403, 404]).toContain(adminDenied.status());
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.getByRole('button', { name: 'Đăng xuất CSKH', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Đăng nhập CSKH', exact: true })).toBeVisible();
   const old = await page.request.get('/api/v1/staff-auth/me', { headers: { Authorization: 'Bearer ' + access, Origin: origin } }); access = ''; expect(old.status()).toBe(401);

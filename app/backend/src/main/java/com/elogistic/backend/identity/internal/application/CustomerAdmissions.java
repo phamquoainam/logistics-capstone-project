@@ -18,6 +18,7 @@ public final class CustomerAdmissions implements CustomerAdmission {
     private final ThreadLocal<State> current=new ThreadLocal<>();
     private static final class State {
         final Context context;boolean meaningful;Instant deadline;
+        final Map<Object,Object> physicalResources=Map.copyOf(org.springframework.transaction.support.TransactionSynchronizationManager.getResourceMap());
         State(Context context){this.context=context;}
     }
     public CustomerAdmissions(IdentitySessionStore store,CustomerAccessVerifier verifier,CustomerRequestAdmission requestAdmission,Clock clock) {
@@ -53,7 +54,7 @@ public final class CustomerAdmissions implements CustomerAdmission {
             try {
                 T value=work.apply(context);
                 // Locks remain held through physical commit; deadline checked after all business writes.
-                admit(claim,actor,session);requestAdmission.authorize(requestId,session.id());checkDeadline(state);meaningful[0]=state.meaningful;return value;
+                requireCurrent(context);admit(claim,actor,session);requestAdmission.authorize(requestId,session.id());checkDeadline(state);meaningful[0]=state.meaningful;return value;
             }finally {current.remove();}
         });
         if(meaningful[0])recordActivity(claim);
@@ -64,6 +65,9 @@ public final class CustomerAdmissions implements CustomerAdmission {
     }
     @Override public void requireCurrent(Context context) {
         State state=current.get();if(state==null || state.context!=context)throw invalid();
+        // A suspended transaction keeps Java callback scope alive but is not the admitted physical transaction.
+        var resources=org.springframework.transaction.support.TransactionSynchronizationManager.getResourceMap();
+        if(state.physicalResources.size()!=resources.size() || state.physicalResources.entrySet().stream().anyMatch(e->resources.get(e.getKey())!=e.getValue()))throw invalid();
     }
     @Override public void meaningfulAction(Context context) {requireCurrent(context);current.get().meaningful=true;}
     @Override public void requireDeadline(Context context,Instant deadline){

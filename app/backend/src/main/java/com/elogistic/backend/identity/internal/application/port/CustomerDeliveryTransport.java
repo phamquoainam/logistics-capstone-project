@@ -12,13 +12,16 @@ public interface CustomerDeliveryTransport {
         @Override public String toString(){return "CustomerDeliveryOutcome[redacted]";}
     }
     final class Message implements AutoCloseable {
-        private final UUID id;private final CustomerProof proof;private final String destination;private final byte[] token;private boolean closed;
+        private final UUID applicationBinding;private final UUID id;private final CustomerProof proof;private final String destination;private final byte[] token;private boolean closed;
         public Message(UUID id,CustomerProof proof,String destination,byte[] token){
-            this.id=Objects.requireNonNull(id);this.proof=Objects.requireNonNull(proof);this.destination=new CustomerEmail(destination).value();
+            this(id,proof,destination,token,null);
+        }
+        public Message(UUID id,CustomerProof proof,String destination,byte[] token,UUID applicationBinding){
+            this.applicationBinding=applicationBinding;this.id=Objects.requireNonNull(id);this.proof=Objects.requireNonNull(proof);this.destination=new CustomerEmail(destination).value();
             if(!proof.purpose().possessionRequired() || token==null || token.length!=43)throw new IllegalArgumentException("CUSTOMER_DELIVERY_MESSAGE_INVALID");this.token=token.clone();
         }
         private void check(){if(closed)throw new IllegalStateException("CUSTOMER_DELIVERY_BUFFER_CLOSED");}
-        public UUID id(){check();return id;}public CustomerProof proof(){check();return proof;}public String destination(){check();return destination;}public byte[] token(){check();return token.clone();}
+        public UUID applicationBinding(){check();return applicationBinding;}public UUID id(){check();return id;}public CustomerProof proof(){check();return proof;}public String destination(){check();return destination;}public byte[] token(){check();return token.clone();}
         @Override public void close(){Arrays.fill(token,(byte)0);closed=true;}
         @Override public String toString(){return "CustomerDeliveryMessage[redacted]";}
     }

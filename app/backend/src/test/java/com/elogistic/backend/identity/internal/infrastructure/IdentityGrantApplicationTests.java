@@ -42,7 +42,7 @@ class IdentityGrantApplicationTests {
 
     @BeforeEach void fixture() throws Exception {
         db = PostgresTestcontainersSupport.database(POSTGRES);
-        assertEquals(37, db.flyway("latest", SCOPE).migrate().migrationsExecuted);
+        assertEquals(42, db.flyway("latest", SCOPE).migrate().migrationsExecuted);
         account(A, "ACTIVE", List.of(ADMIN)); account(B, "ACTIVE", List.of(ADMIN)); account(T, "ACTIVE", List.of(GX));
         session(S, A); session(AS, B); session(TS, T);
         execute("INSERT INTO identity.refresh_token(id,session_id,token_hash,issued_at,expires_at) VALUES ('" + id(20) + "','" + TS + "',decode(repeat('01',32),'hex'),TIMESTAMPTZ '2026-10-21 00:00:00Z',TIMESTAMPTZ '2026-10-21 08:00:00Z')");
@@ -55,6 +55,64 @@ class IdentityGrantApplicationTests {
         service = useCase(authority);
     }
     @AfterAll static void verifyPolicy() throws Exception { PostgresTestcontainersSupport.verifyRuntime(POSTGRES); }
+    // ADM-02–08 uses this existing owned lifecycle. No new suite alias or ownership/cleanup protocol change.
+    private com.elogistic.backend.workflow.internal.web.AdminDashboardPostgresCases adminDashboardCases() throws Exception {
+        return new com.elogistic.backend.workflow.internal.web.AdminDashboardPostgresCases(db,SCOPE);
+    }
+    @Test void adminDashboardTwoConnectionPoolAndUnavailableDatabase()throws Exception{try(var cases=adminDashboardCases()){cases.twoConnectionPoolExhaustionFailsClosedAndRecovers();}}
+    @Test void adminDashboardInvitationHttpSecurityAndRealLogin()throws Exception{try(var cases=adminDashboardCases()){cases.invitationHttpUsesSystemCsrfAndRealProofBeforeLogin();}}
+    @Test void adminDashboardSixApisAndSystemAdmission() throws Exception {try(var cases=adminDashboardCases()){cases.sixApisHaveRealCurrentSystemAdmissionAndNoImplicitRootAuthority();}}
+    @Test void adminDashboardCanonicalCohortAndPii() throws Exception {try(var cases=adminDashboardCases()){cases.canonicalBookingsParcelsAcceptanceFeesAndDrillthroughReconcileWithoutPii();}}
+    @Test void adminDashboardGranularPermissionIsolation() throws Exception {try(var cases=adminDashboardCases()){cases.granularPermissionsDenyBeforeFetchingAndCannotLeakFinancialOrTechnicalData();}}
+    @Test void adminDashboardDefaultOffAndRevocation() throws Exception {try(var cases=adminDashboardCases()){cases.defaultOffProductionCustomerMixedAndRevokedPermissionsFailClosed();}}
+    @Test void adminDashboardSnapshotTamperReplayAndDrift() throws Exception {try(var cases=adminDashboardCases()){cases.queryTamperActorReplayAndLateCohortChangeDoNotReturnMismatchedCounts();}}
+    @Test void adminDashboardReadOnlyAndScopeLifetime() throws Exception {try(var cases=adminDashboardCases()){cases.statelessReadContextCannotEscapeAndPostgresReadOnlyCannotWrite();}}
+    @Test void adminDashboardRealHttpsBrowserAndPostgres() throws Exception {try(var cases=adminDashboardCases()){cases.realHttpsBrowserUsesSourceAndPostgresWithoutFixtureInterception();}}
+    @Test void adminDashboardConcurrentAuthoritySnapshot() throws Exception {try(var cases=adminDashboardCases()){cases.concurrentAuthorityChangeCannotUseAPreLockSnapshot();}}
+    @Test void adminDashboardPartialRevocationAndAudience() throws Exception {try(var cases=adminDashboardCases()){cases.partialRevocationInvalidatesSnapshotsAndOtherAudiencesAreRejected();}}
+    @Test void adminDashboardBusinessAndPersonalCohort() throws Exception {try(var cases=adminDashboardCases()){cases.businessAndPersonalBookingsShareFactsWithoutMerchantMembershipSubstitution();}}
+    @Test void adminGovernanceCommandAdmissionAndRollback()throws Exception{try(var cases=adminDashboardCases()){cases.governanceCommandAdmissionOwnsTransactionAndRollsBack();}}
+    @Test void adminGovernanceCommandPurposeAndLifetime()throws Exception{try(var cases=adminDashboardCases()){cases.governanceCommandAdmissionRejectsWrongPurposeAndEscapedContexts();}}
+    @Test void adminGovernanceCommandRevocationAndExpiry()throws Exception{try(var cases=adminDashboardCases()){cases.governanceCommandAdmissionRejectsRevocationAndExpiryAtCommit();}}
+    @Test void adminGovernanceCommandConcurrentRevoke()throws Exception{try(var cases=adminDashboardCases()){cases.governanceCommandWaitingForRevocationCannotUseOldAuthority();}}
+    @Test void adminGovernanceV41SchemaAndAcl()throws Exception{try(var cases=adminDashboardCases()){cases.governanceV41SchemaAndAclAreForwardOnly();}}
+    @Test void adminGovernanceStepUpReplayAndConsume()throws Exception{try(var cases=adminDashboardCases()){cases.governanceStepUpUsesCredentialAndDurableReplay();}}
+    @Test void adminGovernanceStepUpLimitsAndBinding()throws Exception{try(var cases=adminDashboardCases()){cases.governanceStepUpLimitsPersistAndProofBindingCannotChange();}}
+    @Test void adminGovernanceDirectDmlDenials()throws Exception{try(var cases=adminDashboardCases()){cases.governanceProofDirectDmlCannotMutateIdentityOrOmitAudit();}}
+    @Test void adminShipmentOversightSnapshotAndPrivacy()throws Exception{try(var cases=adminDashboardCases()){cases.maskedOversightUsesExactContributingSnapshotAndRealParcelEvents();}}
+    @Test void businessContactSmtpClearingAndAtomicConsume()throws Exception{try(var cases=adminDashboardCases()){cases.businessContactSmtpClearingAndAtomicConsume();}}
+    @Test void businessContactContextReplayAndLimits()throws Exception{try(var cases=adminDashboardCases()){cases.businessContactContextReplayAndLimits();}}
+    @Test void businessContactWrongBindingExpiryAndTamper()throws Exception{try(var cases=adminDashboardCases()){cases.businessContactWrongBindingExpiryAndTamper();}}
+    @Test void businessContactSuspendedTransactionAndRevocation()throws Exception{try(var cases=adminDashboardCases()){cases.businessContactSuspendedTransactionAndRevocation();}}
+    @Test void adminGovernanceStepUpConstructedContextDenial()throws Exception{try(var cases=adminDashboardCases()){cases.governanceStepUpRejectsConstructedContext();}}
+    @Test void businessContactConcurrentConfirmationAndReceiptBinding()throws Exception{try(var cases=adminDashboardCases()){cases.businessContactConcurrentConfirmationAndReceiptBinding();}}
+    @Test void businessContactWrongSubjectAndSession()throws Exception{try(var cases=adminDashboardCases()){cases.businessContactWrongSubjectAndSession();}}
+    @Test void businessContactActualCustomerHttpAndOwnership()throws Exception{try(var cases=adminDashboardCases()){cases.businessContactActualCustomerHttpAndOwnership();}}
+    @Test void merchantGovernanceCurrentScopeAndRevocation()throws Exception{try(var cases=adminDashboardCases()){cases.merchantGovernanceCurrentScopeAndRevocation();}}
+    @Test void merchantWorkflowV42DraftCompatibilityAndDenial()throws Exception{try(var cases=adminDashboardCases()){cases.merchantWorkflowV42DraftCompatibilityAndDenial();}}
+    @Test void merchantV42ScreenedEvidenceAndImmutableSubmission()throws Exception{try(var cases=adminDashboardCases()){cases.merchantV42ScreenedEvidenceAndImmutableSubmission();}}
+    @Test void merchantV42HttpEvidenceAndSubmissionNegatives()throws Exception{try(var cases=adminDashboardCases()){cases.merchantV42HttpEvidenceAndSubmissionNegatives();}}
+    @Test void merchantV42IndependentAssignmentReviewAndInformationRequest()throws Exception{try(var cases=adminDashboardCases()){cases.merchantV42IndependentAssignmentReviewAndInformationRequest();}}
+    @Test void governanceIdentityOwnedContextsBindResourceAndLifetime()throws Exception{try(var cases=adminDashboardCases()){cases.governanceIdentityOwnedContextsBindResourceAndLifetime();}}
+    @Test void submittedBusinessContactFactHistoryAndAuthority()throws Exception{try(var cases=adminDashboardCases()){cases.submittedBusinessContactFactHistoryAndAuthority();}}
+    @Test void submittedBusinessContactFactSecurityVersion()throws Exception{try(var cases=adminDashboardCases()){cases.submittedBusinessContactFactSecurityVersion();}}
+    @Test void merchantV42RealHttpsIndependentRejection()throws Exception{try(var cases=adminDashboardCases()){cases.merchantV42RealHttpsIndependentRejection();}}
+    @Test void merchantV43AtomicApprovalAndBoundNotices()throws Exception{try(var cases=adminDashboardCases()){cases.merchantV43AtomicApprovalAndBoundNotices();}}
+    @Test void merchantV43RealHttpsIndependentApproval()throws Exception{try(var cases=adminDashboardCases()){cases.merchantV43RealHttpsIndependentApproval();}}
+    @Test void merchantV43LegacyKeyClearanceFailsClosed()throws Exception{try(var cases=adminDashboardCases()){cases.merchantV43LegacyKeyClearanceFailsClosed();}}
+    @Test void merchantV43OppositeDecisionsCommitOnlyOneOutcome()throws Exception{try(var cases=adminDashboardCases()){cases.merchantV43OppositeDecisionsCommitOnlyOneOutcome();}}
+    @Test void merchantV43ActivatedBusinessKeyCannotBeReused()throws Exception{try(var cases=adminDashboardCases()){cases.merchantV43ActivatedBusinessKeyCannotBeReused();}}
+    @Test void merchantV43RejectionCommitsOneBoundNotice()throws Exception{try(var cases=adminDashboardCases()){cases.merchantV43RejectionCommitsOneBoundNotice();}}
+    @Test void merchantV43ScopedAuditProjectsMetadataOnly()throws Exception{try(var cases=adminDashboardCases()){cases.merchantV43ScopedAuditProjectsMetadataOnly();}}
+    @Test void merchantV43ApplicationFactsVerifyIdentityAndCanonicalCohort()throws Exception{try(var cases=adminDashboardCases()){cases.merchantV43ApplicationFactsVerifyIdentityAndCanonicalCohort();}}
+    @Test void merchantV43DashboardV2CanonicalSnapshotAndCompatibility()throws Exception{try(var cases=adminDashboardCases()){cases.merchantV43DashboardV2CanonicalSnapshotAndCompatibility();}}
+    @Test void adminCoreRealHttpsCustomerToIndependentActivation()throws Exception{try(var cases=adminDashboardCases()){cases.adminCoreRealHttpsCustomerToIndependentActivation();}}
+    @Test void merchantWorkAndOrganizationAuditCurrentAuthority()throws Exception{try(var cases=adminDashboardCases()){cases.merchantWorkAndOrganizationAuditCurrentAuthority();}}
+    @Test void merchantV43SchemaAndWriterAcl()throws Exception{try(var cases=adminDashboardCases()){cases.merchantV43SchemaAndWriterAcl();}}
+    @Test void merchantV42RealHttpsReviewerFlow()throws Exception{try(var cases=adminDashboardCases()){cases.merchantV42RealHttpsReviewerFlow();}}
+    @Test void merchantV42ReassignmentRequiresFreshReview()throws Exception{try(var cases=adminDashboardCases()){cases.merchantV42ReassignmentRequiresFreshReview();}}
+    @Test void merchantGovernanceRejectsConstructedIdentityContexts()throws Exception{try(var cases=adminDashboardCases()){cases.merchantGovernanceRejectsConstructedIdentityContexts();}}
+    @Test void merchantGovernanceV42SchemaAndOperatorReceipts()throws Exception{try(var cases=adminDashboardCases()){cases.merchantGovernanceV42SchemaAndOperatorReceipts();}}
     @AfterEach void releaseCompletedOwnedDatabase() throws Exception {
         if (db != null) com.elogistic.backend.testsupport.OwnedTestDatabase.release(db);
     }
@@ -2384,12 +2442,12 @@ class IdentityGrantApplicationTests {
     @Test void applicationHttpDeniesForeignTargetsInjectionAndInvalidPreconditions()throws Exception{
         customerFixture(true);try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var context=customerHttpContext(NOW,smtp(inbox,NOW),true)){
             var mvc=httpMvc(context);var browser=profileBrowser(mvc);String path="/api/v1/merchant-applications";var first=onboardingWrite(mvc,browser,"POST",path,KEY,null,Map.of());assertEquals(201,first.getStatus());String own=responseId(first,"id");
-            try(var c=db.runtimeConnection();var q=c.createStatement()){c.setAutoCommit(false);q.execute("INSERT INTO merchant.application(id,applicant_account_id,version,draft,created_at,updated_at) VALUES ('"+X+"','"+B+"',1,'{}',TIMESTAMPTZ '2026-10-21 00:05:00Z',TIMESTAMPTZ '2026-10-21 00:05:00Z')");q.execute("INSERT INTO merchant.application_draft_version VALUES ('"+X+"',1,'"+B+"','{}',TIMESTAMPTZ '2026-10-21 00:05:00Z',TIMESTAMPTZ '2026-10-21 00:05:00Z')");c.commit();}
-            for(UUID target:List.of(X,Y)){assertEquals(404,httpRead(mvc,path+"/"+target,browser.access()).getStatus());assertEquals(404,onboardingWrite(mvc,browser,"PUT",path+"/"+target,UUID.randomUUID(),"\"v999\"",Map.of()).getStatus());}
+            var foreignBrowser=addressOtherBrowser(mvc);var foreignCreated=onboardingWrite(mvc,foreignBrowser,"POST",path,UUID.randomUUID(),null,Map.of());assertEquals(201,foreignCreated.getStatus());UUID foreignId=UUID.fromString(responseId(foreignCreated,"id"));
+            for(UUID target:List.of(foreignId,Y)){assertEquals(404,httpRead(mvc,path+"/"+target,browser.access()).getStatus());assertEquals(404,onboardingWrite(mvc,browser,"PUT",path+"/"+target,UUID.randomUUID(),"\"v999\"",Map.of()).getStatus());}
             for(String field:List.of("applicantAccountId","accountId","organizationId","owner","role","state","version"))assertEquals(400,onboardingWrite(mvc,browser,"POST",path,UUID.randomUUID(),null,Map.of(field,A.toString())).getStatus());
             assertEquals(400,onboardingWrite(mvc,browser,"POST",path,UUID.randomUUID(),null,"{\"registeredName\":\"First\",\"registeredName\":\"Second\"}").getStatus());assertEquals(400,onboardingWrite(mvc,browser,"POST",path,UUID.randomUUID(),null,"{\"registeredName\":null}").getStatus());assertEquals(400,onboardingWrite(mvc,browser,"POST",path,UUID.randomUUID(),null,Map.of("registeredName",17)).getStatus());assertEquals(422,onboardingWrite(mvc,browser,"POST",path,UUID.randomUUID(),null,Map.of("registeredName"," ")).getStatus());
             assertEquals(428,onboardingWrite(mvc,browser,"PUT",path+"/"+own,UUID.randomUUID(),null,Map.of()).getStatus());assertEquals(400,onboardingWrite(mvc,browser,"PUT",path+"/"+own,UUID.randomUUID(),"W/\"v1\"",Map.of()).getStatus());assertEquals(412,onboardingWrite(mvc,browser,"PUT",path+"/"+own,UUID.randomUUID(),"\"v2\"",Map.of()).getStatus());assertEquals(400,httpRead(mvc,path+"?page=-1",browser.access()).getStatus());
-            var system=new ProfileBrowser(httpToken(context,S,A,1,NOW,NOW.plusSeconds(900)),browser.flow());assertEquals(401,onboardingWrite(mvc,system,"POST",path,UUID.randomUUID(),null,Map.of()).getStatus());assertEquals(2,scalar("SELECT count(*) FROM merchant.application"));assertEquals(1,scalar("SELECT count(*) FROM merchant.business_audit WHERE target_type='APPLICATION'"));
+            var system=new ProfileBrowser(httpToken(context,S,A,1,NOW,NOW.plusSeconds(900)),browser.flow());assertEquals(401,onboardingWrite(mvc,system,"POST",path,UUID.randomUUID(),null,Map.of()).getStatus());assertEquals(2,scalar("SELECT count(*) FROM merchant.application"));assertEquals(2,scalar("SELECT count(*) FROM merchant.business_audit WHERE target_type='APPLICATION'"));
         }
     }
     @Test void applicationBusinessKeyAndConcurrentDraftUpdatesHaveOneWinner()throws Exception{
@@ -3065,10 +3123,11 @@ class IdentityGrantApplicationTests {
     }
 
     /** Synthetic fixtures use the same constrained snapshot/receipt/audit path after V31. */
+    // Runtime fixture retains facility grants, version, receipt and audit guards; no schema-owner predicate ACL.
     private void seedFacility(UUID site,UUID org,String contact)throws Exception{
         facilityGrant(org,A,null,"'facility.read','facility.manage'");
         String code="SITE-"+site.toString().substring(24),op=UUID.randomUUID().toString();
-        db.ownerExecute("BEGIN; INSERT INTO merchant.facility(id,organization_id,name,contact,state,version,created_at,updated_at,code,kind) VALUES ('"+site+"','"+org+"','Synthetic site','"+contact.replace("'","''")+"','ACTIVE',1,statement_timestamp(),statement_timestamp(),'"+code+"','WAREHOUSE'); INSERT INTO merchant.facility_version(resource_kind,target_id,organization_id,version,snapshot) SELECT 'SITE',id,organization_id,version,to_jsonb(f) FROM merchant.facility f WHERE id='"+site+"'; INSERT INTO merchant.facility_command_receipt SELECT organization_id,'"+A+"','CREATE','"+op+"','SITE',id,id,0,1,'synthetic',decode(repeat('01',32),'hex'),updated_at FROM merchant.facility WHERE id='"+site+"'; INSERT INTO merchant.facility_audit SELECT gen_random_uuid(),organization_id,'"+A+"','CREATE','"+op+"','SITE',id,0,1,gen_random_uuid(),updated_at FROM merchant.facility WHERE id='"+site+"'; COMMIT;");
+        execute("BEGIN; INSERT INTO merchant.facility(id,organization_id,name,contact,state,version,created_at,updated_at,code,kind) VALUES ('"+site+"','"+org+"','Synthetic site','"+contact.replace("'","''")+"','ACTIVE',1,statement_timestamp(),statement_timestamp(),'"+code+"','WAREHOUSE'); INSERT INTO merchant.facility_version(resource_kind,target_id,organization_id,version,snapshot) SELECT 'SITE',id,organization_id,version,to_jsonb(f) FROM merchant.facility f WHERE id='"+site+"'; INSERT INTO merchant.facility_command_receipt SELECT organization_id,'"+A+"','CREATE','"+op+"','SITE',id,id,0,1,'synthetic',decode(repeat('01',32),'hex'),updated_at FROM merchant.facility WHERE id='"+site+"'; INSERT INTO merchant.facility_audit SELECT gen_random_uuid(),organization_id,'"+A+"','CREATE','"+op+"','SITE',id,0,1,gen_random_uuid(),updated_at FROM merchant.facility WHERE id='"+site+"'; COMMIT;");
     }
     private String facilityPath(UUID org){return "/api/v1/merchant-organizations/"+org+"/facilities";}
     private void facilityGrant(UUID org,UUID account,UUID site,String permissions)throws Exception{

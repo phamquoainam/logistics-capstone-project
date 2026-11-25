@@ -10,6 +10,21 @@ public interface MerchantApplications {
     Application get(CustomerAdmission.Context context,UUID id);
     Page list(CustomerAdmission.Context context,Query query);
     Receipt receipt(CustomerAdmission.Context context,String operation,UUID key);
+    default ApplicationRequirements requirements(CustomerAdmission.Context context,UUID application){throw new com.elogistic.backend.merchant.api.GovernanceFailure(com.elogistic.backend.merchant.api.GovernanceFailure.Code.POLICY_UNAVAILABLE);}
+    // Approved P0 commands remain fail-closed for the legacy/default composition.
+    default Application submit(CustomerAdmission.Context context,UUID id,SubmissionInput input,long expectedVersion,UUID key){throw new com.elogistic.backend.merchant.api.GovernanceFailure(com.elogistic.backend.merchant.api.GovernanceFailure.Code.POLICY_UNAVAILABLE);}
+    default Application resubmit(CustomerAdmission.Context context,UUID id,SubmissionInput input,long expectedVersion,UUID key){throw new com.elogistic.backend.merchant.api.GovernanceFailure(com.elogistic.backend.merchant.api.GovernanceFailure.Code.POLICY_UNAVAILABLE);}
+    default Application withdraw(CustomerAdmission.Context context,UUID id,ReasonInput input,long expectedVersion,UUID key){throw new com.elogistic.backend.merchant.api.GovernanceFailure(com.elogistic.backend.merchant.api.GovernanceFailure.Code.POLICY_UNAVAILABLE);}
+    /** Owns two bounded Identity admissions around external byte I/O; never accepts a caller actor ID. */
+    default Evidence uploadEvidence(String access,UUID request,UUID application,String purpose,String mime,byte[] file,UUID key){throw new com.elogistic.backend.merchant.api.GovernanceFailure(com.elogistic.backend.merchant.api.GovernanceFailure.Code.POLICY_UNAVAILABLE);}
+    default Evidence evidence(CustomerAdmission.Context context,UUID application,UUID id){throw new com.elogistic.backend.merchant.api.GovernanceFailure(com.elogistic.backend.merchant.api.GovernanceFailure.Code.POLICY_UNAVAILABLE);}
+    default void archiveEvidence(CustomerAdmission.Context context,UUID application,UUID evidence,long expectedVersion,UUID key){throw new com.elogistic.backend.merchant.api.GovernanceFailure(com.elogistic.backend.merchant.api.GovernanceFailure.Code.POLICY_UNAVAILABLE);}
+    default byte[] evidenceContent(String access,UUID request,UUID application,UUID evidenceId){throw new com.elogistic.backend.merchant.api.GovernanceFailure(com.elogistic.backend.merchant.api.GovernanceFailure.Code.POLICY_UNAVAILABLE);}
+    record SubmissionInput(String organizationDisplayName){}
+    record ConsentStatements(String accuracy,String representation){}
+    record ApplicationRequirements(UUID applicationId,UUID policyId,String policyVersion,String consentVersion,ConsentStatements consentStatements,List<String> requiredEvidence){public ApplicationRequirements{requiredEvidence=List.copyOf(requiredEvidence);}}
+    record ReasonInput(String reason){@Override public String toString(){return "ReasonInput[redacted]";}}
+    record Evidence(UUID id,UUID applicationId,String purpose,String state,String mime,long bytes,String sha256,long version,java.time.Instant screenedAt){@Override public String toString(){return "ApplicationEvidence[redacted]";}}
     record Address(String country,String administrativeArea,String locality,String addressLine) {
         @Override public String toString(){return "ApplicationAddress[redacted]";}
     }

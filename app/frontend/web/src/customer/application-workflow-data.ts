@@ -1,0 +1,16 @@
+export type EvidencePurpose = 'REGISTRATION' | 'REPRESENTATIVE_AUTHORIZATION';
+export type ApplicationRequirements = { applicationId: string; policyId: string; policyVersion: string; consentVersion: string; consentStatements: { accuracy: string; representation: string }; requiredEvidence: EvidencePurpose[] };
+export type ApplicationEvidence = { id: string; applicationId: string; purpose: EvidencePurpose; state: 'QUARANTINED' | 'CLEAN' | 'REJECTED' | 'ARCHIVED'; mime: string | null; bytes: number; sha256: string | null; version: number; screenedAt: string | null };
+const object = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
+const exact = (v: Record<string, unknown>, keys: string[]) => Object.keys(v).length === keys.length && keys.every(k => Object.hasOwn(v, k));
+export const applicationId = (v: unknown): v is string => typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(v) && v !== '00000000-0000-0000-0000-000000000000';
+const statement = (v: unknown, max: number): v is string => typeof v === 'string' && v.trim().length > 0 && [...v].length <= max && v.normalize('NFC') === v && !/[\p{Cc}\p{Cs}\u2028\u2029]/u.test(v);
+const invalid = (): never => { throw new Error('APPLICATION_RESPONSE_INVALID'); };
+export function parseApplicationRequirements(v: unknown, id: string): ApplicationRequirements {
+  if (!object(v) || !exact(v, ['applicationId', 'policyId', 'policyVersion', 'consentVersion', 'consentStatements', 'requiredEvidence']) || v.applicationId !== id || !applicationId(v.policyId) || typeof v.policyVersion !== 'string' || !/^[1-9][0-9]{0,18}$/.test(v.policyVersion) || BigInt(v.policyVersion) > 9223372036854775807n || !statement(v.consentVersion, 64) || !object(v.consentStatements) || !exact(v.consentStatements, ['accuracy', 'representation']) || !statement(v.consentStatements.accuracy, 1000) || !statement(v.consentStatements.representation, 1000) || !Array.isArray(v.requiredEvidence) || v.requiredEvidence.length !== 2 || new Set(v.requiredEvidence).size !== 2 || !v.requiredEvidence.every(p => p === 'REGISTRATION' || p === 'REPRESENTATIVE_AUTHORIZATION')) invalid();
+  return v as ApplicationRequirements;
+}
+export function parseApplicationEvidence(v: unknown, id: string): ApplicationEvidence {
+  if (!object(v) || !exact(v, ['id', 'applicationId', 'purpose', 'state', 'mime', 'bytes', 'sha256', 'version', 'screenedAt']) || !applicationId(v.id) || v.applicationId !== id || !['REGISTRATION', 'REPRESENTATIVE_AUTHORIZATION'].includes(v.purpose as string) || !['QUARANTINED', 'CLEAN', 'REJECTED', 'ARCHIVED'].includes(v.state as string) || !Number.isSafeInteger(v.version) || (v.version as number) < 1 || !Number.isSafeInteger(v.bytes) || (v.bytes as number) < 1 || (v.bytes as number) > 5242880 || v.mime !== null && !['application/pdf', 'image/png', 'image/jpeg'].includes(v.mime as string) || v.sha256 !== null && (typeof v.sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(v.sha256)) || v.screenedAt !== null && (typeof v.screenedAt !== 'string' || !Number.isFinite(Date.parse(v.screenedAt))) || v.state === 'CLEAN' && (v.mime === null || v.sha256 === null || v.screenedAt === null)) invalid();
+  return v as ApplicationEvidence;
+}

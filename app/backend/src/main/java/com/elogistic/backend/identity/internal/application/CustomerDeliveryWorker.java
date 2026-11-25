@@ -21,7 +21,7 @@ public final class CustomerDeliveryWorker {
                 String recipient=protection.openDestination(lease.proof(),lease.verifierKey(),lease.encryptionKey(),recipientNonce,recipientCiphertext,now());
                 if(!recipient.equals(lease.destination()))throw new IllegalStateException("CUSTOMER_DELIVERY_RECIPIENT_REJECTED");
                 try(var opened=protection.open(lease.proof(),recipient,lease.verifierKey(),lease.encryptionKey(),nonce,ciphertext,now())){
-                    byte[] token=opened.token();try(var message=new CustomerDeliveryTransport.Message(lease.delivery().id(),lease.proof(),recipient,token)){
+                    byte[] token=opened.token();try(var message=new CustomerDeliveryTransport.Message(lease.delivery().id(),lease.proof(),recipient,token,lease.applicationBinding())){
                         outcome=Objects.requireNonNull(transport.send(message));
                     }finally{Arrays.fill(token,(byte)0);}
                 }
