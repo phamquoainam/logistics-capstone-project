@@ -18,17 +18,20 @@ jobs:
   verify:
     name: ${{ matrix.name }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: ${{ matrix.timeout_minutes }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - mode: architecture
             name: Architecture gate
+            timeout_minutes: 30
           - mode: h2
             name: Backend default / H2
+            timeout_minutes: 30
           - mode: postgres
             name: Backend PostgreSQL 18
+            timeout_minutes: 45
     steps:
       - name: Checkout source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

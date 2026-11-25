@@ -2170,3 +2170,14 @@ migration or business rule changed. Focused PG18 scope2/2 and remaining9/9 PASS,
 including real HTTPS Customer19/19 and Admin6/6 Browser checks; typecheck/lint PASS.
 Exact revision full CI required before merge; historical failure evidence retained
 in [execution report](../implementation/admin-p0-source-test-execution.md).
+
+
+### PR51 CI runtime budget (2026-11-25)
+
+Run45544523333 atb35ab4a was cancelled by the explicit30-minute GitHub job limit,
+not a published test-failure result. Increase only PostgreSQL job budget to45
+minutes; architecture/H2 stay30. Structural YAML comparison PASS: triggers, steps,
+test inventory/assertions, permissions, timeouts within tests and cleanup intact.
+No application/migration/runtime change or new full-suite PASS claim. Owner North
+Star/AGENTS WIP preserved and excluded; current task remains resolving CI + merge.
+See [failure evidence](../implementation/admin-p0-source-test-execution.md).

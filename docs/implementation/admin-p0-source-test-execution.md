@@ -1221,3 +1221,25 @@ in IdentityGrantApplicationTests. The two external-DB Foundation assertions are
 updated to the already observed V43/158 inventory; their exact CI execution is
 still required, not claimed as locally run. No code/SQL permission defect or
 PostgreSQL infrastructure failure was observed in these reproductions.
+
+
+### PR51 PostgreSQL job budget cancellation (2026-11-25)
+
+Run45544523333/job138970797785 atb35ab4a concluded CANCELLED. GitHub check annotation
+explicitly states: The job has exceeded the maximum execution time of30m0s. Job
+04:06:52Z ->04:37:10Z; Maven/report step04:09:44Z ->04:37:04Z cancelled. No final
+Surefire summary was published, so no inference of all tests passed or of a new
+logic/schema failure. PR51 remains OPEN, mergeCommit null. Earlier targeted11/11
+and Browser19/19 +6/6 evidence remains valid for unchanged source.
+
+Bounded CI correction: keep architecture/H2 budgets30 minutes, give only PostgreSQL
+45 minutes for the expanded1327-case integration suite. No test/step/assertion,
+retry, credentials, database resource/cleanup or security gate changed. Existing
+per-test and Browser timeouts are unchanged. YAML parsed with the existing js-yaml
+dependency; structural comparison to previous workflow proves only these job
+budgets changed. Python PyYAML unavailable; no package installed.
+
+AGENTS.md and new ARGOPOST_PROJECT_NORTH_STAR.md are Owner WIP, read in full and
+hash-preserved; excluded from this CI correction commit. No product/menu work is
+started in this checkpoint. Full exact-head CI remains required before merge;
+this budget correction is not a CI PASS claim and not an automatic blind rerun.
