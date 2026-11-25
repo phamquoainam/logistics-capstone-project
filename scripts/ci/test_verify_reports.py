@@ -284,8 +284,8 @@ class ReportGuardTests(unittest.TestCase):
         for name, methods in reports.S2_REQUIRED.items():
             self.assertEqual(len(methods), len(set(methods)), name)
         # Prior cases retained; local S3/SMTP adds two exact unit identities.
-        for mode, passed, skipped in [('architecture', 23, 0), ('h2', 731, 17),
-                                      ('postgres', 1263, 5), ('foundation', 5, 0)]:
+        for mode, passed, skipped in [('architecture', 23, 0), ('h2', 753, 17),
+                                      ('postgres', 1327, 5), ('foundation', 5, 0)]:
             with self.subTest(mode=mode):
                 self.fixture(mode)
                 self.assertTrue(self.check(mode))

@@ -1162,3 +1162,21 @@ report-guard and integration outcomes will be checked on the replacement CI SHA;
 this is not a full-suite PASS claim. Local preview launcher focused checks PASS.
 Exact manifest CRLF bytes and V41 bytes preserved through Git attributes; coverage
 CSV newline normalization changes no field text. No deployment or DB mutation.
+
+
+Second integration workflow45539198883 at5a412ef rejected two stale expected job
+totals: H2 expected731 but explicit inventory753; PostgreSQL expected1263 but1327.
+These totals grow by22 unit and42 PG cases; architecture23 and skip counts17/5
+stay unchanged. The totals test plus P0/HTTP inventory gates4/4 PASS after correction.
+
+Focused cold-start reproduction91f1979846454e818ba8547e0f7d10bd failed exactly
+expected39 migrations/actual42. Legacy current-stream migration tests and the
+exact table-owner inventory still described V40. Updated only fixed expected
+counts/version list for V41-V43 and15 approved new tables (143 ->158), preserving
+all prior checksum/data/ownership/privilege assertions and zero-repeat checks.
+No migration SQL or runtime authority changed. Focused rerun tracked separately.
+
+Focused PG18 rerun a61d50dc086c43219ead296b5bc75b0a:4/4 PASS, sourceUnchanged=true:
+current-stream cold start, exact table/owner inventory, Identity history/rerun
+preservation, populated Business V23 upgrade/data/authority preservation. These
+checks do not replace required exact-revision CI or a full migration-suite result.
