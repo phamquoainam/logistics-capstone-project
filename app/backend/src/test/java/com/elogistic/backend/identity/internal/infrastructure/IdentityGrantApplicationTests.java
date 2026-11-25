@@ -3123,10 +3123,11 @@ class IdentityGrantApplicationTests {
     }
 
     /** Synthetic fixtures use the same constrained snapshot/receipt/audit path after V31. */
+    // Runtime fixture retains facility grants, version, receipt and audit guards; no schema-owner predicate ACL.
     private void seedFacility(UUID site,UUID org,String contact)throws Exception{
         facilityGrant(org,A,null,"'facility.read','facility.manage'");
         String code="SITE-"+site.toString().substring(24),op=UUID.randomUUID().toString();
-        db.ownerExecute("BEGIN; INSERT INTO merchant.facility(id,organization_id,name,contact,state,version,created_at,updated_at,code,kind) VALUES ('"+site+"','"+org+"','Synthetic site','"+contact.replace("'","''")+"','ACTIVE',1,statement_timestamp(),statement_timestamp(),'"+code+"','WAREHOUSE'); INSERT INTO merchant.facility_version(resource_kind,target_id,organization_id,version,snapshot) SELECT 'SITE',id,organization_id,version,to_jsonb(f) FROM merchant.facility f WHERE id='"+site+"'; INSERT INTO merchant.facility_command_receipt SELECT organization_id,'"+A+"','CREATE','"+op+"','SITE',id,id,0,1,'synthetic',decode(repeat('01',32),'hex'),updated_at FROM merchant.facility WHERE id='"+site+"'; INSERT INTO merchant.facility_audit SELECT gen_random_uuid(),organization_id,'"+A+"','CREATE','"+op+"','SITE',id,0,1,gen_random_uuid(),updated_at FROM merchant.facility WHERE id='"+site+"'; COMMIT;");
+        execute("BEGIN; INSERT INTO merchant.facility(id,organization_id,name,contact,state,version,created_at,updated_at,code,kind) VALUES ('"+site+"','"+org+"','Synthetic site','"+contact.replace("'","''")+"','ACTIVE',1,statement_timestamp(),statement_timestamp(),'"+code+"','WAREHOUSE'); INSERT INTO merchant.facility_version(resource_kind,target_id,organization_id,version,snapshot) SELECT 'SITE',id,organization_id,version,to_jsonb(f) FROM merchant.facility f WHERE id='"+site+"'; INSERT INTO merchant.facility_command_receipt SELECT organization_id,'"+A+"','CREATE','"+op+"','SITE',id,id,0,1,'synthetic',decode(repeat('01',32),'hex'),updated_at FROM merchant.facility WHERE id='"+site+"'; INSERT INTO merchant.facility_audit SELECT gen_random_uuid(),organization_id,'"+A+"','CREATE','"+op+"','SITE',id,0,1,gen_random_uuid(),updated_at FROM merchant.facility WHERE id='"+site+"'; COMMIT;");
     }
     private String facilityPath(UUID org){return "/api/v1/merchant-organizations/"+org+"/facilities";}
     private void facilityGrant(UUID org,UUID account,UUID site,String permissions)throws Exception{

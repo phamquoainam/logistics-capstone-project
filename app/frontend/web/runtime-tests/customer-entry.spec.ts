@@ -579,7 +579,7 @@ test('merchant draft uses the real HTTPS API and resolves one lost write', async
     writes++; const committed = await route.fetch({ maxRedirects: 0, maxRetries: 0, timeout: 15000 }); expect(committed.status()).toBe(200); await route.abort('failed');
   });
   await page.getByRole('button', { name: 'Lưu bản nháp' }).click();
-  await expect(page.getByRole('alert')).toContainText('Chưa xác định');
+  await expect(page.locator('form').filter({ has: page.locator('#application-registeredName') }).getByRole('alert')).toContainText('Chưa xác định');
   await page.getByRole('button', { name: 'Kiểm tra kết quả lưu bản nháp' }).click();
   await expect(page.getByText('Đã lưu bản nháp.', { exact: true })).toBeVisible();
   await expect(page.getByLabel('Tên pháp nhân đăng ký')).toHaveValue('Synthetic browser merchant');

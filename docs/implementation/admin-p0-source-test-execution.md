@@ -1180,3 +1180,44 @@ Focused PG18 rerun a61d50dc086c43219ead296b5bc75b0a:4/4 PASS, sourceUnchanged=tr
 current-stream cold start, exact table/owner inventory, Identity history/rerun
 preservation, populated Business V23 upgrade/data/authority preservation. These
 checks do not replace required exact-revision CI or a full migration-suite result.
+
+
+### PR51 PostgreSQL CI failure investigation (2026-11-25)
+
+Run45539754551/job138955104587 at36bb401 failed:1332 discovered,1327 executed,
+1314 passed,4 failures,9 errors,5 expected skips. PR51 was still OPEN, mergeCommit
+null; this was pre-merge integration CI, not a post-merge develop regression.
+Architecture23 and H2753 PASS remain exact-head observations.
+
+Focused reproduction f9e7601d67b74d25a69a48d07ad30716:2 Browser failures and2
+Organization scope errors reproduced (sourceUnchanged=true). SQL source frames
+locate errors in seedFacility: schema-owner fixture insert invokes a V43 guard
+which calls merchant.application_origin_admitted; this predicate intentionally
+grants runtime EXECUTE, not schema-owner EXECUTE. Runtime application creation
+already passes. Fix the fixture to use its existing runtime connection with the
+same explicit facility grants/version/receipt/audit; do not broaden production ACL
+or change V43 SQL. ce494ca2f1f847b9ae576382fbffbc29: both affected scope/isolation
+tests2/2 PASS after correction, sourceUnchanged=true.
+
+Foundation tests still asserted143 V40 tables and the V40 version list; align to
+158/V43, preserving owner/privilege/checksum/data and zero-rerun assertions.
+Browser Admin diagnostic frame admin-dashboard.spec.ts:35 expected9 groups but
+received8 after approved Overview regrouping. Update to8 groups/7 tabs and open
+the explicit Profile tab for the existing READ assertion. Customer Browser frame
+customer-entry.spec.ts:582 was a strict-mode ambiguous whole-page alert after
+new workflow notices: scope the assertion to the draft form; retain lost-response,
+real committed200, one write and actual receipt recovery assertions.
+
+This correction touches only four test files plus execution/traceability evidence.
+No production source, DB guard, SQL migration, permission or runtime data changed.
+Frontend typecheck/lint PASS; remaining targeted regression outcomes and exact-head
+replacement CI are pending, not claimed PASS.
+
+Targeted rerun dd3a112370c24a3f815fd7a437d1af92:9/9 PASS, sourceUnchanged=true.
+Seven remaining Organization/Team/Claims/Support regressions pass with the runtime
+facility fixture. Real HTTPS Customer Browser19/19 and Admin Browser6/6 PASS.
+Together with the earlier two scope cases this verifies all11 affected methods
+in IdentityGrantApplicationTests. The two external-DB Foundation assertions are
+updated to the already observed V43/158 inventory; their exact CI execution is
+still required, not claimed as locally run. No code/SQL permission defect or
+PostgreSQL infrastructure failure was observed in these reproductions.

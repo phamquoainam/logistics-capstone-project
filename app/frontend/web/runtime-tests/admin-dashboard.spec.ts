@@ -32,8 +32,8 @@ test('real SYSTEM HTTPS login reads confirmed PostgreSQL counts and exact unpaid
   await expect(page.getByRole('button', { name: 'Cước chưa thanh toán: 125.000 VND' })).toBeVisible(); await expect(page.getByRole('heading', { name: 'Tình trạng API quản trị' })).toBeVisible();
   await page.getByText('Nguồn dữ liệu & phạm vi thống kê', { exact: true }).click(); await expect(page.getByText('Nguồn nghiệp vụ chưa được triển khai').first()).toBeVisible(); await expect(page.getByText('Giao thành công', { exact: true })).toHaveCount(0);
   await page.screenshot({ path: resolve(directory!, 'admin-real-desktop.png'), fullPage: true, animations: 'disabled' });
-  await expect(page.locator('.iw-nav-group')).toHaveCount(9);
-  await expect(page.getByRole('tab')).toHaveCount(6);
+  await expect(page.locator('.iw-nav-group')).toHaveCount(8);
+  await expect(page.getByRole('tab')).toHaveCount(7);
   await page.getByRole('tab', { name: 'Finance Exposure', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Cước chưa thanh toán: 125.000 VND' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Vận đơn đã đặt: 2 vận đơn' })).toHaveCount(0);
@@ -46,7 +46,7 @@ test('real SYSTEM HTTPS login reads confirmed PostgreSQL counts and exact unpaid
   await expect(page.locator('[data-state="UNAVAILABLE"]')).toContainText('ApprovalTask');
   await page.getByRole('tab', { name: 'Platform Health', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Tình trạng API quản trị' })).toBeVisible();
-  await page.goto('/admin/account');
+  await page.goto('/admin/account?tab=profile');
   await expect(page.getByText('ADMIN_FINANCE_READ', { exact: true })).toBeVisible();
   await page.goto('/admin/security/staff');
   await expect(page.locator('[data-state="FORBIDDEN"]')).toBeVisible();

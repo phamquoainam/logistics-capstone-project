@@ -2157,3 +2157,16 @@ contracts remain dependencies. This checkpoint does not accept whole modules,
 full P0-T-01..15, GitHub CI or live deployment. No demo/UAT/Production mutation, real
 mail/grant, commit/push/merge. See [execution evidence](../implementation/admin-p0-source-test-execution.md)
 and [coverage matrix](../implementation/admin-console-functional-coverage.csv).
+
+
+### PR51 failed PostgreSQL integration correction (2026-11-25)
+
+Run45539754551/HEAD36bb401:1314 PASS,4 failure,9 error,5 expected skips; PR remained
+OPEN, no merge occurred. Root causes: old Foundation V40 inventory; schema-owner
+facility fixture could not execute the intentionally runtime-scoped V43 origin
+predicate; stale Browser menu counts/profile path and ambiguous page-level alert.
+Only test fixtures/assertions/selectors corrected. No production ACL, guard, SQL
+migration or business rule changed. Focused PG18 scope2/2 and remaining9/9 PASS,
+including real HTTPS Customer19/19 and Admin6/6 Browser checks; typecheck/lint PASS.
+Exact revision full CI required before merge; historical failure evidence retained
+in [execution report](../implementation/admin-p0-source-test-execution.md).
