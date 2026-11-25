@@ -581,6 +581,79 @@ REQUIRED[BASE + 'notifications.internal.application.AdminDashboardTests'] = ['ex
 REQUIRED[BASE + 'identity.internal.AdminConfigurationTests'] = ['onboardingDefaultsOffAndRejectsImplicitOrProductionActivation', 'adminReadGateIsOffByDefaultWithoutDatabaseAccess', 'productionProfilesDenyEvenWhenLocalFlagsAreRequested', 'unsupportedEnvironmentNeverAdmitsFromAFlag']
 REQUIRED[IDENTITY_GRANTS] = ['adminDashboardTwoConnectionPoolAndUnavailableDatabase', 'adminDashboardInvitationHttpSecurityAndRealLogin', 'adminDashboardSixApisAndSystemAdmission', 'adminDashboardCanonicalCohortAndPii', 'adminDashboardGranularPermissionIsolation', 'adminDashboardDefaultOffAndRevocation', 'adminDashboardSnapshotTamperReplayAndDrift', 'adminDashboardReadOnlyAndScopeLifetime', 'adminDashboardRealHttpsBrowserAndPostgres', 'adminDashboardConcurrentAuthoritySnapshot', 'adminDashboardPartialRevocationAndAudience', 'adminDashboardBusinessAndPersonalCohort'] + REQUIRED[IDENTITY_GRANTS]
 
+# Owner-approved P0: exact finite source inventory, never dynamic test discovery.
+ADMIN_P0_UNIT_REQUIRED = {'com.elogistic.backend.identity.internal.BusinessContactConfigurationTests': ['legacyCompositionStaysDisabledWithoutV41OptIn',
+                                                                               'productionAliasesAndWrongPhysicalPurposeCannotEnableContactWorkflow',
+                                                                               'explicitLocalTestSandboxCompositionCanRequestThePhysicalSchemaGate'],
+ 'com.elogistic.backend.identity.internal.infrastructure.SmtpCustomerDeliveryTests': ['merchantNoticesUseFourFixedTemplatesWithoutIdentityProof',
+                                                                                      'merchantNoticeInvalidInputIsRejectedBeforeSmtp',
+                                                                                      'merchantNoticeRetainsIdentityTlsFailureAndRetrySemantics'],
+ 'com.elogistic.backend.identity.internal.web.ProductionIdentitySecurityTests': ['currentSessionStorageFailureIs503WithoutAuthenticationOrSessionRevocation'],
+ 'com.elogistic.backend.merchant.internal.MerchantGovernanceConfigurationTests': ['localGovernanceRequiresEveryIndependentGate',
+                                                                                  'applicantGateDoesNotActivateOrRequireAdminAuthentication',
+                                                                                  'protectionUsesRetainedConfiguredKeysWithoutDefaultOrGeneration'],
+ 'com.elogistic.backend.merchant.internal.infrastructure.MerchantActivationFailuresTests': ['canonicalActivationConflictsHaveFinitePublicCodes',
+                                                                                            'unrelatedFailuresAndWrongSqlStatesAreNeverReclassified'],
+ 'com.elogistic.backend.merchant.internal.infrastructure.ProtectedGovernancePayloadsTests': ['contextBindingTamperAndRetainedKeysAreFailClosed'],
+ 'com.elogistic.backend.notifications.internal.MerchantApplicationNoticeConfigurationTests': ['localTestOnlyAndIndependentIdentityGatesRemainMandatory'],
+ 'com.elogistic.backend.notifications.internal.infrastructure.ProtectedMerchantNoticeRecipientTests': ['everyBindingAndRetainedKeyIsRequiredWithoutPlaintextFallback'],
+ 'com.elogistic.backend.platform.internal.infrastructure.MerchantPrivateEvidenceConfigurationTests': ['merchantUsesCanonicalPrivateStoreWithoutEnablingClaimOrStaffAuthority',
+                                                                                                      'claimSecurityGatesAndProductionDenialRemainIndependent'],
+ 'com.elogistic.backend.workflow.internal.application.AdminApplicationMetricsTests': ['submittedPopulationAndTerminalDurationUseDifferentCorrectDenominators',
+                                                                                      'emptyAndUnavailableSourcesNeverInventObservedProcessingTimes',
+                                                                                      'invalidStatesDuplicateIdsAndUnboundTerminalFactsFailClosed',
+                                                                                      'vietnamFirstSubmissionBucketsPartitionCalendarWithoutCountingTerminalEventDay'],
+ 'com.elogistic.backend.workflow.internal.web.MerchantGovernanceProblemsTests': ['approvedConflictAndPolicyProblemsHaveSafeFiniteHttpResponses']}
+ADMIN_P0_PG_REQUIRED = ['adminGovernanceCommandAdmissionAndRollback',
+ 'adminGovernanceCommandPurposeAndLifetime',
+ 'adminGovernanceCommandRevocationAndExpiry',
+ 'adminGovernanceCommandConcurrentRevoke',
+ 'adminGovernanceV41SchemaAndAcl',
+ 'adminGovernanceStepUpReplayAndConsume',
+ 'adminGovernanceStepUpLimitsAndBinding',
+ 'adminGovernanceDirectDmlDenials',
+ 'adminShipmentOversightSnapshotAndPrivacy',
+ 'businessContactSmtpClearingAndAtomicConsume',
+ 'businessContactContextReplayAndLimits',
+ 'businessContactWrongBindingExpiryAndTamper',
+ 'businessContactSuspendedTransactionAndRevocation',
+ 'adminGovernanceStepUpConstructedContextDenial',
+ 'businessContactConcurrentConfirmationAndReceiptBinding',
+ 'businessContactWrongSubjectAndSession',
+ 'businessContactActualCustomerHttpAndOwnership',
+ 'merchantGovernanceCurrentScopeAndRevocation',
+ 'merchantWorkflowV42DraftCompatibilityAndDenial',
+ 'merchantV42ScreenedEvidenceAndImmutableSubmission',
+ 'merchantV42HttpEvidenceAndSubmissionNegatives',
+ 'merchantV42IndependentAssignmentReviewAndInformationRequest',
+ 'governanceIdentityOwnedContextsBindResourceAndLifetime',
+ 'submittedBusinessContactFactHistoryAndAuthority',
+ 'submittedBusinessContactFactSecurityVersion',
+ 'merchantV42RealHttpsIndependentRejection',
+ 'merchantV43AtomicApprovalAndBoundNotices',
+ 'merchantV43RealHttpsIndependentApproval',
+ 'merchantV43LegacyKeyClearanceFailsClosed',
+ 'merchantV43OppositeDecisionsCommitOnlyOneOutcome',
+ 'merchantV43ActivatedBusinessKeyCannotBeReused',
+ 'merchantV43RejectionCommitsOneBoundNotice',
+ 'merchantV43ScopedAuditProjectsMetadataOnly',
+ 'merchantV43ApplicationFactsVerifyIdentityAndCanonicalCohort',
+ 'merchantV43DashboardV2CanonicalSnapshotAndCompatibility',
+ 'adminCoreRealHttpsCustomerToIndependentActivation',
+ 'merchantWorkAndOrganizationAuditCurrentAuthority',
+ 'merchantV43SchemaAndWriterAcl',
+ 'merchantV42RealHttpsReviewerFlow',
+ 'merchantV42ReassignmentRequiresFreshReview',
+ 'merchantGovernanceRejectsConstructedIdentityContexts',
+ 'merchantGovernanceV42SchemaAndOperatorReceipts']
+for _name, _methods in ADMIN_P0_UNIT_REQUIRED.items():
+    if _name == IDENTITY_HTTP_UNIT:
+        IDENTITY_HTTP_UNIT_REQUIRED[0:0] = _methods
+    else:
+        REQUIRED.setdefault(_name, []).extend(_methods)
+REQUIRED[IDENTITY_GRANTS][12:12] = ADMIN_P0_PG_REQUIRED
+
+
 def expected_suites(mode):
     return {k: v for k, v in REQUIRED.items()
             if (k in FOUNDATION_ONLY if mode == 'foundation' else mode != 'architecture' or '.architecture.' in k)

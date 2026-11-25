@@ -1140,3 +1140,25 @@ missing authoritative sources or unapproved policy/security write contracts are
 listed in the coverage matrix. No live deployment, real email/grant or database
 mutation outside isolated fixtures; no commit/push/merge. No full PostgreSQL suite
 or GitHub CI PASS claim. Historical failures stay in this ledger.
+
+
+### 2026-11-25 integration into PR51
+
+Owner separately authorized commit/push/merge. Source checkpoint c369590 pushed
+to existing PR51. First exact-head workflow45538723368 failed before Maven at
+Test fail-closed report guard: three finite-source inventory assertions had not
+registered42 new P0 PostgreSQL methods and the new storage-failure security test.
+The new P0 unit suites and three SMTP methods also required registration before
+strict report sanitization could accept their XML. No business test was skipped.
+
+Correction extends the explicit allowlist by42 PG cases and22 unit cases across
+nine new suites plus two existing suites. Old420 PG inventory grows to462 and
+HTTP security43 to44. Existing methods and source ordering stay required; unknown
+methods remain rejected. Added two focused tests for exact P0 source inventory
+and missing/renamed/skipped/failure/error report rejection. Initial TDD failure and
+three original CI assertions retained; six targeted inventory gates PASS after
+correction (one mistyped test selector corrected without source change). Full
+report-guard and integration outcomes will be checked on the replacement CI SHA;
+this is not a full-suite PASS claim. Local preview launcher focused checks PASS.
+Exact manifest CRLF bytes and V41 bytes preserved through Git attributes; coverage
+CSV newline normalization changes no field text. No deployment or DB mutation.
