@@ -45,8 +45,12 @@ public class CustomerProfileConfiguration {
         JdbcCustomerProfileStore.requireSchema(source);return new CustomerProfileApplication(admission,new JdbcCustomerProfileStore(source),fingerprints,clock);
     }
     @Bean @DependsOnDatabaseInitialization
-    MerchantApplications merchantApplications(DataSource source,CustomerAdmission admission,MerchantFingerprints fingerprints,@Qualifier("identityHttpClock")Clock clock){
-        JdbcMerchantApplicationStore.requireSchema(source);return new MerchantApplicationService(admission,new JdbcMerchantApplicationStore(source),fingerprints,clock);
+    MerchantApplications merchantApplications(DataSource source,CustomerAdmission admission,MerchantFingerprints fingerprints,@Qualifier("identityHttpClock")Clock clock,org.springframework.beans.factory.ObjectProvider<com.elogistic.backend.identity.api.customer.CustomerBusinessContacts> contacts,@Qualifier("claimPrivateEvidenceStore")org.springframework.beans.factory.ObjectProvider<com.elogistic.backend.platform.api.PrivateEvidenceStore> store,@Qualifier("claimEvidenceScreening")org.springframework.beans.factory.ObjectProvider<com.elogistic.backend.platform.api.PrivateEvidenceScreening> scanner,Environment environment){
+        JdbcMerchantApplicationStore.requireSchema(source);
+        if(!environment.getProperty("merchant.application-workflow.enabled",Boolean.class,false))return new MerchantApplicationService(admission,new JdbcMerchantApplicationStore(source),fingerprints,clock);
+        MerchantGovernanceConfiguration.requireApplicantLocal(environment);var jdbc=new org.springframework.jdbc.core.JdbcTemplate(source);jdbc.setQueryTimeout(3);
+        if(!Boolean.TRUE.equals(jdbc.queryForObject("SELECT to_regclass('merchant.application_policy') IS NOT NULL AND to_regclass('merchant.application_revision') IS NOT NULL",Boolean.class)))throw new IllegalStateException("MERCHANT_APPLICATION_V42_SCHEMA_REQUIRED");
+        return new JdbcMerchantApplicationWorkflow(source,admission,contacts.getObject(),fingerprints,store.getObject(),scanner.getObject(),MerchantGovernanceConfiguration.payloads(environment),clock,true,environment.getRequiredProperty("identity.admin-dashboard.environment"));
     }
     @Bean @DependsOnDatabaseInitialization
     PersonalAddresses personalAddresses(DataSource source,CustomerAdmission admission,MerchantFingerprints fingerprints,@Qualifier("identityHttpClock")Clock clock){

@@ -22,12 +22,12 @@ public final class CustomerProfileHttp {
         var request=requests.current();return response(admission.execute(request.encodedAccess(),request.requestId(),Set.of(),profiles::get));
     }
     @GetMapping("/api/v1/onboarding-receipts/{operationId}/{idempotencyKey}") public ResponseEntity<Map<String,Object>> receipt(@PathVariable String operationId,@PathVariable String idempotencyKey){
-        if(!Set.of("updateCustomerProfile","createApplicationDraft","updateApplicationDraft").contains(operationId))throw problem(404,"RESOURCE_NOT_FOUND");
+        if(!Set.of("updateCustomerProfile","createApplicationDraft","updateApplicationDraft","SUBMIT","RESUBMIT","WITHDRAW","ARCHIVE_EVIDENCE").contains(operationId))throw problem(404,"RESOURCE_NOT_FOUND");
         UUID key;try{key=UUID.fromString(idempotencyKey);if(!key.toString().equals(idempotencyKey))throw problem(400,"VALIDATION_FAILED");}catch(IllegalArgumentException invalid){throw problem(400,"VALIDATION_FAILED");}
         var request=requests.current();
         if(!operationId.equals("updateCustomerProfile")){
             var receipt=admission.execute(request.encodedAccess(),request.requestId(),Set.of(),context->applications.receipt(context,operationId,key));
-            return ResponseEntity.ok(Map.of("operationId",receipt.operationId(),"targetId",receipt.targetId(),"outcome",receipt.outcome(),"version",receipt.version()));
+            Map<String,Object> body=new LinkedHashMap<>();body.put("operationId",receipt.operationId());body.put("targetId",receipt.targetId());body.put("outcome",receipt.outcome());body.put("version",receipt.version());if(Set.of("SUBMIT","RESUBMIT","WITHDRAW","ARCHIVE_EVIDENCE").contains(operationId))body.put("activation",null);return ResponseEntity.ok(body);
         }
         var receipt=admission.execute(request.encodedAccess(),request.requestId(),Set.of(),context->profiles.receipt(context,key));
         return ResponseEntity.ok(Map.of("operationId",receipt.operationId(),"targetId",receipt.targetId(),"outcome",receipt.outcome(),"version",receipt.version()));

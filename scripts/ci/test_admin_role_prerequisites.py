@@ -8,6 +8,14 @@ spec.loader.exec_module(module)
 
 
 class AdminRolePrerequisiteTests(unittest.TestCase):
+    def test_p0_only_two_nologin_roles_no_operator_or_runtime_membership(self):
+        sql=module.merchant_governance_roles('elogistics_test_owner_012345abcdef')
+        self.assertEqual(2,sql.count('CREATE ROLE '))
+        self.assertIn('CREATE ROLE merchant_governance_operator NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;',sql)
+        self.assertIn('CREATE ROLE merchant_governance_writer NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;',sql)
+        self.assertEqual(['GRANT merchant_governance_writer TO elogistics_test_owner_012345abcdef WITH INHERIT FALSE, SET TRUE;'],[s for s in sql.splitlines()if s.startswith('GRANT ')])
+        for owner in ('owner','runtime',None,'elogistics_test_owner_012345abcdef;DROP ROLE x'):
+            with self.assertRaises(ValueError):module.merchant_governance_roles(owner)
     def test_exact_three_nologin_roles_and_only_writer_owner_binding(self):
         owner = 'elogistics_test_owner_012345abcdef'
         sql = module.roles(owner)

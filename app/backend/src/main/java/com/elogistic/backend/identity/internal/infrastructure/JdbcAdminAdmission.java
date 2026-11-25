@@ -18,6 +18,18 @@ public final class JdbcAdminAdmission implements AdminAdmission {
     private final DataSource source;private final CurrentSessionAdmission admission;private final Supplier<UUID> requestId;
     private final AdminSessionPolicy policy;private final Clock clock;private final JdbcTemplate jdbc;private final TransactionTemplate read;
     private final ThreadLocal<Object> current=new ThreadLocal<>();
+    private record Issued(DataSource source,AdminReadContext context){}
+    private static final ThreadLocal<Issued> ISSUED=new ThreadLocal<>();
+    /** Preserve domain-owned failures without importing another module's exception types. */
+    private static final class CallbackFailure extends RuntimeException {
+        private final RuntimeException original;
+        private CallbackFailure(RuntimeException original){super("ADMIN_CALLBACK_FAILURE");this.original=original;}
+    }
+    @Override public void requireCurrent(AdminReadContext context){
+        var issued=ISSUED.get();
+        if(issued==null||issued.source()!=source||issued.context()!=context)throw new AdminFailure("ACCESS_DENIED");
+        context.requireCurrent();
+    }
     public JdbcAdminAdmission(DataSource source,CurrentSessionAdmission admission,Supplier<UUID> requestId,AdminSessionPolicy policy,Clock clock){
         this.source=source;this.admission=admission;this.requestId=requestId;this.policy=policy;this.clock=clock;jdbc=new JdbcTemplate(source);
         read=new TransactionTemplate(new JdbcTransactionManager(source));read.setReadOnly(true);read.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);read.setTimeout(12);
@@ -43,19 +55,27 @@ public final class JdbcAdminAdmission implements AdminAdmission {
                      AND s.auth_version=? AND a.auth_version=s.auth_version AND a.status='ACTIVE' AND a.email_verified
                     """,(r,n)->new Instant[]{r.getTimestamp(1).toInstant(),r.getTimestamp(2).toInstant(),r.getTimestamp(3).toInstant()},claim.sessionId(),claim.accountId(),claim.authVersion());
                 if(expiry.size()!=1)throw new AdminFailure("SESSION_INVALID");
-                var limits=expiry.getFirst();Object identity=new Object();current.set(identity);
+                var limits=expiry.getFirst();Object identity=new Object(),physical=TransactionSynchronizationManager.getResource(source);current.set(identity);
                 AdminReadContext context=new AdminReadContext(){
                     public UUID accountId(){return authority.accountId();}public UUID realmId(){return authority.realmId();}public String displayName(){return authority.displayName();}public String environment(){return policy.environment();}public String permissionVersion(){return authority.version();}public Set<String> permissions(){return authority.permissions();}
                     public void requireCurrent(){
                         Instant now=clock.instant();
-                        if(current.get()!=identity||!TransactionSynchronizationManager.isActualTransactionActive()||!TransactionSynchronizationManager.isCurrentTransactionReadOnly()||!Objects.equals(TransactionSynchronizationManager.getCurrentTransactionIsolationLevel(),Connection.TRANSACTION_REPEATABLE_READ))throw new AdminFailure("ACCESS_DENIED");
+                        if(current.get()!=identity||physical==null||TransactionSynchronizationManager.getResource(source)!=physical||!TransactionSynchronizationManager.isActualTransactionActive()||!TransactionSynchronizationManager.isCurrentTransactionReadOnly()||!Objects.equals(TransactionSynchronizationManager.getCurrentTransactionIsolationLevel(),Connection.TRANSACTION_REPEATABLE_READ))throw new AdminFailure("ACCESS_DENIED");
                         if(claim.issuedAt()==null||claim.expiresAt()==null||claim.issuedAt().isBefore(limits[0])||now.isBefore(claim.issuedAt())||!now.isBefore(claim.expiresAt())||claim.expiresAt().isAfter(limits[1])||claim.expiresAt().isAfter(limits[2])||!claim.expiresAt().isAfter(claim.issuedAt())||Duration.between(claim.issuedAt(),claim.expiresAt()).compareTo(Duration.ofMinutes(15))>0)throw new AdminFailure("SESSION_INVALID");
                     }
                 };
-                try{context.require(AdminReadContext.ENTRY);T result=work.apply(context);context.requireCurrent();return result;}finally{current.remove();}
+                ISSUED.set(new Issued(source,context));
+                try{
+                    context.require(AdminReadContext.ENTRY);T result;
+                    try{result=work.apply(context);}
+                    catch(org.springframework.dao.DataAccessException unavailable){throw new AdminFailure("SERVICE_UNAVAILABLE");}
+                    catch(RuntimeException domainFailure){throw new CallbackFailure(domainFailure);}
+                    context.requireCurrent();return result;
+                }finally{ISSUED.remove();current.remove();}
             });}finally{
                 try(var s=lock.prepareStatement("SELECT pg_advisory_unlock(?)")){s.setLong(1,LOCK);try(var rows=s.executeQuery()){if(!rows.next()||!rows.getBoolean(1))throw new AdminFailure("SERVICE_UNAVAILABLE");}}
             }
-        }catch(AdminFailure known){throw known;}catch(Exception unavailable){throw new AdminFailure("SERVICE_UNAVAILABLE");}
+        }catch(CallbackFailure domainFailure){throw domainFailure.original;}
+        catch(AdminFailure known){throw known;}catch(Exception unavailable){throw new AdminFailure("SERVICE_UNAVAILABLE");}
     }
 }

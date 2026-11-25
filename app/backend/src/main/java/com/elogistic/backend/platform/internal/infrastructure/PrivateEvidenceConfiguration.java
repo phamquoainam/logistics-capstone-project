@@ -13,8 +13,11 @@ import software.amazon.awssdk.services.s3.S3Client;
 @Configuration @Profile("customer")
 public class PrivateEvidenceConfiguration {
     private static boolean enabled(Environment env){
-        if(!env.getProperty("support.claim-evidence.enabled",Boolean.class,false))return false;
+        boolean claims=env.getProperty("support.claim-evidence.enabled",Boolean.class,false),merchant=env.getProperty("merchant.application-workflow.enabled",Boolean.class,false);
+        if(!claims&&!merchant)return false;
         var profiles=Set.of(env.getActiveProfiles());
+        if(merchant&&(!profiles.containsAll(Set.of("customer","identity","postgres"))||profiles.stream().anyMatch(p->Set.of("production","prod","demo","migration").contains(p.toLowerCase(java.util.Locale.ROOT)))||!"SANDBOX".equals(env.getProperty("customer.rollout"))||!Set.of("LOCAL","TEST").contains(env.getProperty("identity.admin-dashboard.environment","DISABLED"))))throw new IllegalStateException("MERCHANT_PRIVATE_EVIDENCE_LOCAL_TEST_REQUIRED");
+        if(!claims)return true; // Storage dependency only; no Claim/Staff feature is enabled by this branch.
         if(!env.getProperty("support.claim-intakes.enabled",Boolean.class,false)||!env.getProperty("identity.staff.enabled",Boolean.class,false)
             ||!profiles.containsAll(Set.of("customer","identity","postgres"))||profiles.stream().anyMatch(p->Set.of("production","prod","demo","migration").contains(p.toLowerCase(java.util.Locale.ROOT)))
             ||!Set.of("LOCAL","TEST").contains(env.getProperty("identity.staff.environment","DISABLED"))||!"SANDBOX".equals(env.getProperty("customer.rollout")))throw new IllegalStateException("PRIVATE_EVIDENCE_LOCAL_TEST_REQUIRED");return true;

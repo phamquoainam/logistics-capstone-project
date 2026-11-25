@@ -15,7 +15,7 @@ final class AdminRoleTestBootstrap {
         admin.setAutoCommit(false);
         try (var s = admin.createStatement()) {
             s.execute("SELECT pg_advisory_xact_lock(730039)");
-            for (String role : List.of("elogistics_local_admin_operator", "identity_admin_writer", "elogistics_local_realm_operator")) {
+            for (String role : List.of("elogistics_local_admin_operator", "identity_admin_writer", "elogistics_local_realm_operator", "merchant_governance_operator", "merchant_governance_writer")) {
                 boolean exists;
                 try (var r = s.executeQuery("SELECT rolcanlogin,rolsuper,rolcreatedb,rolcreaterole,rolreplication,rolbypassrls FROM pg_roles WHERE rolname='" + role + "'")) {
                     exists = r.next();
@@ -24,6 +24,7 @@ final class AdminRoleTestBootstrap {
                 if (!exists) s.execute("CREATE ROLE " + role + " NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS");
             }
             s.execute("GRANT identity_admin_writer TO " + owner + " WITH INHERIT FALSE, SET TRUE");
+            s.execute("GRANT merchant_governance_writer TO " + owner + " WITH INHERIT FALSE, SET TRUE");
             admin.commit();
         } catch (SQLException | RuntimeException failure) {
             admin.rollback(); throw failure;

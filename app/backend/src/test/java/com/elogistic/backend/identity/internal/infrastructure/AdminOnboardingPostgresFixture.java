@@ -61,6 +61,11 @@ public final class AdminOnboardingPostgresFixture implements AutoCloseable {
             try{return new PendingInvitation(result.accountId(),UUID.fromString(match.group(1)),token);}finally{Arrays.fill(token,(byte)0);}
         }
     }
+    private DriverManagerDataSource governanceOperator;
+    public synchronized Connection governanceOperatorConnection()throws Exception{
+        if(governanceOperator==null)governanceOperator=operator(database().container(),"merchant_governance_operator");
+        return governanceOperator.getConnection();
+    }
     public Connection operatorConnection()throws SQLException{return operator.getConnection();}
     private DriverManagerDataSource operator(PostgreSQLContainer pg,String role)throws Exception{
         String login="aon_fixture_"+UUID.randomUUID().toString().replace("-","");String password=PostgresTestcontainersSupport.password();

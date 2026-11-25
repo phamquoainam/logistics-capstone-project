@@ -6,11 +6,12 @@ import java.time.Instant;
 import java.util.*;
 
 /** Partial policy-shaped draft, never a submitted revision or a verified business representation. */
-public record MerchantApplicationDraft(UUID id,UUID applicantAccountId,Input input,long version,Instant createdAt,Instant updatedAt) {
+public record MerchantApplicationDraft(UUID id,UUID applicantAccountId,Input input,long version,Instant createdAt,Instant updatedAt,String state,long revision) {
+    public MerchantApplicationDraft(UUID id,UUID applicant,Input input,long version,Instant created,Instant updated){this(id,applicant,input,version,created,updated,"DRAFT",1);}
     public MerchantApplicationDraft {
         Objects.requireNonNull(id);Objects.requireNonNull(applicantAccountId);Objects.requireNonNull(input);
         Objects.requireNonNull(createdAt);Objects.requireNonNull(updatedAt);
-        if(version<1 || updatedAt.isBefore(createdAt))throw new IllegalArgumentException("APPLICATION_VERSION_INVALID");
+        if(version<1 || revision<1 || state==null || !Set.of("DRAFT","SUBMITTED","UNDER_REVIEW","NEEDS_INFORMATION","APPROVED","REJECTED","WITHDRAWN").contains(state) || updatedAt.isBefore(createdAt))throw new IllegalArgumentException("APPLICATION_VERSION_INVALID");
         validate(input);
     }
     public static void validate(Input input){
@@ -35,7 +36,7 @@ public record MerchantApplicationDraft(UUID id,UUID applicantAccountId,Input inp
         String region=jurisdictionKey(input.jurisdiction()),legal=legalKey(input.legalIdentifier());
         return region.length()+":"+region+input.entityType().length()+":"+input.entityType()+legal.length()+":"+legal;
     }
-    public MerchantApplicationDraft replace(Input next,Instant now){if(version==Long.MAX_VALUE)invalid();return new MerchantApplicationDraft(id,applicantAccountId,next,version+1,createdAt,now);}
-    public Application view(){return new Application(id,applicantAccountId,"DRAFT",1,version,input);}
+    public MerchantApplicationDraft replace(Input next,Instant now){if(version==Long.MAX_VALUE || !Set.of("DRAFT","NEEDS_INFORMATION").contains(state))invalid();return new MerchantApplicationDraft(id,applicantAccountId,next,version+1,createdAt,now,state,revision);}
+    public Application view(){return new Application(id,applicantAccountId,state,revision,version,input);}
     @Override public String toString(){return "MerchantApplicationDraft[redacted]";}
 }

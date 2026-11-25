@@ -13,7 +13,13 @@ export function adminReport(query: Query, context = adminContext(), empty = fals
     const metrics: Metric[] = keys.map(key => ({ key, value: empty ? '0' : values[key], unit: section === 'FINANCE' ? 'VND' : key === 'PARCELS' ? 'PARCEL' : 'SHIPMENT', drilldown: context.permissions.includes('ADMIN_SHIPMENT_READ') ? { path: '/api/v1/admin/dashboard/shipments', metric: key, filters: { from: query.from, to: query.to, grain: query.grain, ...(query.shipmentStatus ? { shipmentStatus: query.shipmentStatus } : {}) } } : null }));
     const series = metrics.flatMap(metric => {
       const points = [];
-      for (let day = query.from; day <= query.to; day = daysBefore(day, -1)) points.push({ from: day, to: daysBefore(day, -1), metric: metric.key, value: day === query.to ? metric.value : '0' });
+      for (let day = query.from; day <= query.to;) {
+        const date = new Date(day + 'T00:00:00Z');
+        if (query.grain === 'MONTH') date.setUTCMonth(date.getUTCMonth() + 1, 1);
+        else date.setUTCDate(date.getUTCDate() + (query.grain === 'WEEK' ? (8 - date.getUTCDay()) % 7 || 7 : 1));
+        const end = date.toISOString().slice(0, 10) > query.to ? daysBefore(query.to, -1) : date.toISOString().slice(0, 10);
+        points.push({ from: day, to: end, metric: metric.key, value: end > query.to ? metric.value : '0' }); day = end;
+      }
       return points;
     });
     report.sections.push({ key: section, availability: 'AVAILABLE', reasonCode: 'SYNTHETIC_BROWSER_FIXTURE', metrics, series });
@@ -26,4 +32,14 @@ export function adminRows(report: Dashboard, metric: MetricKey): ShipmentPage {
   const accepted = metric === 'ACCEPTED';
   const rows: ShipmentPage['items'] = [{ id: '30000000-0000-4000-8000-000000000001', code: 'AP-SIM-' + 'a'.repeat(32), ownerKind: 'PERSONAL', bookedAt: new Date(Math.min(Date.parse(report.query.to + 'T00:00:01+07:00'), Date.now() - 1000)).toISOString(), status: accepted ? 'AT_STATION' : 'BOOKED', parcelCount: 2 }];
   return { items: rows, page: 0, size: 20, hasNext: false, snapshotId: report.snapshotId };
+}
+
+/** Synthetic masked fixture, never a source of production facts. */
+export function adminOversight(report: Dashboard, shipment = adminRows(report, 'BOOKINGS').items[0]) {
+  const parcels = Array.from({ length: shipment.parcelCount }, (_, i) => {
+    const id = `40000000-0000-4000-8000-${String(i + 1).padStart(12, '0')}`;
+    return { id, code: 'AP-P-' + id.replaceAll('-', ''), actualGrams: 1000, lengthMm: 100, widthMm: 100, heightMm: 100 };
+  });
+  const at = new Date(Math.min(Date.parse(shipment.bookedAt) + 1000, Date.parse(report.generatedAt))).toISOString();
+  return { shipment, parcels, tracking: shipment.status === 'AT_STATION' ? [{ id: '50000000-0000-4000-8000-000000000001', kind: 'CARRIER_ACCEPTED_AT_STATION', occurredAt: at }] : [], acceptance: shipment.status === 'AT_STATION' ? { eventId: '60000000-0000-4000-8000-000000000001', occurredAt: at, stationCode: 'SIM-DROP-A1' } : null, snapshotId: report.snapshotId };
 }

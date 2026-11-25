@@ -60,8 +60,15 @@ public class ProductionCustomerConfiguration {
             return new ProductionAccessTokens(issuer,fixedAudience==null?audience:fixedAudience,kid,signer,publicKeys,clock);
         }catch(Exception invalid){throw new IllegalStateException("CUSTOMER_JWT_PURPOSE_CONFIGURATION_INVALID");}
     }
+    static boolean businessContactEnabled(Environment environment){
+        if(!environment.getProperty("identity.business-contact.enabled",Boolean.class,false))return false;
+        var profiles=Set.of(environment.getActiveProfiles());
+        if(!profiles.containsAll(Set.of("customer","postgres","identity"))||profiles.stream().anyMatch(Set.of("production","prod","demo","migration")::contains)
+            ||!"SANDBOX".equals(environment.getProperty("customer.rollout"))||!Set.of("LOCAL","TEST").contains(environment.getProperty("identity.admin-dashboard.environment","DISABLED")))throw new IllegalStateException("BUSINESS_CONTACT_LOCAL_TEST_CONFIGURATION_REQUIRED");
+        return true;
+    }
     @Bean @DependsOnDatabaseInitialization
-    ProductionCustomerComposition.Services customerServices(DataSource source,Environment environment,org.springframework.beans.factory.ObjectProvider<CustomerMembershipDeliveryAdmission> membershipAuthority){
+    ProductionCustomerComposition.Services customerServices(DataSource source,Environment environment,org.springframework.beans.factory.ObjectProvider<CustomerMembershipDeliveryAdmission> membershipAuthority,SmtpCustomerDelivery smtp){
         Map<String,byte[]> verifiers=Map.of(),encryptors=Map.of();byte[] limiter=null,systemLimiter=null;
         try{
             CustomerRuntimeRequirements.verify(source);Clock clock=Clock.systemUTC();var tokens=customerTokens(environment,clock);
@@ -70,11 +77,12 @@ public class ProductionCustomerConfiguration {
             if(Arrays.equals(limiter,systemLimiter))throw new IllegalArgumentException();
             for(byte[] key:verifiers.values())if(Arrays.equals(limiter,key))throw new IllegalArgumentException();for(byte[] key:encryptors.values())if(Arrays.equals(limiter,key))throw new IllegalArgumentException();
             var protection=new ProtectedCustomerProofs(verifiers,environment.getRequiredProperty("customer.security.current-proof-key"),encryptors,environment.getRequiredProperty("customer.security.current-encryption-key"));
-            var smtp=customerTransport(environment,clock);
-            return ProductionCustomerComposition.create(source,tokens,protection,new JdbcIdentityRateLimiter(source,limiter),smtp,environment.getRequiredProperty("customer.security.origin"),clock,()->membershipAuthority.getIfAvailable(()->(i,p,o,a,n,e)->false));
+            boolean contacts=businessContactEnabled(environment);if(contacts)JdbcCustomerBusinessContacts.requireSchema(source);
+            return ProductionCustomerComposition.create(source,tokens,protection,new JdbcIdentityRateLimiter(source,limiter),smtp,environment.getRequiredProperty("customer.security.origin"),clock,()->membershipAuthority.getIfAvailable(()->(i,p,o,a,n,e)->false),contacts,environment.getProperty("identity.admin-dashboard.environment","DISABLED"));
         }catch(Exception invalid){throw new IllegalStateException("CUSTOMER_RUNTIME_CONFIGURATION_INVALID");}
         finally{verifiers.values().forEach(key->Arrays.fill(key,(byte)0));encryptors.values().forEach(key->Arrays.fill(key,(byte)0));if(limiter!=null)Arrays.fill(limiter,(byte)0);if(systemLimiter!=null)Arrays.fill(systemLimiter,(byte)0);}
     }
+    @Bean SmtpCustomerDelivery configuredCustomerTransport(Environment environment){return customerTransport(environment,Clock.systemUTC());}
     static SmtpCustomerDelivery customerTransport(Environment environment,Clock clock){
         var mode=SmtpCustomerDelivery.Mode.valueOf(environment.getRequiredProperty("customer.smtp.mode"));boolean loopback=mode==SmtpCustomerDelivery.Mode.TEST_LOOPBACK;
             var domains=new HashSet<>(Arrays.asList(environment.getRequiredProperty("customer.smtp.approved-sender-domains").split(",",-1)));
@@ -82,6 +90,7 @@ public class ProductionCustomerConfiguration {
                 loopback?null:environment.getRequiredProperty("customer.smtp.username"),loopback?null:environment.getRequiredProperty("customer.smtp.password"),environment.getRequiredProperty("customer.smtp.sender"),domains,environment.getRequiredProperty("customer.security.origin"),true),clock);
     }
     @Bean CustomerAdmission customerAdmission(ProductionCustomerComposition.Services services){return services.customers();}
+    @Bean CustomerBusinessContacts customerBusinessContacts(ProductionCustomerComposition.Services services){return services.businessContacts();}
     @Bean CustomerMemberNames customerMemberNames(DataSource source,CustomerAdmission admission){return new JdbcCustomerMemberNames(source,admission);}
     @Bean CustomerMembershipInvitations customerMembershipInvitations(ProductionCustomerComposition.Services services){return services.memberships();}
     @Bean CustomerRequestContext customerRequestContext(ProductionCustomerComposition.Services services){return services.requests();}

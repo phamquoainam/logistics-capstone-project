@@ -1,4 +1,6 @@
+import { organizationCommandDigest } from '../src/admin/MerchantOrganizations';
 import { test, expect } from '@playwright/test';
+import { rejectionDigest } from '../src/admin/AdminRejection';
 import { createAdminSession } from '../src/admin/session';
 
 const id = '10000000-0000-4000-8000-000000000001';
@@ -100,4 +102,85 @@ test('canonical Unicode username boundary is preserved; invalid inputs do not se
   for (const [username, password] of [[' ', 'synthetic-password'], ['🚚'.repeat(81), 'synthetic-password'], ['valid', 'Đ'.repeat(37)], ['valid', '\uD800'], ['\uD800', 'valid']]) {
     const f = fixture(); await expect(f.client.login(username, password)).rejects.toMatchObject({ code: 'VALIDATION_FAILED' }); expect(f.calls).toHaveLength(0);
   }
+});
+
+
+test('bounded governance routes reuse SYSTEM transport without arbitrary URL or actor authority', async () => {
+  const { client, calls } = fixture(async path => {
+    if (path.endsWith('/csrf')) return Response.json({ csrfToken: 'synthetic-csrf-challenge-123456' });
+    if (path.endsWith('/me')) return Response.json(account);
+    if (path.startsWith('/api/v1/auth/')) return Response.json(session());
+    return Response.json({ accepted: true });
+  });
+  await client.login('synthetic-admin', 'synthetic-password');
+  await client.read('governance-context', new URLSearchParams(), v => v);
+  await client.read('application-list', new URLSearchParams({ from: '2026-11-01', to: '2026-11-21' }), v => v);
+  await client.read('application-detail', new URLSearchParams(), v => v, id);
+  expect(calls.at(-1)?.path).toBe('/api/v1/admin/merchant-applications/' + id);
+  await expect(client.read('application-detail', new URLSearchParams(), v => v, '../users')).rejects.toMatchObject({ code: 'VALIDATION_FAILED' });
+  const key = '30000000-0000-4000-8000-000000000001';
+  const body = { action: 'BEGIN', revision: 1, policyVersion: '1', checklist: null, reason: 'Synthetic review' };
+  await client.governanceWrite('review', id, 3, key, body, v => v);
+  expect(calls.at(-1)?.path).toBe('/api/v1/admin/merchant-applications/' + id + '/review');
+  expect(calls.at(-1)?.init).toMatchObject({ method: 'POST', cache: 'no-store', redirect: 'error', referrerPolicy: 'no-referrer', headers: { 'Idempotency-Key': key, 'If-Match': '"v3"', Authorization: 'Bearer ' + 'a'.repeat(128) } });
+  expect(JSON.parse(String(calls.at(-1)?.init.body))).toEqual(body);
+  expect(JSON.stringify(client.getSnapshot())).not.toContain('accessToken');
+});
+
+test('governance lost response is explicit and same-key retry preserves body and ETag', async () => {
+  let writes = 0;
+  const { client, calls } = fixture(async (path) => {
+    if (path.endsWith('/csrf')) return Response.json({ csrfToken: 'synthetic-csrf-challenge-123456' });
+    if (path.endsWith('/me')) return Response.json(account);
+    if (path.startsWith('/api/v1/auth/')) return Response.json(session());
+    if (++writes === 1) throw new Error('SYNTHETIC_LOST_RESPONSE');
+    return Response.json({ accepted: true });
+  });
+  await client.login('synthetic-admin', 'synthetic-password');
+  const key = '30000000-0000-4000-8000-000000000002', body = { revision: 1, fieldCodes: ['registeredAddress'], reason: 'Synthetic request' };
+  await expect(client.governanceWrite('information', id, 4, key, body, v => v)).rejects.toMatchObject({ code: 'OUTCOME_UNKNOWN' });
+  expect(writes).toBe(1);
+  await client.governanceWrite('information', id, 4, key, body, v => v);
+  const sent = calls.filter(c => c.path.endsWith('/request-information'));
+  expect(sent).toHaveLength(2);expect(sent[0].init.body).toBe(sent[1].init.body);expect(sent[0].init.headers).toEqual(sent[1].init.headers);
+});
+
+test('step-up and independent rejection use exact approved routes and a canonical credential-free digest', async () => {
+  const { client, calls } = fixture(async path => path.endsWith('/csrf') ? Response.json({ csrfToken: 'synthetic-csrf-challenge-123456' }) : path.endsWith('/me') ? Response.json(account) : path.startsWith('/api/v1/auth/') ? Response.json(session()) : Response.json({ accepted: true }));
+  await client.login('synthetic-admin', 'synthetic-password'); const key = '30000000-0000-4000-8000-000000000003';
+  const input = { id, version: 10, revision: 2, policy: '7', reason: 'Synthetic independent reason' };
+  const digest = await rejectionDigest(input); const canonical = JSON.stringify({ operation: 'REJECT', originalVersion: 10, policy: '7', reason: input.reason, revision: 2, target: id });
+  expect(digest).toBe([...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(canonical)))].map(b => b.toString(16).padStart(2, '0')).join(''));
+  await client.governanceWrite('stepup', id, 10, key, { operation: 'REJECT', targetId: id, expectedVersion: 10, commandDigest: digest, password: 'synthetic-stepup-password' }, v => v);
+  expect(calls.at(-1)?.path).toBe('/api/v1/admin/governance-reauthentications'); expect(calls.at(-1)?.init.headers).not.toHaveProperty('If-Match');
+  await client.governanceWrite('rejection', id, 10, key, { revision: 2, policyVersion: '7', reauthenticationProofId: key, reason: input.reason }, v => v);
+  expect(calls.at(-1)?.path).toBe('/api/v1/admin/merchant-applications/' + id + '/rejection'); expect(calls.at(-1)?.init.headers).toMatchObject({ 'If-Match': '"v10"', 'Idempotency-Key': key });
+  expect(String(calls.at(-1)?.init.body)).not.toContain('password'); expect(JSON.stringify(client.getSnapshot())).not.toContain('synthetic-stepup-password');
+});
+
+test('private evidence transport accepts only bounded attachment bytes through the current SYSTEM session', async () => {
+  const headers = { 'Content-Type': 'image/png', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Content-Disposition': 'attachment; filename="merchant-evidence"' };
+  const { client, calls } = fixture(async path => path.endsWith('/csrf') ? Response.json({ csrfToken: 'synthetic-csrf-challenge-123456' }) : path.endsWith('/me') ? Response.json(account) : path.startsWith('/api/v1/auth/') ? Response.json(session()) : new Response(new Uint8Array([1, 2, 3]), { headers }));
+  await client.login('synthetic-admin', 'synthetic-password');const evidence = '30000000-0000-4000-8000-000000000004';const blob = await client.governanceEvidence(id, evidence);
+  expect(blob.type).toBe('image/png');expect([...new Uint8Array(await blob.arrayBuffer())]).toEqual([1, 2, 3]);
+  expect(calls.at(-1)?.path).toBe('/api/v1/admin/merchant-applications/' + id + '/evidence/' + evidence + '/content?purpose=MERCHANT_REVIEW');expect(calls.at(-1)?.init).toMatchObject({ method: 'GET', credentials: 'same-origin', cache: 'no-store', redirect: 'error', referrerPolicy: 'no-referrer' });
+  await expect(client.governanceEvidence('../other', evidence)).rejects.toMatchObject({ code: 'VALIDATION_FAILED' });
+});
+test('private evidence rejects HTML, missing privacy headers and oversized bodies', async () => {
+  for (const response of [() => new Response('synthetic', { headers: { 'Content-Type': 'text/html' } }), () => new Response('synthetic', { headers: { 'Content-Type': 'image/png' } }), () => new Response(new Uint8Array(5242881), { headers: { 'Content-Type': 'image/png', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Content-Disposition': 'attachment; filename="merchant-evidence"' } })]) {
+    const { client } = fixture(async path => path.endsWith('/csrf') ? Response.json({ csrfToken: 'synthetic-csrf-challenge-123456' }) : path.endsWith('/me') ? Response.json(account) : path.startsWith('/api/v1/auth/') ? Response.json(session()) : response());
+    await client.login('synthetic-admin', 'synthetic-password');await expect(client.governanceEvidence(id, realm)).rejects.toMatchObject({ code: 'RESPONSE_INVALID' });
+  }
+});
+
+test('approval digest is operation-bound and excludes password and proof', async () => {
+  const input = { id: '40000000-0000-4000-8000-000000000001', version: 10, revision: 2, policy: '7', reason: 'Synthetic approval' };
+  const approved = await rejectionDigest({ ...input, operation: 'APPROVE' });
+  expect(approved).not.toBe(await rejectionDigest(input));
+  expect(approved).toMatch(/^[a-f0-9]{64}$/);
+});
+
+test('organization lifecycle digest cannot be reused for the inverse operation', async () => {
+  const id = '40000000-0000-4000-8000-000000000001';
+  expect(await organizationCommandDigest(id, 1, 'SUSPEND', 'Synthetic reason')).not.toBe(await organizationCommandDigest(id, 1, 'REINSTATE', 'Synthetic reason'));
 });

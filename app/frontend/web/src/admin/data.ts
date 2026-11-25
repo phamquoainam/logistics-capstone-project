@@ -39,6 +39,12 @@ export function queryParameters(q: Query) {
   if (q.shipmentStatus) p.set('shipmentStatus', q.shipmentStatus);
   return p;
 }
+function bucketEnd(from: string, query: Query) {
+  const cursor = new Date(from + 'T00:00:00Z');
+  if (query.grain === 'MONTH') cursor.setUTCMonth(cursor.getUTCMonth() + 1, 1);
+  else cursor.setUTCDate(cursor.getUTCDate() + (query.grain === 'WEEK' ? (8 - cursor.getUTCDay()) % 7 || 7 : 1));
+  return new Date(Math.min(cursor.getTime(), Date.parse(query.to) + 86400000)).toISOString().slice(0, 10);
+}
 export function parseDashboard(value: unknown, context: AdminContext, expected: Query): Dashboard {
   const v = obj(value, ['query', 'generatedAt', 'snapshotId', 'sections']), q = parseQuery(v.query);
   if (queryParameters(q).toString() !== queryParameters(expected).toString() || !instant(v.generatedAt) || typeof v.snapshotId !== 'string' || v.snapshotId.length > 4096 || !/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]{43}$/.test(v.snapshotId) || !Array.isArray(v.sections) || v.sections.length > 6) return fail();
@@ -70,7 +76,7 @@ export function parseDashboard(value: unknown, context: AdminContext, expected: 
     for (const raw of s.metrics) {
       const m = raw as Metric, points = (s.series as Point[]).filter(p => p.metric === m.key);
       let end = q.from;
-      for (const point of points) { if (point.from !== end) return fail(); end = point.to; }
+      for (const point of points) { if (point.from !== end || point.to !== bucketEnd(point.from, q)) return fail(); end = point.to; }
       if (Date.parse(end) !== Date.parse(q.to) + 86400000 || points.reduce((n, p) => n + BigInt(p.value), 0n) !== BigInt(m.value)) return fail();
     }
     if (s.key === 'SHIPMENTS') {
@@ -92,6 +98,38 @@ export function parseShipments(value: unknown, report: Dashboard, metric: Metric
     ids.add(row.id);
   }
   return v as ShipmentPage;
+}
+export type ShipmentOversight = {
+  shipment: Shipment;
+  parcels: { id: string; code: string; actualGrams: number; lengthMm: number; widthMm: number; heightMm: number }[];
+  tracking: { id: string; kind: 'CARRIER_ACCEPTED_AT_STATION'; occurredAt: string }[];
+  acceptance: { eventId: string; occurredAt: string; stationCode: string } | null;
+  snapshotId: string;
+};
+export function parseShipmentOversight(value: unknown, expected: Shipment, report: Dashboard): ShipmentOversight {
+  const v = obj(value, ['shipment', 'parcels', 'tracking', 'acceptance', 'snapshotId']);
+  if (v.snapshotId !== report.snapshotId) return fail();
+  const row = parseShipments({ items: [v.shipment], page: 0, size: 1, hasNext: false, snapshotId: v.snapshotId }, report, 'BOOKINGS', 0, 1).items[0];
+  if ((Object.keys(row) as (keyof Shipment)[]).some(key => row[key] !== expected[key]) || !Array.isArray(v.parcels) || v.parcels.length !== row.parcelCount || !Array.isArray(v.tracking) || v.tracking.length > 1) return fail();
+  const ids = new Set<string>();
+  for (const raw of v.parcels) {
+    const p = obj(raw, ['id', 'code', 'actualGrams', 'lengthMm', 'widthMm', 'heightMm']);
+    if (!id(p.id) || ids.has(p.id) || p.code !== 'AP-P-' + p.id.replaceAll('-', '')) return fail();
+    for (const key of ['actualGrams', 'lengthMm', 'widthMm', 'heightMm']) if (!Number.isSafeInteger(p[key]) || Number(p[key]) <= 0 || Number(p[key]) > (key === 'actualGrams' ? 20000 : 1000)) return fail();
+    if (Number(p.lengthMm) + 2 * (Number(p.widthMm) + Number(p.heightMm)) > 2000) return fail();
+    ids.add(p.id);
+  }
+  for (const raw of v.tracking) {
+    const event = obj(raw, ['id', 'kind', 'occurredAt']);
+    if (!id(event.id) || event.kind !== 'CARRIER_ACCEPTED_AT_STATION' || !instant(event.occurredAt) || Date.parse(event.occurredAt) < Date.parse(row.bookedAt) || Date.parse(event.occurredAt) > Date.parse(report.generatedAt)) return fail();
+  }
+  if (row.status === 'BOOKED') { if (v.acceptance !== null || v.tracking.length) return fail(); }
+  else {
+    if (v.tracking.length !== 1) return fail();
+    const a = obj(v.acceptance, ['eventId', 'occurredAt', 'stationCode']);
+    if (!id(a.eventId) || !instant(a.occurredAt) || a.occurredAt !== (v.tracking[0] as Record<string, unknown>).occurredAt || typeof a.stationCode !== 'string' || !/^[A-Z0-9_-]{1,64}$/.test(a.stationCode)) return fail();
+  }
+  return v as ShipmentOversight;
 }
 export function parsePlatform(value: unknown): PlatformStatus {
   const v = obj(value, ['checkedAt', 'apiAvailability', 'queues', 'scheduledJobs', 'integrationFailures']);

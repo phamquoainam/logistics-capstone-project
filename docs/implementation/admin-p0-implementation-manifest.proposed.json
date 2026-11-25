@@ -1,0 +1,2204 @@
+{
+  "schema_version": 1,
+  "package_id": "ADMIN-CONSOLE-P0-2026-11-23",
+  "status": "PROPOSED_NOT_APPROVED_NOT_IMPLEMENTED",
+  "purpose": "Single bounded Owner technical checkpoint; no blanket approval or deployment",
+  "baseline_head": "248d651951a1d3f70a5d15e73ccfa76b9877993d",
+  "preserved_migration_count": 39,
+  "preservation_report": ".demo/admin-p0-preflight-17cf057a322b41acbde1fcc962720fa3/preservation.json",
+  "new_linking_or_context_switch_api": false,
+  "new_identity_grant_codes": [],
+  "new_runtime_role_templates": [],
+  "authority_decisions": [
+    "ID-P0-01: NO_LINKING for P0; IWA-01/02 common discovery deferred",
+    "ROLE-P0-01: documentary semantic aliases only, no numeric-ID rewrite",
+    "ID-P0-04: dedicated SYSTEM Admin plus separately issued Merchant scope; no SYSTEM shortcut",
+    "MA-POL-02: two-person reviewer/decider for every sandbox decision [PROPOSED]",
+    "MA-POL-03: exact initial Owner grant dashboard.read only [PROPOSED]",
+    "MA-POL-04: unresolved legacy legal-key clearance blocks activation [PROPOSED]",
+    "MA-COMPAT-01: explicit submission organizationDisplayName<=160; preserve registeredName<=240 and existing Organization wire limit, never truncate"
+  ],
+  "packages": [
+    {
+      "id": "P0-ID",
+      "owner": "identity",
+      "depends_on": [],
+      "migration_candidates": [
+        41
+      ]
+    },
+    {
+      "id": "P0-MA",
+      "owner": "merchant",
+      "depends_on": [
+        "P0-ID"
+      ],
+      "migration_candidates": [
+        42,
+        43
+      ]
+    },
+    {
+      "id": "P0-MET",
+      "owner": "notifications",
+      "depends_on": [
+        "P0-MA"
+      ],
+      "migration_candidates": []
+    },
+    {
+      "id": "P0-READ",
+      "owner": "orders/merchant",
+      "depends_on": [
+        "P0-MA"
+      ],
+      "migration_candidates": []
+    }
+  ],
+  "apis": [
+    {
+      "id": "P0-CUST-01",
+      "status": "PROPOSED",
+      "method": "POST",
+      "path": "/api/v1/merchant-applications/{applicationId}/submit",
+      "request": "SubmissionInput",
+      "response": "Application",
+      "success": 200,
+      "permission": "SELF",
+      "scope": "current eligible applicant",
+      "versioned": true,
+      "errors": "P0-ERROR-01",
+      "idempotency": true,
+      "domain_owner": "merchant"
+    },
+    {
+      "id": "P0-CUST-02",
+      "status": "PROPOSED",
+      "method": "POST",
+      "path": "/api/v1/merchant-applications/{applicationId}/resubmit",
+      "request": "SubmissionInput",
+      "response": "Application",
+      "success": 200,
+      "permission": "SELF",
+      "scope": "current eligible applicant",
+      "versioned": true,
+      "errors": "P0-ERROR-01",
+      "idempotency": true,
+      "domain_owner": "merchant"
+    },
+    {
+      "id": "P0-CUST-03",
+      "status": "PROPOSED",
+      "method": "POST",
+      "path": "/api/v1/merchant-applications/{applicationId}/withdrawal",
+      "request": "ReasonInput",
+      "response": "Application",
+      "success": 200,
+      "permission": "SELF",
+      "scope": "current eligible applicant",
+      "versioned": true,
+      "errors": "P0-ERROR-01",
+      "idempotency": true,
+      "domain_owner": "merchant"
+    },
+    {
+      "id": "P0-CUST-04",
+      "status": "PROPOSED",
+      "method": "POST",
+      "path": "/api/v1/customer/business-contact-proofs",
+      "request": "BusinessContactRequest",
+      "response": "ProofAccepted",
+      "success": 202,
+      "permission": "SELF",
+      "scope": "owned application + current Customer session",
+      "versioned": false,
+      "errors": "P0-ERROR-01",
+      "idempotency": true,
+      "domain_owner": "merchant"
+    },
+    {
+      "id": "P0-CUST-05",
+      "status": "PROPOSED",
+      "method": "POST",
+      "path": "/api/v1/customer/business-contact-confirmations",
+      "request": "BusinessContactConfirmation",
+      "response": "BusinessContactAttestation",
+      "success": 200,
+      "permission": "SELF",
+      "scope": "same application/subject/proof/session",
+      "versioned": false,
+      "errors": "P0-ERROR-01",
+      "idempotency": true,
+      "domain_owner": "merchant"
+    },
+    {
+      "id": "P0-CUST-06",
+      "status": "PROPOSED",
+      "method": "POST",
+      "path": "/api/v1/merchant-applications/{applicationId}/evidence",
+      "request": "EvidenceUpload",
+      "response": "Evidence",
+      "success": 201,
+      "permission": "SELF",
+      "scope": "owned editable application",
+      "versioned": false,
+      "errors": "P0-ERROR-01",
+      "idempotency": true,
+      "domain_owner": "merchant"
+    },
+    {
+      "id": "P0-CUST-07",
+      "status": "PROPOSED",
+      "method": "GET",
+      "path": "/api/v1/merchant-applications/{applicationId}/evidence/{evidenceId}",
+      "request": null,
+      "response": "Evidence",
+      "success": 200,
+      "permission": "SELF",
+      "scope": "owned application",
+      "versioned": false,
+      "errors": "P0-ERROR-01",
+      "idempotency": false,
+      "domain_owner": "merchant"
+    },
+    {
+      "id": "P0-CUST-08",
+      "status": "PROPOSED",
+      "method": "GET",
+      "path": "/api/v1/merchant-applications/{applicationId}/evidence/{evidenceId}/content",
+      "request": null,
+      "response": "BINARY",
+      "success": 200,
+      "permission": "SELF",
+      "scope": "owned application",
+      "versioned": false,
+      "errors": "P0-ERROR-01",
+      "idempotency": false,
+      "domain_owner": "merchant"
+    },
+    {
+      "id": "P0-CUST-09",
+      "status": "PROPOSED",
+      "method": "DELETE",
+      "path": "/api/v1/merchant-applications/{applicationId}/evidence/{evidenceId}",
+      "request": null,
+      "response": null,
+      "success": 204,
+      "permission": "SELF",
+      "scope": "unsubmitted working evidence only",
+      "versioned": true,
+      "errors": "P0-ERROR-01",
+      "idempotency": true,
+      "domain_owner": "merchant"
+    },
+    {
+      "id": "P0-CUST-10",
+      "status": "PROPOSED",
+      "method": "GET",
+      "path": "/api/v1/onboarding-receipts/{operationId}/{idempotencyKey}",
+      "request": null,
+      "response": "CommandReceipt",
+      "success": 200,
+      "permission": "SELF",
+      "scope": "existing path, additive finite workflow operations only",
+      "versioned": false,
+      "errors": "P0-ERROR-01",
+      "idempotency": false,
+      "domain_owner": "merchant"
+    },
+    {
+      "id": "P0-ID-API-01",
+      "status": "PROPOSED",
+      "method": "POST",
+      "path": "/api/v1/admin/governance-reauthentications",
+      "request": "AdminStepUpInput",
+      "response": "StepUpResult",
+      "success": 200,
+      "permission": "ADMIN_DASHBOARD_READ + current requested Merchant capability",
+      "scope": "current dedicated SYSTEM Admin/session/target",
+      "versioned": false,
+      "errors": "P0-ERROR-01",
+      "idempotency": true,
+      "domain_owner": "identity"
+    },
+    {
+      "id": "P0-GOV-01",
+      "status": "PROPOSED",
+      "method": "GET",
+      "path": "/api/v1/admin/merchant-governance/context",
+      "request": null,
+      "response": "GovernanceContext",
+      "success": 200,
+      "permission": "ADMIN_DASHBOARD_READ",
+      "scope": "current actor only",
+      "versioned": false,
+      "errors": "P0-ERROR-01",
+      "idempotency": false,
+      "domain_owner": "merchant"
+    },
+    {
+      "id": "P0-GOV-02",
+      "status": "PROPOSED",
+      "method": "GET",
+      "path": "/api/v1/admin/merchant-applications",
+      "request": "ApplicationQuery",
+      "response": "ApplicationSummaryPage",
+      "success": 200,
+      "permission": "ADMIN_MERCHANT_READ + application.read",
+      "scope": "published assigned policy scopes",
+      "versioned": false,
+      "errors": "P0-ERROR-01",
+      "idempotency": false,
+      "domain_owner": "merchant"
+    },
+    {
+      "id": "P0-GOV-03",
+      "status": "PROPOSED",
+      "method": "GET",
+      "path": "/api/v1/admin/merchant-applications/{applicationId}",
+      "request": null,
+      "response": "ApplicationSummary",
+      "success": 200,
+      "permission": "ADMIN_MERCHANT_READ + application.read",
+      "scope": "target policy",
+      "versioned": false,
+      "errors": "P0-ERROR-01",
+      "idempotency": false,
+      "domain_owner": "merchant"
+    },
+    {
+      "id": "P0-GOV-04",
+      "status": "PROPOSED",
+      "method": "GET",
+      "path": "/api/v1/admin/merchant-applications/{applicationId}/review-data",
+      "request": "ReviewDataQuery",
+      "response": "ReviewData",
+      "success": 200,
+      "permission": "ADMIN_MERCHANT_READ + application.read + application.evidence.read",
+      "scope": "target policy; MERCHANT_REVIEW purpose; disclosure audit",
+      "versioned": false,
+      "errors": "P0-ERROR-01",
+      "idempotency": false,
+      "domain_owner": "merchant"
+    },
+    {
+      "id": "P0-GOV-05",
+      "status": "PROPOSED",
+      "method": "POST",
+      "path": "/api/v1/admin/merchant-applications/{applicationId}/review-assignment",
+      "request": "ReviewerAssignmentInput",
+      "response": "ApplicationSummary",
+      "success": 200,
+      "permission": "application.assign",
+      "scope": "current actor and eligible target reviewer policy intersection",
+      "versioned": true,
+      "errors": "P0-ERROR-01",
+      "idempotency": true,
+      "domain_owner": "merchant"
+    },
+    {
+      "id": "P0-GOV-06",
+      "status": "PROPOSED",
+      "method": "POST",
+      "path": "/api/v1/admin/merchant-applications/{applicationId}/review",
+      "request": "ReviewInput",
+      "response": "ApplicationSummary",
+      "success": 200,
+      "permission": "application.review",
+      "scope": "assigned reviewer, exact revision/policy",
+      "versioned": true,
+      "errors": "P0-ERROR-01",
+      "idempotency": true,
+      "domain_owner": "merchant"
+    },
+    {
+      "id": "P0-GOV-07",
+      "status": "PROPOSED",
+      "method": "POST",
+      "path": "/api/v1/admin/merchant-applications/{applicationId}/request-information",
+      "request": "InformationRequest",
+      "response": "ApplicationSummary",
+      "success": 200,
+      "permission": "application.review",
+      "scope": "assigned reviewer, exact revision",
+      "versioned": true,
+      "errors": "P0-ERROR-01",
+      "idempotency": true,
+      "domain_owner": "merchant"
+    },
+    {
+      "id": "P0-GOV-08",
+      "status": "PROPOSED",
+      "method": "POST",
+      "path": "/api/v1/admin/merchant-applications/{applicationId}/approval",
+      "request": "DecisionInput",
+      "response": "ActivationOutcome",
+      "success": 200,
+      "permission": "application.decide",
+      "scope": "independent decider, target policy, current step-up",
+      "versioned": true,
+      "errors": "P0-ERROR-01",
+      "idempotency": true,
+      "domain_owner": "merchant"
+    },
+    {
+      "id": "P0-GOV-09",
+      "status": "PROPOSED",
+      "method": "POST",
+      "path": "/api/v1/admin/merchant-applications/{applicationId}/rejection",
+      "request": "DecisionInput",
+      "response": "ApplicationSummary",
+      "success": 200,
+      "permission": "application.decide",
+      "scope": "independent decider, target policy, current step-up",
+      "versioned": true,
+      "errors": "P0-ERROR-01",
+      "idempotency": true,
+      "domain_owner": "merchant"
+    },
+    {
+      "id": "P0-GOV-10",
+      "status": "PROPOSED",
+      "method": "GET",
+      "path": "/api/v1/admin/merchant-applications/{applicationId}/revisions",
+      "request": "PageQuery",
+      "response": "ApplicationRevisionPage",
+      "success": 200,
+      "permission": "application.read",
+      "scope": "target policy; masked facts only",
+      "versioned": false,
+      "errors": "P0-ERROR-01",
+      "idempotency": false,
+      "domain_owner": "merchant"
+    },
+    {
+      "id": "P0-GOV-11",
+      "status": "PROPOSED",
+      "method": "GET",
+      "path": "/api/v1/admin/merchant-applications/{applicationId}/events",
+      "request": "PageQuery",
+      "response": "AuditPage",
+      "success": 200,
+      "permission": "audit.read",
+      "scope": "target policy, no raw protected payload",
+      "versioned": false,
+      "errors": "P0-ERROR-01",
+      "idempotency": false,
+      "domain_owner": "merchant"
+    },
+    {
+      "id": "P0-GOV-12",
+      "status": "PROPOSED",
+      "method": "GET",
+      "path": "/api/v1/admin/merchant-applications/{applicationId}/evidence/{evidenceId}/content",
+      "request": "ReviewDataQuery",
+      "response": "BINARY",
+      "success": 200,
+      "permission": "application.read + application.evidence.read",
+      "scope": "target policy, MERCHANT_REVIEW purpose, disclosure audit",
+      "versioned": false,
+      "errors": "P0-ERROR-01",
+      "idempotency": false,
+      "domain_owner": "merchant"
+    },
+    {
+      "id": "P0-GOV-13",
+      "status": "PROPOSED",
+      "method": "GET",
+      "path": "/api/v1/admin/merchant-organizations",
+      "request": "OrganizationQuery",
+      "response": "OrganizationSummaryPage",
+      "success": 200,
+      "permission": "org.read",
+      "scope": "explicit org or activation policy scope",
+      "versioned": false,
+      "errors": "P0-ERROR-01",
+      "idempotency": false,
+      "domain_owner": "merchant"
+    },
+    {
+      "id": "P0-GOV-14",
+      "status": "PROPOSED",
+      "method": "GET",
+      "path": "/api/v1/admin/merchant-organizations/{organizationId}",
+      "request": null,
+      "response": "OrganizationSummary",
+      "success": 200,
+      "permission": "org.read",
+      "scope": "explicit org or activation policy scope",
+      "versioned": false,
+      "errors": "P0-ERROR-01",
+      "idempotency": false,
+      "domain_owner": "merchant"
+    },
+    {
+      "id": "P0-GOV-15",
+      "status": "PROPOSED",
+      "method": "POST",
+      "path": "/api/v1/admin/merchant-organizations/{organizationId}/suspension",
+      "request": "LifecycleInput",
+      "response": "OrganizationSummary",
+      "success": 200,
+      "permission": "org.suspend",
+      "scope": "APPLICATION_APPROVED origin only; step-up",
+      "versioned": true,
+      "errors": "P0-ERROR-01",
+      "idempotency": true,
+      "domain_owner": "merchant"
+    },
+    {
+      "id": "P0-GOV-16",
+      "status": "PROPOSED",
+      "method": "POST",
+      "path": "/api/v1/admin/merchant-organizations/{organizationId}/reinstatement",
+      "request": "LifecycleInput",
+      "response": "OrganizationSummary",
+      "success": 200,
+      "permission": "org.reinstate",
+      "scope": "APPLICATION_APPROVED origin only; step-up + current initial Owner",
+      "versioned": true,
+      "errors": "P0-ERROR-01",
+      "idempotency": true,
+      "domain_owner": "merchant"
+    },
+    {
+      "id": "P0-GOV-17",
+      "status": "PROPOSED",
+      "method": "GET",
+      "path": "/api/v1/admin/merchant-governance/receipts/{operationId}/{idempotencyKey}",
+      "request": null,
+      "response": "CommandReceipt",
+      "success": 200,
+      "permission": "current permission for original operation",
+      "scope": "same actor/realm/target policy, no proof replay authority",
+      "versioned": false,
+      "errors": "P0-ERROR-01",
+      "idempotency": false,
+      "domain_owner": "merchant"
+    },
+    {
+      "id": "P0-GOV-18",
+      "status": "PROPOSED",
+      "method": "GET",
+      "path": "/api/v1/admin/merchant-governance/reviewer-candidates",
+      "request": "ReviewerCandidateQuery",
+      "response": "ReviewerCandidatePage",
+      "success": 200,
+      "permission": "ADMIN_MERCHANT_READ + application.assign",
+      "scope": "same policy; current dedicated Admin eligibility before pagination, no global account directory",
+      "versioned": false,
+      "errors": "P0-ERROR-01",
+      "idempotency": false,
+      "domain_owner": "merchant"
+    },
+    {
+      "id": "P0-READ-01",
+      "status": "PROPOSED",
+      "method": "GET",
+      "path": "/api/v1/admin/shipments/{shipmentId}",
+      "request": "OversightQuery",
+      "response": "ShipmentOversight",
+      "success": 200,
+      "permission": "ADMIN_SHIPMENT_READ",
+      "scope": "current admitted Local/Test realm + valid original contributing snapshot",
+      "versioned": false,
+      "errors": "P0-ERROR-01",
+      "idempotency": false,
+      "domain_owner": "orders"
+    },
+    {
+      "id": "P0-READ-02",
+      "status": "PROPOSED",
+      "method": "GET",
+      "path": "/api/v1/admin/audit",
+      "request": "AuditQuery",
+      "response": "AuditPage",
+      "success": 200,
+      "permission": "audit.read",
+      "scope": "MERCHANT_APPLICATION or MERCHANT_ORGANIZATION only; assigned scope",
+      "versioned": false,
+      "errors": "P0-ERROR-01",
+      "idempotency": false,
+      "domain_owner": "merchant"
+    },
+    {
+      "id": "P0-READ-03",
+      "status": "PROPOSED",
+      "method": "GET",
+      "path": "/api/v1/admin/work-items",
+      "request": "WorkQuery",
+      "response": "WorkPage",
+      "success": 200,
+      "permission": "task.read + application.read",
+      "scope": "current policy and eligible assignment/independent-decision predicate",
+      "versioned": false,
+      "errors": "P0-ERROR-01",
+      "idempotency": false,
+      "domain_owner": "merchant"
+    }
+  ],
+  "dtos": [
+    {
+      "id": "P0-DTO-01",
+      "name": "SubmissionInput",
+      "status": "PROPOSED",
+      "fields": {
+        "organizationDisplayName": "string1..160 NFC, no control characters; not a replacement for registeredName<=240"
+      }
+    },
+    {
+      "id": "P0-DTO-02",
+      "name": "ReasonInput",
+      "status": "PROPOSED",
+      "fields": {
+        "reason": "string1..300 no control characters"
+      }
+    },
+    {
+      "id": "P0-DTO-03",
+      "name": "Application",
+      "status": "PROPOSED",
+      "fields": "existing Application(id,applicantAccountId,state,revision,version,draft); same field shape; state semantics extended under V42 deployment gate"
+    },
+    {
+      "id": "P0-DTO-04",
+      "name": "BusinessContactRequest",
+      "status": "PROPOSED",
+      "fields": {
+        "applicationId": "UUID",
+        "email": "exact email <=254; no credential contact mutation"
+      }
+    },
+    {
+      "id": "P0-DTO-05",
+      "name": "ProofAccepted",
+      "status": "PROPOSED",
+      "fields": {
+        "requestId": "UUID",
+        "accepted": "boolean true; no raw proof"
+      }
+    },
+    {
+      "id": "P0-DTO-06",
+      "name": "BusinessContactConfirmation",
+      "status": "PROPOSED",
+      "fields": {
+        "applicationId": "UUID",
+        "proofId": "UUID",
+        "proof": "256-bit purpose-bound token; redacted transport only"
+      }
+    },
+    {
+      "id": "P0-DTO-07",
+      "name": "BusinessContactAttestation",
+      "status": "PROPOSED",
+      "fields": {
+        "id": "UUID",
+        "applicationId": "UUID",
+        "verifiedAt": "UTC instant",
+        "expiresAt": "original proof deadline; must submit before expiry"
+      }
+    },
+    {
+      "id": "P0-DTO-08",
+      "name": "EvidenceUpload",
+      "status": "PROPOSED",
+      "fields": {
+        "purpose": "REGISTRATION|REPRESENTATIVE_AUTHORIZATION",
+        "file": "multipart binary 1..5242880 bytes; content-inspected PDF/PNG/JPEG"
+      }
+    },
+    {
+      "id": "P0-DTO-09",
+      "name": "Evidence",
+      "status": "PROPOSED",
+      "fields": {
+        "id": "UUID",
+        "applicationId": "UUID",
+        "purpose": "finite evidence purpose",
+        "state": "QUARANTINED|CLEAN|REJECTED|ARCHIVED",
+        "mime": "inspected MIME nullable until scan",
+        "bytes": "integer1..5242880",
+        "sha256": "lower hex64 nullable before finalize",
+        "version": "positive int64",
+        "screenedAt": "UTC instant|null"
+      }
+    },
+    {
+      "id": "P0-DTO-10",
+      "name": "AdminStepUpInput",
+      "status": "PROPOSED",
+      "fields": {
+        "operation": "APPROVE|REJECT|SUSPEND|REINSTATE",
+        "targetId": "UUID",
+        "expectedVersion": "positive int64",
+        "commandDigest": "hex64, recomputed by server",
+        "password": "transport-only current credential <=72 UTF8 bytes"
+      }
+    },
+    {
+      "id": "P0-DTO-11",
+      "name": "StepUpResult",
+      "status": "PROPOSED",
+      "fields": {
+        "proofId": "UUID",
+        "expiresAt": "createdAt+15min"
+      }
+    },
+    {
+      "id": "P0-DTO-12",
+      "name": "GovernanceContext",
+      "status": "PROPOSED",
+      "fields": {
+        "accountId": "UUID",
+        "realmId": "UUID",
+        "authorityVersion": "opaque digest of exact current assignments/policies",
+        "assignments": "GovernanceAssignment[] max100"
+      }
+    },
+    {
+      "id": "P0-DTO-13",
+      "name": "GovernanceAssignment",
+      "status": "PROPOSED",
+      "fields": {
+        "id": "UUID",
+        "scopeType": "POLICY|ORGANIZATION",
+        "policyId": "UUID|null",
+        "organizationId": "UUID|null; exactly one scope target",
+        "permissions": "exact P0-PERM list, no wildcard",
+        "version": "positive int64",
+        "expiresAt": "UTC instant"
+      }
+    },
+    {
+      "id": "P0-DTO-14",
+      "name": "PageQuery",
+      "status": "PROPOSED",
+      "fields": {
+        "page": "integer0..10000 default0",
+        "size": "integer1..50 default20"
+      }
+    },
+    {
+      "id": "P0-DTO-15",
+      "name": "ApplicationQuery",
+      "status": "PROPOSED",
+      "fields": {
+        "from": "ISO date inclusive firstSubmittedAt",
+        "to": "ISO date inclusive <=todayVietnam, <=366days",
+        "state": "SUBMITTED|UNDER_REVIEW|NEEDS_INFORMATION|APPROVED|REJECTED|WITHDRAWN optional",
+        "reviewerId": "UUID optional; authorized visible member only",
+        "policyId": "UUID optional within current scope",
+        "page": "PageQuery.page",
+        "size": "PageQuery.size"
+      }
+    },
+    {
+      "id": "P0-DTO-16",
+      "name": "ApplicationSummary",
+      "status": "PROPOSED",
+      "fields": {
+        "id": "UUID",
+        "state": "canonical application state",
+        "revision": "positive int64",
+        "version": "positive int64",
+        "legalNameMasked": "string <=240",
+        "legalIdentifierMasked": "last4 only, <=80",
+        "policyId": "UUID",
+        "reviewerId": "UUID|null",
+        "firstSubmittedAt": "UTC instant|null",
+        "updatedAt": "UTC instant",
+        "activation": "ActivationOutcome|null",
+        "allowedActions": "finite server-validated action codes"
+      }
+    },
+    {
+      "id": "P0-DTO-17",
+      "name": "ReviewDataQuery",
+      "status": "PROPOSED",
+      "fields": {
+        "purpose": "MERCHANT_REVIEW only"
+      }
+    },
+    {
+      "id": "P0-DTO-18",
+      "name": "ReviewData",
+      "status": "PROPOSED",
+      "fields": {
+        "application": "ApplicationSummary",
+        "submission": "existing complete MerchantApplications.Input snapshot, not working Draft",
+        "evidence": "Evidence[] <=5",
+        "contactVerifiedAt": "UTC instant",
+        "policyVersion": "string <=64",
+        "reviewEvents": "review checklist/protected comments only with evidence authority",
+        "organizationDisplayName": "immutable submitted activation display name <=160"
+      }
+    },
+    {
+      "id": "P0-DTO-19",
+      "name": "ReviewerAssignmentInput",
+      "status": "PROPOSED",
+      "fields": {
+        "assigneeAccountId": "UUID; current independent eligible reviewer discovered/locked through Identity",
+        "reason": "string1..300"
+      }
+    },
+    {
+      "id": "P0-DTO-20",
+      "name": "ReviewInput",
+      "status": "PROPOSED",
+      "fields": {
+        "action": "BEGIN|READY_FOR_DECISION",
+        "revision": "positive int64",
+        "policyVersion": "string <=64",
+        "checklist": "{registrationValid:boolean,representationValid:boolean,contactValid:boolean,duplicatesClear:boolean,conflictsClear:boolean}",
+        "reason": "string1..300"
+      }
+    },
+    {
+      "id": "P0-DTO-21",
+      "name": "InformationRequest",
+      "status": "PROPOSED",
+      "fields": {
+        "revision": "positive int64",
+        "fieldCodes": "nonempty subset of existing complete Input fields/evidence purposes, max16",
+        "reason": "string1..300"
+      }
+    },
+    {
+      "id": "P0-DTO-22",
+      "name": "DecisionInput",
+      "status": "PROPOSED",
+      "fields": {
+        "revision": "positive int64",
+        "policyVersion": "string <=64",
+        "reauthenticationProofId": "UUID, current action/target/input-bound",
+        "reason": "string1..300"
+      }
+    },
+    {
+      "id": "P0-DTO-23",
+      "name": "ActivationOutcome",
+      "status": "PROPOSED",
+      "fields": {
+        "applicationId": "UUID",
+        "revision": "positive int64",
+        "decisionEventId": "UUID",
+        "organizationId": "UUID",
+        "ownerMembershipId": "UUID",
+        "state": "ACTIVE only; response exists only after atomic commit",
+        "activatedAt": "UTC persisted activation instant; ACTIVE is historical command outcome, refresh Org for current state"
+      }
+    },
+    {
+      "id": "P0-DTO-24",
+      "name": "ApplicationRevision",
+      "status": "PROPOSED",
+      "fields": "{applicationId:UUID,revision:int64,submittedAt:instant,policyVersion:string,organizationDisplayName:string<=160,digest:hex64,evidenceIds:UUID[],contactVerifiedAt:instant}; no raw legal/contact fields without review-data permission"
+    },
+    {
+      "id": "P0-DTO-25",
+      "name": "OrganizationQuery",
+      "status": "PROPOSED",
+      "fields": {
+        "state": "ACTIVE|SUSPENDED optional",
+        "policyId": "UUID optional within scope",
+        "page": "PageQuery.page",
+        "size": "PageQuery.size"
+      }
+    },
+    {
+      "id": "P0-DTO-26",
+      "name": "OrganizationSummary",
+      "status": "PROPOSED",
+      "fields": {
+        "id": "UUID",
+        "displayName": "string <=160",
+        "state": "ACTIVE|SUSPENDED",
+        "admissionOrigin": "LOCAL_OPERATOR_PROVISIONED|APPLICATION_APPROVED",
+        "version": "positive int64",
+        "initialOwnerMembershipId": "UUID",
+        "activation": "ActivationOutcome|null",
+        "membershipCounts": "current counts by persisted role/state only, no email/phone",
+        "allowedActions": "finite server-validated codes"
+      }
+    },
+    {
+      "id": "P0-DTO-27",
+      "name": "LifecycleInput",
+      "status": "PROPOSED",
+      "fields": {
+        "reason": "string1..300",
+        "reauthenticationProofId": "UUID"
+      }
+    },
+    {
+      "id": "P0-DTO-28",
+      "name": "CommandReceipt",
+      "status": "PROPOSED",
+      "fields": {
+        "operationId": "finite manifest operation",
+        "targetId": "UUID",
+        "outcome": "COMMITTED",
+        "version": "positive int64; original applied version",
+        "activation": "ActivationOutcome|null; no protected response cache"
+      }
+    },
+    {
+      "id": "P0-DTO-29",
+      "name": "OversightQuery",
+      "status": "PROPOSED",
+      "fields": {
+        "snapshotId": "existing authenticated selector <=4096",
+        "from": "existing date",
+        "to": "existing date",
+        "grain": "DAY|WEEK|MONTH",
+        "shipmentStatus": "BOOKED|AT_STATION optional",
+        "metric": "existing Shipment metric; financial metric additionally requires FINANCE READ"
+      }
+    },
+    {
+      "id": "P0-DTO-30",
+      "name": "ShipmentOversight",
+      "status": "PROPOSED",
+      "fields": {
+        "shipment": "existing AdminShipmentFacts.Row",
+        "parcels": "{id:UUID,code:string,actualGrams:int64,lengthMm:int,widthMm:int,heightMm:int}[] <=5",
+        "tracking": "{id:UUID,kind:string,occurredAt:instant}[] real bounded existing events",
+        "acceptance": "{eventId:UUID,occurredAt:instant,stationCode:string}|null",
+        "snapshotId": "same selector; no sender/recipient/label/POD bytes"
+      }
+    },
+    {
+      "id": "P0-DTO-31",
+      "name": "AuditQuery",
+      "status": "PROPOSED",
+      "fields": {
+        "domain": "MERCHANT_APPLICATION|MERCHANT_ORGANIZATION",
+        "targetId": "UUID optional within assignment scope",
+        "from": "UTC ISO instant",
+        "to": "UTC ISO instant, max366days",
+        "page": "PageQuery.page",
+        "size": "PageQuery.size"
+      }
+    },
+    {
+      "id": "P0-DTO-32",
+      "name": "AuditItem",
+      "status": "PROPOSED",
+      "fields": {
+        "id": "UUID",
+        "actorId": "UUID pseudonymous",
+        "operation": "finite event kind",
+        "targetType": "APPLICATION|ORGANIZATION",
+        "targetId": "UUID",
+        "priorVersion": "int64>=0",
+        "newVersion": "int64",
+        "revision": "int64|null",
+        "policyVersion": "string <=64",
+        "reasonCode": "finite code, no free text",
+        "occurredAt": "UTC instant",
+        "requestId": "UUID"
+      }
+    },
+    {
+      "id": "P0-DTO-33",
+      "name": "WorkQuery",
+      "status": "PROPOSED",
+      "fields": {
+        "kind": "MERCHANT_REVIEW|MERCHANT_DECISION optional",
+        "policyId": "UUID optional within assignments",
+        "page": "PageQuery.page",
+        "size": "PageQuery.size"
+      }
+    },
+    {
+      "id": "P0-DTO-34",
+      "name": "WorkItem",
+      "status": "PROPOSED",
+      "fields": {
+        "id": "stable derived application/revision/assignment identity, not a new persisted ApprovalTask",
+        "kind": "MERCHANT_REVIEW|MERCHANT_DECISION",
+        "applicationId": "UUID",
+        "revision": "int64",
+        "assignmentVersion": "int64",
+        "createdAt": "persisted submission/assignment instant",
+        "dueAt": "null until approved deadline policy",
+        "targetPath": "fixed internal application route",
+        "allowedActions": "current authority-derived codes"
+      }
+    },
+    {
+      "id": "P0-DTO-35",
+      "name": "ReviewerCandidateQuery",
+      "status": "PROPOSED",
+      "fields": {
+        "policyId": "UUID within current assignment scope",
+        "page": "PageQuery.page",
+        "size": "PageQuery.size"
+      }
+    },
+    {
+      "id": "P0-DTO-36",
+      "name": "ReviewerCandidatePage",
+      "status": "PROPOSED",
+      "fields": {
+        "items": "{accountId:UUID,displayName:string<=160}[] <=50, eligible same-policy review scopes only",
+        "page": "integer",
+        "size": "integer",
+        "hasNext": "boolean"
+      }
+    },
+    {
+      "id": "P0-DTO-37",
+      "name": "ApplicationSummaryPage",
+      "status": "PROPOSED",
+      "fields": {
+        "items": "ApplicationSummary[] <=50",
+        "page": "integer",
+        "size": "integer",
+        "hasNext": "boolean; no invented totalCount"
+      }
+    },
+    {
+      "id": "P0-DTO-38",
+      "name": "ApplicationRevisionPage",
+      "status": "PROPOSED",
+      "fields": {
+        "items": "ApplicationRevision[] <=50",
+        "page": "integer",
+        "size": "integer",
+        "hasNext": "boolean; no invented totalCount"
+      }
+    },
+    {
+      "id": "P0-DTO-39",
+      "name": "OrganizationSummaryPage",
+      "status": "PROPOSED",
+      "fields": {
+        "items": "OrganizationSummary[] <=50",
+        "page": "integer",
+        "size": "integer",
+        "hasNext": "boolean; no invented totalCount"
+      }
+    },
+    {
+      "id": "P0-DTO-40",
+      "name": "AuditPage",
+      "status": "PROPOSED",
+      "fields": {
+        "items": "AuditItem[] <=50",
+        "page": "integer",
+        "size": "integer",
+        "hasNext": "boolean; no invented totalCount"
+      }
+    },
+    {
+      "id": "P0-DTO-41",
+      "name": "WorkPage",
+      "status": "PROPOSED",
+      "fields": {
+        "items": "WorkItem[] <=50",
+        "page": "integer",
+        "size": "integer",
+        "hasNext": "boolean; no invented totalCount"
+      }
+    },
+    {
+      "id": "P0-DTO-42",
+      "name": "AdminMetricMetadataV2",
+      "status": "PROPOSED",
+      "fields": {
+        "metricKey": "finite v2 registry code",
+        "definitionVersion": "ARGO_ADMIN_METRICS_2",
+        "cohortKind": "BOOKED_SHIPMENT|FIRST_SUBMITTED_APPLICATION",
+        "timeZone": "Asia/Ho_Chi_Minh",
+        "numerator": "exact nonnegative integer string",
+        "denominator": "integer string|null; sampleCount for average, never unrelated population",
+        "unit": "SHIPMENT|PARCEL|APPLICATION|VND|MILLISECOND|RATIO",
+        "sampleCount": "integer string|null",
+        "lastSourceEventAt": "UTC instant|null from persisted cohort source",
+        "sourceCheckedAt": "UTC instant consistent read",
+        "freshness": "CURRENT_TRANSACTION|UNAVAILABLE|DEGRADED",
+        "availabilityReason": "finite code|null"
+      }
+    },
+    {
+      "id": "P0-DTO-43",
+      "name": "AdminResourceScopeV2",
+      "status": "PROPOSED",
+      "fields": {
+        "kind": "REALM_BOUND_LOCAL|MERCHANT_POLICY|MERCHANT_ORGANIZATION",
+        "id": "UUID",
+        "capabilities": "explicit current finite read capabilities",
+        "version": "opaque current authority digest"
+      }
+    },
+    {
+      "id": "P0-DTO-44",
+      "name": "AdminDashboardQueryV2",
+      "status": "PROPOSED",
+      "fields": {
+        "from": "existing date",
+        "to": "existing date <=366day interval",
+        "grain": "DAY|WEEK|MONTH",
+        "shipmentStatus": "BOOKED|AT_STATION|null, Shipment/Finance only",
+        "regionId": "null only",
+        "applicationState": "SUBMITTED|UNDER_REVIEW|NEEDS_INFORMATION|APPROVED|REJECTED|WITHDRAWN|null, Merchant only",
+        "policyId": "UUID|null within current scope; Merchant only"
+      }
+    },
+    {
+      "id": "P0-DTO-45",
+      "name": "AdminMetricV2",
+      "status": "PROPOSED",
+      "fields": {
+        "key": "exact v2 metric registry",
+        "value": "integer/decimal string; null only for average with no eligible sample",
+        "unit": "existing units plus APPLICATION/MILLISECOND/RATIO",
+        "drilldown": "existing fixed endpoint/filter object|null; no arbitrary URL"
+      }
+    },
+    {
+      "id": "P0-DTO-46",
+      "name": "AdminDashboardV2",
+      "status": "PROPOSED",
+      "fields": {
+        "schemaVersion": "ADMIN_DASHBOARD_2",
+        "query": "AdminDashboardQueryV2",
+        "generatedAt": "UTC instant",
+        "snapshotId": "authenticated existing selector, scope+definition-version bound",
+        "sections": "typed source sections with AdminMetricV2 metrics",
+        "resourceScopeVersion": "opaque current scope digest",
+        "metricMetadata": "AdminMetricMetadataV2[] <=32"
+      }
+    },
+    {
+      "id": "P0-DTO-47",
+      "name": "AdminContextV2",
+      "status": "PROPOSED",
+      "fields": {
+        "schemaVersion": "ADMIN_DASHBOARD_2",
+        "accountId": "UUID",
+        "displayName": "existing own display name",
+        "permissions": "existing six READ codes only",
+        "environment": "LOCAL|TEST",
+        "timeZone": "Asia/Ho_Chi_Minh",
+        "regionFilterAvailable": "false",
+        "resourceScopeVersion": "opaque digest",
+        "resourceScopes": "AdminResourceScopeV2[] <=100"
+      }
+    },
+    {
+      "id": "P0-DTO-48",
+      "name": "AdminPageV2",
+      "status": "PROPOSED",
+      "fields": {
+        "schemaVersion": "ADMIN_DASHBOARD_2",
+        "items": "existing typed safe Shipment/Application/Network items; no PII",
+        "page": "integer",
+        "size": "integer1..50",
+        "hasNext": "boolean",
+        "snapshotId": "same selector",
+        "resourceScopeVersion": "same digest",
+        "metricMetadata": "AdminMetricMetadataV2 for selected metric"
+      }
+    },
+    {
+      "id": "P0-DTO-49",
+      "name": "AdminPlatformV2",
+      "status": "PROPOSED",
+      "fields": {
+        "schemaVersion": "ADMIN_DASHBOARD_2",
+        "checkedAt": "UTC instant",
+        "apiAvailability": "UP|UNAVAILABLE",
+        "queues": "existing SourceStatus",
+        "scheduledJobs": "existing SourceStatus",
+        "integrationFailures": "existing SourceStatus"
+      }
+    }
+  ],
+  "permissions": [
+    {
+      "id": "P0-PERM-01",
+      "status": "PROPOSED",
+      "code": "application.read",
+      "owner": "merchant",
+      "storage": "merchant.business_reviewer_scope.permissions",
+      "scope": "POLICY or explicit ORGANIZATION, not Identity/region role",
+      "meaning": "masked application/read queue",
+      "automatic_grant": false
+    },
+    {
+      "id": "P0-PERM-02",
+      "status": "PROPOSED",
+      "code": "application.evidence.read",
+      "owner": "merchant",
+      "storage": "merchant.business_reviewer_scope.permissions",
+      "scope": "POLICY or explicit ORGANIZATION, not Identity/region role",
+      "meaning": "purpose-bound KYC/evidence disclosure",
+      "automatic_grant": false
+    },
+    {
+      "id": "P0-PERM-03",
+      "status": "PROPOSED",
+      "code": "application.assign",
+      "owner": "merchant",
+      "storage": "merchant.business_reviewer_scope.permissions",
+      "scope": "POLICY or explicit ORGANIZATION, not Identity/region role",
+      "meaning": "assign/reassign eligible reviewer",
+      "automatic_grant": false
+    },
+    {
+      "id": "P0-PERM-04",
+      "status": "PROPOSED",
+      "code": "application.review",
+      "owner": "merchant",
+      "storage": "merchant.business_reviewer_scope.permissions",
+      "scope": "POLICY or explicit ORGANIZATION, not Identity/region role",
+      "meaning": "review/checklist/request information",
+      "automatic_grant": false
+    },
+    {
+      "id": "P0-PERM-05",
+      "status": "PROPOSED",
+      "code": "application.decide",
+      "owner": "merchant",
+      "storage": "merchant.business_reviewer_scope.permissions",
+      "scope": "POLICY or explicit ORGANIZATION, not Identity/region role",
+      "meaning": "independent approve/reject, atomic activation",
+      "automatic_grant": false
+    },
+    {
+      "id": "P0-PERM-06",
+      "status": "PROPOSED",
+      "code": "org.read",
+      "owner": "merchant",
+      "storage": "merchant.business_reviewer_scope.permissions",
+      "scope": "POLICY or explicit ORGANIZATION, not Identity/region role",
+      "meaning": "masked Organization and membership summary",
+      "automatic_grant": false
+    },
+    {
+      "id": "P0-PERM-07",
+      "status": "PROPOSED",
+      "code": "org.suspend",
+      "owner": "merchant",
+      "storage": "merchant.business_reviewer_scope.permissions",
+      "scope": "POLICY or explicit ORGANIZATION, not Identity/region role",
+      "meaning": "application-origin suspension only",
+      "automatic_grant": false
+    },
+    {
+      "id": "P0-PERM-08",
+      "status": "PROPOSED",
+      "code": "org.reinstate",
+      "owner": "merchant",
+      "storage": "merchant.business_reviewer_scope.permissions",
+      "scope": "POLICY or explicit ORGANIZATION, not Identity/region role",
+      "meaning": "application-origin reinstatement only",
+      "automatic_grant": false
+    },
+    {
+      "id": "P0-PERM-09",
+      "status": "PROPOSED",
+      "code": "audit.read",
+      "owner": "merchant",
+      "storage": "merchant.business_reviewer_scope.permissions",
+      "scope": "POLICY or explicit ORGANIZATION, not Identity/region role",
+      "meaning": "Merchant governance events only",
+      "automatic_grant": false
+    },
+    {
+      "id": "P0-PERM-10",
+      "status": "PROPOSED",
+      "code": "task.read",
+      "owner": "merchant",
+      "storage": "merchant.business_reviewer_scope.permissions",
+      "scope": "POLICY or explicit ORGANIZATION, not Identity/region role",
+      "meaning": "derived current Merchant review/decision work only",
+      "automatic_grant": false
+    }
+  ],
+  "tables": [
+    {
+      "id": "P0-DB-01",
+      "status": "PROPOSED",
+      "name": "identity.admin_governance_reauthentication",
+      "migration": 41,
+      "columns": "id UUID; account_id UUID; realm_id UUID; session_id UUID; auth_version BIGINT; authority_version CHAR(64); operation VARCHAR(32); target_id UUID; expected_version BIGINT; command_digest BYTEA; created_at TIMESTAMPTZ; expires_at TIMESTAMPTZ; consumed_at TIMESTAMPTZ NULL; consumed_request_id UUID NULL",
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [
+        "(session_id,account_id)->identity.auth_session(id,account_id)",
+        "realm_id->identity.realm(id)"
+      ],
+      "unique": [],
+      "checks": [
+        "expires_at=created_at+15min",
+        "digest32bytes; version>0; operation finite",
+        "consume once before expiry, same actor/session/authVersion/action/target/input"
+      ],
+      "mutation": "Identity runtime INSERT; UPDATE consumed_at/consumed_request_id only under current admission; no DELETE/TRUNCATE",
+      "justification": "Customer proof FK is Customer-session-bound; cannot relabel it as SYSTEM step-up",
+      "nullability": "All columns NOT NULL except explicitly marked NULL; receipt optional-family columns use exact operation CHECK",
+      "foreign_key_timing": "IMMEDIATE except activation/event/organization/member circular references and current submitted revision: DEFERRABLE INITIALLY DEFERRED"
+    },
+    {
+      "id": "P0-DB-02",
+      "status": "PROPOSED",
+      "name": "identity.business_contact_attestation",
+      "migration": 41,
+      "columns": "id UUID; proof_id UUID; account_id UUID; application_binding UUID; address_digest BYTEA; protected_address BYTEA; key_id VARCHAR(64); verified_at TIMESTAMPTZ; expires_at TIMESTAMPTZ; used_revision BIGINT NULL; used_at TIMESTAMPTZ NULL; revoked_at TIMESTAMPTZ NULL",
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [
+        "proof_id->identity.customer_proof(id)",
+        "account_id->identity.user_account(id)"
+      ],
+      "unique": [
+        "proof_id"
+      ],
+      "checks": [
+        "BUSINESS_CONTACT purpose/subject/resource/session/authVersion checked through Identity port",
+        "address digest32; exact binding; use before expiry; consume once for exact revision",
+        "historical verification fact retained after queue wait; revocation rechecked"
+      ],
+      "mutation": "Identity INSERT, bind used_revision/used_at or revoke only; immutable destination/binding/verified fact",
+      "justification": "Existing proof has no durable application/revision attestation; no Merchant email_verified master",
+      "nullability": "All columns NOT NULL except explicitly marked NULL; receipt optional-family columns use exact operation CHECK",
+      "foreign_key_timing": "IMMEDIATE except activation/event/organization/member circular references and current submitted revision: DEFERRABLE INITIALLY DEFERRED"
+    },
+    {
+      "id": "P0-DB-03",
+      "status": "PROPOSED",
+      "name": "identity.governance_proof_receipt",
+      "migration": 41,
+      "columns": "actor_id UUID; operation VARCHAR(40); operation_key UUID; system_session_id UUID NULL; customer_session_id UUID NULL; auth_version BIGINT; target_id UUID; input_key_id VARCHAR(64); input_digest BYTEA; system_proof_id UUID NULL; customer_proof_id UUID NULL; attestation_id UUID NULL; created_at TIMESTAMPTZ; expires_at TIMESTAMPTZ",
+      "primary_key": [
+        "actor_id",
+        "operation",
+        "operation_key"
+      ],
+      "foreign_keys": [
+        "(system_session_id,actor_id)->identity.auth_session(id,account_id)",
+        "(customer_session_id,actor_id)->identity.customer_auth_session(id,account_id)",
+        "system_proof_id->identity.admin_governance_reauthentication(id)",
+        "customer_proof_id->identity.customer_proof(id)",
+        "attestation_id->identity.business_contact_attestation(id)"
+      ],
+      "unique": [],
+      "checks": [
+        "REQUEST_ADMIN_STEPUP requires system session/proof; all customer columns null",
+        "REQUEST_BUSINESS_CONTACT requires customer session/proof; system columns and attestation null",
+        "CONFIRM_BUSINESS_CONTACT requires customer session/proof/attestation; all system columns null",
+        "digest32; auth_version>0; expiry>=created+7days; current authorization and exact digest; no password/token cache"
+      ],
+      "mutation": "INSERT/SELECT only; immutable receipt; no cleanup enabled",
+      "justification": "Existing Identity receipts have constrained operation/subject targets; preserve them instead of abusing invitation/recovery receipts",
+      "nullability": "All columns NOT NULL except explicitly marked NULL; receipt optional-family columns use exact operation CHECK",
+      "foreign_key_timing": "IMMEDIATE except activation/event/organization/member circular references and current submitted revision: DEFERRABLE INITIALLY DEFERRED"
+    },
+    {
+      "id": "P0-DB-04",
+      "status": "PROPOSED",
+      "name": "merchant.application_policy",
+      "migration": 42,
+      "columns": "id UUID; code VARCHAR(64); version BIGINT; environment VARCHAR(5); entity_types TEXT[]; jurisdiction_codes TEXT[]; consent_version VARCHAR(64); required_evidence TEXT[]; review_mode VARCHAR(32); state VARCHAR(12); valid_from TIMESTAMPTZ; valid_to TIMESTAMPTZ NULL; published_digest BYTEA; created_at TIMESTAMPTZ",
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [],
+      "unique": [
+        "code,version,environment"
+      ],
+      "checks": [
+        "environment LOCAL|TEST; state PUBLISHED|RETIRED",
+        "entity types exact COMPANY/HOUSEHOLD_BUSINESS; jurisdictions explicit, not invented geography",
+        "review_mode TWO_PERSON; required registration/authorization; consent text/version required",
+        "published content immutable; no automatic published row",
+        "typed policy rejects overlap for the same environment/entity/jurisdiction/effective interval; no duplicate matching policy",
+        "no legacy clearance override; unresolved operator-created Organizations block new activation"
+      ],
+      "mutation": "Offline typed operator function publishes/retires; runtime SELECT only",
+      "justification": "Bind exact approved sandbox review policy/consent/scope, not a generic rules engine",
+      "nullability": "All columns NOT NULL except explicitly marked NULL; receipt optional-family columns use exact operation CHECK",
+      "foreign_key_timing": "IMMEDIATE except activation/event/organization/member circular references and current submitted revision: DEFERRABLE INITIALLY DEFERRED"
+    },
+    {
+      "id": "P0-DB-05",
+      "status": "PROPOSED",
+      "name": "merchant.business_reviewer_scope",
+      "migration": 42,
+      "columns": "id UUID; account_id UUID; realm_id UUID; scope_type VARCHAR(16); policy_id UUID NULL; organization_id UUID NULL; permissions TEXT[]; state VARCHAR(8); version BIGINT; expires_at TIMESTAMPTZ; operator_request_id UUID; updated_at TIMESTAMPTZ",
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [
+        "policy_id->merchant.application_policy(id)",
+        "organization_id->merchant.organization(id)"
+      ],
+      "unique": [
+        "(account_id,realm_id,scope_type,coalesce(policy_id,organization_id)) WHERE state=ACTIVE"
+      ],
+      "checks": [
+        "POLICY xor ORGANIZATION target, state ACTIVE|REVOKED",
+        "permissions exact P0-PERM-01..10, distinct finite array",
+        "eligible dedicated SYSTEM Admin via Identity public predicate; no Root/Customer/Staff",
+        "operator receipt+event; version+1; revoke terminal; explicit expiry",
+        "max100 active reviewer candidates per policy, enforced under policy/control lock; current Identity eligibility before page slicing",
+        "application permissions require current ADMIN_MERCHANT_READ as well as ENTRY; no grant supplies those Identity codes",
+        "scope_permission_matrix exact allowlist; ORGANIZATION cannot grant application or task permissions",
+        "revoked row remains immutable; later independent operator issue creates a new scope UUID, never reactivates old scope/receipt"
+      ],
+      "mutation": "Offline operator functions only; runtime SELECT; no public/runtime grant EXECUTE",
+      "justification": "Merchant-owned reviewer/delegation authority, no automatic Identity grant or role conversion",
+      "nullability": "All columns NOT NULL except explicitly marked NULL; receipt optional-family columns use exact operation CHECK",
+      "foreign_key_timing": "IMMEDIATE except activation/event/organization/member circular references and current submitted revision: DEFERRABLE INITIALLY DEFERRED"
+    },
+    {
+      "id": "P0-DB-06",
+      "status": "PROPOSED",
+      "name": "merchant.governance_event",
+      "migration": 42,
+      "columns": "id UUID; actor_kind VARCHAR(16); actor_id UUID NULL; operator_principal TEXT NULL; realm_id UUID NULL; target_type VARCHAR(16); target_id UUID; application_id UUID NULL; organization_id UUID NULL; policy_id UUID NULL; operation VARCHAR(40); revision BIGINT NULL; prior_version BIGINT; new_version BIGINT; reason_code VARCHAR(40); protected_payload BYTEA NULL; request_id UUID; occurred_at TIMESTAMPTZ",
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [
+        "application_id->merchant.application(id)",
+        "organization_id->merchant.organization(id)",
+        "policy_id->merchant.application_policy(id)"
+      ],
+      "unique": [
+        "request_id,operation,target_id"
+      ],
+      "checks": [
+        "actor-kind/source binding; no raw secret/PII in public audit projection",
+        "version+1 on state command; READ_DISCLOSURE event has unchanged business version",
+        "typed finite operation and reason-code enums; append-only",
+        "policy-bound application events require policy_id; Organization-only legacy scope events may have null policy_id and require exact organization_id, never grant application authority"
+      ],
+      "mutation": "INSERT/SELECT only; no UPDATE/DELETE/TRUNCATE",
+      "justification": "Review/decision/assignment/disclosure history and operator grants need authoritative immutable events; retain old business_audit unchanged",
+      "nullability": "All columns NOT NULL except explicitly marked NULL; receipt optional-family columns use exact operation CHECK",
+      "foreign_key_timing": "IMMEDIATE except activation/event/organization/member circular references and current submitted revision: DEFERRABLE INITIALLY DEFERRED"
+    },
+    {
+      "id": "P0-DB-07",
+      "status": "PROPOSED",
+      "name": "merchant.governance_receipt",
+      "migration": 42,
+      "columns": "actor_kind VARCHAR(16); actor_binding TEXT; realm_id UUID NULL; operation VARCHAR(40); operation_key UUID; target_type VARCHAR(16); target_id UUID; original_version BIGINT; result_version BIGINT; input_key_id VARCHAR(64); input_digest BYTEA; event_id UUID; outcome VARCHAR(12); recorded_at TIMESTAMPTZ; expires_at TIMESTAMPTZ",
+      "primary_key": [
+        "actor_kind",
+        "actor_binding",
+        "operation",
+        "operation_key"
+      ],
+      "foreign_keys": [
+        "event_id->merchant.governance_event(id)"
+      ],
+      "unique": [],
+      "checks": [
+        "digest32; outcome COMMITTED; input/target/version binding",
+        "expiry>=recorded+7days; no purge while references/holds",
+        "current authorized actor/realm/operation/target checked before replay; no raw response cache",
+        "actor_kind CUSTOMER|SYSTEM|OPERATOR, actor_binding canonical UUID for human or exact session_user<=63bytes for operator, no role label actor",
+        "target type APPLICATION|ORGANIZATION|SCOPE|POLICY; operation-specific target/event/realm/policy check"
+      ],
+      "mutation": "INSERT/SELECT only; immutable",
+      "justification": "Old command_receipt application FK requires applicant draft-version outcome, cannot represent Admin decision/Organization activation",
+      "nullability": "All columns NOT NULL except explicitly marked NULL; receipt optional-family columns use exact operation CHECK",
+      "foreign_key_timing": "IMMEDIATE except activation/event/organization/member circular references and current submitted revision: DEFERRABLE INITIALLY DEFERRED"
+    },
+    {
+      "id": "P0-DB-08",
+      "status": "PROPOSED",
+      "name": "merchant.application_revision",
+      "migration": 42,
+      "columns": "application_id UUID; revision BIGINT; applicant_id UUID; application_version BIGINT; submitted_input JSONB; activation_display_name VARCHAR(160); content_digest BYTEA; policy_id UUID; policy_version BIGINT; consent_version VARCHAR(64); contact_attestation_id UUID; submitted_at TIMESTAMPTZ",
+      "primary_key": [
+        "application_id",
+        "revision"
+      ],
+      "foreign_keys": [
+        "(application_id,applicant_id)->merchant.application(id,applicant_account_id)",
+        "policy_id->merchant.application_policy(id)"
+      ],
+      "unique": [
+        "application_id,application_version"
+      ],
+      "checks": [
+        "complete typed Input <=32768bytes, revision>0, digest32",
+        "attestation resolved through public Identity API; no cross-owner SQL from Merchant",
+        "immutable after submit; current_revision FK deferred at commit",
+        "activation_display_name nonblank<=160 NFC, no control characters, immutable submitted field; full registeredName<=240 preserved independently"
+      ],
+      "mutation": "INSERT/SELECT only; no UPDATE/DELETE/TRUNCATE",
+      "justification": "Existing application_draft_version is a mutable-working-draft history, not a submitted legal revision",
+      "nullability": "All columns NOT NULL except explicitly marked NULL; receipt optional-family columns use exact operation CHECK",
+      "foreign_key_timing": "IMMEDIATE except activation/event/organization/member circular references and current submitted revision: DEFERRABLE INITIALLY DEFERRED"
+    },
+    {
+      "id": "P0-DB-09",
+      "status": "PROPOSED",
+      "name": "merchant.application_evidence",
+      "migration": 42,
+      "columns": "id UUID; application_id UUID; reservation_id UUID; blob_key UUID; purpose VARCHAR(40); state VARCHAR(16); mime VARCHAR(80); bytes BIGINT; sha256 CHAR(64); scan_version VARCHAR(64) NULL; screened_at TIMESTAMPTZ NULL; version BIGINT; created_at TIMESTAMPTZ; updated_at TIMESTAMPTZ",
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [
+        "application_id->merchant.application(id)",
+        "reservation_id->merchant.application_evidence_reservation(id)"
+      ],
+      "unique": [
+        "blob_key",
+        "reservation_id",
+        "id,application_id"
+      ],
+      "checks": [
+        "bytes1..5242880, sha lowerhex64, inspected MIME allowlist",
+        "CLEAN only after inspected bytes/digest match; frozen referenced content immutable",
+        "archive not physical deletion; quarantine read denied",
+        "CLEAN requires scan_version and screened_at; scanner outage never yields CLEAN"
+      ],
+      "mutation": "bounded reservation/finalize/archive only; no content overwrite of submitted evidence",
+      "justification": "Reuse private Platform bytes/scanner but keep Merchant evidence ownership separate from Orders Claim evidence",
+      "nullability": "All columns NOT NULL except explicitly marked NULL; receipt optional-family columns use exact operation CHECK",
+      "foreign_key_timing": "IMMEDIATE except activation/event/organization/member circular references and current submitted revision: DEFERRABLE INITIALLY DEFERRED"
+    },
+    {
+      "id": "P0-DB-10",
+      "status": "PROPOSED",
+      "name": "merchant.application_evidence_reservation",
+      "migration": 42,
+      "columns": "id UUID; application_id UUID; applicant_id UUID; operation_key UUID; input_digest BYTEA; purpose VARCHAR(40); state VARCHAR(12); created_at TIMESTAMPTZ; expires_at TIMESTAMPTZ; finalized_at TIMESTAMPTZ NULL",
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [
+        "(application_id,applicant_id)->merchant.application(id,applicant_account_id)"
+      ],
+      "unique": [
+        "applicant_id,operation_key"
+      ],
+      "checks": [
+        "state RESERVED|FINALIZED|FAILED|EXPIRED; reserve TTL15min",
+        "count retained+reserved <=5 under application lock; finalized exactly once",
+        "input digest32; expired/foreign reservation cannot finalize"
+      ],
+      "mutation": "state transition only; no destructive cleanup",
+      "justification": "Prevent concurrent file quota race and DB/storage inconsistency outside transaction",
+      "nullability": "All columns NOT NULL except explicitly marked NULL; receipt optional-family columns use exact operation CHECK",
+      "foreign_key_timing": "IMMEDIATE except activation/event/organization/member circular references and current submitted revision: DEFERRABLE INITIALLY DEFERRED"
+    },
+    {
+      "id": "P0-DB-11",
+      "status": "PROPOSED",
+      "name": "merchant.application_revision_evidence",
+      "migration": 42,
+      "columns": "application_id UUID; revision BIGINT; evidence_id UUID; sha256 CHAR(64)",
+      "primary_key": [
+        "application_id",
+        "revision",
+        "evidence_id"
+      ],
+      "foreign_keys": [
+        "(application_id,revision)->merchant.application_revision(application_id,revision)",
+        "(evidence_id,application_id)->merchant.application_evidence(id,application_id)"
+      ],
+      "unique": [],
+      "checks": [
+        "<=5 per revision; CLEAN matching bytes/hash at submit and decision; immutable"
+      ],
+      "mutation": "INSERT/SELECT only",
+      "justification": "Real same-application FK and immutable reviewed byte references, no unvalidated JSON UUID array",
+      "nullability": "All columns NOT NULL except explicitly marked NULL; receipt optional-family columns use exact operation CHECK",
+      "foreign_key_timing": "IMMEDIATE except activation/event/organization/member circular references and current submitted revision: DEFERRABLE INITIALLY DEFERRED"
+    },
+    {
+      "id": "P0-DB-12",
+      "status": "PROPOSED",
+      "name": "merchant.application_reviewer_assignment",
+      "migration": 42,
+      "columns": "application_id UUID; reviewer_account_id UUID; reviewer_scope_id UUID; policy_id UUID; version BIGINT; event_id UUID; assigned_at TIMESTAMPTZ",
+      "primary_key": [
+        "application_id"
+      ],
+      "foreign_keys": [
+        "application_id->merchant.application(id)",
+        "reviewer_scope_id->merchant.business_reviewer_scope(id)",
+        "policy_id->merchant.application_policy(id)",
+        "event_id->merchant.governance_event(id)"
+      ],
+      "unique": [],
+      "checks": [
+        "same policy/current eligible reviewer; no known applicant/conflict relation",
+        "version+1 with assignment event, terminal application no reassignment"
+      ],
+      "mutation": "versioned assign/reassign only; events retain prior assignments",
+      "justification": "Authoritative assignment, no frontend-owned task state",
+      "nullability": "All columns NOT NULL except explicitly marked NULL; receipt optional-family columns use exact operation CHECK",
+      "foreign_key_timing": "IMMEDIATE except activation/event/organization/member circular references and current submitted revision: DEFERRABLE INITIALLY DEFERRED"
+    },
+    {
+      "id": "P0-DB-13",
+      "status": "PROPOSED",
+      "name": "merchant.business_key_registry",
+      "migration": 43,
+      "columns": "jurisdiction_key TEXT; entity_type VARCHAR(32); legal_key TEXT; organization_id UUID; application_id UUID; revision BIGINT; decision_event_id UUID; created_at TIMESTAMPTZ",
+      "primary_key": [
+        "jurisdiction_key",
+        "entity_type",
+        "legal_key"
+      ],
+      "foreign_keys": [
+        "organization_id->merchant.organization(id)",
+        "(application_id,revision)->merchant.application_revision(application_id,revision)",
+        "decision_event_id->merchant.governance_event(id)"
+      ],
+      "unique": [
+        "organization_id",
+        "application_id"
+      ],
+      "checks": [
+        "V14 normalization exact; no key reassignment/takeover; no guessed legacy backfill"
+      ],
+      "mutation": "INSERT/SELECT only; key aliases retained",
+      "justification": "Unique activated business identity; existing offline Organizations have no legal-key registry",
+      "nullability": "All columns NOT NULL except explicitly marked NULL; receipt optional-family columns use exact operation CHECK",
+      "foreign_key_timing": "IMMEDIATE except activation/event/organization/member circular references and current submitted revision: DEFERRABLE INITIALLY DEFERRED"
+    },
+    {
+      "id": "P0-DB-14",
+      "status": "PROPOSED",
+      "name": "merchant.application_activation",
+      "migration": 43,
+      "columns": "application_id UUID; revision BIGINT; decision_event_id UUID; organization_id UUID; owner_membership_id UUID; applicant_id UUID; policy_id UUID; request_id UUID; activated_at TIMESTAMPTZ",
+      "primary_key": [
+        "application_id"
+      ],
+      "foreign_keys": [
+        "(application_id,revision)->merchant.application_revision(application_id,revision)",
+        "(owner_membership_id,organization_id)->merchant.membership(id,organization_id)",
+        "organization_id->merchant.organization(id)",
+        "decision_event_id->merchant.governance_event(id)",
+        "policy_id->merchant.application_policy(id)"
+      ],
+      "unique": [
+        "organization_id",
+        "owner_membership_id",
+        "decision_event_id",
+        "request_id"
+      ],
+      "checks": [
+        "deferred APPROVED + ACTIVE + correct initial Owner + registry + receipt + event in same transaction",
+        "exact dashboard.read Owner grant only; no Team/Finance/Shipping auto-grant",
+        "no APPROVED row without full activation; no remote saga"
+      ],
+      "mutation": "INSERT/SELECT only; immutable",
+      "justification": "Guarded legitimate initial Owner insertion instead of using offline PROVISION",
+      "nullability": "All columns NOT NULL except explicitly marked NULL; receipt optional-family columns use exact operation CHECK",
+      "foreign_key_timing": "IMMEDIATE except activation/event/organization/member circular references and current submitted revision: DEFERRABLE INITIALLY DEFERRED"
+    },
+    {
+      "id": "P0-DB-15",
+      "status": "PROPOSED",
+      "name": "notification.merchant_application_notice",
+      "migration": 43,
+      "columns": "id UUID; event_id UUID; application_id UUID; applicant_id UUID; protected_recipient BYTEA; recipient_key_id VARCHAR(64); template VARCHAR(64); state VARCHAR(24); attempts INTEGER; next_attempt_at TIMESTAMPTZ NULL; created_at TIMESTAMPTZ; accepted_at TIMESTAMPTZ NULL",
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [],
+      "unique": [
+        "event_id,template"
+      ],
+      "checks": [
+        "event/application binding validated by Merchant public event port; no cross-owner table SQL",
+        "finite templates REQUEST_INFORMATION|REJECTED|APPROVED|WITHDRAWN",
+        "queued same transaction; worker outside TX, no proof/credentials in body; accepted by provider is not delivered",
+        "state QUEUED|SENDING|RETRY_WAIT|ACCEPTED_BY_PROVIDER|FAILED|BLOCKED, attempts>=0, template finite",
+        "public event port validates application/event/recipient before enqueue in same transaction; direct DML without matching command/event denied"
+      ],
+      "mutation": "worker state transitions only, no business state mutation",
+      "justification": "Existing Identity invitation/customer proof delivery is purpose-bound; cannot masquerade decision mail as auth proof",
+      "nullability": "All columns NOT NULL except explicitly marked NULL; receipt optional-family columns use exact operation CHECK",
+      "foreign_key_timing": "IMMEDIATE except activation/event/organization/member circular references and current submitted revision: DEFERRABLE INITIALLY DEFERRED"
+    }
+  ],
+  "error_contract": {
+    "id": "P0-ERROR-01",
+    "status": "PROPOSED",
+    "codes": {
+      "400": "VALIDATION_FAILED",
+      "401": "SESSION_INVALID",
+      "403": "ACCESS_DENIED before listing; no sensitive target existence",
+      "404": "RESOURCE_NOT_FOUND for invisible/foreign target",
+      "409": "IDEMPOTENCY_CONFLICT|STATE_CONFLICT|BUSINESS_CONFLICT|SNAPSHOT_EXPIRED",
+      "412": "PRECONDITION_STALE",
+      "422": "POLICY_UNAVAILABLE|EVIDENCE_NOT_READY|CONTACT_PROOF_REQUIRED|LEGACY_KEY_CLEARANCE_REQUIRED",
+      "428": "PRECONDITION_REQUIRED",
+      "429": "RATE_LIMITED",
+      "503": "SERVICE_UNAVAILABLE"
+    },
+    "raw_diagnostics": false
+  },
+  "read_protocol": {
+    "existing_six_paths_unchanged": true,
+    "legacy_default_media_type": "application/json",
+    "opt_in_accept": "application/vnd.argopost.admin-dashboard.v2+json",
+    "new_http_paths_for_metrics": [],
+    "metadata_contract": "admin-p0-dashboard-supporting-read-contract.proposed.md",
+    "missing_source": "UNAVAILABLE not zero",
+    "legacy_snapshots_after_scope_revision": "409 refresh, never widen",
+    "v2_query": "AdminDashboardQueryV2; added applicationState/policyId are Merchant-only, unsupported domain combinations400",
+    "not_acceptable": {
+      "status": 406,
+      "code": "NOT_ACCEPTABLE"
+    },
+    "v2_list_queries": {
+      "shipments": "existing PageQuery + original Query + snapshotId + existing finite Shipment metric",
+      "merchant-applications": "v2 Query + PageQuery + snapshotId + finite APPLICATIONS_* or processing-sample metric",
+      "network": "existing bounded query, remains source unavailable; no new network metric/dataset",
+      "unsupported_combinations": "applicationState/policyId on Shipment list or shipmentStatus on Merchant list reject400"
+    }
+  },
+  "interfaces": [
+    {
+      "id": "P0-PORT-01",
+      "status": "PROPOSED",
+      "signature": "identity.api.admin.AdminCommandAdmission.execute(UUID requestId,ReferencedSubjects(Set<UUID> customers,Set<UUID> admins),Function<AdminCommandContext,T>); context.customer(UUID)->existing CustomerAdmission.Subject; context.admin(UUID)->AdminEligibility(UUID accountId,UUID realmId,String displayName,String permissionVersion,boolean eligible)",
+      "owner": "identity"
+    },
+    {
+      "id": "P0-PORT-02",
+      "status": "PROPOSED",
+      "signature": "identity.api.admin.AdminGovernanceReauthentication.request(AdminCommandContext,AdminStepUpInput,String authorityVersion,UUID key); consume(AdminCommandContext,UUID proofId,String authorityVersion,String op,UUID target,long expectedVersion,byte[] digest)",
+      "owner": "identity"
+    },
+    {
+      "id": "P0-PORT-03",
+      "status": "PROPOSED",
+      "signature": "identity.api.customer.CustomerBusinessContacts.request(CustomerAdmission.Context,UUID application,String email,UUID key); confirm(Context,UUID application,UUID proof,byte[] token,UUID key); consumeAttestation(Context,UUID attestation,UUID application,long revision)",
+      "owner": "identity"
+    },
+    {
+      "id": "P0-PORT-04",
+      "status": "PROPOSED",
+      "signature": "merchant.api.MerchantGovernance.withScope(AdminReadContext|AdminCommandContext,Target,Function<GovernanceScope,T>); scope.require(permission,target); scope.version()",
+      "owner": "merchant"
+    },
+    {
+      "id": "P0-PORT-05",
+      "status": "PROPOSED",
+      "signature": "merchant.api.AdminApplicationFacts.capture(Access,ApplicationCohort,Instant cutoff); page(Access,ApplicationCohort,Selector,int page,int size); availability(Access) retained",
+      "owner": "merchant"
+    },
+    {
+      "id": "P0-PORT-06",
+      "status": "PROPOSED",
+      "signature": "orders.api.AdminOversightReads.get(Access,UUID shipment,Selector); finance remains current AdminObligationFacts",
+      "owner": "orders"
+    },
+    {
+      "id": "P0-PORT-07",
+      "status": "PROPOSED",
+      "signature": "notifications.api.MerchantApplicationNotices.enqueue(Access,ApplicationEvent,CustomerAdmission.Subject recipient); dispatch outside admission transaction through existing configured mail transport",
+      "owner": "notifications",
+      "constraints": "Access revalidates recipient against the current locked Identity callback subject, never trusts a constructed Subject value; protected destination only, redacted diagnostics, no transport I/O in transaction"
+    }
+  ],
+  "sql_proposals": [
+    {
+      "id": "P0-SQL-01",
+      "status": "PROPOSED",
+      "signature": "merchant.configure_local_reviewer_scope(UUID request,UUID actor,UUID realm,TEXT scope_type,UUID scope_id,TEXT[] permissions,TEXT action,BIGINT expected_version,TIMESTAMPTZ expires_at,TEXT reason) RETURNS UUID",
+      "caller": "merchant_governance_operator only; independent session_user, physical binding, audit/digest/receipt; no runtime/PUBLIC"
+    },
+    {
+      "id": "P0-SQL-02",
+      "status": "PROPOSED",
+      "signature": "merchant.publish_local_application_policy(UUID request,UUID policy,BIGINT version,JSONB typed_policy,TEXT reason) RETURNS UUID",
+      "caller": "same independent operator; finite policy fields only, explicit consent/jurisdiction/legacy clearance"
+    },
+    {
+      "id": "P0-SQL-03",
+      "status": "PROPOSED",
+      "signature": "merchant.application_origin_admitted(UUID organization) RETURNS BOOLEAN",
+      "caller": "runtime boolean only; operator origin unchanged OR exact committed approved activation; never returns legal data"
+    },
+    {
+      "id": "P0-SQL-04",
+      "status": "PROPOSED",
+      "signature": "merchant.activate_approved_application(UUID request,UUID application,BIGINT revision,BIGINT expected_version,UUID decision_event,UUID reauth_proof) RETURNS UUID",
+      "caller": "bounded runtime EXECUTE to SECURITY DEFINER writer; all current admission/domain scope/independent review/proof/receipt checks; no CREATE ROLE/operator membership; no generic body Owner/grants"
+    },
+    {
+      "id": "P0-SQL-05",
+      "status": "PROPOSED",
+      "signature": "identity.admin_governance_command_bound(UUID proof,UUID request,UUID actor,TEXT authority_version,TEXT operation,UUID target,BIGINT expected_version,BYTEA digest) RETURNS BOOLEAN",
+      "caller": "Merchant writer boolean predicate only; Identity-owned current physical binding/session/authVersion/deadline/authority version and exact consumed request/proof binding; no raw table SELECT or PUBLIC execute"
+    }
+  ],
+  "database_roles": [
+    {
+      "name": "merchant_governance_operator",
+      "attributes": "NOLOGIN,NOSUPERUSER,NOCREATEDB,NOCREATEROLE,NOREPLICATION,NOBYPASSRLS",
+      "runtime_membership": false
+    },
+    {
+      "name": "merchant_governance_writer",
+      "attributes": "NOLOGIN,NOSUPERUSER,NOCREATEDB,NOCREATEROLE,NOREPLICATION,NOBYPASSRLS",
+      "runtime_membership": false
+    }
+  ],
+  "existing_reuse": [
+    "Admin six READ paths and dedicated six-code Identity admission; no AON grant-issuance rewrite",
+    "MerchantApplications partial Input/Draft CRUD and exact V14 normalization/history",
+    "Identity account/credential/verification/proof/session/limiter/CSRF; existing BUSINESS_CONTACT purpose",
+    "Platform PrivateEvidenceStore and PrivateEvidenceScreening; no new provider",
+    "BusinessWorkspaces/Organization/initial membership; current Team guards except exact receipt-backed activation branch",
+    "Root-only ProductionIdentityReads five GET readers; no staff-wide catalog authority from Admin READ",
+    "CustomerAdmission.Subject already carries current verifiedEmail/securityVersion/eligibility; reuse it under Identity-owned locks, no new recipient lookup port"
+  ],
+  "existing_objects_to_amend": [
+    {
+      "id": "P0-ALTER-01",
+      "status": "PROPOSED",
+      "target": "merchant.application",
+      "delta": "Exact 7-state CHECK/current_revision>=1; policy_id UUID NULL, first_submitted_at TIMESTAMPTZ NULL, terminal_at TIMESTAMPTZ NULL, submitted_revision BIGINT NULL with deferred (id,submitted_revision) FK to application_revision; preserve applicant/created identity; append matching draft_version at every application version mutation"
+    },
+    {
+      "id": "P0-ALTER-02",
+      "status": "PROPOSED",
+      "target": "merchant.guard_application_draft_identity() and trigger guard_application_draft_identity",
+      "delta": "versioned workflow guard/trigger; old binaries fail startup rather than falsely expose DRAFT; complete evidence+receipt required"
+    },
+    {
+      "id": "P0-ALTER-03",
+      "status": "PROPOSED",
+      "target": "merchant.organization admission_origin CHECK",
+      "delta": "add APPLICATION_APPROVED only with deferred activation invariant; no existing origin rewrite"
+    },
+    {
+      "id": "P0-ALTER-04",
+      "status": "PROPOSED",
+      "target": "merchant.guard_workspace_identity(), check_team_member_insert(), check_team_grant_mutation(), check_team_authority_change()",
+      "delta": "initial activation-receipt-only branch; all existing OTA/Initial Owner/last Owner/revocation branches retained"
+    },
+    {
+      "id": "P0-ALTER-05",
+      "status": "PROPOSED",
+      "target": "merchant.initialize_team_policy(), guard_team_policy()",
+      "delta": "permit exactly initial version1 Team policy created by activation writer, no arbitrary Team policy DML or grant"
+    },
+    {
+      "id": "P0-ALTER-06",
+      "status": "PROPOSED",
+      "target": "orders.guard_report_export_audit(), merchant.contact_scope(UUID,UUID,UUID,TEXT)",
+      "delta": "replace only operator-origin predicate with common approved-origin predicate; same permissions/membership/PII and snapshot invariants"
+    },
+    {
+      "id": "P0-ALTER-07",
+      "status": "PROPOSED",
+      "target": "JdbcBusinessWorkspaces.rows; JdbcOrganizationTeam recipient admission query",
+      "delta": "same approved-origin predicate, no grants/context broadening"
+    },
+    {
+      "id": "P0-ALTER-08",
+      "status": "PROPOSED",
+      "target": "CustomerProfileHttp onboarding-receipts finite operation list",
+      "delta": "add only manifest Customer workflow operations; old operations/shape preserved"
+    },
+    {
+      "id": "P0-ALTER-09",
+      "status": "PROPOSED",
+      "target": "AdminApplicationSource and AdminDashboardReads v2",
+      "delta": "canonical submitted revisions/events, scope intersection/fingerprint, opt-in v2 metadata; old default DTO unchanged"
+    }
+  ],
+  "migration_candidates": [
+    {
+      "version": 41,
+      "file": "V41__admin_governance_proof_bridge.sql",
+      "status": "PROPOSED_FILE_NOT_CREATED",
+      "owner": "identity",
+      "depends_on": [
+        40
+      ]
+    },
+    {
+      "version": 42,
+      "file": "V42__merchant_application_review.sql",
+      "status": "PROPOSED_FILE_NOT_CREATED",
+      "owner": "merchant",
+      "depends_on": [
+        41
+      ]
+    },
+    {
+      "version": 43,
+      "file": "V43__merchant_approved_activation.sql",
+      "status": "PROPOSED_FILE_NOT_CREATED",
+      "owner": "merchant/notifications with Orders guard owner review",
+      "depends_on": [
+        42
+      ]
+    }
+  ],
+  "tests": [
+    {
+      "id": "P0-T-01",
+      "status": "NOT_RUN_NOT_IMPLEMENTED",
+      "gate": "PG18 V1-V43 migration/validate/no-op/FK/CHECK/unique/ACL and 39 original hashes; no V33"
+    },
+    {
+      "id": "P0-T-02",
+      "status": "NOT_RUN_NOT_IMPLEMENTED",
+      "gate": "Current SYSTEM/Staff/Customer/Root isolation, no linking, exact six READ compatibility; unknown/mixed realm denial"
+    },
+    {
+      "id": "P0-T-03",
+      "status": "NOT_RUN_NOT_IMPLEMENTED",
+      "gate": "Review scope issue/revoke/expiry/policy change/operator replay, no self-grant/runtime execute or grants by role"
+    },
+    {
+      "id": "P0-T-04",
+      "status": "NOT_RUN_NOT_IMPLEMENTED",
+      "gate": "Real Customer BUSINESS_CONTACT test SMTP proof, same-resource attestation, replay/current session/purpose/expiry"
+    },
+    {
+      "id": "P0-T-05",
+      "status": "NOT_RUN_NOT_IMPLEMENTED",
+      "gate": "Private evidence content/signature/MIME/size/quota/reservation race/upload failure/scanner outage/integrity and disclosure"
+    },
+    {
+      "id": "P0-T-06",
+      "status": "NOT_RUN_NOT_IMPLEMENTED",
+      "gate": "DRAFT submit/completeness/consent/immutable revisions/resubmit/withdraw/terminal/stale ETag; registeredName240 preserved; activation displayName160 accepted/161 rejected, no silent truncation"
+    },
+    {
+      "id": "P0-T-07",
+      "status": "NOT_RUN_NOT_IMPLEMENTED",
+      "gate": "Assignee eligibility, two-person decision, known conflicts, own/related business denial; no automatic risk clearing"
+    },
+    {
+      "id": "P0-T-08",
+      "status": "NOT_RUN_NOT_IMPLEMENTED",
+      "gate": "Same-key lost response after ETag/proof consume; different input conflict; no duplicate audit/mail; current revoke denial"
+    },
+    {
+      "id": "P0-T-09",
+      "status": "NOT_RUN_NOT_IMPLEMENTED",
+      "gate": "Concurrent approve/reject/withdraw and legal-key collisions; exactly one organization/Owner/grant; fail after each write rolls back"
+    },
+    {
+      "id": "P0-T-10",
+      "status": "NOT_RUN_NOT_IMPLEMENTED",
+      "gate": "Legacy unknown keys fail closed; no merge or operator-origin relabel; explicit supported approved-origin admission"
+    },
+    {
+      "id": "P0-T-11",
+      "status": "NOT_RUN_NOT_IMPLEMENTED",
+      "gate": "Suspension/reinstatement, current initial Owner, revoked access, Personal/Team/Shipping/Support regression"
+    },
+    {
+      "id": "P0-T-12",
+      "status": "NOT_RUN_NOT_IMPLEMENTED",
+      "gate": "v1 exact DTO compatible, v2 opt-in, definitions/cohort/last event, distinct count/no Parcel joins inflating fees, stale snapshot/scope"
+    },
+    {
+      "id": "P0-T-13",
+      "status": "NOT_RUN_NOT_IMPLEMENTED",
+      "gate": "Masked oversight/audit/task source records, role scope/PII/unsupported domain denial, no fake ApprovalTask or write from READ"
+    },
+    {
+      "id": "P0-T-14",
+      "status": "NOT_RUN_NOT_IMPLEMENTED",
+      "gate": "Actual HTTPS Customer -> submit -> two independent Admin reviewers -> activation -> workspace, SMTP test only, no intercepted Backend"
+    },
+    {
+      "id": "P0-T-15",
+      "status": "NOT_RUN_NOT_IMPLEMENTED",
+      "gate": "Frontend typecheck/lint/build, architecture/validators, default-off flags, rollback to compatible build with data/history retained"
+    }
+  ],
+  "deployment_gates": [
+    "source/test technical approval of exact package first",
+    "all proposed required tests PASS before source/test readiness",
+    "separate exact-target Local/Test approval, recovery point, operator memberships and published policy/consent",
+    "legacy legal-key clearance and review-policy dataset approved; no guessed regions",
+    "no Production, real grants, demo migration, commit/push/merge in current checkpoint"
+  ],
+  "exclusions": [
+    "principal linking/cross-purpose sessions",
+    "Root/Staff/Customer reassignment",
+    "Owner transfer/recovery/closure/RESTRICTED policy",
+    "Carrier custody/Tracking/POD writes",
+    "Finance/COD/ledger/settlement/pricing grants",
+    "unscoped audit export/PII disclosure",
+    "automatic policy publication/retention purge",
+    "generic ApprovalTask engine"
+  ],
+  "canonicalization": {
+    "step_up_command_digest": "SHA256 of canonical op/target/originalVersion/revision/policy/reason; excludes password and proof reference; recomputed server-side",
+    "receipt_digest": "HMAC existing configured key ring, actor/realm/operation/target/key/originalVersion and exact typed command including proof reference; no plaintext payload cache",
+    "json": "reject unknown/duplicate fields; sorted keys; preserve strings except explicitly reviewed legal-key normalization; never normalize credentials",
+    "replay": "current admission/scope then exact receipt before ETag/consumed-proof checks; changed input409; no repeated effect"
+  },
+  "configuration": [
+    {
+      "key": "merchant.application-workflow.enabled",
+      "type": "boolean",
+      "default": false
+    },
+    {
+      "key": "merchant.admin-governance.enabled",
+      "type": "boolean",
+      "default": false
+    },
+    {
+      "key": "identity.admin-governance-step-up.enabled",
+      "type": "boolean",
+      "default": false
+    },
+    {
+      "key": "identity.business-contact.enabled",
+      "type": "boolean",
+      "default": false
+    },
+    {
+      "key": "identity.business-contact.rate-limit",
+      "type": "approved existing security-contact limiter:3/actor-hour and20/IP-hour; unavailable durable store503",
+      "default": "fail closed"
+    },
+    {
+      "key": "identity.admin-governance-step-up.rate-limit",
+      "type": "reuse existing reauthentication/login password attempt limiter; no unlimited new credential oracle",
+      "default": "fail closed"
+    },
+    {
+      "key": "notification.application-notices.enabled",
+      "type": "boolean",
+      "default": false
+    },
+    {
+      "key": "notification.application-notices.key-id",
+      "type": "existing configured protection key ID; no key generation/fallback; domain-separated encryption",
+      "default": null
+    }
+  ],
+  "database_privilege_boundary": {
+    "operator": "NOLOGIN operator membership granted only by separate exact-target approval; function session_user binding; no runtime/PUBLIC execute",
+    "writer": "SECURITY DEFINER activation function owned by isolated NOLOGIN writer; fixed search_path; all non-PG identifiers qualified; runtime not member; only required table/column rights and Identity boolean predicate",
+    "guard_preservation": "new initial activation branch only; retain every old Team/Owner/grant branch; no generic skip/disabled trigger/custom-GUC authority",
+    "runtime": "no CREATE/ALTER/DROP/TRUNCATE, DML reviewer grants/policy, schema-owner/operator credentials or mutable audit/receipt",
+    "threat_model": "Backend admission is authoritative for HTTP actor; DB guards enforce structural/current scope/proof/transaction evidence, not a claim that a compromised schema owner is harmless"
+  },
+  "metric_registry": {
+    "BOOKINGS": {
+      "cohort": "BOOKED_SHIPMENT",
+      "aggregation": "distinct Shipment IDs",
+      "denominator": null
+    },
+    "PARCELS": {
+      "cohort": "BOOKED_SHIPMENT",
+      "aggregation": "distinct Parcel IDs in same Shipment cohort",
+      "denominator": null
+    },
+    "WAITING_HANDOVER": {
+      "cohort": "BOOKED_SHIPMENT",
+      "aggregation": "distinct same-cohort BOOKED Shipment IDs",
+      "denominator": null
+    },
+    "ACCEPTED": {
+      "cohort": "BOOKED_SHIPMENT",
+      "aggregation": "distinct same-cohort AT_STATION Shipment IDs once",
+      "denominator": null
+    },
+    "CONFIRMED_FEES": {
+      "cohort": "BOOKED_SHIPMENT",
+      "aggregation": "sum exact booked snapshot VND once per Shipment",
+      "denominator": null
+    },
+    "UNPAID_FEES": {
+      "cohort": "BOOKED_SHIPMENT",
+      "aggregation": "sum exact UNPAID obligations once per same Shipment",
+      "denominator": null
+    },
+    "APPLICATIONS_SUBMITTED": {
+      "cohort": "FIRST_SUBMITTED_APPLICATION",
+      "aggregation": "distinct application IDs at captured state SUBMITTED",
+      "denominator": null
+    },
+    "APPLICATIONS_UNDER_REVIEW": {
+      "cohort": "FIRST_SUBMITTED_APPLICATION",
+      "aggregation": "distinct application IDs at captured state UNDER_REVIEW",
+      "denominator": null
+    },
+    "APPLICATIONS_NEEDS_INFORMATION": {
+      "cohort": "FIRST_SUBMITTED_APPLICATION",
+      "aggregation": "distinct application IDs at captured state NEEDS_INFORMATION",
+      "denominator": null
+    },
+    "APPLICATIONS_APPROVED": {
+      "cohort": "FIRST_SUBMITTED_APPLICATION",
+      "aggregation": "distinct application IDs at captured state APPROVED",
+      "denominator": null
+    },
+    "APPLICATIONS_REJECTED": {
+      "cohort": "FIRST_SUBMITTED_APPLICATION",
+      "aggregation": "distinct application IDs at captured state REJECTED",
+      "denominator": null
+    },
+    "APPLICATIONS_WITHDRAWN": {
+      "cohort": "FIRST_SUBMITTED_APPLICATION",
+      "aggregation": "distinct application IDs at captured state WITHDRAWN",
+      "denominator": null
+    },
+    "APPLICATION_PROCESSING_TOTAL_MS": {
+      "cohort": "FIRST_SUBMITTED_APPLICATION with final APPROVED/REJECTED event",
+      "aggregation": "TOTAL committed terminal duration from firstSubmittedAt, integer milliseconds",
+      "denominator": null,
+      "empty_samples": "null/NO_ELIGIBLE_SAMPLE, not measured zero",
+      "average_format": null
+    },
+    "APPLICATION_PROCESSING_MIN_MS": {
+      "cohort": "FIRST_SUBMITTED_APPLICATION with final APPROVED/REJECTED event",
+      "aggregation": "MIN committed terminal duration from firstSubmittedAt, integer milliseconds",
+      "denominator": null,
+      "empty_samples": "null/NO_ELIGIBLE_SAMPLE, not measured zero",
+      "average_format": null
+    },
+    "APPLICATION_PROCESSING_MAX_MS": {
+      "cohort": "FIRST_SUBMITTED_APPLICATION with final APPROVED/REJECTED event",
+      "aggregation": "MAX committed terminal duration from firstSubmittedAt, integer milliseconds",
+      "denominator": null,
+      "empty_samples": "null/NO_ELIGIBLE_SAMPLE, not measured zero",
+      "average_format": null
+    },
+    "APPLICATION_PROCESSING_AVG_MS": {
+      "cohort": "FIRST_SUBMITTED_APPLICATION with final APPROVED/REJECTED event",
+      "aggregation": "AVG committed terminal duration from firstSubmittedAt, integer milliseconds",
+      "denominator": "terminal sample count",
+      "empty_samples": "null/NO_ELIGIBLE_SAMPLE, not measured zero",
+      "average_format": "3 decimal places HALF_UP; metadata retains exact total/sample count"
+    }
+  },
+  "metric_read_endpoints": [
+    {
+      "id": "P0-MET-API-01",
+      "status": "PROPOSED_CHANGED_OPT_IN_ONLY",
+      "method": "GET",
+      "path": "/api/v1/admin/dashboard/context",
+      "request": "no query",
+      "response": "AdminContextV2",
+      "permission": "same six existing granular READ checks plus current applicable Merchant source scope",
+      "v1_unchanged": true
+    },
+    {
+      "id": "P0-MET-API-02",
+      "status": "PROPOSED_CHANGED_OPT_IN_ONLY",
+      "method": "GET",
+      "path": "/api/v1/admin/dashboard",
+      "request": "AdminDashboardQueryV2",
+      "response": "AdminDashboardV2",
+      "permission": "same six existing granular READ checks plus current applicable Merchant source scope",
+      "v1_unchanged": true
+    },
+    {
+      "id": "P0-MET-API-03",
+      "status": "PROPOSED_CHANGED_OPT_IN_ONLY",
+      "method": "GET",
+      "path": "/api/v1/admin/dashboard/shipments",
+      "request": "AdminDashboardQueryV2",
+      "response": "AdminPageV2",
+      "permission": "same six existing granular READ checks plus current applicable Merchant source scope",
+      "v1_unchanged": true
+    },
+    {
+      "id": "P0-MET-API-04",
+      "status": "PROPOSED_CHANGED_OPT_IN_ONLY",
+      "method": "GET",
+      "path": "/api/v1/admin/dashboard/merchant-applications",
+      "request": "AdminDashboardQueryV2",
+      "response": "AdminPageV2",
+      "permission": "same six existing granular READ checks plus current applicable Merchant source scope",
+      "v1_unchanged": true
+    },
+    {
+      "id": "P0-MET-API-05",
+      "status": "PROPOSED_CHANGED_OPT_IN_ONLY",
+      "method": "GET",
+      "path": "/api/v1/admin/dashboard/network",
+      "request": "AdminDashboardQueryV2",
+      "response": "AdminPageV2",
+      "permission": "same six existing granular READ checks plus current applicable Merchant source scope",
+      "v1_unchanged": true
+    },
+    {
+      "id": "P0-MET-API-06",
+      "status": "PROPOSED_CHANGED_OPT_IN_ONLY",
+      "method": "GET",
+      "path": "/api/v1/admin/dashboard/platform",
+      "request": "no query",
+      "response": "AdminPlatformV2",
+      "permission": "same six existing granular READ checks plus current applicable Merchant source scope",
+      "v1_unchanged": true
+    }
+  ],
+  "table_indexes": [
+    {
+      "table": "merchant.application",
+      "index": "(first_submitted_at DESC,id DESC) for submitted records and (policy_id,state,first_submitted_at DESC,id DESC)"
+    },
+    {
+      "table": "merchant.application_revision",
+      "index": "(application_id,revision DESC)"
+    },
+    {
+      "table": "merchant.application_reviewer_assignment",
+      "index": "(reviewer_account_id,application_id)"
+    },
+    {
+      "table": "merchant.business_reviewer_scope",
+      "index": "(account_id,realm_id,state,expires_at)"
+    },
+    {
+      "table": "merchant.governance_event",
+      "index": "(application_id,occurred_at DESC,id DESC) and (organization_id,occurred_at DESC,id DESC)"
+    },
+    {
+      "table": "notification.merchant_application_notice",
+      "index": "(next_attempt_at,id) for QUEUED/RETRY_WAIT"
+    }
+  ],
+  "common_admin_gate": "All new internal APIs require existing current dedicated SYSTEM Admin + ADMIN_DASHBOARD_READ. All application/Organization governance except audit/task-only projections additionally require ADMIN_MERCHANT_READ; domain scopes never issue those Identity grants.",
+  "scope_permission_matrix": {
+    "POLICY": [
+      "application.read",
+      "application.evidence.read",
+      "application.assign",
+      "application.review",
+      "application.decide",
+      "org.read",
+      "org.suspend",
+      "org.reinstate",
+      "audit.read",
+      "task.read"
+    ],
+    "ORGANIZATION": [
+      "org.read",
+      "org.suspend",
+      "org.reinstate",
+      "audit.read"
+    ],
+    "application_target": "POLICY only; no pre-activation Organization exists",
+    "organization_target": "explicit Organization assignment or its immutable activation policy; unknown legacy origin does not infer a policy"
+  }
+}

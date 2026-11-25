@@ -13,9 +13,11 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 /** Enrollment and version-bound recovery delivery; other purposes require their own current-authority checks. */
 public final class JdbcCustomerDeliveryStore implements CustomerDeliveryStore {
     private final JdbcIdentityGrantStore accounts;private final JdbcTemplate jdbc;
+    private final boolean businessContacts;
     private final CustomerProofProtection protection;private final java.util.function.Supplier<com.elogistic.backend.identity.api.customer.CustomerMembershipDeliveryAdmission> memberships;
     public JdbcCustomerDeliveryStore(DataSource source){this(source,null,()->(i,p,o,a,n,e)->false);}
-    public JdbcCustomerDeliveryStore(DataSource source,CustomerProofProtection protection,java.util.function.Supplier<com.elogistic.backend.identity.api.customer.CustomerMembershipDeliveryAdmission> memberships){accounts=new JdbcIdentityGrantStore(Objects.requireNonNull(source));jdbc=new JdbcTemplate(source);this.protection=protection;this.memberships=memberships;}
+    public JdbcCustomerDeliveryStore(DataSource source,CustomerProofProtection protection,java.util.function.Supplier<com.elogistic.backend.identity.api.customer.CustomerMembershipDeliveryAdmission> memberships){this(source,protection,memberships,false);}
+    public JdbcCustomerDeliveryStore(DataSource source,CustomerProofProtection protection,java.util.function.Supplier<com.elogistic.backend.identity.api.customer.CustomerMembershipDeliveryAdmission> memberships,boolean businessContacts){accounts=new JdbcIdentityGrantStore(Objects.requireNonNull(source));jdbc=new JdbcTemplate(source);this.protection=protection;this.memberships=memberships;this.businessContacts=businessContacts;}
     private static Timestamp stamp(Instant time){return time==null?null:Timestamp.from(time);}
     private static Instant instant(ResultSet r,String column)throws SQLException{var value=r.getTimestamp(column);return value==null?null:value.toInstant();}
     private <T>T owned(Function<IdentityGrantStore.Transaction,T> work){
@@ -74,6 +76,13 @@ public final class JdbcCustomerDeliveryStore implements CustomerDeliveryStore {
                 byte[] nonce=r.getBytes(3),ciphertext=r.getBytes(4);try{return protection.openDestination(proof,r.getString(1),r.getString(2),nonce,ciphertext,now);}finally{if(nonce!=null)Arrays.fill(nonce,(byte)0);if(ciphertext!=null)Arrays.fill(ciphertext,(byte)0);}
             },proof.id()).stream().findFirst();
         }
+        if(proof.purpose()==CustomerProof.Purpose.BUSINESS_CONTACT){
+            if(!businessContacts||protection==null||proof.consumedAt()!=null||proof.revokedAt()!=null||!now.isBefore(proof.expiresAt())
+                ||!Boolean.TRUE.equals(jdbc.queryForObject("SELECT identity.local_admin_environment_matches('LOCAL') OR identity.local_admin_environment_matches('TEST')",Boolean.class)))return Optional.empty();
+            var rows=jdbc.queryForList("SELECT r.protected_address,p.verifier_key_id FROM identity.governance_proof_receipt r JOIN identity.customer_proof p ON p.id=r.customer_proof_id JOIN identity.customer_auth_session s ON s.id=p.bound_session_id AND s.account_id=p.subject_id JOIN identity.user_account a ON a.id=p.subject_id JOIN identity.customer_identifier i ON i.account_id=a.id AND i.status='ACTIVE' AND i.exact_email=a.email COLLATE \"C\" WHERE r.operation='REQUEST_BUSINESS_CONTACT' AND p.id=? AND r.actor_id=p.subject_id AND r.customer_session_id=s.id AND r.auth_version=p.bound_auth_version AND s.auth_version=a.auth_version AND s.auth_version=p.bound_auth_version AND s.revoked_at IS NULL AND s.absolute_expires_at>? AND s.idle_expires_at>? AND a.status='ACTIVE' AND a.email_verified",proof.id(),stamp(now),stamp(now));
+            if(rows.size()!=1)return Optional.empty();byte[] envelope=(byte[])rows.getFirst().get("protected_address");
+            try{return Optional.of(GovernanceRecipientEnvelope.open(protection,proof,(String)rows.getFirst().get("verifier_key_id"),envelope,now));}finally{Arrays.fill(envelope,(byte)0);}
+        }
         if(proof.purpose()==CustomerProof.Purpose.CUSTOMER_RECOVERY){
             return jdbc.query("SELECT a.email FROM identity.user_account a JOIN identity.customer_identifier c ON c.account_id=a.id AND c.status='ACTIVE' AND c.exact_email=a.email COLLATE \"C\" WHERE a.id=? AND a.status='ACTIVE' AND a.email_verified AND a.auth_version=?",(r,n)->r.getString(1),proof.subjectId(),proof.authVersion()).stream().findFirst();
         }
@@ -83,8 +92,8 @@ public final class JdbcCustomerDeliveryStore implements CustomerDeliveryStore {
             (r,n)->r.getString(1),proof.id(),stamp(now)).stream().findFirst();
     }
     @Override public Optional<Lease> claim(Instant now){return owned(tx->{
-        var candidate=jdbc.query("SELECT d.id,d.proof_id,CASE WHEN p.purpose='MERCHANT_MEMBERSHIP' THEN p.account_id ELSE p.subject_id END FROM identity.customer_delivery d JOIN identity.customer_proof p ON p.id=d.proof_id WHERE p.purpose IN ('CUSTOMER_ENROLLMENT','CUSTOMER_RECOVERY','MERCHANT_MEMBERSHIP') AND d.status IN ('QUEUED','SENDING','RETRY_WAIT','BLOCKED') AND d.due_at<=? AND (d.status<>'SENDING' OR d.lease_until<=?) ORDER BY d.due_at,d.id LIMIT 1",
-            (r,n)->List.of(r.getObject(1,UUID.class),r.getObject(2,UUID.class),r.getObject(3,UUID.class)),stamp(now),stamp(now)).stream().findFirst();
+        var candidate=jdbc.query("SELECT d.id,d.proof_id,CASE WHEN p.purpose='MERCHANT_MEMBERSHIP' THEN p.account_id ELSE p.subject_id END FROM identity.customer_delivery d JOIN identity.customer_proof p ON p.id=d.proof_id WHERE (p.purpose IN ('CUSTOMER_ENROLLMENT','CUSTOMER_RECOVERY','MERCHANT_MEMBERSHIP') OR (? AND p.purpose='BUSINESS_CONTACT')) AND d.status IN ('QUEUED','SENDING','RETRY_WAIT','BLOCKED') AND d.due_at<=? AND (d.status<>'SENDING' OR d.lease_until<=?) ORDER BY d.due_at,d.id LIMIT 1",
+            (r,n)->List.of(r.getObject(1,UUID.class),r.getObject(2,UUID.class),r.getObject(3,UUID.class)),businessContacts,stamp(now),stamp(now)).stream().findFirst();
         if(candidate.isEmpty())return Optional.empty();var ids=candidate.get();tx.lockAccount(ids.get(2));var proof=proof(ids.get(1));var before=delivery(ids.getFirst());
         var destination=eligible(proof,now);
         if(destination.isEmpty() || !now.isBefore(before.expiresAt())){
@@ -92,9 +101,10 @@ public final class JdbcCustomerDeliveryStore implements CustomerDeliveryStore {
         }
         if(before.attempts()==5){update(before,before.exhaust(now),null,now);audit(proof.subjectId(),UUID.randomUUID(),"CUSTOMER_DELIVERY_FAILED",now);return Optional.empty();}
         var after=before.claim(UUID.randomUUID(),now);update(before,after,null,now);audit(proof.subjectId(),after.leaseId(),"CUSTOMER_DELIVERY_LEASED",now);
+        UUID application=proof.purpose()==CustomerProof.Purpose.BUSINESS_CONTACT?jdbc.queryForObject("SELECT target_id FROM identity.governance_proof_receipt WHERE operation='REQUEST_BUSINESS_CONTACT' AND customer_proof_id=?",UUID.class,proof.id()):null;
         return Optional.of(jdbc.queryForObject("SELECT verifier_key_id,encryption_key_id,nonce,ciphertext,recipient_nonce,recipient_ciphertext FROM identity.customer_delivery WHERE id=?",(r,n)->{
             byte[] nonce=r.getBytes(3),ciphertext=r.getBytes(4),recipientNonce=r.getBytes(5),recipientCiphertext=r.getBytes(6);
-            try{return new Lease(after,proof,r.getString(1),r.getString(2),destination.get(),nonce,ciphertext,recipientNonce,recipientCiphertext);}
+            try{return new Lease(after,proof,r.getString(1),r.getString(2),destination.get(),nonce,ciphertext,recipientNonce,recipientCiphertext,application);}
             finally{Arrays.fill(nonce,(byte)0);Arrays.fill(ciphertext,(byte)0);Arrays.fill(recipientNonce,(byte)0);Arrays.fill(recipientCiphertext,(byte)0);}
         },after.id()));
     });}

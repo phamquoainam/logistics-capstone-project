@@ -26,3 +26,12 @@ def database(owner):
     # Owner AON-ACL-02: only the freshly owned isolated database catalog.
     return ('REVOKE EXECUTE ON FUNCTION pg_catalog.pg_control_system() FROM PUBLIC;\n'
             + f'GRANT EXECUTE ON FUNCTION pg_catalog.pg_control_system() TO identity_admin_writer,{owner};\n')
+
+
+def merchant_governance_roles(owner):
+    """P0 approved prerequisites, only for a verified disposable source/test cluster."""
+    owner = _owner(owner)
+    return f"""CREATE ROLE merchant_governance_operator NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
+CREATE ROLE merchant_governance_writer NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
+GRANT merchant_governance_writer TO {owner} WITH INHERIT FALSE, SET TRUE;
+"""

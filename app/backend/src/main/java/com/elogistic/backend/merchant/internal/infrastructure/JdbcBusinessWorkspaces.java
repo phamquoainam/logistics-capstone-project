@@ -8,6 +8,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 public final class JdbcBusinessWorkspaces implements BusinessWorkspaces {
+    private String originPredicate(){return Boolean.TRUE.equals(jdbc.queryForObject("SELECT to_regprocedure('merchant.application_origin_admitted(uuid)') IS NOT NULL",Boolean.class))?"merchant.application_origin_admitted(o.id)":"o.admission_origin='LOCAL_OPERATOR_PROVISIONED'";}
     private final DataSource source; private final JdbcTemplate jdbc; private final boolean enabled; private final String environment;
     private static final Set<String> PERMISSIONS=Set.of("dashboard.read","dashboard.finance.read","dashboard.staff.read","shipment.draft.read","shipment.draft.write","shipment.import","shipment.template.manage","shipment.prepare","shipment.quote","shipment.book","shipment.label.read","shipment.handover.read","shipment.handover.manage","facility.read","facility.manage","defaults.manage","shipment.export","shipment.export.pii","shipment.assign","shipment.reports.read","shipment.finance.read","contacts.read","contacts.write","contacts.import","contacts.export","shipment.actions.manage","shipment.actions.respond","team.read","team.invite","team.access.manage","team.membership.manage","team.audit.read","support.read","support.write","support.assign","support.reports.read","support.notifications.manage");
     public JdbcBusinessWorkspaces(DataSource source,boolean enabled,String environment){this.source=source;this.jdbc=new JdbcTemplate(source);this.enabled=enabled;this.environment=environment;}
@@ -30,6 +31,7 @@ public final class JdbcBusinessWorkspaces implements BusinessWorkspaces {
     }
     private record Row(Context context,UUID owner){}
     private List<Row> rows(Access access,UUID org){
+        String origin=originPredicate();
         return jdbc.query("""
             SELECT o.id,o.display_name,m.id membership_id,m.role,m.authority_version,owner.account_id owner_account,
                    array_agg(g.permission ORDER BY g.permission) permissions
@@ -38,12 +40,12 @@ public final class JdbcBusinessWorkspaces implements BusinessWorkspaces {
             JOIN merchant.member_grant g ON g.membership_id=m.id AND g.organization_id=o.id
             WHERE m.account_id=? AND m.state='ACTIVE' AND o.state='ACTIVE'
               AND owner.state='ACTIVE' AND owner.role='OWNER' AND o.environment=?
-              AND o.admission_origin='LOCAL_OPERATOR_PROVISIONED' AND g.scope='ORGANIZATION'
+              AND %s AND g.scope='ORGANIZATION'
               AND (?::uuid IS NULL OR o.id=?)
             GROUP BY o.id,m.id,owner.account_id
             HAVING bool_or(g.permission='dashboard.read')
             ORDER BY o.id LIMIT 101
-            """,(r,n)->{
+            """.formatted(origin),(r,n)->{
                 var array=r.getArray("permissions"); List<String> permissions;
                 try{permissions=Arrays.stream((Object[])array.getArray()).map(Object::toString).toList();}finally{array.free();}
                 if(!PERMISSIONS.containsAll(permissions))throw new Failure("BUSINESS_CONTEXT_UNAVAILABLE");

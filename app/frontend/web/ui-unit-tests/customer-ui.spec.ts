@@ -28,6 +28,72 @@ async function fixture(context: BrowserContext, authenticated = false, special?:
   });
   return calls;
 }
+
+test('business contact fragment is private and an unknown draft save retries the exact command', async ({ page, context }) => {
+  const applicationId = '10000000-0000-4000-8000-000000000021', token = 'Q'.repeat(43);
+  let saves = 0, version = 1;
+  const input = { representativeEmail: 'contact@example.invalid', registeredName: 'Synthetic application' };
+  const calls = await fixture(context, true, async (route, call) => {
+    if (call.path.endsWith('/business-contact-confirmations')) { await route.fulfill({ status: 200, contentType: 'application/json', headers: { 'Cache-Control': 'no-store' }, body: JSON.stringify({ id: proofId, applicationId, verifiedAt: new Date().toISOString(), expiresAt: new Date(Date.now() + 899000).toISOString() }) }); return true; }
+    if (call.path === '/api/v1/merchant-applications/' + applicationId) {
+      if (call.method === 'PUT') { version = 2; if (++saves === 1) { await route.abort('failed'); return true; } }
+      await route.fulfill({ status: 200, contentType: 'application/json', headers: { ETag: '"v' + version + '"' }, body: JSON.stringify({ id: applicationId, applicantAccountId: account, state: 'DRAFT', revision: 1, version, draft: { ...input, ...(version === 2 ? { businessContactAttestationId: proofId } : {}) } }) }); return true;
+    }
+    return false;
+  });
+  const urls: string[] = []; page.on('request', request => urls.push(request.url()));
+  await page.goto('/personal/profile#applicationId=' + applicationId + '&proofId=' + proofId + '&proof=' + token);
+  await expect(page.getByRole('heading', { name: 'Xác minh email liên hệ doanh nghiệp', exact: true })).toBeVisible();
+  expect(new URL(page.url()).hash).toBe(''); expect(urls.some(url => url.includes(token))).toBe(false); await expect(page.locator('body')).not.toContainText(token);
+  expect(calls.filter(call => call.path.endsWith('/business-contact-confirmations'))).toHaveLength(0);
+  await page.getByRole('button', { name: 'Xác nhận email liên hệ', exact: true }).click(); await expect(page.getByRole('alert')).toContainText('Chưa thể xác nhận'); expect(saves).toBe(1);
+  await page.getByRole('button', { name: 'Xác nhận email liên hệ', exact: true }).click(); await expect(page).toHaveURL('/personal/applications/' + applicationId);
+  const writes = calls.filter(call => call.path === '/api/v1/merchant-applications/' + applicationId && call.method === 'PUT'); expect(writes).toHaveLength(2); expect(writes[0].key).toBe(writes[1].key); expect(writes[0].body).toEqual(writes[1].body);
+  expect(await page.evaluate(() => [localStorage.length, sessionStorage.length])).toEqual([0, 0]);
+});
+
+test('invalid business contact query proof is stripped without a confirmation request', async ({ page, context }) => {
+  const calls = await fixture(context, true); await page.goto('/personal/profile?proof=' + 'Q'.repeat(43) + '#applicationId=' + account + '&proofId=' + proofId + '&proof=' + 'Q'.repeat(43));
+  await expect(page.getByRole('heading', { name: 'Hồ sơ cá nhân', exact: true })).toBeVisible(); expect(new URL(page.url()).hash).toBe(''); expect(new URL(page.url()).search).toBe('');
+  await expect(page.getByRole('button', { name: 'Xác nhận email liên hệ', exact: true })).toHaveCount(0); expect(calls.filter(call => call.path.endsWith('/business-contact-confirmations'))).toHaveLength(0);
+});
+
+test('applicant reads exact published statements, explicitly consents and retries lost submission without a new command', async ({ page, context }) => {
+  const app = '10000000-0000-4000-8000-000000000041', registration = '10000000-0000-4000-8000-000000000042', authority = '10000000-0000-4000-8000-000000000043';
+  let version = 3, state = 'DRAFT', submissions = 0;
+  let input: Record<string, unknown> = { entityType: 'COMPANY', jurisdiction: 'SYNTHETIC-J1', registeredName: 'Synthetic full legal name', legalIdentifier: 'SYNTHETIC-REG', registeredAddress: { country: 'VN', administrativeArea: 'Synthetic', locality: 'Synthetic', addressLine: 'Synthetic' }, operatingAddress: { country: 'VN', administrativeArea: 'Synthetic', locality: 'Synthetic', addressLine: 'Synthetic' }, representativeName: 'Synthetic representative', representativeEmail: 'contact@example.invalid', representativeRelationship: 'Synthetic authority', businessContactAttestationId: proofId, evidenceIds: [registration, authority] };
+  const calls = await fixture(context, true, async (route, call) => {
+    const reply = (value: unknown, headers: Record<string, string> = {}) => route.fulfill({ status: 200, contentType: 'application/json', headers: { 'Cache-Control': 'no-store', ...headers }, body: JSON.stringify(value) });
+    const path = '/api/v1/merchant-applications/' + app;
+    if (call.path === path + '/requirements') { await reply({ applicationId: app, policyId: proofId, policyVersion: '7', consentVersion: 'SYNTHETIC-7', consentStatements: { accuracy: 'Synthetic accuracy statement seven', representation: 'Synthetic authority statement seven' }, requiredEvidence: ['REGISTRATION', 'REPRESENTATIVE_AUTHORIZATION'] }); return true; }
+    if (call.path.startsWith(path + '/evidence/')) { const id = call.path.split('/').at(-1); await reply({ id, applicationId: app, purpose: id === registration ? 'REGISTRATION' : 'REPRESENTATIVE_AUTHORIZATION', state: 'CLEAN', mime: 'application/pdf', bytes: 256, sha256: 'a'.repeat(64), version: 1, screenedAt: new Date().toISOString() }, { ETag: '"v1"' }); return true; }
+    if (call.path === path || call.path === path + '/submit') {
+      if (call.method === 'PUT') { input = call.body!; version = 4; }
+      if (call.path.endsWith('/submit')) { state = 'SUBMITTED'; version = 5; if (++submissions === 1) { await route.abort('failed'); return true; } }
+      await reply({ id: app, applicantAccountId: account, state, revision: 1, version, draft: input }, { ETag: '"v' + version + '"' }); return true;
+    }
+    return false;
+  });
+  await page.goto('/personal/applications/' + app);
+  await expect(page.getByText('Chính sách phiên bản 7 · Cam kết SYNTHETIC-7')).toBeVisible();
+  const submit = page.getByRole('button', { name: 'Nộp hồ sơ xét duyệt', exact: true }); await expect(submit).toBeDisabled();
+  await expect(page.getByLabel('Synthetic accuracy statement seven', { exact: true })).not.toBeChecked(); await expect(page.getByLabel('Synthetic authority statement seven', { exact: true })).not.toBeChecked();
+  await page.getByLabel('Tên hiển thị doanh nghiệp', { exact: true }).fill('Synthetic display'); await page.getByLabel('Synthetic accuracy statement seven', { exact: true }).check(); await expect(submit).toBeDisabled(); await page.getByLabel('Synthetic authority statement seven', { exact: true }).check(); await submit.click();
+  await expect(page.getByText('Chưa xác định kết quả.', { exact: false })).toBeVisible(); expect(submissions).toBe(1); await expect(page.getByRole('button', { name: 'Lưu bản nháp', exact: true })).toBeDisabled();
+  await page.getByRole('button', { name: 'Kiểm tra / thử lại đúng yêu cầu' }).click(); await expect(page.getByText('Hồ sơ đã được ghi nhận.', { exact: false })).toBeVisible();
+  const writes = calls.filter(c => c.path.endsWith('/submit')); expect(writes).toHaveLength(2); expect(writes[0].key).toBe(writes[1].key); expect(writes[0].body).toEqual({ organizationDisplayName: 'Synthetic display' }); expect(writes[1].body).toEqual(writes[0].body);
+  const updates = calls.filter(c => c.method === 'PUT' && c.path.endsWith(app)); expect(updates).toHaveLength(1); expect(updates[0].body?.declarations).toEqual({ accuracy: true, representation: true, consentVersion: 'SYNTHETIC-7' });
+  expect(await page.evaluate(() => [localStorage.length, sessionStorage.length])).toEqual([0, 0]);
+});
+
+test('applicant cannot invent a policy or consent when requirements are unavailable', async ({ page, context }) => {
+  const app = '10000000-0000-4000-8000-000000000044';
+  const calls = await fixture(context, true, async (route, call) => {
+    if (call.path.endsWith('/requirements')) { await route.fulfill({ status: 422, contentType: 'application/json', body: JSON.stringify({ code: 'POLICY_UNAVAILABLE' }) }); return true; }
+    if (call.path === '/api/v1/merchant-applications/' + app) { await route.fulfill({ status: 200, contentType: 'application/json', headers: { ETag: '"v1"' }, body: JSON.stringify({ id: app, applicantAccountId: account, state: 'DRAFT', revision: 1, version: 1, draft: {} }) }); return true; } return false;
+  });
+  await page.goto('/personal/applications/' + app); await expect(page.getByRole('alert')).toContainText('Chưa có chính sách phù hợp'); await expect(page.getByRole('button', { name: 'Nộp hồ sơ xét duyệt', exact: true })).toHaveCount(0); expect(calls.filter(c => c.path.endsWith('/submit'))).toHaveLength(0);
+});
 test('registration validates password and prevents duplicate submission without claiming email delivery', async ({ page, context }) => {
   const calls = await fixture(context); await page.goto('/register');
   expect(await page.getByRole('checkbox').locator('..').evaluate(element => getComputedStyle(element).display)).toBe('flex');

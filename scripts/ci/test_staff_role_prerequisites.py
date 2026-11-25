@@ -7,12 +7,13 @@ roles,database=_module.roles,_module.database
 
 
 class StaffRolePrerequisiteTests(unittest.TestCase):
-    def test_only_exact_owned_owner_and_six_approved_nologin_roles(self):
+    def test_only_exact_owned_owner_and_eight_approved_nologin_roles(self):
         owner='elogistics_test_owner_012345abcdef'
         sql=roles(owner)
-        self.assertEqual(6,sql.count('CREATE ROLE '))
+        self.assertEqual(8,sql.count('CREATE ROLE '))
         for role in ('elogistics_local_staff_operator','identity_staff_writer','support_grant_writer',
-                     'elogistics_local_admin_operator','identity_admin_writer','elogistics_local_realm_operator'):
+                     'elogistics_local_admin_operator','identity_admin_writer','elogistics_local_realm_operator',
+                     'merchant_governance_operator','merchant_governance_writer'):
             self.assertIn('CREATE ROLE '+role+' NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;',sql)
         self.assertIn('TO '+owner+' WITH INHERIT FALSE, SET TRUE;',sql)
         self.assertEqual('GRANT EXECUTE ON FUNCTION pg_catalog.pg_control_system() TO identity_staff_writer,'+owner+';\n'

@@ -34,7 +34,7 @@ public final class ProductionReadGuard extends OncePerRequestFilter {
         try {
             if(!request.isSecure() || !allowedMethod(request)){deny(response,401,"SESSION_INVALID");return;}
             var origins=Collections.list(request.getHeaders("Origin"));
-            if(origins.size()>1 || (!origins.isEmpty() && !origin.equals(origins.getFirst()))){deny(response,401,"SESSION_INVALID");return;}
+            if(origins.size()>1 || (!origins.isEmpty() && !origin.equals(origins.getFirst())) || (governanceWrite(request)&&origins.isEmpty())){deny(response,401,"SESSION_INVALID");return;}
             var headers=Collections.list(request.getHeaders("Authorization"));
             if(headers.size()!=1 || !headers.getFirst().regionMatches(true,0,"Bearer ",0,7) || request.getParameter("access_token")!=null){deny(response,401,"SESSION_INVALID");return;}
             var verified=tokens.verify(headers.getFirst().substring(7));
@@ -45,6 +45,7 @@ public final class ProductionReadGuard extends OncePerRequestFilter {
                 chain.doFilter(request,response);
             } finally {SecurityContextHolder.clearContext();}
         } catch(com.elogistic.backend.identity.api.IdentityCommandFailure rejected) {if(!response.isCommitted())deny(response,401,"SESSION_INVALID");}
+        catch(org.springframework.dao.DataAccessException unavailable){if(!response.isCommitted())deny(response,503,"SERVICE_UNAVAILABLE");}
         catch(RuntimeException rejected){if(!response.isCommitted())deny(response,401,"SESSION_INVALID");}
         catch(Exception rejected){throw new ServletException("IDENTITY_REQUEST_FAILED");}
     }
@@ -52,7 +53,11 @@ public final class ProductionReadGuard extends OncePerRequestFilter {
         if("GET".equals(request.getMethod()))return true;
         String path=request.getRequestURI().substring(request.getContextPath().length());
         return ("PUT".equals(request.getMethod()) && path.matches("/api/v1/admin/users/[0-9a-fA-F-]{36}/grants"))
-            || ("POST".equals(request.getMethod()) && path.matches("/api/v1/admin/users/[0-9a-fA-F-]{36}/(disable|reactivate)"));
+            || ("POST".equals(request.getMethod()) && path.matches("/api/v1/admin/users/[0-9a-fA-F-]{36}/(disable|reactivate)")) || governanceWrite(request);
+    }
+    private static boolean governanceWrite(HttpServletRequest request){
+        String path=request.getRequestURI().substring(request.getContextPath().length());
+        return "POST".equals(request.getMethod())&&(path.equals("/api/v1/admin/governance-reauthentications")||path.matches("/api/v1/admin/merchant-applications/[0-9a-f-]{36}/(review-assignment|review|request-information|rejection|approval)")||path.matches("/api/v1/admin/merchant-organizations/[0-9a-f-]{36}/(suspension|reinstatement)"));
     }
     public static void deny(HttpServletResponse response,int status,String code) throws IOException {
         response.setStatus(status);response.setContentType("application/json;charset=UTF-8");

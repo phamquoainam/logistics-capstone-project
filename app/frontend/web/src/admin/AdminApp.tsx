@@ -22,7 +22,7 @@ function errorText(code: string | null) {
   }
 }
 function Brand() {
-  return <Link className="ap-brand" to="/admin/login" aria-label="ArgoPost Admin"><img src="/media/argopost-logo-primary.png" alt="ArgoPost" /><span>ADMIN PORTAL</span></Link>;
+  return <Link className="ap-brand" to="/admin/login" aria-label="ArgoPost Administration Console"><img src="/media/argopost-logo-primary.png" alt="ArgoPost" /><span>INTERNAL · ADMINISTRATION</span></Link>;
 }
 function Login() {
   const location = useLocation();
@@ -84,7 +84,7 @@ export default function AdminApp() {
   const activation = useLocation().pathname === '/admin/activate';
   useEffect(() => {
     const previousTitle = document.title;
-    document.title = 'ArgoPost | Quản trị';
+    document.title = 'ArgoPost | Administration Console';
     if (activation) return () => { document.title = previousTitle; };
     clearAdminInvitation();
     void adminSession.initialize();
@@ -97,5 +97,5 @@ export default function AdminApp() {
     window.addEventListener('focus', check);
     return () => { document.title = previousTitle; window.clearInterval(timer); window.removeEventListener('focus', check); unsubscribe(); channel?.close(); };
   }, [activation]);
-  return <Routes><Route path="/admin/activate" element={<AdminActivation />} /><Route path="/admin/login" element={<Login />} /><Route path="/admin" element={<AccessBoundary />} /><Route path="*" element={<Navigate to="/admin/login" replace />} /></Routes>;
+  return <Routes><Route path="/admin/activate" element={<AdminActivation />} /><Route path="/admin/login" element={<Login />} /><Route path="/admin/*" element={<AccessBoundary />} /><Route path="*" element={<Navigate to="/admin/login" replace />} /></Routes>;
 }

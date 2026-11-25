@@ -95,7 +95,32 @@ public final class AdminDashboardService implements AdminDashboardReads {
         a.require(AdminReadContext.SHIPMENT);if(Set.of("CONFIRMED_FEES","UNPAID_FEES").contains(Objects.toString(metric,"")))a.require(AdminReadContext.FINANCE);
         if(!Set.of("BOOKINGS","WAITING_HANDOVER","ACCEPTED","PARCELS","CONFIRMED_FEES","UNPAID_FEES").contains(Objects.toString(metric,""))||page<0||page>10000||size<1||size>50)throw invalid();
         var verified=verify(a,q,snapshot,now);validateCohort(a,rows,money);if(!MessageDigest.isEqual(verified.fingerprint().getBytes(StandardCharsets.US_ASCII),fingerprint(rows,money).getBytes(StandardCharsets.US_ASCII)))throw new AdminFailure("SNAPSHOT_EXPIRED");
-        var selected=rows.stream().filter(r->!metric.equals("WAITING_HANDOVER")&&!metric.equals("ACCEPTED")||r.status().equals(metric.equals("ACCEPTED")?"AT_STATION":"BOOKED")).sorted(Comparator.comparing(AdminShipmentFacts.Row::bookedAt).thenComparing(AdminShipmentFacts.Row::id).reversed()).toList();
+        var selected=com.elogistic.backend.notifications.api.AdminMetricCohorts.select(rows,metric);
         long start=(long)page*size;return new Page(selected.stream().skip(start).limit(size).toList(),page,size,start+size<selected.size(),snapshot);
     }
+    @Override public QueryV2 queryV2(Map<String,String> parameters,Instant now,boolean page){
+        if(parameters==null)throw invalid();var p=new HashMap<>(parameters);String state=p.remove("applicationState"),policy=p.remove("policyId");
+        var old=query(p,now,page);UUID id=null;
+        try{if(state!=null&&!Set.of("SUBMITTED","UNDER_REVIEW","NEEDS_INFORMATION","APPROVED","REJECTED","WITHDRAWN").contains(state))throw invalid();if(policy!=null){id=UUID.fromString(policy);if(!id.toString().equals(policy)||id.equals(new UUID(0,0)))throw invalid();}}catch(IllegalArgumentException bad){throw invalid();}
+        if(old.shipmentStatus()!=null&&(state!=null||id!=null))throw invalid();
+        return new QueryV2(old.from(),old.to(),old.grain(),old.shipmentStatus(),old.regionId(),state,id);
+    }
+    private static String canonicalV2(QueryV2 q){return canonical(q.legacy())+"|"+Objects.toString(q.applicationState(),"")+"|"+Objects.toString(q.policyId(),"");}
+    @Override public String snapshotV2(AdminReadContext actor,QueryV2 q,Instant cutoff,String scope,String fingerprint){
+        actor.require(AdminReadContext.ENTRY);if(scope==null||!scope.matches("[a-f0-9]{64}")||fingerprint==null||!fingerprint.matches("[a-f0-9]{64}"))throw invalid();
+        String payload=String.join("\n","ARGOPOST_ADMIN_SNAPSHOT_2",actor.accountId().toString(),actor.realmId().toString(),actor.permissionVersion(),canonicalV2(q),cutoff.toString(),scope,fingerprint,"ARGO_ADMIN_METRICS_2");
+        byte[] bytes=payload.getBytes(StandardCharsets.UTF_8);return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)+"."+Base64.getUrlEncoder().withoutPadding().encodeToString(hmac(key,bytes));
+    }
+    @Override public SelectorV2 selectorV2(AdminReadContext actor,QueryV2 q,String token,Instant now){
+        actor.require(AdminReadContext.ENTRY);
+        try{
+            if(token==null||token.length()>4096||!token.matches("[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]{43}"))throw new IllegalArgumentException();
+            var parts=token.split("\\.");byte[] bytes=Base64.getUrlDecoder().decode(parts[0]),signature=Base64.getUrlDecoder().decode(parts[1]);
+            if(!Base64.getUrlEncoder().withoutPadding().encodeToString(bytes).equals(parts[0])||!Base64.getUrlEncoder().withoutPadding().encodeToString(signature).equals(parts[1])||!MessageDigest.isEqual(signature,hmac(key,bytes)))throw new IllegalArgumentException();
+            String[] fields=new String(bytes,StandardCharsets.UTF_8).split("\n",-1);
+            if(fields.length!=9||!fields[0].equals("ARGOPOST_ADMIN_SNAPSHOT_2")||!fields[1].equals(actor.accountId().toString())||!fields[2].equals(actor.realmId().toString())||!fields[3].equals(actor.permissionVersion())||!fields[4].equals(canonicalV2(q))||!fields[8].equals("ARGO_ADMIN_METRICS_2")||!fields[6].matches("[a-f0-9]{64}")||!fields[7].matches("[a-f0-9]{64}"))throw new IllegalArgumentException();
+            Instant cutoff=Instant.parse(fields[5]);if(now.isBefore(cutoff)||!now.isBefore(cutoff.plusSeconds(900)))throw new IllegalArgumentException();return new SelectorV2(q,cutoff,fields[6],fields[7]);
+        }catch(IllegalArgumentException|DateTimeException malformed){throw new AdminFailure("SNAPSHOT_EXPIRED");}
+    }
+
 }

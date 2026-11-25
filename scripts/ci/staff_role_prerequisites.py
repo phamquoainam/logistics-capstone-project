@@ -24,7 +24,7 @@ def roles(owner):
 CREATE ROLE identity_staff_writer NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
 CREATE ROLE support_grant_writer NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
 GRANT identity_staff_writer,support_grant_writer TO {owner} WITH INHERIT FALSE, SET TRUE;
-""" + _admin.roles(owner)
+""" + _admin.roles(owner) + _admin.merchant_governance_roles(owner)
 
 
 def database(owner):

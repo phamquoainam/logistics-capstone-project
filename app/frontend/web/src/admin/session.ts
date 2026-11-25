@@ -76,22 +76,61 @@ export function createAdminSession(ports: Ports = { fetch: (...args) => fetch(..
     subscribe: (fn: () => void) => { listeners.add(fn); return () => { listeners.delete(fn); }; },
     initialize: () => initialization ??= restore(),
     discard: () => forget('SESSION_INVALID'),
-    read: <T>(operation: 'context' | 'dashboard' | 'shipments' | 'merchant-applications' | 'network' | 'platform', parameters: URLSearchParams, parse: (value: unknown) => T): Promise<T> => ports.lock(async () => {
+    read: <T>(operation: 'context' | 'dashboard' | 'shipments' | 'merchant-applications' | 'network' | 'platform' | 'shipment-detail' | 'governance-context' | 'application-list' | 'application-detail' | 'application-revisions' | 'application-review-data' | 'reviewer-candidates' | 'application-events' | 'organization-list' | 'organization-detail' | 'audit' | 'work-items', parameters: URLSearchParams, parse: (value: unknown) => T, resourceId?: string, version?: 2): Promise<T> => ports.lock(async () => {
       try {
-        if (!['context', 'dashboard', 'shipments', 'merchant-applications', 'network', 'platform'].includes(operation)) throw new AdminSessionError('VALIDATION_FAILED');
+        if (!['context', 'dashboard', 'shipments', 'merchant-applications', 'network', 'platform', 'shipment-detail', 'governance-context', 'application-list', 'application-detail', 'application-revisions', 'application-review-data', 'reviewer-candidates', 'application-events', 'organization-list', 'organization-detail', 'audit', 'work-items'].includes(operation) || (['shipment-detail', 'application-detail', 'application-revisions', 'application-review-data', 'application-events', 'organization-detail'].includes(operation) ? !uuid(resourceId) : resourceId !== undefined)) throw new AdminSessionError('VALIDATION_FAILED');
         if (ports.protocol() !== 'https:') throw new AdminSessionError('HTTPS_REQUIRED');
         if (state.status !== 'authenticated' || !token) throw new AdminSessionError('SESSION_INVALID');
         if (expiresAt <= ports.now() + 30000) await establish(await request('refresh', undefined, await csrf()));
-        const path = operation === 'dashboard' ? '' : '/' + operation;
+        const path = operation === 'work-items' ? '/api/v1/admin/work-items' : operation === 'audit' ? '/api/v1/admin/audit' : operation === 'organization-list' ? '/api/v1/admin/merchant-organizations' : operation === 'organization-detail' ? '/api/v1/admin/merchant-organizations/' + resourceId : operation === 'shipment-detail' ? '/api/v1/admin/shipments/' + resourceId : operation === 'reviewer-candidates' ? '/api/v1/admin/merchant-governance/reviewer-candidates' : operation === 'governance-context' ? '/api/v1/admin/merchant-governance/context' : operation === 'application-list' ? '/api/v1/admin/merchant-applications' : ['application-detail', 'application-revisions', 'application-review-data', 'application-events'].includes(operation) ? '/api/v1/admin/merchant-applications/' + resourceId + (operation === 'application-revisions' ? '/revisions' : operation === 'application-review-data' ? '/review-data' : operation === 'application-events' ? '/events' : '') : '/api/v1/admin/dashboard' + (operation === 'dashboard' ? '' : '/' + operation);
         let response: Response;
-        try { response = await ports.fetch('/api/v1/admin/dashboard' + path + (parameters.size ? '?' + parameters.toString() : ''), { method: 'GET', headers: { Authorization: 'Bearer ' + token }, credentials: 'same-origin', mode: 'same-origin', redirect: 'error', cache: 'no-store', referrerPolicy: 'no-referrer', signal: AbortSignal.timeout(15000) }); }
+        try { response = await ports.fetch(path + (parameters.size ? '?' + parameters.toString() : ''), { method: 'GET', headers: { Authorization: 'Bearer ' + token, ...(version === 2 ? { Accept: 'application/vnd.argopost.admin-dashboard.v2+json' } : {}) }, credentials: 'same-origin', mode: 'same-origin', redirect: 'error', cache: 'no-store', referrerPolicy: 'no-referrer', signal: AbortSignal.timeout(15000) }); }
         catch { throw new AdminSessionError('NETWORK_UNAVAILABLE'); }
-        if (!response.ok) throw new AdminSessionError(response.status === 401 ? 'SESSION_INVALID' : response.status === 403 ? 'ACCESS_DENIED' : response.status === 409 ? 'SNAPSHOT_EXPIRED' : response.status === 422 ? 'SOURCE_UNAVAILABLE' : response.status === 400 ? 'VALIDATION_FAILED' : 'SERVICE_UNAVAILABLE');
+        if (!response.ok) throw new AdminSessionError(response.status === 401 ? 'SESSION_INVALID' : response.status === 403 ? 'ACCESS_DENIED' : response.status === 404 ? 'RESOURCE_NOT_FOUND' : response.status === 409 ? 'SNAPSHOT_EXPIRED' : response.status === 422 ? 'SOURCE_UNAVAILABLE' : response.status === 406 ? 'NOT_ACCEPTABLE' : response.status === 400 ? 'VALIDATION_FAILED' : 'SERVICE_UNAVAILABLE');
         const text = await response.text();
-        if (response.status !== 200 || text.length > 1048576 || !response.headers.get('Content-Type')?.toLowerCase().startsWith('application/json')) throw invalid();
+        if (response.status !== 200 || text.length > 1048576 || !response.headers.get('Content-Type')?.toLowerCase().startsWith(version === 2 ? 'application/vnd.argopost.admin-dashboard.v2+json' : 'application/json')) throw invalid();
         let value: unknown; try { value = JSON.parse(text); } catch { throw invalid(); }
         try { return parse(value); } catch (failure) { if (failure instanceof AdminSessionError) throw failure; throw invalid(); }
       } catch (failure) { if (failure instanceof AdminSessionError && failure.code === 'SESSION_INVALID') forget('SESSION_INVALID'); throw failure; }
+    }),
+    governanceWrite: <T>(operation: 'assignment' | 'review' | 'information' | 'stepup' | 'rejection' | 'approval' | 'suspension' | 'reinstatement', applicationId: string, version: number, key: string, body: unknown, parse: (value: unknown) => T): Promise<T> => ports.lock(async () => {
+      try {
+        const routes = { assignment: 'review-assignment', review: 'review', information: 'request-information', stepup: 'governance-reauthentications', rejection: 'rejection', approval: 'approval', suspension: 'suspension', reinstatement: 'reinstatement' } as const;
+        if (!Object.hasOwn(routes, operation) || !uuid(applicationId) || !uuid(key) || !Number.isSafeInteger(version) || version < 1) throw new AdminSessionError('VALIDATION_FAILED');
+        if (ports.protocol() !== 'https:') throw new AdminSessionError('HTTPS_REQUIRED');
+        if (state.status !== 'authenticated' || !state.subject || !token) throw new AdminSessionError('SESSION_INVALID');
+        if (expiresAt <= ports.now() + 30000) await establish(await request('refresh', undefined, await csrf()));
+        const actor = state.subject?.id, generation = authorizationVersion, serialized = JSON.stringify(body);
+        if (serialized === undefined || new TextEncoder().encode(serialized).length > 32768) throw new AdminSessionError('VALIDATION_FAILED');
+        let response: Response;
+        try { response = await ports.fetch(operation === 'stepup' ? '/api/v1/admin/governance-reauthentications' : (['suspension', 'reinstatement'].includes(operation) ? '/api/v1/admin/merchant-organizations/' : '/api/v1/admin/merchant-applications/') + applicationId + '/' + routes[operation], { method: 'POST', body: serialized, headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json', ...(operation === 'stepup' ? {} : { 'If-Match': '"v' + version + '"' }), 'Idempotency-Key': key }, credentials: 'same-origin', mode: 'same-origin', redirect: 'error', cache: 'no-store', referrerPolicy: 'no-referrer', signal: AbortSignal.timeout(15000) }); }
+        catch { throw new AdminSessionError('OUTCOME_UNKNOWN'); }
+        if (state.status !== 'authenticated' || state.subject?.id !== actor || authorizationVersion !== generation) throw new AdminSessionError('SESSION_INVALID');
+        if (!response.ok) {
+          const fallback = response.status === 401 ? 'SESSION_INVALID' : response.status === 403 ? 'ACCESS_DENIED' : response.status === 404 ? 'RESOURCE_NOT_FOUND' : response.status === 412 ? 'PRECONDITION_STALE' : response.status === 409 ? 'STATE_CONFLICT' : response.status === 422 ? 'SOURCE_UNAVAILABLE' : response.status === 406 ? 'NOT_ACCEPTABLE' : response.status === 400 ? 'VALIDATION_FAILED' : 'SERVICE_UNAVAILABLE';
+          throw new AdminSessionError(fallback);
+        }
+        let text: string;try { text = await response.text(); } catch { throw new AdminSessionError('OUTCOME_UNKNOWN'); }
+        if (response.status !== 200 || text.length > 1048576 || !response.headers.get('Content-Type')?.toLowerCase().startsWith('application/json')) throw invalid();
+        try { return parse(JSON.parse(text) as unknown); } catch { throw invalid(); }
+      } catch (failure) { if (failure instanceof AdminSessionError && failure.code === 'SESSION_INVALID') forget('SESSION_INVALID'); throw failure; }
+    }),
+    governanceEvidence: (applicationId: string, evidenceId: string): Promise<Blob> => ports.lock(async () => {
+      try {
+        if (!uuid(applicationId) || !uuid(evidenceId)) throw new AdminSessionError('VALIDATION_FAILED');
+        if (ports.protocol() !== 'https:') throw new AdminSessionError('HTTPS_REQUIRED');
+        if (state.status !== 'authenticated' || !state.subject || !token) throw new AdminSessionError('SESSION_INVALID');
+        if (expiresAt <= ports.now() + 30000) await establish(await request('refresh', undefined, await csrf()));
+        const actor = state.subject?.id, generation = authorizationVersion;let response: Response;
+        try { response = await ports.fetch('/api/v1/admin/merchant-applications/' + applicationId + '/evidence/' + evidenceId + '/content?purpose=MERCHANT_REVIEW', { method: 'GET', headers: { Authorization: 'Bearer ' + token }, credentials: 'same-origin', mode: 'same-origin', redirect: 'error', cache: 'no-store', referrerPolicy: 'no-referrer', signal: AbortSignal.timeout(15000) }); } catch { throw new AdminSessionError('NETWORK_UNAVAILABLE'); }
+        if (!response.ok) throw new AdminSessionError(response.status === 401 ? 'SESSION_INVALID' : response.status === 403 ? 'ACCESS_DENIED' : response.status === 404 ? 'RESOURCE_NOT_FOUND' : 'SERVICE_UNAVAILABLE');
+        const mime = response.headers.get('Content-Type')?.split(';')[0];
+        if (response.status !== 200 || !mime || !['application/pdf', 'image/png', 'image/jpeg'].includes(mime) || response.headers.get('Cache-Control') !== 'no-store' || response.headers.get('X-Content-Type-Options') !== 'nosniff' || !response.headers.get('Content-Disposition')?.startsWith('attachment;') || !response.body) throw invalid();
+        const reader = response.body.getReader(), chunks: Uint8Array<ArrayBuffer>[] = [];let size = 0;
+        try { while (true) { const part = await reader.read();if (part.done) break;size += part.value.byteLength;if (size > 5242880) { await reader.cancel();throw invalid(); }chunks.push(Uint8Array.from(part.value)); } } finally { reader.releaseLock(); }
+        if (size < 1 || state.status !== 'authenticated' || state.subject?.id !== actor || authorizationVersion !== generation) throw new AdminSessionError('SESSION_INVALID');
+        return new Blob(chunks, { type: mime });
+      } catch (failure) { if (failure instanceof AdminSessionError && failure.code === 'SESSION_INVALID') forget('SESSION_INVALID');throw failure; }
     }),
     checkSession: async () => {
       try { await ports.lock(async () => {

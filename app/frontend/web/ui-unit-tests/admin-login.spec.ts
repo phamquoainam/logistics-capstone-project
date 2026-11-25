@@ -3,6 +3,7 @@ import type { BrowserContext } from '@playwright/test';
 
 // Intercepted browser contracts only; no real SYSTEM login, Realm activation or DB evidence.
 const origin = 'https://admin.example.invalid';
+test.afterEach(async ({ page }) => { if (!page.isClosed()) await page.waitForLoadState('networkidle'); });
 const id = '10000000-0000-4000-8000-000000000001';
 const user = { id, username: 'synthetic-admin', displayName: 'Quản trị thử nghiệm', email: 'admin@example.invalid', status: 'ACTIVE', grants: [{ role: 'IDENTITY_MANAGEMENT', scopeType: 'IDENTITY', scopeId: '20000000-0000-4000-8000-000000000001' }], version: 1, emailVerified: true };
 async function fixture(context: BrowserContext, options: { authenticated?: boolean; reject?: number; logoutFails?: boolean; loginDelay?: boolean } = {}) {
@@ -97,7 +98,7 @@ test('HTTP blocks credentials without contacting an authentication endpoint', as
 test('desktop and mobile login remain compact, readable and free of horizontal overflow', async ({ page, context }) => {
   await fixture(context); await page.goto(origin + '/admin/login');
   await expect(page.getByRole('heading', { name: 'Đăng nhập quản trị' })).toBeVisible();
-  await expect(page).toHaveTitle('ArgoPost | Quản trị');
+  await expect(page).toHaveTitle('ArgoPost | Administration Console');
   await page.screenshot({ path: '../../../.demo/spec003-implementation/admin-login-desktop.png', fullPage: true, animations: 'disabled' });
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByRole('heading', { name: 'Đăng nhập quản trị' })).toBeVisible();
