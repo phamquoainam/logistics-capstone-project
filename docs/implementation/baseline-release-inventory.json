@@ -551,7 +551,7 @@
     },
     {
       "path": "app/backend/src/test/java/com/elogistic/backend/workflow/internal/web/AdminCoreBrowserRuntime.java",
-      "sha256": "c86b40248f23686a48ee5b73794b012a18da92b5e4f45a6849da00baec292bab",
+      "sha256": "0a0c9be60b886ceaec0ec0ba5925ddf1443f5d1f25701d2eab6aa8acf9eec8e6",
       "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
       "releaseCategory": "APPROVED",
       "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
@@ -1055,7 +1055,7 @@
     },
     {
       "path": "docs/implementation/develop-baseline-release.md",
-      "sha256": "24df01fef92dd2f86295f366858d64c4d6998bd3b08cf454c0270d2ae86f04a5",
+      "sha256": "184c5535953a73501fa176e617e3823b997a2b46351c4d9b93b531e5e6819a1d",
       "classification": "PORTABLE_BASELINE_OR_OWNER_TEAM_DOCUMENT",
       "releaseCategory": "REQUIRED",
       "disposition": "PUBLISH; portability/CI or approved BRC-ACL-01 only"
@@ -1279,7 +1279,7 @@
     },
     {
       "path": "docs/implementation/baseline-verification.json",
-      "sha256": "7aa50181b5b92d19d3e127da5388fadde26108d95d2b90581059caab3e09a095",
+      "sha256": "3d127d8ea8659f441b5011173f30a5382ae69cbb65f80f586e06c559aa5470e8",
       "classification": "PORTABLE_BASELINE_EVIDENCE_HANDOFF",
       "releaseCategory": "REQUIRED",
       "disposition": "PUBLISH; portability/CI or approved BRC-ACL-01 only"
@@ -1304,6 +1304,20 @@
       "classification": "CI_EXACT_ACCEPTED_SOURCE_INVENTORY",
       "releaseCategory": "REQUIRED",
       "disposition": "PUBLISH; portability/CI or approved BRC-ACL-01 only"
+    },
+    {
+      "path": "scripts/ci/classify-failures.py",
+      "classification": "BOUNDED_CI_PRIVACY_DIAGNOSTICS",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH_TEST_DIAGNOSTICS_ONLY; no runtime authority",
+      "sha256": "a1aad1c0295a5cc1d1507e16a4aece970b79d5646ec4a41f5fdf388b698bcbc0"
+    },
+    {
+      "path": "scripts/ci/test_classify_failures.py",
+      "classification": "BOUNDED_CI_PRIVACY_DIAGNOSTICS",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH_TEST_DIAGNOSTICS_ONLY; no runtime authority",
+      "sha256": "fef8d83028a60bd7badf492a1cc18e394b2c408732f083a5c737816a727759a0"
     }
   ],
   "hashSemantics": "Captured working-copy SHA256 before Git newline filters; exact approved artifacts/migrations use -text. Original index/WIP preserved separately. Only release OrganizationCasePolicy EOF blank line trimmed; no logic change.",

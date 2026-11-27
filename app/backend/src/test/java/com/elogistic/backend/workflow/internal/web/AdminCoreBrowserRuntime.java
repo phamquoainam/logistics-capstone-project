@@ -136,15 +136,22 @@ final class AdminCoreBrowserRuntime {
             if(System.getenv("NODE_OPTIONS")!=null&&!System.getenv("NODE_OPTIONS").isBlank())throw new IllegalStateException("UNTRUSTED_NODE_OPTIONS");
             var child=command.environment();child.keySet().removeIf(k->k.startsWith("PG_")||k.startsWith("IDENTITY_")||k.startsWith("CUSTOMER_")||k.startsWith("AWS_")||k.startsWith("SMTP_")||k.startsWith("GMAIL_")||Set.of("GITHUB_TOKEN","ACTIONS_RUNTIME_TOKEN","ACTIONS_ID_TOKEN_REQUEST_TOKEN").contains(k));
             child.put("S003_BROWSER_ORIGIN",origin);child.put("S003_BROWSER_CERT",dir.resolve("server-cert.pem").toString());child.put("S003_BROWSER_SPKI",pin);child.put("S003_BROWSER_PRIVATE_DIRECTORY",dir.toString());child.put("NODE_EXTRA_CA_CERTS",dir.resolve("server-cert.pem").toString());child.put("C04_SAFE_REPORT",dir.resolve("safe-browser-results.json").toString());
-            var process=command.start();try{assertTrue(process.waitFor(180,TimeUnit.SECONDS),"ADMIN_CORE_BROWSER_TIMEOUT");assertEquals(0,process.exitValue(),"ADMIN_CORE_BROWSER_RUNTIME_FAILED");}finally{if(process.isAlive()){process.toHandle().descendants().forEach(ProcessHandle::destroyForcibly);process.destroyForcibly();}}
+            var process=command.start();try{assertTrue(process.waitFor(180,TimeUnit.SECONDS),()->"ADMIN_CORE_BROWSER_TIMEOUT BIA_SAFE_STAGE_"+safeStage(dir));assertEquals(0,process.exitValue(),()->"ADMIN_CORE_BROWSER_RUNTIME_FAILED BIA_SAFE_STAGE_"+safeStage(dir));}finally{if(process.isAlive()){process.toHandle().descendants().forEach(ProcessHandle::destroyForcibly);process.destroyForcibly();}}
             var result=JsonMapper.builder().build().readTree(Files.readString(dir.resolve("safe-browser-results.json")));assertEquals("passed",result.get("status").asString());assertEquals(1,result.get("passed").asInt());assertEquals(0,result.get("failed").asInt());
             if(db!=null)try(var pdf=org.apache.pdfbox.Loader.loadPDF(dir.resolve("bia-labels.pdf").toFile())){
-                assertEquals(2,pdf.getNumberOfPages());String text=new org.apache.pdfbox.text.PDFTextStripper().getText(pdf);assertTrue(text.contains("UNPAID"));assertTrue(text.contains("LOCAL/TEST SIMULATION"));
+                assertEquals(2,pdf.getNumberOfPages(),"BIA_SAFE_CHECK_LABEL_PAGES");String text=new org.apache.pdfbox.text.PDFTextStripper().getText(pdf);assertTrue(text.contains("UNPAID"),"BIA_SAFE_CHECK_LABEL_UNPAID");assertTrue(text.contains("LOCAL/TEST SIMULATION"),"BIA_SAFE_CHECK_LABEL_SIMULATION");
                 var expected=new HashSet<>(new org.springframework.jdbc.core.JdbcTemplate(source).query("SELECT p.id FROM orders.pilot_parcel p JOIN orders.pilot_shipment s ON s.id=p.shipment_id WHERE s.owner_type='BUSINESS'",(r,n)->"AP-P-"+r.getObject(1,UUID.class).toString().replace("-","")));var decoded=new HashSet<String>();var renderer=new org.apache.pdfbox.rendering.PDFRenderer(pdf);
-                for(int i=0;i<2;i++){var bitmap=new com.google.zxing.BinaryBitmap(new com.google.zxing.common.HybridBinarizer(new com.google.zxing.client.j2se.BufferedImageLuminanceSource(renderer.renderImageWithDPI(i,300))));decoded.add(new com.google.zxing.MultiFormatReader().decode(bitmap,Map.of(com.google.zxing.DecodeHintType.POSSIBLE_FORMATS,List.of(com.google.zxing.BarcodeFormat.CODE_128),com.google.zxing.DecodeHintType.TRY_HARDER,true)).getText());}assertEquals(expected,decoded);
+                for(int i=0;i<2;i++){var bitmap=new com.google.zxing.BinaryBitmap(new com.google.zxing.common.HybridBinarizer(new com.google.zxing.client.j2se.BufferedImageLuminanceSource(renderer.renderImageWithDPI(i,300))));decoded.add(new com.google.zxing.MultiFormatReader().decode(bitmap,Map.of(com.google.zxing.DecodeHintType.POSSIBLE_FORMATS,List.of(com.google.zxing.BarcodeFormat.CODE_128),com.google.zxing.DecodeHintType.TRY_HARDER,true)).getText());}assertEquals(expected,decoded,"BIA_SAFE_CHECK_LABEL_BARCODES");
             }
-            assertEquals(db==null?2:3,smtp.messages().size());assertTrue(scanner.requests.get()>=2);
+            assertEquals(db==null?2:3,smtp.messages().size(),"BIA_SAFE_CHECK_SMTP_MESSAGES");assertTrue(scanner.requests.get()>=2,"BIA_SAFE_CHECK_SCANNER_REQUESTS");
         }finally{var held=heldAdmission.getAndSet(null);if(held!=null)held.close();Files.writeString(dir.resolve("safe-sql-faults.json"),JsonMapper.builder().build().writeValueAsString(sqlFaults),StandardCharsets.UTF_8);inbox.stop(0);executor.shutdownNow();}
         }
+    }
+    private static String safeStage(Path directory){
+        try{
+            var path=directory.resolve("safe-core-stage.json");if(Files.isSymbolicLink(path)||Files.size(path)>256)return "UNKNOWN";
+            String stage=JsonMapper.builder().build().readTree(Files.readString(path,StandardCharsets.UTF_8)).path("stage").asString();
+            return Set.of("CUSTOMER_LOGIN","APPLICATION_DRAFT","CONTACT_VERIFICATION","EVIDENCE","SUBMISSION","ASSIGNMENT","REVIEW","APPROVAL","DASHBOARD","AUDIT_AND_NOTICES","EXPLICIT_SHIPPING_SETUP","BUSINESS_QUOTE_BOOKING","GENUINE_OPS_VERIFICATION","BUSINESS_SCAN_ACCEPTANCE","BUSINESS_AT_STATION_VERIFIED").contains(stage)?stage:"UNKNOWN";
+        }catch(Exception unavailable){return "UNKNOWN";}
     }
 }

@@ -461,5 +461,22 @@
     ],
     "snapshotSha256": "0f878a1a3de443e5f89d0ac77c861d236d7e83e59e091a52a8e221ea3a80eb00",
     "nextCiRequired": true
+  },
+  "ci35Result": {
+    "head": "35bff881230ba7ea45bcc84829d7f87c17f2259a",
+    "backendRun": 46011132559,
+    "architecture": "PASS",
+    "h2": "PASS",
+    "composeRun": 46011132698,
+    "compose": "PASS",
+    "postgres": "FAIL",
+    "remainingCase": "biaRealHttpsCustomerApplicationToBusinessStation",
+    "diagnostics": "bounded literal stages/checks only; assertions/timeout/acceptance unchanged",
+    "diagnosticUnitTests": {
+      "passed": 5,
+      "failed": 0
+    },
+    "testCompile": "PASS",
+    "status": "MERGE_BLOCKED"
   }
 }

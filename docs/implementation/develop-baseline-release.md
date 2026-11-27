@@ -244,3 +244,20 @@ documents (documentation only, no runtime). LOCAL_ONLY and SECRET/SENSITIVE
 exclusions remain explicit. Spec012 remains PROPOSED/BLOCKED_CONTRACT. No claim
 that local fixture fixes are already in develop; publication is through PR52 and
 post-merge checks on its eventual exact merge commit.
+
+### Exact-head35bff88 result: one CI-only BIA failure remains
+
+Backend run46011132559: H2 and Architecture PASS. Portable Compose run46011132698
+PASS. PG job140546626248 completed29m22s; all previous schema/count/reader failures
+cleared, but biaRealHttpsCustomerApplicationToBusinessStation remains nonpassing.
+Local focused17/17 includes that case; this is not evidence of CI resolution.
+PR52 remains OPEN/MERGE_BLOCKED. No migration or runtime authority changed.
+
+Added test-only bounded diagnostics to distinguish the existing browser stages
+and label/mail/scanner postconditions. The classifier accepts only literal
+allowlisted markers from two exact known test identities, retains SQL/resource
+error precedence, and never emits arbitrary messages, paths, emails, credentials,
+proofs or response bodies. Unknown/conflicting/foreign markers stay generic.
+Every original assertion, timeout and report acceptance gate remains intact.
+Classifier/privacy tests5/5 and Maven offline test-compile PASS. This is a
+diagnostic checkpoint, not a fix or readiness claim; exact-head CI is required.

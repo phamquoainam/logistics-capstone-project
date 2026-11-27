@@ -6,6 +6,7 @@ This program cannot turn a failed/cancelled verification into a success.
 import argparse
 import importlib.util
 import json
+import re
 from pathlib import Path
 import xml.etree.ElementTree as ET
 
@@ -30,6 +31,29 @@ KINDS = (
     ('BROWSER_RUNTIME', ('customer_browser_runtime_failed', 'staff_browser_runtime_failed', 'claim_browser_runtime_failed')),
     ('ASSERTION', ('assertionfailederror', 'assertionerror')),
 )
+
+# Literal test-stage/check labels only. Never serialize a caller-supplied value.
+BIA_STAGES = frozenset(('CUSTOMER_LOGIN', 'APPLICATION_DRAFT', 'CONTACT_VERIFICATION',
+    'EVIDENCE', 'SUBMISSION', 'ASSIGNMENT', 'REVIEW', 'APPROVAL', 'DASHBOARD',
+    'AUDIT_AND_NOTICES', 'EXPLICIT_SHIPPING_SETUP', 'BUSINESS_QUOTE_BOOKING',
+    'GENUINE_OPS_VERIFICATION', 'BUSINESS_SCAN_ACCEPTANCE', 'BUSINESS_AT_STATION_VERIFIED', 'UNKNOWN'))
+BIA_CHECKS = frozenset(('LABEL_PAGES', 'LABEL_UNPAID', 'LABEL_SIMULATION',
+    'LABEL_BARCODES', 'SMTP_MESSAGES', 'SCANNER_REQUESTS'))
+BIA_SUITE = 'com.elogistic.backend.identity.internal.infrastructure.IdentityGrantApplicationTests'
+BIA_CASES = frozenset(('biaRealHttpsCustomerApplicationToBusinessStation',
+    'adminCoreRealHttpsCustomerToIndependentActivation'))
+
+
+def bounded_browser_kind(suite, method, text, original):
+    if suite != BIA_SUITE or method not in BIA_CASES or original not in ('ASSERTION', 'BROWSER_RUNTIME', 'TEST_TIMEOUT'):
+        return original
+    markers = set(re.findall(r'\bBIA_SAFE_(STAGE|CHECK)_([A-Z_]+)\b', text))
+    if len(markers) != 1:
+        return original
+    category, value = next(iter(markers))
+    if value not in (BIA_STAGES if category == 'STAGE' else BIA_CHECKS):
+        return original
+    return 'BIA_' + category + '_' + value
 
 
 def kind(text):
@@ -69,7 +93,8 @@ def classify(source, inventory, max_file_bytes=32 * 1024 * 1024):
                     continue
                 # Message/stack are examined in memory only; never serialized.
                 text = ' '.join((error.get('type', ''), error.get('message', ''), error.text or ''))
-                result['cases'].append({'suite': name, 'test': method, 'kind': kind(text)})
+                result['cases'].append({'suite': name, 'test': method,
+                    'kind': bounded_browser_kind(name, method, text, kind(text))})
         except (OSError, ValueError, ET.ParseError):
             result['unavailable_reports'] += 1
     result['unavailable_reports'] += max(0, len(files) - 128)

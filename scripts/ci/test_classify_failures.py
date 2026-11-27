@@ -62,6 +62,25 @@ class SafeFailureClassificationTests(unittest.TestCase):
         ]:
             self.assertEqual(expected, module.kind(message))
 
+    def test_browser_stage_is_literal_case_bound_and_never_exposes_private_values(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory); suite = ET.Element('testsuite')
+            name = module.BIA_SUITE; method = 'biaRealHttpsCustomerApplicationToBusinessStation'
+            error = ET.SubElement(ET.SubElement(suite, 'testcase', classname=name, name=method), 'failure',
+                type='org.opentest4j.AssertionFailedError', message='BIA_SAFE_STAGE_BUSINESS_SCAN_ACCEPTANCE private-token@example.invalid')
+            error.text = 'Bearer hidden-proof; original request and password must stay private'
+            ET.ElementTree(suite).write(source / 'TEST-bia.xml')
+            result = module.classify(source, {name: [method]})
+            self.assertEqual('BIA_STAGE_BUSINESS_SCAN_ACCEPTANCE', result['cases'][0]['kind'])
+            for secret in ('private-token', 'example.invalid', 'hidden-proof', 'password', 'Bearer'):
+                self.assertNotIn(secret, json.dumps(result))
+        for text in ('BIA_SAFE_STAGE_PRIVATE_TOKEN', 'BIA_SAFE_STAGE_REVIEW BIA_SAFE_STAGE_APPROVAL', 'BIA_SAFE_CHECK_UNKNOWN'):
+            self.assertEqual('ASSERTION', module.bounded_browser_kind(name, method, text, 'ASSERTION'))
+        self.assertEqual('ASSERTION', module.bounded_browser_kind('other.Suite', method, 'BIA_SAFE_STAGE_REVIEW', 'ASSERTION'))
+        self.assertEqual('ASSERTION', module.bounded_browser_kind(name, 'otherCase', 'BIA_SAFE_STAGE_REVIEW', 'ASSERTION'))
+        self.assertEqual('PG_PERMISSION', module.bounded_browser_kind(name, method, 'BIA_SAFE_STAGE_REVIEW', 'PG_PERMISSION'))
+        self.assertEqual('BIA_CHECK_SMTP_MESSAGES', module.bounded_browser_kind(name, method, 'BIA_SAFE_CHECK_SMTP_MESSAGES', 'ASSERTION'))
+
 
 if __name__ == '__main__':
     unittest.main()
