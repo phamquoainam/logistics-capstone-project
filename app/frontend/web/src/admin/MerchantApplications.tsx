@@ -28,7 +28,6 @@ function declaration(value: unknown, key: string) {
 export default function MerchantApplications({ accountId }: { accountId: string }) {
   const [params] = useSearchParams();
   const applicationId = params.get('applicationId');
-  const deepLink = useRef<string | null>(null);
   const [context, setContext] = useState<GovernanceContext | null>(null), [rows, setRows] = useState<ApplicationPage | null>(null);
   const [from, setFrom] = useState(() => new Date(Date.now() + 7 * 3600000 - 29 * 86400000).toISOString().slice(0, 10)), [to, setTo] = useState(day), [state, setState] = useState(''), [page, setPage] = useState(0), [refresh, setRefresh] = useState(0);
   const [draftFrom, setDraftFrom] = useState(from), [draftTo, setDraftTo] = useState(to), [draftState, setDraftState] = useState(state);
@@ -42,10 +41,10 @@ export default function MerchantApplications({ accountId }: { accountId: string 
   const pending = useRef<Pending | null>(null), mounted = useRef(false), running = useRef(false);
   useEffect(() => { mounted.current = true;return () => { mounted.current = false;pending.current = null; }; }, []);
   useEffect(() => {
-    let active = true;setLoading(true);setError('');setRows(null);setContext(null);
+    let active = true;setLoading(true);setError('');setRows(null);setContext(null);setReview(null);setChecks({});
     const parameters = new URLSearchParams({ from, to, page: String(page), size: '20' });if (state) parameters.set('state', state);
     if (policy) parameters.set('policyId', policy);if (mine) parameters.set('reviewerId', accountId);
-    void Promise.all([adminSession.read('governance-context', new URLSearchParams(), v => parseGovernanceContext(v, accountId)), adminSession.read('application-list', parameters, v => parseApplicationPage(v, page))]).then(([c, list]) => { if (active) { setContext(c);setRows(list); } }).catch(e => { if (active) setError(message(e)); }).finally(() => { if (active) setLoading(false); });
+    void Promise.all([adminSession.read('governance-context', new URLSearchParams(), v => parseGovernanceContext(v, accountId)), adminSession.read('application-list', parameters, v => parseApplicationPage(v, page))]).then(([c, list]) => { if (active) { setContext(c);setRows(list); } }).catch(e => { if (active) { setSelected(null);setReview(null);setError(message(e)); } }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [accountId, from, to, state, page, refresh, policy, mine]);
   const permissions = context?.assignments.filter(a => a.scopeType === 'POLICY' && a.policyId === selected?.policyId).flatMap(a => a.permissions) ?? [];
@@ -65,16 +64,18 @@ export default function MerchantApplications({ accountId }: { accountId: string 
     catch (e) { if (mounted.current) setError(message(e)); }finally { running.current = false;if (mounted.current) setBusy(false); }
   }
   useEffect(() => {
-    if (!context || !applicationId || deepLink.current === applicationId) return;
-    deepLink.current = applicationId;
+    // Open a URL target once per actor/target. Refreshing the context/list must
+    // not start a second detail loader competing with the command's refresh.
+    // Each read still passes through current Backend admission independently.
+    if (!applicationId) return;
     if (!/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(applicationId)) { setError('M\u00e3 h\u1ed3 s\u01a1 ch\u01b0a h\u1ee3p l\u1ec7.');return; }
     let active = true;setSelected(null);setReview(null);setRevisions(null);setPolicyVersion(null);setBusy(true);
     void adminSession.read('application-detail', new URLSearchParams(), v => parseApplication(v, applicationId), applicationId).then(async item => {
       const version = await adminSession.read('application-revisions', new URLSearchParams(), v => currentPolicyVersion(v, applicationId, item.revision), applicationId);
       if (active) { setSelected(item);setPolicyVersion(version); }
     }).catch(e => { if (active) setError(message(e)); }).finally(() => { if (active) setBusy(false); });
-    return () => { active = false;deepLink.current = null; };
-  }, [applicationId, context]);
+    return () => { active = false; };
+  }, [applicationId, accountId]);
   async function disclose() {
     if (!selected || running.current) return;const id = selected.id;running.current = true;setBusy(true);setError('');
     try { const value = await adminSession.read('application-review-data', new URLSearchParams({ purpose: 'MERCHANT_REVIEW' }), v => parseReviewData(v, id), id);if (mounted.current) { setReview(value);setSelected(value.application); } }

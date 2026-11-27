@@ -42,10 +42,10 @@ test('Customer submission through independent review activates real Organization
     const decider = await decisionContext.newPage(), reviewer = await reviewerContext.newPage();await login(decider, fixture.decider);await decider.goto('/admin/merchants/applications?applicationId=' + application);
     // Assignment controls remain canonical; selectors bind their existing label, not a test-only authority.
     const select = decider.getByRole('combobox').filter({ has: decider.locator('option[value="' + fixture.reviewerId + '"]') });await select.selectOption(fixture.reviewerId);await decider.getByRole('textbox', { name: 'Lý do', exact: true }).fill('Synthetic full-stack assignment');const assignment = decider.waitForResponse(r => r.request().method() === 'POST' && new URL(r.url()).pathname.endsWith('/review-assignment'));await decider.getByRole('button', { name: 'Phân công', exact: true }).click();expect((await assignment).status()).toBe(200);await decider.waitForLoadState('networkidle');
-    // BIA verifies the shipment journey, not simultaneous Admin browsing.
-    // Close each role's live session before the next actor, retaining the
-    // production fail-closed population lock and all independent decisions.
-    if (fixture.businessIntake) { await decider.getByRole('button', { name: 'Đăng xuất', exact: true }).click();await expect(decider).toHaveURL(/\/admin\/login$/);await decider.goto('about:blank'); }
+    // Stage independent actors sequentially: a live background session check
+    // also takes canonical population admission. Concurrency/503 is tested
+    // explicitly below, not by an unrelated 60-second browser timer.
+    await decider.getByRole('button', { name: 'Đăng xuất', exact: true }).click();await expect(decider).toHaveURL(/\/admin\/login$/);await decider.goto('about:blank');
     await mark('REVIEW');
     await login(reviewer, fixture.reviewer);if (fixture.businessIntake) await reviewer.goto('/admin/merchants/applications?applicationId=' + application);else { await reviewer.goto('/admin/account');await expect(reviewer.getByRole('link', { name: 'Mở hồ sơ', exact: true })).toBeVisible();await reviewer.getByRole('link', { name: 'Mở hồ sơ', exact: true }).click(); }await reviewer.getByRole('textbox', { name: 'Lý do', exact: true }).fill('Synthetic full-stack review');await reviewer.getByRole('button', { name: 'Bắt đầu thẩm định', exact: true }).click();await reviewer.getByRole('button', { name: 'Mở dữ liệu thẩm định', exact: true }).click();
     for (const name of ['Hồ sơ đăng ký hợp lệ', 'Thẩm quyền đại diện hợp lệ', 'Liên hệ đã xác minh', 'Đã đối chiếu trùng lặp', 'Không có xung đột đã biết']) await reviewer.getByRole('checkbox', { name, exact: true }).check();await reviewer.getByRole('textbox', { name: 'Lý do', exact: true }).fill('Synthetic complete checklist');await Promise.all([reviewer.waitForLoadState('networkidle'), decider.waitForLoadState('networkidle'), page.waitForLoadState('networkidle')]);
@@ -61,7 +61,8 @@ test('Customer submission through independent review activates real Organization
     await reviewer.getByRole('button', { name: 'Th\u1eed l\u1ea1i \u0111\u00fang y\u00eau c\u1ea7u', exact: true }).click();const committed = await retry;expect(committed.status()).toBe(200);
     expect(committed.request().headers()['idempotency-key']).toBe(original.headers()['idempotency-key']);expect(committed.request().headers()['if-match']).toBe(original.headers()['if-match']);expect(committed.request().postData()).toBe(original.postData());await reviewer.waitForLoadState('networkidle');
     }
-    if (fixture.businessIntake) { await reviewer.getByRole('button', { name: 'Đăng xuất', exact: true }).click();await expect(reviewer).toHaveURL(/\/admin\/login$/);await reviewer.goto('about:blank');await login(decider, fixture.decider); }
+    if (!fixture.businessIntake) expect(await reviewer.evaluate(() => [localStorage.length, sessionStorage.length])).toEqual([0, 0]);
+    await reviewer.getByRole('button', { name: 'Đăng xuất', exact: true }).click();await expect(reviewer).toHaveURL(/\/admin\/login$/);await reviewer.goto('about:blank');await login(decider, fixture.decider);
     await mark('APPROVAL');
     if (fixture.businessIntake) await decider.goto('/admin/merchants/applications?applicationId=' + application);else { await decider.goto('/admin/account');await decider.getByRole('link', { name: 'Mở hồ sơ', exact: true }).click(); }await decider.getByLabel('Quyết định', { exact: true }).selectOption('APPROVE');await decider.getByLabel('Lý do phê duyệt', { exact: true }).fill('Synthetic independent approval');await decider.getByLabel('Mật khẩu xác thực lại', { exact: true }).fill(fixture.password);const approved = decider.waitForResponse(r => r.request().method() === 'POST' && new URL(r.url()).pathname.endsWith('/approval'));await decider.getByRole('button', { name: 'Xác thực & phê duyệt hồ sơ', exact: true }).click();expect((await approved).status()).toBe(200);await decider.waitForLoadState('networkidle');
     await mark('DASHBOARD');
@@ -75,7 +76,7 @@ test('Customer submission through independent review activates real Organization
     await decider.goto('/admin/audit');await expect(decider.locator('tbody')).toContainText('APPROVE');await expect(decider.locator('tbody')).not.toContainText('business-contact@example.invalid');await expect.poll(async () => { const r = await page.request.get(fixture.inboxOrigin + '/contact', { headers: { 'X-Test-Nonce': fixture.inboxNonce } });return r.status() === 200 ? (await r.json() as { count: number }).count : 0; }).toBe(2);
     await decider.setViewportSize({ width: 390, height: 844 });expect(await decider.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);await decider.screenshot({ path: resolve(directory!, 'admin-core-real-mobile.png'), fullPage: true, animations: 'disabled' });
     }
-    for (const target of fixture.businessIntake ? [decider] : [decider, reviewer]) { expect(await target.evaluate(() => [localStorage.length, sessionStorage.length])).toEqual([0, 0]);await target.getByRole('button', { name: 'Đăng xuất', exact: true }).click();await expect(target).toHaveURL(new RegExp('/admin/login$')); }
+    expect(await decider.evaluate(() => [localStorage.length, sessionStorage.length])).toEqual([0, 0]);await decider.getByRole('button', { name: 'Đăng xuất', exact: true }).click();await expect(decider).toHaveURL(new RegExp('/admin/login$'));
     await page.reload();await page.goto('/personal/applications/' + application);await expect(page.getByText('Hồ sơ đã được ghi nhận. Thông tin đã nộp được lưu theo từng lần xét duyệt.', { exact: true })).toBeVisible();
     if (fixture.businessIntake) {
       await mark('EXPLICIT_SHIPPING_SETUP');

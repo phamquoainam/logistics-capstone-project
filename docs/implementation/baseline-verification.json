@@ -478,5 +478,46 @@
     },
     "testCompile": "PASS",
     "status": "MERGE_BLOCKED"
+  },
+  "ciE1Result": {
+    "head": "e1c56bfc7fd18939c9e3be86422a20d7252c7232",
+    "backendRun": 46017701778,
+    "architecture": "PASS",
+    "h2": "PASS",
+    "compose": "PASS",
+    "postgres": "FAIL",
+    "cases": [
+      "merchantV43RealHttpsIndependentApproval",
+      "biaRealHttpsCustomerApplicationToBusinessStation"
+    ],
+    "biaStage": "REVIEW"
+  },
+  "reviewRaceCorrection": {
+    "uiRed": "deep link BEGIN detail count3 expected2",
+    "uiPassed": 5,
+    "lint": "PASS",
+    "typecheck": "PASS",
+    "actionlint": "PASS",
+    "focusedPrevious": {
+      "id": "a17d265a79d34d9a9ac9dbdc7d553760",
+      "passed": 2,
+      "failed": 1,
+      "failure": "Admin Core approval reauthentication503"
+    },
+    "focusedSequencing": {
+      "id": "61ad48cc381f4f4eb067fd7918048395",
+      "passed": 2,
+      "failed": 1,
+      "failure": "Core completed workflow; fixture read storage on already-logged-out about:blank"
+    },
+    "focusedCoreFinal": {
+      "id": "72dbebd4e9964fceb8e360f39d097e57",
+      "passed": 1,
+      "failed": 0,
+      "snapshotSha256": "31d16574eaa0bf2294b15850ab5773ec662d17c6b05744a268dfc2881ec275cb",
+      "sourceUnchanged": true
+    },
+    "assertions": "held503 and exact-key/ETag/body replay retained; reviewer storage checked before logout",
+    "status": "LOCAL_TARGETED_PASS_EXACT_HEAD_CI_REQUIRED"
   }
 }

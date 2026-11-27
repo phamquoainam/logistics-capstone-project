@@ -68,6 +68,37 @@ test('Merchant review uses real policy metadata, explicit disclosure and an unch
   await page.screenshot({ path: '../../../.demo/spec003-implementation/admin-governance-review.png', fullPage: true });
 });
 
+test('Merchant review deep link refresh does not reopen the active application after BEGIN', async ({ page, context }) => {
+  const writes = await governanceFixture(context);
+  const app = '40000000-0000-4000-8000-000000000001';
+  const details: string[] = [];
+  context.on('request', request => { if (new URL(request.url()).pathname === '/api/v1/admin/merchant-applications/' + app && request.method() === 'GET') details.push(request.url()); });
+  await page.goto(origin + '/admin/merchants/applications?applicationId=' + app);
+  await page.getByRole('textbox', { name: 'Lý do', exact: true }).fill('Synthetic deep link review');
+  await page.getByRole('button', { name: 'Bắt đầu thẩm định', exact: true }).click();
+  await expect(page.getByText('Đang thẩm định · Revision 1 · Phiên bản 4', { exact: true })).toBeVisible();
+  await page.waitForLoadState('networkidle');
+  expect(details).toHaveLength(2); // Initial deep link + canonical post-command refresh only.
+  await page.getByRole('button', { name: 'Mở dữ liệu thẩm định', exact: true }).click();
+  for (const name of ['Hồ sơ đăng ký hợp lệ', 'Thẩm quyền đại diện hợp lệ', 'Liên hệ đã xác minh', 'Đã đối chiếu trùng lặp', 'Không có xung đột đã biết']) await page.getByRole('checkbox', { name, exact: true }).check();
+  await page.getByRole('textbox', { name: 'Lý do', exact: true }).fill('Synthetic review completed');
+  await page.getByRole('button', { name: 'Hoàn tất thẩm định', exact: true }).click();
+  await expect(page.getByText('Đang thẩm định · Revision 1 · Phiên bản 5', { exact: true })).toBeVisible();
+  expect(writes).toHaveLength(2);
+});
+
+test('Merchant review clears disclosed data when current governance admission is revoked', async ({ page, context }) => {
+  await governanceFixture(context);
+  await page.goto(origin + '/admin/merchants/applications?applicationId=40000000-0000-4000-8000-000000000001');
+  await page.getByRole('button', { name: 'Mở dữ liệu thẩm định', exact: true }).click();
+  await expect(page.getByText('synthetic@example.invalid', { exact: true })).toBeVisible();
+  await context.route(origin + '/api/v1/admin/merchant-governance/context', route => route.fulfill({ status: 403, contentType: 'application/json', body: JSON.stringify({ code: 'ACCESS_DENIED' }) }));
+  await page.getByRole('button', { name: 'Làm mới', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('chưa có quyền');
+  await expect(page.getByText('synthetic@example.invalid', { exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Mở dữ liệu thẩm định', exact: true })).toHaveCount(0);
+});
+
 test('Merchant review lost response keeps the original key/ETag and rereads canonical state after receipt replay', async ({ page, context }) => {
   const writes = await governanceFixture(context, true);await page.goto(origin + '/admin/merchants/applications');
   await page.getByRole('button', { name: 'Mở hồ sơ', exact: true }).click();await page.getByRole('textbox', { name: 'Lý do', exact: true }).fill('Synthetic lost response');await page.getByRole('button', { name: 'Bắt đầu thẩm định', exact: true }).click();
@@ -102,7 +133,7 @@ test('Menu 2 exposes all five entries, protected review details and immutable re
   await expect(page.getByRole('button', { name: 'Revision sau', exact: true })).toBeDisabled();
   await menu.getByRole('link', { name: 'Owner Transfer', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Owner Transfer', exact: true })).toBeVisible();
-  await expect(page.getByText(/BLOCKED_CONTRACT/)).toBeVisible();
+  await expect(page.getByText(/BLOCKED_COORDINATION · Policy nghiệp vụ đã được duyệt; chưa mở thực thi chuyển Owner/)).toBeVisible();
   await expect(page.getByRole('button', { name: /Chuyển Owner|Phê duyệt chuyển/ })).toHaveCount(0);
   expect(writes).toHaveLength(0);
   await page.setViewportSize({ width: 390, height: 844 });

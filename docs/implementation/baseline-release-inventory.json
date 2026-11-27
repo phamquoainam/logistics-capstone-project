@@ -600,7 +600,7 @@
     },
     {
       "path": "app/frontend/web/runtime-tests/admin-core.spec.ts",
-      "sha256": "1a987347b580732dbcde0e06e414b10c2d48cdcbd1a881e0d318a66cf1c0a98e",
+      "sha256": "7af6f7d92a8f4157dea92f4c025c71a911975a29836dbcd9042accd49ed7250e",
       "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
       "releaseCategory": "APPROVED",
       "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
@@ -649,7 +649,7 @@
     },
     {
       "path": "app/frontend/web/src/admin/MerchantApplications.tsx",
-      "sha256": "87d62e9c255fb7b7b5291f78a8c546e3b489515b5bb270cb82b2d63666c884a7",
+      "sha256": "f73fc0a47c1c2a54cb541093e0601c6113fa8891b40e605dd85dd7f18cabab68",
       "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
       "releaseCategory": "APPROVED",
       "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
@@ -824,7 +824,7 @@
     },
     {
       "path": "app/frontend/web/ui-unit-tests/admin-dashboard.spec.ts",
-      "sha256": "85f4a39a23c79149f52a66d6ae1e6f5bc362b6b14e4f8620b1e2ea0e17590041",
+      "sha256": "34913874890843a0b70291b703962f646d3959462627690ee6446ea8d41f2d17",
       "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
       "releaseCategory": "APPROVED",
       "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
@@ -1055,7 +1055,7 @@
     },
     {
       "path": "docs/implementation/develop-baseline-release.md",
-      "sha256": "184c5535953a73501fa176e617e3823b997a2b46351c4d9b93b531e5e6819a1d",
+      "sha256": "6adf697c7d16f0bf74c752ab70857d971f48cfaa69a7fd5e0ea65e1bd1a97f54",
       "classification": "PORTABLE_BASELINE_OR_OWNER_TEAM_DOCUMENT",
       "releaseCategory": "REQUIRED",
       "disposition": "PUBLISH; portability/CI or approved BRC-ACL-01 only"
@@ -1139,7 +1139,7 @@
     },
     {
       "path": "docs/quality/traceability.md",
-      "sha256": "4339231d7a519df850f9ab491253e96b36424536731f953ee1f379f24687c4fc",
+      "sha256": "d4c82089f12d9ded2b0fe61927d44cb104c591e9cbe319aa40ed6ac76ac9fbda",
       "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
       "releaseCategory": "APPROVED",
       "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
@@ -1279,7 +1279,7 @@
     },
     {
       "path": "docs/implementation/baseline-verification.json",
-      "sha256": "3d127d8ea8659f441b5011173f30a5382ae69cbb65f80f586e06c559aa5470e8",
+      "sha256": "41a6c94f8e39c011b5a2e2cf768cc78a0b5a33b3b8437dde1257ba35dc71c2ce",
       "classification": "PORTABLE_BASELINE_EVIDENCE_HANDOFF",
       "releaseCategory": "REQUIRED",
       "disposition": "PUBLISH; portability/CI or approved BRC-ACL-01 only"
@@ -1318,6 +1318,27 @@
       "releaseCategory": "REQUIRED",
       "disposition": "PUBLISH_TEST_DIAGNOSTICS_ONLY; no runtime authority",
       "sha256": "fef8d83028a60bd7badf492a1cc18e394b2c408732f083a5c737816a727759a0"
+    },
+    {
+      "path": ".github/workflows/backend-verification.yml",
+      "classification": "PORTABLE_BASELINE_OR_OWNER_TEAM_DOCUMENT",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH; targeted CI/browser regression only; no domain authority delta",
+      "sha256": "95543a450faef255b30804a1fcec0299ce54e91ea13bd823a8739233e4a11745"
+    },
+    {
+      "path": "app/frontend/web/playwright-customer-ui.config.ts",
+      "classification": "PORTABLE_BASELINE_OR_OWNER_TEAM_DOCUMENT",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH; targeted CI/browser regression only; no domain authority delta",
+      "sha256": "400077604570d9fd5dab214e4f014629d9d32795c91b7ebf34d94bc2f4654c83"
+    },
+    {
+      "path": "app/frontend/web/runtime-tests/admin-governance.spec.ts",
+      "classification": "PORTABLE_BASELINE_OR_OWNER_TEAM_DOCUMENT",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH; targeted CI/browser regression only; no domain authority delta",
+      "sha256": "e9a6a93a260383e502b367259ff2c1bd4c3d21cea368c28b1402f15f2e3e7967"
     }
   ],
   "hashSemantics": "Captured working-copy SHA256 before Git newline filters; exact approved artifacts/migrations use -text. Original index/WIP preserved separately. Only release OrganizationCasePolicy EOF blank line trimmed; no logic change.",

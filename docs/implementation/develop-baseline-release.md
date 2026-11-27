@@ -7,6 +7,41 @@ Publication checkpoint: **PR52 OPEN — MERGE_BLOCKED**. Source is published on 
 release branch; the initial status above records preparation time, not live Git
 state. The latest GitHub checks/merge record at PR52 are authoritative.
 
+### Follow-up CI review / active correction
+
+Run46017701778 at e1c56bf: Architecture, H2 and portable Compose PASS; PostgreSQL
+FAIL in Merchant approval and BIA. Bounded diagnostics locate BIA at REVIEW.
+No migration/authority regression is inferred from the browser failure alone.
+
+Deterministic UI regression reproduced an extra deep-link detail reload after
+BEGIN (three reads instead of the initial read plus canonical command refresh).
+The context object was replaced on list refresh and retriggered URL opening.
+URL detail loading is now bound to actor/target, independently Backend-admitted;
+scope/list refresh still clears disclosed private facts/checks, and denied current
+admission clears the selected view. No authorization API or Backend guard changed.
+Five focused UI regressions PASS, including disclosure revocation and same-key
+lost-response replay; lint/typecheck PASS. A stale Owner Transfer test expectation
+now checks actual BLOCKED_COORDINATION and still forbids transfer controls.
+
+Focused a17d265a79d34d9a9ac9dbdc7d553760:2/3 PASS (Merchant approval and Business
+S1); Admin Core FAIL at approval reauthentication with503. Preserve this evidence.
+Two live independent Admin pages could collide through the normal60-second
+session check. The fixture now logs each actor out before the next actor logs in;
+the deliberate held-admission503, exact-key/ETag/body replay and independent
+decision assertions remain. Single-actor governance browser navigation waits for
+pending admitted reads before unloading. No retries/timeouts/assertions weakened.
+
+CI explicitly runs the five relevant synthetic UI regressions, separately from
+the genuine HTTPS/PG18 integration gate. Workflow actionlint1.7.12 PASS.
+New exact-head integration/CI results are required before merge; old failures
+are retained rather than relabeled PASS.
+
+Focused61ad48cc381f4f4eb067fd7918048395 retained Merchant approval/BIA PASS and
+completed Core approval, Dashboard, Work and Audit. Core's final fixture cleanup
+then raised SecurityError reading storage from reviewer about:blank, after the
+new earlier logout. Its original zero-storage assertion is moved before that
+logout, not removed. Only Core needs rerun for this branch-specific correction.
+
 Nam is temporary Integration Writer for Docker/build/local configuration and
 accepted Slice1 integration. Hoàng/Triết retain equal domain authority. No domain
 contract, historical migration, real grant or production authority is expanded.
@@ -261,3 +296,8 @@ proofs or response bodies. Unknown/conflicting/foreign markers stay generic.
 Every original assertion, timeout and report acceptance gate remains intact.
 Classifier/privacy tests5/5 and Maven offline test-compile PASS. This is a
 diagnostic checkpoint, not a fix or readiness claim; exact-head CI is required.
+
+Final focused72dbebd4e9964fceb8e360f39d097e57 Core **1/1 PASS**, Maven0,
+sourceUnchanged=true, snapshot31d16574eaa0bf2294b15850ab5773ec662d17c6b05744a268dfc2881ec275cb.
+Combine only with unchanged Merchant approval/BIA PASS in focused61ad48; no
+full Backend or GitHub CI PASS is claimed. Exact-head CI/merge remain pending.
