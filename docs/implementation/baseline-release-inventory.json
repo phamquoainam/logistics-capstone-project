@@ -27,7 +27,7 @@
     },
     {
       "path": ".github/workflows/portable-baseline.yml",
-      "sha256": "74ecc2fe769d5145f21647b29b049f7db58b0061c8e536dc7edc7e2f98feabc9",
+      "sha256": "328feeb88c9c048538336f93132dcbf81e39a34311d066c4cbe259b9a78fa5cf",
       "classification": "PORTABLE_BASELINE_OR_OWNER_TEAM_DOCUMENT"
     },
     {
@@ -757,7 +757,7 @@
     },
     {
       "path": "docs/implementation/develop-baseline-release.md",
-      "sha256": "d2e64156b35cbadd1f138fa9b8de4c59df09491efa9d3df76ac1ea49d010e82b",
+      "sha256": "acad51e9eb37be223d89fbe8b1f394e688aa71cce975ee66b627aaafceb8549d",
       "classification": "PORTABLE_BASELINE_OR_OWNER_TEAM_DOCUMENT"
     },
     {
@@ -917,13 +917,23 @@
     },
     {
       "path": "docs/implementation/baseline-verification.json",
-      "sha256": "f82523f205bf61fabba1fbee01d1972362d15031e5a6b965170c533a827bda66",
+      "sha256": "b3725ae42125c55217101a5a8672fdf27b276c3f792b60c6373bb3f39eafc854",
       "classification": "PORTABLE_BASELINE_EVIDENCE_HANDOFF"
     },
     {
       "path": "docs/implementation/baseline-team-handoff.md",
       "sha256": "7d88c40da19b2572e855b55cb658fa16abdb3364c0880de6b91f5bfcd657e56c",
       "classification": "PORTABLE_BASELINE_EVIDENCE_HANDOFF"
+    },
+    {
+      "path": "scripts/ci/verify-reports.py",
+      "sha256": "71a88fb663cdb97afa9eb633bdcd083ca0bf03cf8dc3fa922121380035f7006b",
+      "classification": "CI_EXACT_ACCEPTED_SOURCE_INVENTORY"
+    },
+    {
+      "path": "scripts/ci/test_verify_reports.py",
+      "sha256": "74a8d54d2b86efa4f606bee93d811a1d325725690c9e3c375936254126adb6b9",
+      "classification": "CI_EXACT_ACCEPTED_SOURCE_INVENTORY"
     }
   ],
   "hashSemantics": "Captured working-copy SHA256 before Git newline filters; exact approved artifacts/migrations use -text. Original index/WIP preserved separately. Only release OrganizationCasePolicy EOF blank line trimmed; no logic change."

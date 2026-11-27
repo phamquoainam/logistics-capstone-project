@@ -174,3 +174,30 @@ Web index SHA256:
 Machine-readable catalog/evidence: baseline-verification.json. Any subsequent
 documentation-only commit does not change these runtime inputs. CI and merge
 remain mandatory, pending gates. No three-machine parity claim.
+
+### PR52 initial CI failures and exact corrections
+
+Initial PR head237dcf400d57d0986ab1c43fcf86aabad00b310c:
+Backend verification run45974787711 failed all three jobs in the Python report
+guard, before running Backend tests. The accepted release source introduced16
+NWS/S1/read-preparation integration cases, one migration case and three unit
+suites absent from the old explicit inventory. Expanded exact names/order:
+Identity grants478, migration85; aggregate H2 passed756 and PG passed1347.
+Retained every original case, skip allowance, failed/missing/renamed/unknown
+rejection and private diagnostic boundary; no assertion or business gate removed.
+Added source/mode and negative-report checks for the three unit suites.
+Intermediate guard run exposed old aggregate totals; that FAIL is retained.
+Final isolated Linux no-network/read-only guard run: **149/149 PASS**.
+
+Portable workflow run45974777740 failed parsing job env: runner context is not
+available there. Moved only PLAYWRIGHT_BROWSERS_PATH to the browser step env.
+Official actionlint1.7.12 archive SHA256
+6e7241b51e6817ea6a047693d8e6fed13b31819c9a0dd6c5a726e1592d22f6e9
+verified; old workflow reproduces exact error, corrected workflow PASS. No
+Backend/domain/migration/ACL change or need to repeat the accepted S1 suite.
+
+PR: https://github.com/phamquoainam/logistics-capstone-project/pull/52.
+Latest exact-head GitHub checks and merge record are authoritative for publication;
+this execution history does not imply CI/merge PASS. Original auto-review usage
+failure temporarily blocked a read-only diagnostic; resumed through normal
+review after user continuation, without a second execution path or bypass.

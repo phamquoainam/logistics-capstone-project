@@ -653,6 +653,45 @@ for _name, _methods in ADMIN_P0_UNIT_REQUIRED.items():
         REQUIRED.setdefault(_name, []).extend(_methods)
 REQUIRED[IDENTITY_GRANTS][12:12] = ADMIN_P0_PG_REQUIRED
 
+# Accepted NWS / Menu2 read-preparation / dual-audience S1 source, released together.
+# Explicit names and source order: missing, skipped or renamed invocations still fail.
+BASELINE_PG_INSERTIONS = [
+    ('adminDashboardTwoConnectionPoolAndUnavailableDatabase', [
+        'biaOwnershipSchemaBindsCarrierEventsToCanonicalOwners',
+        'nwsV44DedicatedOperationsSchemaAndAudience',
+        'nwsOperationsInvitationAndAudienceIsolation',
+        'nwsNetworkOperatorReceiptAndRuntimeAclAreBound',
+        'nwsOperationsOutboxFailureRetryAndCancellationArePurposeBound',
+        'nwsScopedIntakeReusesAtomicCustodyAndCurrentAuthority',
+        'nwsRealHttpsBrowserAndPostgres',
+        'nwsAdminCarrierDirectoryIsPermissionBound']),
+    ('merchantGovernanceCurrentScopeAndRevocation', [
+        'organizationLifecycleV47PreparationSchema',
+        'organizationLifecycleV47PreparationHttps',
+        'merchantR01SearchCommentsAndScope',
+        'merchantR01ComparisonAndHttps',
+        'merchantR01ProfileAndMembers']),
+    ('merchantWorkAndOrganizationAuditCurrentAuthority', [
+        'biaRealHttpsCustomerApplicationToBusinessStation']),
+    ('businessBookingPersistsSharedParcelsUnpaidSnapshotAndPrivateLabels', [
+        'biaBusinessIntakeUsesCanonicalTimestampOwnershipAndAtomicPipeline',
+        'biaBusinessHandlingRetainsOrganizationOwnershipAndUnpaid']),
+]
+BASELINE_PG_REQUIRED = [method for _, methods in BASELINE_PG_INSERTIONS for method in methods]
+for _anchor, _methods in BASELINE_PG_INSERTIONS:
+    _at = REQUIRED[IDENTITY_GRANTS].index(_anchor)
+    REQUIRED[IDENTITY_GRANTS][_at:_at] = _methods
+REQUIRED[IDENTITY_MIGRATION][0:0] = ['nwsForwardUpgradePreservesV43RowsChecksumsAndPrivateGuardBoundary']
+BASELINE_UNIT_REQUIRED = {
+    BASE + 'identity.internal.ProductionOperationsConfigurationTests': [
+        'dedicatedOpsDefaultsOffAndCannotEnableInProductionOrCustomerRollout'],
+    BASE + 'merchant.internal.infrastructure.MerchantViewCursorTests': [
+        'cursorBindsCurrentActorRealmAuthorityQuerySourceSizeAndDeadline'],
+    BASE + 'merchant.internal.infrastructure.OrganizationCasePolicyTests': [
+        'ownerV1HasExactLimitsAndNoInventedRetentionOrTransferAuthority'],
+}
+REQUIRED.update(BASELINE_UNIT_REQUIRED)
+
 
 def expected_suites(mode):
     return {k: v for k, v in REQUIRED.items()

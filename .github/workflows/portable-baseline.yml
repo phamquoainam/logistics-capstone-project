@@ -17,7 +17,6 @@ jobs:
     timeout-minutes: 35
     env:
       COMPOSE_PROJECT_NAME: argopost-baseline-ci
-      PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/baseline-browsers
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -40,6 +39,8 @@ jobs:
           python3 scripts/dev/verify-compose.py --project "$COMPOSE_PROJECT_NAME" > .local/restart.json
           python3 -c "import json; a=json.load(open('.local/cold.json')); b=json.load(open('.local/restart.json')); assert all(a[k]==b[k] for k in ['database','migrations','envBindReceipts','envBindAudit']); assert b['noAutomaticAccounts']"
       - name: Synthetic HTTPS registration, SMTP verification, login and security
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/baseline-browsers
         run: |
           npm --prefix packages/api-client ci --ignore-scripts --no-audit --no-fund
           npm --prefix app/frontend/web ci --ignore-scripts --no-audit --no-fund
