@@ -1,0 +1,426 @@
+{
+  "schemaVersion": 1,
+  "status": "LOCAL_GATES_PASS_CI_AND_MERGE_PENDING",
+  "runtimeCandidate": "d6f25865297b610adcce9bbfa09ca547e9dc35cf",
+  "cleanClone": "git clone --no-local; no private inputs",
+  "postgresCold": {
+    "postgresVersion": "180006",
+    "migrationCount": 48,
+    "migrationFailureCount": 0,
+    "migrations": [
+      {
+        "version": "1",
+        "script": "V1__ownership_schemas.sql",
+        "checksum": -1533163014
+      },
+      {
+        "version": "2",
+        "script": "V2__demo_identity_merchant_drafts.sql",
+        "checksum": 1234525598
+      },
+      {
+        "version": "3",
+        "script": "V3__production_identity.sql",
+        "checksum": -1429243027
+      },
+      {
+        "version": "4",
+        "script": "V4__identity_system_realm.sql",
+        "checksum": 2108637928
+      },
+      {
+        "version": "5",
+        "script": "V5__identity_invitation_outbox.sql",
+        "checksum": 338037969
+      },
+      {
+        "version": "6",
+        "script": "V6__identity_shared_rate_limiter.sql",
+        "checksum": -614332600
+      },
+      {
+        "version": "7",
+        "script": "V7__customer_identity_admission.sql",
+        "checksum": 1864003935
+      },
+      {
+        "version": "8",
+        "script": "V8__customer_enrollment_proof_delivery.sql",
+        "checksum": -1876554396
+      },
+      {
+        "version": "9",
+        "script": "V9__customer_durable_abuse_policies.sql",
+        "checksum": 1255343478
+      },
+      {
+        "version": "10",
+        "script": "V10__customer_recovery_and_proof_receipts.sql",
+        "checksum": 128307809
+      },
+      {
+        "version": "11",
+        "script": "V11__independent_customer_business_profile.sql",
+        "checksum": -2049116960
+      },
+      {
+        "version": "12",
+        "script": "V12__customer_reauthentication_receipts.sql",
+        "checksum": 703972650
+      },
+      {
+        "version": "13",
+        "script": "V13__customer_owner_recovery_consent_receipts.sql",
+        "checksum": 149368690
+      },
+      {
+        "version": "14",
+        "script": "V14__merchant_application_drafts.sql",
+        "checksum": 1611915675
+      },
+      {
+        "version": "15",
+        "script": "V15__unverified_customer_phone_contact.sql",
+        "checksum": 1729343854
+      },
+      {
+        "version": "16",
+        "script": "V16__customer_enrollment_otp.sql",
+        "checksum": 1613507563
+      },
+      {
+        "version": "17",
+        "script": "V17__customer_recovery_otp.sql",
+        "checksum": -792949399
+      },
+      {
+        "version": "18",
+        "script": "V18__personal_address_book.sql",
+        "checksum": 1074978018
+      },
+      {
+        "version": "19",
+        "script": "V19__shipping_preparation_drafts.sql",
+        "checksum": -219292293
+      },
+      {
+        "version": "20",
+        "script": "V20__approved_personal_pilot_quote_booking.sql",
+        "checksum": -1782437934
+      },
+      {
+        "version": "21",
+        "script": "V21__personal_labels_station_intake_tracking.sql",
+        "checksum": -1003057427
+      },
+      {
+        "version": "22",
+        "script": "V22__personal_support_tickets.sql",
+        "checksum": 1368217949
+      },
+      {
+        "version": "23",
+        "script": "V23__local_business_workspace_access.sql",
+        "checksum": 1038211312
+      },
+      {
+        "version": "24",
+        "script": "V24__organization_shipping_preparation.sql",
+        "checksum": 431534304
+      },
+      {
+        "version": "25",
+        "script": "V25__organization_csv_imports.sql",
+        "checksum": -2023044644
+      },
+      {
+        "version": "26",
+        "script": "V26__business_confirmed_shipping.sql",
+        "checksum": -967140194
+      },
+      {
+        "version": "27",
+        "script": "V27__organization_shipment_management.sql",
+        "checksum": -666924700
+      },
+      {
+        "version": "28",
+        "script": "V28__merchant_reports_finance_reads.sql",
+        "checksum": 1020117376
+      },
+      {
+        "version": "29",
+        "script": "V29__organization_contacts.sql",
+        "checksum": -1468868419
+      },
+      {
+        "version": "30",
+        "script": "V30__organization_internal_actions.sql",
+        "checksum": -967670997
+      },
+      {
+        "version": "31",
+        "script": "V31__merchant_facility_management.sql",
+        "checksum": -967114241
+      },
+      {
+        "version": "32",
+        "script": "V32__merchant_parcel_handover_preparation.sql",
+        "checksum": -1480467103
+      },
+      {
+        "version": "34",
+        "script": "V34__organization_team_access.sql",
+        "checksum": 667729765
+      },
+      {
+        "version": "35",
+        "script": "V35__organization_support_tickets.sql",
+        "checksum": -599636176
+      },
+      {
+        "version": "36",
+        "script": "V36__local_support_staff_identity.sql",
+        "checksum": 739827437
+      },
+      {
+        "version": "37",
+        "script": "V37__request_bound_support_staff_grants.sql",
+        "checksum": 50475833
+      },
+      {
+        "version": "38",
+        "script": "V38__organization_claim_intake.sql",
+        "checksum": -1079917049
+      },
+      {
+        "version": "39",
+        "script": "V39__isolated_admin_onboarding.sql",
+        "checksum": -350159411
+      },
+      {
+        "version": "40",
+        "script": "V40__isolated_system_first_bootstrap.sql",
+        "checksum": 1057813618
+      },
+      {
+        "version": "41",
+        "script": "V41__admin_governance_proof_bridge.sql",
+        "checksum": 1370888563
+      },
+      {
+        "version": "42",
+        "script": "V42__merchant_application_governance.sql",
+        "checksum": -1090279870
+      },
+      {
+        "version": "43",
+        "script": "V43__merchant_application_atomic_activation.sql",
+        "checksum": -1491763433
+      },
+      {
+        "version": "44",
+        "script": "V44__operational_staff_identity.sql",
+        "checksum": 1652574211
+      },
+      {
+        "version": "45",
+        "script": "V45__carrier_sites_operational_scope.sql",
+        "checksum": -1165096870
+      },
+      {
+        "version": "46",
+        "script": "V46__merchant_governance_review_views.sql",
+        "checksum": -1260957430
+      },
+      {
+        "version": "47",
+        "script": "V47__merchant_organization_governance_preparation.sql",
+        "checksum": -873423187
+      },
+      {
+        "version": "48",
+        "script": "V48__business_station_intake_ownership.sql",
+        "checksum": -1477124834
+      },
+      {
+        "version": "49",
+        "script": "V49__canonical_review_comment_table_owner.sql",
+        "checksum": -2022074179
+      }
+    ],
+    "loginOwnedDomainTables": 0,
+    "operatorFlags": {
+      "super": false,
+      "createRole": false,
+      "createDb": false,
+      "bypassRls": false,
+      "replication": false
+    },
+    "operatorMemberships": [
+      {
+        "role": "elogistics_local_admin_operator",
+        "inherit": true,
+        "set": false,
+        "admin": false
+      }
+    ],
+    "runtimeControlSystem": false,
+    "operatorControlSystem": false,
+    "operatorPrivateRelationAccess": 0,
+    "operatorIdentityExecute": [
+      "bind_local_admin_environment",
+      "configure_local_admin_permissions",
+      "disable_local_admin_environment",
+      "disposition_local_admin_invitation",
+      "local_admin_environment_matches",
+      "local_admin_invitation_destination",
+      "local_admin_operator_status",
+      "provision_local_admin",
+      "revoke_local_admin",
+      "seal_local_admin_invitation"
+    ],
+    "realmState": "INACTIVE",
+    "accounts": 0,
+    "applicationGrants": 0,
+    "adminEnvironmentBound": true,
+    "staffEnvironmentBound": true,
+    "envBindReceipts": 1,
+    "envBindAudit": 1,
+    "scriptsMatchSource": true,
+    "operatorBoundary": true,
+    "services": [
+      {
+        "service": "backend",
+        "state": "running",
+        "health": "healthy"
+      },
+      {
+        "service": "mail",
+        "state": "running",
+        "health": "healthy"
+      },
+      {
+        "service": "postgres",
+        "state": "running",
+        "health": "healthy"
+      },
+      {
+        "service": "scanner",
+        "state": "running",
+        "health": "healthy"
+      },
+      {
+        "service": "web",
+        "state": "running",
+        "health": "healthy"
+      }
+    ],
+    "project": "argopost-baseline-final",
+    "database": "argopost_admin_uat_1d1d18d3f42a",
+    "deploymentId": "5de0097f-6dd9-48b3-9ccb-a14be93fc606",
+    "noAutomaticAccounts": true,
+    "healthPass": true,
+    "verification": "PASS"
+  },
+  "restartPreserved": true,
+  "realBrowser": {
+    "result": "PASS",
+    "target": "https://localhost:5444",
+    "registration": true,
+    "smtpOtp": true,
+    "verification": true,
+    "login": true,
+    "secureCookie": true,
+    "csrfDenial": true,
+    "systemIsolation": true,
+    "businessContactVerification": true,
+    "merchantStillDraft": true,
+    "responsive": true,
+    "logout": true,
+    "syntheticAccountsCreated": 1,
+    "noPrivilegedProvisioning": true
+  },
+  "credentialIsolation": "PASS: Backend and migrator uid10001 cannot read operator material",
+  "frontend": {
+    "typecheck": "PASS",
+    "lint": "PASS",
+    "unitsPassed": 272,
+    "containerBuild": "PASS"
+  },
+  "staffPrerequisitesTests": {
+    "passed": 1,
+    "failed": 0
+  },
+  "s1": {
+    "runId": "c3cda1604f0b462fa968795f51869700",
+    "tests": 6,
+    "passed": 6,
+    "failed": 0,
+    "sourceUnchanged": true,
+    "snapshotSha256": "bb37d1807ae9cbd4ea34cb27e6efe3e57909d66e2b8bf2fc1460e06bf3a55c81",
+    "environment": "separate genuine isolated HTTPS/PostgreSQL18 fixtures; not accounts seeded in Compose"
+  },
+  "migrationFilesSha256": {
+    "V10__customer_recovery_and_proof_receipts.sql": "4d16986a6a34adea427034ccee768291e4faead424d0c8a551c607ffbdfd9247",
+    "V11__independent_customer_business_profile.sql": "84fd87c41d84a9f61448eec89b4a2452e3265215fc3f569666aa5360a5d52605",
+    "V12__customer_reauthentication_receipts.sql": "15cee70c9f9b526a8372feeb20f92723038b33d28e42fd0f810e92d4167bbf15",
+    "V13__customer_owner_recovery_consent_receipts.sql": "104e535ab560281fb968d4e463199228f789b02fab7735075a0c8ea051aff898",
+    "V14__merchant_application_drafts.sql": "70f5540f09d02ae0da3cf413e3c60055a3c72f728f7c9b494691e4beb5026038",
+    "V15__unverified_customer_phone_contact.sql": "77bfbc1c3abdc1b22fe1e9001f59a54c040df70f17f411bd2aa0b3c8d4198ce5",
+    "V16__customer_enrollment_otp.sql": "96fe0228e58b9d5496b5343cf09d8109969e13eca35698a6388352b9a067f737",
+    "V17__customer_recovery_otp.sql": "abcf14347a4ac42de937993b0dea585860e05813a202de721621868099017370",
+    "V18__personal_address_book.sql": "7c9fed6e3d18f2cd82351bd08990df3dbc63714b10a2b603dca816a4d069076b",
+    "V19__shipping_preparation_drafts.sql": "7a80c4a4ff6b67d7a1bba104392798518f144f5bdbbdcd1de91d5dc1aab093a9",
+    "V1__ownership_schemas.sql": "fc634d0cc30aeda75f894dd78aa4e987ba5feacccf4f30ce86a72e539abe9cca",
+    "V20__approved_personal_pilot_quote_booking.sql": "183043022edc8016c2cd83293d8957689d3bd6f496aa85eb74418e25ce5b0d81",
+    "V21__personal_labels_station_intake_tracking.sql": "a564ebe816d5e806e865decb09c8ea8ebef364520c3cdc27ba25b7c7b9a33732",
+    "V22__personal_support_tickets.sql": "2ef13eda15a75bc072288ff833d1f3e7861fac6f3597f0a7f30f5242415fbbce",
+    "V23__local_business_workspace_access.sql": "b60a162b9b04df7609cde93cf8f58532cce6c5a300bc8d2c35fb967aa70de9c9",
+    "V24__organization_shipping_preparation.sql": "e42c9a3ab0a7171c3ee03664d5d549c8983af1219ed899ad984f1201d59a96b0",
+    "V25__organization_csv_imports.sql": "9e397672f451832a33f360119680e8c80a3d5bdbbe1b05f8f0ef0a14c1c5eab8",
+    "V26__business_confirmed_shipping.sql": "4298648b4cc0aad87511a8a6c0a4675d3262ef18f8c3b50a4e4eedccbec82d04",
+    "V27__organization_shipment_management.sql": "5fd41fbed692424fbb474c861a98e06be52229f79717be648858cacfb947905a",
+    "V28__merchant_reports_finance_reads.sql": "9cf0fde845be47871f48114b1684f948fd644a42ef29ef7c2f2706c962f82b11",
+    "V29__organization_contacts.sql": "0388f995f73d6d37b0d704637c93d699c6d85baeb3df4489c33b99af33d35fbf",
+    "V2__demo_identity_merchant_drafts.sql": "16bea5ac1a9f9e8df8d2ef8d5d11110f95ddd69b86a0c8a22aca648d1251d199",
+    "V30__organization_internal_actions.sql": "40267c62dedfbf88ee7898cad922dd554dde322b8666740f20347b95f2410f71",
+    "V31__merchant_facility_management.sql": "8061a283006f6605b6be78ec55a07f75631ecf96e232ed9059a1006462d9bf7c",
+    "V32__merchant_parcel_handover_preparation.sql": "df47f255a552e3b151b0cb7ca8c5232ad3ab1937af05e132dd62d260699dbf64",
+    "V34__organization_team_access.sql": "07ebf9fd74aa31c178ab4e849761c4f3b513fdee7c8ad46269713661de6f0f4c",
+    "V35__organization_support_tickets.sql": "33e7e8b532de598627c321a454fd293157fb6c3a365cede946a03c3267d4844b",
+    "V36__local_support_staff_identity.sql": "78f3c438f56ffc60079469775b3614712f74085559344269725472eee6c44849",
+    "V37__request_bound_support_staff_grants.sql": "e2e4676d95c7ba9a91e8e952cc68dcfdea25f1f2694b9711eff9500a126381d9",
+    "V38__organization_claim_intake.sql": "e53544089747502cd9958a02b9508d35ef2508824d6118a152a0949bc980ae6a",
+    "V39__isolated_admin_onboarding.sql": "48510ec55434143218c222782d9e7e89ccc553585ce12ab638c733e52ec95fbd",
+    "V3__production_identity.sql": "c870bc7fa2225e7497534caf717ce6ad8d0f51c8fffbca272f8c5bdaf84985fb",
+    "V40__isolated_system_first_bootstrap.sql": "7c663b1df790bc26eaa020c366c4784c89e76a6979d10377bd8043d4422e486c",
+    "V41__admin_governance_proof_bridge.sql": "aa78854d594c8ed228b88570bfae62f7c3c590dbdac663d96beb59d53359fed6",
+    "V42__merchant_application_governance.sql": "52e2aab6d9fd990dc3ac269efacd44544e75f8f78340be7668a3584921e03701",
+    "V43__merchant_application_atomic_activation.sql": "3c230a3d8c6bfc092fb88432809621308d0a437ab33c568f6dd25080220dd28e",
+    "V44__operational_staff_identity.sql": "02c12c6e4c4ecd0af016377f4eedaa0621501e2e8468b62742064a8ad3cd209c",
+    "V45__carrier_sites_operational_scope.sql": "07b4d0b4d01a81d870879dafaf4c50e7406b534e2a349b9156ea436db414139d",
+    "V46__merchant_governance_review_views.sql": "10d213932e3e58088e42c220f970ecf816ff9662dde68aae5d55722a38b88919",
+    "V47__merchant_organization_governance_preparation.sql": "3389ec46fd7c89aa56d42b3d8c29588b482037704881560ee42ae7b9881fec13",
+    "V48__business_station_intake_ownership.sql": "be5fc80332e19aa89302e2548e8c7fc4402192da18f7f84e60889d81aea15321",
+    "V49__canonical_review_comment_table_owner.sql": "92976319fb025afb313d97373f83956488ea1c1957ca4f0c059dee27247a0316",
+    "V4__identity_system_realm.sql": "c2254b9fc8f292e171f4fde49cda15c38c63c940b1c74a2ccae780ec94643062",
+    "V5__identity_invitation_outbox.sql": "353144d6a866fadafd4eea3d8765b906198907331489be6c1d749030a2d91347",
+    "V6__identity_shared_rate_limiter.sql": "4f72f29a4a1c3cbd7b107545415212c0394b6022122ccb60f6411fda7f6b1742",
+    "V7__customer_identity_admission.sql": "446fead8a520cc4db1a41b5715a4b8350fa1c59273c568ec5abd4bca54c7bdb1",
+    "V8__customer_enrollment_proof_delivery.sql": "626412cfebde4d8076e89b485dc1d05c22c4646f3dc3329d103ab2e8de1c4698",
+    "V9__customer_durable_abuse_policies.sql": "0baea37f9b79c75ddc0c84d160e758e94ba48e18fc871fe893288cb2d3d41827"
+  },
+  "limits": [
+    "not independent three-machine validation",
+    "no SYSTEM activation/internal identity provisioning",
+    "no Spec012 runtime",
+    "not full logistics E2E or Production"
+  ],
+  "retainedFailures": [
+    "initial backend lacked canonical Admin physical binding",
+    "first clone clamd.conf CRLF",
+    "first Business Contact duplicated Cache-Control header",
+    "host npm sandbox CDN EACCES resolved through normal review"
+  ]
+}

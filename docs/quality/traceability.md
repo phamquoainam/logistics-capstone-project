@@ -2494,3 +2494,5 @@ manifest; exact API/schema/permissions require approval. Spec012 is not READY.
 ## Develop portable baseline (Owner release exception, 2026-11-27)
 
 Compose cold/restart PG18.6 +48 migrations, BRC-ACL-01 boundary and actual HTTPS/SMTP Customer smoke PASS. Fresh dual-audience S1 focused regression6/6; frontend typecheck/lint and272 units PASS. See [execution](../implementation/develop-baseline-release.md) and [runbook](../runbooks/portable-compose.md). Clean-clone/CI/merge remain pending; no Production or Spec012 acceptance.
+
+Final cold clean clone d6f2586 and same-volume restart PASS; real HTTPS/SMTP Customer + Business Contact verification PASS (Merchant stays DRAFT). See baseline-verification.json; CI/merge remain pending.

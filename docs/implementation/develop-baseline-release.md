@@ -144,3 +144,33 @@ final blank line and supplied Markdown hard line breaks preserved; attributes
 describe those formats. Release-only OrganizationCasePolicy Java EOF blank line
 trimmed without logic changes or overwriting original WIP. Candidate validator
 and secret scan PASS. A second new clone/cluster will verify both corrections.
+
+### Final clean-clone gate — PASS
+
+Exact runtime candidate **d6f25865297b610adcce9bbfa09ca547e9dc35cf**, cloned
+with git clone --no-local into a separate directory, clean Git status. Only
+documented public .env project/port overrides were created (5444/8026 to avoid
+the first baseline stack); no .demo/private source, home credentials or host
+dependencies are build inputs. Actual docker compose config / up --build -d
+--wait PASS; all five services healthy. Second cold target:
+argopost_admin_uat_1d1d18d3f42a, deployment
+5de0097f-6dd9-48b3-9ccb-a14be93fc606. Cold and stop/up restart both PASS,
+identical48 migration/checksum rows and one ENV_BIND audit/receipt. Initial
+accounts0/grants0, SYSTEM INACTIVE; no private-table access for BRC operator.
+Backend/migration uid10001 probes cannot read operator credentials; migrator
+cannot read bootstrap SQL holding role passwords. No permission repairs.
+
+Real HTTPS smoke from that clean clone PASS at localhost:5444, including bound
+Business Contact verification, retained DRAFT, session cookies/CSRF/isolation/
+responsive/logout. Host test dependency fetch initially hit sandbox EACCES to
+SheetJS CDN; normal reviewed network escalation retried the same locked npm ci
+successfully. Docker startup itself requires no host Node/npm. No global setting
+or credential change. Canonical role-generator targeted unit1/1 PASS.
+
+Backend JAR SHA256:
+8317ccdd0136dfd8b01a692b25d635cb3a2c4b08bf2b1b1571134014ed6a16f3.
+Web index SHA256:
+3f631c9b2b88ee02c4d996bb6568f42ffb1f556bef68274c4b30dc1fefcea1f3.
+Machine-readable catalog/evidence: baseline-verification.json. Any subsequent
+documentation-only commit does not change these runtime inputs. CI and merge
+remain mandatory, pending gates. No three-machine parity claim.
