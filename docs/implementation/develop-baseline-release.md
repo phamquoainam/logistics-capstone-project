@@ -120,3 +120,27 @@ exact merged SHA and post-merge smoke. Existing Admin multi-user READ contention
 from the S1 report is an unchanged IAM limitation. No three-machine/device/full
 logistics E2E/Production claim. Handoff packet is prepared, not sent or ACKed;
 Hoàng receives S1 contracts plus Spec012 PROPOSED, Triết downstream boundaries.
+
+### Retained clean-clone findings and corrections
+
+Candidate cfc5d7db10f17a35d98003f3d401e9c7b054206b was genuinely cloned using
+git clone --no-local. Cold DB/Backend/mail migrated/started correctly, but Windows
+checkout CRLF in clamd.conf broke the real scanner: FAIL retained. Added LF only
+for infra/local/*.conf; no migration or scanner guard weakened. Failed project
+was stopped and its volumes retained.
+
+Expanded Compose smoke found Business Contact confirmation FAIL despite real
+SMTP: proxy added a second Cache-Control header, violating the client's exact
+no-store contract. Hid only that upstream duplicate; gateway still emits no-store.
+Rebuilt Web only. Smoke including actual Business Contact proof issuance/SMTP/
+confirmation and persisted draft attestation then PASS. No submission/approval
+or privileged account/grant fabricated. Each explicit smoke invocation creates
+a new synthetic account/draft; failed runs/audit remain. Zero-account snapshot
+is historical, not the state after opt-in testing.
+
+Original staged Owner instructions/North Star were explicitly added alongside
+the157 unstaged WIP paths. Existing attributes retained. Protected V47's original
+final blank line and supplied Markdown hard line breaks preserved; attributes
+describe those formats. Release-only OrganizationCasePolicy Java EOF blank line
+trimmed without logic changes or overwriting original WIP. Candidate validator
+and secret scan PASS. A second new clone/cluster will verify both corrections.

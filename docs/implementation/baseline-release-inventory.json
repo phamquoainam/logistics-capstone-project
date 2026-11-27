@@ -22,7 +22,7 @@
     },
     {
       "path": ".gitattributes",
-      "sha256": "e39abd99b09b9fc2df604fde778b934f4b6be1b5aa0efb720edd3003cea25e5a",
+      "sha256": "47946f4ecc2ad4b5d8260b3dfd0e75681e1c4fc5741cdb338bf1c096044316ed",
       "classification": "PORTABLE_BASELINE_OR_OWNER_TEAM_DOCUMENT"
     },
     {
@@ -757,7 +757,7 @@
     },
     {
       "path": "docs/implementation/develop-baseline-release.md",
-      "sha256": "a2c8f44b568d733567e635e23fdeb0313c5bcd7c95b20f81636d1b3ecef9064f",
+      "sha256": "b2733cd535df2f86f57b9017c358051ebe8c606dc34bd030d524800ced1b44a6",
       "classification": "PORTABLE_BASELINE_OR_OWNER_TEAM_DOCUMENT"
     },
     {
@@ -857,7 +857,7 @@
     },
     {
       "path": "infra/local/browser-smoke.mjs",
-      "sha256": "e49358d4f3af3534210d653a2ef72a19c66a26d4a4f02b235bff6794a63a9951",
+      "sha256": "2990454399061a1690f782833001ee3e318982d26a5db19d1dcf94c32b401cda",
       "classification": "PORTABLE_BASELINE_OR_OWNER_TEAM_DOCUMENT"
     },
     {
@@ -877,7 +877,7 @@
     },
     {
       "path": "infra/local/nginx.conf",
-      "sha256": "70e48d79438f95bac31b6c1511a663bef5eae25148686b91be5ae60f06dde478",
+      "sha256": "d0a1c1aae8f320003152080c495dc63d78a9fd73fe5d239c848770d3a39cc302",
       "classification": "PORTABLE_BASELINE_OR_OWNER_TEAM_DOCUMENT"
     },
     {
