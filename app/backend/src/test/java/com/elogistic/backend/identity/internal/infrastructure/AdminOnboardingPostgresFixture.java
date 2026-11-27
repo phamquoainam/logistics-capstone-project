@@ -67,6 +67,8 @@ public final class AdminOnboardingPostgresFixture implements AutoCloseable {
         return governanceOperator.getConnection();
     }
     public Connection operatorConnection()throws SQLException{return operator.getConnection();}
+    /** Independent least-privilege operator for the owned disposable BIA test target only. */
+    public DataSource operationsTestOperator()throws Exception{return operator(database().container(),"elogistics_local_operations_operator");}
     private DriverManagerDataSource operator(PostgreSQLContainer pg,String role)throws Exception{
         String login="aon_fixture_"+UUID.randomUUID().toString().replace("-","");String password=PostgresTestcontainersSupport.password();
         try(var c=DriverManager.getConnection(PostgresTestcontainersSupport.currentUrl(pg,"postgres"),pg.getUsername(),pg.getPassword());var s=c.createStatement()){

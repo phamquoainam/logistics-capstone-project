@@ -127,6 +127,19 @@ test('bounded governance routes reuse SYSTEM transport without arbitrary URL or 
   expect(JSON.stringify(client.getSnapshot())).not.toContain('accessToken');
 });
 
+test('review views keep sensitive search out of URL and reuse bounded authenticated transport', async () => {
+  const { client, calls } = fixture(async path => {
+    if (path.endsWith('/csrf')) return Response.json({ csrfToken: 'synthetic-csrf-challenge-123456' });
+    if (path.endsWith('/me')) return Response.json(account);
+    if (path.startsWith('/api/v1/auth/')) return Response.json(session());
+    return Response.json({ accepted: true });
+  });await client.login('synthetic-admin', 'synthetic-password');
+  const body = { legalIdentifier: 'SYNTHETIC-PRIVATE-123', purpose: 'MERCHANT_REVIEW' };
+  await client.governanceView('application-search', body, v => v);expect(calls.at(-1)?.path).toBe('/api/v1/admin/merchant-applications/search');expect(calls.at(-1)?.init).toMatchObject({ method: 'POST', credentials: 'same-origin', cache: 'no-store', redirect: 'error', referrerPolicy: 'no-referrer', headers: { Authorization: 'Bearer ' + 'a'.repeat(128) } });expect(JSON.parse(String(calls.at(-1)?.init.body))).toEqual(body);
+  await expect(client.governanceView('profile', {}, v => v, '../users')).rejects.toMatchObject({ code: 'VALIDATION_FAILED' });
+  await client.governanceWrite('comment', id, 7, realm, { revision: 2, text: 'Synthetic note' }, v => v);expect(calls.at(-1)?.path).toBe('/api/v1/admin/merchant-applications/' + id + '/review-comments');expect(calls.at(-1)?.init.headers).toMatchObject({ 'Idempotency-Key': realm, 'If-Match': '"v7"' });
+});
+
 test('governance lost response is explicit and same-key retry preserves body and ETag', async () => {
   let writes = 0;
   const { client, calls } = fixture(async (path) => {

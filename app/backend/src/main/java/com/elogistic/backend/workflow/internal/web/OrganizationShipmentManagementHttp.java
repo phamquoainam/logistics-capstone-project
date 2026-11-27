@@ -36,7 +36,25 @@ public final class OrganizationShipmentManagementHttp {
     private static void emptyQuery(HttpServletRequest request){if(!parameters(request).isEmpty())throw problem(400,"VALIDATION_FAILED");}
     private void validate(Scope scope,List<BusinessShipmentManagement.FeeBinding> rows){finance.validateCaptured(scope,rows.stream().map(r->new BusinessObligations.Captured(r.shipmentId(),r.quoteId(),r.facilityId(),r.amountVnd())).toList());}
     private Map<String,Object> record(Scope scope,BusinessShipments.Shipment shipment){var f=finance.get(scope,shipment.facilityId(),shipment.id());if(!f.quoteId().equals(shipment.quote().id())||f.amountVnd()!=shipment.totalVnd()||!"UNPAID".equals(f.state()))throw new IllegalStateException("BUSINESS_OBLIGATION_BINDING_REQUIRED");return Map.of("simulation",true,"shipment",shipment,"obligation",f);}
-    @GetMapping(value=BASE+"/shipments",params="view=management") public Map<String,Object> list(@PathVariable String organizationId,HttpServletRequest request){var p=parameters(request);return execute(organizationId,Set.of(),a->{var result=management.read(a,p,rows->validate(a,rows));Map<String,Object> response=new LinkedHashMap<>();response.put("schemaVersion","ORGANIZATION_MANAGEMENT_1");response.put("generatedAt",result.generatedAt());response.put("timeZone","Asia/Ho_Chi_Minh");response.put("summary",result.summary());response.put("total",result.total());response.put("page",result.page());response.put("size",20);response.put("hasNext",result.hasNext());response.put("items",result.items().stream().map(item->Map.of("record",record(a,item.shipment()),"status","WAITING_FOR_HANDOVER","source",item.source(),"assignment",item.assignment(),"allowedActions",item.allowedActions())).toList());return response;});}
+    @GetMapping(value=BASE+"/shipments",params="view=management") public Map<String,Object> list(@PathVariable String organizationId,HttpServletRequest request){
+        var p=parameters(request);boolean v2="application/vnd.argopost.business-management.v2+json".equals(request.getHeader("Accept"));
+        return execute(organizationId,Set.of(),a->{
+            Map<String,Object> response=new LinkedHashMap<>();response.put("timeZone","Asia/Ho_Chi_Minh");response.put("size",20);
+            if(v2){
+                var result=management.readV2(a,p,rows->validate(a,rows));response.put("schemaVersion","ORGANIZATION_MANAGEMENT_2");
+                response.put("generatedAt",result.generatedAt());response.put("summary",result.summary());response.put("total",result.total());
+                response.put("page",result.page());response.put("hasNext",result.hasNext());
+                response.put("items",result.items().stream().map(item->Map.of("record",record(a,item.shipment()),"status",item.handling().state(),"source",item.source(),"assignment",item.assignment(),"allowedActions",item.allowedActions(),"handling",item.handling())).toList());
+            }else{
+                var result=management.read(a,p,rows->validate(a,rows));
+                if(!result.summary().bookedShipments().equals(result.summary().waitingForHandover()))throw new IllegalStateException("BUSINESS_LIFECYCLE_SOURCE_UNAVAILABLE");
+                response.put("schemaVersion","ORGANIZATION_MANAGEMENT_1");response.put("generatedAt",result.generatedAt());response.put("summary",result.summary());response.put("total",result.total());
+                response.put("page",result.page());response.put("hasNext",result.hasNext());
+                response.put("items",result.items().stream().map(item->Map.of("record",record(a,item.shipment()),"status","WAITING_FOR_HANDOVER","source",item.source(),"assignment",item.assignment(),"allowedActions",item.allowedActions())).toList());
+            }
+            return response;
+        });
+    }
     @GetMapping(BASE+"/shipment-exports") public Map<String,Object> export(@PathVariable String organizationId,HttpServletRequest request){var p=parameters(request);return execute(organizationId,Set.of(),a->{var result=management.export(a,p,rows->validate(a,rows));Map<String,Object> response=new LinkedHashMap<>();response.put("schemaVersion","ORGANIZATION_EXPORT_1");response.put("exportId",result.exportId());response.put("organizationId",result.organizationId());response.put("generatedAt",result.generatedAt());response.put("timeZone","Asia/Ho_Chi_Minh");response.put("piiIncluded",result.piiIncluded());response.put("rowCount",result.rowCount());response.put("columns",result.columns());response.put("rows",result.rows());return response;});}
     @GetMapping(BASE+"/shipments/{id}/assignment") public ResponseEntity<BusinessShipmentManagement.Assignment> assignment(@PathVariable String organizationId,@PathVariable String id,HttpServletRequest request){emptyQuery(request);return assignmentResponse(execute(organizationId,Set.of(),a->management.assignment(a,uuid(id))));}
     private static ResponseEntity<BusinessShipmentManagement.Assignment> assignmentResponse(BusinessShipmentManagement.Assignment result){return ResponseEntity.ok().header("Cache-Control","no-store").eTag("\"a"+result.version()+"\"").body(result);}

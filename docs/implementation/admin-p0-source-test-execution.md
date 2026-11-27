@@ -1243,3 +1243,154 @@ AGENTS.md and new ARGOPOST_PROJECT_NORTH_STAR.md are Owner WIP, read in full and
 hash-preserved; excluded from this CI correction commit. No product/menu work is
 started in this checkpoint. Full exact-head CI remains required before merge;
 this budget correction is not a CI PASS claim and not an automatic blind rerun.
+
+
+## Owner Menu1 core readiness review - 2026-11-25
+
+Task: retain Executive Dashboard / My Approvals / Operational Risk / Service
+Health, reconcile ADM-01/17/18 against the latest bounded core scope. Read the
+entire Owner North Star and AGENTS. No production source, contract, schema,
+permission or runtime change is needed for this review. Existing implementation
+and exact-head acceptance evidence are reused rather than rerun. Owner's current
+task slot and strategic North Star text remain untouched.
+
+### Acceptance matrix
+
+| Required capability | Canonical implementation / evidence | Core result |
+|---|---|---|
+| Merchant submission/current-state KPIs and processing samples | Merchant AdminApplicationFacts -> Workflow AdminDashboardV2/AdminApplicationMetrics; first-submission cohort, revision dedup and real terminal timestamps | EXISTING_VERIFIED |
+| Booking, Shipment/Parcel and Carrier Accepted | Orders AdminShipmentFacts/AdminOversightReads; persisted Booking/Parcel/intake facts, no invented In Transit/Delivered | EXISTING_VERIFIED |
+| Confirmed fees and UNPAID | Finance AdminObligationFacts; exact VND snapshot/obligation, separate money meanings and current Finance READ | EXISTING_VERIFIED |
+| Date/status/scope filters and drill-through | Six existing GET APIs with exact v2 negotiation, current resource scope and HMAC-bound query/cohort/fingerprint; current authority and source drift reject stale selectors | EXISTING_VERIFIED |
+| Metric metadata | ARGO_ADMIN_METRICS_2, Vietnam timezone, numerator/denominator/sample count, source event vs checkedAt/freshness; null average without samples | EXISTING_VERIFIED |
+| My Approvals/current work | Merchant WorkQuery/WorkItem/WorkPage; genuine assignment/revision-derived stable IDs, eligibility before pagination and canonical command deep links | EXISTING_VERIFIED |
+| Task state and deadline | MERCHANT_REVIEW vs MERCHANT_DECISION and allowedActions from current persisted state; dueAt=null under approved contract until a deadline policy exists | EXISTING_VERIFIED; deadline policy BLOCKED_CONTRACT |
+| Own context/profile/basic session/logout | Current SYSTEM Admin, scoped capabilities/versions/expiry and self profile; existing secure session/refresh/logout, no Customer/Staff grant union | EXISTING_VERIFIED |
+| Reviewer/decider independence | Genuine Identity-owned contexts, no applicant self-approval, different reviewer/decider, current scope/expiry/revocation, reauthentication/version checks before decision and at transaction boundary | EXISTING_VERIFIED |
+| Immutable audit and activation | Merchant governance event/receipt audit plus atomic Organization/Initial Owner creation; Workflow event/outbox binding, no read-side execution authority | EXISTING_VERIFIED |
+| Responsive and source states | Real HTTPS Browser desktop/mobile plus parser/UI regression; loading/legitimate empty/error/forbidden/unavailable stay distinct | EXISTING_VERIFIED |
+| Official Network/SLA/COD/telemetry | Canonical owning sources/policies absent; Operational Risk and Service Health do not invent incidents, overdue or platform-wide health | BLOCKED_CANONICAL_SOURCE / UNAVAILABLE |
+
+### Verified outcome
+
+**ADM-01 CORE READY - SOURCE/TEST**, for the Owner-approved bounded sources above.
+**ADM-17 CORE READY - SOURCE/TEST**, for existing Work Inbox, canonical review and
+decision navigation, own context/profile and basic session/logout. No parallel
+task engine or notification implementation.
+**ADM-18 CORE SECURITY CONTROLS VERIFIED**, not acceptance of the general proposed
+Authority Matrix editor, financial thresholds or multi-domain delegation policy.
+
+Exact-head run45548559303 at6e4e1c3a7d38c810e215ea4de96db1f2ddadd35a is SUCCESS.
+Sanitized artifacts: Architecture23 passed/0 skipped; H2753 passed/17 expected
+skips; PostgreSQL1327 passed/5 expected skips, zero failures/errors. The explicit
+Dashboard v2, Work/Audit, constructed-context denial, revocation/expiry, independent
+review, atomic activation and real Customer-to-independent-decision HTTPS cases
+all passed in that run. Prior failure and30-minute cancellation records remain
+above; they are not reclassified as PASS. No new manual test suite was run.
+CI: https://github.com/phamquoainam/logistics-capstone-project/actions/runs/45548559303
+
+### Boundaries and residual findings
+
+Full-module classifications remain ADM-01 PARTIAL, ADM-17 PARTIAL and ADM-18
+PROPOSED against the larger product specification; core readiness does not imply
+full Admin, platform E2E, Local UAT or Production readiness. Advanced notifications,
+MFA/session inventory/general handoff and policy editing remain BLOCKED_CONTRACT.
+No false due date, deadline/SLA compliance, COD collection, settlement or revenue.
+
+NAV-PARENT-COUNT: navigation.ts currently has8 parent groups after an earlier
+Overview regrouping, while the new North Star retains9 as the full-console target.
+The four Menu1 entries and ADM-01..23 IDs remain present. This is an existing
+non-core taxonomy gap, not a source/authority blocker for the bounded Menu1
+acceptance. No unrelated parent/menu IDs were changed in this review. Full shared
+shell/product navigation acceptance must reconcile this explicitly.
+
+Next highest-value domain dependency for the missing Overview sources is the
+canonical Carrier Network/operational event source (Dispatch/Orders); it must
+unlock real custody/transport lifecycle before SLA/Network dashboard expansion.
+This review does not authorize or begin that implementation.
+
+Integration reconciliation: Owner merged PR51 at2026-11-25T06:03:07Z into
+develop asd5a0c240841bdb35d9ef6064cddba696a5b2fa62. Post-merge run45557771726
+is SUCCESS; all three existing jobs PASS. Its committed source tree equals
+6e4e1c3, so no redundant manual regression is needed for this docs-only core review.
+The current readiness/coverage/traceability edits are not part of that CI revision;
+they do not change application source. No new deployment or real-data UAT claim.
+
+## Menu1 closure / NAV-PARENT-COUNT reconciliation - 2026-11-25
+
+**MENU_1_ADMIN_CORE_ACCEPTED — SOURCE/TEST** under the latest Owner acceptance.
+This supersedes the open NAV-PARENT-COUNT finding above; its historical evidence
+and the earlier full-spec classifications are retained. It does not claim Full
+Specification, Local UAT or Production readiness.
+
+### Navigation scope and exact source
+
+Reconciled with the Owner's supplied table and the menu table in
+`docs/business-references/ArgoPost_Administration_Console_Admin_Portal_Functional_Menu_Specification_Full.docx`
+(SHA-256 `58f43be7ba88255fb1483fe3c3222f02822e2a668c6079d785d168f4d7987a46`).
+`navigation.ts` now has exactly these nine parent groups:
+
+1. Tổng quan.
+2. Merchant & Phê duyệt.
+3. Dịch vụ & Mạng lưới.
+4. Giám sát vận hành.
+5. Hỗ trợ & Tài chính.
+6. Nhân sự & Bảo mật.
+7. Nền tảng & Tích hợp.
+8. Kiểm toán & Báo cáo.
+9. Tài khoản & Công việc.
+
+The four Overview entries remain Executive Dashboard, My Approvals, Operational
+Risk and Service Health. The ninth group references the single existing ADM-17
+route `/admin/account`; My Approvals uses that same Work Inbox with its approvals
+tab. Shared ADM-17/ADM-20 group references reflect the specification, not duplicate
+modules, tasks, routes or grants. All 23 unique module IDs/routes remain intact.
+No backend, API, schema, permission, dependency or business behavior changed.
+
+### Focused verification
+
+- TDD: navigation assertion initially failed on the missing ninth group (1 FAIL,
+  5 PASS); after the one-row registry fix, navigation tests **6/6 PASS**.
+- `npx.cmd playwright test --config playwright-unit.config.ts internal-navigation.spec.ts`:
+  **6/6 PASS**.
+- `npx.cmd playwright test --config playwright-customer-ui.config.ts admin-dashboard.spec.ts --grep 'internal shell groups overview|overview work center'`:
+  **2/2 PASS**. This is intercepted-API UI regression, not live HTTPS/backend UAT.
+  The configured server's `build:customer` (TypeScript and Vite build) succeeded;
+  the existing large-bundle advisory remains advisory, not suppressed.
+- `npx.cmd eslint src/internal/navigation.ts unit-tests/internal-navigation.spec.ts ui-unit-tests/admin-dashboard.spec.ts runtime-tests/admin-dashboard.spec.ts --max-warnings 0`:
+  **PASS**.
+- The HTTPS runtime test's expected parent count is synchronized to nine. That
+  full-stack suite was **not rerun** for this menu-only correction. Prior CI does
+  not certify this uncommitted navigation patch; only the focused results above do.
+- The 2,103 passing Backend tests from the accepted CI revision are reused, not
+  executed again. No new full-suite, CI or deployment PASS is claimed.
+
+`AGENTS.md` was already Git-tracked and contains Owner WIP. The North Star file
+was untracked at preflight. Both Owner-authored files are preserved byte-for-byte;
+their documentation changes are prepared separately from the menu source patch.
+No commit, push or merge is authorized or performed by this checkpoint.
+Final Git preparation: only `AGENTS.md` and the new North Star are staged as the
+documentation-only change; all source/readiness WIP remains unstaged. Neither
+documentation change is committed yet. `git diff --check` and
+`python docs/reconciliation/v3/validate.py --implementation` PASS (exit 0).
+The separate `git diff --cached --check` reports five pre-existing two-space
+Markdown hard-break lines in Owner's new North Star. Those bytes are deliberately
+preserved rather than silently reformatted; this is documentation formatting,
+not a navigation/test failure.
+
+### Next E2E dependency handoff (review only, no implementation started)
+
+| Priority / area | Existing capability to preserve | Actual missing dependency / owning boundary |
+|---|---|---|
+| First: ADM-05 + ADM-12 operational foundation | Dispatch StationIntake scans/all-parcels acceptance/custody and bounded Local/Test assignments; Identity Staff/CSKH admission already exist | Authoritative Carrier Station/Hub location, ACTIVE/capability source and operational Staff/site-scoped admission, assignment and revocation. Dispatch owns operational sites/assignments; Identity owns principal/admission. `AdminNetworkSource` explicitly returns SOURCE_NOT_IMPLEMENTED and `/ops` explicitly denies inferred SYSTEM/SUPPORT authority. Merchant facilities are not Carrier sites. Prepare one bounded contract before new authority/schema. |
+| ADM-04 Services/Coverage | PilotCoverage already supplies ROAD_STANDARD eligibility on four approved SIM routes and drop-off restrictions | Canonical versioned service/coverage publishing and approved site/service capability binding (Merchant catalogue boundary coordinated with Dispatch network); no assumption of nationwide coverage or Pickup. Reuse eligibility reader. |
+| ADM-07 Pricing | PilotQuoteApplication/RoadTariffCalculation and JdbcBusinessQuotes already implement real Local/Test quotes, Merchant contract tariff, TTL and Booking snapshots | Governed tariff/contract publication, effective version and approval for the next approved service scope (Pricing). Do not replace the existing Quote engine or use Personal tariff as Merchant authority. |
+| Carrier Operations lifecycle | Booking and bounded Station Acceptance/AT_STATION already persist real Shipment/Parcel/custody facts | Canonical sorting/manifests/transfer/dispatch and delivery-attempt/POD/return events with actor/site authority (Dispatch/Orders, specs010–015). These unlock meaningful in-transit/delivery/SLA reporting; do not invent status transitions to populate widgets. |
+
+Use canonical specs004/005/010–015/027 and current approved pilot evidence together:
+planning BLOCKED_FOR_IMPLEMENTATION is not evidence that verified pilot code is
+absent. Recommended next work is the bounded ADM-05/ADM-12 site-and-operational-
+access contract, checking ADM-04/ADM-07 compatibility, then the next actual Carrier
+custody transition. New exact API/schema/authority remains subject to review;
+advanced Admin editors, Network/SLA/COD engines and repeated Dashboard work are
+not part of this checkpoint.

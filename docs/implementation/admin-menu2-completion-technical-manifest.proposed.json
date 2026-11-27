@@ -1,0 +1,2785 @@
+{
+  "manifest_id": "ADM-M2-COMPLETION-01",
+  "status": "PROPOSED_NOT_APPROVED",
+  "scope": "Menu 2 ADM-02/03; isolated SOURCE/TEST only after exact approval; no deployment",
+  "parent_approved_manifest_sha256": "90c795bd7e773b6a58d0d220056cfbc5e9a5ee95b38ae2493d5b9f75a372291f",
+  "coverage_source": "docs/implementation/admin-console-functional-coverage.csv",
+  "preserve": [
+    "V1-V45 including NWS V44/V45; no V33",
+    "all existing P0 HTTP/DTO shapes and receipts",
+    "Initial Owner and original ActivationOutcome historical bytes",
+    "all WIP and staged Owner files",
+    "nine parents/23 modules",
+    "Menu6-9 and shared IAM/Notifications implementations until coordination"
+  ],
+  "groups": [
+    {
+      "id": "M2-R01",
+      "status": "BLOCKED_TECHNICAL_APPROVAL",
+      "owner": "merchant",
+      "dependencies": [
+        "COORD-NOTICE",
+        "COORD-PROFILE"
+      ]
+    },
+    {
+      "id": "M2-L01",
+      "status": "BLOCKED_BUSINESS_AND_TECHNICAL_APPROVAL",
+      "owner": "merchant",
+      "dependencies": [
+        "DEC-L1",
+        "DEC-L2",
+        "DEC-L3",
+        "DEC-L4",
+        "COORD-EXIT",
+        "COORD-ADMISSION"
+      ]
+    },
+    {
+      "id": "M2-O01",
+      "status": "BLOCKED_BUSINESS_AND_TECHNICAL_APPROVAL",
+      "owner": "merchant",
+      "dependencies": [
+        "DEC-O1",
+        "DEC-O2",
+        "DEC-O3",
+        "DEC-O4",
+        "COORD-IAM",
+        "COORD-TEAM",
+        "COORD-NOTICE"
+      ]
+    }
+  ],
+  "api_defaults": {
+    "all_new_entries": "[PROPOSED]",
+    "admin_admission": "SYSTEM AdminAdmission/AdminCommandAdmission + ADMIN_DASHBOARD_READ + ADMIN_MERCHANT_READ + current Merchant scope; no implicit Root authority",
+    "scope": "APPLICATION/POLICY or ORGANIZATION; scope before matching, paging, eligibility, counts and disclosure; genuine owner-issued context and physical transaction verification",
+    "headers": "no-store,no-referrer,nosniff; existing HTTPS/session/CSRF/admission filters unchanged",
+    "commands": "Idempotency-Key UUID; If-Match vN (428 absent/412 stale) except creation; authenticated actor/server IDs; immutable receipt/event; purpose-bound recent reauthentication for sensitive transition/decision/execution",
+    "reads": "fixed size 20 default, 1..50 maximum; opaque HMAC cursor bound to actor, realm, current scope/authority, normalized filters, source fingerprint and expiry; changed scope/source rejects snapshot, never silently rematches cohort",
+    "errors": {
+      "400": "VALIDATION_FAILED",
+      "401": "SESSION_INVALID",
+      "403": "ACCESS_DENIED",
+      "404": "RESOURCE_NOT_FOUND (foreign scope indistinguishable)",
+      "409": "STATE_CONFLICT|IDEMPOTENCY_CONFLICT|SNAPSHOT_EXPIRED|CONFLICT_OF_INTEREST",
+      "412": "PRECONDITION_STALE",
+      "422": "POLICY_UNAVAILABLE|CANONICAL_SOURCE_UNAVAILABLE|CLEARANCE_REQUIRED",
+      "428": "PRECONDITION_REQUIRED",
+      "429": "RATE_LIMITED",
+      "503": "DEPENDENCY_UNAVAILABLE"
+    },
+    "privacy": "No PII in URL/search tokens/logs; advanced PII matching uses POST body, purpose MERCHANT_REVIEW or ORGANIZATION_OVERSIGHT, audited before disclosure; redacted toString; no raw recipient/proof/key/body in receipts"
+  },
+  "apis": [
+    {
+      "id": "M2R-API-01",
+      "status": "[PROPOSED]",
+      "group": "M2-R01",
+      "method": "POST",
+      "path": "/api/v1/admin/merchant-applications/search",
+      "input": "M2-ApplicationSearch",
+      "output": "M2-ApplicationSearchPage",
+      "permissions": [
+        "application.read",
+        "application.evidence.read"
+      ],
+      "ownership": "current exact Merchant scope",
+      "notes": "Search submitted/current immutable revision with scope BEFORE matching; every candidate/source change invalidates cohort. Old GET unchanged."
+    },
+    {
+      "id": "M2R-API-02",
+      "status": "[PROPOSED]",
+      "group": "M2-R01",
+      "method": "POST",
+      "path": "/api/v1/admin/merchant-organizations/search",
+      "input": "M2-OrganizationSearch",
+      "output": "M2-OrganizationSearchPage",
+      "permissions": [
+        "org.read",
+        "org.profile.read"
+      ],
+      "ownership": "current exact Merchant scope",
+      "notes": "Search registered data only for approved-origin organizations; legacy missing legal data is unavailable, never guessed."
+    },
+    {
+      "id": "M2R-API-03",
+      "status": "[PROPOSED]",
+      "group": "M2-R01",
+      "method": "POST",
+      "path": "/api/v1/admin/merchant-applications/{applicationId}/revision-comparisons",
+      "input": "M2-ComparisonRequest",
+      "output": "M2-RevisionComparison",
+      "permissions": [
+        "application.read",
+        "application.evidence.read"
+      ],
+      "ownership": "current exact Merchant scope",
+      "notes": "Audited read disclosure, not update; both revisions exact application, submitted and digest-bound."
+    },
+    {
+      "id": "M2R-API-04",
+      "status": "[PROPOSED]",
+      "group": "M2-R01",
+      "method": "POST",
+      "path": "/api/v1/admin/merchant-organizations/{organizationId}/profile-disclosures",
+      "input": "M2-DisclosureRequest",
+      "output": "M2-OrganizationProfile",
+      "permissions": [
+        "org.read",
+        "org.profile.read"
+      ],
+      "ownership": "current exact Merchant scope",
+      "notes": "No contract prices/financial amounts; source ports needed before optional blocks become AVAILABLE."
+    },
+    {
+      "id": "M2R-API-05",
+      "status": "[PROPOSED]",
+      "group": "M2-R01",
+      "method": "POST",
+      "path": "/api/v1/admin/merchant-organizations/{organizationId}/membership-disclosures",
+      "input": "M2-DisclosureRequest",
+      "output": "M2-MembershipPage",
+      "permissions": [
+        "org.read",
+        "org.members.read"
+      ],
+      "ownership": "current exact Merchant scope",
+      "notes": "Merchant-owned metadata/aggregate invitations only; no credential/session/recipient-email or Team mutation."
+    },
+    {
+      "id": "M2R-API-06",
+      "status": "[PROPOSED]",
+      "group": "M2-R01",
+      "method": "GET",
+      "path": "/api/v1/admin/merchant-applications/{applicationId}/notice-status",
+      "input": "M2-PageQuery",
+      "output": "M2-NoticePage",
+      "permissions": [
+        "application.read",
+        "application.notice.read"
+      ],
+      "ownership": "current exact Merchant scope",
+      "notes": "Workflow scopes application first; Notifications validates genuine context and binding independently."
+    },
+    {
+      "id": "M2R-API-07",
+      "status": "[PROPOSED]",
+      "group": "M2-R01",
+      "method": "POST",
+      "path": "/api/v1/admin/merchant-applications/{applicationId}/review-comments",
+      "input": "M2-CommentInput",
+      "output": "M2-Comment",
+      "permissions": [
+        "application.read",
+        "application.comment.write"
+      ],
+      "ownership": "current exact Merchant scope",
+      "notes": "Immutable append on exact revision with If-Match; no decision or edit/delete API."
+    },
+    {
+      "id": "M2R-API-08",
+      "status": "[PROPOSED]",
+      "group": "M2-R01",
+      "method": "POST",
+      "path": "/api/v1/admin/merchant-applications/{applicationId}/comment-disclosures",
+      "input": "M2-PageQuery",
+      "output": "M2-CommentPage",
+      "permissions": [
+        "application.read",
+        "application.evidence.read"
+      ],
+      "ownership": "current exact Merchant scope",
+      "notes": "Purpose MERCHANT_REVIEW fixed by endpoint, audited disclosure."
+    },
+    {
+      "id": "M2R-API-09",
+      "status": "[PROPOSED]",
+      "group": "M2-R01",
+      "method": "GET",
+      "path": "/api/v1/admin/merchant-applications/{applicationId}/checks",
+      "input": "none",
+      "output": "M2-Checks",
+      "permissions": [
+        "application.read",
+        "application.evidence.read"
+      ],
+      "ownership": "current exact Merchant scope",
+      "notes": "Only existing duplicate/contact/evidence screening/conflict guards projected; current decision recomputes, no override."
+    },
+    {
+      "id": "M2L-API-01",
+      "status": "[PROPOSED]",
+      "group": "M2-L01",
+      "method": "POST",
+      "path": "/api/v1/admin/merchant-organizations/{organizationId}/governance-cases",
+      "input": "M2-CaseInput",
+      "output": "M2-Case",
+      "permissions": [
+        "org.read",
+        "org.lifecycle.propose"
+      ],
+      "ownership": "current exact Merchant scope",
+      "notes": "Creates DRAFT; requester must not be member of target Organization. Each sensitive step is bound to case policy, not a general approval engine."
+    },
+    {
+      "id": "M2L-API-02",
+      "status": "[PROPOSED]",
+      "group": "M2-L01",
+      "method": "GET",
+      "path": "/api/v1/admin/merchant-organizations/{organizationId}/governance-cases",
+      "input": "M2-CaseQuery",
+      "output": "M2-CasePage",
+      "permissions": [
+        "org.read"
+      ],
+      "ownership": "current exact Merchant scope",
+      "notes": ""
+    },
+    {
+      "id": "M2L-API-03",
+      "status": "[PROPOSED]",
+      "group": "M2-L01",
+      "method": "GET",
+      "path": "/api/v1/admin/merchant-organizations/{organizationId}/governance-cases/{caseId}",
+      "input": "none",
+      "output": "M2-Case",
+      "permissions": [
+        "org.read"
+      ],
+      "ownership": "current exact Merchant scope",
+      "notes": ""
+    },
+    {
+      "id": "M2L-API-04",
+      "status": "[PROPOSED]",
+      "group": "M2-L01",
+      "method": "POST",
+      "path": "/api/v1/admin/merchant-organizations/{organizationId}/governance-cases/{caseId}/assignment",
+      "input": "M2-AssignmentInput",
+      "output": "M2-Case",
+      "permissions": [
+        "org.read",
+        "org.lifecycle.propose"
+      ],
+      "ownership": "current exact Merchant scope",
+      "notes": "Current eligible reviewer with exact org/type authority; not maker/party. OWNER_TRANSFER always requires corresponding ownership capability; lifecycle capability never substitutes.",
+      "permission_by_case_type": {
+        "OTHER": [
+          "org.read",
+          "org.lifecycle.propose"
+        ],
+        "OWNER_TRANSFER": [
+          "org.read",
+          "org.ownership.propose"
+        ]
+      }
+    },
+    {
+      "id": "M2L-API-05",
+      "status": "[PROPOSED]",
+      "group": "M2-L01",
+      "method": "POST",
+      "path": "/api/v1/admin/merchant-organizations/{organizationId}/governance-cases/{caseId}/review",
+      "input": "M2-CaseReviewInput",
+      "output": "M2-Case",
+      "permissions": [
+        "org.read",
+        "org.lifecycle.review"
+      ],
+      "ownership": "current exact Merchant scope",
+      "notes": " OWNER_TRANSFER always requires corresponding ownership capability; lifecycle capability never substitutes.",
+      "permission_by_case_type": {
+        "OTHER": [
+          "org.read",
+          "org.lifecycle.review"
+        ],
+        "OWNER_TRANSFER": [
+          "org.read",
+          "org.ownership.review"
+        ]
+      }
+    },
+    {
+      "id": "M2L-API-06",
+      "status": "[PROPOSED]",
+      "group": "M2-L01",
+      "method": "POST",
+      "path": "/api/v1/admin/merchant-organizations/{organizationId}/governance-cases/{caseId}/request-information",
+      "input": "M2-InformationInput",
+      "output": "M2-Case",
+      "permissions": [
+        "org.read",
+        "org.lifecycle.review"
+      ],
+      "ownership": "current exact Merchant scope",
+      "notes": " OWNER_TRANSFER always requires corresponding ownership capability; lifecycle capability never substitutes.",
+      "permission_by_case_type": {
+        "OTHER": [
+          "org.read",
+          "org.lifecycle.review"
+        ],
+        "OWNER_TRANSFER": [
+          "org.read",
+          "org.ownership.review"
+        ]
+      }
+    },
+    {
+      "id": "M2L-API-07",
+      "status": "[PROPOSED]",
+      "group": "M2-L01",
+      "method": "POST",
+      "path": "/api/v1/admin/merchant-organizations/{organizationId}/governance-cases/{caseId}/resubmission",
+      "input": "M2-ResponseInput",
+      "output": "M2-Case",
+      "permissions": [
+        "org.read",
+        "org.lifecycle.propose"
+      ],
+      "ownership": "current exact Merchant scope",
+      "notes": "Admin maker only; Customer responses use separate named-party endpoint, no actor substitution. OWNER_TRANSFER always requires corresponding ownership capability; lifecycle capability never substitutes.",
+      "permission_by_case_type": {
+        "OTHER": [
+          "org.read",
+          "org.lifecycle.propose"
+        ],
+        "OWNER_TRANSFER": [
+          "org.read",
+          "org.ownership.propose"
+        ]
+      }
+    },
+    {
+      "id": "M2L-API-08",
+      "status": "[PROPOSED]",
+      "group": "M2-L01",
+      "method": "POST",
+      "path": "/api/v1/admin/merchant-organizations/{organizationId}/governance-cases/{caseId}/decision",
+      "input": "M2-CaseDecisionInput",
+      "output": "M2-Case",
+      "permissions": [
+        "org.read",
+        "org.lifecycle.decide"
+      ],
+      "ownership": "current exact Merchant scope",
+      "notes": "Maker != reviewer != decider; no approving own organization/case. OWNER_TRANSFER substitutes ownership.* permissions, never OR-union. OWNER_TRANSFER always requires corresponding ownership capability; lifecycle capability never substitutes.",
+      "permission_by_case_type": {
+        "OTHER": [
+          "org.read",
+          "org.lifecycle.decide"
+        ],
+        "OWNER_TRANSFER": [
+          "org.read",
+          "org.ownership.decide"
+        ]
+      }
+    },
+    {
+      "id": "M2L-API-09",
+      "status": "[PROPOSED]",
+      "group": "M2-L01",
+      "method": "POST",
+      "path": "/api/v1/admin/merchant-organizations/{organizationId}/governance-cases/{caseId}/execution",
+      "input": "M2-ExecutionInput",
+      "output": "M2-Case",
+      "permissions": [
+        "org.read",
+        "org.lifecycle.execute"
+      ],
+      "ownership": "current exact Merchant scope",
+      "notes": "Approved exact revision; approvals do not execute automatically. Execution may be same as independent decider only if approved DEC-L2 policy says so; no Finance writes. OWNER_TRANSFER always requires corresponding ownership capability; lifecycle capability never substitutes.",
+      "permission_by_case_type": {
+        "OTHER": [
+          "org.read",
+          "org.lifecycle.execute"
+        ],
+        "OWNER_TRANSFER": [
+          "org.read",
+          "org.ownership.execute"
+        ]
+      }
+    },
+    {
+      "id": "M2L-API-10",
+      "status": "[PROPOSED]",
+      "group": "M2-L01",
+      "method": "POST",
+      "path": "/api/v1/admin/merchant-organizations/{organizationId}/governance-cases/{caseId}/cancellation",
+      "input": "M2-ReasonInput",
+      "output": "M2-Case",
+      "permissions": [
+        "org.read",
+        "org.lifecycle.propose"
+      ],
+      "ownership": "current exact Merchant scope",
+      "notes": "Maker before decision only; cannot cancel already executed case. CUSTOMER named party uses separate endpoint. OWNER_TRANSFER always requires corresponding ownership capability; lifecycle capability never substitutes.",
+      "permission_by_case_type": {
+        "OTHER": [
+          "org.read",
+          "org.lifecycle.propose"
+        ],
+        "OWNER_TRANSFER": [
+          "org.read",
+          "org.ownership.propose"
+        ]
+      }
+    },
+    {
+      "id": "M2L-API-11",
+      "status": "[PROPOSED]",
+      "group": "M2-L01",
+      "method": "GET",
+      "path": "/api/v1/admin/merchant-organizations/{organizationId}/governance-cases/{caseId}/events",
+      "input": "M2-PageQuery",
+      "output": "M2-CaseEventPage",
+      "permissions": [
+        "org.read",
+        "audit.read"
+      ],
+      "ownership": "current exact Merchant scope",
+      "notes": ""
+    },
+    {
+      "id": "M2L-API-12",
+      "status": "[PROPOSED]",
+      "group": "M2-L01",
+      "method": "GET",
+      "path": "/api/v1/admin/merchant-organizations/{organizationId}/risk-holds",
+      "input": "M2-PageQuery",
+      "output": "M2-HoldPage",
+      "permissions": [
+        "org.read"
+      ],
+      "ownership": "current exact Merchant scope",
+      "notes": ""
+    },
+    {
+      "id": "M2L-API-13",
+      "status": "[PROPOSED]",
+      "group": "M2-L01",
+      "method": "GET",
+      "path": "/api/v1/admin/merchant-organizations/{organizationId}/governance-state",
+      "input": "none",
+      "output": "M2-StateSummary",
+      "permissions": [
+        "org.read"
+      ],
+      "ownership": "current exact Merchant scope",
+      "notes": "New versioned state reader; old OrganizationSummary is not silently expanded."
+    },
+    {
+      "id": "M2L-API-14",
+      "status": "[PROPOSED]",
+      "group": "M2-L01",
+      "method": "GET",
+      "path": "/api/v1/admin/merchant-organizations/{organizationId}/governance-policies",
+      "input": "none",
+      "output": "M2-CasePolicies",
+      "permissions": [
+        "org.read"
+      ],
+      "ownership": "current exact Merchant scope",
+      "notes": "Offline published immutable policy versions only; no platform policy editor."
+    },
+    {
+      "id": "M2O-API-01",
+      "status": "[PROPOSED]",
+      "group": "M2-O01",
+      "method": "POST",
+      "path": "/api/v1/customer/organizations/{organizationId}/owner-transfer-requests",
+      "input": "M2-TransferInput",
+      "output": "M2-PartyView",
+      "permissions": [
+        "ownership.transfer.request"
+      ],
+      "ownership": "authenticated named party",
+      "notes": "Current verified Owner + ORGANIZATION grant; creates one canonical Merchant case; not Customer self-approval."
+    },
+    {
+      "id": "M2O-API-02",
+      "status": "[PROPOSED]",
+      "group": "M2-O01",
+      "method": "GET",
+      "path": "/api/v1/customer/organization-governance-cases/{caseId}",
+      "input": "none",
+      "output": "M2-PartyView",
+      "permissions": [],
+      "ownership": "authenticated named party",
+      "notes": "Named verified party only; identity match is bounded case admission, not org/member authority."
+    },
+    {
+      "id": "M2O-API-03",
+      "status": "[PROPOSED]",
+      "group": "M2-O01",
+      "method": "POST",
+      "path": "/api/v1/customer/organization-governance-cases/{caseId}/consents",
+      "input": "M2-PartyConsentInput",
+      "output": "M2-ConsentResult",
+      "permissions": [],
+      "ownership": "authenticated named party",
+      "notes": "Named party + genuine current Customer context, single-use reauthentication and exact intent; cannot act as the other party."
+    },
+    {
+      "id": "M2O-API-04",
+      "status": "[PROPOSED]",
+      "group": "M2-O01",
+      "method": "POST",
+      "path": "/api/v1/customer/organization-governance-cases/{caseId}/responses",
+      "input": "M2-ResponseInput",
+      "output": "M2-PartyView",
+      "permissions": [],
+      "ownership": "authenticated named party",
+      "notes": "Named subject on NEEDS_INFORMATION only; invalidates prior checklist/decision/consents when material revision changes."
+    },
+    {
+      "id": "M2O-API-05",
+      "status": "[PROPOSED]",
+      "group": "M2-O01",
+      "method": "POST",
+      "path": "/api/v1/customer/organization-governance-cases/{caseId}/cancellation",
+      "input": "M2-ReasonInput",
+      "output": "M2-PartyView",
+      "permissions": [],
+      "ownership": "authenticated named party",
+      "notes": "Current transferor before decision only; not a lifecycle bypass."
+    },
+    {
+      "id": "M2O-API-06",
+      "status": "[PROPOSED]",
+      "group": "M2-O01",
+      "method": "POST",
+      "path": "/api/v1/customer/organization-governance-cases/{caseId}/evidence",
+      "input": "M2-EvidenceUpload",
+      "output": "M2-CaseEvidence",
+      "permissions": [],
+      "ownership": "authenticated named party",
+      "notes": "Named verified party; private platform store/scanner reused; no storage I/O inside business locks."
+    },
+    {
+      "id": "M2O-API-07",
+      "status": "[PROPOSED]",
+      "group": "M2-O01",
+      "method": "GET",
+      "path": "/api/v1/admin/merchant-organizations/{organizationId}/governance-cases/{caseId}/evidence/{evidenceId}/content",
+      "input": "none",
+      "output": "existing private evidence bytes",
+      "permissions": [
+        "org.read",
+        "org.profile.read"
+      ],
+      "ownership": "current exact Merchant scope",
+      "notes": "Exact case/scoped audited disclosure; digest/screening/state/current admission rechecked before bytes; no public URLs."
+    },
+    {
+      "id": "M2L-API-15",
+      "status": "[PROPOSED]",
+      "group": "M2-L01",
+      "method": "POST",
+      "path": "/api/v1/admin/merchant-organizations/{organizationId}/governance-cases/{caseId}/submission",
+      "input": "M2-ReasonInput",
+      "output": "M2-Case",
+      "permissions": [
+        "org.read",
+        "org.lifecycle.propose"
+      ],
+      "ownership": "current exact Merchant scope",
+      "notes": "Admin DRAFT -> SUBMITTED; OWNER_TRANSFER submission requires both exact live consents, uses ownership.propose authority after DEC-O policy. OWNER_TRANSFER always requires corresponding ownership capability; lifecycle capability never substitutes.",
+      "permission_by_case_type": {
+        "OTHER": [
+          "org.read",
+          "org.lifecycle.propose"
+        ],
+        "OWNER_TRANSFER": [
+          "org.read",
+          "org.ownership.propose"
+        ]
+      }
+    },
+    {
+      "id": "M2O-API-08",
+      "status": "[PROPOSED]",
+      "group": "M2-O01",
+      "method": "POST",
+      "path": "/api/v1/customer/organization-governance-cases/{caseId}/submission",
+      "input": "M2-PartyActionInput",
+      "output": "M2-PartyView",
+      "permissions": [
+        "ownership.transfer.request"
+      ],
+      "ownership": "authenticated named party",
+      "notes": "Current transferor only; both named current consents required, transitions canonical case to SUBMITTED. No Admin forging of a customer-owned request."
+    },
+    {
+      "id": "M2R-API-10",
+      "status": "[PROPOSED]",
+      "group": "M2-R01",
+      "method": "GET",
+      "path": "/api/v1/admin/merchant-applications/{applicationId}/review-timing",
+      "input": "none",
+      "output": "M2-ReviewTiming",
+      "permissions": [
+        "application.read"
+      ],
+      "ownership": "current exact Merchant scope",
+      "notes": "No SLA engine. Existing submitted/revision events + explicit versioned application review policy; missing policy/source yields unavailable/null, never invented deadline."
+    }
+  ],
+  "dtos": [
+    {
+      "id": "M2-PageQuery",
+      "status": "[PROPOSED]",
+      "fields": {
+        "size": "int1..50 default20",
+        "cursor": "opaque HMAC|null"
+      }
+    },
+    {
+      "id": "M2-ApplicationSearch",
+      "status": "[PROPOSED]",
+      "fields": {
+        "from": "LocalDate",
+        "to": "LocalDate; max366days/notfuture",
+        "state": "existing application state|null",
+        "policyId": "UUID|null",
+        "reviewerId": "UUID|null",
+        "applicationId": "UUID|null",
+        "applicantAccountId": "UUID|null",
+        "registeredName": "NFC string1..240 exact casefold match|null",
+        "legalIdentifier": "canonical exact string1..80|null",
+        "purpose": "MERCHANT_REVIEW",
+        "page": "M2-PageQuery",
+        "dueBefore": "instant|null; requires published review_timing or422",
+        "overdue": "boolean|null; same condition",
+        "checkCode": "BUSINESS_KEY_CONFLICT|CONTACT_REVERIFY_REQUIRED|EVIDENCE_NOT_CLEAN|REVIEWER_CONFLICT|null; exact actual guard facts, not arbitrary fraud score"
+      }
+    },
+    {
+      "id": "M2-ApplicationSearchPage",
+      "status": "[PROPOSED]",
+      "fields": {
+        "items": "existing ApplicationSummary[]",
+        "nextCursor": "opaque|null",
+        "snapshotVersion": "hex64",
+        "matchedCount": "int64 exact same scoped cohort"
+      }
+    },
+    {
+      "id": "M2-OrganizationSearch",
+      "status": "[PROPOSED]",
+      "fields": {
+        "state": "ACTIVE|SUSPENDED|RESTRICTED|CLOSED|null; extra states only after L approval",
+        "policyId": "UUID|null",
+        "organizationId": "UUID|null",
+        "registeredName": "NFC exact casefold1..240|null",
+        "legalIdentifier": "canonical exact1..80|null",
+        "currentOwnerAccountId": "UUID|null",
+        "activatedFrom": "LocalDate|null",
+        "activatedTo": "LocalDate|null",
+        "purpose": "ORGANIZATION_OVERSIGHT",
+        "page": "M2-PageQuery",
+        "admissionOrigin": "APPLICATION_APPROVED|LOCAL_OPERATOR_PROVISIONED|null; legal search with unknown legacy data returns422, never false zero"
+      }
+    },
+    {
+      "id": "M2-OrganizationSearchPage",
+      "status": "[PROPOSED]",
+      "fields": {
+        "items": "M2-OrganizationRow[]; stable new search DTO, no per-row v1/v2 union",
+        "nextCursor": "opaque|null",
+        "snapshotVersion": "hex64",
+        "matchedCount": "int64"
+      }
+    },
+    {
+      "id": "M2-ComparisonRequest",
+      "status": "[PROPOSED]",
+      "fields": {
+        "fromRevision": "int64>0",
+        "toRevision": "int64>fromRevision",
+        "purpose": "MERCHANT_REVIEW"
+      }
+    },
+    {
+      "id": "M2-RevisionComparison",
+      "status": "[PROPOSED]",
+      "fields": {
+        "applicationId": "UUID",
+        "fromRevision": "int64",
+        "toRevision": "int64",
+        "fromDigest": "hex64",
+        "toDigest": "hex64",
+        "changes": "M2-FieldChange[]; full fixed field allowlist, no draft",
+        "evidenceAdded": "UUID[]",
+        "evidenceRemoved": "UUID[]",
+        "contactVerifiedAt": "from/to authoritative instants",
+        "disclosureEventId": "UUID"
+      }
+    },
+    {
+      "id": "M2-FieldChange",
+      "status": "[PROPOSED]",
+      "fields": {
+        "field": "entityType|jurisdiction|registeredName|legalIdentifier|registeredAddress|operatingAddress|representativeName|representativeEmail|representativeRelationship|declarations|activationDisplayName",
+        "before": "typed canonical value|null",
+        "after": "same typed canonical value|null"
+      }
+    },
+    {
+      "id": "M2-DisclosureRequest",
+      "status": "[PROPOSED]",
+      "fields": {
+        "purpose": "ORGANIZATION_OVERSIGHT",
+        "page": "M2-PageQuery optional for members"
+      }
+    },
+    {
+      "id": "M2-SourceBlock",
+      "status": "[PROPOSED]",
+      "fields": {
+        "availability": "AVAILABLE|UNAVAILABLE|FORBIDDEN",
+        "sourceVersion": "string|null",
+        "asOf": "instant|null",
+        "reason": "fixed code|null"
+      }
+    },
+    {
+      "id": "M2-OrganizationProfile",
+      "status": "[PROPOSED]",
+      "fields": {
+        "organizationId": "UUID",
+        "organizationVersion": "int64",
+        "initialOwnerMembershipId": "UUID historical",
+        "currentOwnerMembershipId": "UUID current or same as initial until O migration",
+        "activationApplicationId": "UUID|null",
+        "legal": "M2-SourceBlock plus canonical registeredName/entity/jurisdiction/legalIdentifier/addresses if authorized",
+        "contact": "M2-SourceBlock plus representativeName/relationship/verifiedAt and masked email; unmasked only application.evidence.read on activation application",
+        "facilities": "M2-SourceBlock plus id/code/name/state only",
+        "pricing": "M2-SourceBlock plus contractId/version/effectiveFrom/effectiveTo/state only; NO amounts",
+        "holds": "M2-SourceBlock plus active hold codes when L approved",
+        "disclosureEventId": "UUID"
+      }
+    },
+    {
+      "id": "M2-MembershipPage",
+      "status": "[PROPOSED]",
+      "fields": {
+        "organizationId": "UUID",
+        "organizationVersion": "int64",
+        "items": "M2-Member[]",
+        "pendingInvitationCount": "int64; current scoped Merchant source",
+        "nextCursor": "opaque|null",
+        "disclosureEventId": "UUID"
+      }
+    },
+    {
+      "id": "M2-Member",
+      "status": "[PROPOSED]",
+      "fields": {
+        "membershipId": "UUID",
+        "accountId": "UUID",
+        "role": "OWNER|MANAGER|OPERATOR",
+        "state": "ACTIVE|SUSPENDED|REVOKED",
+        "version": "int64",
+        "authorityVersion": "int64",
+        "isInitialOwner": "boolean historical",
+        "isCurrentOwner": "boolean authoritative"
+      },
+      "excluded_fields": [
+        "displayName",
+        "credential",
+        "session",
+        "recipientEmail"
+      ]
+    },
+    {
+      "id": "M2-NoticePage",
+      "status": "[PROPOSED]",
+      "fields": {
+        "applicationId": "UUID",
+        "items": "M2-NoticeStatus[]",
+        "nextCursor": "opaque|null"
+      }
+    },
+    {
+      "id": "M2-NoticeStatus",
+      "status": "[PROPOSED]",
+      "fields": {
+        "noticeId": "UUID",
+        "eventId": "UUID",
+        "template": "existing four templates",
+        "state": "QUEUED|SENDING|RETRY_WAIT|ACCEPTED_BY_PROVIDER|FAILED|BLOCKED",
+        "attempts": "int>=0",
+        "createdAt": "instant",
+        "nextAttemptAt": "instant|null",
+        "acceptedByProviderAt": "instant|null; maps actual accepted_at",
+        "deliveryConfirmed": "null; no canonical provider delivery receipt",
+        "recipientOrLastErrorBody": "NOT EXPOSED"
+      }
+    },
+    {
+      "id": "M2-CommentInput",
+      "status": "[PROPOSED]",
+      "fields": {
+        "revision": "int64>0",
+        "text": "NFC string1..2000; no controls, encoded output"
+      }
+    },
+    {
+      "id": "M2-Comment",
+      "status": "[PROPOSED]",
+      "fields": {
+        "id": "UUID",
+        "applicationId": "UUID",
+        "revision": "int64",
+        "actorAccountId": "UUID",
+        "createdAt": "instant",
+        "text": "protected at rest, authorized disclosure only"
+      }
+    },
+    {
+      "id": "M2-CommentPage",
+      "status": "[PROPOSED]",
+      "fields": {
+        "items": "M2-Comment[]",
+        "nextCursor": "opaque|null",
+        "disclosureEventId": "UUID"
+      }
+    },
+    {
+      "id": "M2-Checks",
+      "status": "[PROPOSED]",
+      "fields": {
+        "applicationId": "UUID",
+        "revision": "int64",
+        "checks": "code/result/sourceVersion/sourceEventId|null; PASS|FAIL|UNAVAILABLE only actual backend facts",
+        "foreignMatches": "no foreign Organization/account/tax values",
+        "automaticVerification": "NOT PROVIDED; no fraud/expiry assertion without source"
+      }
+    },
+    {
+      "id": "M2-CaseInput",
+      "status": "[PROPOSED]",
+      "fields": {
+        "type": "RESTRICT|RELEASE_RESTRICTION|CLOSE|RISK_HOLD|RELEASE_HOLD|DISPUTE|REVERIFY; OWNER_TRANSFER created only via named Customer request",
+        "reason": "NFC1..300",
+        "policyId": "UUID",
+        "policyVersion": "int64",
+        "expectedOrganizationVersion": "int64",
+        "payload": "M2-CasePayload exact discriminated shape"
+      }
+    },
+    {
+      "id": "M2-CasePayload",
+      "status": "[PROPOSED]",
+      "fields": {
+        "RESTRICT": "{deniedCapabilities:fixed bounded set,effectiveAt:instant,expiresAt:instant|null}",
+        "RELEASE_RESTRICTION": "{restrictionCaseId:UUID}",
+        "CLOSE": "{}",
+        "RISK_HOLD": "{holdCode:BOOKING_HOLD|CONTRACT_CHANGE_HOLD,expiresAt:instant|null}",
+        "RELEASE_HOLD": "{holdId:UUID}",
+        "DISPUTE": "{category:OWNERSHIP|LEGAL_PROFILE,statement:protected1..2000}",
+        "REVERIFY": "{fieldCodes:fixed legal/contact/evidence set,requestedBy:instant|null}",
+        "OWNER_TRANSFER": "{fromMembershipId:UUID,toMembershipId:UUID,ownershipVersion:int64}"
+      }
+    },
+    {
+      "id": "M2-Case",
+      "status": "[PROPOSED]",
+      "fields": {
+        "id": "UUID",
+        "organizationId": "UUID",
+        "type": "M2-CaseInput.type plus OWNER_TRANSFER",
+        "state": "DRAFT|SUBMITTED|UNDER_REVIEW|NEEDS_INFORMATION|READY_FOR_DECISION|APPROVED|REJECTED|EXECUTED|CANCELLED|EXPIRED",
+        "version": "int64",
+        "policyId": "UUID",
+        "policyVersion": "int64",
+        "organizationVersion": "int64",
+        "makerActorKind": "SYSTEM|CUSTOMER",
+        "makerAccountId": "UUID",
+        "reviewerAccountId": "UUID|null",
+        "deciderAccountId": "UUID|null",
+        "executorAccountId": "UUID|null",
+        "createdAt": "instant",
+        "expiresAt": "instant from approved policy",
+        "effectiveAt": "instant|null",
+        "allowedActions": "current backend actions only",
+        "lastEventId": "UUID",
+        "privatePayload": "NOT INCLUDED; use authorized evidence/disclosure",
+        "isExpired": "boolean derived from authoritative expiresAt and Backend asOf; not an invented persisted transition",
+        "asOf": "instant of read"
+      }
+    },
+    {
+      "id": "M2-CasePage",
+      "status": "[PROPOSED]",
+      "fields": {
+        "items": "M2-Case[]",
+        "nextCursor": "opaque|null"
+      }
+    },
+    {
+      "id": "M2-CaseQuery",
+      "status": "[PROPOSED]",
+      "fields": {
+        "type": "case type|null",
+        "state": "case state|null",
+        "assignedToMe": "boolean defaultfalse",
+        "page": "M2-PageQuery"
+      }
+    },
+    {
+      "id": "M2-AssignmentInput",
+      "status": "[PROPOSED]",
+      "fields": {
+        "reviewerAccountId": "UUID",
+        "reason": "1..300"
+      }
+    },
+    {
+      "id": "M2-CaseReviewInput",
+      "status": "[PROPOSED]",
+      "fields": {
+        "action": "BEGIN|READY_FOR_DECISION",
+        "checklist": "{authority,conflictClear,evidenceComplete,impactReviewed}:boolean",
+        "reason": "1..300"
+      }
+    },
+    {
+      "id": "M2-InformationInput",
+      "status": "[PROPOSED]",
+      "fields": {
+        "fieldCodes": "fixed allowlist1..16 unique",
+        "reason": "1..300"
+      }
+    },
+    {
+      "id": "M2-ResponseInput",
+      "status": "[PROPOSED]",
+      "fields": {
+        "casePayload": "same type immutable policy; changes produce new case revision",
+        "evidenceIds": "UUID[] max5 CLEAN same case",
+        "reason": "1..300",
+        "reauthenticationProofId": "UUID for Customer-sensitive consent"
+      }
+    },
+    {
+      "id": "M2-CaseDecisionInput",
+      "status": "[PROPOSED]",
+      "fields": {
+        "decision": "APPROVE|REJECT",
+        "reason": "1..300",
+        "reauthenticationProofId": "UUID",
+        "reviewVersion": "int64",
+        "impactDigest": "hex64"
+      }
+    },
+    {
+      "id": "M2-ExecutionInput",
+      "status": "[PROPOSED]",
+      "fields": {
+        "reauthenticationProofId": "UUID",
+        "reason": "1..300",
+        "expectedOrganizationVersion": "int64",
+        "expectedOwnershipVersion": "int64|null",
+        "clearanceToken": "opaque bound assertion|null; never caller facts"
+      }
+    },
+    {
+      "id": "M2-ReasonInput",
+      "status": "[PROPOSED]",
+      "fields": {
+        "reason": "1..300"
+      }
+    },
+    {
+      "id": "M2-CaseEventPage",
+      "status": "[PROPOSED]",
+      "fields": {
+        "items": "id/caseId/orgId/revision/actorKind/actorId/operation/fromState/toState/priorVersion/newVersion/policyVersion/reasonCode/occurredAt/requestId[]; no protected body",
+        "nextCursor": "opaque|null"
+      }
+    },
+    {
+      "id": "M2-HoldPage",
+      "status": "[PROPOSED]",
+      "fields": {
+        "organizationId": "UUID",
+        "items": "id/code/sourceCaseId/effectiveAt/expiresAt/releasedAt/version[]",
+        "sourceVersion": "int64"
+      }
+    },
+    {
+      "id": "M2-StateSummary",
+      "status": "[PROPOSED]",
+      "fields": {
+        "organizationId": "UUID",
+        "state": "ACTIVE|SUSPENDED|RESTRICTED|CLOSED",
+        "organizationVersion": "int64",
+        "currentOwnerMembershipId": "UUID",
+        "ownershipVersion": "int64",
+        "activeRestrictionCaseId": "UUID|null",
+        "activeHolds": "fixed codes[]",
+        "deniedCapabilities": "bounded enum[]",
+        "asOf": "instant",
+        "policyVersion": "int64|null"
+      }
+    },
+    {
+      "id": "M2-CasePolicies",
+      "status": "[PROPOSED]",
+      "fields": {
+        "items": "policyId/code/version/allowedCaseTypes/validFrom/validTo/limits/requiredChecklists/proofAge/partyConsentTTL/readPreservation[]; published only; never editor"
+      }
+    },
+    {
+      "id": "M2-TransferInput",
+      "status": "[PROPOSED]",
+      "fields": {
+        "targetMembershipId": "UUID; same org ACTIVE non-Owner verified Customer under DEC-O1 candidate policy",
+        "expectedOrganizationVersion": "int64",
+        "expectedOwnershipVersion": "int64",
+        "policyId": "UUID",
+        "policyVersion": "int64",
+        "reauthenticationProofId": "UUID",
+        "reason": "1..300"
+      }
+    },
+    {
+      "id": "M2-PartyView",
+      "status": "[PROPOSED]",
+      "fields": {
+        "caseId": "UUID",
+        "organizationId": "UUID",
+        "roleInCase": "TRANSFEROR|TRANSFEREE|REVERIFICATION_SUBJECT",
+        "state": "case state",
+        "version": "int64",
+        "expiresAt": "instant",
+        "otherPartyDisplay": "masked membership reference only",
+        "consentVersion": "policy version",
+        "consentDigest": "hex64 signed by server intent",
+        "allowedActions": "current named-party actions only"
+      }
+    },
+    {
+      "id": "M2-PartyConsentInput",
+      "status": "[PROPOSED]",
+      "fields": {
+        "action": "AGREE|DECLINE",
+        "intentDigest": "hex64",
+        "reauthenticationProofId": "UUID"
+      }
+    },
+    {
+      "id": "M2-ConsentResult",
+      "status": "[PROPOSED]",
+      "fields": {
+        "caseId": "UUID",
+        "partyAccountId": "UUID authenticated",
+        "decision": "AGREE|DECLINE",
+        "caseVersion": "int64",
+        "recordedAt": "instant",
+        "expiresAt": "instant from policy"
+      }
+    },
+    {
+      "id": "M2-EvidenceUpload",
+      "status": "[PROPOSED]",
+      "fields": {
+        "contentType": "application/pdf|image/png|image/jpeg",
+        "bytes": "bounded raw1..5242880; fixed parser/scanner/quarantine workflow",
+        "purpose": "OWNERSHIP_AUTHORITY|LEGAL_REVERIFICATION",
+        "metadata": "no user path or URL"
+      }
+    },
+    {
+      "id": "M2-CaseEvidence",
+      "status": "[PROPOSED]",
+      "fields": {
+        "id": "UUID",
+        "caseId": "UUID",
+        "state": "QUARANTINED|CLEAN|REJECTED",
+        "purpose": "fixed enum",
+        "mime": "fixed allowlist",
+        "bytes": "int64",
+        "sha256": "hex64",
+        "screenedAt": "instant|null"
+      }
+    },
+    {
+      "id": "M2-CaseCommand",
+      "status": "[PROPOSED]",
+      "fields": {
+        "sealed_variants": "AssignmentInput|CaseReviewInput|InformationInput|ResponseInput|CaseDecisionInput|ExecutionInput|ReasonInput with explicit SUBMIT|CANCEL tag; fixed endpoint dispatch, no arbitrary object"
+      }
+    },
+    {
+      "id": "M2-StateStamp",
+      "status": "[PROPOSED]",
+      "fields": {
+        "organizationId": "UUID",
+        "organizationVersion": "int64",
+        "ownershipVersion": "int64",
+        "holdVersionDigest": "hex64",
+        "policyVersion": "int64",
+        "transactionBinding": "owner-verified opaque callback capability; constructed/captured object rejected"
+      }
+    },
+    {
+      "id": "M2-ExitClearance",
+      "status": "[PROPOSED]",
+      "fields": {
+        "organizationId": "UUID",
+        "status": "CLEAR|BLOCKED|UNAVAILABLE",
+        "sourceVersion": "string",
+        "checkedAt": "instant",
+        "reasonCodes": "fixed codes[]",
+        "transactionBinding": "owner-verified opaque callback capability; no client-supplied assertion"
+      }
+    },
+    {
+      "id": "M2-IntentBinding",
+      "status": "[PROPOSED]",
+      "fields": {
+        "id": "UUID",
+        "accountId": "UUID",
+        "organizationId": "UUID",
+        "caseId": "UUID",
+        "caseRevision": "int64",
+        "partyRole": "TRANSFEROR|TRANSFEREE",
+        "securityVersion": "int64",
+        "intentDigest": "hex64",
+        "verifiedAt": "instant",
+        "expiresAt": "instant",
+        "ownerValidation": "Identity-owned live lookup validates provenance, not record self-check"
+      }
+    },
+    {
+      "id": "M2-CaseNotice",
+      "status": "[PROPOSED]",
+      "fields": {
+        "eventId": "UUID",
+        "organizationId": "UUID",
+        "caseId": "UUID",
+        "template": "CASE_INFORMATION_REQUIRED|CASE_REJECTED|ORGANIZATION_STATE_CHANGED|OWNERSHIP_TRANSFERRED",
+        "recipientAccounts": "named verified account UUIDs, server-discovered only"
+      }
+    },
+    {
+      "id": "M2-CaseNoticeMessage",
+      "status": "[PROPOSED]",
+      "fields": {
+        "id": "UUID outbox",
+        "organizationId": "UUID",
+        "caseId": "UUID",
+        "destination": "verified protected outbox recipient only; no HTTP input",
+        "template": "M2-CaseNotice.template"
+      }
+    },
+    {
+      "id": "M2-PartyActionInput",
+      "status": "[PROPOSED]",
+      "fields": {
+        "action": "SUBMIT|CANCEL",
+        "reason": "NFC1..300"
+      }
+    },
+    {
+      "id": "M2-ContractReference",
+      "status": "[PROPOSED]",
+      "fields": {
+        "id": "UUID",
+        "organizationId": "UUID",
+        "version": "int64",
+        "state": "canonical contract state",
+        "effectiveFrom": "instant",
+        "effectiveTo": "instant|null"
+      }
+    },
+    {
+      "id": "M2-OrganizationRow",
+      "status": "[PROPOSED]",
+      "fields": {
+        "id": "UUID",
+        "displayName": "string1..160",
+        "state": "ACTIVE|SUSPENDED|RESTRICTED|CLOSED; only canonical existing states until L policy/guards installed",
+        "admissionOrigin": "APPLICATION_APPROVED|LOCAL_OPERATOR_PROVISIONED",
+        "version": "int64",
+        "initialOwnerMembershipId": "UUID historical",
+        "currentOwnerMembershipId": "UUID canonical current pointer; initial before bridge only when still current by existing invariant",
+        "ownershipVersion": "int64|null before approved bridge",
+        "activation": "existing ActivationOutcome|null",
+        "membershipCounts": "role/state/counts from same scoped capture"
+      }
+    },
+    {
+      "id": "M2-BusinessContextV2",
+      "status": "[PROPOSED]",
+      "fields": {
+        "organizationId": "UUID",
+        "displayName": "string1..160",
+        "membershipId": "UUID",
+        "role": "canonical existing role",
+        "permissions": "explicit current grants only",
+        "authorityVersion": "int64",
+        "organizationState": "ACTIVE|SUSPENDED|RESTRICTED|CLOSED",
+        "organizationVersion": "int64",
+        "ownershipVersion": "int64",
+        "currentOwnerMembershipId": "UUID",
+        "deniedOperations": "fixed policy operations[]; never client authority"
+      }
+    },
+    {
+      "id": "M2-BusinessContextsV2",
+      "status": "[PROPOSED]",
+      "fields": {
+        "schemaVersion": "BUSINESS_CONTEXTS_V2",
+        "items": "M2-BusinessContextV2[] current membership, state/capability allowlist; no Customer/SYSTEM/OPS grant union"
+      }
+    },
+    {
+      "id": "M2-OrganizationDirectoryV2",
+      "status": "[PROPOSED]",
+      "fields": {
+        "items": "M2-OrganizationRow[]",
+        "page": "int0..10000",
+        "size": "int1..50",
+        "hasNext": "boolean"
+      }
+    },
+    {
+      "id": "M2-ReviewTiming",
+      "status": "[PROPOSED]",
+      "fields": {
+        "applicationId": "UUID",
+        "revision": "int64",
+        "availability": "AVAILABLE|POLICY_UNAVAILABLE|SOURCE_UNAVAILABLE",
+        "policyId": "UUID|null",
+        "policyVersion": "int64|null",
+        "startEventId": "UUID|null actual submission/resubmission event",
+        "startedAt": "instant|null",
+        "dueAt": "instant|null derived only from explicitly published review_timing",
+        "isOverdue": "boolean|null; not false when missing policy",
+        "asOf": "instant",
+        "calendarMode": "ELAPSED_SECONDS|null; no invented business calendar"
+      }
+    },
+    {
+      "id": "M2-WorkItemV2",
+      "status": "[PROPOSED]",
+      "fields": {
+        "id": "UUID derived stable from real source/type/id/revision/assignment, no task insert",
+        "kind": "MERCHANT_REVIEW|MERCHANT_DECISION|ORG_CASE_REVIEW|ORG_CASE_DECISION|ORG_CASE_EXECUTION",
+        "targetType": "APPLICATION|ORGANIZATION_CASE",
+        "targetId": "UUID",
+        "organizationId": "UUID|null for application",
+        "revision": "int64",
+        "assignmentVersion": "int64",
+        "createdAt": "instant from actual assignment/ready/approval event",
+        "dueAt": "instant|null from explicit response-deadline policy, NOT case TTL by inference",
+        "expiresAt": "instant|null from case policy",
+        "targetPath": "fixed application route or /admin/merchants/organizations?view=lifecycle&organizationId=...&caseId=...",
+        "allowedActions": "actual current owner-approved actions only"
+      }
+    },
+    {
+      "id": "M2-WorkPageV2",
+      "status": "[PROPOSED]",
+      "fields": {
+        "items": "M2-WorkItemV2[]",
+        "page": "int0..10000",
+        "size": "int1..50",
+        "hasNext": "boolean"
+      }
+    },
+    {
+      "id": "M2-AuditRowV2",
+      "status": "[PROPOSED]",
+      "fields": {
+        "id": "UUID source event",
+        "domain": "MERCHANT_APPLICATION|MERCHANT_ORGANIZATION|MERCHANT_ORGANIZATION_CASE",
+        "organizationId": "UUID|null",
+        "targetType": "APPLICATION|ORGANIZATION|ORGANIZATION_CASE",
+        "targetId": "UUID",
+        "operation": "fixed canonical source operation",
+        "actorKind": "SYSTEM|CUSTOMER|OPERATOR",
+        "actorId": "UUID|null operator",
+        "occurredAt": "instant",
+        "priorVersion": "int64",
+        "newVersion": "int64",
+        "revision": "int64|null",
+        "policyVersion": "string",
+        "reasonCode": "fixed canonical code",
+        "requestId": "UUID",
+        "protectedPayload": "EXCLUDED"
+      }
+    },
+    {
+      "id": "M2-AuditPageV2",
+      "status": "[PROPOSED]",
+      "fields": {
+        "items": "M2-AuditRowV2[]",
+        "page": "int0..10000",
+        "size": "int1..50",
+        "hasNext": "boolean"
+      }
+    }
+  ],
+  "permissions": [
+    {
+      "id": "M2-PERM-01",
+      "status": "[PROPOSED]",
+      "code": "application.comment.write",
+      "group": "M2-R01",
+      "storage": "merchant.business_reviewer_scope.permissions",
+      "scope": "ORGANIZATION for org.*; POLICY for application.*",
+      "issuer": "existing independent offline Merchant governance operator; no runtime grant endpoint/auto-role grant",
+      "meaning": "append own review comment, never edit/delete"
+    },
+    {
+      "id": "M2-PERM-02",
+      "status": "[PROPOSED]",
+      "code": "application.notice.read",
+      "group": "M2-R01",
+      "storage": "merchant.business_reviewer_scope.permissions",
+      "scope": "ORGANIZATION for org.*; POLICY for application.*",
+      "issuer": "existing independent offline Merchant governance operator; no runtime grant endpoint/auto-role grant",
+      "meaning": "read redacted bound notice states"
+    },
+    {
+      "id": "M2-PERM-03",
+      "status": "[PROPOSED]",
+      "code": "org.profile.read",
+      "group": "M2-R01",
+      "storage": "merchant.business_reviewer_scope.permissions",
+      "scope": "ORGANIZATION for org.*; POLICY for application.*",
+      "issuer": "existing independent offline Merchant governance operator; no runtime grant endpoint/auto-role grant",
+      "meaning": "audited legal/contact/facility/contract-reference projection"
+    },
+    {
+      "id": "M2-PERM-04",
+      "status": "[PROPOSED]",
+      "code": "org.members.read",
+      "group": "M2-R01",
+      "storage": "merchant.business_reviewer_scope.permissions",
+      "scope": "ORGANIZATION for org.*; POLICY for application.*",
+      "issuer": "existing independent offline Merchant governance operator; no runtime grant endpoint/auto-role grant",
+      "meaning": "bounded Merchant membership metadata oversight"
+    },
+    {
+      "id": "M2-PERM-05",
+      "status": "[PROPOSED]",
+      "code": "org.lifecycle.propose",
+      "group": "M2-L01",
+      "storage": "merchant.business_reviewer_scope.permissions",
+      "scope": "ORGANIZATION for org.*; POLICY for application.*",
+      "issuer": "existing independent offline Merchant governance operator; no runtime grant endpoint/auto-role grant",
+      "meaning": "create/submit assigned lifecycle/dispute/reverify case; not execute"
+    },
+    {
+      "id": "M2-PERM-06",
+      "status": "[PROPOSED]",
+      "code": "org.lifecycle.review",
+      "group": "M2-L01",
+      "storage": "merchant.business_reviewer_scope.permissions",
+      "scope": "ORGANIZATION for org.*; POLICY for application.*",
+      "issuer": "existing independent offline Merchant governance operator; no runtime grant endpoint/auto-role grant",
+      "meaning": "independent assigned checklist/RFI"
+    },
+    {
+      "id": "M2-PERM-07",
+      "status": "[PROPOSED]",
+      "code": "org.lifecycle.decide",
+      "group": "M2-L01",
+      "storage": "merchant.business_reviewer_scope.permissions",
+      "scope": "ORGANIZATION for org.*; POLICY for application.*",
+      "issuer": "existing independent offline Merchant governance operator; no runtime grant endpoint/auto-role grant",
+      "meaning": "independent step-up decision"
+    },
+    {
+      "id": "M2-PERM-08",
+      "status": "[PROPOSED]",
+      "code": "org.lifecycle.execute",
+      "group": "M2-L01",
+      "storage": "merchant.business_reviewer_scope.permissions",
+      "scope": "ORGANIZATION for org.*; POLICY for application.*",
+      "issuer": "existing independent offline Merchant governance operator; no runtime grant endpoint/auto-role grant",
+      "meaning": "execute exact approved lifecycle action after domain recheck"
+    },
+    {
+      "id": "M2-PERM-09",
+      "status": "[PROPOSED]",
+      "code": "org.ownership.propose",
+      "group": "M2-O01",
+      "storage": "merchant.business_reviewer_scope.permissions",
+      "scope": "ORGANIZATION for org.*; POLICY for application.*",
+      "issuer": "existing independent offline Merchant governance operator; no runtime grant endpoint/auto-role grant",
+      "meaning": "submit scoped transfer to review/assign reviewer; cannot create party consent"
+    },
+    {
+      "id": "M2-PERM-10",
+      "status": "[PROPOSED]",
+      "code": "org.ownership.review",
+      "group": "M2-O01",
+      "storage": "merchant.business_reviewer_scope.permissions",
+      "scope": "ORGANIZATION for org.*; POLICY for application.*",
+      "issuer": "existing independent offline Merchant governance operator; no runtime grant endpoint/auto-role grant",
+      "meaning": "independent transfer review"
+    },
+    {
+      "id": "M2-PERM-11",
+      "status": "[PROPOSED]",
+      "code": "org.ownership.decide",
+      "group": "M2-O01",
+      "storage": "merchant.business_reviewer_scope.permissions",
+      "scope": "ORGANIZATION for org.*; POLICY for application.*",
+      "issuer": "existing independent offline Merchant governance operator; no runtime grant endpoint/auto-role grant",
+      "meaning": "independent transfer decision"
+    },
+    {
+      "id": "M2-PERM-12",
+      "status": "[PROPOSED]",
+      "code": "org.ownership.execute",
+      "group": "M2-O01",
+      "storage": "merchant.business_reviewer_scope.permissions",
+      "scope": "ORGANIZATION for org.*; POLICY for application.*",
+      "issuer": "existing independent offline Merchant governance operator; no runtime grant endpoint/auto-role grant",
+      "meaning": "atomic approved transfer, not IAM/Carrier/Finance authority"
+    },
+    {
+      "id": "M2-PERM-13",
+      "status": "[PROPOSED]",
+      "code": "ownership.transfer.request",
+      "group": "M2-O01",
+      "storage": "merchant.member_grant.permission",
+      "scope": "ORGANIZATION only; exact current Owner plus explicit grant",
+      "issuer": "independent offline operator only; excluded from Team delegation ceiling",
+      "meaning": "request transfer as current verified Owner; never approve/execute"
+    }
+  ],
+  "ports": [
+    {
+      "id": "M2-PORT-01",
+      "status": "[PROPOSED]",
+      "owner": "merchant",
+      "interface": "MerchantGovernanceViews",
+      "signatures": [
+        "ApplicationSearchPage searchApplications(AdminCommandContext actor, ApplicationSearch input)",
+        "OrganizationSearchPage searchOrganizations(AdminCommandContext actor, OrganizationSearch input)",
+        "RevisionComparison compare(AdminCommandContext actor, UUID applicationId, ComparisonRequest input)",
+        "OrganizationProfile profile(AdminCommandContext actor, UUID organizationId, DisclosureRequest input)",
+        "MembershipPage members(AdminCommandContext actor, UUID organizationId, DisclosureRequest input)",
+        "Comment comment(AdminCommandContext actor, UUID applicationId, CommentInput input, long expectedVersion, UUID key)",
+        "CommentPage comments(AdminCommandContext actor, UUID applicationId, PageQuery input)",
+        "Checks checks(AdminCommandContext actor, UUID applicationId)",
+        "ReviewTiming reviewTiming(AdminReadContext actor, UUID applicationId)"
+      ],
+      "coordination": "Merchant implementation only; contexts verified with existing Identity owner ports"
+    },
+    {
+      "id": "M2-PORT-02",
+      "status": "[PROPOSED]",
+      "owner": "notifications",
+      "interface": "MerchantNoticeStatusReads",
+      "signatures": [
+        "NoticePage read(AdminReadContext actor, UUID applicationId, PageQuery input)"
+      ],
+      "coordination": "COORD-NOTICE: genuine Identity context + Merchant application scope/event-binding callback verified, no caller-supplied boolean; Notifications owns SQL/status projection; no private cross-read"
+    },
+    {
+      "id": "M2-PORT-03",
+      "status": "[PROPOSED]",
+      "owner": "merchant",
+      "interface": "OrganizationGovernanceCases",
+      "signatures": [
+        "CasePage list(AdminReadContext actor, UUID organizationId, CaseQuery query)",
+        "Case get(AdminReadContext actor, UUID organizationId, UUID caseId)",
+        "ReferencedSubjects subjects(AdminReadContext actor, UUID organizationId, UUID caseId)",
+        "Case create(AdminCommandContext actor, UUID organizationId, CaseInput input, UUID key)",
+        "Case command(AdminCommandContext actor, UUID organizationId, UUID caseId, CaseCommand input, long expectedVersion, UUID key)",
+        "PartyView requestTransfer(CustomerAdmission.Context actor, UUID organizationId, TransferInput input, UUID key)",
+        "PartyView party(CustomerAdmission.Context actor, UUID caseId)",
+        "ConsentResult consent(CustomerAdmission.Context actor, UUID caseId, PartyConsentInput input, long expectedVersion, UUID key)",
+        "PartyView respond(CustomerAdmission.Context actor, UUID caseId, ResponseInput input, long expectedVersion, UUID key)",
+        "PartyView cancel(CustomerAdmission.Context actor, UUID caseId, ReasonInput input, long expectedVersion, UUID key)",
+        "CaseEventPage events(AdminReadContext actor, UUID organizationId, UUID caseId, PageQuery query)",
+        "PartyView submit(CustomerAdmission.Context actor, UUID caseId, PartyActionInput input, long expectedVersion, UUID key)",
+        "WorkPageV2 work(AdminReadContext actor, String fixedKind, UUID organizationId, int page, int size)",
+        "AuditPageV2 audit(AdminReadContext actor, UUID organizationId, UUID caseId, Instant from, Instant to, int page, int size)"
+      ],
+      "coordination": "CaseCommand is sealed Assignment/Review/RFI/Response/Decision/Execute/Cancel/Submit, no arbitrary operation/body. Reuse genuine owner context validation."
+    },
+    {
+      "id": "M2-PORT-04",
+      "status": "[PROPOSED]",
+      "owner": "merchant",
+      "interface": "OrganizationGovernanceState",
+      "signatures": [
+        "StateSummary read(AdminReadContext actor, UUID organizationId)",
+        "void requireAllowed(BusinessWorkspaces.Scope scope, String operation, UUID facilityId)",
+        "<T> T withGovernanceLock(BusinessWorkspaces.Access access, UUID organizationId, Function<StateStamp,T> work)"
+      ],
+      "coordination": "COORD-ADMISSION: Merchant owns state/holds; consumers recheck through existing BusinessWorkspaces, not frontend flag. StateStamp exact org/version/ownership/hold/policy digest."
+    },
+    {
+      "id": "M2-PORT-05",
+      "status": "[PROPOSED]",
+      "owner": "orders",
+      "interface": "OrganizationOpenWorkFacts",
+      "signatures": [
+        "<T> T withClearance(AdminCommandContext actor, UUID organizationId, StateStamp state, Function<ExitClearance,T> work)"
+      ],
+      "coordination": "COORD-EXIT: Orders owns Shipment/custody/Support/Claim/dispatch facts; lock same org admission gate; UNKNOWN if unfinished domain sources. ExitClearance status CLEAR|BLOCKED|UNAVAILABLE, reasonCodes/sourceVersion only, no PII or writes."
+    },
+    {
+      "id": "M2-PORT-06",
+      "status": "[PROPOSED]",
+      "owner": "finance",
+      "interface": "OrganizationFinancialClearance",
+      "signatures": [
+        "<T> T withClearance(AdminCommandContext actor, UUID organizationId, StateStamp state, Function<ExitClearance,T> work)"
+      ],
+      "coordination": "COORD-EXIT: Finance owns obligations/collection/reconciliation. Missing COD/settlement not treated zero; current service NO_COD is explicit nonapplicability. No grant to view amounts or mutate ledger."
+    },
+    {
+      "id": "M2-PORT-07",
+      "status": "[PROPOSED]",
+      "owner": "identity",
+      "interface": "CustomerOrganizationIntentProofs",
+      "signatures": [
+        "IntentBinding consume(CustomerAdmission.Context actor, UUID reauthenticationProofId, UUID organizationId, UUID caseId, long caseRevision, String partyRole, byte[] intentDigest, UUID key)",
+        "void requireCurrent(AdminCommandContext actor, IntentBinding binding)"
+      ],
+      "coordination": "COORD-IAM: reuse genuine proof/credential/session, no new authentication; bind one proof once to case intent, genuine context/physical source/lifetime. IntentBinding exact proofId/account/securityVersion/case/revision/role/digest/verifiedAt/expiry/receiptId; never trust caller constructed record."
+    },
+    {
+      "id": "M2-PORT-08",
+      "status": "[PROPOSED]",
+      "owner": "merchant",
+      "interface": "OrganizationGovernanceEvidence",
+      "signatures": [
+        "CaseEvidence upload(String encodedCustomerAccess, UUID requestId, UUID caseId, String purpose, String mime, byte[] bytes, UUID key)",
+        "EvidenceContent download(AdminCommandContext actor, UUID organizationId, UUID caseId, UUID evidenceId, String purpose)"
+      ],
+      "coordination": "COORD-PROFILE/Platform: reuse existing PrivateEvidenceStore scanner/limit/quarantine; Merchant owns case/evidence binding; no new storage provider or upload to an unrelated application."
+    },
+    {
+      "id": "M2-PORT-09",
+      "status": "[PROPOSED]",
+      "owner": "merchant",
+      "interface": "OrganizationGovernanceNoticeEvents",
+      "signatures": [
+        "CaseNotice commandEvent(AdminCommandContext actor, UUID organizationId, UUID caseId, String operation, UUID key)"
+      ],
+      "coordination": "COORD-NOTICE: exact event/receipt/case and verified recipients; sealed template set requires separate Notifications/SMTP amendment, not application-id spoofing."
+    },
+    {
+      "id": "M2-PORT-10",
+      "status": "[PROPOSED]",
+      "owner": "notifications",
+      "interface": "OrganizationGovernanceNotices",
+      "signatures": [
+        "void enqueue(AdminCommandContext actor, CaseNotice event, List<CustomerAdmission.Subject> recipients)"
+      ],
+      "coordination": "COORD-NOTICE: validates Identity owner context + Merchant case event/receipt boolean binding; only verified named parties; same existing outbox/worker, no new sender/system"
+    },
+    {
+      "id": "M2-PORT-11",
+      "status": "[PROPOSED]",
+      "owner": "platform/Identity SMTP implementation",
+      "interface": "MerchantNoticeMail additional overload",
+      "signatures": [
+        "Outcome send(CaseNoticeMessage message)"
+      ],
+      "coordination": "COORD-NOTICE: keep existing send(Message) and four templates exact; new fixed-case rendering overload uses same SmtpCustomerDelivery/sendPrepared/TLS/config, not a second SMTP implementation"
+    },
+    {
+      "id": "M2-PORT-12",
+      "status": "[PROPOSED]",
+      "owner": "pricing",
+      "interface": "MerchantContractReferences",
+      "signatures": [
+        "SourceBlock<List<ContractReference>> read(AdminCommandContext actor, UUID organizationId)"
+      ],
+      "coordination": "COORD-PROFILE: current merchant org.profile.read verified with owning Merchant context callback and current Identity context; id/org/version/state/effective interval only; no tariff/amount/customer/self-service impersonation"
+    },
+    {
+      "id": "M2-PORT-13",
+      "status": "[PROPOSED]",
+      "owner": "merchant, shared Business admission owner",
+      "interface": "BusinessWorkspaces opt-in default-deny additions",
+      "signatures": [
+        "BusinessContextsV2 governanceContexts(Access access)",
+        "<T> T inGovernedOrganization(Access access, UUID organizationId, String fixedServerOperation, Function<Scope,T> work)"
+      ],
+      "coordination": "COORD-ADMISSION/TEAM: old list/inOrganization unchanged for ACTIVE-only v1; supported consumers migrate to fixed operation gate for retained history/support. No caller operation string/role elevation, no state aliasing; genuine transaction lifetime."
+    }
+  ],
+  "tables": [
+    {
+      "id": "M2-DB-01",
+      "status": "[PROPOSED]",
+      "name": "merchant.application_review_comment",
+      "columns": "id UUID;application_id UUID;revision BIGINT;actor_id UUID;realm_id UUID;protected_text BYTEA;event_id UUID;request_id UUID;created_at TIMESTAMPTZ;operation_key UUID;input_key_id VARCHAR(64);input_digest BYTEA",
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [
+        "(application_id,revision)->merchant.application_revision",
+        "event_id->merchant.governance_event"
+      ],
+      "unique": [
+        "actor_id,application_id,operation_key",
+        "event_id"
+      ],
+      "checks": [
+        "positive revision; NFC1..2000 before encryption; exact actor/revision scoped READ_DISCLOSURE/COMMENT event receipt binding",
+        "input_digest32 HMAC over realm/actor/app/revision/text/key; comment row is durable append receipt; validate replay before stale If-Match but after current authorization; matching existing READ_DISCLOSURE audit with protected COMMENT purpose, no application version/state change"
+      ],
+      "lifecycle": "append-only; encrypted; no UPDATE/DELETE; no new opcode or state on application"
+    },
+    {
+      "id": "M2-DB-02",
+      "status": "[PROPOSED]",
+      "name": "merchant.organization_governance_policy",
+      "columns": "id UUID;code VARCHAR(64);version BIGINT;environment VARCHAR(5);state VARCHAR(12);body JSONB;digest BYTEA;valid_from TIMESTAMPTZ;valid_to TIMESTAMPTZ;published_event_id UUID",
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [
+        "published_event_id->merchant.organization_governance_event DEFERRABLE"
+      ],
+      "unique": [
+        "code,version,environment"
+      ],
+      "checks": [
+        "LOCAL|TEST only; PUBLISHED|RETIRED; fixed policy shape; no unknown keys; risk/TTL/SoD limits require explicit Owner policy decision"
+      ],
+      "lifecycle": "immutable published body; retire by append/version; no runtime policy authoring"
+    },
+    {
+      "id": "M2-DB-03",
+      "status": "[PROPOSED]",
+      "name": "merchant.organization_governance_case",
+      "columns": "id UUID;organization_id UUID;type VARCHAR(24);state VARCHAR(24);version BIGINT;revision BIGINT;policy_id UUID;policy_version BIGINT;expected_org_version BIGINT;expected_ownership_version BIGINT;maker_kind VARCHAR(8);maker_account_id UUID;maker_realm_id UUID NULL;protected_payload BYTEA;impact_digest BYTEA;expires_at TIMESTAMPTZ;effective_at TIMESTAMPTZ NULL;created_at TIMESTAMPTZ;updated_at TIMESTAMPTZ;last_event_id UUID",
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [
+        "organization_id->merchant.organization",
+        "policy_id->merchant.organization_governance_policy",
+        "last_event_id->merchant.organization_governance_event DEFERRABLE"
+      ],
+      "unique": [
+        "id,organization_id",
+        "partial organization_id WHERE type=OWNER_TRANSFER and nonterminal",
+        "partial organization_id,type WHERE type=CLOSE and nonterminal"
+      ],
+      "checks": [
+        "state/type exact enums; version/revision>0; maker kind/realm binding; no arbitrary JSON beyond encrypted discriminated payload; bounded expiry"
+      ],
+      "lifecycle": "event-bound state transitions only; no delete; references historical immutable revision events"
+    },
+    {
+      "id": "M2-DB-04",
+      "status": "[PROPOSED]",
+      "name": "merchant.organization_case_review",
+      "columns": "case_id UUID;organization_id UUID;reviewer_account_id UUID;reviewer_realm_id UUID;authority_version TEXT;case_revision BIGINT;version BIGINT;checklist JSONB;ready_event_id UUID NULL;assigned_event_id UUID",
+      "primary_key": [
+        "case_id"
+      ],
+      "foreign_keys": [
+        "(case_id,organization_id)->merchant.organization_governance_case",
+        "ready_event_id/assigned_event_id->merchant.organization_governance_event DEFERRABLE"
+      ],
+      "unique": [],
+      "checks": [
+        "assigned reviewer != maker/party; fixed checklist; readiness binds current revision/impactDigest/policy"
+      ],
+      "lifecycle": "only bounded assignment/review changes with event+receipt; revision changes invalidate readiness"
+    },
+    {
+      "id": "M2-DB-05",
+      "status": "[PROPOSED]",
+      "name": "merchant.organization_governance_event",
+      "columns": "id UUID;case_id UUID NULL;organization_id UUID NULL;actor_kind VARCHAR(8);actor_account_id UUID NULL;realm_id UUID NULL;operator_principal TEXT NULL;operation VARCHAR(40);revision BIGINT;prior_version BIGINT;new_version BIGINT;policy_id UUID NULL;policy_version BIGINT;reason_code VARCHAR(40);protected_payload BYTEA NULL;request_id UUID;occurred_at TIMESTAMPTZ",
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [
+        "organization_id->merchant.organization",
+        "(case_id,organization_id)->merchant.organization_governance_case DEFERRABLE",
+        "policy_id->merchant.organization_governance_policy DEFERRABLE"
+      ],
+      "unique": [
+        "NULLS NOT DISTINCT(request_id,operation,organization_id,case_id)"
+      ],
+      "checks": [
+        "SYSTEM|CUSTOMER|OPERATOR exact actor binding; fixed op/reason enums in contract; transition +1, disclosure same version; local-only operator receipts use SQL SHA binding",
+        "organization_id NULL only PUBLISH_ORG_POLICY/RETIRE_ORG_POLICY with exact policy FK and null case; case commands require exact nonnull org/case"
+      ],
+      "lifecycle": "append-only domain audit, not shared Admin task/audit engine; protected reason/input snapshot encrypted"
+    },
+    {
+      "id": "M2-DB-06",
+      "status": "[PROPOSED]",
+      "name": "merchant.organization_governance_receipt",
+      "columns": "actor_kind VARCHAR(8);actor_binding TEXT;realm_id UUID NULL;operation VARCHAR(40);operation_key UUID;organization_id UUID NULL;case_id UUID NULL;original_version BIGINT;result_version BIGINT;input_key_id VARCHAR(64);input_digest BYTEA;event_id UUID;protected_outcome BYTEA;recorded_at TIMESTAMPTZ;expires_at TIMESTAMPTZ;policy_id UUID NULL",
+      "primary_key": [
+        "actor_kind",
+        "actor_binding",
+        "operation",
+        "operation_key"
+      ],
+      "foreign_keys": [
+        "event_id->merchant.organization_governance_event",
+        "organization_id->merchant.organization",
+        "(case_id,organization_id)->merchant.organization_governance_case",
+        "policy_id->merchant.organization_governance_policy"
+      ],
+      "unique": [],
+      "checks": [
+        "digest32; canonical all input+org/case/actor binding; version+1 for command; minimum existing7day retention; HMAC app receipts / SQL_SHA256_1 offline only",
+        "policy publication receipts allow organization_id/case_id null only with policy_id UUID FK and exact operator event; org commands require nonnull org"
+      ],
+      "lifecycle": "immutable durable replay result; current admission before receipt; never restores grant after revoke"
+    },
+    {
+      "id": "M2-DB-07",
+      "status": "[PROPOSED]",
+      "name": "merchant.organization_current_owner",
+      "columns": "organization_id UUID;membership_id UUID;version BIGINT;last_transfer_case_id UUID NULL;updated_at TIMESTAMPTZ",
+      "primary_key": [
+        "organization_id"
+      ],
+      "foreign_keys": [
+        "organization_id->merchant.organization",
+        "(membership_id,organization_id)->merchant.membership DEFERRABLE",
+        "last_transfer_case_id->merchant.organization_governance_case"
+      ],
+      "unique": [
+        "membership_id"
+      ],
+      "checks": [
+        "current member ACTIVE OWNER; exactly one for every admitted org including CLOSED; immutable historical initial pointer separate"
+      ],
+      "lifecycle": "initial backfill from current valid Initial Owner, block inconsistent rows; changes only approved atomic transfer"
+    },
+    {
+      "id": "M2-DB-08",
+      "status": "[PROPOSED]",
+      "name": "merchant.organization_ownership_history",
+      "columns": "organization_id UUID;version BIGINT;from_membership_id UUID;to_membership_id UUID;case_id UUID;decision_event_id UUID;execution_event_id UUID;occurred_at TIMESTAMPTZ",
+      "primary_key": [
+        "organization_id",
+        "version"
+      ],
+      "foreign_keys": [
+        "both (membership_id,organization_id)->merchant.membership",
+        "case_id->merchant.organization_governance_case",
+        "decision/execution_event_id->merchant.organization_governance_event"
+      ],
+      "unique": [
+        "case_id",
+        "execution_event_id"
+      ],
+      "checks": [
+        "from!=to; version>1; snapshot prior/current roles/grants in protected execution event"
+      ],
+      "lifecycle": "append-only; initial activation remains in existing application_activation, never rewritten"
+    },
+    {
+      "id": "M2-DB-09",
+      "status": "[PROPOSED]",
+      "name": "merchant.organization_risk_hold",
+      "columns": "id UUID;organization_id UUID;hold_code VARCHAR(32);case_id UUID;version BIGINT;effective_at TIMESTAMPTZ;expires_at TIMESTAMPTZ NULL;release_event_id UUID NULL;released_at TIMESTAMPTZ NULL",
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [
+        "organization_id->merchant.organization",
+        "case_id->merchant.organization_governance_case",
+        "release_event_id->merchant.organization_governance_event"
+      ],
+      "unique": [
+        "partial organization_id,hold_code WHERE released_at IS NULL"
+      ],
+      "checks": [
+        "BOOKING_HOLD|CONTRACT_CHANGE_HOLD only; fixed capability effects; intervals positive; releasedAt/event pair"
+      ],
+      "lifecycle": "created by executed approved case; release requires separate case; expiry evaluated by Backend clock, no silent business mutation"
+    },
+    {
+      "id": "M2-DB-10",
+      "status": "[PROPOSED]",
+      "name": "merchant.organization_case_consent",
+      "columns": "case_id UUID;case_revision BIGINT;party_role VARCHAR(24);organization_id UUID;account_id UUID;membership_id UUID;security_version BIGINT;ownership_version BIGINT;intent_digest BYTEA;identity_proof_binding_id UUID;decision VARCHAR(8);verified_at TIMESTAMPTZ;expires_at TIMESTAMPTZ;event_id UUID",
+      "primary_key": [
+        "case_id",
+        "case_revision",
+        "party_role"
+      ],
+      "foreign_keys": [
+        "(case_id,organization_id)->merchant.organization_governance_case",
+        "(membership_id,organization_id)->merchant.membership",
+        "event_id->merchant.organization_governance_event",
+        "(identity_proof_binding_id,account_id,organization_id)->identity.organization_intent_binding(id,account_id,organization_id)"
+      ],
+      "unique": [
+        "identity_proof_binding_id"
+      ],
+      "checks": [
+        "TRANSFEROR|TRANSFEREE; AGREE|DECLINE; target named authenticated party; proof binding via Identity predicate, not guessed external FK; digest32"
+      ],
+      "lifecycle": "immutable per revision; material revision requires new consent; security-version change/revocation invalidates live use"
+    },
+    {
+      "id": "M2-DB-11",
+      "status": "[PROPOSED]",
+      "name": "merchant.organization_case_evidence",
+      "columns": "id UUID;case_id UUID;organization_id UUID;uploader_account_id UUID;purpose VARCHAR(32);state VARCHAR(12);private_blob_id UUID;mime VARCHAR(32);bytes BIGINT;sha256 BYTEA;version BIGINT;screened_at TIMESTAMPTZ NULL;event_id UUID",
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [
+        "(case_id,organization_id)->merchant.organization_governance_case",
+        "event_id->merchant.organization_governance_event"
+      ],
+      "unique": [
+        "private_blob_id"
+      ],
+      "checks": [
+        "1..5MiB; PDF/PNG/JPEG parser/scanner; QUARANTINED|CLEAN|REJECTED; purpose exact; only CLEAN final bytes can enter readiness"
+      ],
+      "lifecycle": "reservation/finalization and rollback-cleanup reuse platform engine; retention/legal hold policy remains undecided"
+    },
+    {
+      "id": "M2-DB-12",
+      "status": "[PROPOSED]",
+      "name": "identity.organization_intent_binding",
+      "columns": "id UUID;account_id UUID;session_id UUID;security_version BIGINT;proof_id UUID;organization_id UUID;case_id UUID;case_revision BIGINT;party_role VARCHAR(16);intent_digest BYTEA;operation_key UUID;input_key_id VARCHAR(64);input_digest BYTEA;request_id UUID;verified_at TIMESTAMPTZ;expires_at TIMESTAMPTZ",
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [
+        "account_id->identity.user_account",
+        "(session_id,account_id)->identity.customer_auth_session",
+        "proof_id->identity.customer_proof; owner guard validates account/purpose/session/auth-version exact"
+      ],
+      "unique": [
+        "proof_id",
+        "account_id,operation_key",
+        "id,account_id,organization_id"
+      ],
+      "checks": [
+        "proof purpose REAUTHENTICATION, genuinely consumed in same transaction; party TRANSFEROR|TRANSFEREE; exact current Customer eligibility/security-version and case-bound digest32; context lifetime/physical-source ownership",
+        "no Merchant private SELECT; no generated verification fact; natural source proof TTL/session expiry after commit does not revoke historical binding, but binding expiry/security-version change/revocation denies future use"
+      ],
+      "lifecycle": "Identity-owned immutable binding/receipt; source proof consumed once via existing engine; no new credentials/proof purpose/SMTP"
+    }
+  ],
+  "amendments": [
+    {
+      "id": "M2-AMEND-01",
+      "status": "[PROPOSED]",
+      "owner": "merchant",
+      "objects": "MerchantGovernanceViews new public reader; existing P0 contracts unchanged",
+      "delta": "New bounded public readers. Search/compare/profile/comments use existing READ_DISCLOSURE audit shape with exact purpose and encrypted context; comment row is append-only HMAC-bound durable receipt, application version/state unchanged. No new application event/receipt opcode or projection storage."
+    },
+    {
+      "id": "M2-AMEND-02",
+      "status": "[PROPOSED]",
+      "owner": "merchant",
+      "objects": "merchant.business_reviewer_scope permission CHECK and configure_local_reviewer_scope exact existing signature",
+      "delta": "Existing10 plus new12 codes, max22, scope allowlist exact; no automatic grants or roles. org.* ORGANIZATION only for new capabilities; old POLICY org scopes unchanged for backward compatibility. Existing task.read becomes allowed on ORGANIZATION scope for these case tasks only, after explicit operator grant; no new task permission and no default grant. Shared context parser capability allowlist is a coordinated contract consumer change, not authority from frontend."
+    },
+    {
+      "id": "M2-AMEND-03",
+      "status": "[PROPOSED]",
+      "owner": "merchant",
+      "objects": "merchant.organization state CHECK, guard_workspace_identity/check_workspace_invariants, application_origin_admitted and current-owner predicates",
+      "delta": "Forward-only explicit RESTRICTED/CLOSED and current-owner separation. Historical initial owner FK/value and activation rows unchanged. No general Owner mutation; old scoped predicates fail closed until upgraded atomically."
+    },
+    {
+      "id": "M2-AMEND-04",
+      "status": "[PROPOSED]",
+      "owner": "merchant + Team-owning team",
+      "objects": "team_permission, invitation/Team grants/receipt guards and JdbcOrganizationTeam/JdbcBusinessWorkspaces admissions using initial_owner_membership_id",
+      "delta": "Only exact EXECUTE_TRANSFER event/receipt may promote same-identity target membership to OWNER and suspend old current Owner. Update authority versions, revoke old Org grants, invalidate pending invites; no self-elevation through Team access. Cannot implement before COORD-TEAM."
+    },
+    {
+      "id": "M2-AMEND-05",
+      "status": "[PROPOSED]",
+      "owner": "identity",
+      "objects": "V41 admin_governance_reauthentication operation CHECK and AdminGovernanceReauthentication request/consume exact signatures",
+      "delta": "Allow ORG_CASE_DECIDE and ORG_CASE_EXECUTE purpose-bound operations only, case digest/version/authority-bound; no bypass, new authentication, SYSTEM activation or Root powers. Identity team must implement/review."
+    },
+    {
+      "id": "M2-AMEND-06",
+      "status": "[PROPOSED]",
+      "owner": "identity",
+      "objects": "existing Customer proof/consent engine via M2-PORT-07 and M2-SQL-03",
+      "delta": "Add exact Identity-owned M2-DB-12 binding/receipt, M2-PORT-07 and M2-SQL-03; reuse CustomerReauthentication.consume in same transaction; no new authentication purpose/API. Do not repurpose OwnerRecoveryConsent. Requires Identity co-sign before implementation."
+    },
+    {
+      "id": "M2-AMEND-07",
+      "status": "[PROPOSED]",
+      "owner": "notifications/platform",
+      "objects": "M2-PORT-02 redacted read; case-notice outbox/template/SMTP public-port integration",
+      "delta": "R-only adds M2-PORT-02 status reader. For L/O extend existing notification.merchant_application_notice with target_kind VARCHAR(16) default APPLICATION, organization_id UUID NULL, governance_case_id UUID NULL, recipient_account_id UUID NULL, recipient_role VARCHAR(16) default APPLICANT. APPLICATION retains exact four templates/non-null app+applicant; ORG_CASE requires null application_id/applicant_id and exact org/case/recipient + CASE_INFORMATION_REQUIRED|CASE_REJECTED|ORGANIZATION_STATE_CHANGED|OWNERSHIP_TRANSFERRED. Existing unique(event_id,template) becomes unique(event_id,template,recipient_role), preventing duplicate party notices. Schema-owned guard uses M2-SQL-02; same outbox worker/backoff/TLS, existing public send(Message) unchanged; M2-PORT-10/11 add bounded overload. New notice rows only after exact committed event/receipt, never SMTP inside transaction. Co-sign by Notifications/SMTP owners required."
+    },
+    {
+      "id": "M2-AMEND-08",
+      "status": "[PROPOSED]",
+      "owner": "merchant",
+      "objects": "organization/member_grant/workspace/team guards and local operator existing grant allowlists",
+      "delta": "Add ORGANIZATION-only ownership.transfer.request; independent operator only; no role-derived grants. Source initial current-owner backfill from valid existing rows is migration-only, not account selection or provisioning."
+    },
+    {
+      "id": "M2-AMEND-09",
+      "status": "[PROPOSED]",
+      "owner": "workflow + read owners",
+      "objects": "Orders/Finance clearance ports; Work Inbox/Audit provider integration",
+      "delta": "New case source only consumed via coordinated existing readers. No second task/notification/audit engine and no Menu6-9 implementation edits before coordination. Direct route Backend deny remains mandatory. Exact shared opt-in API/DTO changes are M2-API-EXT-05/06; same canonical provider, source-derived Work IDs and case event audit, old v1 stays exact."
+    },
+    {
+      "id": "M2-AMEND-10",
+      "status": "[PROPOSED] DEC-R1 + ADM-17 coordination",
+      "owner": "merchant",
+      "objects": "merchant.application_policy + publish_local_application_policy(UUID,UUID,BIGINT,JSONB,TEXT) unchanged SQL signature with opt-in new policy body field",
+      "delta": "Add nullable review_timing JSONB with exact keys start_event FIRST_SUBMISSION|CURRENT_REVISION_SUBMISSION, duration_seconds positive Owner-selected, calendar_mode ELAPSED_SECONDS. Old published rows/digests remain unchanged with null (unavailable); publish new policy versions only, no retrofit deadlines. Include reviewed timing in new-version digest. Shared Work Inbox may consume dueAt only through co-signed reader; no implementation edit here."
+    }
+  ],
+  "sql_functions": [
+    {
+      "id": "M2-SQL-01",
+      "status": "[PROPOSED]",
+      "signature": "merchant.publish_local_organization_governance_policy(UUID,UUID,BIGINT,JSONB,TEXT) RETURNS UUID",
+      "owner": "merchant_governance_writer NOLOGIN",
+      "execute": "merchant_governance_operator only; revoke PUBLIC/runtime",
+      "checks": "existing exact physical LOCAL/TEST binding; typed policy allowed values; request-bound SQL_SHA256_1 operator receipt; no membership/grant issuance"
+    },
+    {
+      "id": "M2-SQL-02",
+      "status": "[PROPOSED]",
+      "signature": "merchant.organization_case_notice_bound(UUID,UUID,UUID,TEXT,UUID,TEXT) RETURNS BOOLEAN",
+      "owner": "merchant_governance_writer NOLOGIN",
+      "execute": "notification protected guard/writer only; no PUBLIC/runtime/operator direct EXECUTE",
+      "checks": "event/receipt/org/case/template mapping fixed and same transaction; no private cross-table reads by Notifications; no mutation; exact recipient account and party role must match authoritative case/consent/current-owner evidence, not only event/case/org/template; foreign recipient denies"
+    },
+    {
+      "id": "M2-SQL-03",
+      "status": "[PROPOSED]",
+      "signature": "identity.organization_intent_bound(UUID,UUID,UUID,UUID,BIGINT,TEXT,BYTEA) RETURNS BOOLEAN",
+      "owner": "identity_admin_writer existing NOLOGIN; only scoped SELECT permissions listed in ACL; requires COORD-IAM approval",
+      "execute": "Merchant private consent guard only, no PUBLIC/runtime/operator direct EXECUTE",
+      "checks": "proof binding/account/org/case/revision/party/digest exact; current security-version/eligibility; no credentials or data output"
+    },
+    {
+      "id": "M2-SQL-04",
+      "status": "[PROPOSED]",
+      "signature": "merchant.guard_organization_governance_rows() RETURNS TRIGGER",
+      "owner": "merchant_governance_writer NOLOGIN",
+      "execute": "trigger-only, revoked PUBLIC/runtime; SECURITY DEFINER fixed pg_catalog search_path qualified tables",
+      "checks": "fixed states/actor/scope/proof/receipt/event; direct DML cannot bypass"
+    },
+    {
+      "id": "M2-SQL-05",
+      "status": "[PROPOSED]",
+      "signature": "merchant.require_organization_governance_commit() RETURNS TRIGGER",
+      "owner": "merchant_governance_writer NOLOGIN",
+      "execute": "deferred constraint trigger only; no direct PUBLIC/runtime execute",
+      "checks": "case/review/event/receipt/state/consent/ownership/grants all exact complete transaction; no partial execution"
+    },
+    {
+      "id": "M2-SQL-06",
+      "status": "[PROPOSED]",
+      "signature": "merchant.execute_approved_organization_case(UUID,UUID,BIGINT,BIGINT,UUID) RETURNS UUID",
+      "owner": "merchant_governance_writer NOLOGIN; SECURITY DEFINER fixed pg_catalog search_path",
+      "execute": "configured runtimeRole only, REVOKE PUBLIC/operator; no writer membership",
+      "checks": "arguments requestId/caseId/expectedOrgVersion/expectedOwnershipVersion/executionEventId are references, not authority. Recheck exact current SYSTEM actor/scope/proof bound to event+receipt in same transaction, approval/current revision/policy/independence, state/consents/clearances/current owner, source/authority locks; function may mutate only exact org/ownership/member/grant delta matching executed case; returns execution event UUID"
+    },
+    {
+      "id": "M2-SQL-07",
+      "status": "[PROPOSED]",
+      "signature": "identity.guard_organization_intent_binding() RETURNS TRIGGER",
+      "owner": "identity_admin_writer NOLOGIN; SECURITY DEFINER fixed pg_catalog qualified tables",
+      "execute": "trigger-only; REVOKE PUBLIC/runtime/operator direct EXECUTE",
+      "checks": "immutable append matching canonical consumed REAUTHENTICATION proof, own subject/current Customer purpose/securityVersion, case/role/digest/request binding, existing shared Identity administration lock; no forged verification or existing offline schema-owner bypass"
+    }
+  ],
+  "acl": {
+    "status": "[PROPOSED] exact permission envelope; NO EXECUTION/GRANTS in this checkpoint",
+    "new_roles": [],
+    "runtimeRole": {
+      "select": "Merchant new tables except identity.organization_intent_binding only through Identity-owned composition; no new private cross-domain SELECT",
+      "insert": "merchant.application_review_comment, merchant.organization_governance_case, merchant.organization_case_review, merchant.organization_governance_event, merchant.organization_governance_receipt, merchant.organization_case_consent, merchant.organization_case_evidence; identity.organization_intent_binding via Identity-owned engine with guard; existing notification outbox insertion guard retained",
+      "update_columns": {
+        "merchant.organization_governance_case": [
+          "state",
+          "version",
+          "revision",
+          "expected_org_version",
+          "expected_ownership_version",
+          "protected_payload",
+          "impact_digest",
+          "effective_at",
+          "updated_at",
+          "last_event_id"
+        ],
+        "merchant.organization_case_review": [
+          "reviewer_account_id",
+          "reviewer_realm_id",
+          "authority_version",
+          "case_revision",
+          "version",
+          "checklist",
+          "ready_event_id",
+          "assigned_event_id"
+        ],
+        "merchant.organization_case_evidence": [
+          "state",
+          "version",
+          "screened_at",
+          "event_id"
+        ]
+      },
+      "execute": [
+        "M2-SQL-06 only; existing canonical public operator functions not newly callable"
+      ],
+      "denied": [
+        "direct new org/member/current-owner/history/hold UPDATE or DELETE",
+        "writer/operator membership, INHERIT, SET ROLE, GRANT OPTION",
+        "private predicates M2-SQL-02/03 direct execute",
+        "all new table DELETE"
+      ]
+    },
+    "merchant_governance_writer": {
+      "attributes": "existing NOLOGIN, no new login/membership/role creation",
+      "select": "own policy/case/state/event/receipt/consent/history/member/grant/evidence and existing application tables; no Identity or Notifications table SELECT",
+      "insert": "new policy/event/receipt/current-owner/history/hold",
+      "update_columns": {
+        "merchant.organization": [
+          "state",
+          "version",
+          "updated_at"
+        ],
+        "merchant.membership": [
+          "role",
+          "state",
+          "version",
+          "authority_version",
+          "updated_at"
+        ],
+        "merchant.organization_current_owner": [
+          "membership_id",
+          "version",
+          "last_transfer_case_id",
+          "updated_at"
+        ],
+        "merchant.organization_risk_hold": [
+          "version",
+          "release_event_id",
+          "released_at"
+        ]
+      },
+      "delete": "merchant.member_grant only when exact EXECUTE_TRANSFER guarded outcome; retain other existing privileges unchanged",
+      "execute": "M2-SQL-03 private boolean predicate only, and existing Identity proof/environment guards; no broad grants"
+    },
+    "identity_admin_writer": {
+      "attributes": "existing NOLOGIN; no new runtime/operator membership",
+      "select_columns": {
+        "identity.organization_intent_binding": "all",
+        "identity.customer_proof": [
+          "id",
+          "subject_id",
+          "purpose",
+          "bound_session_id",
+          "bound_auth_version",
+          "expires_at",
+          "consumed_at",
+          "revoked_at"
+        ],
+        "identity.user_account": [
+          "id",
+          "status",
+          "auth_version",
+          "email_verified"
+        ]
+      },
+      "note": "Existing column names reconciled from V3/V8/V12. Predicate must use Identity current Customer-purpose/identifier eligibility semantics and canonical administration lock, not status-only checks. No schema-owner/current_user guard rewrite; no reuse of offline-only lock_local_business_subject."
+    },
+    "merchant_governance_operator": {
+      "execute": [
+        "existing configure_local_reviewer_scope exact signature with approved allowlist only",
+        "M2-SQL-01 only"
+      ],
+      "denied": [
+        "M2-SQL-06",
+        "private Identity/notice predicates",
+        "runtime execution authority or auto role grants"
+      ]
+    },
+    "notification_guard_writer": {
+      "execute": [
+        "M2-SQL-02 only through existing guarded notification path"
+      ],
+      "private_select": "no Merchant/Identity private table access"
+    },
+    "PUBLIC": "REVOKE ALL on all new tables and all seven new SQL functions",
+    "migration_owner": "only forward migration DDL/owner transfer; temporary schema CREATE revoked before commit; no runtime CREATEROLE or superuser requirement"
+  },
+  "decisions": [
+    {
+      "id": "DEC-R1",
+      "group": "M2-R01",
+      "required": "business + technical",
+      "question": "Approve exact server-side name/legal/applicant search, purpose audit and new restricted projections? Select review deadline start event and explicit elapsed-seconds duration if SLA filtering is to activate; no policy means timing unavailable.",
+      "candidate": "Exact normalized legal name/tax/ID matching; no fuzzy identity search. No recipient email or financial amounts. Existing granular grants plus four new R capabilities, explicit operator grants only. Actual duplicate/contact/evidence/conflict check codes may filter; no external fraud/SLA engine inferred. Application deadlines require a new explicit policy version, no assumed business calendar.",
+      "status": "OWNER_APPROVAL_REQUIRED"
+    },
+    {
+      "id": "DEC-L1",
+      "group": "M2-L01",
+      "required": "business policy",
+      "question": "Which capabilities remain in RESTRICTED/CLOSED and for suspended parties needing support or read access?",
+      "candidate": "RESTRICTED denies new Quote/Booking/Team delegation/contract changes but preserves scoped history/support obligations. CLOSED terminal, no new business or new membership; retain authorized history/support and legal evidence. No reopen without future amendment.",
+      "status": "OWNER_APPROVAL_REQUIRED"
+    },
+    {
+      "id": "DEC-L2",
+      "group": "M2-L01",
+      "required": "business/authority",
+      "question": "Approve maker/reviewer/decider independence and executor requirements for each case type?",
+      "candidate": "Three distinct humans maker/reviewer/decider, none a party or member of target org. Executor may equal independent decider only with separate exact execute grant + fresh proof. All rechecked at execution; no emergency bypass.",
+      "status": "OWNER_APPROVAL_REQUIRED"
+    },
+    {
+      "id": "DEC-L3",
+      "group": "M2-L01",
+      "required": "business policy + source contract",
+      "question": "What obligations block CLOSE and what can risk holds affect?",
+      "candidate": "CLOSE only with explicit CLEAR from Orders open Shipments/custody/work and Finance obligations/reconciliation; UNKNOWN blocks. Hold types BOOKING_HOLD/CONTRACT_CHANGE_HOLD only, historical events untouched. No automatic financial waiver.",
+      "status": "OWNER_APPROVAL_REQUIRED"
+    },
+    {
+      "id": "DEC-L4",
+      "group": "M2-L01",
+      "required": "business policy",
+      "question": "Select case lifetime, consent lifetime, due dates, effective-time limits, dispute/reverification evidence and retention policy.",
+      "candidate": "No seeded default. Explicit published Local/Test policy values are mandatory. Reverification does not mutate approved legal registry/contract snapshots; material legal change needs a subsequent separate legal-amendment contract.",
+      "status": "OWNER_APPROVAL_REQUIRED"
+    },
+    {
+      "id": "DEC-O1",
+      "group": "M2-O01",
+      "required": "business/authority",
+      "question": "Approve eligible transfer parties and authenticated consent model?",
+      "candidate": "Current verified Owner with ownership.transfer.request; transferee already ACTIVE verified same-org non-Owner membership. Both personally consent with real recent reauthentication to same case revision/digest. No outside customer discovery or admin-forged consent.",
+      "status": "OWNER_APPROVAL_REQUIRED"
+    },
+    {
+      "id": "DEC-O2",
+      "group": "M2-O01",
+      "required": "business/authority",
+      "question": "Approve historical Initial Owner vs authoritative current Owner model and shared guard amendment?",
+      "candidate": "Keep initial pointer/activation immutable; add current owner row + append-only history. One current ACTIVE Owner; original Owner can stop being current only through exact approved transfer.",
+      "status": "OWNER_APPROVAL_REQUIRED"
+    },
+    {
+      "id": "DEC-O3",
+      "group": "M2-O01",
+      "required": "business/authority",
+      "question": "Select outgoing/recipient role and grants, invitations and Business session policy.",
+      "candidate": "Suspend outgoing org Membership, revoke its Org grants and pending invitations; recipient retains identity/member UUID and becomes Owner with minimal dashboard.read + explicit ownership.transfer.request, no inherited Finance/team admin grants. Invalidate old Business authority only; Personal and other org sessions remain valid. Session strategy must be co-signed by Identity.",
+      "status": "OWNER_APPROVAL_REQUIRED"
+    },
+    {
+      "id": "DEC-O4",
+      "group": "M2-O01",
+      "required": "business policy",
+      "question": "Do open obligations/disputes block transfer; can held/suspended/legacy origins transfer?",
+      "candidate": "ACTIVE approved-origin organizations only, no open dispute/material reverification case; ordinary UNPAID stays with unchanged Organization and never becomes PAID or personal debt. Legacy operator origins blocked until authoritative legal/ownership onboarding exists.",
+      "status": "OWNER_APPROVAL_REQUIRED"
+    }
+  ],
+  "coordination": [
+    {
+      "id": "COORD-NOTICE",
+      "owner": "Notifications/SMTP + Menu9 team",
+      "need": "co-sign M2-PORT-02 now; separate case-notice exact schema/template amendment before L/O integration",
+      "status": "NOT_COORDINATED"
+    },
+    {
+      "id": "COORD-PROFILE",
+      "owner": "Merchant facilities/contract source + Platform evidence",
+      "need": "current cross-domain contract-reference reader absent; Pricing-owned data requires reviewed new read port; optional absent source UNAVAILABLE, not an invented contract. Existing Merchant facility tables may be read by Merchant owner. Case evidence must use canonical scanner/store and policy.",
+      "status": "NOT_COORDINATED"
+    },
+    {
+      "id": "COORD-EXIT",
+      "owner": "Orders/Finance + Support/Claims owners",
+      "need": "co-sign M2-PORT-05/06 and org serialization gate, sources/version/UNKNOWN rules; no ledger/custody mutation",
+      "status": "NOT_COORDINATED"
+    },
+    {
+      "id": "COORD-ADMISSION",
+      "owner": "Merchant/Orders/Pricing/Team API owners",
+      "need": "operation-specific RESTRICTED/CLOSED/hold behavior under one real DB lock. Old ACTIVE-only readers cannot silently mean READ preservation.",
+      "status": "NOT_COORDINATED"
+    },
+    {
+      "id": "COORD-IAM",
+      "owner": "Identity/Menu6-9 team",
+      "need": "co-sign M2-AMEND-05/06, exact persisted consent binding and target-scoped Business authority invalidation. No implementation by Admin group without coordination.",
+      "status": "NOT_COORDINATED"
+    },
+    {
+      "id": "COORD-TEAM",
+      "owner": "Merchant Team/Menu6-9 team",
+      "need": "co-sign initial/current Owner guards, membership role/grant/receipt paths and all existing offline operator paths; no Team-engine fork",
+      "status": "NOT_COORDINATED"
+    }
+  ],
+  "migration_plan": [
+    {
+      "id": "M2-MIG-R",
+      "candidate": "V46__merchant_governance_read_projections.sql",
+      "status": "[PROPOSED] number unoccupied locally, NOT RESERVED across team branches",
+      "contents": "Only R comment table/guard and exact new R permission/event/reason allowlists; searches/disclosures need no new source storage. No seeds/grants. Read-only implementation can be reviewed separately."
+    },
+    {
+      "id": "M2-MIG-L",
+      "candidate": "V47__merchant_organization_governance.sql",
+      "status": "[PROPOSED] revalidate stream at implementation",
+      "contents": "Policy/case/review/event/receipt/hold tables, exact checks/guards and L permissions/state bridge; no live policy/grants. Stay disabled until operation-admission/clearance sources coordinated. Current-owner read bridge M2-DB-07 initialized only from valid immutable Initial Owner before any L state activation; no transfer allowed yet."
+    },
+    {
+      "id": "M2-MIG-O",
+      "candidate": "V48__merchant_current_ownership.sql",
+      "status": "[PROPOSED] revalidate stream at implementation",
+      "contents": "Current owner/history/consent/evidence and controlled guard amendments; read-only preflight stops inconsistent existing orgs. Identity/notice dependency migrations require separate exact owner-approved numbers/signatures, not hidden in V48. Reuse M2-DB-07 installed by L, do not recreate or rewrite provenance."
+    },
+    {
+      "id": "M2-MIG-I",
+      "candidate": "Identity-owned forward migration AFTER agreed stream allocation; not silently bundled with V48",
+      "status": "[PROPOSED] COORD-IAM + exact catalog-name preflight required",
+      "contents": "M2-DB-12/M2-SQL-03 and V41 operation additions, minimal NOLOGIN ACL. No existing migrations edited."
+    },
+    {
+      "id": "M2-MIG-N",
+      "candidate": "Notifications-owned forward migration AFTER agreed stream allocation",
+      "status": "[PROPOSED] COORD-NOTICE required",
+      "contents": "Exact target discriminator/template/unique guard amendment in M2-AMEND-07; same transport/outbox; no second engine."
+    }
+  ],
+  "tests": [
+    {
+      "id": "M2-T-01",
+      "scope": "R search/projections",
+      "required": "scoped global matching before pagination; foreign/duplicate/empty, exact normalized search and PII/log redaction; cursor tamper/current-authority/source drift; old GET compatibility"
+    },
+    {
+      "id": "M2-T-02",
+      "scope": "R comparison/membership/notices/comments",
+      "required": "two immutable revisions only, revoked disclosure before bytes, append-only comments and same-key replay; no credentials; actual queued/accepted-provider/failed states, no delivered inference; rollback removes disclosure effects"
+    },
+    {
+      "id": "M2-T-03",
+      "scope": "L policy/cases",
+      "required": "PG18 FK/CHECK/unique/direct-DML negative; fixed states and typed payload; stale version, material resubmission invalidates readiness; immutable audit/receipts and expiry"
+    },
+    {
+      "id": "M2-T-04",
+      "scope": "L independent decision/execute",
+      "required": "maker/reviewer/decider conflicts, revoked midflow, replay after consumed proof, same-key different payload, concurrent opposite decision; exact execute authority; rollback all rows"
+    },
+    {
+      "id": "M2-T-05",
+      "scope": "L RESTRICTED/CLOSED/holds",
+      "required": "lock race Quote/Booking/invitation/transfer vs restriction; open obligations/UNKNOWN clearance denial; no historical finance/custody deletion; CLOSED terminal; preserved scoped history/support"
+    },
+    {
+      "id": "M2-T-06",
+      "scope": "O consent/last Owner",
+      "required": "named parties only, wrong account/role/proof/security-version, genuine proof binding/expiry, one current ACTIVE Owner, initial provenance unchanged, direct-DML role/pointer bypass denied"
+    },
+    {
+      "id": "M2-T-07",
+      "scope": "O atomic transfer",
+      "required": "two concurrent transfers, lost response replay, downgrade/suspend outgoing, no inherited sensitive grant, invalidated pending invites and targeted Business denial, unaffected Personal/other org; complete rollback including notices/receipts"
+    },
+    {
+      "id": "M2-T-08",
+      "scope": "integration/security",
+      "required": "one consolidated HTTPS+PG18 synthetic scenario: application review -> activated org -> scoped profile/comparison -> lifecycle case -> approved transfer -> old/new context verification; canonical clearances/outbox, no mock readiness; targeted NWS/Team/Business regressions only when affected"
+    }
+  ],
+  "acceptance": {
+    "full_menu2": "NOT READY until all mandatory coverage and integration gates pass; UNAVAILABLE dependencies do not accept a mandatory mutation",
+    "source_test_execution": "NOT AUTHORIZED by this proposed manifest; exact approval + business policy + coordination first",
+    "deployment": "separate exact-target approval always required",
+    "optional_excluded": [
+      "fuzzy name/entity search",
+      "saved views and bulk exports not expressly in ADM02/03 target actions",
+      "automatic fraud/external registry verification",
+      "automatic debt waiver/settlement",
+      "general approval/task/notification engine",
+      "admin editing global IAM roles",
+      "outside-org transferee invitation/owner recovery without consent",
+      "automatic reopen CLOSED",
+      "arbitrary legal registry changes during reverification"
+    ]
+  },
+  "technical_open_items": [
+    {
+      "id": "TECH-IAM-COORDINATION",
+      "blocker": "Canonical proof/account columns reconciled to V3/V8/V12. Identity owner must co-sign new binding predicate/guard and current Customer eligibility implementation; existing offline lock_local_business_subject is NOT a runtime eligibility API and must not be reused to bypass its schema-owner guard.",
+      "affects": [
+        "M2-O01",
+        "M2-DB-12",
+        "M2-SQL-03"
+      ]
+    },
+    {
+      "id": "TECH-TEAM-OWNERSHIP",
+      "blocker": "Other team must co-sign exact current-owner/role/grant/invitation/session integration diff; Parent manifest cannot override V23/V34 invariants.",
+      "affects": [
+        "M2-O01",
+        "M2-L01"
+      ]
+    },
+    {
+      "id": "TECH-NOTICE-TARGET",
+      "blocker": "Notifications/SMTP owner co-sign target-kind/schema/worker/overload and protected recipient rules. R-only reader may be approved separately.",
+      "affects": [
+        "M2L notices",
+        "M2O notices"
+      ]
+    }
+  ],
+  "event_operations": [
+    "PUBLISH_ORG_POLICY",
+    "RETIRE_ORG_POLICY",
+    "CREATE_CASE",
+    "SUBMIT_CASE",
+    "ASSIGN_CASE_REVIEWER",
+    "BEGIN_CASE_REVIEW",
+    "REQUEST_CASE_INFORMATION",
+    "RESUBMIT_CASE",
+    "READY_CASE_DECISION",
+    "APPROVE_CASE",
+    "REJECT_CASE",
+    "EXECUTE_CASE",
+    "CANCEL_CASE",
+    "EXPIRE_CASE",
+    "CONSENT_AGREE",
+    "CONSENT_DECLINE",
+    "READ_CASE_DISCLOSURE",
+    "RESERVE_CASE_EVIDENCE",
+    "FINALIZE_CASE_EVIDENCE"
+  ],
+  "event_reasons": [
+    "ORG_POLICY_PUBLISHED",
+    "ORG_POLICY_RETIRED",
+    "CASE_CREATED",
+    "CASE_SUBMITTED",
+    "CASE_REVIEWER_ASSIGNED",
+    "CASE_REVIEW_STARTED",
+    "CASE_INFORMATION_REQUIRED",
+    "CASE_RESUBMITTED",
+    "CASE_CHECKLIST_COMPLETE",
+    "CASE_INDEPENDENT_APPROVAL",
+    "CASE_INDEPENDENT_REJECTION",
+    "CASE_EXECUTED",
+    "CASE_CANCELLED",
+    "CASE_EXPIRED",
+    "PARTY_AGREED",
+    "PARTY_DECLINED",
+    "CASE_DISCLOSURE",
+    "CASE_EVIDENCE_RESERVED",
+    "CASE_EVIDENCE_FINALIZED"
+  ],
+  "case_state_machine": {
+    "DRAFT": [
+      "SUBMITTED",
+      "CANCELLED",
+      "EXPIRED"
+    ],
+    "SUBMITTED": [
+      "UNDER_REVIEW",
+      "CANCELLED",
+      "EXPIRED"
+    ],
+    "UNDER_REVIEW": [
+      "NEEDS_INFORMATION",
+      "READY_FOR_DECISION",
+      "REJECTED",
+      "EXPIRED"
+    ],
+    "NEEDS_INFORMATION": [
+      "SUBMITTED",
+      "CANCELLED",
+      "EXPIRED"
+    ],
+    "READY_FOR_DECISION": [
+      "APPROVED",
+      "REJECTED",
+      "NEEDS_INFORMATION",
+      "EXPIRED"
+    ],
+    "APPROVED": [
+      "EXECUTED",
+      "EXPIRED"
+    ],
+    "REJECTED": [],
+    "EXECUTED": [],
+    "CANCELLED": [],
+    "EXPIRED": []
+  },
+  "state_read_compatibility": "Existing OrganizationSummary and Business Contexts v1 support ACTIVE/SUSPENDED only; before L state activation add explicit opt-in v2 DTO negotiation and operation-aware admission for all affected clients. Old clients fail closed on unsupported states, never downgrade RESTRICTED/CLOSED into ACTIVE. Full acceptance requires upgraded supported clients, not parser denial alone.",
+  "schema_amendment_details": {
+    "notification.merchant_application_notice": {
+      "status": "[PROPOSED] COORD-NOTICE required",
+      "add_columns": {
+        "target_kind": "VARCHAR(16) NOT NULL DEFAULT APPLICATION CHECK APPLICATION|ORG_CASE",
+        "organization_id": "UUID NULL",
+        "governance_case_id": "UUID NULL",
+        "recipient_account_id": "UUID NULL",
+        "recipient_role": "VARCHAR(16) NOT NULL DEFAULT APPLICANT CHECK APPLICANT|TRANSFEROR|TRANSFEREE|OWNER"
+      },
+      "change_nullability": [
+        "application_id:NULL only target_kind ORG_CASE",
+        "applicant_id:NULL only target_kind ORG_CASE"
+      ],
+      "case_template_allowlist": [
+        "CASE_INFORMATION_REQUIRED",
+        "CASE_REJECTED",
+        "ORGANIZATION_STATE_CHANGED",
+        "OWNERSHIP_TRANSFERRED"
+      ],
+      "unique": "(event_id,template,recipient_role); original APPLICATION/APPLICANT semantics unchanged",
+      "guard": "M2-SQL-02 exact recipient/case/event/receipt/template + protected verified recipient; no new caller-chosen email. Runtime cannot enqueue outside the exact committed source event; rollback no delivery."
+    },
+    "merchant.organization": {
+      "state_check": [
+        "ACTIVE",
+        "SUSPENDED",
+        "RESTRICTED",
+        "CLOSED"
+      ],
+      "initial_owner_membership_id": "no value/FK change, historical pointer only after explicit O amendment"
+    },
+    "merchant.business_reviewer_scope": {
+      "permission_allowlist": "existing10 plus manifest new12 Merchant Governance codes only",
+      "max_cardinality": 22,
+      "new_org_capability_scope": "ORGANIZATION only"
+    },
+    "identity.admin_governance_reauthentication": {
+      "operation_allowlist": "existing APPROVE/REJECT/SUSPEND/REINSTATE plus ORG_CASE_DECIDE/ORG_CASE_EXECUTE only; not any arbitrary operation"
+    },
+    "merchant.application_policy": {
+      "status": "[PROPOSED]",
+      "add_columns": {
+        "review_timing": "JSONB NULL; fixed shape per M2-AMEND-10, no default deadline"
+      },
+      "compatibility": "old policy/digest immutable; new versions explicitly include field and digest; no event timestamp invention"
+    }
+  },
+  "changed_existing_apis": [
+    {
+      "id": "M2-API-EXT-01",
+      "status": "[PROPOSED] COORD-IAM required",
+      "method": "POST",
+      "path": "/api/v1/admin/governance-reauthentications",
+      "dto": "existing AdminStepUpInput/StepUpResult unchanged fields",
+      "delta": "operation enum adds ORG_CASE_DECIDE/ORG_CASE_EXECUTE only; case target/version/digest+current org/type capability verified before proof issue; other existing operations unchanged",
+      "no_implicit_scope": "READ/Identity management never issues Merchant case authority"
+    },
+    {
+      "id": "M2-API-EXT-02",
+      "status": "[PROPOSED] COORD-ADMISSION/TEAM",
+      "method": "GET",
+      "path": "/api/v1/customer/business-contexts",
+      "dto": "existing Contexts v1 unchanged; opt-in M2-BusinessContextsV2",
+      "delta": "Accept application/vnd.argopost.business-contexts.v2+json negotiates governance-aware current contexts; v1 stays ACTIVE-only. No new grant from workspace switch."
+    },
+    {
+      "id": "M2-API-EXT-03",
+      "status": "[PROPOSED]",
+      "method": "GET",
+      "path": "/api/v1/admin/merchant-organizations",
+      "dto": "existing OrganizationSummaryPage unchanged; opt-in M2-OrganizationDirectoryV2",
+      "delta": "Accept application/vnd.argopost.organization.v2+json; new-state/current-owner metadata, same bounded page/state/policy filters. Old client cannot see state alias ACTIVE."
+    },
+    {
+      "id": "M2-API-EXT-04",
+      "status": "[PROPOSED]",
+      "method": "GET",
+      "path": "/api/v1/admin/merchant-organizations/{organizationId}",
+      "dto": "existing OrganizationSummary unchanged; opt-in M2-OrganizationRow",
+      "delta": "same opt-in v2 media; v1 receives406 for RESTRICTED/CLOSED rather than unsupported/fake ACTIVE payload. Same current org scope enforcement."
+    },
+    {
+      "id": "M2-API-EXT-05",
+      "status": "[PROPOSED] shared ADM-17 owner coordination required",
+      "method": "GET",
+      "path": "/api/v1/admin/work-items",
+      "dto": "v1 exact unchanged; opt-in M2-WorkPageV2",
+      "delta": "Accept application/vnd.argopost.admin-work.v2+json; kind enum adds ORG_CASE_REVIEW/DECISION/EXECUTION, organizationId optional exact granted scope; source eligibility/assignment/current action before union/pagination; no second task engine",
+      "permissions": "existing task.read + application.read for application or org.read + exact case action capability for Org cases; no Ops/Finance task union"
+    },
+    {
+      "id": "M2-API-EXT-06",
+      "status": "[PROPOSED] shared Audit/Menu8 owner coordination required",
+      "method": "GET",
+      "path": "/api/v1/admin/audit",
+      "dto": "v1 exact unchanged; opt-in M2-AuditPageV2",
+      "delta": "Accept application/vnd.argopost.admin-audit.v2+json; domain adds MERCHANT_ORGANIZATION_CASE; exact org/case scope and audit.read; fixed event projections only, not raw protected input/PII"
+    }
+  ],
+  "policy_body": {
+    "status": "[PROPOSED] no seeded values",
+    "schema_version": "ORG_GOVERNANCE_1",
+    "environment": "LOCAL|TEST",
+    "allowed_case_types": "fixed subset of manifest case types",
+    "capability_policy": {
+      "RESTRICTED": "required explicit readSupportAllowlist and deniedBusinessOperations",
+      "CLOSED": "required explicit retainedReadSupportAllowlist, terminal=true candidate DEC-L1",
+      "hold_effects": "BOOKING_HOLD->QUOTE_NEW/BOOKING_CONFIRM; CONTRACT_CHANGE_HOLD->CONTRACT_CHANGE only; values require approval"
+    },
+    "separation": {
+      "maker_reviewer_distinct": "boolean must approved",
+      "reviewer_decider_distinct": "boolean must approved",
+      "maker_decider_distinct": "true required",
+      "executor_may_equal_decider": "boolean must explicit; always separate execute grant"
+    },
+    "case_ttl_seconds": "positive bounded integer chosen by Owner, no fallback",
+    "consent_ttl_seconds": "positive <=caseTTL chosen by Owner, no invitation TTL inheritance",
+    "max_future_effect_seconds": "integer>=0 chosen by Owner",
+    "required_checklist_codes": "fixed four from CaseReviewInput",
+    "close_requires": "explicit Orders/Finance CLEAR source kinds; no unknown->zero",
+    "transfer_eligibility": "explicit DEC-O1/O4 origin/state/member/security prerequisites",
+    "post_transfer_grants": "explicit DEC-O3 fixed allowlist, no transfer of sensitive grants",
+    "retention_policy_reference": "approved reference or unavailable; cannot activate evidence mutation requiring missing retention policy"
+  },
+  "existing_consumer_changes": {
+    "status": "[PROPOSED] coordination required before implementation",
+    "rule": "History/support readers call inGovernedOrganization with fixed server operation; mutation commands retain explicit current capability/Org lock. No query/body parameter chooses admission operation. Full endpoint-level consumer inventory must be co-signed before L feature activation; failure to coordinate blocks affected L/O acceptance, not R work.",
+    "required_owners": [
+      "Orders Shipment Management/Support/Claims",
+      "Merchant Team/Contacts/Facilities",
+      "Pricing Quote",
+      "Finance obligations read",
+      "shared Customer workspace selector/Business admission"
+    ],
+    "not_authorized_now": "No implementation edits to these teams or shared IAM/Notifications"
+  },
+  "requirement_mapping": [
+    {
+      "id": "M2-REQ-01",
+      "kind": "MANDATORY",
+      "status": "EXISTING_VERIFIED",
+      "reuse": "P0 application queue/filter/current-scope UI; no reimplementation"
+    },
+    {
+      "id": "M2-REQ-02",
+      "kind": "MANDATORY",
+      "status": "BLOCKED_CONTRACT",
+      "proposed": [
+        "M2R-API-01",
+        "M2R-API-02",
+        "M2R-API-10"
+      ]
+    },
+    {
+      "id": "M2-REQ-03",
+      "kind": "MANDATORY",
+      "status": "PARTIAL_EXISTING",
+      "reuse": "V42/V43 contact/evidence/checklist and explicit disclosure",
+      "proposed": [
+        "M2R-API-09"
+      ]
+    },
+    {
+      "id": "M2-REQ-04",
+      "kind": "MANDATORY",
+      "status": "BLOCKED_CONTRACT",
+      "proposed": [
+        "M2R-API-03",
+        "M2R-API-07",
+        "M2R-API-08"
+      ]
+    },
+    {
+      "id": "M2-REQ-05",
+      "kind": "MANDATORY",
+      "status": "EXISTING_VERIFIED",
+      "reuse": "canonical P0 assignment/RFI/review/decision/atomic activation, unchanged two-person policy"
+    },
+    {
+      "id": "M2-REQ-06",
+      "kind": "MANDATORY",
+      "status": "INTEGRATION_DEPENDENT",
+      "reuse": "existing four-template outbox",
+      "proposed": [
+        "M2R-API-06",
+        "M2-PORT-02"
+      ]
+    },
+    {
+      "id": "M2-REQ-07",
+      "kind": "MANDATORY",
+      "status": "PARTIAL_EXISTING",
+      "proposed": [
+        "M2R-API-04",
+        "M2-PORT-12"
+      ]
+    },
+    {
+      "id": "M2-REQ-08",
+      "kind": "MANDATORY",
+      "status": "PARTIAL_EXISTING",
+      "reuse": "existing membership role/state aggregates",
+      "proposed": [
+        "M2R-API-05"
+      ]
+    },
+    {
+      "id": "M2-REQ-09",
+      "kind": "MANDATORY",
+      "status": "EXISTING_VERIFIED",
+      "reuse": "ACTIVE/SUSPENDED exact receipts/proof/audit"
+    },
+    {
+      "id": "M2-REQ-10",
+      "kind": "MANDATORY",
+      "status": "BLOCKED_CONTRACT",
+      "proposed": [
+        "M2-L01",
+        "DEC-L1",
+        "DEC-L2",
+        "DEC-L3",
+        "DEC-L4"
+      ]
+    },
+    {
+      "id": "M2-REQ-11",
+      "kind": "MANDATORY",
+      "status": "BLOCKED_CONTRACT",
+      "proposed": [
+        "M2-L01",
+        "DEC-L4",
+        "M2-PORT-08"
+      ]
+    },
+    {
+      "id": "M2-REQ-12",
+      "kind": "MANDATORY",
+      "status": "BLOCKED_CONTRACT",
+      "proposed": [
+        "M2-O01",
+        "DEC-O1",
+        "DEC-O2",
+        "DEC-O3",
+        "DEC-O4",
+        "COORD-IAM",
+        "COORD-TEAM"
+      ]
+    },
+    {
+      "id": "M2-REQ-13",
+      "kind": "MANDATORY",
+      "status": "PARTIAL_EXISTING_INTEGRATION_DEPENDENT",
+      "reuse": "existing scoped Work/Audit/application notice integration",
+      "proposed": [
+        "M2-AMEND-07",
+        "M2-AMEND-09"
+      ]
+    },
+    {
+      "id": "M2-REQ-14",
+      "kind": "MANDATORY_WHEN_POLICY_APPLIES",
+      "status": "BLOCKED_CONTRACT_OR_CANONICAL_SOURCE",
+      "proposed": [
+        "M2R-API-10",
+        "M2-AMEND-10",
+        "DEC-R1"
+      ],
+      "description": "SLA/risk filters use published application-review timing and actual check facts; external fraud/working-calendar sources remain unavailable. No fake deadlines/flags."
+    },
+    {
+      "id": "M2-OPT-01",
+      "kind": "OPTIONAL_EXTENSION",
+      "status": "PROPOSED_EXCLUDED",
+      "description": "fuzzy search/saved views/bulk export beyond explicit module target actions"
+    },
+    {
+      "id": "M2-OPT-02",
+      "kind": "OPTIONAL_AUTOMATION_DEPENDENCY",
+      "status": "UNAVAILABLE",
+      "description": "external fraud/registry/SLA sources; current manual sandbox checks remain valid, never substitute for real source"
+    },
+    {
+      "id": "M2-OPT-03",
+      "kind": "OPTIONAL_EXTENSION",
+      "status": "PROPOSED_EXCLUDED",
+      "description": "unconsented recovery/outside-org transferee/reopen CLOSED; no automatic policy"
+    }
+  ],
+  "expiration_semantics": "GET never mutates case state. Expired proofs/cases deny decision/execution immediately by authoritative clock. Next authorized same-Org mutating create/submit request may terminalize an already expired nonterminal case under org lock, with EXPIRE_CASE event and durable receipt bound to authenticated actor and deterministic child key from original request+expired case; never SYSTEM actor impersonation. This removes expired open-case unique conflicts atomically; replay adds no second expiry. No scheduler/job engine or client-supplied timestamp.",
+  "source_evidence": [
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/merchant/api/MerchantGovernance.java",
+      "sha256": "513929b555a24f75050a38f310b100fe2da63750bd3083f6020bd8398eea5ad4"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/merchant/internal/infrastructure/JdbcMerchantApplicationReviews.java",
+      "sha256": "0306c452fbf804f3d2276698bf62358b90363c84df8c58c7aff8c7bc5c5ef90e"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/merchant/internal/infrastructure/JdbcMerchantOrganizationGovernance.java",
+      "sha256": "19ba674e84d7950abd639c05139379beaace49abec94ff952922ad76b1978537"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/merchant/internal/infrastructure/JdbcBusinessWorkspaces.java",
+      "sha256": "81dc399a83f862d0e7c2838c9aeade2f0cfdab9c3634645134d499e1713c08bb"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/merchant/internal/infrastructure/JdbcOrganizationTeam.java",
+      "sha256": "ad43c1d60b3aa49f71d06672585ff352bb9519238a8ac6b6784e74ebb250e3df"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/identity/api/admin/AdminGovernanceReauthentication.java",
+      "sha256": "c346c0dbadc7922650ccc75c25134e4a2a544f482e42bf4f2f960769a92c21d1"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/identity/api/customer/CustomerReauthentication.java",
+      "sha256": "6bba1ebe5a6e03bd968ba9b7add3afcc732148fc6f58d6b20bda36b36d3fc2fc"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/notifications/internal/infrastructure/JdbcMerchantApplicationNotices.java",
+      "sha256": "54e79c99d92ef00464b7d2de240ac57f8ef6729bbad4c7c701683ea505f35e25"
+    },
+    {
+      "path": "app/backend/src/main/resources/db/migration/V23__local_business_workspace_access.sql",
+      "sha256": "b60a162b9b04df7609cde93cf8f58532cce6c5a300bc8d2c35fb967aa70de9c9"
+    },
+    {
+      "path": "app/backend/src/main/resources/db/migration/V34__organization_team_access.sql",
+      "sha256": "07ebf9fd74aa31c178ab4e849761c4f3b513fdee7c8ad46269713661de6f0f4c"
+    },
+    {
+      "path": "app/backend/src/main/resources/db/migration/V41__admin_governance_proof_bridge.sql",
+      "sha256": "aa78854d594c8ed228b88570bfae62f7c3c590dbdac663d96beb59d53359fed6"
+    },
+    {
+      "path": "app/backend/src/main/resources/db/migration/V42__merchant_application_governance.sql",
+      "sha256": "52e2aab6d9fd990dc3ac269efacd44544e75f8f78340be7668a3584921e03701"
+    },
+    {
+      "path": "app/backend/src/main/resources/db/migration/V43__merchant_application_atomic_activation.sql",
+      "sha256": "3c230a3d8c6bfc092fb88432809621308d0a437ab33c568f6dd25080220dd28e"
+    }
+  ]
+}

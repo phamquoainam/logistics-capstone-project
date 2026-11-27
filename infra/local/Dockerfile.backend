@@ -1,0 +1,18 @@
+FROM eclipse-temurin:21-jdk@sha256:98155457fcdbeb0987472e8abf721657b698ede407aad52ac24ae42618c0931c AS build
+WORKDIR /build
+COPY app/backend/.mvn .mvn
+COPY app/backend/mvnw app/backend/pom.xml ./
+COPY scripts/ci/maven-settings.xml /build/settings.xml
+RUN chmod +x mvnw && ./mvnw -B -ntp --settings settings.xml dependency:go-offline -DskipTests
+COPY app/backend/src src
+RUN ./mvnw -B -ntp --settings settings.xml -DskipTests package
+
+FROM eclipse-temurin:21-jdk@sha256:98155457fcdbeb0987472e8abf721657b698ede407aad52ac24ae42618c0931c
+RUN apt-get update && apt-get install -y --no-install-recommends curl postgresql-client && rm -rf /var/lib/apt/lists/* && useradd --uid 10001 --create-home argopost
+WORKDIR /app
+COPY --from=build /build/target/backend-0.0.1-SNAPSHOT.jar /app/backend.jar
+COPY app/frontend/web/public/media/ /app/public-media/
+COPY infra/local/backend-health.sh /app/backend-health.sh
+RUN mkdir -p /app/private-evidence && chown 10001:10001 /app/private-evidence && chmod 700 /app/private-evidence && chmod +x /app/backend-health.sh
+USER 10001:10001
+ENTRYPOINT ["java", "-jar", "/app/backend.jar"]

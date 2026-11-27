@@ -1,0 +1,7 @@
+FROM node:24.13.0-bookworm-slim@sha256:4660b1ca8b28d6d1906fd644abe34b2ed81d15434d26d845ef0aced307cf4b6f
+RUN apt-get update && apt-get install -y --no-install-recommends openssl python3 postgresql-client ca-certificates && rm -rf /var/lib/apt/lists/*
+WORKDIR /opt/local
+COPY scripts/ci/admin_role_prerequisites.py scripts/ci/staff_role_prerequisites.py ./canonical/
+COPY infra/local/ ./
+RUN node --test material.test.mjs
+ENTRYPOINT ["node", "material.mjs"]

@@ -1,0 +1,115 @@
+name: ${COMPOSE_PROJECT_NAME:-argopost-baseline}
+x-tools: &tools
+  image: ${COMPOSE_PROJECT_NAME:-argopost-baseline}-tools
+  build: {context: ., dockerfile: infra/local/Dockerfile.tools}
+services:
+  material:
+    <<: *tools
+    environment:
+      ARGOPOST_ORIGIN: https://localhost:${ARGOPOST_WEB_PORT:-5443}
+    volumes: [database_secrets:/run/database, runtime_secrets:/run/runtime, web_secrets:/run/web, admin_operator_secrets:/run/admin-operator]
+    network_mode: none
+    restart: "no"
+  postgres:
+    image: postgres:18.6-bookworm@sha256:afc7e2d441324c0388fa80c3d24f733b4194a4eb7f47dd8ee2b08eb1a24a647c
+    depends_on: {material: {condition: service_completed_successfully}}
+    environment:
+      POSTGRES_USER: argopost_bootstrap
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD_FILE: /run/database/pg-bootstrap
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      - database_secrets:/run/database:ro
+      - ./infra/local/bootstrap.sh:/docker-entrypoint-initdb.d/10-argopost.sh:ro
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -h 127.0.0.1 -U argopost_bootstrap -d postgres']
+      interval: 3s
+      timeout: 3s
+      retries: 40
+    networks: [local]
+  migrate:
+    image: ${COMPOSE_PROJECT_NAME:-argopost-baseline}-backend
+    build: {context: ., dockerfile: infra/local/Dockerfile.backend}
+    depends_on: {postgres: {condition: service_healthy}}
+    command: ["--spring.profiles.active=migration", "--spring.config.additional-location=file:/run/database/migration.properties"]
+    volumes: [database_secrets:/run/database:ro]
+    networks: [local]
+    restart: "no"
+  bind-local:
+    <<: *tools
+    depends_on: {migrate: {condition: service_completed_successfully}}
+    command: [bind]
+    volumes: [database_secrets:/run/database:ro]
+    networks: [local]
+    restart: "no"
+  backend:
+    image: ${COMPOSE_PROJECT_NAME:-argopost-baseline}-backend
+    build: {context: ., dockerfile: infra/local/Dockerfile.backend}
+    depends_on: {bind-admin: {condition: service_completed_successfully}}
+    command: ["--spring.profiles.active=identity,customer,postgres", "--spring.config.additional-location=file:/run/runtime/application.properties"]
+    volumes: [runtime_secrets:/run/runtime:ro, private_evidence:/app/private-evidence]
+    ports: ["127.0.0.1:${ARGOPOST_MAIL_PORT:-8025}:8025"]
+    healthcheck:
+      test: [CMD, /bin/sh, /app/backend-health.sh]
+      interval: 10s
+      timeout: 8s
+      retries: 30
+      start_period: 30s
+    networks: [local]
+  bind-admin:
+    <<: *tools
+    depends_on: {bind-local: {condition: service_completed_successfully}}
+    command: [bind-admin]
+    volumes: [admin_operator_secrets:/run/admin-operator:ro]
+    networks: [local]
+    restart: "no"
+  mail:
+    image: axllent/mailpit@sha256:23a2ef85bc50853ab3093645d1d64679afd8887e89da5e48a88940c172591a4e
+    depends_on: {backend: {condition: service_started}}
+    network_mode: service:backend
+    environment:
+      MP_SMTP_BIND_ADDR: 127.0.0.1:1025
+      MP_UI_BIND_ADDR: 0.0.0.0:8025
+      MP_DISABLE_VERSION_CHECK: "true"
+      MP_DATABASE: /data/mailpit.db
+    volumes: [mail_data:/data]
+    healthcheck:
+      test: [CMD, /mailpit, readyz]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  scanner:
+    image: clamav/clamav@sha256:64e30c0bf976198024deb3dc6d5cfe2485fb969c0f73549ba0fdb364b9469614
+    depends_on: {backend: {condition: service_started}}
+    network_mode: service:backend
+    # Preserve the existing 127.0.0.1:3310 screening guard; do not publish this port.
+    volumes:
+      - scanner_data:/var/lib/clamav
+      - ./infra/local/clamd.conf:/etc/clamav/clamd.conf:ro
+    healthcheck:
+      test: [CMD-SHELL, 'clamdscan --ping 1 >/dev/null 2>&1']
+      interval: 15s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+  web:
+    image: ${COMPOSE_PROJECT_NAME:-argopost-baseline}-web
+    build: {context: ., dockerfile: infra/local/Dockerfile.web}
+    depends_on:
+      backend: {condition: service_healthy}
+      mail: {condition: service_healthy}
+      scanner: {condition: service_healthy}
+    ports: ["127.0.0.1:${ARGOPOST_WEB_PORT:-5443}:8443"]
+    volumes: [web_secrets:/run/web:ro]
+    networks: [local]
+networks:
+  local: {}
+volumes:
+  postgres_data: {}
+  database_secrets: {}
+  runtime_secrets: {}
+  web_secrets: {}
+  private_evidence: {}
+  mail_data: {}
+  scanner_data: {}
+  admin_operator_secrets: {}

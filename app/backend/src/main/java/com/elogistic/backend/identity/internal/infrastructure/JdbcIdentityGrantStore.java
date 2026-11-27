@@ -64,7 +64,7 @@ public final class JdbcIdentityGrantStore implements IdentityGrantStore {
                 .stream().findFirst();
         }
         private Set<Grant> grants(UUID id) {
-            if (storage == IdentitySessionStorage.STAFF) return Set.of();
+            if (storage == IdentitySessionStorage.STAFF || storage == IdentitySessionStorage.OPS) return Set.of();
             return Set.copyOf(jdbc.query("SELECT role_code,scope_type,scope_id FROM identity.account_grant WHERE account_id=?",
                 (r, n) -> new Grant(new RoleCode(r.getString(1)),
                     new ResourceScope(ResourceScope.Type.valueOf(r.getString(2)), r.getObject(3, UUID.class))), id));

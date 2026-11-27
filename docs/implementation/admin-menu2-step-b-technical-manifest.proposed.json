@@ -1,0 +1,300 @@
+{
+  "manifest_id": "M2-L01-STEP-B-TECH-01",
+  "status": "[PROPOSED] OWNER EXACT TECHNICAL APPROVAL AND SHARED-OWNER COORDINATION REQUIRED",
+  "scope": "SOURCE/TEST on isolated PostgreSQL 18 only; Step B lifecycle execution. No runtime implementation is authorized by this document.",
+  "parent_manifest": {
+    "path": "docs/implementation/admin-menu2-completion-technical-manifest.proposed.json",
+    "sha256": "6d072d9b649ab144c2fb9b8b780c8f077757387bcef58536a31618f9154251a2",
+    "preserve_bytes": true
+  },
+  "accepted_baselines": [
+    "M2-R01 APPROVED SUBSET SOURCE/TEST READY",
+    "M2-L01 APPROVED PREPARATION SUBSET SOURCE/TEST READY",
+    "V46",
+    "V47",
+    "M2-L-POLICY-PORT-01",
+    "M2-L-DISCLOSURE-01"
+  ],
+  "business_policy": {
+    "approval": "DEC-L1-L4 / DEC-O1-O4 already approved; no business-policy reapproval requested",
+    "restricted_denies": [
+      "QUOTE_NEW",
+      "BOOKING_CONFIRM",
+      "TEAM_DELEGATION",
+      "CONTRACT_CHANGE"
+    ],
+    "hold_codes": [
+      "BOOKING_HOLD",
+      "CONTRACT_CHANGE_HOLD"
+    ],
+    "separation": "Maker, current reviewer and decider are three distinct accounts, none a member of the target Organization. Executor has its own current execute grant and fresh execute-purpose proof; may equal decider, not maker/reviewer.",
+    "close": "CLEAR from both authoritative providers, revalidated under the same transaction/admission serialization; BLOCKED or UNAVAILABLE denies.",
+    "excluded": [
+      "Owner Transfer",
+      "DISPUTE/REVERIFY execution without purpose-specific evidence/retention policy",
+      "general approval policy engine",
+      "new authentication engine",
+      "Finance mutation",
+      "real grants or deployment"
+    ]
+  },
+  "parent_items_requested": {
+    "apis": [
+      "M2L-API-08",
+      "M2L-API-09",
+      "M2L-API-12",
+      "M2L-API-13"
+    ],
+    "changed_existing_apis": [
+      "M2-API-EXT-01",
+      "M2-API-EXT-02",
+      "M2-API-EXT-03",
+      "M2-API-EXT-04"
+    ],
+    "permissions": [
+      "M2-PERM-07 org.lifecycle.decide",
+      "M2-PERM-08 org.lifecycle.execute"
+    ],
+    "ports": [
+      "M2-PORT-03 sealed Decision/Execute variants only",
+      "M2-PORT-04",
+      "M2-PORT-13"
+    ],
+    "schema": [
+      "M2-DB-09 merchant.organization_risk_hold",
+      "forward-only amendments to existing case/event/Organization guards"
+    ],
+    "sql": [
+      "M2-SQL-06 merchant.execute_approved_organization_case(UUID,UUID,BIGINT,BIGINT,UUID) RETURNS UUID"
+    ],
+    "envelope": "Only 2 additional scoped permission codes (15 -> 17). No ownership/task/notification grant codes. Existing operator signatures retained; no role auto-grants."
+  },
+  "amendments": [
+    {
+      "id": "M2-B-IDENTITY-01",
+      "status": "[PROPOSED]",
+      "owners": [
+        "identity",
+        "merchant",
+        "workflow"
+      ],
+      "reuse": "AdminGovernanceReauthentication request/consume, password verifier, durable limiter, HMAC receipts and existing private SQL predicate; preserve the four existing operations.",
+      "identity_changes": [
+        "Add only ORG_CASE_DECIDE and ORG_CASE_EXECUTE to existing Java/SQL operation allowlists.",
+        "For the two new operations, require proof consumption in the same transaction as the matching event/receipt, in addition to current admission, session, scope, authority version, target case/version and command digest checks."
+      ],
+      "unchanged_sql_signature": "identity.admin_governance_command_bound(UUID,UUID,UUID,TEXT,TEXT,UUID,BIGINT,BYTEA) RETURNS BOOLEAN",
+      "acl": "Reuse merchant_governance_writer's existing EXECUTE on the Identity predicate; no new Identity table, role, SELECT or EXECUTE grant.",
+      "merchant_port": "OrganizationGovernanceCases",
+      "new_methods": [
+        "CaseProofTarget proofTarget(AdminReadContext actor, UUID caseId, String operation, long expectedVersion)",
+        "String proofAuthority(AdminCommandContext actor, UUID organizationId, UUID caseId, String operation, long expectedVersion)"
+      ],
+      "new_dto": "CaseProofTarget { organizationId: UUID, subjects: AdminCommandAdmission.ReferencedSubjects }",
+      "semantics": "Default methods deny. Merchant resolves Case -> Organization only after genuine current Identity-owned context and exact scope checks. Fixed operation allowlist. Server authority fingerprint includes current scoped grant/version, policy, case/review revision, Organization and hold state; never accept client authority/scope. Workflow discovers referenced subjects then reacquires command admission and recomputes authority. Existing step-up HTTP path/fields unchanged. No proof for an unauthorized action."
+    },
+    {
+      "id": "M2-B-DISCLOSURE-01",
+      "status": "[PROPOSED]",
+      "owner": "merchant",
+      "method": "POST",
+      "path": "/api/v1/admin/merchant-organizations/{organizationId}/governance-cases/{caseId}/decision-disclosures",
+      "port_method": "CaseDecisionSnapshot decisionSnapshot(AdminCommandContext actor, UUID organizationId, UUID caseId, CaseDecisionDisclosureInput input)",
+      "input": "CaseDecisionDisclosureInput { expectedCaseVersion: int64, purpose: LIFECYCLE_DECISION | LIFECYCLE_EXECUTION }",
+      "output": "CaseDecisionSnapshot { caseId: UUID, organizationId: UUID, caseVersion: int64, revision: int64, reviewVersion: int64, impactDigest: hex64, organizationVersion: int64, ownershipVersion: int64, policyId: UUID, policyVersion: int64, holdVersionDigest: hex64, casePayload: existing M2-CasePayload allowlist, reason: NFC1..300, sourceEventId: UUID, disclosedAt: instant }",
+      "authorization": "org.read plus current exact-Organization org.lifecycle.decide for READY_FOR_DECISION, or org.lifecycle.execute for APPROVED. Independent current non-member actors only; executor may be decider. No implication from role names/Root. Revoked or stale contexts deny.",
+      "audit": "Existing protected READ_CASE_DISCLOSURE event, purpose bound to allowlisted decision/execution disclosure. No plaintext payload in logs/audit, no-store response. No case state/version mutation. Do not expand the accepted maker/reviewer disclosure endpoint.",
+      "reason": "Existing public Case and review disclosure omit reviewVersion/impactDigest and do not authorize a decider/executor to see the substantive decision snapshot."
+    },
+    {
+      "id": "M2-B-EFFECT-01",
+      "status": "[PROPOSED]",
+      "owner": "merchant",
+      "case_columns": [
+        {
+          "name": "effect_snapshot_version",
+          "type": "SMALLINT NULL",
+          "check": "NULL or 1"
+        },
+        {
+          "name": "hold_code",
+          "type": "VARCHAR(32) NULL",
+          "check": "NULL or BOOKING_HOLD or CONTRACT_CHANGE_HOLD"
+        },
+        {
+          "name": "effect_expires_at",
+          "type": "TIMESTAMPTZ NULL",
+          "check": "NULL or after effective_at"
+        },
+        {
+          "name": "release_restriction_case_id",
+          "type": "UUID NULL",
+          "check": "same Organization composite FK to canonical case"
+        },
+        {
+          "name": "release_hold_id",
+          "type": "UUID NULL",
+          "check": "same Organization composite FK to M2-DB-09"
+        }
+      ],
+      "event_columns": [
+        {
+          "name": "reauthentication_proof_id",
+          "type": "UUID NULL"
+        },
+        {
+          "name": "authority_version",
+          "type": "VARCHAR(64) NULL",
+          "check": "hex64 when required"
+        },
+        {
+          "name": "command_digest",
+          "type": "BYTEA NULL",
+          "check": "32 bytes when required"
+        }
+      ],
+      "rationale": "Case payload is application-encrypted; the approved five-reference SQL executor cannot derive hold/release effects by decrypting it. Persist only typed non-PII effect metadata, not encryption keys or a second case store. SQL validates the canonical consumed proof through the existing Identity boolean predicate, never SELECTs Identity proof rows.",
+      "guards": "Effect metadata is bound to current submitted revision/event, immutable after submission until authorized resubmission. Event proof trio required together for APPROVE_CASE/REJECT_CASE/EXECUTE_CASE; historical events remain unchanged. Deferred event/receipt/state guards reject partial commits and direct DML. No proof-value trust from a client.",
+      "legacy": "No SQL decryption/backfill/default effects. Existing V47 rows retain NULL projection; derive through canonical SUBMIT or RESUBMIT under actual Merchant decryption. An already-reviewed legacy case requires RFI/resubmission/review before decision, not historical rewrite.",
+      "acl_delta": "Add INSERT and column UPDATE for the five case projection columns to the existing guarded runtime case path. Event INSERT covers the three new fields under existing protected event guard. No runtime UPDATE/DELETE of events/receipts/holds, no Identity private SELECT.",
+      "hold_dto_delta": "M2-HoldPage additionally includes nextCursor: string|null, matching existing PageQuery pagination. Stable server cursor bound to Organization/filter/version."
+    },
+    {
+      "id": "M2-B-ADMISSION-01",
+      "status": "[PROPOSED]",
+      "owners": [
+        "merchant",
+        "workflow",
+        "shared Team owner",
+        "orders",
+        "pricing",
+        "finance"
+      ],
+      "java_addition": "BusinessWorkspaces.Access default CustomerAdmission.Context identityContext()",
+      "behavior": "Default denies. New opt-in governed methods verify CustomerAdmission.requireCurrent before reading actor data. Merchant owns an issued-Scope identity registry, exact DataSource/physical transaction and callback lifetime; reject constructed, forwarding, substituted, escaped or suspended-transaction contexts. No Identity private imports.",
+      "existing_ports": "Implement M2-PORT-04/13 as proposed; retain old v1 list/inOrganization ACTIVE-only behavior. New v2 responses report actual RESTRICTED/CLOSED, never alias ACTIVE. Existing grants and facility scope remain the upper bound.",
+      "fixed_operations": [
+        "QUOTE_NEW",
+        "BOOKING_CONFIRM",
+        "TEAM_DELEGATION",
+        "CONTRACT_CHANGE",
+        "HISTORY_READ",
+        "EXISTING_SHIPMENT_READ",
+        "EXISTING_SHIPMENT_HANDLING",
+        "SUPPORT_EXISTING",
+        "OBLIGATION_EXISTING",
+        "ACCESS_REVOCATION"
+      ],
+      "dispatch": "Workflow chooses fixed operations by exact controller action, never query/body/header input. Unknown operations deny. These labels are not grants: every retained action still requires its existing exact permission and scope; unsupported domain actions remain unsupported.",
+      "sql_additions": [
+        {
+          "signature": "merchant.organization_operation_allowed(UUID,TEXT) RETURNS BOOLEAN",
+          "owner": "merchant_governance_writer NOLOGIN",
+          "security": "SECURITY DEFINER; fixed pg_catalog search_path; fully qualified tables",
+          "execute": "merchant_governance_writer and existing migration owner only; REVOKE PUBLIC/runtime/operator",
+          "semantics": "State/hold policy predicate only; not principal authorization. Offline Pricing contract changes retain trusted operator authority and call this predicate, never impersonate Customer."
+        },
+        {
+          "signature": "merchant.organization_capability_allowed(UUID,UUID,TEXT,TEXT,UUID) RETURNS BOOLEAN",
+          "owner": "merchant_governance_writer NOLOGIN",
+          "security": "SECURITY DEFINER; fixed pg_catalog search_path; fully qualified tables",
+          "execute": "configured runtimeRole and merchant_governance_writer only; REVOKE PUBLIC/operator",
+          "semantics": "Arguments organization/account/fixed operation/existing permission/facility. Recheck current Organization origin/owner, ACTIVE Membership and explicit grants, exact facility, fixed operation/permission pairing, environment and actual state/holds. QUOTE_NEW requires shipment.quote; BOOKING_CONFIRM requires shipment.book; TEAM_DELEGATION requires team.invite or team.access.manage; ACCESS_REVOCATION requires the existing operation-specific team.invite/team.access.manage/team.membership.manage. Other pairs deny in this SQL wrapper. Domain DB guards derive operation and actor from the matching canonical command/receipt, never client labels; the boolean does not authorize a mutation or replace session admission. Including operation is necessary because invite/revoke and grant/reduction share permission codes. Offline CONTRACT_CHANGE uses the private state predicate plus existing canonical operator authority."
+        }
+      ],
+      "consumer_boundaries": [
+        "BusinessWorkspaceHttp: opt-in v2 context/dashboard and active-context semantics; v1 unchanged.",
+        "BusinessPreparationHttp: fixed action-aware internal dispatch; do not label generic writes as HISTORY_READ.",
+        "BusinessShippingHttp and canonical Orders quote/booking guards: block both new quote and booking confirmation, including old URLs.",
+        "OrganizationTeamHttp plus Team-owned issue/resend/accept/grant paths and corresponding DB guards: block delegation, retain authorized scope removal/offboarding. Coordination required before editing shared Team implementation.",
+        "Pricing-owned configure_local_business_contract(UUID,UUID,TEXT,BIGINT,TEXT): exact existing signature and operator authority retained; enforce CONTRACT_CHANGE and CONTRACT_CHANGE_HOLD. Coordination required.",
+        "Existing imports/facility/actions/contacts/reports/management/support helpers: classify each existing action and apply current permission/scope without making it a new capability. Preserve historical/support/accepted-shipment/obligation handling required by Policy V1."
+      ],
+      "pending_invitations": "A pending invitation cannot be accepted/resend/delegated while policy denies TEAM_DELEGATION. No new membership/grants via stale invitation. Do not mutate or delete invitation history.",
+      "locks": "Reconcile existing order to Identity administration -> Merchant workspace advisory (730023,1) -> Merchant governance control lock -> Organization/current-owner -> case/review -> Orders -> Finance. Narrow common Merchant command-entry adjustment is required because existing governance takes its control lock before Organization guards acquire workspace lock. No reverse-order acquisition or new lock authority.",
+      "approval_boundary": "Owner technical approval must explicitly authorize the named shared-owner coordination; it does not authorize unrelated Menu6-9 changes. If exact current signatures/ownership differ, stop only that delta."
+    },
+    {
+      "id": "M2-B-STATE-01",
+      "status": "[PROPOSED]",
+      "owner": "merchant",
+      "forward_schema": "Organization state CHECK adds RESTRICTED/CLOSED. Extend existing lifecycle/case/deferred guards only for proof/event/receipt-bound lifecycle; no bypass of Initial Owner or ownership invariants.",
+      "executor": "Parent M2-SQL-06 signature unchanged; runtime EXECUTE only, writer NOLOGIN and fixed pg_catalog. Step B mutates only Organization state/version and exact applied/released hold rows. No membership/grant/current-owner/history writes; expectedOwnershipVersion still checked.",
+      "transitions": "RESTRICT -> RESTRICTED; RELEASE_RESTRICTION -> ACTIVE only for matching current restriction; RISK_HOLD -> one of two fixed active holds; RELEASE_HOLD -> exact Organization/hold/source case. CLOSED terminal. Require current published immutable policy, reviewed impact and exact approved revision/versions.",
+      "expiration": "No automatic ACTIVE transition or invented release event. Retain approved restriction-expiration semantics from parent manifest. Hold expiry removes its effective denial by authoritative time but retains immutable history; partial unique slot remains occupied until authorized release. No silent reapply/upsert over an expired historical hold.",
+      "transaction": "Current authority and genuine step-up checked under locks. Same-key same-input replay returns only matching actor/org/operation/digest receipt after current admission checks, before stale If-Match/proof reconsumption; different input rejects. New command consumes proof and records event/audit/receipt/effect in one transaction. A historical committed decision is immutable evidence: execution revalidates current decision authority and revision, but does not reconsume its old proof or require that old proof to be fresh/in the execution transaction. Execution requires its own fresh purpose-bound proof.",
+      "close": "Do not enable CLOSE execution in the initial implementation. Missing real M2-PORT-05/06 -> UNAVAILABLE, deny before committing case execution or Organization change. BLOCKED/CLEAR-positive acceptance cannot be inferred from mocks or Admin aggregate counts."
+    }
+  ],
+  "coordination_required": [
+    {
+      "id": "M2-B-COORD-IAM",
+      "owner": "Identity",
+      "scope": "Only two new proof purposes, existing boolean predicate semantics and genuine context use."
+    },
+    {
+      "id": "M2-B-COORD-TEAM",
+      "owner": "shared Team/Business admission",
+      "scope": "Operation-aware gates and current scope/context adapters; no role model, owner transfer or team authority expansion."
+    },
+    {
+      "id": "M2-B-COORD-PRICING-ORDERS",
+      "owner": "Pricing/Orders",
+      "scope": "Exact quote/booking/contract gates and common lock order; preserve snapshots, UNPAID and accepted shipments."
+    },
+    {
+      "id": "M2-B-COORD-CLOSE",
+      "owner": "Orders/Finance",
+      "status": "BLOCKED_CANONICAL_SOURCE",
+      "scope": "No provider implementation authorized here. Require real clearance sources, completeness and same-transaction locks before CLOSE-positive acceptance."
+    }
+  ],
+  "migration_plan": {
+    "candidate_versions": [
+      "V48 Identity proof-purpose extension",
+      "V49 Merchant state/holds and coordinated gates"
+    ],
+    "reserved": false,
+    "created": false,
+    "preflight": "GitHub read-only inventory: 51 branches, 0 open PRs; complete trees of develop/admin-dashboard/organization-management/spec003-full-onboarding show no V48+. This does not reserve unpublished WIP. Recheck all relevant branches/PRs and owner migration registry immediately before creating files.",
+    "preserve": "All 46 existing migration files V1-V47 (no V33), source WIP, parent approved artifact bytes, Owner-staged AGENTS/North Star and database data."
+  },
+  "verification": [
+    {
+      "id": "M2-B-T-01",
+      "status": "NOT_RUN_PENDING_APPROVAL",
+      "gate": "PG18 cold and V47->new forward migration, exact catalog ACL/owner/constraints, historical hashes and direct-DML denial."
+    },
+    {
+      "id": "M2-B-T-02",
+      "status": "NOT_RUN_PENDING_APPROVAL",
+      "gate": "Genuine SYSTEM decide/execute proofs; wrong purpose/case/org/digest/authority/session, expiry/revoke, constructed/escaped/suspended/cross-source context denial; legacy four proof operations unchanged."
+    },
+    {
+      "id": "M2-B-T-03",
+      "status": "NOT_RUN_PENDING_APPROVAL",
+      "gate": "Three-person maker/reviewer/decider, membership conflict denial, independent executor grant/proof, audit disclosure/current scope/version; no shared Admin/Staff authority."
+    },
+    {
+      "id": "M2-B-T-04",
+      "status": "NOT_RUN_PENDING_APPROVAL",
+      "gate": "Apply/release RESTRICTED and two holds through real Backend; quote/booking/invite/resend/accept/contract blocked, retained history/support/obligations allowed only with current permissions/facility."
+    },
+    {
+      "id": "M2-B-T-05",
+      "status": "NOT_RUN_PENDING_APPROVAL",
+      "gate": "Same key, lost response, stale ETag/consumed proof replay; different actor/input denial; concurrent decision/execution/booking/delegation/release; rollback leaves no partial proof/event/receipt/state/hold."
+    },
+    {
+      "id": "M2-B-T-06",
+      "status": "NOT_RUN_PENDING_APPROVAL",
+      "gate": "CLOSE UNAVAILABLE denies on real current absent providers; eventual real CLEAR/BLOCKED requires separate canonical-provider acceptance and is not covered by fake fixtures."
+    },
+    {
+      "id": "M2-B-T-07",
+      "status": "NOT_RUN_PENDING_APPROVAL",
+      "gate": "One consolidated HTTPS UI + real isolated PG18 lifecycle scenario, focused frontend/HTTP/architecture regressions. Reuse accepted R01/preparation evidence unless dependencies change."
+    }
+  ],
+  "readiness": "STEP_B_TECHNICAL_REVIEW_PREPARED; runtime BLOCKED_EXACT_TECHNICAL_APPROVAL; CLOSE additionally BLOCKED_CANONICAL_SOURCE. Not Step B READY, Step C READY or MENU_2_FULL_SPEC_READY."
+}

@@ -3,15 +3,16 @@ import { customerClient, CustomerApiError } from './client';
 import type { PilotHandling, PilotShipment } from './client';
 import { shipmentDate } from './shipment-management';
 
-export function PrivateLabel({ shipment, station }: { shipment: string; station?: string }) {
-  return <PreparedLabel key={shipment + ':' + (station ?? 'personal')} shipment={shipment} station={station} />;
+type LabelLoad = (shipment: string, station?: string) => Promise<Blob>;
+export function PrivateLabel({ shipment, station, load = customerClient.downloadPilotLabel }: { shipment: string; station?: string; load?: LabelLoad }) {
+  return <PreparedLabel key={shipment + ':' + (station ?? 'personal')} shipment={shipment} station={station} load={load} />;
 }
-function PreparedLabel({ shipment, station }: { shipment: string; station?: string }) {
+function PreparedLabel({ shipment, station, load }: { shipment: string; station?: string; load: LabelLoad }) {
   const [busy, setBusy] = useState(false), [prepared, setPrepared] = useState<{ shipment: string; station?: string; url: string }>(), [error, setError] = useState('');
   const epoch = useRef({ generation: 0 }), url = prepared?.shipment === shipment && prepared.station === station ? prepared.url : '';
   useEffect(() => { const lifecycle = epoch.current;return () => { lifecycle.generation++; }; }, [shipment, station]);
   useEffect(() => () => { if (prepared) URL.revokeObjectURL(prepared.url); }, [prepared, shipment, station]);
-  async function prepare() { const current = epoch.current.generation;setBusy(true);setError(''); try { const pdf = await customerClient.downloadPilotLabel(shipment, station);if (current === epoch.current.generation) setPrepared({ shipment, station, url: URL.createObjectURL(pdf) }); } catch { if (current === epoch.current.generation) setError('Không thể tải nhãn. Hãy kiểm tra phiên và quyền truy cập rồi thử lại.'); } finally { if (current === epoch.current.generation) setBusy(false); } }
+  async function prepare() { const current = epoch.current.generation;setBusy(true);setError(''); try { const pdf = await load(shipment, station);if (current === epoch.current.generation) setPrepared({ shipment, station, url: URL.createObjectURL(pdf) }); } catch { if (current === epoch.current.generation) setError('Không thể tải nhãn. Hãy kiểm tra phiên và quyền truy cập rồi thử lại.'); } finally { if (current === epoch.current.generation) setBusy(false); } }
   return <div className="sl-label"><p>Nhãn mô phỏng · 100 × 150 mm · Một nhãn chính cho mỗi kiện · Có thể kèm trang tiếp nối · Code128</p>{error && <p role="alert">{error}</p>}<div className="sl-actions"><button className="pw-primary" disabled={busy} onClick={() => { void prepare(); }}>{busy ? 'Đang tạo PDF…' : 'Tải / In nhãn'}</button>{url && <><a className="pw-secondary" href={url} download={'argopost-simulation-' + shipment + '.pdf'}>Lưu PDF</a><a className="pw-secondary" href={url} target="_blank" rel="noopener noreferrer">Mở bản in PDF</a></>}</div><small>Nhãn không phải biên nhận Carrier, POD hoặc chứng từ đã thu tiền.</small></div>;
 }
 export function useShipmentHandling(id: string, enabled = true, shipment?: PilotShipment) {

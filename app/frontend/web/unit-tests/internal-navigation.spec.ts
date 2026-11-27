@@ -3,11 +3,23 @@ import { canOpenOverview, overviewEntries, overviewSelection, adminGroups, admin
 import type { AdminContext, Section } from '../src/admin/data';
 
 const entry: AdminContext['permissions'] = ['ADMIN_DASHBOARD_READ'];
-test('one internal navigation retains eight parent groups and all twenty-three source module IDs', () => {
-  expect(adminGroups).toHaveLength(8);
+test('one internal navigation retains nine specified parent groups and all twenty-three source module IDs', () => {
+  expect(adminGroups.map(g => [g.title, g.modules])).toEqual([
+    ['Tổng quan', ['ADM-01', 'ADM-17', 'ADM-18']],
+    ['Merchant & Phê duyệt', ['ADM-02', 'ADM-03']],
+    ['Dịch vụ & Mạng lưới', ['ADM-04', 'ADM-05', 'ADM-06', 'ADM-07', 'ADM-19']],
+    ['Giám sát vận hành', ['ADM-08', 'ADM-09', 'ADM-20']],
+    ['Hỗ trợ & Tài chính', ['ADM-10', 'ADM-11']],
+    ['Nhân sự & Bảo mật', ['ADM-12', 'ADM-15', 'ADM-23']],
+    ['Nền tảng & Tích hợp', ['ADM-13', 'ADM-14', 'ADM-21', 'ADM-22']],
+    ['Kiểm toán & Báo cáo', ['ADM-16', 'ADM-20']],
+    ['Tài khoản & Công việc', ['ADM-17']],
+  ]);
   expect(adminModules.map(m => m.id)).toEqual(Array.from({ length: 23 }, (_, n) => `ADM-${String(n + 1).padStart(2, '0')}`));
   expect(new Set(adminModules.map(m => m.path)).size).toBe(23);
   expect(new Set(adminGroups.flatMap(g => g.modules))).toEqual(new Set(adminModules.map(m => m.id)));
+  expect(adminModules.find(m => m.id === 'ADM-17')?.path).toBe('/admin/account');
+  expect(new URL(overviewEntries.find(v => v.id === 'approvals')!.path, 'https://admin.example.invalid').pathname).toBe('/admin/account');
   expect(adminModules.filter(m => m.extension).map(m => m.id)).toHaveLength(6);
 });
 test('known read permissions do not imply IAM write pricing approval or another execution portal', () => {

@@ -2181,3 +2181,316 @@ test inventory/assertions, permissions, timeouts within tests and cleanup intact
 No application/migration/runtime change or new full-suite PASS claim. Owner North
 Star/AGENTS WIP preserved and excluded; current task remains resolving CI + merge.
 See [failure evidence](../implementation/admin-p0-source-test-execution.md).
+
+
+### Owner Menu1 bounded core acceptance review (2026-11-25)
+
+Latest task retains four Overview entries and limits ADM-18 to existing authority
+controls. ADM-01 CORE READY and ADM-17 CORE READY at SOURCE/TEST; ADM-18 core
+security controls verified, general extension still PROPOSED. Existing canonical
+read/work/decision/Identity engines reused without new source or repeated tests.
+
+Exact-head CI45548559303/6e4e1c3 SUCCESS: Architecture23, H2753, PostgreSQL1327 PASS;
+expected skips0/17/5 and zero failures/errors. Genuine Customer submission to
+independent approval/atomic activation, Dashboard/cohort/drill, Work/Audit and
+revocation/expiry/context-negative cases PASS. No production/deployment inference.
+Missing Network/SLA/COD/telemetry remain BLOCKED_CANONICAL_SOURCE/UNAVAILABLE;
+dueAt stays null without policy; advanced notifications/security/policy editors
+remain contract dependencies. Existing8 vs target9 parent-group taxonomy recorded
+as NAV-PARENT-COUNT outside bounded Menu1 core; four entries/23 IDs retained.
+See [acceptance matrix](../implementation/admin-p0-source-test-execution.md).
+
+Owner-merged PR51 developd5a0c24 has identical source tree to tested6e4e1c3;
+post-merge CI45557771726 SUCCESS (all three gates). Current Menu1 review changes
+documentation only, not that source/test revision.
+
+### Menu1 closure and nine-parent navigation (2026-11-25)
+
+**MENU_1_ADMIN_CORE_ACCEPTED — SOURCE/TEST**. Owner accepted ADM-01/ADM-17 core
+and ADM-18 existing security controls. NAV-PARENT-COUNT is now resolved against
+the supplied nine-row taxonomy and the Full Administration Console DOCX table.
+The ninth parent reuses ADM-17 `/admin/account`; the four Overview entries and
+23 unique modules remain intact. No new task engine, permission or Backend change.
+
+Navigation TDD preserved missing-group failure, then 6/6 PASS; focused overview/
+Work Inbox UI regression 2/2 PASS; configured TypeScript/customer build and targeted
+four-file ESLint PASS. UI uses explicit intercepted fixtures, not live UAT. Runtime
+count assertion synchronized but HTTPS/full Backend suites not rerun. Prior CI
+remains evidence for its own revision, not the current uncommitted menu patch.
+
+AGENTS tracked; Owner North Star initially untracked and prepared as a documentation
+addition with its READ-FIRST hook. Owner bytes/WIP preserved. No commit/push/merge,
+deployment or data mutation. Full-spec PARTIAL/PROPOSED classifications unchanged.
+Next missing E2E dependency: authoritative Carrier sites plus operational Staff
+site-scoped admission/assignment (ADM-05/ADM-12), coordinate ADM-04 catalogue and
+ADM-07 tariff publication, reuse implemented SIM eligibility/Quote/Booking/intake.
+See the [closure, evidence and dependency handoff](../implementation/admin-p0-source-test-execution.md#menu1-closure--nav-parent-count-reconciliation---2026-11-25).
+
+### ADM-05/ADM-12 Carrier site and operational Staff foundation (2026-11-25)
+
+Read full AGENTS/North Star for the new Owner task. First incomplete contract gate
+belongs to spec011 (BC-063 Station intake/custody), coordinated with spec027
+Identity/IAM and spec004 coverage; spec012 sorting/manifests remains downstream.
+No product source/schema/permission or runtime changed in this review.
+
+Reused 13/13 Station/V21 PASS cases from exact-head CI45548559303/6e4e1c3.
+Current committed/working Backend and Station OpenAPI match that verified source.
+Positive intake stores complete Parcel custody/tracking/audit/receipt with UNPAID;
+wrong/revoked/site-disabled authority, races/replay and transaction-fault negatives
+are already covered. No repeated full Backend or integration run.
+
+This evidence is only the approved Customer-admitted PERSONAL Local/Test pilot;
+it does not prove dedicated Ops Staff or general Station/Hub readiness. V36 locks
+Staff purpose SUPPORT; current `/ops` is correctly unavailable. NWS-V1 proposes
+versioned Dispatch site source, OPERATIONS/OPS Identity admission, current scoped
+assignment and compatible linkage into the same intake evidence. Exact public
+ports/HTTP/SQL/schema/ACL and a narrow architecture exception are NOT_APPROVED;
+candidate V44/V45 are not created/applied. **BLOCKED_CONTRACT** pending review of
+the [bounded contract](../implementation/carrier-network-operational-staff-contract.proposed.md)
+and [manifest](../implementation/carrier-network-operational-staff-technical-manifest.proposed.json).
+See [source/evidence readiness](../implementation/carrier-network-operational-staff-readiness.md).
+No real site/Staff/grant/dataset chosen, deployment, DB mutation or Git publication.
+After foundation acceptance, next is spec012 Parcel/site inventory + Sorting and
+immutable Manifest/custody set, then receiver-confirmed Transfer/Dispatch contracts.
+
+## 2026-11-25 — NWS-V1 foundation implementation acceptance
+
+**NWS-V1 FOUNDATION SOURCE/TEST READY**, under Owner-approved manifest
+`8adc4229ff00e728f322dd9341cb146a82e2dc16e1470dc077ec05eb55ac4ce5`
+and bounded NWS-ACL-02. The preceding BLOCKED_CONTRACT review remains historical
+evidence; it is superseded for this bounded foundation by the
+[execution report](../implementation/carrier-network-operational-staff-execution.md).
+
+Identity owns V44 OPERATIONS/OPS invitation/verification and current admission;
+Dispatch owns V45 site/version/link/assignment/receipt; Workflow reuses the same
+PERSONAL all-Parcels Station Intake, Orders tracking and Finance UNPAID transaction.
+Admin has two existing-permission directory GETs and no operational write grant.
+Architecture exception is bounded in [ADR-0019](../architecture/decisions/ADR-0019-dedicated-operations-staff-foundation.md).
+
+NWS-T-01..06 PASS: core7/7, complementary5/5, CSKH/STARTTLS regression3/3;
+architecture/isolation PASS records retained with their original mixed-run status.
+Actual HTTPS/PG18/test-SMTP browser verifies two-Parcel Customer Booking -> Ops
+scan/accept -> Customer Station event/UNPAID -> logout. Frontend unit16/16, UI6/6
+and affected portal-selector1/1 PASS; typecheck/lint/build and ownership validator
+PASS. Synthetic isolated test data only. All 42 historical migrations/parent
+manifest bytes preserved; no real deployment/grants, full-suite or GitHub CI claim.
+
+Owning-spec trace: Identity/spec002 admission under approved NWS amendment;
+Dispatch/spec011 receiving + spec012 site/custody foundation; shared Orders/Pricing/
+Finance behavior unchanged. This does not accept Full ADM-05/12 or Carrier Ops E2E.
+Next dependency is the exact Parcel Inventory/Sorting/Manifest contract for
+spec012, then receiver-confirmed Transfer/spec013 and Dispatch/spec014. No such
+downstream source/schema/permissions were implemented by NWS.
+
+### Admin Menu 1–2 full-coverage reconciliation — 2026-11-25
+
+Latest Owner limits this checkpoint to Menu1/2 and selects
+`docs/implementation/admin-console-functional-coverage.csv` as primary checklist.
+Trace: Menu2 → ADM-02/03 → spec003 Merchant application/organization ownership →
+approved P0-GOV readers/commands, V41–V43 and controlled contact/context/notice
+amendments. Menu1 → ADM-01/17/18 consumes the existing sources and shared inbox.
+
+Evidence and per-capability classifications:
+[admin-menu12-readiness.md](../implementation/admin-menu12-readiness.md).
+Nine parents/23 IDs preserved; no ADM-17/20 implementation or other-team source
+was changed. Added only Menu2 consumers: five local entries, existing scope/reviewer
+filters and UUID lookup, disclosed address/consent/evidence presentation, immutable
+revision metadata pagination and validated exact Organization activation links.
+No API, Backend, migration or permission changes. Existing independent decisions,
+atomic activation, canonical audit/notices and lifecycle are reused.
+
+13/13 parser/navigation PASS. UI initial8/8 PASS; expanded run8 PASS/1 locator FAIL;
+corrected accessible combobox locator and affected new cases2/2 PASS. Original
+failure remains recorded; assertions were not relaxed. Typecheck, affected lint,
+Customer build, ownership validator and unstaged diff check PASS. Intercepted UI
+fixtures are not live PostgreSQL/HTTPS acceptance; prior canonical P0 evidence is
+reused without rerunning the full Backend suite.
+
+Menu1: `MENU_1_ADMIN_OWNED_READY — SOURCE/TEST` for approved Admin-owned scope,
+with unavailable external sources and shared/proposed extensions explicit.
+Menu2: `MENU_2_APPROVED_CAPABILITIES_READY — SOURCE/TEST`; full Admin-owned
+specification remains PARTIAL/BLOCKED_CONTRACT for richer projections, historical
+payload comparison, notice-status reads, lifecycle restrictions and Owner Transfer.
+Bounded proposal: [remaining contracts](../implementation/admin-menu2-remaining-contracts.proposed.md).
+No Full Specification/Production/Local UAT or new CI PASS claim. No deployment or
+Git mutation. Next proposed task: Menu3, not started in this checkpoint.
+
+### Menu2 contract completion — latest Owner priority, 2026-11-25
+
+Owner supersedes the earlier Menu3 handoff: stay on ADM-02/03. Existing source/test
+evidence remains intact. Trace M2-REQ-01..14 to primary coverage CSV; mandatory
+advanced search/revision comparison/member oversight/notice status/lifecycle/
+ownership are separated from optional automation/editors/recovery extensions.
+
+New **PROPOSED ONLY** package:
+[contract](../implementation/admin-menu2-completion-contract.proposed.md),
+[technical manifest](../implementation/admin-menu2-completion-technical-manifest.proposed.json),
+[review/decisions](../implementation/admin-menu2-completion-technical-review.md).
+Exact API/DTO/schema/permission/ports/SQL, source ownership, migration candidates,
+negative cases, DEC-R1/DEC-L1..L4/DEC-O1..O4 and coordination gates are inventoried.
+No blanket approval, additional role grant, direct DML or Initial Owner rewrite.
+
+This checkpoint changes documentation only. All M2-T-01..08 runtime/security/PG18/
+HTTPS acceptance tests remain NOT RUN pending exact approval/policies/coordination.
+Only document-integrity/manifest/ownership/preservation checks apply; no repeated
+Backend suite. Do not mark Menu2 FULL READY or move to Menu3.
+
+### ADM-02/03 — Owner-approved M2-R01 Phase1 (2026-11-26)
+
+Exact manifest `6d072d9b649ab144c2fb9b8b780c8f077757387bcef58536a31618f9154251a2`
+approved only Merchant-owned R01 search/comparison/comments/member/check readers
+and sourced profile blocks. M2-REQ-02/03/04/07/08 now have actual Backend + UI
+implementation, new forward-only V46 and isolated source/test evidence. Existing
+M2-REQ-01/05/09/13 core is reused, not replaced. No notice/timing/L/O authority.
+
+Evidence and consolidated remaining DEC-L1..4/DEC-O1..4 checkpoint:
+[Menu12 readiness](../implementation/admin-menu12-readiness.md#owner-phase1-implementation--2026-11-26).
+Backend/PG18/architecture/HTTP regression **45/45 PASS**; final genuine HTTPS+PG18
+R scenario and forward-upgrade preservation **2/2 PASS**, same source fingerprint
+`0fdf2be01d10d91e7da136b79284de22d1544860af77166f9c5d3cad7a39f9cf`.
+Frontend typecheck/lint/customer build and **30 unit tests PASS**. Tests include
+global cohort→cursor pages, exact legal match, source drift, genuine context /
+DataSource denial, current scope revocation, encrypted append-only comments,
+replay/concurrency/rollback and immutable revision→activated Organization reads.
+
+M2-T-01 and approved subset of02 PASS;02 notice scope remains BLOCKED.03–07
+NOT RUN/unapproved.08 R integration PASS but full Lifecycle/Owner Transfer scenario
+BLOCKED. M2-REQ-06/10/11/12/14 remain contract/integration dependent. All historical
+FAIL evidence, approved artifacts and V1–V45 bytes preserved. No real grants,
+mail, deployment, GitHub CI claim or Menu3 handoff. Do not mark FULL SPEC READY.
+
+### Menu2 next execution gate — 2026-11-26
+
+Owner accepted M2-R01; no source/test work repeated. M2-L01/M2-O01 remain
+BLOCKED_EXACT_OWNER_APPROVAL for the existing DEC-L1..L4/DEC-O1..O4 candidates
+and technical entries. Updated the existing Menu12 readiness report with the
+Lifecycle-first order, early M2-DB-07/current-owner bridge dependency on DEC-O2,
+exact Identity/Team/Notifications interfaces requiring coordination, and missing
+Orders/Finance closure clearance. AWS IAM/S3 infrastructure is Owner-controlled
+and not the transfer blocker. Existing Initial Owner/Team/Identity code unchanged.
+
+Read-only GitHub integration/relevant branch trees and open PR inventory checked;
+no observed V47/V48, no reservation claimed or SQL created. This is a docs-only
+gate update; runtime tests NOT RUN, no new L/O acceptance claimed. Reuse accepted
+R evidence only for unchanged R source. Menu2 FULL_SPEC_READY remains pending.
+# M2-L01 Policy V1 Step A — 2026-11-26 incremental evidence
+
+Owner Policy V1 authorizes isolated preparation/current-owner bridge only;
+DEC-O3 clarification selects ACTIVE OPERATOR with exactly explicit dashboard.read.
+Parent Menu2 manifest remains `6d072d9b649ab144c2fb9b8b780c8f077757387bcef58536a31618f9154251a2`.
+V47 is a new unapplied-to-demo candidate; V1–V46 and accepted R01 evidence retained.
+
+| Requirement | Source / evidence | Current status |
+|---|---|---|
+| M2-DB02–07; M2L preparation | OrganizationCasePolicy, JdbcOrganizationGovernanceCases, V47; focused c5a809e… 2/2 PASS | Earlier populated PG18 migration and prepare/review flow verified; newer HTTP/policy-reader/concurrency tests pending |
+| M2-L-POLICY-PORT-01 | Owner-approved exact policies(AdminReadContext,UUID); API14 existing DTO/org.read | Binding implemented; endpoint registration blocked until required negative/positive tests PASS |
+| Lifecycle UI / transport | OrganizationCases, organization-cases parser, SYSTEM session transport | 3/3 unit, typecheck/lint/customer build PASS; pinned HTTPS test prepared, not yet PASS |
+| Current revision Backend | Maven offline test OrganizationCasePolicyTests | Compile +1/1 policy unit PASS; no full Backend suite run |
+| M2-O3-01–06 | outgoing-owner-operator bounded MD/JSON delta | Business policy approved; shared Team/Identity dependencies pending, no transfer |
+| Execution / evidence / applied holds | policy/proof/clearance/retention coordination | BLOCKED as detailed in admin-menu12-readiness.md; no fake CLEAR/holds or state activation |
+
+Historical failure logs and earlier accepted source fingerprints remain available;
+earlier PASS must not substitute for newer HTTP/security/Browser gates. Automatic
+approval review usage-limit failure prevented elevated evidence inspection; no
+bypass attempted. No deploy, real grants or Git mutation.
+
+## M2-L01 approved preparation subset — final evidence, 2026-11-26
+
+This supersedes the pending statuses immediately above; it preserves their history.
+Owner separately approved M2-L-POLICY-PORT-01 and M2-L-DISCLOSURE-01. Both endpoints
+were registered only after required isolated PG18 positive/negative gates PASS.
+
+| Requirement | Final evidence | Acceptance limit |
+|---|---|---|
+| M2-DB02–07 / preparation flow | `1fd0bca391534af3bf936e1d9c55ead2`, 2/2 focused PASS, source unchanged; snapshot `259e08ba8ec95d5eea7d5322169e8666d695a6df72262aa6c066c5d7dee26efc` | RESTRICT/CLOSE/RISK_HOLD case preparation only; no applied state/hold |
+| Policy reader | `e4de5f4b…` 2/2 PG18 PASS before API14 registration | Exact existing DTO/org.read; no fake policy |
+| Private case disclosure | `191afe7f…` 1/1 PG18 PASS before registration; final run adds former-reviewer denial | Maker/current assigned reviewer only; encrypted audit, allowlisted payload/RFI, no state/version mutation |
+| HTTPS + UI + real PG18 | Child safe Browser report 1/1 PASS; actual SYSTEM login/list/detail/disclosure/submit; 428/401/404 negatives | Isolated synthetic accounts, no API interception or Local demo deployment |
+| Client contracts | `npm.cmd test -- admin-organization-cases.spec.ts` 4/4 PASS; typecheck/lint/customer build PASS | Existing chunk warning; no full suite claim |
+| Public boundaries | ArchitectureTests four impacted module/API/direction/cycle methods 4/4 PASS | No shared Identity/Team/Notifications engine rewrite |
+
+Mobile screenshot inspected at390px; bounded table scroll, no document overflow.
+History retains migration/compiler/browser failures; final focused scenario passed
+without reducing assertions. **M2-L01 APPROVED PREPARATION SUBSET SOURCE/TEST READY**;
+not Menu2 FULL_SPEC_READY or Lifecycle execution/Owner Transfer READY. Remaining
+clearance, admission/proof, applied-hold and retention dependencies are in Menu12
+readiness. No V1–V46 edit, real grant/mail/deploy or Git mutation.
+
+### Menu2 Step B — exact technical review checkpoint, 2026-11-26
+
+| Requirement | Current finding / artifact | Acceptance limit |
+|---|---|---|
+| ORG_CASE_DECIDE / ORG_CASE_EXECUTE | `admin-menu2-step-b-technical-manifest.proposed.json`, M2-B-IDENTITY-01 | Existing Identity engine reused in proposal; no new purpose implemented or proof test run |
+| Independent decision/execution, holds | M2-B-DISCLOSURE-01 / EFFECT-01 / STATE-01 | Exact endpoint/DTO/schema/ACL approval required; V47 preparation acceptance unchanged |
+| RESTRICTED capability enforcement | M2-B-ADMISSION-01 | Shared-owner coordination and action-aware Backend/DB gates proposed; no Team/Identity/Orders/Pricing source change |
+| CLOSE clearance | Parent M2-PORT-05/06 absent implementations | BLOCKED_CANONICAL_SOURCE; no mock CLEAR or financial mutation |
+| Preservation and verification | `.demo/menu2-step-b-preflight.json`, GitHub inventory, document gates recorded in Menu12 readiness | Documentation-only review, not PG18/HTTP/HTTPS acceptance; no full suite rerun |
+
+Readiness: **STEP_B_TECHNICAL_REVIEW_PREPARED — BLOCKED_EXACT_TECHNICAL_APPROVAL**.
+R01 and preparation remain SOURCE/TEST READY. All Step B behavior gates are
+NOT RUN pending approval; no Step C or `MENU_2_FULL_SPEC_READY` claim.
+
+### Owner priority — V1 operational E2E first, 2026-11-26
+
+Step B technical proposal is **DEFERRED_POST_V1**, not rejected/completed and not
+approved for execution. Original manifest hash and accepted Menu1/R01/preparation/
+NWS source/test history preserved. Current plan:
+`docs/implementation/v1-operational-e2e-critical-path.md`.
+
+| V1 requirement | Actual source/evidence | Current gap |
+|---|---|---|
+| Enrollment→Merchant activation | V41–V43, protected P0 XML parsed: historical 45/45 PASS | Some fingerprints changed; consolidated current Slice1 integration still required; activation grants only dashboard.read |
+| Business Quote/Booking/Parcel/label/import | Existing Business Shipping and XLSX Worker→server Draft evidence | Explicit per-Org shipping grants/contract; imported Draft is not automatically Shipment |
+| Dedicated Ops intake/custody | NWS V44/V45, protected XML parsed: historical 7/7 PASS | PERSONAL only; BIA-V1 Business Intake/UNPAID exception and typed tracking extension proposed, not implemented |
+| Inventory→Sort→Manifest→Transfer | Intake custody source exists | Canonical scope/API/schema/transition approval and implementation missing; Merchant WFP documents are not Carrier transfer |
+| Dispatch→Courier→POD/return | Mobile is Expo starter; no canonical attempt/Dispatch/POD engine | Spec014/015/016/029 dependencies, no fake Delivered |
+| Finance/Claims completion | Real UNPAID obligations; Support/Claim intake/review/closure implemented | Verified payment/reconciliation and physical exception sources missing; compensation remains blocked |
+
+Evidence metadata `.demo/v1-e2e-evidence-audit.json`; preservation preflight
+`.demo/v1-e2e-preflight.json`. No new business/PG18/Browser test PASS, real grant,
+email, deployment, migration or Git publication claimed. Current milestone:
+**V1_CRITICAL_PATH_AUDITED — SLICE_1_BLOCKED_CONTRACT**. BIA-V1 is one consolidated
+next approval, not a resumed Admin Lifecycle workstream.
+
+### Dual-audience Slice1 execution — 2026-11-27
+
+Owner approved BIA-V1 SOURCE/TEST in the V1 DUAL-AUDIENCE directive. Historical
+proposal/readiness records above stay unchanged; current execution:
+`docs/implementation/v1-dual-audience-source-test-execution.md`.
+
+| Requirement | Actual current evidence | Readiness limit |
+|---|---|---|
+| V1-S1-P Personal | Real HTTPS/PG18 scenario PASS in `7d8233a9539343cb8dbea4fafea926c7`; same batch four architecture checks PASS | Synthetic controlled Identity/site setup; no deployment/full registration claim |
+| Business owner-bound read/Booking | `bad063ec46f84ba1910aaf06562a74c2` 3/3 PASS: schema, Business handling/Management V2/UNPAID, Personal intake regression | Not Merchant-approval→Business-acceptance E2E |
+| V48 cold/upgrade | `623c8b70941047b7ac0d2535e76f6ca6`: cold 47-migration stream and populated V43 preservation PASS | Catalog ownership FAIL: V46 comment table owned by LOGIN migrator; no historical rewrite |
+| Customer presentation | 13 parser/management tests + 1 fixture UI test PASS; typecheck/build/targeted lint exit0 | Fixture UI does not prove Business custody/tracking |
+| BIA Dispatch/HTTPS | Default-deny overloads retained; pending Booking.createdAt DTO approval | BIA-TIMESTAMP-01 BLOCKED_CONTRACT; complete concurrency/direct-DML/rollback/dual HTTPS gates remain unfinished |
+| Canonical schema ownership | `v1-review-comment-owner.delta.md` BIA-OWNER-01 | Proposed forward repair only, not applied or approved |
+
+Status: **V1_SLICE_1_PARTIAL — BUSINESS_INTAKE_BLOCKED_CONTRACT;
+SCHEMA_OWNERSHIP_FIX_REQUIRED**. Step B remains DEFERRED_POST_V1; Spec012 is the
+next shared execution contract after Slice1, not authority to start its engine.
+
+### V1 Slice1 acceptance superseding the initial PARTIAL record — 2026-11-27
+
+**V1_SLICE_1_DUAL_AUDIENCE_READY — SOURCE/TEST.** Historical failures above are
+retained; the timestamp, canonical owner and complete atomic-pipeline blockers
+are resolved under exact Owner-approved BIA amendments. No deployment/CI claim.
+
+| Requirement | Exact bounded evidence |
+|---|---|
+| BIA-T-01 | V48/V49 cold/populated upgrade/owner/ACL gates PASS;46 historical migration bytes unchanged. |
+| BIA-T-02/03/04 | `1bdee7cb12a24555809a0b0d23f48d3a`: genuine Business HTTP/PG18 acceptance, chronology, wrong scope/finance/context denial,11 malformed commit groups,5 late rollbacks, replay/concurrency/Organization revoke race PASS. |
+| BIA-T-05 Personal | `4221778d40bc40d29782196b94f8ae62`: actual Personal HTTPS/PG18 scenario PASS; same final production source. |
+| BIA-T-05 Business | `2e00170d4f234bbfb9897d3dd72262c8`: actual canonical application/review/activation → explicit shipping setup → Quote/Booking/labels → Ops verification/login → all-Parcel acceptance → Merchant AT_STATION PASS,1/1. |
+| Presentation/dependency |11/11 focused units,2/2 UI regressions, Customer build/typecheck, targeted lint, architecture4/4 and implementation validator PASS. |
+
+Full commands, fingerprints, failure history, effective privilege checks and
+scope limits: [dual-audience execution](../implementation/v1-dual-audience-source-test-execution.md).
+Booking snapshots/UNPAID remain immutable. No Pickup/payment/COD/movement event
+or new real grants. Next unimplemented owner is Spec012 Dispatch inventory/sort/
+manifest; exact API/schema/permissions require approval. Spec012 is not READY.
+
+## Develop portable baseline (Owner release exception, 2026-11-27)
+
+Compose cold/restart PG18.6 +48 migrations, BRC-ACL-01 boundary and actual HTTPS/SMTP Customer smoke PASS. Fresh dual-audience S1 focused regression6/6; frontend typecheck/lint and272 units PASS. See [execution](../implementation/develop-baseline-release.md) and [runbook](../runbooks/portable-compose.md). Clean-clone/CI/merge remain pending; no Production or Spec012 acceptance.

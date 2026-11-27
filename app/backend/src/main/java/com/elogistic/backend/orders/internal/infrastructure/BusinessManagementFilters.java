@@ -23,7 +23,7 @@ public record BusinessManagementFilters(Map<String,String> parameters,int page,S
         if(!allowed.containsAll(p.keySet())||(!export&&!"management".equals(p.get("view"))))throw invalid();
         int page;try{String raw=p.getOrDefault("page","0");if(!raw.matches("0|[1-9][0-9]{0,9}")||!"20".equals(p.getOrDefault("size","20")))throw invalid();page=Integer.parseInt(raw);}catch(NumberFormatException bad){throw invalid();}
         if(export&&(p.containsKey("page")||p.containsKey("size")))throw invalid();
-        String status=option(p,"status","",Set.of("","WAITING_FOR_HANDOVER")),sort=option(p,"sort","NEWEST",Set.of("NEWEST","OLDEST","FEE_ASC","FEE_DESC"));
+        String status=option(p,"status","",Set.of("","WAITING_FOR_HANDOVER","AT_STATION")),sort=option(p,"sort","NEWEST",Set.of("NEWEST","OLDEST","FEE_ASC","FEE_DESC"));
         option(p,"service","",Set.of("","ROAD_STANDARD"));option(p,"obligation","",Set.of("","UNPAID"));option(p,"handover","",Set.of("","DROP_OFF"));
         String origin=p.get("origin"),destination=p.get("destination");if((origin==null)!=(destination==null)||origin!=null&&!Set.of("SIM-A1/SIM-A2","SIM-A2/SIM-A1","SIM-A1/SIM-B1","SIM-B1/SIM-A1").contains(origin+"/"+destination))throw invalid();
         Instant from=null,until=now.plusNanos(1000);if(p.containsKey("from")!=p.containsKey("until"))throw invalid();

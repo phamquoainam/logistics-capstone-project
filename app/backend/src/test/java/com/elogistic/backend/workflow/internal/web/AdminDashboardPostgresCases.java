@@ -20,6 +20,7 @@ import com.elogistic.backend.merchant.internal.infrastructure.AdminApplicationSo
 import com.elogistic.backend.notifications.api.AdminDashboardReads;
 import com.elogistic.backend.notifications.internal.application.AdminDashboardService;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import java.security.*;
 import java.security.interfaces.*;
 import java.sql.*;
@@ -61,6 +62,18 @@ public final class AdminDashboardPostgresCases implements AutoCloseable {
         source=new DriverManagerDataSource(db.url(),db.runtime(),db.runtimePassword());jdbc=new JdbcTemplate(source);admin=account(AdminReadContext.CODES);username=name(admin);compose(true,"TEST");
     }
     String name(UUID id){return jdbc.queryForObject("SELECT username FROM identity.user_account WHERE id=?",String.class,id);}
+    public void nwsCarrierDirectoryRequiresCurrentNetworkPermission()throws Exception {
+        db.flyway("latest",REALM).migrate();assertTrue(db.flyway("latest",REALM).validateWithResult().validationSuccessful);
+        var endpoint=MockMvcBuilders.standaloneSetup(new CarrierNetworkHttp(admission,new JdbcCarrierNetworkReads(source,clock)))
+            .setControllerAdvice(new ProductionIdentityErrors()).addFilters(new ProductionReadGuard(tokens,requests,sessions,ORIGIN).browser(auth)).build();
+        var allowed=login(admin);String path="/api/v1/admin/carrier-sites";
+        var empty=endpoint.perform(get(path).secure(true).header("Authorization","Bearer "+allowed.access())).andReturn().getResponse();assertEquals(200,empty.getStatus());assertEquals(0,JSON.readTree(empty.getContentAsString()).get("total").asInt());
+        assertEquals(400,endpoint.perform(get(path+"?type=WAREHOUSE").secure(true).header("Authorization","Bearer "+allowed.access())).andReturn().getResponse().getStatus());
+        assertEquals(404,endpoint.perform(get(path+"/"+UUID.randomUUID()).secure(true).header("Authorization","Bearer "+allowed.access())).andReturn().getResponse().getStatus());
+        var technical=login(account(Set.of(AdminReadContext.ENTRY,AdminReadContext.TECHNICAL)));
+        assertEquals(403,endpoint.perform(get(path).secure(true).header("Authorization","Bearer "+technical.access())).andReturn().getResponse().getStatus());
+        assertEquals(401,endpoint.perform(get(path).secure(true)).andReturn().getResponse().getStatus());
+    }
     @Override public void close()throws Exception{onboarding.close();}
     UUID account(Set<String> permissions)throws Exception{
         if(permissions.contains(AdminReadContext.ENTRY)&&AdminReadContext.CODES.containsAll(permissions))return onboarding.admin(permissions,password);
@@ -490,7 +503,191 @@ assertEquals(applicant,jdbc.queryForObject("SELECT account_id FROM merchant.memb
             assertFalse(new com.elogistic.backend.notifications.internal.infrastructure.JdbcMerchantApplicationNotices(source,applicantWorkflow.customerAdmission(),noticeCommands,new com.elogistic.backend.notifications.internal.infrastructure.ProtectedMerchantNoticeRecipient(Map.of("n1",encryption),"n1"),testMail,Clock.offset(clock,Duration.ofDays(1))).runOne());
         }
     }
-    private record ReadyMerchant(com.elogistic.backend.merchant.api.MerchantGovernance governance,com.elogistic.backend.workflow.internal.application.MerchantNoticeComposition notices,AdminCommandAdmission commands,AdminGovernanceReauthentication proofs,AdminCommandAdmission.ReferencedSubjects refs,UUID application,UUID applicant){}
+    private com.elogistic.backend.merchant.api.MerchantGovernanceViews views(ReadyMerchant ready){
+        byte[] encryption=new byte[32];Arrays.fill(encryption,(byte)72);
+        return new com.elogistic.backend.merchant.internal.infrastructure.JdbcMerchantGovernanceViews(source,(com.elogistic.backend.merchant.internal.infrastructure.JdbcMerchantApplicationReviews)ready.governance(),ready.commands(),new com.elogistic.backend.merchant.internal.infrastructure.ProtectedMerchantFingerprints(Map.of("v1",key()),"v1"),new com.elogistic.backend.merchant.internal.infrastructure.ProtectedGovernancePayloads(Map.of("e1",encryption),"e1"),clock);
+    }
+    private void viewScope(UUID account,String type,UUID target,String action,long expected,String... permissions)throws Exception{
+        Instant expiry=action.equals("REVOKE")?jdbc.queryForObject("SELECT expires_at FROM merchant.business_reviewer_scope WHERE account_id=? AND realm_id=? AND coalesce(policy_id,organization_id)=? AND state='ACTIVE'",java.sql.Timestamp.class,account,REALM,target).toInstant():clock.instant().plusSeconds(3600).truncatedTo(java.time.temporal.ChronoUnit.MICROS);
+        try(var op=onboarding.governanceOperatorConnection();var q=op.prepareStatement("SELECT merchant.configure_local_reviewer_scope(?,?,?,?,?,?,?,?,?,'Synthetic R01 isolated authority')")){
+            q.setObject(1,UUID.randomUUID());q.setObject(2,account);q.setObject(3,REALM);q.setString(4,type);q.setObject(5,target);q.setArray(6,op.createArrayOf("text",permissions));q.setString(7,action);q.setLong(8,expected);q.setTimestamp(9,java.sql.Timestamp.from(expiry));q.execute();
+        }
+    }
+    public void merchantR01SearchCommentsAndScope()throws Exception{
+        var ready=readyMerchant(null,null);UUID app=ready.application();UUID policyId=jdbc.queryForObject("SELECT policy_id FROM merchant.application WHERE id=?",UUID.class,app);
+        var second=readyMerchant(policyId,ready.refs().admins().iterator().next(),true);
+        var prior=Arrays.stream(db.flyway("45",REALM).info().applied()).map(x->x.getChecksum()).toList();db.flyway("46",REALM).migrate();db.flyway("46",REALM).validate();
+        assertEquals(prior,Arrays.stream(db.flyway("46",REALM).info().applied()).limit(prior.size()).map(x->x.getChecksum()).toList());
+        viewScope(admin,"POLICY",policyId,"REVOKE",1,"application.read","application.assign","application.decide");
+        String[] caps={"application.read","application.assign","application.decide","application.evidence.read","application.comment.write"};viewScope(admin,"POLICY",policyId,"ISSUE",0,caps);
+        var views=views(ready);LocalDate date=clock.instant().atZone(ZoneId.of("Asia/Ho_Chi_Minh")).toLocalDate();
+        var query=new com.elogistic.backend.merchant.api.MerchantGovernanceViews.ApplicationSearch(date,date,null,policyId,null,null,null,null,null,"MERCHANT_REVIEW",new com.elogistic.backend.merchant.api.MerchantGovernanceViews.PageQuery(1,null),null,null,null);
+        var result=ready.commands().execute(UUID.randomUUID(),ready.refs(),c->views.searchApplications(c,query));assertEquals(2,result.matchedCount());assertEquals(1,result.items().size());assertNotNull(result.nextCursor());assertTrue(result.snapshotVersion().matches("[a-f0-9]{64}"));
+        assertFalse(JSON.writeValueAsString(result).contains("business-contact@example.invalid"));
+        ready.commands().execute(UUID.randomUUID(),ready.refs(),c->{
+            var forwarding=(AdminCommandContext)java.lang.reflect.Proxy.newProxyInstance(AdminCommandContext.class.getClassLoader(),new Class<?>[]{AdminCommandContext.class},(proxy,method,args)->method.invoke(c,args));
+            assertThrows(AdminFailure.class,()->views.searchApplications(forwarding,query));
+            byte[] encryption=new byte[32];Arrays.fill(encryption,(byte)72);
+            var substituted=new com.elogistic.backend.merchant.internal.infrastructure.JdbcMerchantGovernanceViews(new DriverManagerDataSource(db.url(),db.runtime(),db.runtimePassword()),(com.elogistic.backend.merchant.internal.infrastructure.JdbcMerchantApplicationReviews)ready.governance(),ready.commands(),new com.elogistic.backend.merchant.internal.infrastructure.ProtectedMerchantFingerprints(Map.of("v1",key()),"v1"),new com.elogistic.backend.merchant.internal.infrastructure.ProtectedGovernancePayloads(Map.of("e1",encryption),"e1"),clock);
+            assertThrows(com.elogistic.backend.merchant.api.GovernanceFailure.class,()->substituted.searchApplications(c,query));return null;
+        });
+        var nextQuery=new com.elogistic.backend.merchant.api.MerchantGovernanceViews.ApplicationSearch(date,date,null,policyId,null,null,null,null,null,"MERCHANT_REVIEW",new com.elogistic.backend.merchant.api.MerchantGovernanceViews.PageQuery(1,result.nextCursor()),null,null,null);
+        var next=ready.commands().execute(UUID.randomUUID(),ready.refs(),c->views.searchApplications(c,nextQuery));assertEquals(2,next.matchedCount());assertNull(next.nextCursor());assertEquals(Set.of(app,second.application()),Set.of(result.items().getFirst().id(),next.items().getFirst().id()));
+        var exact=new com.elogistic.backend.merchant.api.MerchantGovernanceViews.ApplicationSearch(date,date,null,policyId,null,null,null,null,"SYNTHETIC-REG-1","MERCHANT_REVIEW",new com.elogistic.backend.merchant.api.MerchantGovernanceViews.PageQuery(1,null),null,null,null);
+        var filtered=ready.commands().execute(UUID.randomUUID(),ready.refs(),c->views.searchApplications(c,exact));assertEquals(1,filtered.matchedCount());assertEquals(app,filtered.items().getFirst().id());assertNull(filtered.nextCursor());
+
+        var input=new com.elogistic.backend.merchant.api.MerchantGovernanceViews.CommentInput(1,"Synthetic review note <script>not executable</script>");UUID key=UUID.randomUUID();
+        var comment=ready.commands().execute(UUID.randomUUID(),ready.refs(),c->views.comment(c,app,input,6,key));
+        assertEquals(comment,ready.commands().execute(UUID.randomUUID(),ready.refs(),c->views.comment(c,app,input,1,key)),"REPLAY_BEFORE_STALE_ETAG");
+        assertEquals(com.elogistic.backend.merchant.api.GovernanceFailure.Code.IDEMPOTENCY_CONFLICT,assertThrows(com.elogistic.backend.merchant.api.GovernanceFailure.class,()->ready.commands().execute(UUID.randomUUID(),ready.refs(),c->views.comment(c,app,new com.elogistic.backend.merchant.api.MerchantGovernanceViews.CommentInput(1,"Different"),6,key))).code());
+        assertEquals(6,jdbc.queryForObject("SELECT version FROM merchant.application WHERE id=?",Long.class,app));
+        assertEquals(1,ready.commands().execute(UUID.randomUUID(),ready.refs(),c->views.comments(c,app,null)).items().size());
+        // BIA-OWNER-01: preserve a real, guarded V46 comment across the forward repair.
+        String commentsBefore=jdbc.queryForObject("SELECT md5(jsonb_agg(to_jsonb(c) ORDER BY id)::text) FROM merchant.application_review_comment c",String.class);
+        var historical=Arrays.stream(db.flyway("46",REALM).info().applied()).map(x->x.getVersion()+":"+x.getChecksum()).toList();
+        assertEquals(3,db.flyway("latest",REALM).migrate().migrationsExecuted);assertTrue(db.flyway("latest",REALM).validateWithResult().validationSuccessful);assertEquals(0,db.flyway("latest",REALM).migrate().migrationsExecuted);
+        assertEquals(commentsBefore,jdbc.queryForObject("SELECT md5(jsonb_agg(to_jsonb(c) ORDER BY id)::text) FROM merchant.application_review_comment c",String.class));
+        assertEquals(historical,Arrays.stream(db.flyway("latest",REALM).info().applied()).limit(historical.size()).map(x->x.getVersion()+":"+x.getChecksum()).toList());
+        assertEquals(db.owner(),jdbc.queryForObject("SELECT pg_get_userbyid(relowner) FROM pg_class WHERE oid='merchant.application_review_comment'::regclass",String.class));
+        assertTrue(Boolean.TRUE.equals(jdbc.queryForObject("SELECT has_table_privilege(current_user,'merchant.application_review_comment','SELECT') AND has_table_privilege(current_user,'merchant.application_review_comment','INSERT') AND NOT has_table_privilege(current_user,'merchant.application_review_comment','UPDATE') AND NOT has_table_privilege(current_user,'merchant.application_review_comment','DELETE')",Boolean.class)));
+        long count=jdbc.queryForObject("SELECT count(*) FROM merchant.governance_event",Long.class);UUID rollback=UUID.randomUUID();
+        assertThrows(IllegalStateException.class,()->ready.commands().execute(UUID.randomUUID(),ready.refs(),c->{views.comment(c,app,input,6,rollback);throw new IllegalStateException("Synthetic rollback");}));
+        assertEquals(count,jdbc.queryForObject("SELECT count(*) FROM merchant.governance_event",Long.class));assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM merchant.application_review_comment",Integer.class));
+        assertThrows(org.springframework.dao.DataAccessException.class,()->jdbc.update("UPDATE merchant.application_review_comment SET protected_text=decode(repeat('01',64),'hex')"));
+        assertThrows(org.springframework.dao.DataAccessException.class,()->jdbc.update("DELETE FROM merchant.application_review_comment"));
+        assertThrows(org.springframework.dao.DataAccessException.class,()->jdbc.update("INSERT INTO merchant.application_review_comment SELECT gen_random_uuid(),application_id,revision,actor_id,realm_id,protected_text,event_id,request_id,created_at,gen_random_uuid(),input_key_id,input_digest FROM merchant.application_review_comment"));
+        assertThrows(org.springframework.dao.DataAccessException.class,()->jdbc.update("INSERT INTO merchant.application_review_comment SELECT gen_random_uuid(),application_id,revision,actor_id,realm_id,protected_text,gen_random_uuid(),request_id,created_at,gen_random_uuid(),input_key_id,input_digest FROM merchant.application_review_comment"));
+        var checks=ready.commands().execute(UUID.randomUUID(),ready.refs(),c->views.checks(c,app));assertTrue(checks.checks().stream().anyMatch(x->x.code().equals("SUBMISSION_BINDING")&&x.result().equals("PASS")));
+        try(var parallel=Executors.newVirtualThreadPerTaskExecutor()){UUID same=UUID.randomUUID();var barrier=new CyclicBarrier(2);Callable<UUID> work=()->{barrier.await(10,TimeUnit.SECONDS);return ready.commands().execute(UUID.randomUUID(),ready.refs(),c->views.comment(c,app,input,6,same)).id();};var a=parallel.submit(work);var b=parallel.submit(work);assertEquals(a.get(30,TimeUnit.SECONDS),b.get(30,TimeUnit.SECONDS));}
+        assertEquals(2,jdbc.queryForObject("SELECT count(*) FROM merchant.application_review_comment",Integer.class));
+        commandAdmission(ready.refs().admins().iterator().next(),clock).execute(UUID.randomUUID(),ready.refs(),c->ready.governance().requestInformation(c,app,new com.elogistic.backend.merchant.api.MerchantGovernance.InformationRequest(1,List.of("registeredAddress"),"Synthetic cursor source change"),6,UUID.randomUUID()));
+        assertEquals(com.elogistic.backend.merchant.api.GovernanceFailure.Code.SNAPSHOT_EXPIRED,assertThrows(com.elogistic.backend.merchant.api.GovernanceFailure.class,()->ready.commands().execute(UUID.randomUUID(),ready.refs(),c->views.searchApplications(c,nextQuery))).code());
+        var captured=new AtomicReference<AdminCommandContext>();ready.commands().execute(UUID.randomUUID(),ready.refs(),c->{captured.set(c);return null;});assertThrows(RuntimeException.class,()->views.checks(captured.get(),app));
+        UUID foreign=account(Set.of(AdminReadContext.ENTRY,AdminReadContext.MERCHANT));assertThrows(com.elogistic.backend.merchant.api.GovernanceFailure.class,()->commandAdmission(foreign,clock).execute(UUID.randomUUID(),ready.refs(),c->views.searchApplications(c,query)));
+        viewScope(admin,"POLICY",policyId,"REVOKE",1,caps);assertThrows(com.elogistic.backend.merchant.api.GovernanceFailure.class,()->ready.commands().execute(UUID.randomUUID(),ready.refs(),c->views.comment(c,app,input,6,key)));
+    }
+    public void merchantR01ProfileAndMembers()throws Exception{
+        var ready=readyMerchant(null,null);var approved=decide(ready,"APPROVE",decision(ready,"APPROVE"),UUID.randomUUID());UUID organization=approved.activation().organizationId();db.flyway("46",REALM).migrate();
+        viewScope(admin,"ORGANIZATION",organization,"ISSUE",0,"org.read","org.profile.read","org.members.read");var views=views(ready);var input=new com.elogistic.backend.merchant.api.MerchantGovernanceViews.DisclosureRequest("ORGANIZATION_OVERSIGHT",null);
+        var profile=ready.commands().execute(UUID.randomUUID(),ready.refs(),c->views.profile(c,organization,input));assertEquals("AVAILABLE",profile.legal().get("availability"));assertEquals("UNAVAILABLE",profile.pricing().get("availability"));assertEquals("UNAVAILABLE",profile.holds().get("availability"));assertFalse(JSON.writeValueAsString(profile).contains("business-contact@example.invalid"));
+        var members=ready.commands().execute(UUID.randomUUID(),ready.refs(),c->views.members(c,organization,input));assertEquals(1,members.items().size());assertTrue(members.items().getFirst().isInitialOwner());assertTrue(members.items().getFirst().isCurrentOwner());assertEquals(ready.applicant(),members.items().getFirst().accountId());assertEquals(0,members.pendingInvitationCount());assertFalse(JSON.writeValueAsString(members).contains("@"));
+        var q=new com.elogistic.backend.merchant.api.MerchantGovernanceViews.OrganizationSearch("ACTIVE",null,null,null,null,null,null,null,"ORGANIZATION_OVERSIGHT",null,null);var search=ready.commands().execute(UUID.randomUUID(),ready.refs(),c->views.searchOrganizations(c,q));assertEquals(1,search.matchedCount());assertEquals(organization,search.items().getFirst().id());
+        assertThrows(com.elogistic.backend.merchant.api.GovernanceFailure.class,()->ready.commands().execute(UUID.randomUUID(),ready.refs(),c->views.members(c,UUID.randomUUID(),input)));
+        assertFalse(jdbc.queryForObject("SELECT has_function_privilege(current_user,'merchant.configure_local_reviewer_scope(uuid,uuid,uuid,text,uuid,text[],text,bigint,timestamptz,text)','EXECUTE')",Boolean.class));
+    }
+    public void merchantR01ComparisonAndHttps()throws Exception{
+        var ready=readyMerchant(null,null);UUID app=ready.application(),reviewer=ready.refs().admins().iterator().next();UUID policyId=jdbc.queryForObject("SELECT policy_id FROM merchant.application WHERE id=?",UUID.class,app);db.flyway("46",REALM).migrate();
+        viewScope(admin,"POLICY",policyId,"REVOKE",1,"application.read","application.assign","application.decide");viewScope(admin,"POLICY",policyId,"ISSUE",0,"application.read","application.assign","application.decide","application.evidence.read","application.comment.write");
+        commandAdmission(reviewer,clock).execute(UUID.randomUUID(),ready.refs(),c->ready.governance().requestInformation(c,app,new com.elogistic.backend.merchant.api.MerchantGovernance.InformationRequest(1,List.of("registeredAddress"),"Synthetic R01 information"),6,UUID.randomUUID()));
+        ready.workflow().resubmitWithFreshContactFact(app);var views=views(ready);
+        var compare=new com.elogistic.backend.merchant.api.MerchantGovernanceViews.ComparisonRequest(1,2,"MERCHANT_REVIEW");var diff=ready.commands().execute(UUID.randomUUID(),ready.refs(),c->views.compare(c,app,compare));
+        assertNotEquals(diff.fromDigest(),diff.toDigest());assertEquals(List.of("activationDisplayName"),diff.changes().stream().map(x->x.field()).toList());assertEquals(0,diff.evidenceAdded().size());assertEquals(0,diff.evidenceRemoved().size());assertNotNull(diff.contactVerifiedAt().from());assertNotNull(diff.contactVerifiedAt().to());
+        assertThrows(com.elogistic.backend.merchant.api.GovernanceFailure.class,()->ready.commands().execute(UUID.randomUUID(),ready.refs(),c->views.compare(c,app,new com.elogistic.backend.merchant.api.MerchantGovernanceViews.ComparisonRequest(1,3,"MERCHANT_REVIEW"))));
+        var review=commandAdmission(reviewer,clock);review.execute(UUID.randomUUID(),ready.refs(),c->ready.governance().review(c,app,new com.elogistic.backend.merchant.api.MerchantGovernance.ReviewInput("BEGIN",2,"1",null,"Synthetic R01 begin"),9,UUID.randomUUID()));review.execute(UUID.randomUUID(),ready.refs(),c->ready.governance().review(c,app,new com.elogistic.backend.merchant.api.MerchantGovernance.ReviewInput("READY_FOR_DECISION",2,"1",new com.elogistic.backend.merchant.api.MerchantGovernance.Checklist(true,true,true,true,true),"Synthetic R01 complete"),10,UUID.randomUUID()));
+        String reason="Synthetic R01 approved",op="APPROVE";String digest=HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(JSON.writeValueAsString(new TreeMap<>(Map.of("operation",op,"target",app.toString(),"originalVersion",11L,"revision",2L,"policy","1","reason",reason))).getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+        var target=new com.elogistic.backend.merchant.api.MerchantGovernance.Target(com.elogistic.backend.merchant.api.MerchantGovernance.Kind.APPLICATION,app);String authority=ready.commands().execute(UUID.randomUUID(),ready.refs(),c->ready.governance().withScope(c,target,x->x.version()));
+        var proof=ready.commands().execute(UUID.randomUUID(),ready.refs(),c->ready.proofs().request(c,new AdminGovernanceReauthentication.AdminStepUpInput(op,app,11,digest,password),authority,UUID.randomUUID()));
+        var approved=ready.commands().execute(UUID.randomUUID(),ready.refs(),c->ready.governance().approve(c,app,new com.elogistic.backend.merchant.api.MerchantGovernance.DecisionInput(2,"1",proof.proofId(),reason),11,UUID.randomUUID()));UUID org=approved.activation().organizationId();
+        viewScope(admin,"ORGANIZATION",org,"ISSUE",0,"org.read","org.profile.read","org.members.read");
+        AdminBrowserRuntime.runReviewViews(source,name(admin),password,pair,onboarding,ready.governance(),app,views);
+        assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM merchant.application_review_comment WHERE application_id=?",Integer.class,app));assertEquals(12,jdbc.queryForObject("SELECT version FROM merchant.application WHERE id=?",Long.class,app));
+    }
+    public void organizationLifecycleV47PreparationSchema()throws Exception{organizationLifecycleV47PreparationSchema(false);}
+    public void organizationLifecycleV47PreparationHttps()throws Exception{organizationLifecycleV47PreparationSchema(true);}
+    private void organizationLifecycleV47PreparationSchema(boolean browser)throws Exception{
+        var ready=readyMerchant(null,null);var approved=decide(ready,"APPROVE",decision(ready,"APPROVE"),UUID.randomUUID());UUID org=approved.activation().organizationId();
+        var before=jdbc.queryForMap("SELECT * FROM merchant.organization WHERE id=?",org);var previous=Arrays.stream(db.flyway("46",REALM).info().applied()).map(v->v.getVersion()+":"+v.getChecksum()).toList();db.flyway("47",REALM).migrate();db.flyway("47",REALM).validate();
+        assertEquals(previous,Arrays.stream(db.flyway("47",REALM).info().applied()).limit(previous.size()).map(v->v.getVersion()+":"+v.getChecksum()).toList());assertEquals(before,jdbc.queryForMap("SELECT * FROM merchant.organization WHERE id=?",org));
+        var owner=jdbc.queryForMap("SELECT * FROM merchant.organization_current_owner WHERE organization_id=?",org);assertEquals(approved.activation().ownerMembershipId(),owner.get("membership_id"));assertEquals(1L,owner.get("version"));assertNull(owner.get("last_transfer_case_id"));
+        assertThrows(org.springframework.dao.DataAccessException.class,()->jdbc.update("UPDATE merchant.organization_current_owner SET version=version+1 WHERE organization_id=?",org));
+        viewScope(admin,"ORGANIZATION",org,"ISSUE",0,"org.read","org.lifecycle.propose");
+        var policyReader=organizationCases(ready,admin);var policyReads=readAdmission(admin);
+        assertTrue(policyReads.execute(c->policyReader.policies(c,org)).items().isEmpty());
+        assertThrows(RuntimeException.class,()->policyReads.execute(c->policyReader.policies(c,UUID.randomUUID())));
+        var escaped=new AtomicReference<AdminReadContext>();policyReads.execute(c->{escaped.set(c);return null;});assertThrows(AdminFailure.class,()->policyReader.policies(escaped.get(),org));
+        String policy=com.elogistic.backend.merchant.internal.infrastructure.OrganizationCasePolicyTestFixture.ownerV1();UUID policyId=UUID.randomUUID(),key=UUID.randomUUID();
+        try(var op=onboarding.governanceOperatorConnection();var q=op.prepareStatement("SELECT merchant.publish_local_organization_governance_policy(?,?,1,?::jsonb,'Synthetic Owner V1 policy')")){
+            q.setObject(1,key);q.setObject(2,policyId);q.setString(3,policy);try(var r=q.executeQuery()){assertTrue(r.next());assertEquals(policyId,r.getObject(1,UUID.class));}q.execute();
+            q.setString(3,policy.replace("604800","1"));assertThrows(java.sql.SQLException.class,q::execute);
+        }
+        assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM merchant.organization_governance_policy",Integer.class));assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM merchant.organization_governance_receipt",Integer.class));
+        assertFalse(jdbc.queryForObject("SELECT has_function_privilege(current_user,'merchant.publish_local_organization_governance_policy(uuid,uuid,bigint,jsonb,text)','EXECUTE')",Boolean.class));
+        assertFalse(jdbc.queryForObject("SELECT has_schema_privilege('merchant_governance_writer','merchant','CREATE')",Boolean.class));
+        assertEquals(policyId,policyReads.execute(c->policyReader.policies(c,org)).items().getFirst().policyId());
+        UUID other=account(Set.of(AdminReadContext.ENTRY,AdminReadContext.MERCHANT));assertThrows(java.sql.SQLException.class,()->viewScope(other,"ORGANIZATION",org,"ISSUE",0,"org.read","org.lifecycle.execute"));
+        assertEquals("ACTIVE",jdbc.queryForObject("SELECT state FROM merchant.organization WHERE id=?",String.class,org));
+        lifecyclePreparationFlow(ready,org,policyId,before,browser);
+    }
+    private com.elogistic.backend.merchant.api.OrganizationGovernanceCases organizationCases(ReadyMerchant ready,UUID actor)throws Exception{
+        var reads=readAdmission(actor);var commands=commandAdmission(actor,clock);byte[] encryption=new byte[32];Arrays.fill(encryption,(byte)72);
+        return new com.elogistic.backend.merchant.internal.infrastructure.JdbcOrganizationGovernanceCases(source,new com.elogistic.backend.merchant.internal.infrastructure.JdbcMerchantGovernance(source,clock,reads,commands),reads,commands,new com.elogistic.backend.merchant.internal.infrastructure.ProtectedMerchantFingerprints(Map.of("v1",key()),"v1"),new com.elogistic.backend.merchant.internal.infrastructure.ProtectedGovernancePayloads(Map.of("e1",encryption),"e1"),clock);
+    }
+    private void lifecyclePreparationFlow(ReadyMerchant ready,UUID org,UUID policyId,Map<String,Object> original,boolean browser)throws Exception{
+        UUID reviewer=account(Set.of(AdminReadContext.ENTRY,AdminReadContext.MERCHANT));
+        viewScope(reviewer,"ORGANIZATION",org,"ISSUE",0,"org.read","org.lifecycle.review","audit.read");
+        byte[] encryption=new byte[32];Arrays.fill(encryption,(byte)72);
+        var reads=readAdmission(admin);var maker=commandAdmission(admin,clock);var reviewCommands=commandAdmission(reviewer,clock);
+        var scopes=new com.elogistic.backend.merchant.internal.infrastructure.JdbcMerchantGovernance(source,clock,reads,maker);
+        var cases=new com.elogistic.backend.merchant.internal.infrastructure.JdbcOrganizationGovernanceCases(source,scopes,reads,maker,new com.elogistic.backend.merchant.internal.infrastructure.ProtectedMerchantFingerprints(Map.of("v1",key()),"v1"),new com.elogistic.backend.merchant.internal.infrastructure.ProtectedGovernancePayloads(Map.of("e1",encryption),"e1"),clock);
+        var reviewerReads=readAdmission(reviewer);
+        var reviewCases=new com.elogistic.backend.merchant.internal.infrastructure.JdbcOrganizationGovernanceCases(source,new com.elogistic.backend.merchant.internal.infrastructure.JdbcMerchantGovernance(source,clock,reviewerReads,reviewCommands),reviewerReads,reviewCommands,new com.elogistic.backend.merchant.internal.infrastructure.ProtectedMerchantFingerprints(Map.of("v1",key()),"v1"),new com.elogistic.backend.merchant.internal.infrastructure.ProtectedGovernancePayloads(Map.of("e1",encryption),"e1"),clock);
+        var refs=new AdminCommandAdmission.ReferencedSubjects(Set.of(ready.applicant()),Set.of(admin,reviewer));
+        var input=new com.elogistic.backend.merchant.api.OrganizationGovernanceCases.CaseInput("CLOSE","Synthetic closure preparation only",policyId,1,1,new com.elogistic.backend.merchant.api.OrganizationGovernanceCases.Closure());UUID createKey=UUID.randomUUID();
+        var draft=maker.execute(UUID.randomUUID(),refs,c->cases.create(c,org,input,createKey));assertEquals("DRAFT",draft.state());
+        assertEquals(draft,maker.execute(UUID.randomUUID(),refs,c->cases.create(c,org,input,createKey)));
+        assertThrows(com.elogistic.backend.merchant.api.GovernanceFailure.class,()->maker.execute(UUID.randomUUID(),refs,c->cases.create(c,org,new com.elogistic.backend.merchant.api.OrganizationGovernanceCases.CaseInput("CLOSE","Different input",policyId,1,1,input.payload()),createKey)));
+        var submit=new com.elogistic.backend.merchant.api.OrganizationGovernanceCases.ReasonAction(com.elogistic.backend.merchant.api.OrganizationGovernanceCases.ReasonTag.SUBMIT,new com.elogistic.backend.merchant.api.OrganizationGovernanceCases.ReasonInput("Synthetic submit"));UUID submitKey=UUID.randomUUID();
+        var submitted=maker.execute(UUID.randomUUID(),refs,c->cases.command(c,org,draft.id(),submit,1,submitKey));assertEquals("SUBMITTED",submitted.state());assertEquals(submitted,maker.execute(UUID.randomUUID(),refs,c->cases.command(c,org,draft.id(),submit,1,submitKey)));
+        assertThrows(com.elogistic.backend.merchant.api.GovernanceFailure.class,()->maker.execute(UUID.randomUUID(),refs,c->cases.command(c,org,draft.id(),new com.elogistic.backend.merchant.api.OrganizationGovernanceCases.AssignmentInput(admin,"Self reviewer"),2,UUID.randomUUID())));
+        var assigned=maker.execute(UUID.randomUUID(),refs,c->cases.command(c,org,draft.id(),new com.elogistic.backend.merchant.api.OrganizationGovernanceCases.AssignmentInput(reviewer,"Synthetic assignment"),2,UUID.randomUUID()));assertEquals(reviewer,assigned.reviewerAccountId());
+        reviewCommands.execute(UUID.randomUUID(),refs,c->reviewCases.command(c,org,draft.id(),new com.elogistic.backend.merchant.api.OrganizationGovernanceCases.CaseReviewInput("BEGIN",null,"Synthetic begin"),3,UUID.randomUUID()));
+        reviewCommands.execute(UUID.randomUUID(),refs,c->reviewCases.command(c,org,draft.id(),new com.elogistic.backend.merchant.api.OrganizationGovernanceCases.InformationInput(List.of("reason"),"Synthetic information required"),4,UUID.randomUUID()));
+        var information=maker.execute(UUID.randomUUID(),refs,c->cases.disclose(c,org,draft.id(),new com.elogistic.backend.merchant.api.OrganizationGovernanceCases.CaseDisclosureInput(5,"LIFECYCLE_REVIEW")));assertEquals(List.of("reason"),information.requestedFieldCodes());assertEquals("Synthetic information required",information.reason());
+        maker.execute(UUID.randomUUID(),refs,c->cases.command(c,org,draft.id(),new com.elogistic.backend.merchant.api.OrganizationGovernanceCases.ResponseInput(input.payload(),List.of(),"Synthetic response",null),5,UUID.randomUUID()));
+        reviewCommands.execute(UUID.randomUUID(),refs,c->reviewCases.command(c,org,draft.id(),new com.elogistic.backend.merchant.api.OrganizationGovernanceCases.CaseReviewInput("BEGIN",null,"Synthetic review revision two"),6,UUID.randomUUID()));
+        var readyCase=reviewCommands.execute(UUID.randomUUID(),refs,c->reviewCases.command(c,org,draft.id(),new com.elogistic.backend.merchant.api.OrganizationGovernanceCases.CaseReviewInput("READY_FOR_DECISION",new com.elogistic.backend.merchant.api.OrganizationGovernanceCases.Checklist(true,true,true,true),"Synthetic complete"),7,UUID.randomUUID()));assertEquals("READY_FOR_DECISION",readyCase.state());assertTrue(readyCase.allowedActions().stream().noneMatch(a->Set.of("EXECUTE","APPROVE").contains(a)));
+        assertEquals(2,jdbc.queryForObject("SELECT revision FROM merchant.organization_governance_case WHERE id=?",Integer.class,draft.id()));assertEquals(9,jdbc.queryForObject("SELECT count(*) FROM merchant.organization_governance_event WHERE case_id=?",Integer.class,draft.id()));assertEquals(8,jdbc.queryForObject("SELECT count(*) FROM merchant.organization_governance_receipt WHERE case_id=?",Integer.class,draft.id()));assertEquals(original,jdbc.queryForMap("SELECT * FROM merchant.organization WHERE id=?",org));
+        assertThrows(org.springframework.dao.DataAccessException.class,()->jdbc.update("UPDATE merchant.organization_governance_case SET state='EXECUTED',version=version+1 WHERE id=?",draft.id()));
+        var foreign=UUID.randomUUID();assertThrows(RuntimeException.class,()->reads.execute(c->cases.get(c,foreign,draft.id())));
+        var constructed=(AdminReadContext)java.lang.reflect.Proxy.newProxyInstance(AdminReadContext.class.getClassLoader(),new Class[]{AdminReadContext.class},(p,m,a)->{throw new AssertionError("UNTRUSTED_CONTEXT_READ");});assertThrows(AdminFailure.class,()->cases.get(constructed,org,draft.id()));
+        assertEquals(9,reviewerReads.execute(c->reviewCases.events(c,org,draft.id(),new com.elogistic.backend.merchant.api.MerchantGovernanceViews.PageQuery(20,null))).items().size());
+        var disclosureInput=new com.elogistic.backend.merchant.api.OrganizationGovernanceCases.CaseDisclosureInput(8,"LIFECYCLE_REVIEW");
+        var disclosed=maker.execute(UUID.randomUUID(),refs,c->cases.disclose(c,org,draft.id(),disclosureInput));assertEquals(8L,disclosed.version());assertEquals(2L,disclosed.revision());assertEquals(readyCase.lastEventId(),disclosed.sourceEventId());assertEquals(input.payload(),disclosed.casePayload());assertEquals("Synthetic complete",disclosed.reason());
+        reviewCommands.execute(UUID.randomUUID(),refs,c->reviewCases.disclose(c,org,draft.id(),disclosureInput));
+        assertFalse(JSON.writeValueAsString(disclosed).contains("protected_payload"));assertFalse(JSON.writeValueAsString(disclosed).contains("reauthenticationProofId"));assertFalse(disclosed.toString().contains("Synthetic"));
+        assertEquals(3,jdbc.queryForObject("SELECT count(*) FROM merchant.organization_governance_event WHERE case_id=? AND operation='READ_CASE_DISCLOSURE'",Integer.class,draft.id()));assertEquals(8,jdbc.queryForObject("SELECT version FROM merchant.organization_governance_case WHERE id=?",Integer.class,draft.id()));assertEquals(8,jdbc.queryForObject("SELECT count(*) FROM merchant.organization_governance_receipt WHERE case_id=?",Integer.class,draft.id()));
+        assertThrows(com.elogistic.backend.merchant.api.GovernanceFailure.class,()->maker.execute(UUID.randomUUID(),refs,c->cases.disclose(c,org,draft.id(),new com.elogistic.backend.merchant.api.OrganizationGovernanceCases.CaseDisclosureInput(7,"LIFECYCLE_REVIEW"))));
+        assertThrows(RuntimeException.class,()->maker.execute(UUID.randomUUID(),refs,c->cases.disclose(c,UUID.randomUUID(),draft.id(),disclosureInput)));
+        UUID unassigned=account(Set.of(AdminReadContext.ENTRY,AdminReadContext.MERCHANT));viewScope(unassigned,"ORGANIZATION",org,"ISSUE",0,"org.read","org.lifecycle.review");var otherCases=organizationCases(ready,unassigned);assertThrows(com.elogistic.backend.merchant.api.GovernanceFailure.class,()->commandAdmission(unassigned,clock).execute(UUID.randomUUID(),refs,c->otherCases.disclose(c,org,draft.id(),disclosureInput)));
+        assertThrows(org.springframework.dao.DataAccessException.class,()->jdbc.update("INSERT INTO merchant.organization_governance_event SELECT ?,c.id,c.organization_id,'SYSTEM',?,?,NULL,'READ_CASE_DISCLOSURE',c.revision,c.version,c.version,c.policy_id,c.policy_version,'CASE_DISCLOSURE',c.protected_payload,?,clock_timestamp() FROM merchant.organization_governance_case c WHERE c.id=?",UUID.randomUUID(),unassigned,REALM,UUID.randomUUID(),draft.id()));
+        var forgedCommand=(AdminCommandContext)java.lang.reflect.Proxy.newProxyInstance(AdminCommandContext.class.getClassLoader(),new Class[]{AdminCommandContext.class},(p,m,a)->{throw new AssertionError("FORGED_CONTEXT_READ");});assertThrows(AdminFailure.class,()->cases.disclose(forgedCommand,org,draft.id(),disclosureInput));
+        assertThrows(IllegalStateException.class,()->maker.execute(UUID.randomUUID(),refs,c->{cases.disclose(c,org,draft.id(),disclosureInput);throw new IllegalStateException("SYNTHETIC_DISCLOSURE_ROLLBACK");}));assertEquals(3,jdbc.queryForObject("SELECT count(*) FROM merchant.organization_governance_event WHERE case_id=? AND operation='READ_CASE_DISCLOSURE'",Integer.class,draft.id()));
+        int beforeRollback=jdbc.queryForObject("SELECT count(*) FROM merchant.organization_governance_case",Integer.class);
+        var risk=new com.elogistic.backend.merchant.api.OrganizationGovernanceCases.CaseInput("RISK_HOLD","Synthetic preparation",policyId,1,1,new com.elogistic.backend.merchant.api.OrganizationGovernanceCases.RiskHold("BOOKING_HOLD",null));
+        assertThrows(IllegalStateException.class,()->maker.execute(UUID.randomUUID(),refs,c->{cases.create(c,org,risk,UUID.randomUUID());throw new IllegalStateException("SYNTHETIC_ROLLBACK");}));assertEquals(beforeRollback,jdbc.queryForObject("SELECT count(*) FROM merchant.organization_governance_case",Integer.class));
+        UUID concurrentKey=UUID.randomUUID();var barrier=new CyclicBarrier(2);var outcomes=new ConcurrentLinkedQueue<com.elogistic.backend.merchant.api.OrganizationGovernanceCases.Case>();
+        try(var pool=Executors.newVirtualThreadPerTaskExecutor()){List<Future<?>> pending=new ArrayList<>();for(int n=0;n<2;n++)pending.add(pool.submit(()->{barrier.await(10,TimeUnit.SECONDS);outcomes.add(maker.execute(UUID.randomUUID(),refs,c->cases.create(c,org,risk,concurrentKey)));return null;}));for(var result:pending)result.get(30,TimeUnit.SECONDS);}
+        assertEquals(2,outcomes.size());assertEquals(outcomes.peek(),outcomes.stream().skip(1).findFirst().orElseThrow());assertEquals(beforeRollback+1,jdbc.queryForObject("SELECT count(*) FROM merchant.organization_governance_case",Integer.class));
+        var mvc=MockMvcBuilders.standaloneSetup(new OrganizationGovernanceCasesHttp(reads,maker,cases)).addFilters((jakarta.servlet.Filter)(request,response,chain)->{((HttpServletResponse)response).setHeader("X-Request-Id",UUID.randomUUID().toString());chain.doFilter(request,response);}).build();
+        String base="/api/v1/admin/merchant-organizations/"+org+"/governance-cases";
+        assertEquals(200,mvc.perform(get(base)).andReturn().getResponse().getStatus());assertEquals(200,mvc.perform(get(base+"/"+draft.id())).andReturn().getResponse().getStatus());
+        assertEquals(400,mvc.perform(get(base+"?size=1&size=2")).andReturn().getResponse().getStatus());
+        assertEquals(400,mvc.perform(post(base).contentType("application/json").header("Idempotency-Key",UUID.randomUUID()).content("{\"type\":\"CLOSE\",\"type\":\"RISK_HOLD\"}")).andReturn().getResponse().getStatus());
+        assertEquals(428,mvc.perform(post(base+"/"+draft.id()+"/submission").contentType("application/json").header("Idempotency-Key",UUID.randomUUID()).content("{\"reason\":\"Synthetic\"}")).andReturn().getResponse().getStatus());
+        assertEquals(404,mvc.perform(post(base+"/"+draft.id()+"/execution").contentType("application/json").content("{}")).andReturn().getResponse().getStatus());
+        var replacementRefs=new AdminCommandAdmission.ReferencedSubjects(Set.of(ready.applicant()),Set.of(admin,reviewer,unassigned));
+        reviewCommands.execute(UUID.randomUUID(),replacementRefs,c->reviewCases.command(c,org,draft.id(),new com.elogistic.backend.merchant.api.OrganizationGovernanceCases.InformationInput(List.of("reason"),"Synthetic second information request"),8,UUID.randomUUID()));
+        maker.execute(UUID.randomUUID(),replacementRefs,c->cases.command(c,org,draft.id(),new com.elogistic.backend.merchant.api.OrganizationGovernanceCases.ResponseInput(input.payload(),List.of(),"Synthetic second response",null),9,UUID.randomUUID()));
+        maker.execute(UUID.randomUUID(),replacementRefs,c->cases.command(c,org,draft.id(),new com.elogistic.backend.merchant.api.OrganizationGovernanceCases.AssignmentInput(unassigned,"Synthetic reassignment"),10,UUID.randomUUID()));
+        var afterAssignment=new com.elogistic.backend.merchant.api.OrganizationGovernanceCases.CaseDisclosureInput(11,"LIFECYCLE_REVIEW");assertThrows(com.elogistic.backend.merchant.api.GovernanceFailure.class,()->reviewCommands.execute(UUID.randomUUID(),replacementRefs,c->reviewCases.disclose(c,org,draft.id(),afterAssignment)));
+        commandAdmission(unassigned,clock).execute(UUID.randomUUID(),replacementRefs,c->otherCases.disclose(c,org,draft.id(),afterAssignment));
+        viewScope(reviewer,"ORGANIZATION",org,"REVOKE",1,"org.read","org.lifecycle.review","audit.read");assertThrows(RuntimeException.class,()->reviewCommands.execute(UUID.randomUUID(),replacementRefs,c->reviewCases.command(c,org,draft.id(),new com.elogistic.backend.merchant.api.OrganizationGovernanceCases.InformationInput(List.of("reason"),"Revoked reviewer"),11,UUID.randomUUID())));
+        assertEquals(11,jdbc.queryForObject("SELECT version FROM merchant.organization_governance_case WHERE id=?",Integer.class,draft.id()));
+        assertThrows(RuntimeException.class,()->reviewerReads.execute(c->reviewCases.policies(c,org)));
+        assertThrows(RuntimeException.class,()->reviewCommands.execute(UUID.randomUUID(),refs,c->reviewCases.disclose(c,org,draft.id(),disclosureInput)));
+        if(browser)AdminBrowserRuntime.runCases(source,name(admin),password,pair,onboarding,ready.governance(),cases,org);
+    }
+    private record ReadyMerchant(com.elogistic.backend.merchant.api.MerchantGovernance governance,com.elogistic.backend.workflow.internal.application.MerchantNoticeComposition notices,AdminCommandAdmission commands,AdminGovernanceReauthentication proofs,AdminCommandAdmission.ReferencedSubjects refs,UUID application,UUID applicant,BusinessContactPostgresCases workflow){}
     private ReadyMerchant readyMerchant(UUID existingPolicy,UUID existingReviewer)throws Exception{return readyMerchant(existingPolicy,existingReviewer,false);}
     private ReadyMerchant readyMerchant(UUID existingPolicy,UUID existingReviewer,boolean distinctBusiness)throws Exception{
         var proofs=stepUps();db.flyway("43",REALM).migrate();UUID policyId=existingPolicy==null?UUID.randomUUID():existingPolicy,reviewer=existingReviewer==null?account(Set.of(AdminReadContext.ENTRY,AdminReadContext.MERCHANT)):existingReviewer;
@@ -505,7 +702,7 @@ assertEquals(applicant,jdbc.queryForObject("SELECT account_id FROM merchant.memb
         var notices=new com.elogistic.backend.workflow.internal.application.MerchantNoticeComposition(new com.elogistic.backend.merchant.internal.infrastructure.JdbcMerchantApplicationNoticeEvents(source,workflow.customerAdmission(),commands,governance),worker);
         var refs=new AdminCommandAdmission.ReferencedSubjects(Set.of(applicant),Set.of(reviewer));commands.execute(UUID.randomUUID(),refs,c->governance.assign(c,app,new com.elogistic.backend.merchant.api.MerchantGovernance.ReviewerAssignmentInput(reviewer,"Synthetic assignment"),3,UUID.randomUUID()));
         var review=commandAdmission(reviewer,clock);review.execute(UUID.randomUUID(),refs,c->governance.review(c,app,new com.elogistic.backend.merchant.api.MerchantGovernance.ReviewInput("BEGIN",1,"1",null,"Synthetic begin"),4,UUID.randomUUID()));review.execute(UUID.randomUUID(),refs,c->governance.review(c,app,new com.elogistic.backend.merchant.api.MerchantGovernance.ReviewInput("READY_FOR_DECISION",1,"1",new com.elogistic.backend.merchant.api.MerchantGovernance.Checklist(true,true,true,true,true),"Synthetic complete"),5,UUID.randomUUID()));
-        return new ReadyMerchant(governance,notices,commands,proofs,refs,app,applicant);
+        return new ReadyMerchant(governance,notices,commands,proofs,refs,app,applicant,workflow);
     }
     private com.elogistic.backend.merchant.api.MerchantGovernance.DecisionInput decision(ReadyMerchant ready,String operation)throws Exception{
         String reason="Synthetic "+operation;String digest=HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(JSON.writeValueAsString(new TreeMap<>(Map.of("operation",operation,"target",ready.application().toString(),"originalVersion",6L,"revision",1L,"policy","1","reason",reason))).getBytes(java.nio.charset.StandardCharsets.UTF_8)));
@@ -652,12 +849,18 @@ assertEquals(applicant,jdbc.queryForObject("SELECT account_id FROM merchant.memb
         assertTrue(ready.governance().work(UUID.randomUUID(),query).items().isEmpty());
     }
     public void adminCoreRealHttpsCustomerToIndependentActivation()throws Exception{
+        adminCoreRealHttpsCustomerToIndependentActivation(false);
+    }
+    public void biaRealHttpsCustomerApplicationToBusinessStation()throws Exception{adminCoreRealHttpsCustomerToIndependentActivation(true);}
+    private void adminCoreRealHttpsCustomerToIndependentActivation(boolean shipping)throws Exception{
         stepUps();db.flyway("43",REALM).migrate();UUID policy=UUID.randomUUID(),reviewer=account(Set.of(AdminReadContext.ENTRY,AdminReadContext.MERCHANT)),applicant=customer();Instant expiry=clock.instant().plusSeconds(3600).truncatedTo(java.time.temporal.ChronoUnit.MICROS);
         try(var op=onboarding.governanceOperatorConnection()){
             var helper=new MerchantGovernancePostgresCases(db,source,onboarding,REALM,admin);helper.publish(op,UUID.randomUUID(),policy,MerchantGovernancePostgresCases.policy(clock.instant().minusSeconds(30).truncatedTo(java.time.temporal.ChronoUnit.MICROS)));helper.scope(op,UUID.randomUUID(),policy,"ISSUE",0,expiry,"application.read","application.assign","application.decide","org.read","audit.read","task.read");new MerchantGovernancePostgresCases(db,source,onboarding,REALM,reviewer).scope(op,UUID.randomUUID(),policy,"ISSUE",0,expiry,"application.read","application.review","application.evidence.read","task.read","audit.read");
         }
         assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM merchant.application",Integer.class));
-        AdminCoreBrowserRuntime.run(source,password,pair,onboarding,Map.of("customerEmail",name(applicant)+"@example.invalid","reviewer",name(reviewer),"decider",name(admin),"reviewerId",reviewer.toString()));
+        var identities=Map.<String,Object>of("customerEmail",name(applicant)+"@example.invalid","reviewer",name(reviewer),"decider",name(admin),"reviewerId",reviewer.toString());
+        if(shipping){db.flyway("latest",REALM).migrate();AdminCoreBrowserRuntime.runBusiness(source,password,pair,onboarding,identities,db);assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM dispatch.pilot_intake_acceptance WHERE owner_type='BUSINESS'",Integer.class));assertEquals(2,jdbc.queryForObject("SELECT count(*) FROM dispatch.pilot_custody",Integer.class));assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM finance.pilot_shipping_obligation WHERE owner_type='BUSINESS' AND state='UNPAID'",Integer.class));}
+        else AdminCoreBrowserRuntime.run(source,password,pair,onboarding,identities);
         assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM merchant.governance_event WHERE operation='READY_FOR_DECISION'",Integer.class));
         assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM merchant.application WHERE state='APPROVED'",Integer.class));assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM merchant.application_activation",Integer.class));assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM merchant.organization WHERE state='ACTIVE'",Integer.class));assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM merchant.membership WHERE account_id=? AND role='OWNER' AND state='ACTIVE'",Integer.class,applicant));assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM notification.merchant_application_notice WHERE template='APPROVED' AND state='ACCEPTED_BY_PROVIDER'",Integer.class));
     }

@@ -100,7 +100,9 @@ final class ArchitectureRules {
                 boolean trustedActor = origin.equals("order")
                     && target.getName().equals(ROOT + ".identity.api.AuthenticatedActor")
                     && (inLayer(source, "internal.web") || inLayer(source, "internal.application"));
-                if (!technicalApi && !trustedActor && !COLLABORATORS.getOrDefault(origin, Set.of()).contains(destination)) {
+                boolean operationalAdmission = origin.equals("dispatch") && (target.getName().equals(ROOT + ".identity.api.staff.OperationalStaffAdmission")
+                    || target.getName().startsWith(ROOT + ".identity.api.staff.OperationalStaffAdmission$"));
+                if (!technicalApi && !trustedActor && !operationalAdmission && !COLLABORATORS.getOrDefault(origin, Set.of()).contains(destination)) {
                     reject(source, target, "Unapproved module direction", dependency.getDescription(), events);
                 }
             });

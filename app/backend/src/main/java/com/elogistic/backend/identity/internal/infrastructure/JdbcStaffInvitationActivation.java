@@ -14,13 +14,17 @@ import static com.elogistic.backend.identity.api.IdentityCommandFailure.Code.*;
 /** Existing Identity proof/credential engine; SQL-05 owns the atomic Staff state transition. */
 public final class JdbcStaffInvitationActivation implements com.elogistic.backend.identity.internal.application.port.StaffInvitationActivation {
     private final JdbcIdentityGrantStore transactions;
+    private final boolean operations;
     private final JdbcTemplate jdbc;
     private final InvitationProtection protection;
     private final ProtectedInvitationCredentials credentials;
     private final Clock clock;
 
     public JdbcStaffInvitationActivation(DataSource runtime,InvitationProtection protection,Clock clock) {
-        transactions=new JdbcIdentityGrantStore(runtime,IdentitySessionStorage.STAFF);jdbc=new JdbcTemplate(runtime);
+        this(runtime,protection,clock,false);
+    }
+    public JdbcStaffInvitationActivation(DataSource runtime,InvitationProtection protection,Clock clock,boolean operations) {
+        this.operations=operations;transactions=new JdbcIdentityGrantStore(runtime,operations?IdentitySessionStorage.OPS:IdentitySessionStorage.STAFF);jdbc=new JdbcTemplate(runtime);
         this.protection=Objects.requireNonNull(protection);credentials=new ProtectedInvitationCredentials(protection);this.clock=Objects.requireNonNull(clock);
     }
     public void accept(UUID proofId,byte[] supplied,String password,UUID key,UUID request) {
@@ -31,7 +35,7 @@ public final class JdbcStaffInvitationActivation implements com.elogistic.backen
         try {
             transactions.transaction(tx->{
                 tx.lockAdministration();
-                var rows=jdbc.query("SELECT p.*,s.state AS staff_state FROM identity.action_proof p JOIN identity.local_staff_principal s ON s.account_id=p.account_id WHERE p.id=? AND p.purpose='STAFF_INV' FOR UPDATE OF p",(r,n)->{
+                var rows=jdbc.query("SELECT p.*,s.state AS staff_state FROM identity.action_proof p JOIN identity.local_staff_principal s ON s.account_id=p.account_id WHERE p.id=? AND p.purpose='STAFF_INV' AND s.purpose='"+(operations?"OPERATIONS":"SUPPORT")+"' FOR UPDATE OF p",(r,n)->{
                     var revoked=r.getTimestamp("revoked_at");var consumed=r.getTimestamp("consumed_at");
                     var state=revoked!=null?ActionProof.State.REVOKED:consumed!=null?ActionProof.State.CONSUMED:ActionProof.State.AVAILABLE;
                     return new Stored(new ActionProof(proofId,r.getObject("account_id",UUID.class),ActionProof.Purpose.STAFF_INV,r.getTimestamp("created_at").toInstant(),r.getTimestamp("expires_at").toInstant(),state,revoked!=null?revoked.toInstant():consumed!=null?consumed.toInstant():null),r.getString("verifier_key_id"),r.getBytes("token_hash"));
@@ -52,9 +56,9 @@ public final class JdbcStaffInvitationActivation implements com.elogistic.backen
                     if(prior.isEmpty()) {
                         try{account.activateStaffInvitation(proof,password,account.version().version(),clock.instant());}
                         catch(DomainViolation invalid){throw failure(TOKEN_INVALID_OR_EXPIRED);}
-                    } else if(proof.state()!=ActionProof.State.CONSUMED || !Boolean.TRUE.equals(jdbc.queryForObject("SELECT identity.support_staff_eligible(?)",Boolean.class,account.id())))throw failure(TOKEN_INVALID_OR_EXPIRED);
+                    } else if(proof.state()!=ActionProof.State.CONSUMED || !Boolean.TRUE.equals(jdbc.queryForObject("SELECT identity."+(operations?"operations":"support")+"_staff_eligible(?)",Boolean.class,account.id())))throw failure(TOKEN_INVALID_OR_EXPIRED);
                     String verifier=credentials.hashPassword(password);
-                    jdbc.query("SELECT identity.accept_local_support_staff_invitation(?,?,?,?,?)",r->{},proofId,key,fingerprint,verifier,request);
+                    jdbc.query("SELECT identity.accept_local_"+(operations?"operations":"support")+"_staff_invitation(?,?,?,?,?)",r->{},proofId,key,fingerprint,verifier,request);
                     return null;
                 }finally{Arrays.fill(stored.hash(),(byte)0);if(fingerprint!=null)Arrays.fill(fingerprint,(byte)0);}
             });

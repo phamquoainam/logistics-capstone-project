@@ -1,0 +1,535 @@
+{
+  "id": "NWS-V1",
+  "status": "PROPOSED_NOT_APPROVED",
+  "scope": "SOURCE_TEST_ISOLATED_ONLY_AFTER_OWNER_TECHNICAL_APPROVAL",
+  "baseline": "d5a0c240841bdb35d9ef6064cddba696a5b2fa62",
+  "preserve": [
+    "V1-V43 bytes and existing rows",
+    "legacy V21 Customer-admitted pilot",
+    "SUPPORT-only admission",
+    "SYSTEM and Customer admission",
+    "approved manifests",
+    "all prior WIP"
+  ],
+  "candidate_migrations": [
+    {
+      "id": "NWS-MIG-01",
+      "version": 44,
+      "owner": "identity",
+      "name": "operational_staff_identity",
+      "state": "PROPOSED_RECHECK_BEFORE_IMPLEMENTATION"
+    },
+    {
+      "id": "NWS-MIG-02",
+      "version": 45,
+      "owner": "dispatch",
+      "name": "carrier_sites_operational_scope",
+      "state": "PROPOSED_RECHECK_BEFORE_IMPLEMENTATION"
+    }
+  ],
+  "architecture": {
+    "id": "NWS-ARCH-01",
+    "status": "PROPOSED",
+    "change": "Dispatch may reference identity.api.staff.OperationalStaffAdmission and its nested DTO types solely for current genuine context validation. No other new Identity collaborator type is permitted.",
+    "preserve": "Workflow composes public ports in one physical transaction; no cross-private imports, cross-domain table reads or generic Identity collaborator expansion."
+  },
+  "public_ports": [
+    {
+      "id": "NWS-PORT-01",
+      "status": "PROPOSED",
+      "owner": "identity",
+      "type": "identity.api.staff.OperationalStaffAdmission",
+      "signatures": [
+        "<T> T execute(String encodedAccess, UUID requestId, Function<Context,T> work)",
+        "void requireCurrent(Context context)",
+        "void meaningfulAction(Context context)"
+      ],
+      "dto": [
+        "Subject(UUID accountId,String displayName,long securityVersion)",
+        "Context(UUID requestId,UUID sessionId,Subject actor)"
+      ],
+      "security": "OPS audience, immutable OPERATIONS purpose, Identity-issued object identity/resource/lifetime, current session and security version, no external contexts"
+    },
+    {
+      "id": "NWS-PORT-02",
+      "status": "PROPOSED",
+      "owner": "merchant",
+      "type": "merchant.api.customer.PilotCoverage",
+      "signatures": [
+        "Catalog catalog(OperationalStaffAdmission.Context context)"
+      ],
+      "dto": "Existing Catalog/Area/Route unchanged",
+      "security": "Owner requireCurrent before actor use; actual current persisted pilot dataset; no Customer context impersonation"
+    },
+    {
+      "id": "NWS-PORT-03",
+      "status": "PROPOSED",
+      "owner": "dispatch",
+      "type": "dispatch.api.OperationalStationIntake",
+      "signatures": [
+        "List<OperationalSite> sites(OperationalStaffAdmission.Context context)",
+        "void require(OperationalStaffAdmission.Context context,UUID siteId)",
+        "StationIntake.Scan scan(OperationalStaffAdmission.Context context,UUID siteId,PilotHandling.Cargo cargo,String barcode,UUID key)",
+        "List<StationIntake.Scan> scans(OperationalStaffAdmission.Context context,UUID siteId,UUID shipment)",
+        "StationIntake.Acceptance accept(OperationalStaffAdmission.Context context,UUID siteId,PilotHandling.Cargo cargo,List<UUID> scanIds,long expectedVersion,String inspection,UUID key)",
+        "StationIntake.Receipt receipt(OperationalStaffAdmission.Context context,UUID siteId,UUID key)"
+      ],
+      "dto": [
+        "OperationalSite(UUID id,String code,String name,String type,String state,long version,List<String> capabilities,Instant effectiveFrom,Instant effectiveTo)"
+      ],
+      "security": "Identity-owned context validation then live Dispatch assignment/site/version/coverage binding. Same intake core and evidence, not another engine."
+    },
+    {
+      "id": "NWS-PORT-04",
+      "status": "PROPOSED",
+      "owner": "dispatch",
+      "type": "dispatch.api.CarrierNetworkReads",
+      "signatures": [
+        "SitePage sites(Access access,SiteQuery query)",
+        "SiteDetail site(Access access,UUID id)"
+      ],
+      "access": "interface Access { void requireNetworkFacts(); } - trusted Workflow adapter checks existing Admin current network READ",
+      "dto": [
+        "SiteQuery(String state,String type,String areaCode,int page,int size)",
+        "SitePage(List<SiteDetail> items,long total,int page,int size)",
+        "SiteDetail(UUID id,String code,String name,String type,String state,long version,String locationText,String areaCode,BigDecimal latitude,BigDecimal longitude,String timezone,Map<String,List<String>> operatingHours,List<String> capabilities,Instant effectiveFrom,Instant effectiveTo,String provenance,List<SiteLink> outgoing)",
+        "SiteLink(UUID id,UUID toSiteId,String serviceCode,String datasetVersion,String areaCode,String dropOffCode,Instant effectiveFrom,Instant effectiveTo,long version)"
+      ],
+      "security": "No staff email, credential or permission inventory; filter before paging, max size100; provenance and state never inferred from Merchant facilities"
+    }
+  ],
+  "http": [
+    {
+      "id": "NWS-HTTP-01",
+      "status": "PROPOSED",
+      "method": "GET",
+      "path": "/api/v1/ops-auth/csrf",
+      "request": "none",
+      "response": "existing Staff-auth csrfToken response with OPS cookie namespace",
+      "authority": "TLS/exact origin and OPS browser binding"
+    },
+    {
+      "id": "NWS-HTTP-02",
+      "status": "PROPOSED",
+      "method": "POST",
+      "path": "/api/v1/ops-auth/login",
+      "request": "existing Staff-auth {email,password}",
+      "response": "existing Staff-auth {accessToken,expiresAt,accountId}",
+      "authority": "eligible OPERATIONS Identity, existing rate-limit/credential engine, OPS session"
+    },
+    {
+      "id": "NWS-HTTP-03",
+      "status": "PROPOSED",
+      "method": "POST",
+      "path": "/api/v1/ops-auth/refresh",
+      "request": "existing empty refresh body and OPS cookie/CSRF",
+      "response": "existing Staff-auth login response",
+      "authority": "current OPS family, replay protection"
+    },
+    {
+      "id": "NWS-HTTP-04",
+      "status": "PROPOSED",
+      "method": "POST",
+      "path": "/api/v1/ops-auth/logout",
+      "request": "existing logout shape, OPS cookie/CSRF",
+      "response": "204",
+      "authority": "current OPS family only"
+    },
+    {
+      "id": "NWS-HTTP-05",
+      "status": "PROPOSED",
+      "method": "POST",
+      "path": "/api/v1/ops-auth/invitations/accept",
+      "request": "existing Staff invitation {proofId,token,password}, Idempotency-Key",
+      "response": "204",
+      "authority": "STAFF_INV proof bound to OPERATIONS principal only; no public provisioning"
+    },
+    {
+      "id": "NWS-HTTP-06",
+      "status": "PROPOSED",
+      "method": "GET",
+      "path": "/api/v1/ops-auth/me",
+      "request": "none",
+      "response": "{accountId:UUID,displayName:String,principalType:'STAFF',purpose:'OPERATIONS',environment:'LOCAL'|'TEST'}",
+      "authority": "current genuine OPS session"
+    },
+    {
+      "id": "NWS-HTTP-07",
+      "status": "PROPOSED",
+      "method": "GET",
+      "path": "/api/v1/ops/sites",
+      "request": "none",
+      "response": "{sites:OperationalSite[]}",
+      "authority": "current effective SITE_READ assignment per site; no global site visibility"
+    },
+    {
+      "id": "NWS-HTTP-08",
+      "status": "PROPOSED",
+      "method": "GET",
+      "path": "/api/v1/ops/sites/{siteId}/parcels/{barcode}",
+      "request": "strict UUID and AP-P barcode",
+      "response": "existing StationIntakeHttp cargo/scans/paymentState/simulation/policyVersion view",
+      "authority": "current SITE_READ and STATION_INTAKE; booked origin matches site binding"
+    },
+    {
+      "id": "NWS-HTTP-09",
+      "status": "PROPOSED",
+      "method": "GET",
+      "path": "/api/v1/ops/sites/{siteId}/shipments/{id}",
+      "request": "strict UUIDs",
+      "response": "existing intake view",
+      "authority": "same current site/cargo binding"
+    },
+    {
+      "id": "NWS-HTTP-10",
+      "status": "PROPOSED",
+      "method": "POST",
+      "path": "/api/v1/ops/sites/{siteId}/scans",
+      "request": "existing {barcode}, Idempotency-Key",
+      "response": "StationIntake.Scan",
+      "authority": "SITE_READ+STATION_INTAKE; current origin capability; no actor override"
+    },
+    {
+      "id": "NWS-HTTP-11",
+      "status": "PROPOSED",
+      "method": "POST",
+      "path": "/api/v1/ops/sites/{siteId}/shipments/{id}/acceptance",
+      "request": "existing {scanIds:UUID[],inspection:'MATCHED'}, Idempotency-Key, If-Match",
+      "response": "existing intake view with current ETag",
+      "authority": "all-Parcels PERSONAL Local/Test exception only; one transaction with Orders/Finance"
+    },
+    {
+      "id": "NWS-HTTP-12",
+      "status": "PROPOSED",
+      "method": "GET",
+      "path": "/api/v1/ops/sites/{siteId}/receipts/{key}",
+      "request": "strict UUIDs",
+      "response": "StationIntake.Receipt",
+      "authority": "original actor/site/operation binding plus current admission/assignment"
+    },
+    {
+      "id": "NWS-HTTP-13",
+      "status": "PROPOSED",
+      "method": "GET",
+      "path": "/api/v1/ops/sites/{siteId}/shipments/{id}/labels.pdf",
+      "request": "strict UUIDs",
+      "response": "existing private100x150 PDF unchanged",
+      "authority": "current matching site/cargo authority before render; no public media"
+    },
+    {
+      "id": "NWS-HTTP-14",
+      "status": "PROPOSED",
+      "method": "GET",
+      "path": "/api/v1/admin/carrier-sites",
+      "request": "state,type,areaCode,page,size",
+      "response": "SitePage",
+      "authority": "existing ADMIN_DASHBOARD_READ+ADMIN_NETWORK_READ; no writer permission"
+    },
+    {
+      "id": "NWS-HTTP-15",
+      "status": "PROPOSED",
+      "method": "GET",
+      "path": "/api/v1/admin/carrier-sites/{id}",
+      "request": "strict UUID",
+      "response": "SiteDetail including outgoing links",
+      "authority": "same current Admin network READ; no actor credential/grant disclosure"
+    }
+  ],
+  "permissions": [
+    {
+      "id": "NWS-PERM-01",
+      "status": "PROPOSED",
+      "code": "SITE_READ",
+      "scope": "one exact Carrier site",
+      "issuer": "trusted offline Dispatch operator only",
+      "default": false
+    },
+    {
+      "id": "NWS-PERM-02",
+      "status": "PROPOSED",
+      "code": "STATION_INTAKE",
+      "scope": "one exact Carrier STATION",
+      "issuer": "trusted offline Dispatch operator only",
+      "default": false,
+      "note": "Reuse semantic code, new dedicated-Staff site assignment storage; not a Support grant or inherited V21 Customer assignment."
+    }
+  ],
+  "identity_schema": [
+    {
+      "id": "NWS-DB-ID-01",
+      "status": "PROPOSED",
+      "table": "identity.local_staff_principal",
+      "change": "purpose VARCHAR(10), CHECK IN SUPPORT/OPERATIONS; immutable purpose, existing PK/FK/exclusive-purpose guards preserved"
+    },
+    {
+      "id": "NWS-DB-ID-02",
+      "status": "PROPOSED",
+      "table": "identity.auth_session;identity.csrf_binding",
+      "change": "Add OPS to existing audience allowlists and exact purpose binding; existing refresh FK/family/audience isolation retained"
+    },
+    {
+      "id": "NWS-DB-ID-03",
+      "status": "PROPOSED",
+      "table": "identity.local_staff_operator_receipt",
+      "change": "Allow namespace OPS_IDENTITY_V1 in addition to CSKH_IDENTITY_V1; bind namespace to immutable principal purpose and exact operator; all original receipt/proof/audit constraints remain"
+    },
+    {
+      "id": "NWS-DB-ID-04",
+      "status": "PROPOSED",
+      "table": "identity.action_proof;identity.invitation_outbox;identity.command_receipt;identity.audit_entry",
+      "change": "No new columns/tables/purpose codes. Existing STAFF_INV, acceptStaffInvitation operation and STAFF_INVITATION_ACCEPTED event reused with new guarded OPERATIONS branch; support endpoints/helpers remain SUPPORT-only."
+    }
+  ],
+  "dispatch_tables": [
+    {
+      "id": "NWS-DB-D-01",
+      "status": "PROPOSED",
+      "name": "dispatch.carrier_site",
+      "columns": "id UUID PK; code VARCHAR(32) UNIQUE immutable; type VARCHAR(7) CHECK STATION/HUB; created_at TIMESTAMPTZ",
+      "lifecycle": "No delete/reuse; metadata in immutable versions"
+    },
+    {
+      "id": "NWS-DB-D-02",
+      "status": "PROPOSED",
+      "name": "dispatch.carrier_site_version",
+      "columns": "id UUID PK; site_id UUID FK carrier_site RESTRICT; version BIGINT>0; name VARCHAR(120); location_text VARCHAR(500); area_code VARCHAR(32); latitude NUMERIC(9,6) nullable [-90,90]; longitude NUMERIC(10,6) nullable [-180,180]; timezone VARCHAR(64); operating_hours JSONB; state VARCHAR(8) ACTIVE/INACTIVE; capabilities TEXT[] subset SITE_READ/STATION_INTAKE; effective_from TIMESTAMPTZ; effective_to TIMESTAMPTZ nullable; environment VARCHAR(5) LOCAL/TEST; provenance VARCHAR(10) SIMULATION; UNIQUE(site_id,version); UNIQUE(id,site_id); UNIQUE(site_id,effective_from); UNIQUE(id,site_id,version)",
+      "lifecycle": "Append-only; effective_from strictly increasing per site and not backdated. Effective end is min(declared effective_to,next effective_from); newest effective version governs, older rows never rewritten. STATION_INTAKE only STATION; strict hours/location validation; no invented data."
+    },
+    {
+      "id": "NWS-DB-D-03",
+      "status": "PROPOSED",
+      "name": "dispatch.carrier_site_link",
+      "columns": "id UUID PK; link_id UUID; from_site_id UUID FK carrier_site; to_site_id UUID FK carrier_site; service_code VARCHAR(32); dataset_version VARCHAR(64); area_code VARCHAR(32); drop_off_code VARCHAR(32); version BIGINT>0; effective_from TIMESTAMPTZ; effective_to TIMESTAMPTZ nullable; UNIQUE(link_id,version); UNIQUE(link_id,effective_from)",
+      "lifecycle": "Append-only logical link_id revisions; from<>to and endpoint identity immutable. Newest effective version governs using same interval rule as sites. Merchant-owned boolean predicate validates existing drop-off binding; no cross-private SELECT. Link is not transport evidence."
+    },
+    {
+      "id": "NWS-DB-D-04",
+      "status": "PROPOSED",
+      "name": "dispatch.operational_site_assignment",
+      "columns": "id UUID PK; account_id UUID FK identity.user_account RESTRICT; site_id UUID FK carrier_site RESTRICT; permission VARCHAR(32) SITE_READ/STATION_INTAKE; state VARCHAR(7) ACTIVE/REVOKED; effective_from TIMESTAMPTZ; effective_to TIMESTAMPTZ NOT NULL; version BIGINT>0; UNIQUE(id,account_id,site_id)",
+      "lifecycle": "No duplicate ACTIVE same account/site/permission; immutable identity; terminal revoke; expiry explicit operator input, no default permanent scope; account FK is not admission; grants require genuine eligible OPERATIONS principal"
+    },
+    {
+      "id": "NWS-DB-D-05",
+      "status": "PROPOSED",
+      "name": "dispatch.network_operator_audit",
+      "columns": "id UUID PK; request_id UUID UNIQUE; operator_principal NAME; operation VARCHAR(24); target_id UUID; before_version BIGINT nullable; after_version BIGINT; reason VARCHAR(300); occurred_at TIMESTAMPTZ",
+      "lifecycle": "Append-only; deferred reference to exact receipt; no generic PII payload"
+    },
+    {
+      "id": "NWS-DB-D-06",
+      "status": "PROPOSED",
+      "name": "dispatch.network_operator_receipt",
+      "columns": "request_id UUID PK; operator_principal NAME; operation VARCHAR(24); target_id UUID; payload_digest BYTEA length32; environment VARCHAR(5); system_identifier NUMERIC(20,0); database_oid OID; database_name NAME; result_version BIGINT; audit_id UUID UNIQUE FK network_operator_audit deferred; created_at TIMESTAMPTZ",
+      "lifecycle": "Append-only; same-key input binding/current authority; reciprocal audit FK and target guard; no replay resurrection"
+    }
+  ],
+  "evidence_amendment": {
+    "id": "NWS-DB-E-01",
+    "status": "PROPOSED",
+    "tables": [
+      "dispatch.pilot_intake_scan",
+      "dispatch.pilot_intake_acceptance"
+    ],
+    "change": "Add operational_assignment_id UUID nullable and site_version_id UUID nullable. Existing assignment_id nullable ONLY under XOR CHECK: legacy assignment present and both new columns null, OR legacy assignment null and both new columns present. Preserve legacy composite FK. New composite FKs bind operational assignment/account/site and exact site code/version. New branch requires valid immutable site/assignment/time/actor/purpose at commit; preserve current custody/Orders completeness guards, personal-only policy and atomic rollback. No legacy row rewrite.",
+    "additional_column": "site_id UUID nullable in both evidence tables. Legacy branch: assignment_id NOT NULL, operational_assignment_id/site_version_id/site_id all NULL. Ops branch: assignment_id NULL and all three operational columns NOT NULL. Composite FK (operational_assignment_id,actor_id,site_id) -> operational_site_assignment(id,account_id,site_id); (site_version_id,site_id) -> carrier_site_version(id,site_id); private guard verifies station_code==immutable carrier_site.code and assignment/site version/effective time/capability. Preserve all legacy FKs.",
+    "not_authorized_now": true
+  },
+  "sql": [
+    {
+      "id": "NWS-SQL-01",
+      "status": "PROPOSED",
+      "signature": "identity.operations_staff_registered(UUID) RETURNS BOOLEAN",
+      "execute": "migration owner and Identity runtime admission only"
+    },
+    {
+      "id": "NWS-SQL-02",
+      "status": "PROPOSED",
+      "signature": "identity.operations_staff_eligible(UUID) RETURNS BOOLEAN",
+      "execute": "Identity runtime; exact Dispatch writer validation only",
+      "note": "No raw account query in Dispatch; purpose ACTIVE/verification/environment/password checks"
+    },
+    {
+      "id": "NWS-SQL-03",
+      "status": "PROPOSED",
+      "signature": "identity.provision_local_operations_staff(UUID,TEXT,TEXT,TEXT) RETURNS TABLE(account_id UUID,proof_id UUID,message_id UUID,created_at TIMESTAMPTZ,expires_at TIMESTAMPTZ,replayed BOOLEAN,current_principal_state TEXT)",
+      "execute": "offline operations operator only"
+    },
+    {
+      "id": "NWS-SQL-04",
+      "status": "PROPOSED",
+      "signature": "identity.seal_local_operations_staff_invitation(UUID,TEXT,TEXT,BYTEA,BYTEA,BYTEA) RETURNS VOID",
+      "execute": "offline operations operator only; same transaction as reservation"
+    },
+    {
+      "id": "NWS-SQL-05",
+      "status": "PROPOSED",
+      "signature": "identity.disposition_local_operations_staff_invitation(UUID,UUID,TEXT,TEXT) RETURNS TABLE(account_id UUID,proof_id UUID,message_id UUID,created_at TIMESTAMPTZ,expires_at TIMESTAMPTZ,replayed BOOLEAN,current_principal_state TEXT)",
+      "execute": "offline operations operator only; RESEND/CANCEL"
+    },
+    {
+      "id": "NWS-SQL-06",
+      "status": "PROPOSED",
+      "signature": "identity.local_operations_staff_invitation_destination(UUID) RETURNS TEXT",
+      "execute": "offline operations provisioner only, for exact own request sealing; never runtime/public"
+    },
+    {
+      "id": "NWS-SQL-07",
+      "status": "PROPOSED",
+      "signature": "identity.accept_local_operations_staff_invitation(UUID,UUID,BYTEA,TEXT,UUID) RETURNS VOID",
+      "execute": "Identity runtime activation only; authenticated genuine protected proof; not operator proof bypass"
+    },
+    {
+      "id": "NWS-SQL-08",
+      "status": "PROPOSED",
+      "signature": "dispatch.configure_local_carrier_site(UUID,UUID,BIGINT,JSONB,TEXT) RETURNS TABLE(site_id UUID,version BIGINT,replayed BOOLEAN)",
+      "execute": "offline operations operator only",
+      "arguments": "requestId, nullable siteId for CREATE, expectedVersion (0 CREATE), strict SiteConfiguration, reason; UUID allocated by function on CREATE"
+    },
+    {
+      "id": "NWS-SQL-09",
+      "status": "PROPOSED",
+      "signature": "dispatch.configure_local_site_link(UUID,UUID,BIGINT,JSONB,TEXT) RETURNS TABLE(link_id UUID,version BIGINT,replayed BOOLEAN)",
+      "execute": "offline operations operator only",
+      "arguments": "requestId, nullable linkId, expectedVersion, strict LinkConfiguration, reason"
+    },
+    {
+      "id": "NWS-SQL-10",
+      "status": "PROPOSED",
+      "signature": "dispatch.configure_local_operational_assignment(UUID,UUID,UUID,TEXT,TEXT,TIMESTAMPTZ,TIMESTAMPTZ,BIGINT,TEXT) RETURNS TABLE(assignment_id UUID,version BIGINT,replayed BOOLEAN)",
+      "execute": "offline operations operator only",
+      "arguments": "requestId,accountId,siteId,permission,GRANT/REVOKE,effectiveFrom,effectiveTo,expectedVersion,reason"
+    },
+    {
+      "id": "NWS-SQL-11",
+      "status": "PROPOSED",
+      "signature": "merchant.pilot_drop_off_bound(TEXT,TEXT,TEXT,TEXT) RETURNS BOOLEAN",
+      "arguments": "datasetVersion,serviceCode,areaCode,dropOffCode",
+      "execute": "private dispatch_network_writer only, not PUBLIC/runtime/operator",
+      "note": "Merchant-owned SECURITY DEFINER reader with fixed search_path; checks current effective ARGO-SIM-COVERAGE-1, ROAD_STANDARD and actual area/dropoff references; only boolean, no mutation."
+    },
+    {
+      "id": "NWS-SQL-12",
+      "status": "PROPOSED",
+      "signature": "identity.lock_local_operations_staff_subject(UUID,BOOLEAN) RETURNS VOID",
+      "execute": "identity_staff_writer and private dispatch_network_writer only",
+      "note": "Existing Identity administration/account lock protocol; current OPERATIONS purpose/eligibility. No Identity private SELECT from Dispatch."
+    }
+  ],
+  "operator_json": {
+    "SiteConfiguration": "{code,name,type,locationText,areaCode,latitude,longitude,timezone,operatingHours,state,capabilities,effectiveFrom,effectiveTo,environment,provenance}; no unknown keys; code/type immutable on update",
+    "LinkConfiguration": "{fromSiteId,toSiteId,serviceCode,datasetVersion,areaCode,dropOffCode,effectiveFrom,effectiveTo}; no unknown keys; endpoint identity immutable",
+    "operatingHours": "Object with optional MON/TUE/WED/THU/FRI/SAT/SUN keys; each value max2 HH:mm-HH:mm intervals, ordered nonoverlapping; absent means UNKNOWN not open24h; timezone must exist; cannot imply pickup or guaranteed ETA"
+  },
+  "acl": {
+    "id": "NWS-ACL-01",
+    "status": "PROPOSED",
+    "new_roles": [
+      "elogistics_local_operations_operator NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS",
+      "dispatch_network_writer NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS",
+      "merchant_coverage_reader NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS"
+    ],
+    "reuse": "identity_staff_writer owns exact new Identity helpers; no operator or runtime SET membership to writers",
+    "runtime": "SELECT new network/assignment read tables; INSERT existing intake evidence under guarded new branch; no registry/assignment/operator table DML or offline function EXECUTE",
+    "operator": "EXECUTE SQL03-06,08-10 only; no raw table rights, no new role membership automatically; current physical LOCAL/TEST environment binding required",
+    "private_writer": "Dispatch writer can validate eligibility via exact SQL02 boolean; no Identity private table SELECT. Existing Identity writer-only privileged control-system read retained; no new PUBLIC/runtime/operator pg_control_system EXECUTE. merchant_coverage_reader owns SQL11 and receives only SELECT on pilot_coverage_dataset/pilot_area/pilot_route; neither operator nor runtime has membership; Dispatch gets only boolean EXECUTE. SQL12 owns current account lock/admission check.",
+    "prerequisite": "New NOLOGIN roles set up separately by trusted isolated test bootstrap, Flyway/runtime NOCREATEROLE. Existing canonical Staff physical environment binding established by its separately authorized binder; Ops operator cannot self-bind another database.",
+    "function_policy": "SECURITY DEFINER fixed pg_catalog search_path and qualified identifiers; no PUBLIC EXECUTE; session_user/operator/environment checks, same authority locks on operator and runtime. No new code may execute before all guard/FK/ACL gates pass."
+  },
+  "functions_to_amend_in_forward_migrations": [
+    "identity.guard_local_staff_principal()",
+    "identity.guard_local_staff_account()",
+    "identity.guard_local_staff_delivery()",
+    "identity.guard_identity_session_audience()",
+    "identity.check_local_staff_evidence()",
+    "dispatch.require_complete_pilot_custody()"
+  ],
+  "support_compatibility": "support_staff_registered remains generic registered-Staff exclusion as currently implemented; support_staff_eligible and all legacy support issuance/activation remain SUPPORT-only. New Ops provisioning must not permit SUPPORT_TRIAGE/HANDLE, Merchant Membership, account_grant, SYSTEM realm or finance/courier authority.",
+  "verification": [
+    {
+      "id": "NWS-T-01",
+      "status": "NOT_RUN_PROPOSED",
+      "scope": "PG18 V44/V45 upgrade, checksum/data preservation, FK/CHECK/direct-DML/ACL negatives"
+    },
+    {
+      "id": "NWS-T-02",
+      "status": "NOT_RUN_PROPOSED",
+      "scope": "Ops invitation/verification/protected SMTP, same-key replay/concurrency, no default assignment, support/customer/admin compatibility"
+    },
+    {
+      "id": "NWS-T-03",
+      "status": "NOT_RUN_PROPOSED",
+      "scope": "Context forgery/resource/lifetime/suspension and audience/session revocation/expiry"
+    },
+    {
+      "id": "NWS-T-04",
+      "status": "NOT_RUN_PROPOSED",
+      "scope": "Site state/capability/route binding/time intervals, no/wrong/revoked assignment, current receipt admission"
+    },
+    {
+      "id": "NWS-T-05",
+      "status": "NOT_RUN_PROPOSED",
+      "scope": "Intake fault rollback/concurrent assignment revoke, existing scan/set/fee/custody invariants; legacy branch unchanged"
+    },
+    {
+      "id": "NWS-T-06",
+      "status": "NOT_RUN_PROPOSED",
+      "scope": "One genuine HTTPS+PG18 Customer2Parcel Booking -> authorized Ops origin scan/intake -> Customer tracking, plus denied unassigned/revoked Staff; targeted frontend and architecture checks"
+    }
+  ],
+  "not_in_scope": [
+    "production or demo deployment",
+    "real site dataset/grants/provisioning",
+    "Business acceptance payment exception",
+    "Pickup/COD/collection",
+    "sort/manifest/transfer/dispatch execution",
+    "general Admin IAM or Staff-role editor",
+    "Courier or Finance authority",
+    "full suite repetition",
+    "commit/push/merge"
+  ],
+  "private_dispatch_guards": [
+    {
+      "id": "NWS-GUARD-01",
+      "status": "PROPOSED",
+      "signature": "dispatch.guard_carrier_site_identity() RETURNS TRIGGER",
+      "security": "private dispatch_network_writer owner; fixed search_path; no PUBLIC/runtime/operator direct EXECUTE; deferred evidence where required"
+    },
+    {
+      "id": "NWS-GUARD-02",
+      "status": "PROPOSED",
+      "signature": "dispatch.guard_carrier_site_version() RETURNS TRIGGER",
+      "security": "private dispatch_network_writer owner; fixed search_path; no PUBLIC/runtime/operator direct EXECUTE; deferred evidence where required"
+    },
+    {
+      "id": "NWS-GUARD-03",
+      "status": "PROPOSED",
+      "signature": "dispatch.guard_carrier_site_link() RETURNS TRIGGER",
+      "security": "private dispatch_network_writer owner; fixed search_path; no PUBLIC/runtime/operator direct EXECUTE; deferred evidence where required"
+    },
+    {
+      "id": "NWS-GUARD-04",
+      "status": "PROPOSED",
+      "signature": "dispatch.guard_operational_site_assignment() RETURNS TRIGGER",
+      "security": "private dispatch_network_writer owner; fixed search_path; no PUBLIC/runtime/operator direct EXECUTE; deferred evidence where required"
+    },
+    {
+      "id": "NWS-GUARD-05",
+      "status": "PROPOSED",
+      "signature": "dispatch.guard_network_operator_evidence() RETURNS TRIGGER",
+      "security": "private dispatch_network_writer owner; fixed search_path; no PUBLIC/runtime/operator direct EXECUTE; deferred evidence where required"
+    },
+    {
+      "id": "NWS-GUARD-06",
+      "status": "PROPOSED",
+      "signature": "dispatch.require_operational_intake_authority() RETURNS TRIGGER",
+      "security": "private dispatch_network_writer owner; fixed search_path; no PUBLIC/runtime/operator direct EXECUTE; deferred evidence where required"
+    }
+  ],
+  "internal_delivery_amendment": {
+    "id": "NWS-MAIL-01",
+    "status": "PROPOSED",
+    "scope": "Identity-owned private adapter only; existing protected outbox and SmtpCustomerDelivery/sendPrepared reused",
+    "details": "Claim/filter STAFF_INV by immutable target purpose; existing SUPPORT invitation stays /staff/activate, OPERATIONS fixed route /ops/activate. No caller-controlled path/body/recipient or second transport. Wrong-purpose acceptance rejected; provider acceptance is not verified delivery. No real SMTP in source/test."
+  }
+}

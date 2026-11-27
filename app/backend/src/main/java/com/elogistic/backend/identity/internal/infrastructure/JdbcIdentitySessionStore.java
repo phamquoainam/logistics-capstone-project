@@ -38,11 +38,13 @@ public final class JdbcIdentitySessionStore implements IdentitySessionStore {
         return store.transaction(a->work.apply(new Transaction() {
             public IdentityGrantStore.Transaction accounts() {return a;}
             public Optional<UUID> findUsername(String username) {
+                if(storage==IdentitySessionStorage.OPS)return jdbc.query("SELECT s.account_id FROM identity.local_staff_principal s WHERE s.exact_email=? AND identity.operations_staff_eligible(s.account_id)",(r,n)->r.getObject(1,UUID.class),username).stream().findFirst();
                 if(storage==IdentitySessionStorage.STAFF)return jdbc.query("SELECT s.account_id FROM identity.local_staff_principal s WHERE s.exact_email=? AND identity.support_staff_eligible(s.account_id)",(r,n)->r.getObject(1,UUID.class),username).stream().findFirst();
                 if(storage==IdentitySessionStorage.CUSTOMER)return jdbc.query("SELECT c.account_id FROM identity.customer_identifier c JOIN identity.user_account a ON a.id=c.account_id WHERE c.exact_email=? AND c.status='ACTIVE' AND c.exact_email=a.email COLLATE \"C\" AND a.email_verified AND a.status='ACTIVE'",(r,n)->r.getObject(1,UUID.class),username).stream().findFirst();
                 return jdbc.query("SELECT id FROM identity.user_account WHERE username=?",(r,n)->r.getObject(1,UUID.class),username).stream().findFirst();}
             public String passwordVerifier(UUID account) {return jdbc.queryForObject("SELECT password_hash FROM identity.user_account WHERE id=?",String.class,account);}
             public boolean eligibleRealm(UUID account) {
+                if(storage==IdentitySessionStorage.OPS)return Boolean.TRUE.equals(jdbc.queryForObject("SELECT identity.operations_staff_eligible(?)",Boolean.class,account));
                 if(storage==IdentitySessionStorage.STAFF)return Boolean.TRUE.equals(jdbc.queryForObject("SELECT identity.support_staff_eligible(?)",Boolean.class,account));
                 if(storage==IdentitySessionStorage.CUSTOMER)return Boolean.TRUE.equals(jdbc.queryForObject("SELECT EXISTS(SELECT 1 FROM identity.customer_identifier c JOIN identity.user_account a ON a.id=c.account_id WHERE a.id=? AND c.status='ACTIVE' AND c.exact_email=a.email COLLATE \"C\" AND a.email_verified AND a.status='ACTIVE')",Boolean.class,account));
                 // Bounded approved Identity Management pair only; external owner authority is not invented.
@@ -82,7 +84,7 @@ public final class JdbcIdentitySessionStore implements IdentitySessionStore {
             public void audit(UUID account,UUID request,String event,Instant now) {
                 if(!Set.of("IDENTITY_LOGIN","IDENTITY_REFRESH","IDENTITY_REFRESH_REPLAY","IDENTITY_LOGOUT").contains(event))throw new IllegalArgumentException("SESSION_EVENT_INVALID");
                 boolean customer=storage==IdentitySessionStorage.CUSTOMER;
-                boolean staff=storage==IdentitySessionStorage.STAFF;
+                boolean staff=storage==IdentitySessionStorage.STAFF||storage==IdentitySessionStorage.OPS;
                 String recorded=staff?"STAFF_"+event.substring("IDENTITY_".length()):customer?"CUSTOMER_"+event.substring("IDENTITY_".length()):event;
                 one(jdbc.update("INSERT INTO identity.audit_entry(id,actor_id,target_id,event_type,source,reason,request_id,occurred_at) VALUES (?,?,?,?,?,?,?,?)",UUID.randomUUID(),account,account,recorded,staff?"IDENTITY_STAFF":customer?"IDENTITY_CUSTOMER":"IDENTITY_APPLICATION",staff?"Staff session transition":customer?"Customer session transition":"Identity session transition",request.toString(),stamp(now)));
             }

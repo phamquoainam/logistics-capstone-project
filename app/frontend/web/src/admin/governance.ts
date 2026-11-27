@@ -15,14 +15,14 @@ export const governanceId = (v: unknown): v is string => typeof v === 'string' &
 const positive = (v: unknown) => Number.isSafeInteger(v) && Number(v) > 0;
 const instant = (v: unknown) => typeof v === 'string' && /Z$/.test(v) && Number.isFinite(Date.parse(v));
 const text = (v: unknown, limit: number) => typeof v === 'string' && !!v.trim() && [...v].length <= limit;
-const capabilities = ['application.read', 'application.evidence.read', 'application.assign', 'application.review', 'application.decide', 'org.read', 'org.suspend', 'org.reinstate', 'audit.read', 'task.read'];
+const capabilities = ['application.read', 'application.evidence.read', 'application.assign', 'application.review', 'application.decide', 'org.read', 'org.suspend', 'org.reinstate', 'audit.read', 'task.read', 'application.comment.write', 'org.profile.read', 'org.members.read'];
 export function parseGovernanceContext(value: unknown, account: string): GovernanceContext {
   const v = shape(value, ['accountId', 'realmId', 'authorityVersion', 'assignments']);
   if (v.accountId !== account || !governanceId(v.realmId) || typeof v.authorityVersion !== 'string' || !/^[a-f0-9]{64}$/.test(v.authorityVersion) || !Array.isArray(v.assignments) || v.assignments.length > 100) bad();
   const ids = new Set<string>();
   for (const raw of v.assignments as unknown[]) {
     const a = shape(raw, ['id', 'scopeType', 'policyId', 'organizationId', 'permissions', 'version', 'expiresAt']);
-    if (!governanceId(a.id) || ids.has(a.id) || !positive(a.version) || !instant(a.expiresAt) || !Array.isArray(a.permissions) || !a.permissions.length || a.permissions.length > 10 || new Set(a.permissions).size !== a.permissions.length || a.permissions.some(p => typeof p !== 'string' || !capabilities.includes(p))) bad();
+    if (!governanceId(a.id) || ids.has(a.id) || !positive(a.version) || !instant(a.expiresAt) || !Array.isArray(a.permissions) || !a.permissions.length || a.permissions.length > 13 || new Set(a.permissions).size !== a.permissions.length || a.permissions.some(p => typeof p !== 'string' || !capabilities.includes(p))) bad();
     if (a.scopeType === 'POLICY' ? !governanceId(a.policyId) || a.organizationId !== null : a.scopeType !== 'ORGANIZATION' || !governanceId(a.organizationId) || a.policyId !== null) bad();
     ids.add(a.id as string);
   }
@@ -57,14 +57,21 @@ export function parseReviewData(value: unknown, target: string): ReviewData {
   for (const raw of v.evidence as unknown[]) { const e = shape(raw, ['id', 'applicationId', 'purpose', 'state', 'mime', 'bytes', 'sha256', 'version', 'screenedAt']);if (!governanceId(e.id) || e.applicationId !== target || !['REGISTRATION', 'REPRESENTATIVE_AUTHORIZATION'].includes(String(e.purpose)) || e.state !== 'CLEAN' || typeof e.sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(e.sha256) || !positive(e.version) || !positive(e.bytes) || Number(e.bytes) > 5242880 || !instant(e.screenedAt)) bad(); }
   return v as ReviewData;
 }
-export function currentPolicyVersion(value: unknown, target: string, revision: number): string {
-  const v = shape(value, ['items', 'page', 'size', 'hasNext']);if (v.page !== 0 || v.size !== 20 || typeof v.hasNext !== 'boolean' || !Array.isArray(v.items) || v.items.length > 20) bad();
+export type ApplicationRevision = { applicationId: string; revision: number; submittedAt: string; policyVersion: string; organizationDisplayName: string; digest: string; evidenceIds: string[]; contactVerifiedAt: string };
+export type ApplicationRevisionPage = { items: ApplicationRevision[]; page: number; size: number; hasNext: boolean };
+export function parseApplicationRevisions(value: unknown, target: string, page: number): ApplicationRevisionPage {
+  const v = shape(value, ['items', 'page', 'size', 'hasNext']);if (v.page !== page || v.size !== 20 || typeof v.hasNext !== 'boolean' || !Array.isArray(v.items) || v.items.length > 20 || v.hasNext && v.items.length !== 20) bad();
+  const seen = new Set<number>();
   for (const raw of v.items as unknown[]) {
     const r = shape(raw, ['applicationId', 'revision', 'submittedAt', 'policyVersion', 'organizationDisplayName', 'digest', 'evidenceIds', 'contactVerifiedAt']);
-    if (r.applicationId !== target || !positive(r.revision) || !instant(r.submittedAt) || !instant(r.contactVerifiedAt) || !text(r.organizationDisplayName, 160) || !text(r.policyVersion, 64) || typeof r.digest !== 'string' || !/^[a-f0-9]{64}$/.test(r.digest) || !Array.isArray(r.evidenceIds) || r.evidenceIds.length < 2 || r.evidenceIds.length > 5 || r.evidenceIds.some(id => !governanceId(id))) bad();
-    if (r.revision === revision) return r.policyVersion as string;
+    if (r.applicationId !== target || !positive(r.revision) || seen.has(Number(r.revision)) || !instant(r.submittedAt) || !instant(r.contactVerifiedAt) || !text(r.organizationDisplayName, 160) || !text(r.policyVersion, 64) || typeof r.digest !== 'string' || !/^[a-f0-9]{64}$/.test(r.digest) || !Array.isArray(r.evidenceIds) || r.evidenceIds.length < 2 || r.evidenceIds.length > 5 || new Set(r.evidenceIds).size !== r.evidenceIds.length || r.evidenceIds.some(id => !governanceId(id))) bad();
+    seen.add(Number(r.revision));
   }
-  return bad();
+  return v as ApplicationRevisionPage;
+}
+export function currentPolicyVersion(value: unknown, target: string, revision: number): string {
+  const row = parseApplicationRevisions(value, target, 0).items.find(row => row.revision === revision);
+  return row?.policyVersion ?? bad();
 }
 
 export type ApplicationAuditPage = { items: { id: string; actorId: string; operation: string; targetType: 'APPLICATION'; targetId: string; priorVersion: number; newVersion: number; revision: number | null; policyVersion: string; reasonCode: string; occurredAt: string; requestId: string }[]; page: number; size: number; hasNext: boolean };

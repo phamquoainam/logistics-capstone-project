@@ -13,11 +13,14 @@ public interface BusinessShipmentManagement {
     record Summary(String bookedShipments,String waitingForHandover,String unassigned,String confirmedFeesVnd,String unpaidFeesVnd){}
     record Item(BusinessShipments.Shipment shipment,Source source,Assignment assignment,List<String> allowedActions){public Item{allowedActions=List.copyOf(allowedActions);}}
     record Page(Instant generatedAt,Summary summary,String total,int page,boolean hasNext,List<Item> items){public Page{items=List.copyOf(items);}}
+    record ItemV2(BusinessShipments.Shipment shipment,Source source,Assignment assignment,List<String> allowedActions,PilotHandling.Handling handling){public ItemV2{allowedActions=List.copyOf(allowedActions);}}
+    record PageV2(Instant generatedAt,Summary summary,String total,int page,boolean hasNext,List<ItemV2> items){public PageV2{items=List.copyOf(items);}}
     record History(UUID id,String operation,UUID actorAccountId,UUID priorAssigneeAccountId,UUID assigneeAccountId,long priorVersion,long newVersion,Instant occurredAt){}
     record HistoryPage(List<History> items,int page,boolean hasNext){public HistoryPage{items=List.copyOf(items);}}
     record Receipt(UUID targetId,long version,String outcome){}
     record Export(UUID exportId,UUID organizationId,Instant generatedAt,boolean piiIncluded,int rowCount,List<String> columns,List<List<String>> rows){public Export{columns=List.copyOf(columns);rows=rows.stream().map(List::copyOf).toList();}}
     Page read(Access access,Map<String,String> parameters,Consumer<List<FeeBinding>> validateFees);
+    default PageV2 readV2(Access access,Map<String,String> parameters,Consumer<List<FeeBinding>> validateFees){throw new IllegalStateException("BUSINESS_HANDLING_UNAVAILABLE");}
     Export export(Access access,Map<String,String> parameters,Consumer<List<FeeBinding>> validateFees);
     Assignment assignment(Access access,UUID shipment);
     Assignment assign(Access access,UUID shipment,UUID assignee,String reason,long expected,UUID key);

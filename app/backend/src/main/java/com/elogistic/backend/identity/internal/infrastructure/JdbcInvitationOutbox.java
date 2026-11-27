@@ -69,6 +69,12 @@ public final class JdbcInvitationOutbox {
         return new JdbcInvitationOutbox(runtime,protection,policy,clock,ActionProof.Purpose.INVITATION,true,environment,bootstrapEnabled);
     }
     private JdbcInvitationOutbox(DataSource runtime,InvitationProtection protection,Policy policy,Clock clock,ActionProof.Purpose purpose,boolean admin,String environment,boolean bootstrapEnabled) {
+        this(runtime,protection,policy,clock,purpose,admin,environment,bootstrapEnabled,false);
+    }
+    public static JdbcInvitationOutbox operations(DataSource source,InvitationProtection protection,Policy policy,Clock clock){
+        return new JdbcInvitationOutbox(source,protection,policy,clock,ActionProof.Purpose.STAFF_INV,false,null,false,true);
+    }
+    private JdbcInvitationOutbox(DataSource runtime,InvitationProtection protection,Policy policy,Clock clock,ActionProof.Purpose purpose,boolean admin,String environment,boolean bootstrapEnabled,boolean operations) {
         if(purpose!=ActionProof.Purpose.INVITATION && purpose!=ActionProof.Purpose.STAFF_INV)throw rejected();
         dataSource=Objects.requireNonNull(runtime);jdbc=new JdbcTemplate(runtime);transactions=new JdbcIdentityGrantStore(runtime);
         this.protection=Objects.requireNonNull(protection);this.policy=Objects.requireNonNull(policy);this.clock=Objects.requireNonNull(clock);
@@ -77,6 +83,7 @@ public final class JdbcInvitationOutbox {
         if(admin&&!aon)throw rejected();
         String root="EXISTS(SELECT 1 FROM identity.realm ar WHERE ar.id=o.realm_id AND ar.bootstrap_account_id=o.account_id AND ar.activated_at IS NULL AND ar.status='INACTIVE') AND (identity.local_admin_environment_matches('LOCAL') OR identity.local_admin_environment_matches('TEST'))";
         String partition=purpose==ActionProof.Purpose.STAFF_INV||!aon?"TRUE":admin?"(identity.local_admin_registered(o.account_id)"+(bootstrapEnabled?" OR ("+root+")":"")+")":"NOT identity.local_admin_registered(o.account_id) AND NOT ("+root+")";
+        if(purpose==ActionProof.Purpose.STAFF_INV)partition="EXISTS(SELECT 1 FROM identity.local_staff_principal sp WHERE sp.account_id=o.account_id AND sp.purpose='"+(operations?"OPERATIONS":"SUPPORT")+"')";
         selection="o.purpose='"+purpose.name()+"' AND ("+partition+")";
         eligibility=admin?"identity.local_admin_environment_matches('"+environment+"') AND ("+ADMIN_ELIGIBLE+(bootstrapEnabled?" OR ("+BOOTSTRAP_ELIGIBLE+")":"")+")":purpose==ActionProof.Purpose.INVITATION?ELIGIBLE:STAFF_ELIGIBLE;
     }

@@ -1,0 +1,15 @@
+FROM node:24.13.0-bookworm-slim@sha256:4660b1ca8b28d6d1906fd644abe34b2ed81d15434d26d845ef0aced307cf4b6f AS build
+WORKDIR /build
+COPY packages/api-client/ packages/api-client/
+RUN npm --prefix packages/api-client ci --ignore-scripts --no-audit --no-fund && npm --prefix packages/api-client run build
+COPY app/frontend/web/package.json app/frontend/web/package-lock.json app/frontend/web/
+RUN npm --prefix app/frontend/web ci --ignore-scripts --no-audit --no-fund
+COPY app/frontend/web/ app/frontend/web/
+RUN npm --prefix app/frontend/web run build:customer
+
+FROM nginx:1.30.8-alpine@sha256:8eb04fe3b385090e9aa02961f77398ad09b6bf33ab07f6669a5bb7acce22c0d3
+RUN apk add --no-cache curl
+COPY --from=build /build/app/frontend/web/dist-customer/ /usr/share/nginx/html/
+COPY infra/local/nginx.conf /etc/nginx/nginx.conf
+EXPOSE 8443
+HEALTHCHECK --interval=10s --timeout=5s --retries=12 CMD curl --fail --silent --cacert /run/web/ca.crt https://localhost:8443/api/v1/public-media/hero-network.svg >/dev/null || exit 1

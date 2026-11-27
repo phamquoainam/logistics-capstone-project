@@ -1,0 +1,63 @@
+name: Portable baseline
+on:
+  pull_request:
+    branches: [develop]
+  push:
+    branches: [develop]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: portable-baseline-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  compose:
+    name: Portable Compose PostgreSQL 18 HTTPS
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      COMPOSE_PROJECT_NAME: argopost-baseline-ci
+      PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/baseline-browsers
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: '24.13.0'
+          package-manager-cache: false
+      - name: Build and cold start the clean checkout
+        run: |
+          docker compose config --quiet
+          docker compose up --build -d --wait --wait-timeout 420
+          mkdir -p .local
+          python3 scripts/dev/verify-compose.py --project "$COMPOSE_PROJECT_NAME" > .local/cold.json
+          python3 -c "import json; d=json.load(open('.local/cold.json')); assert d['noAutomaticAccounts']"
+      - name: Same-volume restart and canonical binding replay
+        run: |
+          docker compose stop
+          docker compose up -d --wait --wait-timeout 300
+          python3 scripts/dev/verify-compose.py --project "$COMPOSE_PROJECT_NAME" > .local/restart.json
+          python3 -c "import json; a=json.load(open('.local/cold.json')); b=json.load(open('.local/restart.json')); assert all(a[k]==b[k] for k in ['database','migrations','envBindReceipts','envBindAudit']); assert b['noAutomaticAccounts']"
+      - name: Synthetic HTTPS registration, SMTP verification, login and security
+        run: |
+          npm --prefix packages/api-client ci --ignore-scripts --no-audit --no-fund
+          npm --prefix app/frontend/web ci --ignore-scripts --no-audit --no-fund
+          (cd app/frontend/web && npx --no-install playwright install --with-deps chromium)
+          docker compose cp web:/run/web/web.crt .local/argopost-web.crt
+          node infra/local/browser-smoke.mjs > .local/browser.json
+      - name: Publish only non-secret verification
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: portable-baseline-evidence
+          path: |
+            .local/cold.json
+            .local/restart.json
+            .local/browser.json
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Stop this job's isolated project, retain data until runner disposal
+        if: always()
+        run: docker compose stop

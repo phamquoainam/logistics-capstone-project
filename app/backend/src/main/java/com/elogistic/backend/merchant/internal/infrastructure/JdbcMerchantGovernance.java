@@ -16,7 +16,8 @@ import static com.elogistic.backend.merchant.api.GovernanceFailure.Code.*;
 /** Joins the current Identity physical transaction; never manufactures a command actor or scope. */
 public final class JdbcMerchantGovernance implements MerchantGovernance {
     private static final Set<String> CODES=Set.of("application.read","application.evidence.read","application.assign",
-        "application.review","application.decide","org.read","org.suspend","org.reinstate","audit.read","task.read");
+        "application.review","application.decide","org.read","org.suspend","org.reinstate","audit.read","task.read",
+        "application.comment.write","org.profile.read","org.members.read","org.lifecycle.propose","org.lifecycle.review");
     private final DataSource source;private final JdbcTemplate jdbc;private final Clock clock;
     private final AdminAdmission reads;private final AdminCommandAdmission commands;
     private final ThreadLocal<Object> active=new ThreadLocal<>();

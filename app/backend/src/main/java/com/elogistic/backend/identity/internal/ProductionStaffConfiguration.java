@@ -19,7 +19,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /** Staff endpoints are deny-only by default; enabling requires both explicit config and physical DB binding. */
-@Configuration @Profile("customer") @Import(ProductionStaffWebConfiguration.class)
+@Configuration @Profile("customer") @Import({ProductionStaffWebConfiguration.class,ProductionOperationsConfiguration.class})
 public class ProductionStaffConfiguration {
     static boolean enabled(Environment environment){
         String raw=environment.getProperty("identity.staff.enabled","false");
@@ -62,7 +62,7 @@ public class ProductionStaffConfiguration {
         finally{verifiers.values().forEach(k->Arrays.fill(k,(byte)0));encryptors.values().forEach(k->Arrays.fill(k,(byte)0));if(limiter!=null)Arrays.fill(limiter,(byte)0);}
     }
     @Bean StaffAdmission staffAdmission(ProductionStaffComposition.Services services){return services.admission();}
-    @Bean StaffRequestContext staffRequestContext(ProductionStaffComposition.Services services){return services.requests();}
+    @Bean @Primary StaffRequestContext staffRequestContext(ProductionStaffComposition.Services services){return services.requests();}
     @Bean StaffDeliverySchedule staffDeliverySchedule(ProductionStaffComposition.Services services){return new StaffDeliverySchedule(services);}
     static final class StaffDeliverySchedule {
         private final ProductionStaffComposition.Services services;

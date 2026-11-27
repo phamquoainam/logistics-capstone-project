@@ -1,3 +1,4 @@
+import CarrierSites from './CarrierSites';
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { adminSession, AdminSessionError } from './session';
@@ -105,10 +106,11 @@ export default function AdminDashboard({ subject, logout, busy }: { subject: { i
         {context && !moduleAllowed && <ModuleDependency id={activeModule?.id} allowed={false} />}
         {context && moduleAllowed && activeModule?.id === 'ADM-17' && <AdminWorkCenter context={context} capabilities={domainCapabilities} />}
         {context && moduleAllowed && activeModule?.id === 'ADM-02' && <MerchantApplications accountId={subject.id} />}
+        {context && moduleAllowed && activeModule?.id === 'ADM-05' && <CarrierSites />}
         {context && moduleAllowed && activeModule?.id === 'ADM-03' && <MerchantOrganizations />}
         {context && moduleAllowed && activeModule?.id === 'ADM-16' && <MerchantAudit />}
         {context && moduleAllowed && activeModule?.id === 'ADM-18' && <AuthorityView accountId={subject.id} />}
-        {context && moduleAllowed && !supportedSurface && activeModule?.id !== 'ADM-17' && activeModule?.id !== 'ADM-02' && activeModule?.id !== 'ADM-03' && activeModule?.id !== 'ADM-16' && activeModule?.id !== 'ADM-18' && <ModuleDependency id={activeModule?.id} allowed />}
+        {context && moduleAllowed && !supportedSurface && activeModule?.id !== 'ADM-05' && activeModule?.id !== 'ADM-17' && activeModule?.id !== 'ADM-02' && activeModule?.id !== 'ADM-03' && activeModule?.id !== 'ADM-16' && activeModule?.id !== 'ADM-18' && <ModuleDependency id={activeModule?.id} allowed />}
         {context && moduleAllowed && advanced && <DashboardV2View context={context} />}
         {context && moduleAllowed && supportedSurface && !advanced && sourceMode !== null && <>
           {activeModule?.id === 'ADM-01' && <div className="iw-tabs" role="tablist" aria-label="Dashboard điều hành">{tabs.map((item, index) => <button key={item.id} id={'admin-tab-' + item.id} type="button" role="tab" aria-controls="admin-tab-panel" tabIndex={tab === item.id ? 0 : -1} aria-selected={tab === item.id} onClick={() => filters({ tab: item.id === 'overview' ? null : item.id })} onKeyDown={event => {
