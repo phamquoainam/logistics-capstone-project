@@ -439,5 +439,27 @@
     "oldWorkflow": "FAIL context runner unavailable at job env",
     "correctedWorkflow": "PASS"
   },
-  "githubPr": "https://github.com/phamquoainam/logistics-capstone-project/pull/52"
+  "githubPr": "https://github.com/phamquoainam/logistics-capstone-project/pull/52",
+  "pgCiRepair": {
+    "failedRun": 46004001802,
+    "head": "b9afb26f17e1ad106fe3c56c808c1e7da3a87c0a",
+    "passed": 1325,
+    "allowedSkips": 5,
+    "nonpassing": 22,
+    "repairs": "test-only exact V49 inventories/history and current intake fixture schema; all historical migration bytes/targets/checksum/data/security assertions retained",
+    "focusedRuns": [
+      {
+        "id": "276fe614f74f473fb3a32efdecca1bf8",
+        "passed": 4,
+        "failed": 0
+      },
+      {
+        "id": "5715fce404fa4a6e92fda5d5dddb3ff6",
+        "passed": 17,
+        "failed": 0
+      }
+    ],
+    "snapshotSha256": "0f878a1a3de443e5f89d0ac77c861d236d7e83e59e091a52a8e221ea3a80eb00",
+    "nextCiRequired": true
+  }
 }

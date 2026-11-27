@@ -3,6 +3,10 @@
 2026-11-27 · Owner release exception · LOCAL/SOURCE/TEST only.
 Status: **IN_PROGRESS — NOT PUBLISHED / NOT MERGED**.
 
+Publication checkpoint: **PR52 OPEN — MERGE_BLOCKED**. Source is published on the
+release branch; the initial status above records preparation time, not live Git
+state. The latest GitHub checks/merge record at PR52 are authoritative.
+
 Nam is temporary Integration Writer for Docker/build/local configuration and
 accepted Slice1 integration. Hoàng/Triết retain equal domain authority. No domain
 contract, historical migration, real grant or production authority is expanded.
@@ -201,3 +205,42 @@ Latest exact-head GitHub checks and merge record are authoritative for publicati
 this execution history does not imply CI/merge PASS. Original auto-review usage
 failure temporarily blocked a read-only diagnostic; resumed through normal
 review after user continuation, without a second execution path or bypass.
+
+### PG integration failures on b9afb26 and focused repairs
+
+Run46004001802: Architecture PASS, Compose run46004001940 PASS; H2 failed at
+WRAPPER_VERSION DOWNLOAD_FAILED before tests. PG completed29m25s with1325 passed,
+5 allowed skips and22 nonpassing cases. No full-suite PASS is claimed.
+
+Focused reproduction de463f3746f14502995661d12bc36ed0 was RED: latest-history
+assertion still ended at V47; historical-to-latest counts were two too small;
+current intake reader ran on a V40 Dashboard fixture without owner_type.
+Preserved original fixture source in the private preservation archive first.
+
+Repairs change test fixtures only, not V1-V49, application code, SQL guards or
+ACL: exact migration history now includes48/49;15 upgrade expectations account
+for the two approved migrations, retaining all historical targets, zero-rerun,
+checksum and row-preservation assertions. Exact foundation owner-table inventory
+is171, verified against the authoritative V49 catalog (was stale164). Dashboard
+live intake fixture migrates to latest before invoking the current intake code;
+historical onboarding target tests remain at their original versions.
+
+Focused276fe614f74f473fb3a32efdecca1bf8: **4/4 PASS**. Additional focused
+5715fce404fa4a6e92fda5d5dddb3ff6: **17/17 PASS**, including14 remaining migration
+failures and genuine Admin Dashboard/Core/Business S1 HTTPS browser scenarios.
+Both runs Maven0, sourceUnchanged=true, snapshot SHA256
+0f878a1a3de443e5f89d0ac77c861d236d7e83e59e091a52a8e221ea3a80eb00.
+CI-only browser failures are not declared resolved solely from local results;
+the next exact-head CI must confirm them. No retries/assertion/authority weakening.
+
+Latest complete audit:186 changed/staged/untracked root paths are all in the
+explicit release allowlist; zero unexplained paths. Original HEAD/index retained,
+all48 migration bytes unchanged. Only intentional release documentation/source
+inventory and the three backed-up test fixtures differ from the original157-path
+WIP snapshot. No source from another concurrent writer was overwritten.
+
+Inventory categories now distinguish APPROVED, REQUIRED and UNAPPROVED proposal
+documents (documentation only, no runtime). LOCAL_ONLY and SECRET/SENSITIVE
+exclusions remain explicit. Spec012 remains PROPOSED/BLOCKED_CONTRACT. No claim
+that local fixture fixes are already in develop; publication is through PR52 and
+post-merge checks on its eventual exact merge commit.

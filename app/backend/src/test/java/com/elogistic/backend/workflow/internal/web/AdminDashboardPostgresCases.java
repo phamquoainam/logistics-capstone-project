@@ -131,6 +131,9 @@ public final class AdminDashboardPostgresCases implements AutoCloseable {
         });
     }
     void accept(PilotShipments.Shipment shipment)throws Exception{
+        // Current intake reader requires the approved owner-neutral V48 schema.
+        // Preserve historical onboarding targets; upgrade only this live shipping fixture.
+        db.flyway("latest",REALM).migrate();db.flyway("latest",REALM).validate();
         UUID staff=UUID.randomUUID();db.ownerExecute("SET argopost.operator_environment='TEST';SELECT dispatch.configure_pilot_station_staff('"+staff+"','SIM-DROP-A1','GRANT')");
         record Staff(UUID actorId,UUID requestId) implements StationIntake.Access,PilotHandling.CarrierAccess {public String stationCode(){return "SIM-DROP-A1";}public void requireCurrent(){assertTrue(TransactionSynchronizationManager.isActualTransactionActive());}public void meaningfulAction(){requireCurrent();}}
         new TransactionTemplate(new JdbcTransactionManager(source)).execute(status->{var access=new Staff(staff,UUID.randomUUID());var handling=new JdbcPilotHandling(source,true,"TEST");var stations=new JdbcStationIntake(source,clock,true,"TEST");var cargo=handling.atStation(access,shipment.id());var scans=cargo.handling().parcels().stream().map(p->stations.scan(access,"SIM-DROP-A1",cargo,p.barcode(),UUID.randomUUID()).id()).toList();var accepted=stations.accept(access,"SIM-DROP-A1",cargo,scans,0,"MATCHED",UUID.randomUUID());handling.accept(access,shipment.id(),0,accepted.id(),accepted.occurredAt());return null;});

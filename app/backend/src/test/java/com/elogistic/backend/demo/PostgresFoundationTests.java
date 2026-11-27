@@ -44,8 +44,8 @@ class PostgresFoundationTests extends DemoTestSupport {
   List<String> schemas=jdbc.queryForList("SELECT nspname FROM pg_namespace WHERE nspname IN ('identity','merchant','orders','pricing','warehouse','dispatch','finance','routing','notification') ORDER BY nspname",String.class);
   assertEquals(List.of("dispatch","finance","identity","merchant","notification","orders","pricing","routing","warehouse"),schemas);
   assertEquals(10,jdbc.queryForObject("SELECT count(*) FROM pg_namespace n JOIN pg_roles r ON r.oid=n.nspowner WHERE r.rolname=? AND n.nspname IN ('platform','identity','merchant','orders','pricing','warehouse','dispatch','finance','routing','notification')",Integer.class,requiredEnv("PG_TEST_OWNER_ROLE")));
-  // Exact V1-V32/V34-V43 inventory: includes fifteen approved P0 tables.
-  assertEquals(164,jdbc.queryForObject("SELECT count(*) FROM pg_tables WHERE tableowner=? AND schemaname IN ('platform','identity','merchant','orders','pricing','finance','dispatch','notification')",Integer.class,requiredEnv("PG_TEST_OWNER_ROLE")));
+  // Exact V1-V49 inventory (no V33), including accepted NWS/read/preparation tables.
+  assertEquals(171,jdbc.queryForObject("SELECT count(*) FROM pg_tables WHERE tableowner=? AND schemaname IN ('platform','identity','merchant','orders','pricing','finance','dispatch','notification')",Integer.class,requiredEnv("PG_TEST_OWNER_ROLE")));
  }
 
  @Test void runtimeCannotDdlAssumeOwnerOrReadHistory() throws Exception {
