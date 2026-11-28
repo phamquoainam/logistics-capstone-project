@@ -24,6 +24,22 @@ test('Customer submission through independent review activates real Organization
     await target.getByLabel('Application ID', { exact: true }).fill(application);
     await target.getByRole('button', { name: 'Mở theo mã hồ sơ', exact: true }).click();
   };
+  const openWorkApplication = async (target: Page, kind: 'MERCHANT_REVIEW' | 'MERCHANT_DECISION', action: 'BEGIN' | 'APPROVE') => {
+    // Await this navigation's authoritative queue, rather than treating generic
+    // network-idle or an unrelated link as proof that the work item is ready.
+    const response = target.waitForResponse(r => r.request().method() === 'GET' && new URL(r.url()).pathname === '/api/v1/admin/work-items');
+    await navigateAdmin(target, '/admin/account');
+    const queue = await response;
+    expect(queue.status()).toBe(200);
+    const body = await queue.json() as { items: { applicationId: string; kind: string; allowedActions: string[] }[] };
+    const item = body.items.find(row => row.applicationId === application);
+    expect(item?.kind).toBe(kind);
+    expect(item?.allowedActions).toContain(action);
+    const row = target.getByRole('region', { name: 'Hộp công việc Merchant', exact: true }).locator('tbody tr').filter({ has: target.getByText(application, { exact: true }) });
+    const detail = target.waitForResponse(r => r.request().method() === 'GET' && new URL(r.url()).pathname === '/api/v1/admin/merchant-applications/' + application);
+    await row.getByRole('link', { name: 'Mở hồ sơ', exact: true }).click();
+    expect((await detail).status()).toBe(200);
+  };
   await page.goto('/login');await page.getByLabel('Email đã xác minh').fill(fixture.customerEmail);await page.getByLabel('Mật khẩu', { exact: true }).fill(fixture.password);await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();await expect(page).toHaveURL(new RegExp('/personal$'));
   await mark('APPLICATION_DRAFT');
   await page.goto('/personal/applications');await page.getByRole('button', { name: 'Tạo bản nháp Merchant', exact: true }).click();await expect(page).toHaveURL(new RegExp('/personal/applications/[a-f0-9-]{36}$'));const application = new URL(page.url()).pathname.split('/').at(-1)!;
@@ -67,7 +83,7 @@ test('Customer submission through independent review activates real Organization
     // explicitly below, not by an unrelated 60-second browser timer.
     await decider.getByRole('button', { name: 'Đăng xuất', exact: true }).click();await expect(decider).toHaveURL(/\/admin\/login$/);await decider.goto('about:blank');
     await mark('REVIEW');
-    await login(reviewer, fixture.reviewer);if (fixture.businessIntake) await openApplication(reviewer);else { await navigateAdmin(reviewer, '/admin/account');await expect(reviewer.getByRole('link', { name: 'Mở hồ sơ', exact: true })).toBeVisible();await reviewer.getByRole('link', { name: 'Mở hồ sơ', exact: true }).click(); }await reviewer.getByRole('textbox', { name: 'Lý do', exact: true }).fill('Synthetic full-stack review');await reviewer.getByRole('button', { name: 'Bắt đầu thẩm định', exact: true }).click();await reviewer.getByRole('button', { name: 'Mở dữ liệu thẩm định', exact: true }).click();
+    await login(reviewer, fixture.reviewer);if (fixture.businessIntake) await openApplication(reviewer);else await openWorkApplication(reviewer, 'MERCHANT_REVIEW', 'BEGIN');await reviewer.getByRole('textbox', { name: 'Lý do', exact: true }).fill('Synthetic full-stack review');await reviewer.getByRole('button', { name: 'Bắt đầu thẩm định', exact: true }).click();await reviewer.getByRole('button', { name: 'Mở dữ liệu thẩm định', exact: true }).click();
     for (const name of ['Hồ sơ đăng ký hợp lệ', 'Thẩm quyền đại diện hợp lệ', 'Liên hệ đã xác minh', 'Đã đối chiếu trùng lặp', 'Không có xung đột đã biết']) await reviewer.getByRole('checkbox', { name, exact: true }).check();await reviewer.getByRole('textbox', { name: 'Lý do', exact: true }).fill('Synthetic complete checklist');await Promise.all([reviewer.waitForLoadState('networkidle'), decider.waitForLoadState('networkidle'), page.waitForLoadState('networkidle')]);
     if (fixture.businessIntake) {
       const review = reviewer.waitForResponse(r => r.request().method() === 'POST' && new URL(r.url()).pathname.endsWith('/review'));
@@ -84,7 +100,18 @@ test('Customer submission through independent review activates real Organization
     if (!fixture.businessIntake) expect(await reviewer.evaluate(() => [localStorage.length, sessionStorage.length])).toEqual([0, 0]);
     await reviewer.getByRole('button', { name: 'Đăng xuất', exact: true }).click();await expect(reviewer).toHaveURL(/\/admin\/login$/);await reviewer.goto('about:blank');await login(decider, fixture.decider);
     await mark('APPROVAL');
-    if (fixture.businessIntake) await openApplication(decider);else { await navigateAdmin(decider, '/admin/account');await decider.getByRole('link', { name: 'Mở hồ sơ', exact: true }).click(); }await decider.getByLabel('Quyết định', { exact: true }).selectOption('APPROVE');await decider.getByLabel('Lý do phê duyệt', { exact: true }).fill('Synthetic independent approval');await decider.getByLabel('Mật khẩu xác thực lại', { exact: true }).fill(fixture.password);const approved = decider.waitForResponse(r => r.request().method() === 'POST' && new URL(r.url()).pathname.endsWith('/approval'));await decider.getByRole('button', { name: 'Xác thực & phê duyệt hồ sơ', exact: true }).click();expect((await approved).status()).toBe(200);await decider.waitForLoadState('networkidle');
+    if (fixture.businessIntake) await openApplication(decider);
+    else await openWorkApplication(decider, 'MERCHANT_DECISION', 'APPROVE');
+    await expect(decider.getByLabel('Quyết định', { exact: true })).toBeEnabled();
+    await decider.getByLabel('Quyết định', { exact: true }).selectOption('APPROVE');
+    await decider.getByLabel('Lý do phê duyệt', { exact: true }).fill('Synthetic independent approval');
+    await decider.getByLabel('Mật khẩu xác thực lại', { exact: true }).fill(fixture.password);
+    const stepup = decider.waitForResponse(r => r.request().method() === 'POST' && new URL(r.url()).pathname === '/api/v1/admin/governance-reauthentications');
+    const approved = decider.waitForResponse(r => r.request().method() === 'POST' && new URL(r.url()).pathname.endsWith('/approval'));
+    await decider.getByRole('button', { name: 'Xác thực & phê duyệt hồ sơ', exact: true }).click();
+    expect((await stepup).status()).toBe(200);
+    expect((await approved).status()).toBe(200);
+    await decider.waitForLoadState('networkidle');
     await mark('DASHBOARD');
     // The existing Admin acceptance keeps all its assertions. BIA reuses only
     // the canonical approval journey; it does not rerun unrelated Portal UX.
