@@ -2508,3 +2508,9 @@ browser PASS. Merchant Directory duplicate H1 reproduced in genuine two-CPU
 HTTPS/PG18 and deterministic UI; wrapper heading ownership fixed. Six UI and
 two genuine resource-bounded scenarios PASS. Core CI acceptance remains pending
 exact-head rerun; fixed-label/source-line diagnostics retain private data locally.
+
+CI46094578163:1346 PASS/1 FAIL/5 allowed skips, only Business BIA assignment
+selector remained. Shared Core/BIA test now follows real SPA navigation and
+checks canonical reviewer availability explicitly. Focused08aa954c under2 CPU
+2/2 PASS; typecheck/lint PASS. No production source/migration/authority change;
+exact-head full CI and merge still required.

@@ -600,7 +600,7 @@
     },
     {
       "path": "app/frontend/web/runtime-tests/admin-core.spec.ts",
-      "sha256": "7af6f7d92a8f4157dea92f4c025c71a911975a29836dbcd9042accd49ed7250e",
+      "sha256": "72fe9e8b6046dad8fb17ee42771c04908f60adec462c81f245a34a043a381a35",
       "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
       "releaseCategory": "APPROVED",
       "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
@@ -1055,7 +1055,7 @@
     },
     {
       "path": "docs/implementation/develop-baseline-release.md",
-      "sha256": "4002901ad29d87716e176fbea1be9f24ce7c173d576d9f4e95c1bc5b70b07cc1",
+      "sha256": "c2be37473502f191400dd925c1a5efa9a484d80309b36de0de371fb625586477",
       "classification": "PORTABLE_BASELINE_OR_OWNER_TEAM_DOCUMENT",
       "releaseCategory": "REQUIRED",
       "disposition": "PUBLISH; portability/CI or approved BRC-ACL-01 only"
@@ -1139,7 +1139,7 @@
     },
     {
       "path": "docs/quality/traceability.md",
-      "sha256": "0bc70e05931d36143e78d5701fdd1aa0a62fdcd8580aa3619b1b4ba1e219110a",
+      "sha256": "659c60cbf7eb0a6e395389d433aaaa8b5f89a43673af458c400c7820d4dfdd8b",
       "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
       "releaseCategory": "APPROVED",
       "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
@@ -1279,7 +1279,7 @@
     },
     {
       "path": "docs/implementation/baseline-verification.json",
-      "sha256": "1194d13f456e920830a64b2c579cb4fcac6ed9d482ad1f52a7c217b236ba38af",
+      "sha256": "be4a8f64d9c2d80c2c2a8c45b0c347fe484f428f8487384411d48cc4a3d00167",
       "classification": "PORTABLE_BASELINE_EVIDENCE_HANDOFF",
       "releaseCategory": "REQUIRED",
       "disposition": "PUBLISH; portability/CI or approved BRC-ACL-01 only"

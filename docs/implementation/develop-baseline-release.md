@@ -336,3 +336,25 @@ under two logical CPUs, Maven0, sourceUnchanged=true, snapshot
 b9537cf1fcb03eeeaa0970c55ab1e1fd05dd84cfc56ed82a25740f26ba5f5517.
 No full-suite PASS is inferred. Core CI-only AUDIT_AND_NOTICES failure has not
 been independently reproduced; the next exact-head CI remains mandatory.
+
+### CI9efc1d5 / remaining assignment navigation, 2026-11-28
+
+Run46094578163:1347 executed,1346 PASS,1 FAIL,5 allowed skips. Merchant approval
+and Admin Core PASS; only Business BIA failed at ASSIGNMENT, static line44
+(ACTION_TIMEOUT waiting for the reviewer selector). Architecture/H2/Compose PASS.
+No missing report or unknown failure case. Preserve the failed run evidence.
+
+The shared genuine Core/BIA fixture now uses authorized sidebar links, Work
+Inbox links and the existing Application ID lookup form for same-actor Admin
+navigation, retaining the live Admin session/request queue instead of hard
+reloading it at every step. It asserts the real reviewer-candidates response200
+and exact eligible reviewer before selection. No request interception, forced
+selection, added retry/timeout or relaxed assertion. Production source, API,
+Identity/authorization, all48 migrations and Spec012 remain unchanged.
+
+Focused08aa954c75fb44dcab807cb6257dd85e: **2/2 PASS** under two logical CPUs,
+Maven0, sourceUnchanged=true, snapshot
+935c297db4fe30e9c42bf04e9fdfa948dab9bf49a41160602a8f8c598a255295.
+Typecheck/lint PASS. Previous UI/classifier/Compose evidence is reused because
+those sources/dependencies did not change. Exact-head full CI remains mandatory;
+local PASS does not prove the CI-only intermittent failure resolved.

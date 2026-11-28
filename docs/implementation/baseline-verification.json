@@ -552,5 +552,35 @@
     "classifierPrivacyTestsPassed": 9,
     "coreCiResidual": "requires exact-head CI; not independently reproduced",
     "acceptance": "CI_REQUIRED"
+  },
+  "ci9efResult": {
+    "head": "9efc1d5b25cf0e120204b843746bbd55ba7230a8",
+    "run": 46094578163,
+    "executed": 1347,
+    "passed": 1346,
+    "failed": 1,
+    "allowedSkips": 5,
+    "remainingCase": "biaRealHttpsCustomerApplicationToBusinessStation",
+    "browserDiagnostic": {
+      "source": "CORE",
+      "kind": "ACTION_TIMEOUT",
+      "line": 44
+    },
+    "merchantApproval": "PASS",
+    "adminCore": "PASS",
+    "status": "MERGE_BLOCKED"
+  },
+  "spaFixtureCorrection": {
+    "scope": "genuine test navigation only; no production source/authority change",
+    "reviewerResponse": "assert200 and exact eligible reviewer; real API",
+    "focusedId": "08aa954c75fb44dcab807cb6257dd85e",
+    "passed": 2,
+    "failed": 0,
+    "logicalCpuLimit": 2,
+    "sourceUnchanged": true,
+    "sourceSnapshotSha256": "935c297db4fe30e9c42bf04e9fdfa948dab9bf49a41160602a8f8c598a255295",
+    "lint": "PASS",
+    "typecheck": "PASS",
+    "status": "EXACT_HEAD_CI_REQUIRED"
   }
 }
