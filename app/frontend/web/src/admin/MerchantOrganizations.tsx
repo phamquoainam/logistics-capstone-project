@@ -1,4 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import MerchantMenu from './MerchantMenu';
+import OrganizationCases from './OrganizationCases';
+import { MerchantAdvancedSearch, MerchantOrganizationViews } from './MerchantReviewViews';
 import { adminSession, AdminSessionError } from './session';
 import { governanceId, parseOrganization, parseOrganizationPage } from './governance';
 import type { OrganizationSummary, OrganizationPage } from './governance';
@@ -51,25 +55,42 @@ function Lifecycle({ organization, updated, lock }: { organization: Organization
   </section>;
 }
 export default function MerchantOrganizations() {
+  const [params] = useSearchParams();
+  const view = params.get('view') === 'owner-transfer' ? 'owner-transfer' : params.get('view') === 'lifecycle' ? 'lifecycle' : 'directory';
+  const organizationId = params.get('organizationId');
   const [rows, setRows] = useState<OrganizationPage | null>(null), [selected, setSelected] = useState<OrganizationSummary | null>(null), [state, setState] = useState(''), [page, setPage] = useState(0), [refresh, setRefresh] = useState(0), [loading, setLoading] = useState(true), [error, setError] = useState(''), [locked, setLocked] = useState(false);
   const mounted = useRef(false), generation = useRef(0);
   useEffect(() => { mounted.current = true;return () => { mounted.current = false; }; }, []);
   useEffect(() => {
+    if (view === 'owner-transfer') { setLoading(false);setRows(null);return; }
     let active = true;setLoading(true);setError('');setRows(null);const parameters = new URLSearchParams({ page: String(page), size: '20' });if (state) parameters.set('state', state);
     void adminSession.read('organization-list', parameters, value => parseOrganizationPage(value, page)).then(value => { if (active) setRows(value); }).catch(failure => { if (active) setError(errorMessage(failure)); }).finally(() => { if (active) setLoading(false); });return () => { active = false; };
-  }, [state, page, refresh]);
+  }, [state, page, refresh, view]);
+  useEffect(() => {
+    if (!organizationId || view === 'owner-transfer') return;
+    let active = true;const request = ++generation.current;setSelected(null);setError('');setLoading(true);
+    if (!governanceId(organizationId)) { setError('Mã Organization chưa hợp lệ.');setLoading(false);return; }
+    void adminSession.read('organization-detail', new URLSearchParams(), raw => parseOrganization(raw, organizationId), organizationId).then(value => { if (active && request === generation.current) setSelected(value); }).catch(failure => { if (active && request === generation.current) setError(errorMessage(failure)); }).finally(() => { if (active && request === generation.current) setLoading(false); });
+    return () => { active = false; };
+  }, [organizationId, view]);
   async function open(id: string) {
     if (locked) return;const request = ++generation.current;setLoading(true);setError('');setSelected(null);
     try { const value = await adminSession.read('organization-detail', new URLSearchParams(), raw => parseOrganization(raw, id), id);if (mounted.current && request === generation.current) setSelected(value); }
     catch (failure) { if (mounted.current && request === generation.current) setError(errorMessage(failure)); }finally { if (mounted.current && request === generation.current) setLoading(false); }
   }
-  return <section className="ap-governance"><header className="ap-page-heading"><div><h1>Tổ chức Merchant</h1><p>Directory và trạng thái truy cập trong phạm vi quản trị được cấp.</p></div></header>
+  if (view === 'owner-transfer') return <section className="ap-governance"><MerchantMenu current={view} /><section className="ap-panel"><h1>Owner Transfer</h1><p>BLOCKED_COORDINATION · Policy nghiệp vụ đã được duyệt; chưa mở thực thi chuyển Owner.</p><p>Initial Owner và bảo vệ Owner cuối cùng vẫn được giữ nguyên. Sau chuyển, Owner cũ phải là ACTIVE OPERATOR với duy nhất dashboard.read; chờ các guards Team và Identity được phối hợp kiểm chứng.</p><p>Cần xác minh bên chuyển và bên nhận, quyết định độc lập, xử lý tranh chấp, thu hồi quyền và audit nguyên tử trước khi mở thao tác.</p></section></section>;
+  return <section className="ap-governance"><MerchantMenu current={view} locked={locked} /><header className="ap-page-heading"><div><h1>{view === 'lifecycle' ? 'Organization Lifecycle' : 'Tổ chức Merchant'}</h1><p>Directory và trạng thái truy cập trong phạm vi quản trị được cấp.</p></div></header>
+    {view === 'lifecycle' && <p>Chọn tổ chức để xử lý theo quyền hiện hành. Hồ sơ RESTRICTED/CLOSED và risk hold đang ở bước chuẩn bị; chưa mở thực thi các trạng thái này.</p>}
     <div className="ap-filter-row"><label>Trạng thái tổ chức<select value={state} disabled={locked} onChange={e => { setState(e.target.value);setPage(0);setSelected(null); }}><option value="">Tất cả trạng thái</option><option value="ACTIVE">Đang hoạt động</option><option value="SUSPENDED">Tạm ngừng</option></select></label><button className="ap-secondary" disabled={locked || loading} onClick={() => { setSelected(null);setRefresh(n => n + 1); }}>Làm mới</button></div>
+    {!selected && <MerchantAdvancedSearch key={state} kind="organization" state={state} locked={locked} open={item => void open(item.id)} />}
     {error && <p className="ap-error" role="alert">{error}</p>}{loading && <p role="status">Đang đọc dữ liệu…</p>}
     {!selected && rows && <><div className="ap-table-scroll"><table><thead><tr><th>Doanh nghiệp</th><th>Trạng thái</th><th>Nguồn tiếp nhận</th><th>Thành viên</th><th>Thao tác</th></tr></thead><tbody>{rows.items.map(item => <tr key={item.id}><td>{item.displayName}</td><td>{item.state === 'ACTIVE' ? 'Đang hoạt động' : 'Tạm ngừng'}</td><td>{item.admissionOrigin === 'APPLICATION_APPROVED' ? 'Hồ sơ đã phê duyệt' : 'Operator Local/Test'}</td><td>{Object.values(item.membershipCounts).flatMap(states => Object.values(states)).reduce((sum, count) => sum + count, 0)}</td><td><button className="ap-text-button" disabled={locked || loading} onClick={() => void open(item.id)}>Mở tổ chức</button></td></tr>)}</tbody></table></div>{!rows.items.length && <p>Chưa có tổ chức thuộc bộ lọc và phạm vi hiện tại.</p>}<div className="ap-pagination"><button disabled={locked || loading || page === 0} onClick={() => setPage(n => n - 1)}>Trang trước</button><span>Trang {page + 1}</span><button disabled={locked || loading || !rows.hasNext} onClick={() => setPage(n => n + 1)}>Trang sau</button></div></>}
     {selected && <section className="ap-panel"><div className="ap-panel-heading"><div><h2>{selected.displayName}</h2><p>{selected.state === 'ACTIVE' ? 'Đang hoạt động' : 'Tạm ngừng'} · Phiên bản {selected.version}</p></div><button disabled={locked} onClick={() => { generation.current++;setSelected(null); }}>Về directory</button></div>
       <dl><dt>Nguồn tiếp nhận</dt><dd>{selected.admissionOrigin === 'APPLICATION_APPROVED' ? 'Hồ sơ được duyệt qua quy trình độc lập' : 'Operator Local/Test; không phải hồ sơ xét duyệt'}</dd><dt>Initial Owner Membership</dt><dd>{selected.initialOwnerMembershipId}</dd>{selected.activation && <><dt>Thời điểm kích hoạt</dt><dd>{new Date(selected.activation.activatedAt).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}</dd><dt>Hồ sơ</dt><dd>{selected.activation.applicationId} · Revision {selected.activation.revision}</dd></>}</dl>
+      {selected.activation && <Link className="ap-secondary" to={'/admin/merchants/applications?view=review&applicationId=' + selected.activation.applicationId}>Xem hồ sơ và lịch sử xét duyệt</Link>}
       <h3>Thành viên theo vai trò và trạng thái</h3><div className="ap-table-scroll"><table><thead><tr><th>Vai trò</th><th>Trạng thái</th><th>Số thành viên</th></tr></thead><tbody>{Object.entries(selected.membershipCounts).flatMap(([role, states]) => Object.entries(states).map(([state, count]) => <tr key={role + state}><td>{role}</td><td>{state}</td><td>{count}</td></tr>))}</tbody></table></div>
+      <MerchantOrganizationViews key={selected.id + ":" + selected.version} organization={selected} locked={locked} />
+      {view === 'lifecycle' && <OrganizationCases key={selected.id + ":" + selected.version} organization={selected} />}
       <Lifecycle key={selected.id + ':' + selected.version} organization={selected} lock={setLocked} updated={value => { setSelected(value);setRefresh(n => n + 1); }} />
     </section>}
   </section>;

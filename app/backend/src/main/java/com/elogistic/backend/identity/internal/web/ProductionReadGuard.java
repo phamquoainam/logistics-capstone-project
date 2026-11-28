@@ -57,7 +57,14 @@ public final class ProductionReadGuard extends OncePerRequestFilter {
     }
     private static boolean governanceWrite(HttpServletRequest request){
         String path=request.getRequestURI().substring(request.getContextPath().length());
-        return "POST".equals(request.getMethod())&&(path.equals("/api/v1/admin/governance-reauthentications")||path.matches("/api/v1/admin/merchant-applications/[0-9a-f-]{36}/(review-assignment|review|request-information|rejection|approval)")||path.matches("/api/v1/admin/merchant-organizations/[0-9a-f-]{36}/(suspension|reinstatement)"));
+        // Exact approved M2-R01 routes inherit the existing bearer + same-Origin
+        // boundary. This dispatch allowlist issues no Identity or Merchant permission.
+        return "POST".equals(request.getMethod())&&(path.equals("/api/v1/admin/governance-reauthentications")
+            ||path.matches("/api/v1/admin/merchant-(applications|organizations)/search")
+            ||path.matches("/api/v1/admin/merchant-applications/[0-9a-f-]{36}/(review-assignment|review|request-information|rejection|approval|revision-comparisons|review-comments|comment-disclosures)")
+            ||path.matches("/api/v1/admin/merchant-organizations/[0-9a-f-]{36}/(suspension|reinstatement|profile-disclosures|membership-disclosures)")
+            ||path.matches("/api/v1/admin/merchant-organizations/[0-9a-f-]{36}/governance-cases")
+            ||path.matches("/api/v1/admin/merchant-organizations/[0-9a-f-]{36}/governance-cases/[0-9a-f-]{36}/(assignment|review|request-information|resubmission|submission|cancellation|disclosures)"));
     }
     public static void deny(HttpServletResponse response,int status,String code) throws IOException {
         response.setStatus(status);response.setContentType("application/json;charset=UTF-8");

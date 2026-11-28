@@ -41,4 +41,17 @@ public class MerchantGovernanceConfiguration {
     MerchantGovernance merchantGovernance(DataSource source,MerchantFingerprints fingerprints,@Qualifier("identityHttpClock")Clock clock,AdminAdmission reads,AdminCommandAdmission commands,CustomerBusinessContacts contacts,AdminGovernanceReauthentication proofs,@Qualifier("claimPrivateEvidenceStore")PrivateEvidenceStore store,Environment environment){return new JdbcMerchantApplicationReviews(source,fingerprints,payloads(environment),clock,reads,commands,contacts,proofs,store);}
     @Bean com.elogistic.backend.merchant.api.MerchantApplicationNoticeEvents merchantApplicationNoticeEvents(DataSource source,com.elogistic.backend.identity.api.customer.CustomerAdmission customers,AdminCommandAdmission admins,MerchantGovernance governance){return new JdbcMerchantApplicationNoticeEvents(source,customers,admins,governance);}
 
+    @Bean @DependsOnDatabaseInitialization
+    @ConditionalOnProperty(name="merchant.admin-governance.views-enabled",havingValue="true")
+    com.elogistic.backend.merchant.api.MerchantGovernanceViews merchantGovernanceViews(DataSource source,MerchantGovernance governance,AdminCommandAdmission commands,MerchantFingerprints fingerprints,@Qualifier("identityHttpClock")Clock clock,Environment environment){
+        if(!(governance instanceof JdbcMerchantApplicationReviews reviews)||!Boolean.TRUE.equals(new org.springframework.jdbc.core.JdbcTemplate(source).queryForObject("SELECT to_regclass('merchant.application_review_comment') IS NOT NULL",Boolean.class)))throw new IllegalStateException("MERCHANT_REVIEW_VIEWS_SCHEMA_REQUIRED");
+        return new JdbcMerchantGovernanceViews(source,reviews,commands,fingerprints,payloads(environment),clock);
+    }
+
+    @Bean @DependsOnDatabaseInitialization
+    @ConditionalOnProperty(name="merchant.admin-governance.cases-enabled",havingValue="true")
+    com.elogistic.backend.merchant.api.OrganizationGovernanceCases organizationGovernanceCases(DataSource source,MerchantGovernance governance,AdminAdmission reads,AdminCommandAdmission commands,MerchantFingerprints keys,@Qualifier("identityHttpClock")Clock clock,Environment environment){
+        if(!Boolean.TRUE.equals(new org.springframework.jdbc.core.JdbcTemplate(source).queryForObject("SELECT to_regclass('merchant.organization_governance_case') IS NOT NULL AND to_regclass('merchant.organization_current_owner') IS NOT NULL",Boolean.class)))throw new IllegalStateException("ORGANIZATION_GOVERNANCE_PREPARATION_SCHEMA_REQUIRED");
+        return new JdbcOrganizationGovernanceCases(source,governance,reads,commands,keys,payloads(environment),clock);
+    }
 }

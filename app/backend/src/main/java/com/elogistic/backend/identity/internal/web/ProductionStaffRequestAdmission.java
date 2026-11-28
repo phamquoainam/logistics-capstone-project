@@ -14,7 +14,12 @@ public final class ProductionStaffRequestAdmission implements CustomerRequestAdm
     private final ThreadLocal<State> current=new ThreadLocal<>();
     private final IdentityBrowserState browser;
     private final String origin;
+    private final String csrfCookie;
     public ProductionStaffRequestAdmission(IdentityBrowserState browser,String origin) {
+        this(browser,origin,false);
+    }
+    public ProductionStaffRequestAdmission(IdentityBrowserState browser,String origin,boolean operations) {
+        csrfCookie=operations?"__Host-argopost.ops.csrf":"__Host-argopost.staff.csrf";
         this.browser=Objects.requireNonNull(browser);this.origin=ProductionCustomerRequestAdmission.requireOrigin(origin);
     }
     AutoCloseable enter(UUID request,String access,UUID session,HttpServletRequest http) {
@@ -29,7 +34,7 @@ public final class ProductionStaffRequestAdmission implements CustomerRequestAdm
         if(!http.isSecure() || http.getParameter("access_token")!=null || origins.size()>1 || mutation&&origins.size()!=1
             || !origins.isEmpty()&&!origin.equals(origins.getFirst()) || bearers.size()!=1
             || !bearers.getFirst().regionMatches(true,0,"Bearer ",0,7) || !bearers.getFirst().substring(7).equals(state.request().encodedAccess()))throw invalid();
-        if(mutation)browser.verify(ProductionAuthenticationHttp.cookie(http,"__Host-argopost.staff.csrf"),ProductionAuthenticationHttp.single(http,"X-CSRF-Token"),session,false);
+        if(mutation)browser.verify(ProductionAuthenticationHttp.cookie(http,csrfCookie),ProductionAuthenticationHttp.single(http,"X-CSRF-Token"),session,false);
     }
     private static IdentityCommandFailure invalid(){return new IdentityCommandFailure(IdentityCommandFailure.Code.SESSION_INVALID);}
 }

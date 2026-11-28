@@ -40,6 +40,7 @@ export const adminGroups: readonly { title: string; modules: readonly string[] }
   { title: 'Nhân sự & Bảo mật', modules: ['ADM-12', 'ADM-15', 'ADM-23'] },
   { title: 'Nền tảng & Tích hợp', modules: ['ADM-13', 'ADM-14', 'ADM-21', 'ADM-22'] },
   { title: 'Kiểm toán & Báo cáo', modules: ['ADM-16', 'ADM-20'] },
+  { title: 'Tài khoản & Công việc', modules: ['ADM-17'] },
 ];
 /** These are views of existing contracts, never a cross-portal grant. */
 export const overviewEntries = [

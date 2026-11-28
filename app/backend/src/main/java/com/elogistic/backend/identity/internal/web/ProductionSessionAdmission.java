@@ -12,7 +12,7 @@ public final class ProductionSessionAdmission implements SessionAdmission {
     public ProductionSessionAdmission(IdentityBrowserState browser,IdentityRateLimiter limiter){this(browser,limiter,false);}
     public ProductionSessionAdmission(IdentityBrowserState browser,IdentityRateLimiter limiter,boolean customer){this(browser,limiter,customer,"");}
     public ProductionSessionAdmission(IdentityBrowserState browser,IdentityRateLimiter limiter,boolean customer,String subjectPrefix){
-        if(!Set.of("","STAFF:").contains(subjectPrefix) || customer&&!subjectPrefix.isEmpty())throw new IllegalArgumentException("SESSION_PURPOSE_INVALID");
+        if(!Set.of("","STAFF:","OPS:").contains(subjectPrefix) || customer&&!subjectPrefix.isEmpty())throw new IllegalArgumentException("SESSION_PURPOSE_INVALID");
         this.browser=Objects.requireNonNull(browser);this.limiter=Objects.requireNonNull(limiter);this.customer=customer;this.subjectPrefix=subjectPrefix;
     }
     AutoCloseable enter(UUID request,String cookie,String challenge){

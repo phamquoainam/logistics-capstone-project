@@ -4,8 +4,28 @@ scripts/ci/verify-reports.py -text
 # Preserve exact Owner-approved artifact bytes across Windows and CI checkouts.
 docs/implementation/admin-dashboard-contract.proposed.md text eol=lf
 docs/implementation/admin-onboarding-technical-manifest.proposed.json text eol=lf
-docs/implementation/admin-uat-deployment-manifest.json -text
+docs/implementation/admin-uat-deployment-manifest.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 docs/implementation/admin-p0-implementation-manifest.proposed.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 app/backend/src/main/resources/db/migration/V39__isolated_admin_onboarding.sql text eol=lf
 app/backend/src/main/resources/db/migration/V40__isolated_system_first_bootstrap.sql text eol=lf
 app/backend/src/main/resources/db/migration/V41__admin_governance_proof_bridge.sql -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+
+# Shell entrypoints must survive Windows checkouts.
+*.sh text eol=lf
+mvnw text eol=lf
+Dockerfile* text eol=lf
+infra/local/*.conf text eol=lf
+
+# Preserve the newly released accepted artifacts exactly, including approved hashes.
+app/backend/src/main/resources/db/migration/V44__operational_staff_identity.sql -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+app/backend/src/main/resources/db/migration/V45__carrier_sites_operational_scope.sql -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+app/backend/src/main/resources/db/migration/V46__merchant_governance_review_views.sql -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+app/backend/src/main/resources/db/migration/V47__merchant_organization_governance_preparation.sql -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+app/backend/src/main/resources/db/migration/V48__business_station_intake_ownership.sql -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+app/backend/src/main/resources/db/migration/V49__canonical_review_comment_table_owner.sql -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+docs/implementation/admin-menu2-completion-technical-manifest.proposed.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+docs/implementation/carrier-network-operational-staff-execution-manifest.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+
+# Owner-supplied Markdown uses intentional two-space hard line breaks; preserve bytes.
+docs/implementation/v1-team/*.md -text whitespace=-blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+docs/implementation/ARGOPOST_PROJECT_NORTH_STAR.md whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

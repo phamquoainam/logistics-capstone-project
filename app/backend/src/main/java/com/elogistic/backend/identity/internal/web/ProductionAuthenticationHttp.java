@@ -12,8 +12,8 @@ import tools.jackson.core.StreamReadFeature;
 
 /** Four exact accepted browser operations, isolated from Bearer-only administration. */
 public final class ProductionAuthenticationHttp {
-    public enum Transport {SYSTEM,CUSTOMER,STAFF}
-    private final String csrfCookie,refreshCookie,prefix,identifierField;
+    public enum Transport {SYSTEM,CUSTOMER,STAFF,OPS}
+    private final String csrfCookie,refreshCookie,prefix,identifierField,limiterPrefix;
     private final boolean customer;
     private final boolean staff;
     private static final JsonMapper JSON=JsonMapper.builder().enable(StreamReadFeature.STRICT_DUPLICATE_DETECTION).build();
@@ -25,9 +25,10 @@ public final class ProductionAuthenticationHttp {
     }
     public ProductionAuthenticationHttp(IdentitySessionCommands sessions,ProductionSessionAdmission admission,IdentityBrowserState browser,IdentityRateLimiter limiter,ProductionAccessTokens tokens,String origin,Clock clock,Transport transport){
         this.sessions=sessions;this.admission=admission;this.browser=browser;this.limiter=limiter;this.tokens=tokens;this.origin=transport!=Transport.SYSTEM?ProductionCustomerRequestAdmission.requireOrigin(origin):origin;this.clock=clock;
-        customer=Objects.requireNonNull(transport)==Transport.CUSTOMER;staff=transport==Transport.STAFF;prefix=staff?"/api/v1/staff-auth":customer?"/api/v1/customer-auth":"/api/v1/auth";
-        csrfCookie=staff?"__Host-argopost.staff.csrf":customer?"__Host-elogistics.customer.csrf":"__Host-elogistics.csrf";
-        refreshCookie=staff?"__Host-argopost.staff.refresh":customer?"__Host-elogistics.customer.refresh":"__Host-elogistics.refresh";identifierField=customer||staff?"email":"username";
+        limiterPrefix=transport==Transport.OPS?"OPS:":transport==Transport.STAFF?"STAFF:":"";
+        customer=Objects.requireNonNull(transport)==Transport.CUSTOMER;staff=transport==Transport.STAFF||transport==Transport.OPS;prefix=transport==Transport.OPS?"/api/v1/ops-auth":staff?"/api/v1/staff-auth":customer?"/api/v1/customer-auth":"/api/v1/auth";
+        csrfCookie=transport==Transport.OPS?"__Host-argopost.ops.csrf":staff?"__Host-argopost.staff.csrf":customer?"__Host-elogistics.customer.csrf":"__Host-elogistics.csrf";
+        refreshCookie=transport==Transport.OPS?"__Host-argopost.ops.refresh":staff?"__Host-argopost.staff.refresh":customer?"__Host-elogistics.customer.refresh":"__Host-elogistics.refresh";identifierField=customer||staff?"email":"username";
     }
     public boolean matches(HttpServletRequest r){String p=r.getRequestURI().substring(r.getContextPath().length());return (r.getMethod().equals("GET")&&p.equals(prefix+"/csrf"))||(r.getMethod().equals("POST")&&Set.of(prefix+"/login",prefix+"/refresh",prefix+"/logout").contains(p));}
     public void handle(HttpServletRequest request,HttpServletResponse response)throws IOException {
@@ -45,7 +46,7 @@ public final class ProductionAuthenticationHttp {
                     var input=credentials(request);String username=input.get(identifierField).asString(),password=input.get("password").asString();
                     try{if(customer||staff)new CustomerEmail(username);else new Username(username);PasswordPolicy.validateLogin(password);}catch(DomainViolation e){throw new IdentityCommandFailure(IdentityCommandFailure.Code.VALIDATION_FAILED);}
                     String ip=clientAddress(request);
-                    var reservation=limiter.reserve(List.of(new IdentityRateLimiter.Subject(customer?IdentityRateLimiter.Policy.CUSTOMER_LOGIN_EMAIL:IdentityRateLimiter.Policy.LOGIN_ACCOUNT,staff?"STAFF:"+username:username),new IdentityRateLimiter.Subject(customer?IdentityRateLimiter.Policy.CUSTOMER_LOGIN_IP:IdentityRateLimiter.Policy.LOGIN_IP,staff?"STAFF:"+ip:ip)));
+                    var reservation=limiter.reserve(List.of(new IdentityRateLimiter.Subject(customer?IdentityRateLimiter.Policy.CUSTOMER_LOGIN_EMAIL:IdentityRateLimiter.Policy.LOGIN_ACCOUNT,limiterPrefix+username),new IdentityRateLimiter.Subject(customer?IdentityRateLimiter.Policy.CUSTOMER_LOGIN_IP:IdentityRateLimiter.Policy.LOGIN_IP,limiterPrefix+ip)));
                     IdentitySessionCommands.Result result;
                     try{result=sessions.loginIdentity(new IdentitySessionCommands.Login(username,password,requestId));}
                     catch(IdentityCommandFailure rejected){if(rejected.code()==IdentityCommandFailure.Code.INVALID_CREDENTIALS)reservation.finishLogin(false);throw rejected;}

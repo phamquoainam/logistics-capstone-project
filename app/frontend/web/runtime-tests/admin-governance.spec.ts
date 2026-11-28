@@ -12,6 +12,7 @@ test('genuine HTTPS SYSTEM reviewer uses scoped queue, immutable facts and curre
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
   const login = await logged;expect(login.status()).toBe(200);let access = (await login.json() as { accessToken: string }).accessToken;
   await expect(page.getByRole('heading', { name: 'Tổng quan điều hành', exact: true })).toBeVisible();
+  await page.waitForLoadState('networkidle');
   await page.goto('/admin/merchants/applications');
   await expect(page.getByRole('heading', { name: 'Hồ sơ đã nộp', exact: true })).toBeVisible();
   await expect(page.locator('tbody tr')).toHaveCount(1);await expect(page.locator('tbody')).not.toContainText('business-contact@example.invalid');
@@ -45,6 +46,9 @@ test('genuine HTTPS SYSTEM reviewer uses scoped queue, immutable facts and curre
   await expect(page.getByRole('button', { name: 'Hoàn tất thẩm định', exact: true })).toBeDisabled();
   }
   if (fixture.flow === 'APPROVE') {
+    // Let committed-command scope/list reads finish before unloading this app;
+    // aborting the browser fetch does not release Backend admission immediately.
+    await page.waitForLoadState('networkidle');
     await page.goto('/admin/merchants/organizations');await expect(page.getByRole('heading', { name: 'Tổ chức Merchant', exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Mở tổ chức', exact: true }).click();
     for (const operation of ['SUSPEND', 'REINSTATE'] as const) {

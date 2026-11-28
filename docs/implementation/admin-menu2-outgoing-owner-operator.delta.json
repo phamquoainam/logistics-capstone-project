@@ -1,0 +1,31 @@
+{
+  "id": "DEC-O3-OPERATOR",
+  "parentManifestSha256": "6d072d9b649ab144c2fb9b8b780c8f077757387bcef58536a31618f9154251a2",
+  "businessPolicyStatus": "OWNER_APPROVED",
+  "sharedImplementationStatus": "BLOCKED_COORDINATION",
+  "scope": "ISOLATED_SOURCE_TEST",
+  "outgoing": {
+    "role": "OPERATOR",
+    "state": "ACTIVE",
+    "effectivePermissions": ["dashboard.read"],
+    "permissionScope": "ORGANIZATION",
+    "removeAllOtherOrganizationAndFacilityGrants": true
+  },
+  "incoming": {
+    "role": "OWNER",
+    "state": "ACTIVE",
+    "explicitPermissions": ["dashboard.read", "ownership.transfer.request"],
+    "inheritSensitiveAuthority": false
+  },
+  "atomicEffects": [
+    "currentOwnerAndVersion", "membershipsAndAuthorityVersions", "exactGrantDelta",
+    "dependentPendingInvitations", "ownershipHistory", "immutableAudit", "idempotencyReceipt"
+  ],
+  "preserve": ["initialOwner", "activationProvenance", "personal", "otherOrganizations"],
+  "newRoles": [],
+  "newApis": [],
+  "newSqlSignatures": [],
+  "newPermissions": [],
+  "requiredDependencies": ["COORD-TEAM", "COORD-IAM", "currentOwnerInvariants", "transferAcceptanceGates"],
+  "executionEnabled": false
+}

@@ -24,11 +24,17 @@ public final class LocalSupportStaffProvisioner {
     public record OfflineStaffProvisionReceipt(UUID requestId,UUID accountId,UUID proofId,String committedOutcome,String currentPrincipalState,boolean replayed) {}
     private record Reservation(UUID account,UUID proof,UUID message,Instant created,Instant expires,boolean replayed,String state) {}
     private final DataSource operator;
+    private final boolean operations;
     private final InvitationProtection protection;
 
     public LocalSupportStaffProvisioner(DataSource operator,InvitationProtection protection) {
-        this.operator=Objects.requireNonNull(operator);this.protection=Objects.requireNonNull(protection);
+        this(operator,protection,false);
     }
+    private LocalSupportStaffProvisioner(DataSource operator,InvitationProtection protection,boolean operations) {
+        this.operations=operations;this.operator=Objects.requireNonNull(operator);this.protection=Objects.requireNonNull(protection);
+    }
+    public static LocalSupportStaffProvisioner operations(DataSource source,InvitationProtection protection) { return new LocalSupportStaffProvisioner(source,protection,true); }
+    private String function(String name) {return "identity."+name+(operations?"_operations_staff":"_support_staff");}
     public OfflineStaffProvisionReceipt provision(OfflineStaffProvision command) {
         if(command==null)throw rejected();new CustomerEmail(command.email());
         requireTransactionOwnership();
@@ -36,7 +42,7 @@ public final class LocalSupportStaffProvisioner {
             if(!connection.getAutoCommit())throw rejected();connection.setAutoCommit(false);
             try {
                 Reservation reservation;
-                try(var statement=connection.prepareStatement("SELECT * FROM identity.provision_local_support_staff(?,?,?,?)")) {
+                try(var statement=connection.prepareStatement("SELECT * FROM "+function("provision_local")+"(?,?,?,?)")) {
                     statement.setObject(1,command.requestId());statement.setString(2,command.displayName());
                     statement.setString(3,command.email());statement.setString(4,command.reason());
                     try(var rows=statement.executeQuery()){reservation=reservation(rows);}
@@ -54,14 +60,14 @@ public final class LocalSupportStaffProvisioner {
             if(!connection.getAutoCommit())throw rejected();connection.setAutoCommit(false);
             try {
                 Reservation reservation;
-                try(var statement=connection.prepareStatement("SELECT * FROM identity.disposition_local_support_staff_invitation(?,?,?,?)")) {
+                try(var statement=connection.prepareStatement("SELECT * FROM "+function("disposition_local")+"_invitation(?,?,?,?)")) {
                     statement.setObject(1,command.requestId());statement.setObject(2,command.accountId());
                     statement.setString(3,command.action());statement.setString(4,command.reason());
                     try(var rows=statement.executeQuery()){reservation=reservation(rows);}
                 }
                 if(command.action().equals("RESEND")&&!reservation.replayed()) {
                     String destination;
-                    try(var statement=connection.prepareStatement("SELECT identity.local_support_staff_invitation_destination(?)")) {
+                    try(var statement=connection.prepareStatement("SELECT "+function("local")+"_invitation_destination(?)")) {
                         statement.setObject(1,command.requestId());
                         try(var rows=statement.executeQuery()){if(!rows.next())throw rejected();destination=rows.getString(1);}
                     }
@@ -75,7 +81,7 @@ public final class LocalSupportStaffProvisioner {
     private void seal(Connection connection,UUID request,Reservation reservation,String destination) throws SQLException {
         var proof=new ActionProof(reservation.proof(),reservation.account(),ActionProof.Purpose.STAFF_INV,reservation.created(),reservation.expires(),ActionProof.State.AVAILABLE,null);
         var context=protection.staffContext(reservation.message(),proof,destination);
-        try(var sealed=protection.issue(context);PreparedStatement statement=connection.prepareStatement("SELECT identity.seal_local_support_staff_invitation(?,?,?,?,?,?)")) {
+        try(var sealed=protection.issue(context);PreparedStatement statement=connection.prepareStatement("SELECT "+function("seal_local")+"_invitation(?,?,?,?,?,?)")) {
             byte[] verifier=sealed.verifier(),nonce=sealed.nonce(),ciphertext=sealed.ciphertext();
             try {
                 statement.setObject(1,request);statement.setString(2,context.verifierKeyId());statement.setString(3,context.encryptionKeyId());

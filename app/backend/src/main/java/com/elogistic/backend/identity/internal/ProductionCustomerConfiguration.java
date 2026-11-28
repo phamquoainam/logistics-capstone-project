@@ -43,6 +43,11 @@ public class ProductionCustomerConfiguration {
         if(audience.equals(environment.getRequiredProperty("customer.security.audience"))||audience.equals(environment.getRequiredProperty("identity.security.audience")))throw new IllegalStateException("STAFF_JWT_PURPOSE_CONFIGURATION_INVALID");
         return purposeTokens(environment,clock,audience);
     }
+    static ProductionAccessTokens operationsTokens(Environment environment,Clock clock){
+        String audience="argopost-local-operations-staff";
+        if(audience.equals(environment.getRequiredProperty("customer.security.audience"))||audience.equals(environment.getRequiredProperty("identity.security.audience")))throw new IllegalStateException("OPS_JWT_PURPOSE_CONFIGURATION_INVALID");
+        return purposeTokens(environment,clock,audience);
+    }
     private static ProductionAccessTokens purposeTokens(Environment environment,Clock clock,String fixedAudience){
         try{
             String issuer=environment.getRequiredProperty("customer.security.issuer"),audience=environment.getRequiredProperty("customer.security.audience"),kid=environment.getRequiredProperty("customer.security.current-kid");

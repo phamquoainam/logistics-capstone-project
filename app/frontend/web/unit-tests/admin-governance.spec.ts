@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { currentPolicyVersion, parseApplication, parseApplicationPage, parseGovernanceContext, parseReviewers, parseApplicationEvents, parseOrganization, parseOrganizationPage } from '../src/admin/governance';
+import { currentPolicyVersion, parseApplicationRevisions, parseApplication, parseApplicationPage, parseGovernanceContext, parseReviewers, parseApplicationEvents, parseOrganization, parseOrganizationPage } from '../src/admin/governance';
 
 const actor = '10000000-0000-4000-8000-000000000001', realm = '20000000-0000-4000-8000-000000000001', policy = '30000000-0000-4000-8000-000000000001', app = '40000000-0000-4000-8000-000000000001';
 const summary = { id: app, state: 'SUBMITTED', revision: 2, version: 8, legalNameMasked: 'S***', legalIdentifierMasked: '***1234', policyId: policy, reviewerId: null, firstSubmittedAt: '2026-11-24T00:00:00Z', updatedAt: '2026-11-24T01:00:00Z', activation: null, allowedActions: ['ASSIGN_REVIEWER'] };
@@ -37,6 +37,17 @@ test('policy version comes from exact immutable revision metadata; no default ve
 test('candidate projection admits only bounded current server candidates, not role titles or credentials', () => {
   expect(parseReviewers({ items: [{ accountId: actor, displayName: 'Synthetic reviewer' }], page: 0, size: 20, hasNext: false }, 0).items[0].accountId).toBe(actor);
   expect(() => parseReviewers({ items: [{ accountId: actor, displayName: 'Synthetic reviewer', permissions: ['application.decide'] }], page: 0, size: 20, hasNext: false }, 0)).toThrow();
+});
+
+test('revision history validates the whole page, target and uniqueness without disclosing historical payloads', () => {
+  const row = { applicationId: app, revision: 2, submittedAt: '2026-11-24T00:00:00Z', policyVersion: '7', organizationDisplayName: 'Synthetic display', digest: 'b'.repeat(64), evidenceIds: [actor, realm], contactVerifiedAt: '2026-11-23T23:59:00Z' };
+  const page = { items: [row], page: 1, size: 20, hasNext: false };
+  expect(parseApplicationRevisions(page, app, 1)).toEqual(page);
+  expect(() => parseApplicationRevisions(page, app, 0)).toThrow();
+  expect(() => parseApplicationRevisions({ ...page, items: [row, row] }, app, 1)).toThrow();
+  expect(() => parseApplicationRevisions({ ...page, items: [{ ...row, applicationId: realm }] }, app, 1)).toThrow();
+  expect(() => parseApplicationRevisions({ ...page, items: [{ ...row, submission: {} }] }, app, 1)).toThrow();
+  expect(() => currentPolicyVersion({ ...page, page: 0, items: [row, { ...row, revision: 1, applicationId: realm }] }, app, 2)).toThrow();
 });
 
 test('organization directory distinguishes immutable activation from current state and rejects private counts', () => {

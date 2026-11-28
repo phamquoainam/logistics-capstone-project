@@ -67,6 +67,8 @@ export type PilotHandling = { shipmentId: string; state: 'WAITING_FOR_HANDOVER' 
 export type Station = { code: string; datasetVersion: 'ARGO-SIM-COVERAGE-1'; assignmentVersion: number; permission: 'STATION_INTAKE'; acceptanceEnabled: true };
 export type StationScan = { id: string; shipmentId: string; parcelId: string; barcode: string; stationCode: string; scannedAt: string };
 export type StationView = { cargo: { shipment: PilotShipment; handling: PilotHandling }; scans: StationScan[]; paymentState: 'UNPAID'; simulation: true; policyVersion: 'BR13-LOCAL-INTAKE-01' };
+export type CarrierCargo = { shipmentId: string; shipmentCode: string; ownerType: 'PERSONAL' | 'BUSINESS'; accountId: string | null; organizationId: string | null; facilityId: string | null; quoteId: string; totalVnd: number; createdAt: string; input: ShippingDraftInput; route: PilotRoute; parcels: PilotShipment['parcels']; handling: PilotHandling };
+export type CarrierStationView = { cargo: CarrierCargo; scans: StationScan[]; paymentState: 'UNPAID'; simulation: true; policyVersion: 'BR13-LOCAL-INTAKE-01' | 'BR13-BUSINESS-INTAKE-01' };
 export type SessionState = Readonly<{ status: 'loading' | 'guest' | 'authenticated'; subject: Subject | null; error: string | null }>;
 type Access = { accessToken: string; expiresAt: string; accountId: string };
 type Lock = <T>(work: () => Promise<T>) => Promise<T>;
@@ -105,7 +107,7 @@ export function createCustomerClient(ports: Ports = { fetch: (...args) => fetch(
     let value: unknown;
     try {
       const raw = await response.text(); if (raw.length > maximum) malformed();
-      if (response.status !== 204) { if (!response.headers.get('Content-Type')?.toLowerCase().startsWith('application/json')) malformed(); value = JSON.parse(raw); }
+      if (response.status !== 204) { const type = response.headers.get('Content-Type')?.split(';')[0].trim().toLowerCase(); if (type !== 'application/json' && !(headers.Accept === 'application/vnd.argopost.business-management.v2+json' && type === headers.Accept)) malformed(); value = JSON.parse(raw); }
       else if (raw !== '') malformed();
     } catch { throw method === 'GET' ? new CustomerApiError('RESPONSE_INVALID') : unknown(); }
     if (!response.ok) {
@@ -207,10 +209,10 @@ export function createCustomerClient(ports: Ports = { fetch: (...args) => fetch(
     if (response && response.headers.get('ETag') !== '"v' + value.version + '"') malformed();
     return value as BusinessPreparation;
   }
-  async function businessPreparationRequest(context: BusinessContext, suffix: string, method = 'GET', input?: unknown, key?: string, expected?: number, prefix: 'v' | 'a' | 'd' | 'n' = 'v') {
+  async function businessPreparationRequest(context: BusinessContext, suffix: string, method = 'GET', input?: unknown, key?: string, expected?: number, prefix: 'v' | 'a' | 'd' | 'n' = 'v', accept?: 'application/vnd.argopost.business-management.v2+json') {
     if (!uuid.test(context.organizationId) || key !== undefined && !uuid.test(key) || expected !== undefined && (prefix !== 'v' || /^facilities\/[a-f0-9-]+\/responsibilities$/.test(suffix) ? !Number.isSafeInteger(expected) || expected < 0 : !version(expected))) throw new CustomerApiError('VALIDATION_FAILED');
     await ensureAccess(); const current = generation, challenge = method === 'GET' ? undefined : await csrf();
-    const result = await request('merchant-organizations/' + context.organizationId + '/' + suffix, method, input === undefined ? undefined : JSON.stringify(input), { Authorization: 'Bearer ' + access!.accessToken, ...(challenge ? { 'X-CSRF-Token': challenge } : {}), ...(key ? { 'Idempotency-Key': key } : {}), ...(expected !== undefined ? { 'If-Match': '"' + prefix + expected + '"' } : {}) }, 4 * 1024 * 1024);
+    const result = await request('merchant-organizations/' + context.organizationId + '/' + suffix, method, input === undefined ? undefined : JSON.stringify(input), { Authorization: 'Bearer ' + access!.accessToken, ...(accept ? { Accept: accept } : {}), ...(challenge ? { 'X-CSRF-Token': challenge } : {}), ...(key ? { 'Idempotency-Key': key } : {}), ...(expected !== undefined ? { 'If-Match': '"' + prefix + expected + '"' } : {}) }, 4 * 1024 * 1024);
     if (current !== generation) throw new CustomerApiError('SESSION_CHANGED');
     if (result.response.headers.get('Cache-Control') !== 'no-store') { if (method !== 'GET') throw unknown(); malformed(); }
     return result;
@@ -288,6 +290,15 @@ export function createCustomerClient(ports: Ports = { fetch: (...args) => fetch(
     if (!record(v) || !exact(v, ['cargo', 'scans', 'paymentState', 'simulation', 'policyVersion']) || v.simulation !== true || v.paymentState !== 'UNPAID' || v.policyVersion !== 'BR13-LOCAL-INTAKE-01' || !record(v.cargo) || !exact(v.cargo, ['shipment', 'handling']) || !record(v.cargo.shipment) || typeof v.cargo.shipment.accountId !== 'string' || !uuid.test(v.cargo.shipment.accountId) || !Array.isArray(v.scans) || v.scans.length > 5) malformed();
     const d = shipmentSnapshot(v.cargo.shipment, v.cargo.shipment.accountId), h = handlingValue(v.cargo.handling, d.id), scans = v.scans.map(s => scanValue(s, station));
     if (shipment && d.id !== shipment || d.quote.route.dropOffCode !== station || d.parcels.length !== h.parcels.length || d.parcels.some((p, i) => p.id !== h.parcels[i].parcelId) || h.events.some(e => e.stationCode !== station) || scans.some(s => s.shipmentId !== d.id || !d.parcels.some(p => p.id === s.parcelId)) || new Set(scans.map(s => s.parcelId)).size !== scans.length) malformed();return v as StationView;
+  }
+  function carrierStationView(v: unknown, station: string, shipment?: string): CarrierStationView {
+    if (!record(v) || !exact(v, ['cargo', 'scans', 'paymentState', 'simulation', 'policyVersion']) || v.simulation !== true || v.paymentState !== 'UNPAID' || !record(v.cargo) || !Array.isArray(v.scans) || v.scans.length > 5) malformed();
+    const c = v.cargo;
+    if (!exact(c, ['shipmentId', 'shipmentCode', 'ownerType', 'accountId', 'organizationId', 'facilityId', 'quoteId', 'totalVnd', 'createdAt', 'input', 'route', 'parcels', 'handling']) || !applicationId(c.shipmentId) || !applicationId(c.quoteId) || c.shipmentCode !== 'AP-SIM-' + c.shipmentId.replaceAll('-', '') || !money(c.totalVnd) || !date(c.createdAt) || !shippingInput(c.input) || !pilotRoute(c.route) || c.route.dropOffCode !== station || !Array.isArray(c.parcels) || c.parcels.length !== c.input.parcels.length || shipment !== undefined && c.shipmentId !== shipment) malformed();
+    if (c.ownerType === 'PERSONAL' ? !applicationId(c.accountId) || c.organizationId !== null || c.facilityId !== null || v.policyVersion !== 'BR13-LOCAL-INTAKE-01' : c.ownerType !== 'BUSINESS' || c.accountId !== null || !applicationId(c.organizationId) || c.facilityId !== null && !applicationId(c.facilityId) || v.policyVersion !== 'BR13-BUSINESS-INTAKE-01') malformed();
+    const h = handlingValue(c.handling, c.shipmentId), scans = v.scans.map(s => scanValue(s, station));
+    if (!c.parcels.every((p, i) => record(p) && exact(p, ['id', 'parcelNumber', 'facts']) && p.id === h.parcels[i]?.parcelId && p.parcelNumber === i + 1 && record(p.facts) && exact(p.facts, Object.keys((c.input as ShippingDraftInput).parcels[i])) && Object.entries((c.input as ShippingDraftInput).parcels[i]).every(([key, val]) => (p.facts as Record<string, unknown>)[key] === val)) || c.parcels.length !== h.parcels.length || h.events.some(e => e.stationCode !== station || Date.parse(e.occurredAt) < Date.parse(c.createdAt as string)) || scans.some(s => s.shipmentId !== c.shipmentId || !h.parcels.some(p => p.parcelId === s.parcelId) || Date.parse(s.scannedAt) < Date.parse(c.createdAt as string)) || new Set(scans.map(s => s.parcelId)).size !== scans.length || new Set(scans.map(s => s.id)).size !== scans.length) malformed();
+    return v as CarrierStationView;
   }
   async function stationRequest(station: string | undefined, suffix: string, method = 'GET', input?: unknown, key?: string, etag?: string) {
     if (station !== undefined && !stationCode(station) || key !== undefined && !uuid.test(key) || etag !== undefined && !/^"i[01]"$/.test(etag)) throw new CustomerApiError('VALIDATION_FAILED');
@@ -533,7 +544,7 @@ export function createCustomerClient(ports: Ports = { fetch: (...args) => fetch(
     readBusinessReportHistory: (context: BusinessContext, page = 0) => ports.lock(async () => { if (!Number.isSafeInteger(page) || page < 0) throw new CustomerApiError('VALIDATION_FAILED'); const r = await businessPreparationRequest(context, 'shipping-report-history?page=' + page + '&size=20'); try { return parseReportHistory(r.value, page); } catch { return malformed(); } }),
     readOrganizationManagement: (context: BusinessContext, parameters: URLSearchParams) => ports.lock(async () => {
       const p = new URLSearchParams(parameters); p.set('view', 'management'); const page = Number(p.get('page') ?? '0'); if (!Number.isSafeInteger(page) || page < 0) throw new CustomerApiError('VALIDATION_FAILED');
-      const r = await businessPreparationRequest(context, 'shipments?' + p); try { return parseOrganizationPage(r.value, context.organizationId, page, value => businessShipment(value, context)); } catch { return malformed(); }
+      const r = await businessPreparationRequest(context, 'shipments?' + p, 'GET', undefined, undefined, undefined, 'v', 'application/vnd.argopost.business-management.v2+json'); try { return parseOrganizationPage(r.value, context.organizationId, page, value => businessShipment(value, context), handlingValue); } catch { return malformed(); }
     }),
     exportOrganizationShipments: (context: BusinessContext, parameters: URLSearchParams, includePii = false, ids?: string[]) => ports.lock(async () => {
       if (typeof includePii !== 'boolean' || ids !== undefined && (!ids.length || ids.length > 20 || new Set(ids).size !== ids.length)) throw new CustomerApiError('VALIDATION_FAILED');
@@ -572,6 +583,7 @@ export function createCustomerClient(ports: Ports = { fetch: (...args) => fetch(
       try { const v = businessShipment(r.value, context); if (v.shipment.preparationId !== draft.id || v.shipment.preparationVersion !== draft.version || v.shipment.facilityId !== draft.facilityId || v.shipment.creatorAccountId !== access?.accountId || v.shipment.quote.id !== quoteId || r.response.headers.get('ETag') !== '"v1"') malformed(); return v; } catch { throw unknown(); }
     }),
     readBusinessShipment: (context: BusinessContext, id: string) => ports.lock(async () => { if (!uuid.test(id)) throw new CustomerApiError('VALIDATION_FAILED'); const r = await businessPreparationRequest(context, 'shipments/' + id), v = businessShipment(r.value, context); if (v.shipment.id !== id || r.response.headers.get('ETag') !== '"v1"') malformed(); return v; }),
+    readBusinessHandling: (context: BusinessContext, id: string) => ports.lock(async () => { if (!uuid.test(id)) throw new CustomerApiError('VALIDATION_FAILED'); const r = await businessPreparationRequest(context, 'shipments/' + id + '/handling'); return handlingValue(r.value, id); }),
     listBusinessShipments: (context: BusinessContext, page = 0, search = '') => ports.lock(async () => {
       if (!Number.isSafeInteger(page) || page < 0 || search.length > 160) throw new CustomerApiError('VALIDATION_FAILED'); const { value: v } = await businessPreparationRequest(context, 'shipments?' + new URLSearchParams({ page: String(page), size: '20', search })); if (!record(v) || !exact(v, ['items', 'page', 'size', 'hasNext']) || v.page !== page || v.size !== 20 || typeof v.hasNext !== 'boolean' || !Array.isArray(v.items) || v.items.length > 20) malformed(); const items = v.items.map(i => businessShipment(i, context)); if (new Set(items.map(i => i.shipment.id)).size !== items.length) malformed(); return { items, page, size: 20, hasNext: v.hasNext };
     }),
@@ -731,6 +743,8 @@ export function createCustomerClient(ports: Ports = { fetch: (...args) => fetch(
     pilotBookingReceipt: (key: string) => ports.lock(async () => { if (!uuid.test(key)) throw new CustomerApiError('VALIDATION_FAILED'); const r = await pilotRead('booking-receipts/' + key); if (!record(r.value) || !exact(r.value, ['targetId', 'outcome']) || typeof r.value.targetId !== 'string' || !uuid.test(r.value.targetId) || r.value.outcome !== 'COMMITTED') malformed(); return { targetId: r.value.targetId }; }),
     readPilotHandling: (id: string) => ports.lock(async () => { if (!uuid.test(id)) throw new CustomerApiError('VALIDATION_FAILED');const r = await pilotRead('shipments/' + id + '/handling');return handlingValue(r.value, id); }),
     downloadPilotLabel: (id: string, station?: string) => ports.lock(() => privateLabel(id, station)),
+    parseStationView: (value: unknown, station: string, shipment?: string) => stationView(value, station, shipment),
+    parseCarrierStationView: (value: unknown, station: string, shipment?: string) => carrierStationView(value, station, shipment),
     listStations: () => ports.lock(async (): Promise<Station[]> => {const { value: v } = await stationRequest(undefined, '');if (!record(v) || !exact(v, ['stations', 'simulation']) || v.simulation !== true || !Array.isArray(v.stations) || !v.stations.length || v.stations.length > 3 || !v.stations.every(s => record(s) && exact(s, ['code', 'datasetVersion', 'assignmentVersion', 'permission', 'acceptanceEnabled']) && stationCode(s.code) && s.datasetVersion === 'ARGO-SIM-COVERAGE-1' && version(s.assignmentVersion) && s.permission === 'STATION_INTAKE' && s.acceptanceEnabled === true)) malformed();return v.stations as Station[]; }),
     lookupStationParcel: (station: string, barcode: string) => ports.lock(async () => {if (!/^AP-P-[a-f0-9]{32}$/.test(barcode)) throw new CustomerApiError('VALIDATION_FAILED');const r = await stationRequest(station, '/parcels/' + barcode);const v = stationView(r.value, station);if (!v.cargo.handling.parcels.some(p => p.barcode === barcode)) malformed();return v; }),
     readStationShipment: (station: string, shipment: string) => ports.lock(async () => {if (!uuid.test(shipment)) throw new CustomerApiError('VALIDATION_FAILED');const r = await stationRequest(station, '/shipments/' + shipment);return stationView(r.value, station, shipment); }),

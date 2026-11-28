@@ -32,7 +32,7 @@ test('real SYSTEM HTTPS login reads confirmed PostgreSQL counts and exact unpaid
   await expect(page.getByRole('button', { name: 'Cước chưa thanh toán: 125.000 VND' })).toBeVisible(); await expect(page.getByRole('heading', { name: 'Tình trạng API quản trị' })).toBeVisible();
   await page.getByText('Nguồn dữ liệu & phạm vi thống kê', { exact: true }).click(); await expect(page.getByText('Nguồn nghiệp vụ chưa được triển khai').first()).toBeVisible(); await expect(page.getByText('Giao thành công', { exact: true })).toHaveCount(0);
   await page.screenshot({ path: resolve(directory!, 'admin-real-desktop.png'), fullPage: true, animations: 'disabled' });
-  await expect(page.locator('.iw-nav-group')).toHaveCount(8);
+  await expect(page.locator('.iw-nav-group')).toHaveCount(9);
   await expect(page.getByRole('tab')).toHaveCount(7);
   await page.getByRole('tab', { name: 'Finance Exposure', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Cước chưa thanh toán: 125.000 VND' })).toBeVisible();

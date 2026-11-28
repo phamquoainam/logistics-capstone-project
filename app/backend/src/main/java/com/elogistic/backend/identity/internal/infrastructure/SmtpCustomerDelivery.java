@@ -161,7 +161,9 @@ public final class SmtpCustomerDelivery implements CustomerDeliveryTransport, co
         catch(MessagingException | RuntimeException blocked){return outcome(CustomerDeliveryTransport.Kind.BLOCKED);}
     }
     /** Same configured JavaMailSender/TLS policy and bounded outcomes, fixed Staff invitation purpose. */
-    public CustomerDeliveryTransport.Outcome sendStaffInvitation(JdbcInvitationOutbox.Delivery delivery){
+    public CustomerDeliveryTransport.Outcome sendStaffInvitation(JdbcInvitationOutbox.Delivery delivery){return sendStaffInvitation(delivery,false);}
+    public CustomerDeliveryTransport.Outcome sendOperationsInvitation(JdbcInvitationOutbox.Delivery delivery){return sendStaffInvitation(delivery,true);}
+    private CustomerDeliveryTransport.Outcome sendStaffInvitation(JdbcInvitationOutbox.Delivery delivery,boolean operations){
         if(delivery==null||delivery.purpose()!=ActionProof.Purpose.STAFF_INV||wireLoggingEnabled())return outcome(CustomerDeliveryTransport.Kind.BLOCKED);
         byte[] token=delivery.token().clone();
         try{
@@ -169,10 +171,10 @@ public final class SmtpCustomerDelivery implements CustomerDeliveryTransport, co
             try{if(decoded.length!=32||!Arrays.equals(token,Base64.getUrlEncoder().withoutPadding().encode(decoded)))return outcome(CustomerDeliveryTransport.Kind.BLOCKED);}
             finally{Arrays.fill(decoded,(byte)0);}
             new CustomerEmail(delivery.destination());
-            String link=settings.portalOrigin()+"/staff/activate#proofId="+delivery.proofId()+"&token="+new String(token,StandardCharsets.US_ASCII);
+            String link=settings.portalOrigin()+(operations?"/ops/activate#proofId=":"/staff/activate#proofId=")+delivery.proofId()+"&token="+new String(token,StandardCharsets.US_ASCII);
             return sendPrepared(delivery.messageId(),delivery.destination(),message->{
-                message.setSubject("ArgoPost — Kích hoạt tài khoản CSKH","UTF-8");message.setSentDate(Date.from(clock.instant()));
-                message.setText("ArgoPost\nKích hoạt tài khoản CSKH\n\nBạn được mời sử dụng không gian CSKH ArgoPost. Mở liên kết dưới đây để xác minh email và đặt mật khẩu:\n\n"+link+"\n\nLiên kết có hiệu lực trong 24 giờ, chỉ sử dụng một lần. Không chia sẻ liên kết. Nếu không mong đợi lời mời, hãy bỏ qua email.\n\nArgoPost — Gửi niềm tin, nối hành trình.","UTF-8");
+                message.setSubject(operations?"ArgoPost — Kích hoạt tài khoản vận hành":"ArgoPost — Kích hoạt tài khoản CSKH","UTF-8");message.setSentDate(Date.from(clock.instant()));
+                message.setText(operations?"ArgoPost\nKích hoạt tài khoản vận hành\n\nXác minh email và đặt mật khẩu tại liên kết dưới đây:\n\n"+link+"\n\nLiên kết có hiệu lực trong 24 giờ, chỉ sử dụng một lần. Không chia sẻ liên kết. Nếu không yêu cầu tài khoản này, hãy bỏ qua email.":"ArgoPost\nKích hoạt tài khoản CSKH\n\nBạn được mời sử dụng không gian CSKH ArgoPost. Mở liên kết dưới đây để xác minh email và đặt mật khẩu:\n\n"+link+"\n\nLiên kết có hiệu lực trong 24 giờ, chỉ sử dụng một lần. Không chia sẻ liên kết. Nếu không mong đợi lời mời, hãy bỏ qua email.\n\nArgoPost — Gửi niềm tin, nối hành trình.","UTF-8");
             });
         }catch(RuntimeException invalid){return outcome(CustomerDeliveryTransport.Kind.BLOCKED);}
         finally{Arrays.fill(token,(byte)0);}

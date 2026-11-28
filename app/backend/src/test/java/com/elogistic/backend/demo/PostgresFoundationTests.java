@@ -44,8 +44,8 @@ class PostgresFoundationTests extends DemoTestSupport {
   List<String> schemas=jdbc.queryForList("SELECT nspname FROM pg_namespace WHERE nspname IN ('identity','merchant','orders','pricing','warehouse','dispatch','finance','routing','notification') ORDER BY nspname",String.class);
   assertEquals(List.of("dispatch","finance","identity","merchant","notification","orders","pricing","routing","warehouse"),schemas);
   assertEquals(10,jdbc.queryForObject("SELECT count(*) FROM pg_namespace n JOIN pg_roles r ON r.oid=n.nspowner WHERE r.rolname=? AND n.nspname IN ('platform','identity','merchant','orders','pricing','warehouse','dispatch','finance','routing','notification')",Integer.class,requiredEnv("PG_TEST_OWNER_ROLE")));
-  // Exact V1-V32/V34-V43 inventory: includes fifteen approved P0 tables.
-  assertEquals(158,jdbc.queryForObject("SELECT count(*) FROM pg_tables WHERE tableowner=? AND schemaname IN ('platform','identity','merchant','orders','pricing','finance','dispatch','notification')",Integer.class,requiredEnv("PG_TEST_OWNER_ROLE")));
+  // Exact V1-V49 inventory (no V33), including accepted NWS/read/preparation tables.
+  assertEquals(171,jdbc.queryForObject("SELECT count(*) FROM pg_tables WHERE tableowner=? AND schemaname IN ('platform','identity','merchant','orders','pricing','finance','dispatch','notification')",Integer.class,requiredEnv("PG_TEST_OWNER_ROLE")));
  }
 
  @Test void runtimeCannotDdlAssumeOwnerOrReadHistory() throws Exception {
@@ -71,7 +71,7 @@ class PostgresFoundationTests extends DemoTestSupport {
  @Test void validateAndRerunPreserveDataAndChecksums() {
   long before=jdbc.queryForObject("SELECT COUNT(*) FROM identity.demo_account",Long.class);
   var applied=Arrays.stream(flyway.info().applied()).map(m->m.getVersion()+":"+m.getChecksum()).toList();
-  assertEquals(List.of("1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","34","35","36","37","38","39","40","41","42","43"),Arrays.stream(flyway.info().applied()).map(m->m.getVersion().toString()).toList());assertTrue(flyway.validateWithResult().validationSuccessful);
+  assertEquals(List.of("1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","34","35","36","37","38","39","40","41","42","43","44","45","46","47","48","49"),Arrays.stream(flyway.info().applied()).map(m->m.getVersion().toString()).toList());assertTrue(flyway.validateWithResult().validationSuccessful);
   assertEquals(0,flyway.migrate().migrationsExecuted);
   assertEquals(applied,Arrays.stream(flyway.info().applied()).map(m->m.getVersion()+":"+m.getChecksum()).toList());
   assertEquals(before,jdbc.queryForObject("SELECT COUNT(*) FROM identity.demo_account",Long.class));

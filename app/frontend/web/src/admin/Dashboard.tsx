@@ -1,3 +1,4 @@
+import CarrierSites from './CarrierSites';
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { adminSession, AdminSessionError } from './session';
@@ -99,16 +100,17 @@ export default function AdminDashboard({ subject, logout, busy }: { subject: { i
   const colors: Record<MetricKey, string> = { BOOKINGS: '#0B2D5B', WAITING_HANDOVER: '#d96200', ACCEPTED: '#118477', PARCELS: '#2460a1', CONFIRMED_FEES: '#0B2D5B', UNPAID_FEES: '#c65a00' };
   const allPoints = currentReport?.sections.flatMap(s => s.series) ?? [];
   return <InternalShell portal="admin" name={subject.displayName} environment={context?.environment} permissions={context?.permissions} domainCapabilities={domainCapabilities} path={location.pathname} logout={logout} busy={busy}>
-      <section className="ap-dashboard"><div className="ap-dashboard-heading"><div><h1>{activeModule?.id === 'ADM-01' ? 'Tổng quan điều hành' : activeModule?.title ?? 'Tổng quan điều hành'}</h1><p>Dữ liệu nghiệp vụ theo quyền truy cập hiện hành.</p></div>{supportedSurface && !advanced && <button className="ap-secondary" disabled={!context || !currentReport && !error} onClick={() => setRefresh(n => n + 1)}>Làm mới</button>}</div>
+      <section className="ap-dashboard">{!(context && moduleAllowed && ['ADM-02', 'ADM-03'].includes(activeModule?.id ?? '')) && <div className="ap-dashboard-heading"><div><h1>{activeModule?.id === 'ADM-01' ? 'Tổng quan điều hành' : activeModule?.title ?? 'Tổng quan điều hành'}</h1><p>Dữ liệu nghiệp vụ theo quyền truy cập hiện hành.</p></div>{supportedSurface && !advanced && <button className="ap-secondary" disabled={!context || !currentReport && !error} onClick={() => setRefresh(n => n + 1)}>Làm mới</button>}</div>}
         {!context && !contextError && <p className="ap-loading" role="status">Đang kiểm tra quyền truy cập…</p>}
         {contextError && <section className="ap-panel ap-access-boundary" role="alert"><h2>Chưa có quyền xem dữ liệu điều hành</h2><p>{contextError === 'ACCESS_DENIED' ? 'Quyền quản trị Identity hiện tại chưa bao gồm quyền đọc dữ liệu điều hành Carrier.' : problem(contextError)}</p><p>Không có dữ liệu Merchant, vận đơn hoặc tài chính nào được hiển thị. Liên hệ người phụ trách cấp quyền để được hướng dẫn.</p></section>}
         {context && !moduleAllowed && <ModuleDependency id={activeModule?.id} allowed={false} />}
         {context && moduleAllowed && activeModule?.id === 'ADM-17' && <AdminWorkCenter context={context} capabilities={domainCapabilities} />}
         {context && moduleAllowed && activeModule?.id === 'ADM-02' && <MerchantApplications accountId={subject.id} />}
+        {context && moduleAllowed && activeModule?.id === 'ADM-05' && <CarrierSites />}
         {context && moduleAllowed && activeModule?.id === 'ADM-03' && <MerchantOrganizations />}
         {context && moduleAllowed && activeModule?.id === 'ADM-16' && <MerchantAudit />}
         {context && moduleAllowed && activeModule?.id === 'ADM-18' && <AuthorityView accountId={subject.id} />}
-        {context && moduleAllowed && !supportedSurface && activeModule?.id !== 'ADM-17' && activeModule?.id !== 'ADM-02' && activeModule?.id !== 'ADM-03' && activeModule?.id !== 'ADM-16' && activeModule?.id !== 'ADM-18' && <ModuleDependency id={activeModule?.id} allowed />}
+        {context && moduleAllowed && !supportedSurface && activeModule?.id !== 'ADM-05' && activeModule?.id !== 'ADM-17' && activeModule?.id !== 'ADM-02' && activeModule?.id !== 'ADM-03' && activeModule?.id !== 'ADM-16' && activeModule?.id !== 'ADM-18' && <ModuleDependency id={activeModule?.id} allowed />}
         {context && moduleAllowed && advanced && <DashboardV2View context={context} />}
         {context && moduleAllowed && supportedSurface && !advanced && sourceMode !== null && <>
           {activeModule?.id === 'ADM-01' && <div className="iw-tabs" role="tablist" aria-label="Dashboard điều hành">{tabs.map((item, index) => <button key={item.id} id={'admin-tab-' + item.id} type="button" role="tab" aria-controls="admin-tab-panel" tabIndex={tab === item.id ? 0 : -1} aria-selected={tab === item.id} onClick={() => filters({ tab: item.id === 'overview' ? null : item.id })} onKeyDown={event => {

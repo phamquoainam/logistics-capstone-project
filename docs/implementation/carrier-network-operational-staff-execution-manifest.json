@@ -1,0 +1,34 @@
+{
+  "id": "NWS-V1-SOURCE-TEST-EXECUTION",
+  "date": "2026-11-25",
+  "parent": {
+    "path": "docs/implementation/carrier-network-operational-staff-technical-manifest.proposed.json",
+    "sha256": "8adc4229ff00e728f322dd9341cb146a82e2dc16e1470dc077ec05eb55ac4ce5",
+    "bytesPreserved": true,
+    "authority": "Owner NWS-V1 SOURCE/TEST approval"
+  },
+  "amendments": [
+    {
+      "id": "NWS-ACL-02",
+      "path": "docs/implementation/carrier-network-operational-staff-control-acl.delta.md",
+      "status": "OWNER_APPROVED_SOURCE_TEST_ONLY",
+      "exactSql": "GRANT EXECUTE ON FUNCTION pg_catalog.pg_control_system() TO dispatch_network_writer;",
+      "target": "new owned isolated PostgreSQL18 test databases only",
+      "precondition": "Existing AON prerequisites applied; no effective PUBLIC/runtime/operator EXECUTE; private writer NOLOGIN with no runtime/operator membership"
+    }
+  ],
+  "migrations": [
+    "V44__operational_staff_identity.sql",
+    "V45__carrier_sites_operational_scope.sql"
+  ],
+  "historicalMigrationFilesPreserved": 42,
+  "deploymentAllowed": false,
+  "realProvisioningOrGrantsAllowed": false,
+  "gitPublishAllowed": false,
+  "readinessEvidence": "docs/implementation/carrier-network-operational-staff-execution.md",
+  "readiness": "NWS-V1 FOUNDATION SOURCE/TEST READY",
+  "sourceMigrationSha256": {
+    "V44__operational_staff_identity.sql": "02c12c6e4c4ecd0af016377f4eedaa0621501e2e8468b62742064a8ad3cd209c",
+    "V45__carrier_sites_operational_scope.sql": "07b4d0b4d01a81d870879dafaf4c50e7406b534e2a349b9156ea436db414139d"
+  }
+}

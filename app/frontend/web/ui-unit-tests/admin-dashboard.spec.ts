@@ -16,7 +16,7 @@ async function governanceFixture(context: BrowserContext, lost = false) {
     const url = new URL(route.request().url()), reply = (v: unknown) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(v) });
     if (url.pathname.endsWith('/context')) return reply({ accountId: adminUser.id, realmId: realm, authorityVersion: 'a'.repeat(64), assignments: [{ id: app, scopeType: 'POLICY', policyId: policy, organizationId: null, permissions: ['application.read', 'application.review', 'application.evidence.read'], version: 1, expiresAt: new Date(Date.now() + 3600000).toISOString() }] });
     if (url.pathname.endsWith('/revisions')) return reply({ items: [{ applicationId: app, revision: 1, submittedAt: now, policyVersion: '7', organizationDisplayName: 'Synthetic business', digest: 'a'.repeat(64), evidenceIds: [realm, policy], contactVerifiedAt: now }], page: 0, size: 20, hasNext: false });
-    if (url.pathname.endsWith('/review-data')) return reply({ application: current, submission: { entityType: 'COMPANY', jurisdiction: 'SYNTHETIC', registeredName: 'Synthetic business', legalIdentifier: 'SYNTHETIC-1234', registeredAddress: {}, operatingAddress: {}, representativeName: 'Synthetic contact', representativeEmail: 'synthetic@example.invalid', representativeRelationship: 'Representative', businessContactAttestationId: realm, evidenceIds: [realm, policy], declarations: {} }, evidence: [realm, policy].map((id, i) => ({ id, applicationId: app, purpose: i ? 'REPRESENTATIVE_AUTHORIZATION' : 'REGISTRATION', state: 'CLEAN', mime: 'image/png', bytes: 100, sha256: 'a'.repeat(64), version: 1, screenedAt: now })), contactVerifiedAt: now, policyVersion: '7', reviewEvents: [], organizationDisplayName: 'Synthetic business' });
+    if (url.pathname.endsWith('/review-data')) return reply({ application: current, submission: { entityType: 'COMPANY', jurisdiction: 'SYNTHETIC', registeredName: 'Synthetic business', legalIdentifier: 'SYNTHETIC-1234', registeredAddress: { country: 'TEST', administrativeArea: 'SIM-A1', locality: 'Synthetic locality', addressLine: 'Synthetic registered address' }, operatingAddress: { country: 'TEST', administrativeArea: 'SIM-A1', locality: 'Synthetic locality', addressLine: 'Synthetic operating address' }, representativeName: 'Synthetic contact', representativeEmail: 'synthetic@example.invalid', representativeRelationship: 'Representative', businessContactAttestationId: realm, evidenceIds: [realm, policy], declarations: { accuracy: true, representation: true, consentVersion: 'consent-test-1' } }, evidence: [realm, policy].map((id, i) => ({ id, applicationId: app, purpose: i ? 'REPRESENTATIVE_AUTHORIZATION' : 'REGISTRATION', state: 'CLEAN', mime: 'image/png', bytes: 100, sha256: 'a'.repeat(64), version: 1, screenedAt: now })), contactVerifiedAt: now, policyVersion: '7', reviewEvents: [], organizationDisplayName: 'Synthetic business' });
     if (route.request().method() === 'POST') {
       const headers = route.request().headers(), body = route.request().postData()!;writes.push({ body, key: headers['idempotency-key'], version: headers['if-match'] });
       if (lost && writes.length === 1) { current = { ...current, state: 'NEEDS_INFORMATION', version: 5, allowedActions: [] };return route.abort('failed'); }
@@ -68,6 +68,37 @@ test('Merchant review uses real policy metadata, explicit disclosure and an unch
   await page.screenshot({ path: '../../../.demo/spec003-implementation/admin-governance-review.png', fullPage: true });
 });
 
+test('Merchant review deep link refresh does not reopen the active application after BEGIN', async ({ page, context }) => {
+  const writes = await governanceFixture(context);
+  const app = '40000000-0000-4000-8000-000000000001';
+  const details: string[] = [];
+  context.on('request', request => { if (new URL(request.url()).pathname === '/api/v1/admin/merchant-applications/' + app && request.method() === 'GET') details.push(request.url()); });
+  await page.goto(origin + '/admin/merchants/applications?applicationId=' + app);
+  await page.getByRole('textbox', { name: 'Lý do', exact: true }).fill('Synthetic deep link review');
+  await page.getByRole('button', { name: 'Bắt đầu thẩm định', exact: true }).click();
+  await expect(page.getByText('Đang thẩm định · Revision 1 · Phiên bản 4', { exact: true })).toBeVisible();
+  await page.waitForLoadState('networkidle');
+  expect(details).toHaveLength(2); // Initial deep link + canonical post-command refresh only.
+  await page.getByRole('button', { name: 'Mở dữ liệu thẩm định', exact: true }).click();
+  for (const name of ['Hồ sơ đăng ký hợp lệ', 'Thẩm quyền đại diện hợp lệ', 'Liên hệ đã xác minh', 'Đã đối chiếu trùng lặp', 'Không có xung đột đã biết']) await page.getByRole('checkbox', { name, exact: true }).check();
+  await page.getByRole('textbox', { name: 'Lý do', exact: true }).fill('Synthetic review completed');
+  await page.getByRole('button', { name: 'Hoàn tất thẩm định', exact: true }).click();
+  await expect(page.getByText('Đang thẩm định · Revision 1 · Phiên bản 5', { exact: true })).toBeVisible();
+  expect(writes).toHaveLength(2);
+});
+
+test('Merchant review clears disclosed data when current governance admission is revoked', async ({ page, context }) => {
+  await governanceFixture(context);
+  await page.goto(origin + '/admin/merchants/applications?applicationId=40000000-0000-4000-8000-000000000001');
+  await page.getByRole('button', { name: 'Mở dữ liệu thẩm định', exact: true }).click();
+  await expect(page.getByText('synthetic@example.invalid', { exact: true })).toBeVisible();
+  await context.route(origin + '/api/v1/admin/merchant-governance/context', route => route.fulfill({ status: 403, contentType: 'application/json', body: JSON.stringify({ code: 'ACCESS_DENIED' }) }));
+  await page.getByRole('button', { name: 'Làm mới', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('chưa có quyền');
+  await expect(page.getByText('synthetic@example.invalid', { exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Mở dữ liệu thẩm định', exact: true })).toHaveCount(0);
+});
+
 test('Merchant review lost response keeps the original key/ETag and rereads canonical state after receipt replay', async ({ page, context }) => {
   const writes = await governanceFixture(context, true);await page.goto(origin + '/admin/merchants/applications');
   await page.getByRole('button', { name: 'Mở hồ sơ', exact: true }).click();await page.getByRole('textbox', { name: 'Lý do', exact: true }).fill('Synthetic lost response');await page.getByRole('button', { name: 'Bắt đầu thẩm định', exact: true }).click();
@@ -75,6 +106,39 @@ test('Merchant review lost response keeps the original key/ETag and rereads cano
   await page.getByRole('button', { name: 'Thử lại đúng yêu cầu', exact: true }).click();
   await expect(page.getByText('Cần bổ sung · Revision 1 · Phiên bản 5', { exact: true })).toBeVisible();
   expect(writes).toHaveLength(2);expect(writes[0]).toEqual(writes[1]);
+});
+
+test('Menu 2 exposes all five entries, protected review details and immutable revision metadata without owner-transfer writes', async ({ page, context }) => {
+  const writes = await governanceFixture(context);
+  const app = '40000000-0000-4000-8000-000000000001', policy = '30000000-0000-4000-8000-000000000001';
+  await context.route(origin + '/api/v1/admin/merchant-governance/context', route => route.fulfill({ contentType: 'application/json', body: JSON.stringify({ accountId: adminUser.id, realmId: policy, authorityVersion: 'a'.repeat(64), assignments: [{ id: app, scopeType: 'POLICY', policyId: policy, organizationId: null, permissions: ['application.read', 'application.review', 'application.evidence.read', 'org.read'], version: 1, expiresAt: new Date(Date.now() + 3600000).toISOString() }] }) }));
+  await page.goto(origin + '/admin/merchants/applications?view=review');
+  const menu = page.getByRole('navigation', { name: 'Merchant & Phê duyệt', exact: true });
+  await expect(menu.getByRole('link')).toHaveCount(5);
+  await expect(menu.getByRole('link', { name: 'Review Workspace', exact: true })).toHaveAttribute('aria-current', 'page');
+  await page.getByRole('combobox', { name: 'Policy scope', exact: true }).selectOption(policy);
+  await page.getByLabel('Được phân công cho tôi', { exact: true }).check();
+  const filtered = page.waitForRequest(request => { const url = new URL(request.url());return url.pathname === '/api/v1/admin/merchant-applications' && url.searchParams.get('policyId') === policy && url.searchParams.get('reviewerId') === adminUser.id && url.searchParams.get('page') === '0'; });
+  await page.getByRole('button', { name: 'Làm mới', exact: true }).click();await filtered;
+  await page.getByRole('button', { name: 'Mở hồ sơ', exact: true }).click();
+  await expect(page.getByText('synthetic@example.invalid', { exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Mở dữ liệu thẩm định', exact: true }).click();
+  await expect(page.getByText('synthetic@example.invalid', { exact: true })).toBeVisible();
+  await expect(page.getByText('Địa chỉ đăng ký', { exact: true })).toBeVisible();
+  await expect(page.getByText('Synthetic registered address, Synthetic locality, SIM-A1, TEST', { exact: true })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Consent đã nộp', exact: true })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Consent đã nộp', exact: true })).toContainText('consent-test-1');
+  await page.getByRole('button', { name: 'Xem lịch sử revision', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Revision history' }).getByRole('cell', { name: 'Synthetic business', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Revision sau', exact: true })).toBeDisabled();
+  await menu.getByRole('link', { name: 'Owner Transfer', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Owner Transfer', exact: true })).toBeVisible();
+  await expect(page.getByText(/BLOCKED_COORDINATION · Policy nghiệp vụ đã được duyệt; chưa mở thực thi chuyển Owner/)).toBeVisible();
+  await expect(page.getByRole('button', { name: /Chuyển Owner|Phê duyệt chuyển/ })).toHaveCount(0);
+  expect(writes).toHaveLength(0);
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: '../../../.demo/spec003-implementation/admin-menu2-mobile.png', fullPage: true, animations: 'disabled' });
 });
 
 test('independent decider reauthenticates once and retries the exact rejection without retaining a password', async ({ page, context }) => {
@@ -149,6 +213,32 @@ test('organization lifecycle keeps exact key on lost response and refreshes curr
   await expect(page.getByRole('heading', { name: 'Khôi phục tổ chức', exact: true })).toBeVisible();expect(proofs).toBe(1);expect(requests).toHaveLength(2);expect(requests[0]).toEqual(requests[1]);
   expect(await page.evaluate(() => [localStorage.length, sessionStorage.length])).toEqual([0, 0]);
 });
+
+test('Merchant directory owns exactly one primary heading after its canonical list loads', async ({ page, context }) => {
+  await fixture(context);
+  await context.route(origin + '/api/v1/admin/merchant-organizations**', route => route.fulfill({ contentType: 'application/json', body: JSON.stringify({ items: [], page: 0, size: 20, hasNext: false }) }));
+  await page.goto(origin + '/admin/merchants/organizations');
+  await expect(page.getByText('Chưa có tổ chức thuộc bộ lọc và phạm vi hiện tại.', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
+  await expect(page.getByRole('heading', { name: 'Tổ chức Merchant', exact: true })).toBeVisible();
+});
+
+test('Organization activation deep link binds exact target and handles denied access without exposing prior details', async ({ page, context }) => {
+  await fixture(context);
+  const id = '60000000-0000-4000-8000-000000000001', owner = '60000000-0000-4000-8000-000000000002';
+  let denied = false;
+  await context.route(origin + '/api/v1/admin/merchant-organizations**', route => {
+    const path = new URL(route.request().url()).pathname;
+    const value = { id, displayName: 'Synthetic target organization', state: 'ACTIVE', admissionOrigin: 'LOCAL_OPERATOR_PROVISIONED', version: 1, initialOwnerMembershipId: owner, activation: null, membershipCounts: { OWNER: { ACTIVE: 1 } }, allowedActions: [] };
+    return route.fulfill({ status: denied && path.endsWith(id) ? 403 : 200, contentType: 'application/json', body: JSON.stringify(path.endsWith(id) ? denied ? { code: 'ACCESS_DENIED' } : value : { items: [], page: 0, size: 20, hasNext: false }) });
+  });
+  await page.goto(origin + '/admin/merchants/organizations?organizationId=' + id);
+  await expect(page.getByRole('heading', { name: 'Synthetic target organization', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Xác thực & tạm ngừng' })).toHaveCount(0);
+  denied = true;await page.reload();
+  await expect(page.getByRole('alert')).toContainText('không có quyền');
+  await expect(page.getByRole('heading', { name: 'Synthetic target organization', exact: true })).toHaveCount(0);
+});
 async function fixture(context: BrowserContext, limited = false, expired = false, stale = false) {
   const calls: string[] = [], ctx = adminContext(limited ? ['ADMIN_DASHBOARD_READ', 'ADMIN_SHIPMENT_READ'] : adminPermissions);
   let report: Dashboard;
@@ -216,7 +306,14 @@ test('responsive Dashboard shows truthful source availability without unsupporte
 test('internal shell groups overview with work and distinguishes seven authorized dashboard views', async ({ page, context }) => {
   const calls = await fixture(context); await page.goto(origin + '/admin');
   await expect(page.getByRole('button', { name: 'Vận đơn đã đặt: 3 vận đơn' })).toBeVisible();
-  await expect(page.locator('.iw-nav-group')).toHaveCount(8);
+  await expect(page.locator('.iw-nav-group')).toHaveCount(9);
+  const overviewMenu = page.locator('.iw-nav-group').first();
+  await expect(overviewMenu.locator('summary')).toHaveText('Tổng quan');
+  await expect(overviewMenu.locator(':scope > div > a, :scope > div > button')).toHaveText(['Executive Dashboard', /My Approvals/, 'Operational Risk', 'Service Health']);
+  const accountMenu = page.locator('.iw-nav-group').last();
+  await expect(accountMenu.locator('summary')).toHaveText('Tài khoản & Công việc');
+  await accountMenu.locator('summary').click();
+  await expect(accountMenu.getByRole('link', { name: 'Tài khoản & Công việc', exact: true })).toHaveAttribute('href', '/admin/account');
   await expect(page.getByRole('tab')).toHaveCount(7);
   await page.getByRole('tab', { name: 'Finance Exposure', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Cước chưa thanh toán: 125.000 VND' })).toBeVisible();
@@ -269,8 +366,8 @@ test('portal selector never lends SYSTEM Admin authority to operations or financ
   await expect(page.getByRole('button', { name: /^Carrier Operations/ })).toBeDisabled();
   await expect(page.getByRole('button', { name: /^Carrier Business & Finance/ })).toBeDisabled();
   calls.length = 0; await page.goto(origin + '/ops');
-  await expect(page.locator('[data-state="UNAVAILABLE"]')).toContainText('Chưa có admission');
-  expect(calls).toEqual([]);
+  await expect(page.getByRole('heading', { name: 'Đăng nhập Operations', exact: true })).toBeVisible();
+  expect(calls).toEqual(['/api/v1/ops-auth/csrf', '/api/v1/ops-auth/refresh']);
   await page.goto(origin + '/finance');
   await expect(page.getByRole('heading', { name: 'Đăng nhập CSKH', exact: true })).toBeVisible();
   expect(calls.some(v => v.startsWith('/api/v1/support-operations/'))).toBe(false);

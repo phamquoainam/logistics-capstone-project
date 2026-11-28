@@ -7,7 +7,8 @@ import java.util.List;
 /** Owner-approved ACL-05 prerequisite, called only by an owned test cluster administrator. */
 final class StaffRoleTestBootstrap {
     private static final List<String> ROLES = List.of(
-        "elogistics_local_staff_operator", "identity_staff_writer", "support_grant_writer");
+        "elogistics_local_staff_operator", "identity_staff_writer", "support_grant_writer",
+        "elogistics_local_operations_operator", "dispatch_network_writer", "merchant_coverage_reader");
 
     private StaffRoleTestBootstrap() {}
 
@@ -29,6 +30,7 @@ final class StaffRoleTestBootstrap {
             }
             // Only the trusted migration owner can SET for ownership transfer; no inherited DML.
             statement.execute("GRANT identity_staff_writer,support_grant_writer TO " + owner + " WITH INHERIT FALSE, SET TRUE");
+            statement.execute("GRANT dispatch_network_writer,merchant_coverage_reader TO " + owner + " WITH INHERIT FALSE, SET TRUE");
             admin.commit();
         } catch (SQLException | RuntimeException failure) {
             admin.rollback();
@@ -46,5 +48,12 @@ final class StaffRoleTestBootstrap {
             statement.execute("GRANT EXECUTE ON FUNCTION pg_catalog.pg_control_system() TO identity_staff_writer," + owner);
         }
         AdminRoleTestBootstrap.database(admin, owner);
+        // NWS-ACL-02: only a newly owned test database, after existing AON ACL prerequisites.
+        try (var statement = admin.createStatement()) {
+            try (var rows = statement.executeQuery("SELECT EXISTS(SELECT 1 FROM pg_proc p CROSS JOIN LATERAL aclexplode(COALESCE(p.proacl,acldefault('f',p.proowner))) a WHERE p.oid='pg_catalog.pg_control_system()'::regprocedure AND a.grantee=0 AND a.privilege_type='EXECUTE')")) {
+                if (!rows.next() || rows.getBoolean(1)) throw new SQLException("NWS_PUBLIC_CONTROL_EXECUTE_BLOCKED", "42501");
+            }
+            statement.execute("GRANT EXECUTE ON FUNCTION pg_catalog.pg_control_system() TO dispatch_network_writer");
+        }
     }
 }

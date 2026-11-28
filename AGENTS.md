@@ -36,3 +36,15 @@ Nếu mâu thuẫn, **dừng và nêu xung đột**, không sửa nghĩa báo c�
 Đọc [delivery principles](docs/implementation/delivery-principles-v3.md), [index](specs/INDEX.md), [account-first decision](docs/decisions/customer-account-merchant-admission.md) và [portal coverage](docs/portal/group-ab-coverage.md). Phương pháp hiện hành: Spec-first → Spec-by-Spec → Full-stack End-to-end Delivery → Full Spec Acceptance; vertical slice chỉ decomposition nội bộ, không partial feature acceptance.
 
 Explicit latest Owner business decision có precedence trước reference cũ; accepted security/architecture chỉ đổi qua controlled amendment. Canonical specs003–030 thay legacy/planning active tree;001/002 và accepted evidence giữ nguyên. Public registration chỉ personal account, Merchant application sau verified customer login, no Guest Owner/self-grant, no anonymous Shipment/no mandatory Recipient IAM. Exact schema/API/permission/provider còn proposal cần review trước code. Docs-only task không phải chỉ đạo implement vertical slice/runtime; không tự bắt đầu production coding. Menu→BC/REQ→owning spec→screen/API/data/current permission/test/delivery status; product portal acceptance cross-Spec riêng.
+
+### ArgoPost project-wide North Star — mandatory read first
+For every new task in any ArgoPost area (public/customer/ops/courier/finance/admin,
+backend, DB or infrastructure), read the entire
+`docs/implementation/ARGOPOST_PROJECT_NORTH_STAR.md` before planning, editing,
+testing, or declaring completion. It is portal-neutral: do not default to Admin
+or repeat a prior ADM-01 task. Use the Owner's latest explicit task as Section 5;
+only the Owner may request edits to the current-task slot. Prioritize genuine
+cross-portal Quote→Booking→Pickup→Station/Hub→Delivery/Return→Finance→Support E2E.
+Inspect existing source and PASS evidence; avoid redundant implementation/tests.
+Keep domain boundaries and security/transaction gates. This file does not expand
+authority or permit deployments. If unreadable, report this before code changes.

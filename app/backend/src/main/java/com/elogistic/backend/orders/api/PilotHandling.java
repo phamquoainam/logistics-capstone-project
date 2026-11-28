@@ -10,6 +10,22 @@ public interface PilotHandling {
         public Handling {parcels=List.copyOf(parcels);events=List.copyOf(events);}
     }
     record Cargo(PilotShipments.Shipment shipment,Handling handling) {public String dropOffCode(){return shipment.quote().route().dropOffCode();}@Override public String toString(){return "PilotCargo[redacted]";}}
+    record CarrierCargo(UUID shipmentId,String shipmentCode,String ownerType,UUID accountId,UUID organizationId,UUID facilityId,
+                        UUID quoteId,long totalVnd,Instant createdAt,ShippingDrafts.Input input,com.elogistic.backend.pricing.api.PilotQuotes.Route route,
+                        List<PilotShipments.Parcel> parcels,Handling handling) {
+        public CarrierCargo {
+            parcels=List.copyOf(parcels);
+            Objects.requireNonNull(createdAt,"CARRIER_BOOKING_TIME_REQUIRED");
+            if (!("PERSONAL".equals(ownerType)&&accountId!=null&&organizationId==null&&facilityId==null)
+                && !("BUSINESS".equals(ownerType)&&accountId==null&&organizationId!=null)) throw new IllegalArgumentException("CARRIER_OWNER_BINDING_REQUIRED");
+        }
+        @Override public String toString(){return "CarrierCargo[redacted]";}
+    }
+    default CarrierCargo carrierLookup(CarrierAccess actor,String barcode){throw new IllegalStateException("CARRIER_HANDLING_UNAVAILABLE");}
+    default CarrierCargo carrierAtStation(CarrierAccess actor,UUID shipment){throw new IllegalStateException("CARRIER_HANDLING_UNAVAILABLE");}
+    default void carrierAccept(CarrierAccess actor,UUID shipment,long expectedVersion,UUID acceptanceId,Instant occurredAt){throw new IllegalStateException("CARRIER_HANDLING_UNAVAILABLE");}
+    default byte[] carrierLabel(CarrierAccess actor,UUID shipment){throw new IllegalStateException("CARRIER_HANDLING_UNAVAILABLE");}
+    default Handling businessSelf(BusinessPreparations.Access actor,UUID shipment){throw new IllegalStateException("CARRIER_HANDLING_UNAVAILABLE");}
     Handling self(ShippingDrafts.Access access,UUID shipment);
     Cargo lookup(CarrierAccess access,String barcode);
     Cargo atStation(CarrierAccess access,UUID shipment);

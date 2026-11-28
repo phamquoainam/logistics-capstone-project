@@ -26,7 +26,7 @@ export default function InternalShell({ portal, name, environment, permissions =
             const item = adminModules.find(m => m.id === id)!;
             return canOpenModule(id, permissions, domainCapabilities) ? <Link key={id} to={item.path} aria-current={active?.id === id ? 'page' : undefined} onClick={() => setMobileOpen(false)}>{item.title}</Link> : <button key={id} disabled title={item.dependency}>{item.title}<small>{item.extension ? 'PROPOSED' : 'Chưa mở capability'}</small></button>;
           })}</div>
-        </details>) : portal === 'finance' ? <><Link to="/finance" aria-current="page">CSKH & Hồ sơ hỗ trợ</Link><p className="iw-nav-note">Thu tiền, ledger, COD và payout chưa được mở trong admission này.</p></> : <p className="iw-nav-note">Chưa có admission Operations được duyệt cho giao diện này.</p>}
+        </details>) : portal === 'finance' ? <><Link to="/finance" aria-current="page">CSKH & Hồ sơ hỗ trợ</Link><p className="iw-nav-note">Thu tiền, ledger, COD và payout chưa được mở trong admission này.</p></> : <Link to="/ops/station" aria-current={path === '/ops/station' ? 'page' : undefined}>Station Intake</Link>}
       </nav>
     </aside>
     {mobileOpen && <button className="iw-overlay" aria-label="Đóng menu nội bộ" onClick={() => setMobileOpen(false)} />}
@@ -36,7 +36,7 @@ export default function InternalShell({ portal, name, environment, permissions =
         <div className="iw-identity"><span className="iw-environment">{environment ?? 'Chưa xác minh môi trường'}</span><span className="iw-session">{environment ? 'Phiên đã xác thực' : 'Chưa xác thực'}</span><strong>{name}</strong>{logout && <button className="ap-secondary" onClick={logout} disabled={busy}>{busy ? 'Đang đăng xuất…' : logoutLabel}</button>}</div>
       </header>
       <main id="internal-content" className="iw-main" tabIndex={-1}><nav className="iw-breadcrumbs" aria-label="Đường dẫn"><span>Nội bộ</span><span>/</span><Link to={portal === 'admin' ? '/admin' : '/' + portal}>{portalNames[portal]}</Link>{active && <><span>/</span><span aria-current="page">{active.title}</span></>}</nav>{children}</main>
-      <footer className="iw-footer"><span>{portal === 'admin' ? 'Governance & Control Plane · Thẩm quyền theo từng nghiệp vụ' : portal === 'finance' ? 'Business & Finance Execution Plane · SUPPORT context' : 'Operational Execution Plane · Chưa mở admission'}</span><span>Giờ Việt Nam · UTC+07:00</span></footer>
+      <footer className="iw-footer"><span>{portal === 'admin' ? 'Governance & Control Plane · Thẩm quyền theo từng nghiệp vụ' : portal === 'finance' ? 'Business & Finance Execution Plane · SUPPORT context' : 'Operational Execution Plane · OPS context · Quyền theo địa điểm'}</span><span>Giờ Việt Nam · UTC+07:00</span></footer>
     </div>
   </div>;
 }

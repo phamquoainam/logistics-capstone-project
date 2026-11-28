@@ -1,0 +1,1388 @@
+{
+  "baseline": "d5a0c240841bdb35d9ef6064cddba696a5b2fa62",
+  "authority": "Owner develop baseline release + BRC-ACL-01",
+  "status": "RELEASE_BRANCH_PUBLISHED_PR52_OPEN_NOT_MERGED",
+  "preservedWipPaths": 157,
+  "excluded": [
+    ".demo/**",
+    ".local/**",
+    ".baseline-release/**",
+    "private keys/credentials/logs/DB volumes/build outputs"
+  ],
+  "entries": [
+    {
+      "path": ".dockerignore",
+      "sha256": "1475a2e3d7a0e4602659eb1a13cd200fbf8e5c21ab17e819ad7fc371e5e05be2",
+      "classification": "PORTABLE_BASELINE_OR_OWNER_TEAM_DOCUMENT",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH; portability/CI or approved BRC-ACL-01 only"
+    },
+    {
+      "path": ".env.example",
+      "sha256": "c9dd976162358d6ffec6ccb6398819365a052a3f4c5665383d47a3058c50792d",
+      "classification": "PORTABLE_BASELINE_OR_OWNER_TEAM_DOCUMENT",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH; portability/CI or approved BRC-ACL-01 only"
+    },
+    {
+      "path": ".gitattributes",
+      "sha256": "47946f4ecc2ad4b5d8260b3dfd0e75681e1c4fc5741cdb338bf1c096044316ed",
+      "classification": "PORTABLE_BASELINE_OR_OWNER_TEAM_DOCUMENT",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH; portability/CI or approved BRC-ACL-01 only"
+    },
+    {
+      "path": ".github/workflows/portable-baseline.yml",
+      "sha256": "328feeb88c9c048538336f93132dcbf81e39a34311d066c4cbe259b9a78fa5cf",
+      "classification": "PORTABLE_BASELINE_OR_OWNER_TEAM_DOCUMENT",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH; portability/CI or approved BRC-ACL-01 only"
+    },
+    {
+      "path": ".gitignore",
+      "sha256": "db50b59aa52d56aa9d51ae6ec951207d12fd4013e275b14f44b3fe83620aa5fb",
+      "classification": "PORTABLE_BASELINE_OR_OWNER_TEAM_DOCUMENT",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH; portability/CI or approved BRC-ACL-01 only"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/dispatch/api/CarrierNetworkReads.java",
+      "sha256": "c50b0da3a29b3528cc73b456599add1dea97dafea0a4eae2457cace2e311400d",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/dispatch/api/OperationalStationIntake.java",
+      "sha256": "8050558dc2a87216df9bd7a90496af32991645e31c3071202c8bffe7001fcffc",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/dispatch/internal/StationIntakeConfiguration.java",
+      "sha256": "fb187388ab94ae0dd3fa5333c8eab99b4ecb11e6934ea2a4e9b692055e2a6a6a",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/dispatch/internal/infrastructure/JdbcCarrierNetworkReads.java",
+      "sha256": "0201fe545f7db7e40969b8e687a9850bfcdf1a001df7c156d90dd5e47906d4c3",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/dispatch/internal/infrastructure/JdbcStationIntake.java",
+      "sha256": "f8f28e4b77d4c9171acaa641bb922f941395590dc256fe24b5ebb7496ba14717",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/finance/api/BusinessObligations.java",
+      "sha256": "bb726092b2586166c77718bb5987ad0bf6d6d4b2db6a0f89fad384ca7fcf6dc5",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/finance/internal/infrastructure/JdbcBusinessObligations.java",
+      "sha256": "7832e132a0fff6991caa3a058f8f0f8e8eee8ea906e76e6c2399de1cb8e5d00d",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/identity/api/staff/OperationalStaffAdmission.java",
+      "sha256": "9574f942d1e3c16f6af40103dfb6764a67ec7835edd855c63855ba5f287a46e4",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/identity/internal/ProductionCustomerConfiguration.java",
+      "sha256": "1836879b5e10f3a6a3fab29c15489eae589790edc2c54b18e296c42dc333f685",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/identity/internal/ProductionIdentityHttpConfiguration.java",
+      "sha256": "5d5e432f2d6d4b0a235da2c79de22f8d6d0f019a59851a1157bbae953eeb3706",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/identity/internal/ProductionOperationsComposition.java",
+      "sha256": "e27385bc1be986ff56ae5fe90b32ac64ed169d89bdda4f0ceb9821003be4a704",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/identity/internal/ProductionOperationsConfiguration.java",
+      "sha256": "f4ed4b1c0b7d660a6b4b733cbb5801d56b3204e98b80d7f6ad7a38eb01546510",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/identity/internal/ProductionOperationsWebConfiguration.java",
+      "sha256": "e8f90ce00dbd548d09a3fe8277aa40195f9a1827936e2c380fd553745a9c236c",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/identity/internal/ProductionStaffConfiguration.java",
+      "sha256": "145d288e489b6a1d58c2db61b593c188d225fa6fb803db635950c19f18a0436d",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/identity/internal/infrastructure/IdentitySessionStorage.java",
+      "sha256": "24941d395725f4ad224e3ab724934c6153e9b83d904d069f97812cf2d1f2ce02",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/identity/internal/infrastructure/JdbcIdentityGrantStore.java",
+      "sha256": "e24bc8af93bba98c70ba84011fa2f2d9088b75f5e9dacc6268cde0a8a29e91e3",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/identity/internal/infrastructure/JdbcIdentitySessionStore.java",
+      "sha256": "ad7fec1f88378903030af9db33a0b13ee8610e4e0149d993a5c5349136500ddc",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/identity/internal/infrastructure/JdbcInvitationOutbox.java",
+      "sha256": "b81e5dae7d5f3b6d58b1abf077411aeefc0328b8e08e951599316559732dc25b",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/identity/internal/infrastructure/JdbcOperationalStaffAdmission.java",
+      "sha256": "babcd822e4dabe03dc75f6f8850484e1c884d85a06ae6cc476cf99e091167862",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/identity/internal/infrastructure/JdbcStaffInvitationActivation.java",
+      "sha256": "eb4f2441214e822f38dbf769a3a9f9236021bc7e94400095d20e040738ad5b74",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/identity/internal/infrastructure/LocalSupportStaffProvisioner.java",
+      "sha256": "e9c482dfe2ab39e23fa35093a92ca38b51b1bc8285a5c83ed1e0a894aeae211a",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/identity/internal/infrastructure/SmtpCustomerDelivery.java",
+      "sha256": "8281a9aeb38182aa31700172a26a87c80b7006a79a75f122d1348b46b4febabc",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/identity/internal/infrastructure/StaffInvitationDeliveryWorker.java",
+      "sha256": "a2c79257ff44e078604058f815d9b79bec81486522f30afe1b9726b9b0db50d8",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/identity/internal/web/ProductionAuthenticationHttp.java",
+      "sha256": "56fb5742d0b0d04aa1358e8c5be78a07f009fe40cc771aecaacb367be571a04c",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/identity/internal/web/ProductionOperationalGuard.java",
+      "sha256": "93cb031aa58af92cc4ab2d781e278db4de0d4c725f5ce78b8c696dfdac2e803f",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/identity/internal/web/ProductionReadGuard.java",
+      "sha256": "fc224fe7514b17e2b09b723b68557c9d7ba175366dd4434b626809329c669f2e",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/identity/internal/web/ProductionSessionAdmission.java",
+      "sha256": "ec1024be3c43de5361b76bc0135d8f7e1442f165e8416c5dd4e935e38996bba4",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/identity/internal/web/ProductionStaffRequestAdmission.java",
+      "sha256": "da8e5af814fb09ea211e9d6731c90a7c84a8291774bc1b63fef858967ff2dc90",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/merchant/api/MerchantGovernanceViews.java",
+      "sha256": "e954c8ee72531b51f766fc2d5bccbd550f618d1f128ab16c59ae366b8a5588f3",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/merchant/api/OrganizationGovernanceCases.java",
+      "sha256": "0b02dcde27ec677d7c31d540c670dbaead23f1c6e68d9c5450e9094bde7aef41",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/merchant/api/customer/PilotCoverage.java",
+      "sha256": "3506db031b4cbc6aae8ec5e162e545afa7eae72a6dbd329cb2faa4fbebafc9a2",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/merchant/internal/CustomerProfileConfiguration.java",
+      "sha256": "1f76e9dafb6f85fe9fb7af3b7695fa9db73a622758d7336b0027627a9b9bb7c2",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/merchant/internal/MerchantGovernanceConfiguration.java",
+      "sha256": "8a31c54a5e8cdcb0c5edbbed107e9e4fd93bce4d84a6a7aa315958a45b7b60ad",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/merchant/internal/infrastructure/JdbcMerchantApplicationReviews.java",
+      "sha256": "0a5b8ef49c44fd8106106215cdd75ec91c83254d5d403490a3c60c4c8ebcfec8",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/merchant/internal/infrastructure/JdbcMerchantGovernance.java",
+      "sha256": "2062bf680ad7d303bea61c24bc5adbd7092cc32d2b0e11db3cece4b1e0302fb4",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/merchant/internal/infrastructure/JdbcMerchantGovernanceViews.java",
+      "sha256": "8dd0b663019e0854edac7aef7c57c89a7bfc03521aa84fad4925ba9332a91e0c",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/merchant/internal/infrastructure/JdbcOrganizationGovernanceCases.java",
+      "sha256": "2598dff61d66fb33b110ad3f683cdcb457e53a559f5e8b0ee539af640684b5d3",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/merchant/internal/infrastructure/JdbcPilotCoverage.java",
+      "sha256": "6aec5b71dd8f07a3bcf6494f19c5c131f3fbb8ff57f72c1e2209616b36c12a7b",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/merchant/internal/infrastructure/MerchantViewCursor.java",
+      "sha256": "ade5c22103d2a4a80c66f220e6edb7687a66f62166ff9dba98a711e082a9efb7",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/merchant/internal/infrastructure/OrganizationCasePolicy.java",
+      "sha256": "bce2533c88d27886acea0166733f8c488d7bdee87321fbbc19462cc64c1201a8",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/orders/api/BusinessShipmentManagement.java",
+      "sha256": "b728943a81b0acd81dfee928ce78b4f62ef3daea89e17a64ef80f5c4c5bc681f",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/orders/api/PilotHandling.java",
+      "sha256": "754730bdada4effcf9df37fa403551b98c7369786de6858a8a2aec4b42eadcde",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/orders/internal/BusinessPreparationConfiguration.java",
+      "sha256": "23d33760713761df45bfac5b8261eade877238cdb155d385025028ef14f5c7f9",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/orders/internal/PilotBookingConfiguration.java",
+      "sha256": "0ad2f69ae86abdff7606a7c4a0e46d2349bc8e633e280a011842062a845dd001",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/orders/internal/infrastructure/BusinessManagementFilters.java",
+      "sha256": "9dd66106c26953b214eed05f3ed2751beb51c839d572db25f285dd91d9bf568c",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/orders/internal/infrastructure/JdbcBusinessShipmentManagement.java",
+      "sha256": "0a20b414284b869a2c22741b36d58435f55a10452261b4347d9a36aeef09047d",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/orders/internal/infrastructure/JdbcPilotHandling.java",
+      "sha256": "efabb53139320fb436e94b04e9bc925fe4a7258f3a4399e87a60c430515149e5",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/workflow/internal/web/BusinessShippingHttp.java",
+      "sha256": "07b4a6abfa31f4c5cf2929da4fc69033db7560d25fe2066d0190e8cd7ffbe0d7",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/workflow/internal/web/CarrierNetworkHttp.java",
+      "sha256": "15510fb4673a5bf8e2cc47a5c26a8421e94b96c12e0395f857aa58290d35628d",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/workflow/internal/web/MerchantGovernanceViewsHttp.java",
+      "sha256": "a0dc9e71fa13a23f29528de7f08abb1d82ae063a2a6c72ed8dfe31262d6f2c11",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/workflow/internal/web/OperationalStationHttp.java",
+      "sha256": "deebbb5f55eee7fd47ef9f70c97e54e2bd389acbd58160d2804e58b86c5fbd51",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/workflow/internal/web/OrganizationGovernanceCasesHttp.java",
+      "sha256": "b1ab4d082d017172d1cf9b0473658d3dcb9ca0d525af836a6ab02a2a8b214f67",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/java/com/elogistic/backend/workflow/internal/web/OrganizationShipmentManagementHttp.java",
+      "sha256": "e3459f81a69110b9667c2655c62cebaec3d4997ad307123923f12093f9a7e897",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/resources/db/migration/V44__operational_staff_identity.sql",
+      "sha256": "02c12c6e4c4ecd0af016377f4eedaa0621501e2e8468b62742064a8ad3cd209c",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/resources/db/migration/V45__carrier_sites_operational_scope.sql",
+      "sha256": "07b4d0b4d01a81d870879dafaf4c50e7406b534e2a349b9156ea436db414139d",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/resources/db/migration/V46__merchant_governance_review_views.sql",
+      "sha256": "10d213932e3e58088e42c220f970ecf816ff9662dde68aae5d55722a38b88919",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/resources/db/migration/V47__merchant_organization_governance_preparation.sql",
+      "sha256": "3389ec46fd7c89aa56d42b3d8c29588b482037704881560ee42ae7b9881fec13",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/resources/db/migration/V48__business_station_intake_ownership.sql",
+      "sha256": "be5fc80332e19aa89302e2548e8c7fc4402192da18f7f84e60889d81aea15321",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/main/resources/db/migration/V49__canonical_review_comment_table_owner.sql",
+      "sha256": "92976319fb025afb313d97373f83956488ea1c1957ca4f0c059dee27247a0316",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/test/java/com/elogistic/backend/architecture/ArchitectureRules.java",
+      "sha256": "86a1bb2eed232078eb327e2be269f00b5f6ee550a6518988af41466905838f45",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/test/java/com/elogistic/backend/demo/PostgresFoundationTests.java",
+      "sha256": "96d330131f8b5d73dfa650d80d894d47b12ea26ac2d084646ddf814284b85168",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/test/java/com/elogistic/backend/demo/PostgresTestcontainersTests.java",
+      "sha256": "88bef4bc4a30e9e6229a9bf01c112518c210f995a4a8783848dd7444fdc5e282",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/test/java/com/elogistic/backend/identity/internal/ProductionOperationsConfigurationTests.java",
+      "sha256": "d561ea5719a167817d8dc52e7c26efb69eefe98a01520388d78a44ef7a063ea6",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/test/java/com/elogistic/backend/identity/internal/infrastructure/AdminOnboardingPostgresFixture.java",
+      "sha256": "1b4d586eddb38cc3ac11e0454835042f48432a2fc0b14e21e79d3486e9543dcf",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/test/java/com/elogistic/backend/identity/internal/infrastructure/IdentityGrantApplicationTests.java",
+      "sha256": "6c03b867345b87b76578dc721696768ab0f7dbac7da80a0db41f19bf8945283b",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/test/java/com/elogistic/backend/identity/internal/infrastructure/IdentityMigrationTests.java",
+      "sha256": "1ea732bbb76664831af7abbc6f1ef97385f09411b5d295aa9bac4696b83712fa",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/test/java/com/elogistic/backend/identity/internal/infrastructure/S003CustomerBrowserRuntime.java",
+      "sha256": "d22a2ba52155b2f4fd1719b51f9ec4b24f50e823563936ccbebc19f43a125b63",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/test/java/com/elogistic/backend/merchant/internal/infrastructure/MerchantViewCursorTests.java",
+      "sha256": "8af3afa459c4cd632c1f4675898339b3cbad62c793f4be7f9ec1e23b24ce7e90",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/test/java/com/elogistic/backend/merchant/internal/infrastructure/OrganizationCasePolicyTestFixture.java",
+      "sha256": "3d867814c7a263d1dd5c55ff4ead45869642ea80594dcdfbb82e86c52f3a0906",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/test/java/com/elogistic/backend/merchant/internal/infrastructure/OrganizationCasePolicyTests.java",
+      "sha256": "3bf380ed88a165cea97f646a199f9427601b3c228a5e2b5fe2cef701905be23c",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/test/java/com/elogistic/backend/testsupport/StaffRoleTestBootstrap.java",
+      "sha256": "27bcbff1e7839a797ca897b8c4c7cbe2fd46d021316ab411acc46e6a953789cd",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/test/java/com/elogistic/backend/workflow/internal/web/AdminBrowserRuntime.java",
+      "sha256": "9a925ea4bd1857eafe71dd107a1cd3c32c7bfeb84140bf52d7b24aff4f2c26d3",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/test/java/com/elogistic/backend/workflow/internal/web/AdminCoreBrowserRuntime.java",
+      "sha256": "0a0c9be60b886ceaec0ec0ba5925ddf1443f5d1f25701d2eab6aa8acf9eec8e6",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/test/java/com/elogistic/backend/workflow/internal/web/AdminDashboardPostgresCases.java",
+      "sha256": "6fd0872577bdfdec48ab22e41fb1cec36671cb9ba21cddebb48731e5b4aff0e8",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/backend/src/test/java/com/elogistic/backend/workflow/internal/web/BusinessIntakeUatFixture.java",
+      "sha256": "b2700cd71f6aca9793e47a3e99aee61f663f96b0ffa4b9d8d68b5bc91488d937",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/playwright-admin-cases-runtime.config.ts",
+      "sha256": "bd3c9c917f909767fe31556c9fe79fb30ed4c1d3f13770d3e931127fcfd66b29",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/playwright-admin-core-runtime.config.ts",
+      "sha256": "aa788bf845cebe332cccb84ffc894a520b12db40f5a73e61c34d00e8ab1faae6",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/playwright-admin-review-views-runtime.config.ts",
+      "sha256": "63174da4d88f7ac2c6ab12d21b8fc1d1e4142a59e5e0602f29ffe3f9142d1f97",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/playwright-operations-runtime.config.ts",
+      "sha256": "004e97bd8b35dfef45c87af07597ac07512b6e4e1a8023d8a373ebfd18c8cfb5",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/runtime-tests/admin-core.spec.ts",
+      "sha256": "72fe9e8b6046dad8fb17ee42771c04908f60adec462c81f245a34a043a381a35",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/runtime-tests/admin-dashboard.spec.ts",
+      "sha256": "4a841662224ed1a78be553b552b45788102df0e0e9131436307c1fc41fa79b92",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/runtime-tests/admin-organization-cases.spec.ts",
+      "sha256": "7ff512a38b5715e944ee5c29463b951467893114401489ba3a51bc1257c8d54d",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/runtime-tests/admin-review-views.spec.ts",
+      "sha256": "a7fe55083fe2c8009f92e90a6c3c92cd4c7fc5e76c20fbf87dafdbc381a7b8a4",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/runtime-tests/operations-entry.spec.ts",
+      "sha256": "c58973c279ed6ef00e12a022f6fb9cf5ce2719e014d8a194c8c2f8e264276ccd",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/src/admin/CarrierSites.tsx",
+      "sha256": "941c05275992c087ed5c2e624a742874fccb4bf7566420aab6102caa29d37558",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/src/admin/Dashboard.tsx",
+      "sha256": "3808c94a5a38264b32fb594ba53fd915df0562ac2e1b3c087199a12fc4cc6f4a",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/src/admin/MerchantApplications.tsx",
+      "sha256": "f73fc0a47c1c2a54cb541093e0601c6113fa8891b40e605dd85dd7f18cabab68",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/src/admin/MerchantMenu.tsx",
+      "sha256": "bc7cf32003e27d600ba5b9825815b489730e562c8711693e19e3166241478e8f",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/src/admin/MerchantOrganizations.tsx",
+      "sha256": "6363944fcb195381d2f79cc5305725f0cd6bbab345c668eefb15fc76961d5c68",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/src/admin/MerchantReviewViews.tsx",
+      "sha256": "958bbb36895ef44c3109d0a4d8436657be86a84efff4de2fb43c65e9f3aa53ce",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/src/admin/OrganizationCases.tsx",
+      "sha256": "2f0580d1c013da6f759f195f11e53c871d7a7aeea3859579696639f67767ca86",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/src/admin/admin.css",
+      "sha256": "430e299891ffd1aad025627ce34b614c1530ba101dfb333fb0fa9a6974b0e6a5",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/src/admin/governance.ts",
+      "sha256": "1aaf0a4150970fe33797fed5830bc45260c29d4641e384c0b549412a241e9ea8",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/src/admin/organization-cases.ts",
+      "sha256": "f91fd8cc5c15ad4b09de9f948e5e4ca57fdfb7f61e854f804961fb50efdad9ad",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/src/admin/review-views.ts",
+      "sha256": "2d5dd5cf2d33f59206193791af0d0c52d9b3c9e2010accd8d959c8edd3a71637",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/src/admin/session.ts",
+      "sha256": "c6bfba4a6edd1c11b5df62c09091f8fdc6820a2ffd576e349cc504ca44316d14",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/src/customer/BusinessShipmentTabs.tsx",
+      "sha256": "ddcfca42d9eaacc852f1f69e92eb9e9468d7484d3a9931a782215f82b8028e6d",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/src/customer/BusinessShipments.tsx",
+      "sha256": "67a93970c6189d73c9565ba2f09014896f6cb15777c1f422dcd4e114d1e465b3",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/src/customer/OperationsApp.tsx",
+      "sha256": "cc0c0d30feb67dcb0ac41262d21c0122e367f8e0e716cdd5cbd408f131d6f046",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/src/customer/OrganizationManagement.tsx",
+      "sha256": "1a5b7b107ca3082a6c50c5da7caf423931077df6a37e9680164456ce235e8faf",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/src/customer/ShipmentHandling.tsx",
+      "sha256": "c99baa333dcc2f7bb6b51a66b6212fb069c578059162e4a2d8b006889db3c8ee",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/src/customer/StationOperations.tsx",
+      "sha256": "b1f9bb0ce03aaab90bbf617958b1138e37d577c0a565a322f004f30bce6aa282",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/src/customer/business-management-data.ts",
+      "sha256": "8a8b4504e1b9657078bca9e5e52074fdf52b8fce2c55b76ef4d69c4fe615c276",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/src/customer/client.ts",
+      "sha256": "0bd8c339f4fd18090c5a543c21f5b1006df563e8fc5adcd5813699209a6c8e3c",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/src/customer/operations-client.ts",
+      "sha256": "9aaa885bf1d59dd92811d11f95d087c1d1df35631c70b7e57088a06c5fa4d708",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/src/customer/operations-invitation-proof.ts",
+      "sha256": "49cb0a4b00e1b3d6699e4da7fd0cc8a829a3b0384446d1ca43398c83c457d880",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/src/customer/staff-client.ts",
+      "sha256": "3186cc5fb62092fd9908116b2805f343086693b483f3e30347b1e924e5637779",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/src/internal/InternalApp.tsx",
+      "sha256": "c92516d353ceeffd6f59b8a534ecfd5e51fe3395dc2d32e7f2710fd149c6b27b",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/src/internal/InternalShell.tsx",
+      "sha256": "9b46b39c2fe91a25fb76832a18bd1bf1e629194894cd4119f53648535ad9cc7f",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/src/internal/navigation.ts",
+      "sha256": "225576f93c8e848ef2cacf8b44f748452207d39d783f7e6fbe7d7ec25352a555",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/src/main.tsx",
+      "sha256": "a60a531b400391d55451e57ad15a0ea6d502a8243f5a48959fb73943b386a4c7",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/ui-unit-tests/admin-dashboard.spec.ts",
+      "sha256": "39d199434376ed563f155689fd52ba13faa6f18d20006ec9f41cb30a6e9bdb43",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/ui-unit-tests/business-intake-read-ui.spec.ts",
+      "sha256": "53f00950c9230f58948a0634d6be13da168ffb41bce3845dbc18c78e999d36db",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/ui-unit-tests/operations-ui.spec.ts",
+      "sha256": "ff7c55e755424cc47ef99568f4f6b3c23e8defe43f675f4e725eceee88289b7b",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/unit-tests/admin-governance.spec.ts",
+      "sha256": "c0a0eb477dd96742864ee47cd3520f40979873da2e4ba718309c5a4149173f9c",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/unit-tests/admin-organization-cases.spec.ts",
+      "sha256": "acef8050f1624279e43a8450bfe151ff39f9358a1078e42673ff850f5e557d6f",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/unit-tests/admin-review-views.spec.ts",
+      "sha256": "7054e3d6e70a9e60fc72afc040abaa8380bd37abec730fe42930128effd3b266",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/unit-tests/admin-session.spec.ts",
+      "sha256": "02a172418b1c028357d0fc9f89920cd71630df04d062b8240842cc1c51748070",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/unit-tests/business-intake-read.spec.ts",
+      "sha256": "fe23fc9953f68b8e08f53fd830d6be91cd5a5cefd248c11a8e27b7fd0e170717",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/unit-tests/internal-navigation.spec.ts",
+      "sha256": "a5b669e67bba9a4d56b21e9840645b6af703c59ed32db6f95208cd37990c5e27",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "app/frontend/web/unit-tests/operations-authority.spec.ts",
+      "sha256": "a554fcf94ec00bda569e1d9544611f1f6a85d6c9614ea7e7f894deb9677e24ed",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "compose.yaml",
+      "sha256": "9f7821a1aaa361472a83e61c627f951c2dd3b544174443166f29edc2e64269ef",
+      "classification": "PORTABLE_BASELINE_OR_OWNER_TEAM_DOCUMENT",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH; portability/CI or approved BRC-ACL-01 only"
+    },
+    {
+      "path": "docs/architecture/decisions/ADR-0019-dedicated-operations-staff-foundation.md",
+      "sha256": "43303814761a361dc3897a9275699d938700e58f82c7681b9c708ec42773b84f",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "docs/architecture/decisions/ADR-0020-owner-neutral-station-intake.md",
+      "sha256": "9faf81851187eb803878d865919e461dcb68141fed998b3ba7b940fba313ae07",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "docs/implementation/admin-console-functional-coverage.csv",
+      "sha256": "e58747d5ff66ba24494b93e7dd060577b0dcc773d2577f97c158a3153062560f",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "docs/implementation/admin-menu12-readiness.md",
+      "sha256": "2b64ed64b73ab45c5a7310421344cd44bb1beb763df14784911c52a892591df6",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "docs/implementation/admin-menu2-case-disclosure.delta.md",
+      "sha256": "29e4cfb3f7c7e0d83a7741c7d48923d711b456cee381a6c22cbd6575c8f94c9a",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "docs/implementation/admin-menu2-completion-contract.proposed.md",
+      "sha256": "00b60aef1a34b6ddb3297b34a43211f9365005985d0a97ff4c54e6e262b6d986",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "UNAPPROVED",
+      "disposition": "DOCUMENTATION_ONLY; approved subsets separately evidenced; no extra runtime"
+    },
+    {
+      "path": "docs/implementation/admin-menu2-completion-technical-manifest.proposed.json",
+      "sha256": "6d072d9b649ab144c2fb9b8b780c8f077757387bcef58536a31618f9154251a2",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "UNAPPROVED",
+      "disposition": "DOCUMENTATION_ONLY; approved subsets separately evidenced; no extra runtime"
+    },
+    {
+      "path": "docs/implementation/admin-menu2-completion-technical-review.md",
+      "sha256": "dc0f0d33d3a63069b276115634a0ff1e00f08dc2ff2b023091101c36184057d6",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "UNAPPROVED",
+      "disposition": "DOCUMENTATION_ONLY; approved subsets separately evidenced; no extra runtime"
+    },
+    {
+      "path": "docs/implementation/admin-menu2-outgoing-owner-operator.delta.json",
+      "sha256": "b4d0d264d372443355e1d276df9ece9b931ed320a1336dedc552a8285e15c801",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "docs/implementation/admin-menu2-outgoing-owner-operator.delta.md",
+      "sha256": "95ee91718ecf42eed3b14cce86b55778b1c7575ddf9e26af17bbc59c4c3afa1d",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "docs/implementation/admin-menu2-policy-reader-port.delta.md",
+      "sha256": "21f04d72411fb7da21a86372a0f9d2da7b18b38cc549a9ead11434393845f41f",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "docs/implementation/admin-menu2-remaining-contracts.proposed.md",
+      "sha256": "9ba0d8cc96b7f1f47ed0d875f5d7a68859dedebd1073a738ace5b26af13d5508",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "UNAPPROVED",
+      "disposition": "DOCUMENTATION_ONLY; approved subsets separately evidenced; no extra runtime"
+    },
+    {
+      "path": "docs/implementation/admin-menu2-step-b-technical-manifest.proposed.json",
+      "sha256": "b88e6d9df08c60d78d45afde9883dc424ed5ccb9aa5b12033f271d39e9cd1cd4",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "UNAPPROVED",
+      "disposition": "DOCUMENTATION_ONLY; approved subsets separately evidenced; no extra runtime"
+    },
+    {
+      "path": "docs/implementation/admin-menu2-step-b-technical-review.md",
+      "sha256": "a00d797c3bb29e12966d10dc6dc37aeb7d548f879c6232a1bc3ef1bb1e4a2efd",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "UNAPPROVED",
+      "disposition": "DOCUMENTATION_ONLY; approved subsets separately evidenced; no extra runtime"
+    },
+    {
+      "path": "docs/implementation/admin-p0-source-test-execution.md",
+      "sha256": "f1d233064a876255cafbdd9534e6225aa175ba07be68460eab894898c0535937",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "docs/implementation/baseline-admin-environment-binding.delta.md",
+      "sha256": "a15804e3a026e314345e326855bb2485efaa1aec3e01baf7c291903487c2d0da",
+      "classification": "PORTABLE_BASELINE_OR_OWNER_TEAM_DOCUMENT",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH; portability/CI or approved BRC-ACL-01 only"
+    },
+    {
+      "path": "docs/implementation/carrier-network-operational-staff-contract.proposed.md",
+      "sha256": "436acdeeffcacc24226d3a29452ec1c5747f81b337f0e4fe4056fcf94a3f53fc",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "docs/implementation/carrier-network-operational-staff-control-acl.delta.md",
+      "sha256": "34d6235444a6163dcb57c723558dfa3a81a83051be064096ca8e725a3f49bf9f",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "docs/implementation/carrier-network-operational-staff-execution-manifest.json",
+      "sha256": "7f481f7f9ff94d4fc3407ab2f19e40014441e21e266bdc2a1de65d73eb1af2c6",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "docs/implementation/carrier-network-operational-staff-execution.md",
+      "sha256": "1e738c46ae6d4fe697efbde0bb6d727f84b7d198c25bd569e41b6357d1d8b433",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "docs/implementation/carrier-network-operational-staff-readiness.md",
+      "sha256": "69d3311eb3124506c38b45aedd74a41c91d15e1c4a1e58614951e8f347d5ff80",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "docs/implementation/carrier-network-operational-staff-technical-manifest.proposed.json",
+      "sha256": "8adc4229ff00e728f322dd9341cb146a82e2dc16e1470dc077ec05eb55ac4ce5",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "docs/implementation/develop-baseline-release.md",
+      "sha256": "c2be37473502f191400dd925c1a5efa9a484d80309b36de0de371fb625586477",
+      "classification": "PORTABLE_BASELINE_OR_OWNER_TEAM_DOCUMENT",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH; portability/CI or approved BRC-ACL-01 only"
+    },
+    {
+      "path": "docs/implementation/spec012-station-preparation-contract.proposed.md",
+      "sha256": "c7c9f62d26809994bffc1a30fa756d6ad7c6443b99318c65c9cf9bc554eda5be",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "UNAPPROVED",
+      "disposition": "DOCUMENTATION_ONLY; approved subsets separately evidenced; no extra runtime"
+    },
+    {
+      "path": "docs/implementation/v1-business-intake-carrier-timestamp.delta.md",
+      "sha256": "738fd34c097ee1b8dfecbe6cc24e7befd3bc3f046f23330d855a996160d20cbf",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "docs/implementation/v1-business-station-intake.delta.md",
+      "sha256": "ba0812bc41572e0870cba0b7a1572426321430530698e9b5aa697f9205aa06ea",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "docs/implementation/v1-dual-audience-source-test-execution.md",
+      "sha256": "ee06e6d08bb39e7b0a621e98a83ce8b8ab4e1079d93738a19d8ddf063712c88e",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "docs/implementation/v1-intake-completeness-guards.delta.md",
+      "sha256": "6950d9601e81b5a6da3589d492cae5f990db64b82fa254b50172da5fc42ed240",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "docs/implementation/v1-operational-e2e-critical-path.md",
+      "sha256": "f6bfae551aed63427ee556067a41cdcdc713d1339aad8d1b7ae700b98e35f472",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "docs/implementation/v1-review-comment-owner.delta.md",
+      "sha256": "35ad5c6d0a6937c88c035d16efacc89a796ffb421d4dec56cfb6a4352703c09b",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "docs/implementation/v1-team/ArgoPost_V1_Member_01_Owner_Customer_Commercial.md",
+      "sha256": "9a20b4734dddffd60f7cfb2c6a9fafadf9bcd66bfe5fbf42aba71a73c6aeb289",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "docs/implementation/v1-team/ArgoPost_V1_Member_02_Carrier_Network_Custody.md",
+      "sha256": "bf0ba86cdec8691cc2209f224287171e45e8b3ffe476caf630607a1dc59b0ad1",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "docs/implementation/v1-team/ArgoPost_V1_Member_03_Dispatch_Courier_Delivery.md",
+      "sha256": "317b142f4fcadbd7e67e6def9975a116f18d0c6f689569e3e3ee11734b4913f1",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "docs/implementation/v1-team/ArgoPost_V1_Team_Execution_Calendar_2026-11-28_to_2026-12-05.md",
+      "sha256": "278065e0e72afb8d6339e307f462ed90af085d295d35c0c772a95540a5253866",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "docs/quality/traceability.md",
+      "sha256": "659c60cbf7eb0a6e395389d433aaaa8b5f89a43673af458c400c7820d4dfdd8b",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "docs/runbooks/portable-compose.md",
+      "sha256": "31f2f52885640348d4d602be6e5c51f56ba15aa59fcafb752b6e4f7e415b128f",
+      "classification": "PORTABLE_BASELINE_OR_OWNER_TEAM_DOCUMENT",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH; portability/CI or approved BRC-ACL-01 only"
+    },
+    {
+      "path": "infra/local/Dockerfile.backend",
+      "sha256": "5356f616237b928e1a0781141a7a06f82a256bfd56b14918edee2163777df076",
+      "classification": "PORTABLE_BASELINE_OR_OWNER_TEAM_DOCUMENT",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH; portability/CI or approved BRC-ACL-01 only"
+    },
+    {
+      "path": "infra/local/Dockerfile.tools",
+      "sha256": "ff4109accb0a01753e394f30ec97dcea22188514deed28d3235e66c9110189b0",
+      "classification": "PORTABLE_BASELINE_OR_OWNER_TEAM_DOCUMENT",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH; portability/CI or approved BRC-ACL-01 only"
+    },
+    {
+      "path": "infra/local/Dockerfile.web",
+      "sha256": "e57be0db68a82f1a41cb3486d2e341bbcda3da038a671a2febe67a7811757aba",
+      "classification": "PORTABLE_BASELINE_OR_OWNER_TEAM_DOCUMENT",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH; portability/CI or approved BRC-ACL-01 only"
+    },
+    {
+      "path": "infra/local/backend-health.sh",
+      "sha256": "adc133c5214b2cbae5f7dcb06393bf480e804475681462269c4fb125ac4d110a",
+      "classification": "PORTABLE_BASELINE_OR_OWNER_TEAM_DOCUMENT",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH; portability/CI or approved BRC-ACL-01 only"
+    },
+    {
+      "path": "infra/local/bootstrap.py",
+      "sha256": "7a32112ed2680708be2ceeb8b1fa3751b3a53c0e6df65ab55f3d96eb0d1ff501",
+      "classification": "PORTABLE_BASELINE_OR_OWNER_TEAM_DOCUMENT",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH; portability/CI or approved BRC-ACL-01 only"
+    },
+    {
+      "path": "infra/local/bootstrap.sh",
+      "sha256": "17bf03bfb8e8b293b1b49764689b1e4bead4ce70ca48220522c41729b84cc35e",
+      "classification": "PORTABLE_BASELINE_OR_OWNER_TEAM_DOCUMENT",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH; portability/CI or approved BRC-ACL-01 only"
+    },
+    {
+      "path": "infra/local/browser-smoke.mjs",
+      "sha256": "2990454399061a1690f782833001ee3e318982d26a5db19d1dcf94c32b401cda",
+      "classification": "PORTABLE_BASELINE_OR_OWNER_TEAM_DOCUMENT",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH; portability/CI or approved BRC-ACL-01 only"
+    },
+    {
+      "path": "infra/local/clamd.conf",
+      "sha256": "d05e8dcd6d9f297b97157b953b91baa03d619bbb8e767a6ee5a8f9e6bba8c743",
+      "classification": "PORTABLE_BASELINE_OR_OWNER_TEAM_DOCUMENT",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH; portability/CI or approved BRC-ACL-01 only"
+    },
+    {
+      "path": "infra/local/material.mjs",
+      "sha256": "9f38150c0b05112fdfb9a5c169e66a043768073a0ac95b4b086192b26c140176",
+      "classification": "PORTABLE_BASELINE_OR_OWNER_TEAM_DOCUMENT",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH; portability/CI or approved BRC-ACL-01 only"
+    },
+    {
+      "path": "infra/local/material.test.mjs",
+      "sha256": "1c2abfb57f206e91da7b2b4482b33caa0bc5eb4805d8142c59fd546eb731e7bd",
+      "classification": "PORTABLE_BASELINE_OR_OWNER_TEAM_DOCUMENT",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH; portability/CI or approved BRC-ACL-01 only"
+    },
+    {
+      "path": "infra/local/nginx.conf",
+      "sha256": "d0a1c1aae8f320003152080c495dc63d78a9fd73fe5d239c848770d3a39cc302",
+      "classification": "PORTABLE_BASELINE_OR_OWNER_TEAM_DOCUMENT",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH; portability/CI or approved BRC-ACL-01 only"
+    },
+    {
+      "path": "scripts/ci/staff_role_prerequisites.py",
+      "sha256": "40a703b95201b646ef667fa869d67cfe16d680357cac633af39029ad619bb897",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "scripts/ci/test_staff_role_prerequisites.py",
+      "sha256": "d23c7d37f1320e8e4de140e2784c0bb2966180a93b22dfa4f574ab288ada0a62",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "scripts/dev/verify-compose.py",
+      "sha256": "7a6ae34fd67254c9056d71bdea8ac300347f2083e01c4e8a3b0d4f5c9518b22a",
+      "classification": "PORTABLE_BASELINE_OR_OWNER_TEAM_DOCUMENT",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH; portability/CI or approved BRC-ACL-01 only"
+    },
+    {
+      "path": "specs/003-sender-merchant-onboarding/implementation-scope.json",
+      "sha256": "2fd9fccaa56c93a157d0a98d0ee02eba684547f3a0503c0be2ad87aee1d33bd4",
+      "classification": "ACCEPTED_SOURCE_OR_RETAINED_EVIDENCE",
+      "releaseCategory": "APPROVED",
+      "disposition": "PUBLISH_ACCEPTED_SOURCE_OR_NON_SECRET_EVIDENCE"
+    },
+    {
+      "path": "AGENTS.md",
+      "sha256": "c2d311045b9c63dd604e26c6983826c0a98da5c76a7890bdb67b5b764f0f69f5",
+      "classification": "OWNER_INSTRUCTIONS_AND_STARTUP_DOCUMENTATION",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH; portability/CI or approved BRC-ACL-01 only"
+    },
+    {
+      "path": "docs/implementation/ARGOPOST_PROJECT_NORTH_STAR.md",
+      "sha256": "150c84dc1dc0613cfe7b36edfd2b0964778d11edb43d6dff43fb7741b3120375",
+      "classification": "OWNER_INSTRUCTIONS_AND_STARTUP_DOCUMENTATION",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH; portability/CI or approved BRC-ACL-01 only"
+    },
+    {
+      "path": "README.md",
+      "sha256": "dd9472eea98fbe585d16ad54f4af8eb7688a22e65e232d87a51123df7e7da734",
+      "classification": "OWNER_INSTRUCTIONS_AND_STARTUP_DOCUMENTATION",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH; portability/CI or approved BRC-ACL-01 only"
+    },
+    {
+      "path": "docs/implementation/baseline-verification.json",
+      "sha256": "be4a8f64d9c2d80c2c2a8c45b0c347fe484f428f8487384411d48cc4a3d00167",
+      "classification": "PORTABLE_BASELINE_EVIDENCE_HANDOFF",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH; portability/CI or approved BRC-ACL-01 only"
+    },
+    {
+      "path": "docs/implementation/baseline-team-handoff.md",
+      "sha256": "7d88c40da19b2572e855b55cb658fa16abdb3364c0880de6b91f5bfcd657e56c",
+      "classification": "PORTABLE_BASELINE_EVIDENCE_HANDOFF",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH; portability/CI or approved BRC-ACL-01 only"
+    },
+    {
+      "path": "scripts/ci/verify-reports.py",
+      "sha256": "71a88fb663cdb97afa9eb633bdcd083ca0bf03cf8dc3fa922121380035f7006b",
+      "classification": "CI_EXACT_ACCEPTED_SOURCE_INVENTORY",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH; portability/CI or approved BRC-ACL-01 only"
+    },
+    {
+      "path": "scripts/ci/test_verify_reports.py",
+      "sha256": "74a8d54d2b86efa4f606bee93d811a1d325725690c9e3c375936254126adb6b9",
+      "classification": "CI_EXACT_ACCEPTED_SOURCE_INVENTORY",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH; portability/CI or approved BRC-ACL-01 only"
+    },
+    {
+      "path": "scripts/ci/classify-failures.py",
+      "classification": "BOUNDED_CI_PRIVACY_DIAGNOSTICS",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH_TEST_DIAGNOSTICS_ONLY; no runtime authority",
+      "sha256": "60e577c81baad4dc77205d9430a3bfb72ce0fab762022d28b9a9c9b4999bb14a"
+    },
+    {
+      "path": "scripts/ci/test_classify_failures.py",
+      "classification": "BOUNDED_CI_PRIVACY_DIAGNOSTICS",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH_TEST_DIAGNOSTICS_ONLY; no runtime authority",
+      "sha256": "5f4cdeb1b3d795f3b67dc62765563a13ae004318d91524bf9662aed50c2df0d7"
+    },
+    {
+      "path": ".github/workflows/backend-verification.yml",
+      "classification": "PORTABLE_BASELINE_OR_OWNER_TEAM_DOCUMENT",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH; targeted CI/browser regression only; no domain authority delta",
+      "sha256": "1e57d62c388e064595ab2103ce3434afece2d2fdf0006a13fee1ac0624011160"
+    },
+    {
+      "path": "app/frontend/web/playwright-customer-ui.config.ts",
+      "classification": "PORTABLE_BASELINE_OR_OWNER_TEAM_DOCUMENT",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH; targeted CI/browser regression only; no domain authority delta",
+      "sha256": "400077604570d9fd5dab214e4f014629d9d32795c91b7ebf34d94bc2f4654c83"
+    },
+    {
+      "path": "app/frontend/web/runtime-tests/admin-governance.spec.ts",
+      "classification": "PORTABLE_BASELINE_OR_OWNER_TEAM_DOCUMENT",
+      "releaseCategory": "REQUIRED",
+      "disposition": "PUBLISH; targeted CI/browser regression only; no domain authority delta",
+      "sha256": "e9a6a93a260383e502b367259ff2c1bd4c3d21cea368c28b1402f15f2e3e7967"
+    }
+  ],
+  "hashSemantics": "Captured working-copy SHA256 before Git newline filters; exact approved artifacts/migrations use -text. Original index/WIP preserved separately. Only release OrganizationCasePolicy EOF blank line trimmed; no logic change.",
+  "publicationPr": "https://github.com/phamquoainam/logistics-capstone-project/pull/52",
+  "classificationRules": {
+    "APPROVED": "accepted S1/NWS/read/preparation source and approved non-secret artifacts only",
+    "REQUIRED": "portable configuration/scripts/CI/docs necessary for the baseline",
+    "UNAPPROVED": "proposal or partial-approval documents retained as documents only; unapproved runtime excluded",
+    "LOCAL_ONLY": "private test execution/cache/build outputs excluded",
+    "SECRET/SENSITIVE": "all credentials/proofs/private keys/real data/logs/DB contents excluded"
+  },
+  "excludedDetails": [
+    {
+      "category": "LOCAL_ONLY",
+      "paths": [
+        ".demo/**",
+        ".baseline-release/**",
+        "**/target/**",
+        "**/node_modules/**",
+        "**/dist*/**"
+      ],
+      "reason": "private execution/archive/cache/generated build state; reproducible from source"
+    },
+    {
+      "category": "SECRET/SENSITIVE",
+      "paths": [
+        ".local/**",
+        ".aws/**",
+        ".env",
+        "**/*.key",
+        "**/*.p12",
+        "**/*.jks",
+        "Docker volumes",
+        "proofs/tokens/real customer data/raw logs"
+      ],
+      "reason": "never publish credentials, keys or private data"
+    },
+    {
+      "category": "UNAPPROVED",
+      "paths": [
+        "Spec012 runtime",
+        "Menu2 StepB/Owner Transfer execution beyond approved preparation"
+      ],
+      "reason": "not implemented or activated by this release"
+    }
+  ]
+}

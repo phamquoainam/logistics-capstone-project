@@ -19,6 +19,7 @@ import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.parallel.*;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
@@ -42,7 +43,7 @@ class IdentityGrantApplicationTests {
 
     @BeforeEach void fixture() throws Exception {
         db = PostgresTestcontainersSupport.database(POSTGRES);
-        assertEquals(42, db.flyway("latest", SCOPE).migrate().migrationsExecuted);
+        assertEquals(48, db.flyway("latest", SCOPE).migrate().migrationsExecuted);
         account(A, "ACTIVE", List.of(ADMIN)); account(B, "ACTIVE", List.of(ADMIN)); account(T, "ACTIVE", List.of(GX));
         session(S, A); session(AS, B); session(TS, T);
         execute("INSERT INTO identity.refresh_token(id,session_id,token_hash,issued_at,expires_at) VALUES ('" + id(20) + "','" + TS + "',decode(repeat('01',32),'hex'),TIMESTAMPTZ '2026-10-21 00:00:00Z',TIMESTAMPTZ '2026-10-21 08:00:00Z')");
@@ -55,10 +56,171 @@ class IdentityGrantApplicationTests {
         service = useCase(authority);
     }
     @AfterAll static void verifyPolicy() throws Exception { PostgresTestcontainersSupport.verifyRuntime(POSTGRES); }
+    @Test void biaOwnershipSchemaBindsCarrierEventsToCanonicalOwners() throws Exception {
+        assertEquals(3,scalar("SELECT count(*) FROM information_schema.columns WHERE table_schema='orders' AND table_name='pilot_tracking_event' AND column_name IN ('owner_type','organization_id','facility_id')"));
+        assertEquals(1,scalar("SELECT count(*) FROM information_schema.columns WHERE table_schema='dispatch' AND table_name='pilot_intake_acceptance' AND column_name='owner_type'"));
+        assertEquals(0,scalar("SELECT count(*) FROM orders.pilot_tracking_event"));
+        assertEquals(0,scalar("SELECT count(*) FROM dispatch.pilot_intake_acceptance"));
+        try(var c=db.runtimeConnection();var q=c.createStatement();var rows=q.executeQuery("SELECT has_table_privilege(current_user,'orders.pilot_tracking_event','UPDATE'),has_table_privilege(current_user,'dispatch.pilot_custody','DELETE')")) {
+            assertTrue(rows.next());assertFalse(rows.getBoolean(1));assertFalse(rows.getBoolean(2));
+        }
+    }
+    @Test void nwsV44DedicatedOperationsSchemaAndAudience() throws Exception {
+        try(var c=db.runtimeConnection();var q=c.prepareStatement("SELECT to_regprocedure('identity.operations_staff_eligible(uuid)')" );var rows=q.executeQuery()) {
+            assertTrue(rows.next());assertNotNull(rows.getString(1),"NWS-V1 requires dedicated Operations eligibility, not SUPPORT admission");
+        }
+        assertEquals(0,scalar("SELECT count(*) FROM dispatch.carrier_site"));
+        assertEquals(0,scalar("SELECT count(*) FROM dispatch.operational_site_assignment"));
+        try(var c=db.runtimeConnection();var q=c.createStatement();var rows=q.executeQuery("SELECT has_function_privilege(current_user,'pg_catalog.pg_control_system()','EXECUTE'),has_function_privilege('elogistics_local_operations_operator','pg_catalog.pg_control_system()','EXECUTE'),has_function_privilege('dispatch_network_writer','pg_catalog.pg_control_system()','EXECUTE')")) {
+            assertTrue(rows.next());assertFalse(rows.getBoolean(1));assertFalse(rows.getBoolean(2));assertTrue(rows.getBoolean(3));
+        }
+    }
+    @Test void nwsOperationsInvitationAndAudienceIsolation() throws Exception {
+        ensureStaffOperator();var operator=nwsOperator();var provisioner=LocalSupportStaffProvisioner.operations(operator,staffProtection());
+        var input=new LocalSupportStaffProvisioner.OfflineStaffProvision(UUID.randomUUID(),"Synthetic Operations Staff","operations@example.invalid","NWS isolated verification");
+        var receipt=provisioner.provision(input);assertEquals(receipt.accountId(),provisioner.provision(input).accountId());
+        var source=outboxDataSource();var worker=JdbcInvitationOutbox.operations(source,staffProtection(),outboxPolicy(),Clock.systemUTC());
+        assertTrue(new JdbcInvitationOutbox(source,staffProtection(),outboxPolicy(),Clock.systemUTC(),ActionProof.Purpose.STAFF_INV).claim().isEmpty());
+        var lease=worker.claim().orElseThrow();byte[] token;try(var delivery=worker.open(lease)){token=delivery.token().clone();}worker.complete(lease,JdbcInvitationOutbox.Outcome.SENT);
+        try {
+            assertThrows(IdentityCommandFailure.class,()->new JdbcStaffInvitationActivation(source,staffProtection(),Clock.systemUTC()).accept(receipt.proofId(),token,SESSION_PASSWORD,UUID.randomUUID(),UUID.randomUUID()));
+            UUID acceptanceKey=UUID.randomUUID(),request=UUID.randomUUID();
+            var activation=new JdbcStaffInvitationActivation(source,staffProtection(),Clock.systemUTC(),true);
+            assertEquals(List.of("ACTIVATED","ACTIVATED"),adminRace(()->{activation.accept(receipt.proofId(),token,SESSION_PASSWORD,acceptanceKey,request);return "ACTIVATED";},()->{activation.accept(receipt.proofId(),token,SESSION_PASSWORD,acceptanceKey,request);return "ACTIVATED";}));
+        } finally {Arrays.fill(token,(byte)0);}
+        var jdbc=new org.springframework.jdbc.core.JdbcTemplate(source);
+        assertEquals(Boolean.TRUE,jdbc.queryForObject("SELECT identity.operations_staff_eligible(?)",Boolean.class,receipt.accountId()));
+        assertEquals(Boolean.FALSE,jdbc.queryForObject("SELECT identity.support_staff_eligible(?)",Boolean.class,receipt.accountId()));
+        var sessions=com.elogistic.backend.identity.internal.application.IdentitySessions.staff(new JdbcIdentitySessionStore(source,IdentitySessionStorage.OPS),new ProtectedSessionCredentials(),(operation,request,session,present)->{},Clock.systemUTC());
+        try(var login=sessions.loginIdentity(new com.elogistic.backend.identity.api.IdentitySessionCommands.Login(input.email(),SESSION_PASSWORD,UUID.randomUUID()))) {
+            assertEquals(receipt.accountId(),login.access().accountId());
+            assertEquals("OPS",jdbc.queryForObject("SELECT audience FROM identity.auth_session WHERE id=?",String.class,login.access().sessionId()));
+            UUID site=nwsSite(operator,"SIM-DROP-A1","STATION","SIM-A1",UUID.randomUUID()),hub=nwsSite(operator,"SIM-HUB-A","HUB","SIM-A1",UUID.randomUUID());nwsLink(operator,site,hub);nwsAssignment(operator,receipt.accountId(),site,"SITE_READ",false);nwsAssignment(operator,receipt.accountId(),site,"STATION_INTAKE",false);
+            var access=login.access();var admission=new JdbcOperationalStaffAdmission(source,t->new com.elogistic.backend.identity.internal.application.port.CustomerAccessVerifier.Claim(access.sessionId(),access.accountId(),access.authVersion(),access.issuedAt(),access.expiresAt()),(request,session)->{},Clock.systemUTC());
+            var escaped=admission.execute("synthetic-verified-ops-claim",UUID.randomUUID(),c->{
+                admission.requireCurrent(c);
+                new com.elogistic.backend.dispatch.internal.infrastructure.JdbcStationIntake(source,Clock.systemUTC(),true,"TEST",admission).require(c,site);
+                assertThrows(com.elogistic.backend.orders.api.PilotHandlingFailure.class,()->new com.elogistic.backend.dispatch.internal.infrastructure.JdbcStationIntake(source,Clock.offset(Clock.systemUTC(),Duration.ofHours(2)),true,"TEST",admission).require(c,site));
+                assertThrows(IdentityCommandFailure.class,()->admission.requireCurrent(new com.elogistic.backend.identity.api.staff.OperationalStaffAdmission.Context(c.requestId(),c.sessionId(),c.actor())));
+                var suspended=new org.springframework.transaction.support.TransactionTemplate(new org.springframework.jdbc.support.JdbcTransactionManager(source));suspended.setPropagationBehavior(org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+                assertThrows(IdentityCommandFailure.class,()->suspended.execute(status->{admission.requireCurrent(c);return null;}));admission.requireCurrent(c);
+                var foreign=new org.springframework.jdbc.datasource.DriverManagerDataSource(db.url(),db.runtime(),db.runtimePassword());
+                var wrongSource=new com.elogistic.backend.dispatch.internal.infrastructure.JdbcStationIntake(foreign,Clock.systemUTC(),true,"TEST",admission);
+                assertThrows(com.elogistic.backend.orders.api.PilotHandlingFailure.class,()->wrongSource.require(c,UUID.randomUUID()));return c;});
+            assertThrows(IdentityCommandFailure.class,()->admission.requireCurrent(escaped));
+            assertEquals(0,scalar("SELECT count(*) FROM identity.account_grant WHERE account_id='"+receipt.accountId()+"'"));
+            var expired=new JdbcOperationalStaffAdmission(source,t->new com.elogistic.backend.identity.internal.application.port.CustomerAccessVerifier.Claim(access.sessionId(),access.accountId(),access.authVersion(),access.issuedAt(),access.expiresAt()),(request,session)->{},Clock.offset(Clock.systemUTC(),Duration.ofMinutes(16)));
+            assertThrows(IdentityCommandFailure.class,()->expired.execute("synthetic-verified-ops-claim",UUID.randomUUID(),c->c.actor()));
+            jdbc.update("UPDATE identity.auth_session SET revoked_at=clock_timestamp() WHERE id=?",access.sessionId());
+            assertThrows(IdentityCommandFailure.class,()->admission.execute("synthetic-verified-ops-claim",UUID.randomUUID(),c->c.actor()));
+        }
+    }
+    private org.springframework.jdbc.datasource.DriverManagerDataSource nwsOperator() throws Exception {
+        String name="nws_test_"+UUID.randomUUID().toString().replace("-",""),password=PostgresTestcontainersSupport.password();
+        try(var c=DriverManager.getConnection(PostgresTestcontainersSupport.currentUrl(POSTGRES,"postgres"),POSTGRES.getUsername(),POSTGRES.getPassword());var q=c.createStatement()) {
+            q.execute("CREATE ROLE "+name+" LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE PASSWORD '"+password+"'");
+            q.execute("GRANT elogistics_local_operations_operator TO "+name);q.execute("GRANT CONNECT ON DATABASE "+db.name()+" TO "+name);
+        }
+        return new org.springframework.jdbc.datasource.DriverManagerDataSource(db.url(),name,password);
+    }
+    private boolean nwsHttpEnabled;
+    private boolean biaHttpEnabled;
+    private UUID nwsStaff(org.springframework.jdbc.datasource.DriverManagerDataSource operator) throws Exception {
+        var receipt=LocalSupportStaffProvisioner.operations(operator,staffProtection()).provision(new LocalSupportStaffProvisioner.OfflineStaffProvision(UUID.randomUUID(),"Synthetic Station Operator","operations@example.invalid","NWS isolated intake"));
+        var source=outboxDataSource();var worker=JdbcInvitationOutbox.operations(source,staffProtection(),outboxPolicy(),Clock.systemUTC());var lease=worker.claim().orElseThrow();byte[] token;
+        try(var d=worker.open(lease)){token=d.token().clone();}worker.complete(lease,JdbcInvitationOutbox.Outcome.SENT);
+        try{new JdbcStaffInvitationActivation(source,staffProtection(),Clock.systemUTC(),true).accept(receipt.proofId(),token,SESSION_PASSWORD,UUID.randomUUID(),UUID.randomUUID());}finally{Arrays.fill(token,(byte)0);}return receipt.accountId();
+    }
+    private UUID nwsSite(javax.sql.DataSource operator,String code,String type,String area,UUID key) throws Exception {
+        Map<String,Object> input=nwsSiteConfiguration(code,type,area);
+        try(var c=operator.getConnection();var q=c.prepareStatement("SELECT * FROM dispatch.configure_local_carrier_site(?,NULL,0,?::jsonb,?)")){q.setObject(1,key);q.setString(2,new tools.jackson.databind.ObjectMapper().writeValueAsString(input));q.setString(3,"NWS synthetic site");try(var r=q.executeQuery()){assertTrue(r.next());return r.getObject(1,UUID.class);}}
+    }
+    private Map<String,Object> nwsSiteConfiguration(String code,String type,String area){
+        Map<String,Object> input=new HashMap<>();input.put("code",code);input.put("type",type);input.put("name","Synthetic "+type);input.put("locationText","Isolated fixture location, not a real address");input.put("areaCode",area);input.put("latitude",null);input.put("longitude",null);input.put("timezone","Asia/Ho_Chi_Minh");input.put("operatingHours",Map.of());input.put("state","ACTIVE");input.put("capabilities",type.equals("STATION")?List.of("SITE_READ","STATION_INTAKE"):List.of("SITE_READ"));input.put("effectiveFrom",null);input.put("effectiveTo",null);input.put("environment","TEST");input.put("provenance","SIMULATION");
+        return input;
+    }
+    private void nwsSiteState(javax.sql.DataSource operator,UUID site,long expected,String state)throws Exception {
+        var config=nwsSiteConfiguration("SIM-DROP-A1","STATION","SIM-A1");config.put("state",state);
+        try(var c=operator.getConnection();var q=c.prepareStatement("SELECT * FROM dispatch.configure_local_carrier_site(?,?,?,?,?)")){
+            q.setObject(1,UUID.randomUUID());q.setObject(2,site);q.setLong(3,expected);q.setObject(4,new tools.jackson.databind.ObjectMapper().writeValueAsString(config),java.sql.Types.OTHER);q.setString(5,"NWS synthetic versioned state");try(var r=q.executeQuery()){assertTrue(r.next());assertEquals(expected+1,r.getLong(2));}
+        }
+    }
+    private void nwsLink(javax.sql.DataSource operator,UUID station,UUID hub) throws Exception {
+        Map<String,Object> v=new HashMap<>(Map.of("fromSiteId",station,"toSiteId",hub,"serviceCode","ROAD_STANDARD","datasetVersion","ARGO-SIM-COVERAGE-1","areaCode","SIM-A1","dropOffCode","SIM-DROP-A1"));v.put("effectiveFrom",null);v.put("effectiveTo",null);
+        try(var c=operator.getConnection();var q=c.prepareStatement("SELECT * FROM dispatch.configure_local_site_link(?,NULL,0,?::jsonb,?)")){q.setObject(1,UUID.randomUUID());q.setString(2,new tools.jackson.databind.ObjectMapper().writeValueAsString(v));q.setString(3,"NWS synthetic topology");try(var r=q.executeQuery()){assertTrue(r.next());}}
+    }
+    private void nwsAssignment(javax.sql.DataSource operator,UUID actor,UUID site,String permission,boolean revoke) throws Exception {
+        Instant from=Instant.now(),to=from.plusSeconds(3600);long version=0;
+        if(revoke)try(var c=db.runtimeConnection();var q=c.prepareStatement("SELECT effective_from,effective_to,version FROM dispatch.operational_site_assignment WHERE account_id=? AND site_id=? AND permission=? AND state='ACTIVE'")){q.setObject(1,actor);q.setObject(2,site);q.setString(3,permission);try(var r=q.executeQuery()){assertTrue(r.next());from=r.getTimestamp(1).toInstant();to=r.getTimestamp(2).toInstant();version=r.getLong(3);}}
+        try(var c=operator.getConnection();var q=c.prepareStatement("SELECT * FROM dispatch.configure_local_operational_assignment(?,?,?,?,?,?,?,?,?)")){q.setObject(1,UUID.randomUUID());q.setObject(2,actor);q.setObject(3,site);q.setString(4,permission);q.setString(5,revoke?"REVOKE":"GRANT");q.setTimestamp(6,Timestamp.from(from));q.setTimestamp(7,Timestamp.from(to));q.setLong(8,version);q.setString(9,"NWS synthetic assignment");try(var r=q.executeQuery()){assertTrue(r.next());}}
+    }
+    private ProfileBrowser nwsBrowser(org.springframework.test.web.servlet.MockMvc mvc)throws Exception {
+        var csrf=mvc.perform(MockMvcRequestBuilders.get("/api/v1/ops-auth/csrf").secure(true).header("Origin","https://portal.example.invalid")).andReturn().getResponse();assertEquals(200,csrf.getStatus());
+        var json=new tools.jackson.databind.ObjectMapper();String challenge=json.readTree(csrf.getContentAsString()).get("csrfToken").asString();
+        var login=mvc.perform(MockMvcRequestBuilders.post("/api/v1/ops-auth/login").secure(true).header("Origin","https://portal.example.invalid").header("X-CSRF-Token",challenge).cookie(responseCookie(csrf,"__Host-argopost.ops.csrf")).contentType("application/json").content(json.writeValueAsString(Map.of("email","operations@example.invalid","password",SESSION_PASSWORD)))).andReturn().getResponse();assertEquals(200,login.getStatus(),this::safeOnboardingFailure);
+        var cookie=responseCookie(login,"__Host-argopost.ops.csrf");var refresh=responseCookie(login,"__Host-argopost.ops.refresh");
+        var rebound=mvc.perform(MockMvcRequestBuilders.get("/api/v1/ops-auth/csrf").secure(true).header("Origin","https://portal.example.invalid").cookie(cookie,refresh)).andReturn().getResponse();assertEquals(200,rebound.getStatus());return new ProfileBrowser(json.readTree(login.getContentAsString()).get("accessToken").asString(),new BrowserFlow(responseCookie(rebound,"__Host-argopost.ops.csrf"),refresh,json.readTree(rebound.getContentAsString()).get("csrfToken").asString()));
+    }
+    @Test void nwsNetworkOperatorReceiptAndRuntimeAclAreBound()throws Exception {
+        ensureStaffOperator();var op=nwsOperator();UUID key=UUID.randomUUID();var race=adminRace(()->nwsSite(op,"SIM-DROP-A1","STATION","SIM-A1",key),()->nwsSite(op,"SIM-DROP-A1","STATION","SIM-A1",key));assertEquals(race.getFirst(),race.get(1));UUID site=(UUID)race.getFirst();assertEquals(site,nwsSite(op,"SIM-DROP-A1","STATION","SIM-A1",key));assertEquals(1,scalar("SELECT count(*) FROM dispatch.carrier_site"));
+        try(var c=db.migrationConnection();var q=c.createStatement()){q.execute("SET ROLE dispatch_network_writer");try(var r=q.executeQuery("SELECT count(*) FROM dispatch.network_operator_receipt r JOIN dispatch.network_operator_audit a ON a.id=r.audit_id WHERE a.target_id=r.target_id AND a.request_id=r.request_id AND r.system_identifier=(SELECT system_identifier FROM pg_control_system()) AND r.database_name=current_database() AND r.database_oid=(SELECT oid FROM pg_database WHERE datname=current_database())")){assertTrue(r.next());assertEquals(1,r.getInt(1));}}
+        assertThrows(SQLException.class,()->execute("UPDATE dispatch.carrier_site_version SET state='INACTIVE'"));assertThrows(SQLException.class,()->execute("INSERT INTO dispatch.carrier_site VALUES(gen_random_uuid(),'UNAUTHORIZED','STATION',clock_timestamp())"));
+        assertThrows(SQLException.class,()->nwsSite(op,"SIM-DROP-A2","STATION","SIM-A2",key));assertEquals(1,scalar("SELECT count(*) FROM dispatch.carrier_site"));
+        var source=outboxDataSource();UUID hub=nwsSite(op,"SIM-HUB-A","HUB","SIM-A1",UUID.randomUUID());nwsLink(op,site,hub);
+        var reader=new com.elogistic.backend.dispatch.internal.infrastructure.JdbcCarrierNetworkReads(source,Clock.systemUTC());
+        new org.springframework.transaction.support.TransactionTemplate(new org.springframework.jdbc.support.JdbcTransactionManager(source)).execute(status->{
+            com.elogistic.backend.dispatch.api.CarrierNetworkReads.Access allowed=()->assertTrue(org.springframework.transaction.support.TransactionSynchronizationManager.hasResource(source));
+            var page=reader.sites(allowed,new com.elogistic.backend.dispatch.api.CarrierNetworkReads.SiteQuery("ACTIVE","STATION","SIM-A1",0,20));assertEquals(1,page.total());assertEquals(site,page.items().getFirst().id());var detail=reader.site(allowed,site);assertEquals("SIMULATION",detail.provenance());assertTrue(detail.operatingHours().isEmpty());assertEquals(hub,detail.outgoing().getFirst().toSiteId());return null;
+        });
+        try(var c=DriverManager.getConnection(PostgresTestcontainersSupport.currentUrl(POSTGRES,"postgres"),POSTGRES.getUsername(),POSTGRES.getPassword());var q=c.createStatement()){q.execute("REVOKE elogistics_local_operations_operator FROM "+op.getUsername());}
+        assertEquals("42501",assertThrows(SQLException.class,()->nwsSite(op,"SIM-DROP-A1","STATION","SIM-A1",key)).getSQLState());assertEquals(2,scalar("SELECT count(*) FROM dispatch.carrier_site"));
+
+    }
+    @Test void nwsOperationsOutboxFailureRetryAndCancellationArePurposeBound()throws Exception {
+        ensureStaffOperator();var operator=nwsOperator();var provisioner=LocalSupportStaffProvisioner.operations(operator,staffProtection());var source=outboxDataSource();
+        var receipt=provisioner.provision(new LocalSupportStaffProvisioner.OfflineStaffProvision(UUID.randomUUID(),"Synthetic Ops Retry","ops-retry@example.invalid","NWS transport failure recovery"));
+        Instant base=Instant.now().plusSeconds(1);var initial=JdbcInvitationOutbox.operations(source,staffProtection(),outboxPolicy(),Clock.fixed(base,ZoneOffset.UTC));
+        try(var smtp=new CustomerSmtpTestInbox(1,false,false,450,null)){
+            assertTrue(new StaffInvitationDeliveryWorker(initial,smtp(smtp,base),()->true,true).runOne());
+            assertEquals(1,scalar("SELECT count(*) FROM identity.invitation_outbox WHERE account_id='"+receipt.accountId()+"' AND status='PENDING' AND last_outcome='TRANSIENT_FAILURE'"));
+        }
+        var retry=JdbcInvitationOutbox.operations(source,staffProtection(),outboxPolicy(),Clock.fixed(base.plusSeconds(2),ZoneOffset.UTC));
+        try(var smtp=new CustomerSmtpTestInbox(1,false,false,250,null)){
+            assertTrue(new StaffInvitationDeliveryWorker(retry,smtp(smtp,base.plusSeconds(2)),()->true,true).runOne());var mail=new jakarta.mail.internet.MimeMessage(jakarta.mail.Session.getInstance(new Properties()),new java.io.ByteArrayInputStream(smtp.messages().getFirst()));String content=CustomerSmtpTestInbox.plainText(mail);assertTrue(content.contains("/ops/activate#proofId="));assertFalse(content.contains("/staff/activate"));assertEquals("ops-retry@example.invalid",mail.getAllRecipients()[0].toString());assertFalse(new StaffInvitationDeliveryWorker(retry,smtp(smtp,base.plusSeconds(2)),()->true,true).runOne());
+        }
+        assertEquals(1,scalar("SELECT count(*) FROM identity.invitation_outbox WHERE account_id='"+receipt.accountId()+"' AND status='SENT' AND attempts=2 AND nonce IS NULL AND ciphertext IS NULL"));assertEquals(1,scalar("SELECT count(*) FROM identity.local_staff_principal WHERE account_id='"+receipt.accountId()+"' AND state='PENDING'"));
+        var pending=provisioner.provision(new LocalSupportStaffProvisioner.OfflineStaffProvision(UUID.randomUUID(),"Synthetic Ops Cancel","ops-cancel@example.invalid","NWS cancellation"));var outbox=JdbcInvitationOutbox.operations(source,staffProtection(),outboxPolicy(),Clock.systemUTC());var lease=outbox.claim().orElseThrow();provisioner.disposition(new LocalSupportStaffProvisioner.OfflineStaffInvitationDisposition(UUID.randomUUID(),pending.accountId(),"CANCEL","NWS cancel before dispatch"));assertThrows(IllegalStateException.class,()->outbox.open(lease));assertEquals(0,scalar("SELECT count(*) FROM dispatch.operational_site_assignment"));
+    }
+    @Test void nwsScopedIntakeReusesAtomicCustodyAndCurrentAuthority()throws Exception {
+        customerFixture(true);ensureStaffOperator();var op=nwsOperator();UUID actor=nwsStaff(op),site=nwsSite(op,"SIM-DROP-A1","STATION","SIM-A1",UUID.randomUUID()),hub=nwsSite(op,"SIM-HUB-A","HUB","SIM-A1",UUID.randomUUID());nwsLink(op,site,hub);nwsAssignment(op,actor,site,"SITE_READ",false);nwsAssignment(op,actor,site,"STATION_INTAKE",false);
+        nwsHttpEnabled=true;liveStaffClock=true;Instant current=Instant.now();
+        try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var c=customerHttpContext(current,smtp(inbox,current),true)) {
+            var mvc=httpMvc(c);var owner=profileBrowser(mvc);var staff=nwsBrowser(mvc);String shipment=intakeBooked(mvc,owner);var codes=intakeBarcodes(mvc,owner,shipment);String base="/api/v1/ops/sites/"+site;
+            assertEquals(401,httpRead(mvc,base+"/shipments/"+shipment,owner.access()).getStatus());assertEquals(401,httpRead(mvc,"/api/v1/staff-auth/me",staff.access()).getStatus());assertEquals(403,httpRead(mvc,"/api/v1/ops/sites/"+hub+"/shipments/"+shipment,staff.access()).getStatus());
+            List<String> scans=new ArrayList<>();for(String code:codes){var r=onboardingWrite(mvc,staff,"POST",base+"/scans",UUID.randomUUID(),null,Map.of("barcode",code));assertEquals(200,r.getStatus(),this::safeOnboardingFailure);scans.add(responseId(r,"id"));}
+            UUID key=UUID.randomUUID();Map<String,Object> input=Map.of("scanIds",scans,"inspection","MATCHED");var accepted=onboardingWrite(mvc,staff,"POST",base+"/shipments/"+shipment+"/acceptance",key,"\"i0\"",input);assertEquals(200,accepted.getStatus(),this::safeOnboardingFailure);assertEquals(200,onboardingWrite(mvc,staff,"POST",base+"/shipments/"+shipment+"/acceptance",key,"\"i0\"",input).getStatus());
+            assertEquals(1,scalar("SELECT count(*) FROM dispatch.pilot_intake_acceptance WHERE assignment_id IS NULL AND operational_assignment_id IS NOT NULL AND site_version_id IS NOT NULL"));assertEquals(2,scalar("SELECT count(*) FROM dispatch.pilot_custody"));assertEquals(2,scalar("SELECT count(*) FROM orders.pilot_parcel_event"));assertEquals(1,scalar("SELECT count(*) FROM orders.pilot_tracking_event"));assertEquals(1,scalar("SELECT count(*) FROM finance.pilot_shipping_obligation WHERE state='UNPAID'"));
+            assertEquals(200,httpRead(mvc,"/api/v1/customer/shipments/"+shipment+"/handling",owner.access()).getStatus());
+            nwsSiteState(op,site,1,"INACTIVE");assertEquals(403,httpRead(mvc,base+"/shipments/"+shipment,staff.access()).getStatus());nwsSiteState(op,site,2,"ACTIVE");assertEquals(200,httpRead(mvc,base+"/shipments/"+shipment,staff.access()).getStatus());
+            String second=intakeBooked(mvc,owner);List<String> secondScans=new ArrayList<>();for(String code:intakeBarcodes(mvc,owner,second)){var r=onboardingWrite(mvc,staff,"POST",base+"/scans",UUID.randomUUID(),null,Map.of("barcode",code));assertEquals(200,r.getStatus());secondScans.add(responseId(r,"id"));}
+            db.ownerExecute("CREATE FUNCTION dispatch.nws_intake_fault() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'NWS_SYNTHETIC_LATE_FAILURE'; END $$");db.ownerExecute("CREATE TRIGGER nws_late_fault BEFORE INSERT ON dispatch.pilot_custody FOR EACH ROW EXECUTE FUNCTION dispatch.nws_intake_fault()");
+            Map<String,Object> secondInput=Map.of("scanIds",secondScans,"inspection","MATCHED");assertEquals(503,onboardingWrite(mvc,staff,"POST",base+"/shipments/"+second+"/acceptance",UUID.randomUUID(),"\"i0\"",secondInput).getStatus());assertEquals(1,scalar("SELECT count(*) FROM dispatch.pilot_intake_acceptance"));assertEquals(2,scalar("SELECT count(*) FROM dispatch.pilot_custody"));assertEquals(2,scalar("SELECT count(*) FROM orders.pilot_parcel_event"));
+            db.ownerExecute("DROP TRIGGER nws_late_fault ON dispatch.pilot_custody");db.ownerExecute("DROP FUNCTION dispatch.nws_intake_fault()");
+            UUID concurrent=UUID.randomUUID();assertEquals(List.of(200,200),adminRace(()->onboardingWrite(mvc,staff,"POST",base+"/shipments/"+second+"/acceptance",concurrent,"\"i0\"",secondInput).getStatus(),()->onboardingWrite(mvc,staff,"POST",base+"/shipments/"+second+"/acceptance",concurrent,"\"i0\"",secondInput).getStatus()));assertEquals(2,scalar("SELECT count(*) FROM dispatch.pilot_intake_acceptance"));assertEquals(4,scalar("SELECT count(*) FROM dispatch.pilot_custody"));
+            String third=intakeBooked(mvc,owner);List<String> thirdScans=new ArrayList<>();for(String code:intakeBarcodes(mvc,owner,third)){var r=onboardingWrite(mvc,staff,"POST",base+"/scans",UUID.randomUUID(),null,Map.of("barcode",code));assertEquals(200,r.getStatus());thirdScans.add(responseId(r,"id"));}
+            var race=adminRace(()->onboardingWrite(mvc,staff,"POST",base+"/shipments/"+third+"/acceptance",UUID.randomUUID(),"\"i0\"",Map.of("scanIds",thirdScans,"inspection","MATCHED")).getStatus(),()->{nwsAssignment(op,actor,site,"STATION_INTAKE",true);return 204;});assertTrue(Set.of(200,403).contains(race.getFirst()));assertEquals(204,race.get(1));long count=Integer.valueOf(200).equals(race.getFirst())?3:2;assertEquals(count,scalar("SELECT count(*) FROM dispatch.pilot_intake_acceptance"));assertEquals(count*2,scalar("SELECT count(*) FROM dispatch.pilot_custody"));
+            assertEquals(403,httpRead(mvc,base+"/shipments/"+shipment,staff.access()).getStatus());assertEquals(403,httpRead(mvc,base+"/receipts/"+key,staff.access()).getStatus());assertEquals(200,httpRead(mvc,"/api/v1/ops-auth/me",staff.access()).getStatus());
+        }
+    }
+    @Test void nwsRealHttpsBrowserAndPostgres()throws Exception {
+        customerFixture(true);ensureStaffOperator();var operator=nwsOperator();UUID site=nwsSite(operator,"SIM-DROP-A1","STATION","SIM-A1",UUID.randomUUID()),hub=nwsSite(operator,"SIM-HUB-A","HUB","SIM-A1",UUID.randomUUID());nwsLink(operator,site,hub);
+        S003CustomerBrowserRuntime.runOperations(outboxDataSource(),operator,site);
+    }
     // ADM-02–08 uses this existing owned lifecycle. No new suite alias or ownership/cleanup protocol change.
     private com.elogistic.backend.workflow.internal.web.AdminDashboardPostgresCases adminDashboardCases() throws Exception {
         return new com.elogistic.backend.workflow.internal.web.AdminDashboardPostgresCases(db,SCOPE);
     }
+    @Test void nwsAdminCarrierDirectoryIsPermissionBound()throws Exception{try(var cases=adminDashboardCases()){cases.nwsCarrierDirectoryRequiresCurrentNetworkPermission();}}
     @Test void adminDashboardTwoConnectionPoolAndUnavailableDatabase()throws Exception{try(var cases=adminDashboardCases()){cases.twoConnectionPoolExhaustionFailsClosedAndRecovers();}}
     @Test void adminDashboardInvitationHttpSecurityAndRealLogin()throws Exception{try(var cases=adminDashboardCases()){cases.invitationHttpUsesSystemCsrfAndRealProofBeforeLogin();}}
     @Test void adminDashboardSixApisAndSystemAdmission() throws Exception {try(var cases=adminDashboardCases()){cases.sixApisHaveRealCurrentSystemAdmissionAndNoImplicitRootAuthority();}}
@@ -88,6 +250,11 @@ class IdentityGrantApplicationTests {
     @Test void businessContactConcurrentConfirmationAndReceiptBinding()throws Exception{try(var cases=adminDashboardCases()){cases.businessContactConcurrentConfirmationAndReceiptBinding();}}
     @Test void businessContactWrongSubjectAndSession()throws Exception{try(var cases=adminDashboardCases()){cases.businessContactWrongSubjectAndSession();}}
     @Test void businessContactActualCustomerHttpAndOwnership()throws Exception{try(var cases=adminDashboardCases()){cases.businessContactActualCustomerHttpAndOwnership();}}
+    @Test void organizationLifecycleV47PreparationSchema()throws Exception{try(var cases=adminDashboardCases()){cases.organizationLifecycleV47PreparationSchema();}}
+    @Test void organizationLifecycleV47PreparationHttps()throws Exception{try(var cases=adminDashboardCases()){cases.organizationLifecycleV47PreparationHttps();}}
+    @Test void merchantR01SearchCommentsAndScope()throws Exception{try(var cases=adminDashboardCases()){cases.merchantR01SearchCommentsAndScope();}}
+    @Test void merchantR01ComparisonAndHttps()throws Exception{try(var cases=adminDashboardCases()){cases.merchantR01ComparisonAndHttps();}}
+    @Test void merchantR01ProfileAndMembers()throws Exception{try(var cases=adminDashboardCases()){cases.merchantR01ProfileAndMembers();}}
     @Test void merchantGovernanceCurrentScopeAndRevocation()throws Exception{try(var cases=adminDashboardCases()){cases.merchantGovernanceCurrentScopeAndRevocation();}}
     @Test void merchantWorkflowV42DraftCompatibilityAndDenial()throws Exception{try(var cases=adminDashboardCases()){cases.merchantWorkflowV42DraftCompatibilityAndDenial();}}
     @Test void merchantV42ScreenedEvidenceAndImmutableSubmission()throws Exception{try(var cases=adminDashboardCases()){cases.merchantV42ScreenedEvidenceAndImmutableSubmission();}}
@@ -107,6 +274,7 @@ class IdentityGrantApplicationTests {
     @Test void merchantV43ApplicationFactsVerifyIdentityAndCanonicalCohort()throws Exception{try(var cases=adminDashboardCases()){cases.merchantV43ApplicationFactsVerifyIdentityAndCanonicalCohort();}}
     @Test void merchantV43DashboardV2CanonicalSnapshotAndCompatibility()throws Exception{try(var cases=adminDashboardCases()){cases.merchantV43DashboardV2CanonicalSnapshotAndCompatibility();}}
     @Test void adminCoreRealHttpsCustomerToIndependentActivation()throws Exception{try(var cases=adminDashboardCases()){cases.adminCoreRealHttpsCustomerToIndependentActivation();}}
+    @Test void biaRealHttpsCustomerApplicationToBusinessStation()throws Exception{try(var cases=adminDashboardCases()){cases.biaRealHttpsCustomerApplicationToBusinessStation();}}
     @Test void merchantWorkAndOrganizationAuditCurrentAuthority()throws Exception{try(var cases=adminDashboardCases()){cases.merchantWorkAndOrganizationAuditCurrentAuthority();}}
     @Test void merchantV43SchemaAndWriterAcl()throws Exception{try(var cases=adminDashboardCases()){cases.merchantV43SchemaAndWriterAcl();}}
     @Test void merchantV42RealHttpsReviewerFlow()throws Exception{try(var cases=adminDashboardCases()){cases.merchantV42RealHttpsReviewerFlow();}}
@@ -2003,6 +2171,7 @@ class IdentityGrantApplicationTests {
         var key=new com.nimbusds.jose.jwk.RSAKey.Builder((java.security.interfaces.RSAPublicKey)httpKeys().getPublic()).privateKey((java.security.interfaces.RSAPrivateKey)httpKeys().getPrivate()).keyID("http-test").keyUse(com.nimbusds.jose.jwk.KeyUse.SIGNATURE).algorithm(com.nimbusds.jose.JWSAlgorithm.RS256).build();
         var context=new org.springframework.web.context.support.AnnotationConfigWebApplicationContext();context.setServletContext(new org.springframework.mock.web.MockServletContext());context.getEnvironment().setActiveProfiles(productionProfile?new String[]{"identity","postgres","customer","production"}:new String[]{"identity","postgres","customer"});
         context.getEnvironment().getPropertySources().addFirst(new org.springframework.core.env.MapPropertySource("isolated-customer-http-fixture",Map.of("identity.security.issuer","https://identity.example.invalid","identity.security.audience","elogistics-browser","identity.security.current-kid","http-test","identity.security.jwk-set",new com.nimbusds.jose.jwk.JWKSet(key).toString(false),"identity.security.origin","https://portal.example.invalid","identity.security.limiter-hmac",Base64.getEncoder().encodeToString(limiterKey()),"customer.rollout","SANDBOX","shipping.pilot.environment",configuredMode)));
+        if(biaHttpEnabled)context.getEnvironment().getPropertySources().addFirst(new org.springframework.core.env.MapPropertySource("isolated-bia-intake",Map.of("shipping.pilot.business-intake-enabled",true)));
         // Real production composition with deterministic test clock, test keys, same runtime DS and explicit manual worker tick.
         var services=com.elogistic.backend.identity.internal.ProductionCustomerComposition.create(source,customerTokens(fixtureClock),enrollmentProtection(),new JdbcIdentityRateLimiter(source,keyBytes(73)),transport,"https://portal.example.invalid",fixtureClock,()->(i,p,o,a,n,e)->context.getBean(com.elogistic.backend.merchant.api.customer.OrganizationTeam.class).deliveryCurrent(i,p,o,a,n,e));
         var staffTokens=new com.elogistic.backend.identity.internal.web.ProductionAccessTokens("https://customer.example.invalid","argopost-local-support-staff","http-test",(java.security.interfaces.RSAPrivateKey)httpKeys().getPrivate(),Map.of("http-test",(java.security.interfaces.RSAPublicKey)httpKeys().getPublic()),Clock.systemUTC());
@@ -2010,6 +2179,16 @@ class IdentityGrantApplicationTests {
         var staffServices=com.elogistic.backend.identity.internal.ProductionStaffComposition.create(source,staffTokens,staffProtection(),new JdbcIdentityRateLimiter(source,keyBytes(73)),staffTransport,"https://portal.example.invalid","TEST",Clock.systemUTC(),()->Boolean.TRUE.equals(new org.springframework.jdbc.core.JdbcTemplate(source).queryForObject("SELECT identity.local_staff_environment_matches('TEST')",Boolean.class)));
         context.addBeanFactoryPostProcessor(factory->{factory.registerSingleton("staffServices",staffServices);factory.registerSingleton("staffAdmission",staffServices.admission());factory.registerSingleton("staffRequestContext",staffServices.requests());});
         context.register(com.elogistic.backend.identity.internal.ProductionStaffWebConfiguration.class);
+        if(nwsHttpEnabled){
+            var opsTokens=new com.elogistic.backend.identity.internal.web.ProductionAccessTokens("https://customer.example.invalid","argopost-local-operations-staff","http-test",(java.security.interfaces.RSAPrivateKey)httpKeys().getPrivate(),Map.of("http-test",(java.security.interfaces.RSAPublicKey)httpKeys().getPublic()),Clock.systemUTC());
+            var operations=com.elogistic.backend.identity.internal.ProductionOperationsComposition.create(source,opsTokens,staffProtection(),new JdbcIdentityRateLimiter(source,keyBytes(73)),staffTransport,"https://portal.example.invalid","TEST",Clock.systemUTC(),()->Boolean.TRUE.equals(new org.springframework.jdbc.core.JdbcTemplate(source).queryForObject("SELECT identity.local_staff_environment_matches('TEST')",Boolean.class)));
+            context.addBeanFactoryPostProcessor(factory->{
+                factory.registerSingleton("operationsServices",operations);factory.registerSingleton("operationalStaffAdmission",operations.admission());factory.registerSingleton("operationsRequests",operations.requests());
+                var primary=new org.springframework.beans.factory.support.RootBeanDefinition(com.elogistic.backend.identity.api.staff.StaffRequestContext.class);primary.setInstanceSupplier(staffServices::requests);primary.setPrimary(true);((org.springframework.beans.factory.support.BeanDefinitionRegistry)factory).registerBeanDefinition("staffRequestContext",primary);
+            });
+            context.register(com.elogistic.backend.identity.internal.ProductionOperationsWebConfiguration.class,com.elogistic.backend.workflow.internal.web.OperationalStationHttp.class);
+        }
+
         context.addBeanFactoryPostProcessor(factory->{factory.registerSingleton("identityHttpClock",fixtureClock);factory.registerSingleton("customerServices",services);});
         context.register(HttpFixtureConfiguration.class,com.elogistic.backend.identity.internal.ProductionIdentityHttpConfiguration.class,com.elogistic.backend.identity.internal.ProductionCustomerWebConfiguration.class,com.elogistic.backend.identity.internal.web.ProductionIdentityReads.class,com.elogistic.backend.identity.internal.web.ProductionIdentityErrors.class);
         if(profile){
@@ -2993,6 +3172,110 @@ class IdentityGrantApplicationTests {
             assertEquals(422,onboardingWrite(mvc,owner,"POST",preparationPath(org)+"/"+draft+"/quotes",UUID.randomUUID(),"\"v1\"",Map.of("originCode","SIM-A2","destinationCode","SIM-B1","ordinaryGoodsConfirmed",true)).getStatus());
             for(var route:List.of(new String[]{"SIM-A2","SIM-A1","53000"},new String[]{"SIM-A1","SIM-B1","81000"},new String[]{"SIM-B1","SIM-A1","81000"})){var priced=onboardingWrite(mvc,owner,"POST",preparationPath(org)+"/"+draft+"/quotes",UUID.randomUUID(),"\"v1\"",Map.of("originCode",route[0],"destinationCode",route[1],"ordinaryGoodsConfirmed",true));assertEquals(201,priced.getStatus(),this::safeOnboardingFailure);assertEquals(Long.parseLong(route[2]),intakeJson(priced).get("quote").get("totalVnd").asLong());}
             assertEquals(404,httpRead(mvc,"/api/v1/customer/shipping-quotes/"+q.get("id").asString(),owner.access()).getStatus());assertEquals(4,scalar("SELECT count(*) FROM pricing.pilot_quote WHERE owner_type='BUSINESS' AND owner_id IS NULL AND draft_id IS NULL"));assertEquals(0,scalar("SELECT count(*) FROM orders.pilot_shipment"));
+        }
+    }
+    private String businessSnapshot(String table){if(!table.equals("orders.pilot_shipment"))throw new IllegalArgumentException();return new org.springframework.jdbc.core.JdbcTemplate(outboxDataSource()).queryForObject("SELECT md5(COALESCE(jsonb_agg(to_jsonb(s) ORDER BY id)::text,'')) FROM orders.pilot_shipment s",String.class);}
+    private org.springframework.mock.web.MockHttpServletResponse biaWrite(org.springframework.test.web.servlet.MockMvc mvc,ProfileBrowser browser,String path,UUID key,String version,Object body)throws Exception{
+        var q=MockMvcRequestBuilders.post(path).secure(true).header("Origin","https://portal.example.invalid").header("Authorization","Bearer "+browser.access()).header("X-CSRF-Token",browser.flow().challenge).cookie(browser.flow().csrf,browser.flow().refresh).contentType("application/json").accept("application/vnd.argopost.station-cargo.v2+json").header("Idempotency-Key",key);
+        if(version!=null)q.header("If-Match",version);q.content(new tools.jackson.databind.ObjectMapper().writeValueAsString(body));var r=mvc.perform(q).andReturn();onboardingFailure.set(r.getResolvedException());return r.getResponse();
+    }
+    private org.springframework.mock.web.MockHttpServletResponse biaRead(org.springframework.test.web.servlet.MockMvc mvc,ProfileBrowser browser,String path)throws Exception{var r=mvc.perform(MockMvcRequestBuilders.get(path).secure(true).header("Authorization","Bearer "+browser.access()).accept("application/vnd.argopost.station-cargo.v2+json")).andReturn();onboardingFailure.set(r.getResolvedException());return r.getResponse();}
+    private void biaPortsRejectForeignFacts(org.springframework.context.ApplicationContext c,String token,UUID site,UUID org,UUID shipment){
+        var admission=c.getBean(com.elogistic.backend.identity.api.staff.OperationalStaffAdmission.class);var coverage=c.getBean(com.elogistic.backend.merchant.api.customer.PilotCoverage.class);var intake=c.getBean(com.elogistic.backend.dispatch.api.OperationalStationIntake.class);var handling=c.getBean(com.elogistic.backend.orders.api.PilotHandling.class);var finance=c.getBean(com.elogistic.backend.finance.api.BusinessObligations.class);
+        UUID currentRequest=c.getBean("operationsRequests",com.elogistic.backend.identity.api.staff.StaffRequestContext.class).current().requestId();
+        admission.execute(token,currentRequest,ctx->coverage.withIntakeOrganizationLock(ctx,()->{
+            var access=new com.elogistic.backend.orders.api.PilotHandling.CarrierAccess(){public UUID actorId(){requireCurrent();return ctx.actor().accountId();}public UUID requestId(){requireCurrent();return ctx.requestId();}public String stationCode(){return "SIM-DROP-A1";}public void requireCurrent(){admission.requireCurrent(ctx);coverage.requireIntakeOrganization(ctx,org,null);intake.require(ctx,site);}};
+            var cargo=handling.carrierAtStation(access,shipment);com.elogistic.backend.finance.api.PilotObligations.HandoverAccess guard=access::requireCurrent;
+            finance.requireUnpaidHandover(guard,org,null,shipment,cargo.quoteId(),cargo.totalVnd());
+            assertThrows(RuntimeException.class,()->finance.requireUnpaidHandover(guard,UUID.randomUUID(),null,shipment,cargo.quoteId(),cargo.totalVnd()));
+            assertThrows(RuntimeException.class,()->finance.requireUnpaidHandover(guard,org,UUID.randomUUID(),shipment,cargo.quoteId(),cargo.totalVnd()));
+            assertThrows(RuntimeException.class,()->finance.requireUnpaidHandover(guard,org,null,shipment,UUID.randomUUID(),cargo.totalVnd()));
+            assertThrows(RuntimeException.class,()->finance.requireUnpaidHandover(guard,org,null,shipment,cargo.quoteId(),cargo.totalVnd()+1));
+            assertThrows(RuntimeException.class,()->coverage.requireIntakeOrganization(ctx,org,UUID.randomUUID()));
+            var forged=new com.elogistic.backend.orders.api.PilotHandling.CarrierCargo(cargo.shipmentId(),cargo.shipmentCode(),cargo.ownerType(),cargo.accountId(),cargo.organizationId(),cargo.facilityId(),cargo.quoteId(),cargo.totalVnd(),cargo.createdAt().plusSeconds(1),cargo.input(),cargo.route(),cargo.parcels(),cargo.handling());
+            assertThrows(com.elogistic.backend.orders.api.PilotHandlingFailure.class,()->intake.scan(ctx,site,forged,cargo.handling().parcels().getFirst().barcode(),UUID.randomUUID()));
+            var beforeBooking=new com.elogistic.backend.dispatch.internal.infrastructure.JdbcStationIntake(c.getBean(javax.sql.DataSource.class),Clock.fixed(cargo.createdAt().minusMillis(1),ZoneOffset.UTC),true,"TEST",admission,handling,true);
+            assertEquals(com.elogistic.backend.orders.api.PilotHandlingFailure.Code.PARCEL_SET_INCOMPLETE,assertThrows(com.elogistic.backend.orders.api.PilotHandlingFailure.class,()->beforeBooking.scan(ctx,site,cargo,cargo.handling().parcels().getFirst().barcode(),UUID.randomUUID())).code());
+            var earlyClock=new com.elogistic.backend.dispatch.internal.infrastructure.JdbcStationIntake(c.getBean(javax.sql.DataSource.class),Clock.fixed(cargo.createdAt().plusMillis(1),ZoneOffset.UTC),true,"TEST",admission,handling,true);
+            var scanIds=intake.scans(ctx,site,shipment).stream().map(com.elogistic.backend.dispatch.api.StationIntake.Scan::id).toList();
+            assertEquals(com.elogistic.backend.orders.api.PilotHandlingFailure.Code.PARCEL_SET_INCOMPLETE,assertThrows(com.elogistic.backend.orders.api.PilotHandlingFailure.class,()->earlyClock.accept(ctx,site,cargo,scanIds,0,"MATCHED",UUID.randomUUID())).code());
+            return null;
+        }));
+    }
+    /** Deliberately malformed direct DML only; every transaction must fail and roll back. */
+    private void biaIncompleteDmlDenied(String shipment,String mode)throws Exception{
+        UUID acceptance=UUID.randomUUID(),event=UUID.randomUUID(),request=UUID.randomUUID();String time=mode.equals("TIME")?"TIMESTAMPTZ '2000-01-01T00:00:00Z'":"TIMESTAMPTZ '"+Instant.now()+"'";
+        try(var c=db.runtimeConnection();var q=c.createStatement()){
+            c.setAutoCommit(false);
+            try{
+                q.executeUpdate("INSERT INTO dispatch.pilot_intake_acceptance SELECT '"+acceptance+"','"+shipment+"',"+(mode.equals("ACTOR")?"'"+UUID.randomUUID()+"'":"actor_id")+",assignment_id,"+(mode.equals("SITE")?"'SIM-DROP-B1'":"station_code")+",2,"+time+",'"+request+"',0,'MATCHED','BR13-BUSINESS-INTAKE-01',environment,provenance,operational_assignment_id,site_version_id,site_id,"+(mode.equals("OWNER")?"'PERSONAL'":"owner_type")+" FROM dispatch.pilot_intake_acceptance LIMIT 1");
+                if(!mode.equals("CUSTODY"))q.executeUpdate("INSERT INTO dispatch.pilot_custody SELECT '"+acceptance+"',parcel_id,id,shipment_id,station_code,actor_id,"+time+" FROM dispatch.pilot_intake_scan WHERE shipment_id='"+shipment+"'");
+                if(!mode.equals("TRACKING")){
+                    q.executeUpdate("INSERT INTO orders.pilot_tracking_event(id,shipment_id,owner_type,owner_id,organization_id,facility_id,source_acceptance_id,event_type,station_code,actor_id,occurred_at,version,environment,provenance) SELECT '"+event+"',a.shipment_id,a.owner_type,NULL,"+(mode.equals("ORG")?"'"+UUID.randomUUID()+"'":"b.organization_id")+",b.facility_id,'"+(mode.equals("SOURCE")?UUID.randomUUID():acceptance)+"','CARRIER_ACCEPTED_AT_STATION',a.station_code,a.actor_id,"+time+",1,a.environment,'SIMULATION' FROM dispatch.pilot_intake_acceptance a JOIN orders.pilot_shipment b ON b.id=a.shipment_id WHERE a.id='"+acceptance+"'");
+                    q.executeUpdate("INSERT INTO orders.pilot_parcel_event SELECT '"+event+"',shipment_id,"+(mode.equals("PARCEL")?"'"+UUID.randomUUID()+"'":"id")+",'CARRIER_ACCEPTED_AT_STATION',"+time+" FROM orders.pilot_parcel WHERE shipment_id='"+shipment+"'");
+                }
+                if(!mode.equals("AUDIT"))q.executeUpdate("INSERT INTO dispatch.pilot_intake_audit SELECT gen_random_uuid(),actor_id,station_code,'ACCEPT',id,shipment_id,request_id,occurred_at FROM dispatch.pilot_intake_acceptance WHERE id='"+acceptance+"'");
+                if(!mode.equals("RECEIPT"))q.executeUpdate("INSERT INTO dispatch.pilot_intake_receipt SELECT actor_id,station_code,gen_random_uuid(),'ACCEPT',decode(repeat('01',32),'hex'),id,shipment_id,occurred_at FROM dispatch.pilot_intake_acceptance WHERE id='"+acceptance+"'");
+                var failure=assertThrows(SQLException.class,c::commit,"Malformed "+mode+" must never commit");assertTrue(Set.of("23503","23514","42501","23505").contains(failure.getSQLState()));
+            }catch(SQLException failure){assertTrue(Set.of("23503","23514","42501","23505").contains(failure.getSQLState()));}
+            finally{c.rollback();}
+        }
+        assertEquals(1,scalar("SELECT count(*) FROM dispatch.pilot_intake_acceptance"));assertEquals(2,scalar("SELECT count(*) FROM dispatch.pilot_custody"));assertEquals(1,scalar("SELECT count(*) FROM orders.pilot_tracking_event"));
+    }
+    @Test void biaBusinessIntakeUsesCanonicalTimestampOwnershipAndAtomicPipeline()throws Exception{
+        customerFixture(true);ensureStaffOperator();var op=nwsOperator();UUID actor=nwsStaff(op),site=nwsSite(op,"SIM-DROP-A1","STATION","SIM-A1",UUID.randomUUID()),hub=nwsSite(op,"SIM-HUB-A","HUB","SIM-A1",UUID.randomUUID());nwsLink(op,site,hub);nwsAssignment(op,actor,site,"SITE_READ",false);nwsAssignment(op,actor,site,"STATION_INTAKE",false);
+        nwsHttpEnabled=true;biaHttpEnabled=true;liveStaffClock=true;Instant time=Instant.now();
+        try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var c=customerHttpContext(time,smtp(inbox,time),true)){
+            var mvc=httpMvc(c);var owner=profileBrowser(mvc);var staff=nwsBrowser(mvc);UUID org=id(878);businessShippingOwner(org);businessTestContract(org);String draft=businessTestDraft(mvc,owner,org);var qr=businessTestQuote(mvc,owner,org,draft,UUID.randomUUID());assertEquals(201,qr.getStatus(),this::safeOnboardingFailure);String quote=intakeJson(qr).get("quote").get("id").asString();var booked=businessTestBook(mvc,owner,org,draft,quote,UUID.randomUUID());assertEquals(201,booked.getStatus(),this::safeOnboardingFailure);var shipment=intakeJson(booked).get("shipment");String id=shipment.get("id").asString(),base="/api/v1/ops/sites/"+site;
+            String snapshot=businessSnapshot("orders.pilot_shipment");var view=biaRead(mvc,staff,base+"/shipments/"+id);assertEquals(200,view.getStatus(),this::safeOnboardingFailure);var cargo=intakeJson(view).get("cargo");assertEquals("BUSINESS",cargo.get("ownerType").asString());assertEquals(org.toString(),cargo.get("organizationId").asString());assertEquals(shipment.get("createdAt").asString(),cargo.get("createdAt").asString());assertTrue(cargo.get("accountId").isNull());
+            assertEquals(401,biaRead(mvc,owner,base+"/shipments/"+id).getStatus());assertEquals(403,biaRead(mvc,staff,"/api/v1/ops/sites/"+hub+"/shipments/"+id).getStatus());assertEquals(404,httpRead(mvc,base+"/shipments/"+id,staff.access()).getStatus());
+            List<String> ids=new ArrayList<>();for(var parcel:shipment.get("parcels")){String barcode="AP-P-"+parcel.get("id").asString().replace("-","");UUID key=UUID.randomUUID();var scan=biaWrite(mvc,staff,base+"/scans",key,null,Map.of("barcode",barcode));assertEquals(200,scan.getStatus(),this::safeOnboardingFailure);assertEquals(scan.getContentAsString(),biaWrite(mvc,staff,base+"/scans",key,null,Map.of("barcode",barcode)).getContentAsString());ids.add(responseId(scan,"id"));}
+            assertEquals(409,biaWrite(mvc,staff,base+"/shipments/"+id+"/acceptance",UUID.randomUUID(),"\"i0\"",Map.of("scanIds",ids.subList(0,1),"inspection","MATCHED")).getStatus());
+            assertEquals(400,biaWrite(mvc,staff,base+"/shipments/"+id+"/acceptance",UUID.randomUUID(),"\"i0\"",Map.of("scanIds",List.of(ids.getFirst(),ids.getFirst()),"inspection","MATCHED")).getStatus());
+            assertEquals(404,biaWrite(mvc,staff,base+"/shipments/"+id+"/acceptance",UUID.randomUUID(),"\"i0\"",Map.of("scanIds",List.of(ids.getFirst(),UUID.randomUUID().toString()),"inspection","MATCHED")).getStatus());
+            assertEquals(412,biaWrite(mvc,staff,base+"/shipments/"+id+"/acceptance",UUID.randomUUID(),"\"i1\"",Map.of("scanIds",ids,"inspection","MATCHED")).getStatus());
+            jakarta.servlet.Filter probe=(request,response,chain)->{biaPortsRejectForeignFacts(c,staff.access(),site,org,UUID.fromString(id));chain.doFilter(request,response);};
+            var probeMvc=MockMvcBuilders.webAppContextSetup(c).addFilters(c.getBean("springSecurityFilterChain",jakarta.servlet.Filter.class),probe).build();
+            assertEquals(200,biaRead(probeMvc,staff,base+"/shipments/"+id).getStatus(),this::safeOnboardingFailure);
+            UUID key=UUID.randomUUID();var input=Map.of("scanIds",ids,"inspection","MATCHED");var acceptance=biaWrite(mvc,staff,base+"/shipments/"+id+"/acceptance",key,"\"i0\"",input);assertEquals(200,acceptance.getStatus(),this::safeOnboardingFailure);assertEquals("AT_STATION",intakeJson(acceptance).get("cargo").get("handling").get("state").asString());assertEquals(200,biaWrite(mvc,staff,base+"/shipments/"+id+"/acceptance",key,"\"i0\"",input).getStatus());
+            assertEquals(1,scalar("SELECT count(*) FROM dispatch.pilot_intake_acceptance WHERE owner_type='BUSINESS' AND policy_version='BR13-BUSINESS-INTAKE-01'"));assertEquals(2,scalar("SELECT count(*) FROM dispatch.pilot_custody"));assertEquals(1,scalar("SELECT count(*) FROM orders.pilot_tracking_event WHERE owner_type='BUSINESS' AND owner_id IS NULL AND organization_id='"+org+"'"));assertEquals(2,scalar("SELECT count(*) FROM orders.pilot_parcel_event"));assertEquals(1,scalar("SELECT count(*) FROM finance.pilot_shipping_obligation WHERE state='UNPAID'"));assertEquals(snapshot,businessSnapshot("orders.pilot_shipment"));assertEquals("AT_STATION",intakeJson(httpRead(mvc,businessShippingBase(org)+"/shipments/"+id+"/handling",owner.access())).get("state").asString());
+            String d2=businessTestDraft(mvc,owner,org);var q2=businessTestQuote(mvc,owner,org,d2,UUID.randomUUID());var b2=businessTestBook(mvc,owner,org,d2,intakeJson(q2).get("quote").get("id").asString(),UUID.randomUUID());assertEquals(201,b2.getStatus());String second=intakeJson(b2).get("shipment").get("id").asString();List<String> secondScans=new ArrayList<>();
+            for(var p:intakeJson(b2).get("shipment").get("parcels")){var r=biaWrite(mvc,staff,base+"/scans",UUID.randomUUID(),null,Map.of("barcode","AP-P-"+p.get("id").asString().replace("-","")));assertEquals(200,r.getStatus());secondScans.add(responseId(r,"id"));}
+            for(String malformed:List.of("CUSTODY","TRACKING","AUDIT","RECEIPT","TIME","SOURCE","OWNER","ORG","PARCEL","ACTOR","SITE"))biaIncompleteDmlDenied(second,malformed);
+            var secondInput=Map.of("scanIds",secondScans,"inspection","MATCHED");String secondPath=base+"/shipments/"+second+"/acceptance";
+            for(String table:List.of("dispatch.pilot_custody","dispatch.pilot_intake_audit","dispatch.pilot_intake_receipt","orders.pilot_tracking_event","orders.pilot_parcel_event")){
+                db.ownerExecute("REVOKE INSERT ON "+table+" FROM \""+db.runtime()+"\"");try{assertEquals(503,biaWrite(mvc,staff,secondPath,UUID.randomUUID(),"\"i0\"",secondInput).getStatus());assertEquals(1,scalar("SELECT count(*) FROM dispatch.pilot_intake_acceptance"));assertEquals(2,scalar("SELECT count(*) FROM dispatch.pilot_custody"));assertEquals(1,scalar("SELECT count(*) FROM orders.pilot_tracking_event"));}finally{db.ownerExecute("GRANT INSERT ON "+table+" TO \""+db.runtime()+"\"");}
+            }
+            UUID concurrent=UUID.randomUUID();assertEquals(List.of(200,200),adminRace(()->biaWrite(mvc,staff,secondPath,concurrent,"\"i0\"",secondInput).getStatus(),()->biaWrite(mvc,staff,secondPath,concurrent,"\"i0\"",secondInput).getStatus()));assertEquals(2,scalar("SELECT count(*) FROM dispatch.pilot_intake_acceptance"));assertEquals(4,scalar("SELECT count(*) FROM dispatch.pilot_custody"));assertEquals(2,scalar("SELECT count(*) FROM finance.pilot_shipping_obligation WHERE state='UNPAID'"));
+            String d3=businessTestDraft(mvc,owner,org);var q3=businessTestQuote(mvc,owner,org,d3,UUID.randomUUID());var b3=businessTestBook(mvc,owner,org,d3,intakeJson(q3).get("quote").get("id").asString(),UUID.randomUUID());assertEquals(201,b3.getStatus());String third=intakeJson(b3).get("shipment").get("id").asString();List<String> thirdScans=new ArrayList<>();
+            for(var p:intakeJson(b3).get("shipment").get("parcels")){var r=biaWrite(mvc,staff,base+"/scans",UUID.randomUUID(),null,Map.of("barcode","AP-P-"+p.get("id").asString().replace("-","")));assertEquals(200,r.getStatus());thirdScans.add(responseId(r,"id"));}
+            var race=adminRace(()->biaWrite(mvc,staff,base+"/shipments/"+third+"/acceptance",UUID.randomUUID(),"\"i0\"",Map.of("scanIds",thirdScans,"inspection","MATCHED")).getStatus(),()->{businessCommand(UUID.randomUUID(),"SUSPEND",org,A,"OWNER","'dashboard.read'");return 204;});assertTrue(Set.of(200,404).contains(race.getFirst()));assertEquals(204,race.get(1));long acceptedCount=Integer.valueOf(200).equals(race.getFirst())?3:2;assertEquals(acceptedCount,scalar("SELECT count(*) FROM dispatch.pilot_intake_acceptance"));assertEquals(acceptedCount*2,scalar("SELECT count(*) FROM dispatch.pilot_custody"));
+            assertEquals(404,biaRead(mvc,staff,base+"/receipts/"+key).getStatus());assertEquals(404,biaWrite(mvc,staff,base+"/shipments/"+id+"/acceptance",key,"\"i0\"",input).getStatus());
+            nwsAssignment(op,actor,site,"STATION_INTAKE",true);assertEquals(403,biaWrite(mvc,staff,base+"/shipments/"+id+"/acceptance",key,"\"i0\"",input).getStatus());
+        }
+    }
+    @Test void biaBusinessHandlingRetainsOrganizationOwnershipAndUnpaid()throws Exception{
+        customerFixture(true);biaHttpEnabled=true;
+        try(var inbox=new CustomerSmtpTestInbox(0,false,false,250,null);var c=customerHttpContext(PILOT_NOW,smtp(inbox,PILOT_NOW),true)){
+            var mvc=httpMvc(c);var owner=profileBrowser(mvc);var stranger=addressOtherBrowser(mvc);UUID org=id(885);
+            businessShippingOwner(org);businessTestContract(org);String draft=businessTestDraft(mvc,owner,org);
+            var priced=businessTestQuote(mvc,owner,org,draft,UUID.randomUUID());assertEquals(201,priced.getStatus(),this::safeOnboardingFailure);
+            var booked=businessTestBook(mvc,owner,org,draft,intakeJson(priced).get("quote").get("id").asString(),UUID.randomUUID());
+            assertEquals(201,booked.getStatus(),this::safeOnboardingFailure);String shipment=intakeJson(booked).get("shipment").get("id").asString();
+            String path=businessShippingBase(org)+"/shipments/"+shipment+"/handling";
+            var read=httpRead(mvc,path,owner.access());assertEquals(200,read.getStatus(),this::safeOnboardingFailure);
+            assertEquals("WAITING_FOR_HANDOVER",intakeJson(read).get("state").asString());assertEquals(2,intakeJson(read).get("parcels").size());
+            var management=mvc.perform(MockMvcRequestBuilders.get(businessShippingBase(org)+"/shipments?view=management")
+                .secure(true).header("Authorization","Bearer "+owner.access()).header("Origin","https://portal.example.invalid")
+                .accept("application/vnd.argopost.business-management.v2+json")).andReturn().getResponse();
+            assertEquals(200,management.getStatus(),this::safeOnboardingFailure);
+            assertEquals("ORGANIZATION_MANAGEMENT_2",intakeJson(management).get("schemaVersion").asString());
+            assertEquals("WAITING_FOR_HANDOVER",intakeJson(management).get("items").get(0).get("handling").get("state").asString());
+            assertEquals(404,httpRead(mvc,path,stranger.access()).getStatus());
+            assertEquals(404,httpRead(mvc,"/api/v1/customer/shipments/"+shipment+"/handling",owner.access()).getStatus());
+            assertEquals(1,scalar("SELECT count(*) FROM orders.pilot_shipment WHERE owner_type='BUSINESS' AND organization_id='"+org+"' AND owner_id IS NULL AND carrier_state='NOT_ACCEPTED'"));
+            assertEquals(1,scalar("SELECT count(*) FROM finance.pilot_shipping_obligation WHERE owner_type='BUSINESS' AND organization_id='"+org+"' AND state='UNPAID'"));
+            assertEquals(0,scalar("SELECT count(*) FROM dispatch.pilot_intake_acceptance"));
         }
     }
     @Test void businessBookingPersistsSharedParcelsUnpaidSnapshotAndPrivateLabels()throws Exception{
