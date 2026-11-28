@@ -1,6 +1,6 @@
 # ARGOPOST V1 — HOÀNG — Carrier Network & Custody
 
-> **V1.5 — Tri-Co-Owner governance, full-stack acceptance & integration readiness.** Work assignment độc lập cho Codex của Hoàng. Đọc toàn bộ file trước khi lập kế hoạch hoặc sửa source. Không dùng file của thành viên khác để tự nhận thêm quyền.
+> **V1.6 — Tri-Co-Owner governance, full-stack acceptance & rescheduled execution.** Work assignment độc lập cho Codex của Hoàng. Đọc toàn bộ file trước khi lập kế hoạch hoặc sửa source. Không dùng file của thành viên khác để tự nhận thêm quyền.
 
 ---
 
@@ -11,10 +11,10 @@
 | Vai trò chính | **Carrier Network & Custody** |
 | Accountable cho | Carrier Operations Station→Inventory→Sorting→Manifest→Transfer→Hub; network exceptions |
 | Các Slice chính | S1-intake, S2, S3, S5-station, S6-network, S8-network |
-| Phiên bản tài liệu | `TEAM-ASSIGNMENT-v1.5 — TRI-CO-OWNER AUTHORITY` — 2026-11-27 |
+| Phiên bản tài liệu | `TEAM-ASSIGNMENT-v1.6 — 29NOV–07DEC EXECUTION` — 2026-11-29 |
 | Trạng thái | `CO-OWNER PLANNING / WORK ASSIGNMENT — NOT TECHNICAL SECURITY APPROVAL` |
 | Mục tiêu release | `V1_OPERATIONAL_E2E_ACCEPTED — SOURCE/TEST` (cả ba Co-Owners cùng nghiệm thu) |
-| Deadline mục tiêu (không phải bảo đảm) | **05/12/2026** — GO/NO-GO theo evidence |
+| Deadline mục tiêu (không phải bảo đảm) | **07/12/2026** — GO/NO-GO theo evidence |
 
 **SELF-IDENTIFICATION:** Khi nhận file này, Codex phải tự nhận `ROLE_ID=V1-B`, **không được** trả lời như thành viên khác. Nếu prompt muốn sửa module thuộc người khác, chỉ lập impact/contract request rồi handoff, trừ khi có explicit Owner assignment cho đúng change-set. Người được phân công file này là **Hoàng — Co-Owner phụ trách Carrier Network & Custody**.
 
@@ -22,18 +22,17 @@
 
 **TEAM ROSTER — áp dụng cho cả ba Codex:** `V1-A = Nam (Co-Owner/Customer & Commercial)`; `V1-B = Hoàng (Co-Owner/Carrier Network & Custody)`; `V1-C = Triết (Co-Owner/Dispatch & Courier Delivery)`. **Tên thành viên là người phụ trách công việc, không phải runtime application role, không cấp quyền Git/database.** Mỗi Codex chỉ dùng ROLE_ID của file mình.
 
-> **OWNER DECISION — `OWNER-V1-DEADLINE-2026-11-27`:** Nam (V1-A/Co-Owner) chấp thuận chuyển **deadline GO/NO-GO từ 04/12/2026 sang 05/12/2026**. Giữ nguyên yêu cầu S1–S8, bốn hành trình Personal/Business × Drop-off/Pickup, security, full-stack gates và các handoff đường găng 28/11–03/12. **D7 04/12** được dùng cho sửa lỗi/integration regression và `TEAM-S8-REVALIDATION`; **D8 05/12** là ngày ký nhận và ba Co-Owners cùng quyết định. Đây chỉ là thay đổi timeline; **không** là approval kỹ thuật mới hoặc xác nhận đã PASS.
+> **TEAM REPLAN — `TEAM-REPLAN-29NOV-07DEC-2026`:** Nam yêu cầu chuyển single active calendar sang **29/11–07/12/2026 (9 ngày lịch)**, GO/NO-GO mục tiêu **07/12/2026**, không giờ cố định. Theo cơ chế ba Co-Owners, Nam/Hoàng/Triết cùng ACK thay đổi deadline/scope này trong kênh nhóm trước khi coi là release commitment. Lịch cũ 28/11–05/12 và tất cả D0–D8 milestone chỉ còn là lịch sử, **không phải deadline hiện hành**. Giữ S1 đã PASS SOURCE/TEST ngày 27/11; xác minh riêng việc merge `develop` và clean-clone Docker Compose, không giả định đã PASS. Spec012 vẫn PROPOSED cho đến khi independent review chấp thuận.
 
+**FLEXIBLE DAILY COORDINATION:** Chỉ mục tiêu theo ngày, không ấn định giờ họp, handoff, smoke test, status hoặc GO/NO-GO. Bàn giao hợp lệ ngay khi sẵn sàng; thiếu input thì `DEPENDENCY_NOTICE` + `NEXT_INDEPENDENT_TASK`, không idle hoặc bịa evidence. Acceptance/security/approval không được nới lỏng bởi lịch mới.
 
-**OWNER DECISION — FLEXIBLE DAILY COORDINATION:** Kế hoạch này chỉ ấn định **ngày mục tiêu, không ấn định giờ cụ thể** cho handoff, daily sync, smoke test, status report hoặc quyết định GO/NO-GO. Nam/Hoàng/Triết chủ động bàn giao ngay khi có approved contract/source/evidence. Nếu thiếu input, báo rõ ngay khi nhận ra rủi ro, chuyển sang `NEXT_INDEPENDENT_TASK`; ngày 05/12 cả ba xác nhận domain evidence trên một integrated revision trước quyết định GO/NO-GO chung. Quy tắc này thay thế các khung giờ cố định của bản trước, **không nới lỏng acceptance/security/approval**.
-
-**FULL-STACK RELEASE RULE (v1.5):** Backend-only, UI-only hoặc contract-only không được ghi `FEATURE_FULL_STACK_PASS`/`SLICE_E2E_PASS`; xem III.3–III.5, V.3 và VI.5. `INTEGRATION_READY` là gate bổ sung, không thay thế EVIDENCE_READY.
+**FULL-STACK RELEASE RULE (v1.6):** Backend-only, UI-only hoặc contract-only không được ghi `FEATURE_FULL_STACK_PASS`/`SLICE_E2E_PASS`; xem III.3–III.5, V.3 và VI.5. `INTEGRATION_READY` là gate bổ sung, không thay thế EVIDENCE_READY.
 
 **CO-OWNER IMPLEMENTATION RULE:** Mọi task trong domain mình đã giao và đã có technical authority được Codex thực hiện trực tiếp theo prompt hằng ngày; **không tạo checkpoint xin Nam phê duyệt**. Với các vấn đề cross-domain, hỏi đúng Co-Owner liên quan hoặc reviewer độc lập theo bảng Mục 0; nếu chưa xong, chuyển task độc lập.
 
 **PRE-TASK RULE:** Trước khi gửi yêu cầu implement một task phụ thuộc của Member khác, Codex **phải đối chiếu V.2 và tạo `DEPENDENCY_NOTICE` theo VI.0**. Nếu chưa nhận được approved contract/source và evidence ở đúng level, chỉ triển khai phần riêng độc lập; không edit phần phụ thuộc. Tạo notice không đồng nghĩa đã thông báo cho người khác — kiểm chứng kênh gửi.
 
-## 0. TEAM CO-OWNER GOVERNANCE — Quyết định điều hành chung v1.5
+## 0. TEAM CO-OWNER GOVERNANCE — bảo lưu quyền đồng Owner từ v1.5
 
 > **CO-OWNER DECISION `TEAM-COOWNER-DELEGATION-2026-11-27`:** Nam, Hoàng và Triết là **ba Co-Owners ngang quyền trong quản trị kế hoạch ArgoPost V1**. Không có bước "gửi Nam xin Owner approval" mặc định đối với task, sửa lỗi, UI/backend/test hay điều phối trong domain đã giao và đã có technical authority. Quyết định được ghi trong tài liệu nhóm này như **chính sách điều hành dự án**; không giả định nó tự cấp quyền PostgreSQL, Git, AWS, production hoặc vượt các quy định AGENTS.md / review bắt buộc.
 
@@ -49,11 +48,11 @@
 
 **Quy trình quyết định không gây chờ:** (1) chủ domain tự xử lý L0; (2) khi thật sự cần L2, ghi `COOWNER_DECISION_RECORD` tối thiểu `DECISION_ID | TASK_ID | AFFECTED_DOMAINS | WRITER | REVIEWER | CONTRACT_VERSION | SECURITY_IMPACT | ACK/REJECT | TEST_GATES` để người liên quan xác nhận, *không chuyển vòng qua Nam*; (3) nếu một bên chưa thống nhất, đánh dấu `WAITING_CROSS_DOMAIN_DECISION`, làm `NEXT_INDEPENDENT_TASK`, không chiếm writer lock hoặc tự đổi contract; (4) L3 theo review bắt buộc, không sử dụng phê duyệt nhóm làm phương tiện né review.
 
-**Mốc thời gian vẫn theo ngày, không giờ cố định:** 28/11–05/12/2026; giao ngay khi đủ output. Mỗi Co-Owner tự báo status và lưu evidence; người cập nhật dashboard là **integration steward luân phiên hoặc người cả ba chỉ định**, không có quyền đơn phương duyệt tất cả Slice.
+**Mốc thời gian vẫn theo ngày, không giờ cố định:** 29/11–07/12/2026; giao ngay khi đủ output. Mỗi Co-Owner tự báo status và lưu evidence; người cập nhật dashboard là **integration steward luân phiên hoặc người cả ba chỉ định**, không có quyền đơn phương duyệt tất cả Slice.
 
 ## I. Vai trò của tài liệu và nguyên tắc ưu tiên
 
-Tài liệu này là **work assignment + acceptance plan**, được cập nhật thành **kế hoạch D0–D8 (27/11–05/12), 8 ngày thực thi từ 28/11**, không phải cam kết 8 Slice chắc chắn sẽ hoàn thành cho Codex của đúng thành viên được định danh tại phần đầu. Nó **không** là sự phê duyệt triển khai tự động, không thay thế `AGENTS.md`, Project North Star, approved technical contracts, domain ownership hay quyết định Co-Owner và technical review hiện hành. Khi có khác biệt, dừng phần xung đột, đối chiếu tài liệu có hiệu lực và xin quyết định rõ ràng; **không được tự sửa luật**.
+Tài liệu này là **work assignment + acceptance plan**, được cập nhật thành **kế hoạch T1–T9 (29/11–07/12), 9 ngày lịch**, không phải cam kết 8 Slice chắc chắn sẽ hoàn thành cho Codex của đúng thành viên được định danh tại phần đầu. Nó **không** là sự phê duyệt triển khai tự động, không thay thế `AGENTS.md`, Project North Star, approved technical contracts, domain ownership hay quyết định Co-Owner và technical review hiện hành. Khi có khác biệt, dừng phần xung đột, đối chiếu tài liệu có hiệu lực và xin quyết định rõ ràng; **không được tự sửa luật**.
 
 **Mục tiêu V1 (bắt buộc):** một canonical logistics execution cho hai loại chủ vận đơn `PERSONAL | BUSINESS` với **cả `DROP_OFF` và `PICKUP`**. Bốn luồng thành công phải chạy từ đăng ký/đăng nhập hoặc onboarding hợp lệ → Quote → Booking/Shipment/Parcel/Label → hàng vào custody Carrier → Station Inventory/Sorting/Manifest → Transfer/Hub Receive → Dispatch/Courier → Delivery Attempt/POD → Delivered → Tracking/Finance/Support tương ứng. Đường Pickup bắt đầu bằng Courier đến lấy hàng và bàn giao Station; Drop-off do khách đưa hàng đến Station. Sau khi hội tụ, **không có hai bộ engine hoặc hai nguồn sự thật**.
 
@@ -65,23 +64,22 @@ Tài liệu này là **work assignment + acceptance plan**, được cập nhậ
 2. `docs/implementation/ARGOPOST_PROJECT_NORTH_STAR.md` và `docs/implementation/ARGOPOST_E2E_NORTH_STAR.md` nếu hiện diện; không chép đè một bản lên bản khác.
 3. `docs/implementation/v1-operational-e2e-critical-path.md`, `docs/implementation/v1-dual-audience-source-test-execution.md` và báo cáo mới nhất trong repo.
 4. Các **approved** contract/ADR/spec và evidence hiện hữu cho slice đang làm, đặc biệt `v1-business-station-intake.delta.md`, `v1-intake-completeness-guards.delta.md` khi đụng Station; chỉ bản có chứng cứ technical/domain approval hợp lệ theo quyền thực tế mới cấp authority.
-5. Source/API/schema/migrations/test hiện tại và Git status; kiểm chứng file thực có mặt trước khi đưa ra đường dẫn/claim. Tài liệu cũ không thay thế trạng thái code mới nhất.
+5. **Lịch duy nhất:** `docs/implementation/v1-team/ArgoPost_V1_Team_Execution_Calendar_2026-11-29_to_2026-12-07.md` (nếu chưa có ở repo phải bổ sung đúng nội dung, không tự tạo lịch khác).
+6. Source/API/schema/migrations/test hiện tại và Git status; kiểm chứng file thực có mặt trước khi đưa ra đường dẫn/claim. Tài liệu cũ không thay thế trạng thái code mới nhất.
 
 **Quy tắc nhận task:** Co-Owner phụ trách domain gửi `MỤC 5 — NHIỆM VỤ HIỆN TẠI` hoặc một nhiệm vụ rõ ràng trong prompt. File này định nghĩa *trách nhiệm dài hạn*, không tự cho phép Codex thực thi mọi slice cùng lúc. Nếu chưa có task rõ ràng hoặc chưa xác minh được technical authority, làm **read-only audit/impact/contract proposal**, rồi báo blocker; không tự chạy migration hay phát triển domain chưa duyệt.
 
-### I.2. Trạng thái khởi điểm được xác minh trong báo cáo 27/11/2026
+### I.2. Trạng thái nguồn trước lịch mới — kiểm chứng ngày 29/11
 
-- **S1 = PARTIAL, không Dual-Audience READY**: Personal HTTPS+PG18 Booking → Station (hai Parcel) PASS; Business Quote/Booking và Management V2 PASS nhưng **Business Acceptance E2E chưa PASS**.
-- `BIA-TIMESTAMP-01`: immutable Booking `createdAt` trong `CarrierCargo` cần contract; `BIA-OWNER-01`: bảng `merchant.application_review_comment` có lỗi owner của LOGIN migrator cần forward-fix.
-- `BIA-DB-GUARD-01`: đề xuất deferred cross-domain reads cho exact completeness; file gốc ghi **PROPOSED** và automatic review đã từ chối lần patch thiếu approval. **Không coi khuyến nghị trong chat là giấy phép đã phê duyệt.** Xác minh quyết định Co-Owner và technical review hiện hành và reviewer gate trước khi sửa.
-- V48 có source/WIP; V1–V47 và checksum lịch sử được bảo toàn. Không giả định V48 đã/ chưa áp dụng tại mọi môi trường. **Kiểm tra registry, branch/PR, migration state trước bất kỳ forward migration mới.**
-- S2–S5 chưa có evidence thực thi E2E hoàn chỉnh; S6–S7 có các thành phần rời rạc (UNPAID, Excel/CSV Draft, CSKH/Claims), chưa thể tuyên bố hoàn chỉnh.
-- Menu2 Step B vẫn **`DEFERRED_POST_V1`**; không quay lại Lifecycle Execute/Owner Transfer khi chưa có quyết định Co-Owner mới.
+- **S1 `V1_SLICE_1_DUAL_AUDIENCE_READY — SOURCE/TEST`: PASS đã ghi trong `v1-dual-audience-source-test-execution.md` (final continuation 27/11).** PERSONAL và BUSINESS đã có genuine HTTPS + PostgreSQL18 Booking hai Parcel → scan → atomic Station Acceptance → custody/tracking, business review/activation, security/race/replay/rollback. Reuse theo fingerprint; không rebuild.
+- V48/V49 và historical migrations đã có kiểm chứng catalog/ACL/preservation trong báo cáo; **không tuyên bố máy khác hoặc `develop` đã có cùng source**. `DEVELOP_BASELINE_READY` (clean clone Docker Compose + migration/bootstrap + S1 regression) phải được xác minh tách biệt. Nếu Nam đang tích hợp release, Hoàng/Triết không chỉnh cùng shared bootstrap/migration path.
+- **Spec012 — Station Inventory → Sorting → Manifest vẫn `PROPOSED/BLOCKED_CONTRACT`** theo file đề xuất 27/11: các policy, API, role/ACL, SQL và acceptance cần review trước runtime code. Spec013/014/015/029 và pickup/payment cần kiểm kê authority thực tế, không tự gọi approved.
+- S2–S8 chưa có báo cáo integrated Full-Stack PASS trong nguồn đã xem. Dữ liệu UNPAID, Excel Draft và Claims có thể đã có component; audit/reuse chính xác trước khi mở runtime task.
+- Menu2 Step B tiếp tục `DEFERRED_POST_V1`; không tự quay lại Admin lifecycle expansion.
 
-Nếu source/evidence mới mâu thuẫn các điểm trên, báo khác biệt cho các Co-Owners liên quan kèm commit/hash/run ID, không lặng lẽ thay đổi trạng thái.
+**Quy tắc nguồn:** Nếu bản repo/báo cáo mới hơn chứng minh kết quả khác, cập nhật evidence register và thông báo affected Co-Owners; không suy đoán `develop` đã merge, AWS/S3 hoặc Docker đã READY.
 
-
-### I.3. SOURCE-FIRST INVENTORY — bắt buộc trước mọi code (D0, lặp lại khi nhận task mới)
+### I.3. SOURCE-FIRST INVENTORY — bắt buộc trước mọi code (T1, lặp lại khi nhận task mới)
 
 **Không được triển khai dựa trên danh sách tính năng trong tài liệu này mà bỏ qua code đã tồn tại.** Báo cáo tiến độ ngày 27/11 là **baseline tham khảo, không phải trạng thái mới nhất của repository**. Codex phải đọc thực tế rồi chỉ làm **GAP có chứng cứ**. Không được đổi tên, sao chép hoặc xây lại engine đang tồn tại chỉ để hoàn thành Task ID.
 
@@ -93,7 +91,7 @@ Nếu source/evidence mới mâu thuẫn các điểm trên, báo khác biệt c
 4. **Gap register theo task ID:** ghi mỗi capability dưới một trạng thái: `REUSE_CURRENT_PASS`, `REUSE_NEEDS_REGRESSION`, `EXISTS_NEEDS_INTEGRATION`, `PARTIAL_GAP`, `MISSING`, `BLOCKED_APPROVAL`, `NOT_V1`. Kèm canonical source paths, behavior hiện hữu, bằng chứng, change nhỏ nhất, domain/source writer, approval, E2E dependency, estimated effort và test bắt buộc.
 5. **Giới hạn patch:** chỉ chọn `PARTIAL_GAP`/`MISSING` có approved authority hoặc `EXISTS_NEEDS_INTEGRATION` trong phạm vi được phép. `REUSE_CURRENT_PASS` thì **không viết lại**, chỉ bổ sung integration/negative tests cần thiết. Code path/DB object không có trong source phải đánh dấu `PROPOSED`, không khẳng định đang hiện hữu.
 6. **Chống đụng source:** trước mọi lần edit, đối chiếu owner+worktree+path-lock với hai teammate; nếu trùng file/port/migration, yêu cầu các Co-Owners có domain liên quan thống nhất đúng **một CODE_WRITER**. Khi hết quyền, chỉ mở request/handoff, không sửa source người khác.
-7. **D0 output:** `ROLE_ID`, source-and-evidence inventory, `TASK_ID × STATUS × REUSE/GAP × PATH × OWNER × APPROVAL × TEST × DEPENDENCY × TARGET_DAY`, top blockers, và kế hoạch 24 giờ đầu. Report ngắn gọn nhưng đầy đủ, không làm giả test.
+7. **T1 audit output:** `ROLE_ID`, source-and-evidence inventory, `TASK_ID × STATUS × REUSE/GAP × PATH × OWNER × APPROVAL × TEST × DEPENDENCY × TARGET_DAY`, top blockers, và kế hoạch 24 giờ đầu. Report ngắn gọn nhưng đầy đủ, không làm giả test.
 
 **Lệnh rà soát gợi ý (read-only; điều chỉnh theo cấu trúc repo):**
 
@@ -142,22 +140,22 @@ Không chạy toàn repository bằng truy vấn quá rộng nếu `rg` lộ log
 6. Mỗi PR/handoff cần sanitized evidence và fingerprint/source revision; không gửi mật khẩu/OTP/email thật/token, không đụng UAT/Production, AWS IAM/S3 hoặc cấp quyền người thật khi chưa được phép.
 7. Một người có thể tiếp tục **đọc, viết draft contract, test unit độc lập** trong lúc chờ dependency, nhưng không viết mock data/state để “chứng minh” một nghiệp vụ thực đã chạy.
 
-## III. 8 Slice và milestone toàn đội
+## III. 8 Slice và mốc hoàn thành Full-Stack — kế hoạch mới 29/11–07/12
 
-| Slice | Đầu ra nghiệp vụ bắt buộc | Lead chính | Gate trước khi tuyên bố PASS | Mốc mục tiêu D0–D8 (ICT) |
+**Single active schedule:** T1=29/11, T2=30/11, T3=01/12, T4=02/12, T5=03/12, T6=04/12, T7=05/12, T8=06/12, T9=07/12/2026 (giờ Việt Nam, **không đặt giờ cố định**). Lịch cũ 28/11–05/12 và các mốc D0–D8 cũ **được thay thế hoàn toàn**, không còn là deadline triển khai. Các mốc mục tiêu chỉ đạt khi có evidence; ba Co-Owners xác nhận thay đổi kế hoạch chung này trong repository/team channel trước khi coi là quyết định release có hiệu lực.
+
+| Slice | Kết quả Full-Stack bắt buộc | Người điều phối / CODE_WRITER | Ngày dự kiến hoàn chỉnh | Điều kiện trước khi ghi `SLICE_FULL_STACK_PASS` |
 |---|---|---|---|---|
-| **S1** | Personal/Business Quote → Booking → Parcel/Label → **Drop-off** Station Acceptance + custody/tracking | Nam (Booking) + Hoàng (Intake) | `V1-S1-P` và `V1-S1-B`, DB security/atomicity & HTTPS/PG18 | **D2 — 29/11**; hiện chỉ có historical PARTIAL |
-| **S2** | Canonical Inventory → versioned Sorting → exact Parcel-set Manifest Draft/Seal | **Hoàng** | Không double-count; no custody move on seal; strict site scope | **D3 — 30/11** |
-| **S3** | Manifest Handover → Transfer → Hub Receiving/Discrepancy | **Hoàng** | Sender/receiver evidence, exactly one holder, rollback, Hub mismatch | **D4 — 01/12** |
-| **S4** | DeliveryRun → Courier assignment/custody → Attempt/POD → Delivered | **Triết** | Genuine Courier + proof; deny fake delivery; per-parcel outcomes | **D4–D5 — 01–02/12** |
-| **S5** | Customer Pickup Request → Courier Pickup → Station handover → shared S2–S4 | Nam (request) + Triết (execution) + Hoàng (station) | Personal + Business Pickup E2E branch and failure | **D5 — 02/12** |
-| **S6** | Missed Pickup/Failed Delivery → Retry/Return + operational exceptions | Hoàng (network) + Triết (courier) + Nam (claim) | Full reverse custody/tracking & cancellation/no duplicate attempts | **D5–D6 — 02–03/12** |
-| **S7** | Finance obligation & real supported settlement/reconciliation; Business XLSX/CSV Draft → Booking; Claims/CSKH | **Nam** | No fake payment/COD; import idempotency; issue-to-resolution evidence | **D2–D6 — 29/11–03/12** |
-| **S8** | Four successful E2E scenarios + targeted failure/security/finance gates | **Nam+Hoàng+Triết** | Integrated SOURCE/TEST evidence, no blocker, signed gate | **D6–D8 — 03–05/12**, D7 final regression 04/12, ba Co-Owners cùng quyết định **trong ngày D8** |
+| **S1 — Dual-audience Booking + Station** | Personal/Business đăng nhập, Merchant xét duyệt, Quote→Booking→Parcel/Label, Station Scan→Acceptance→Custody/Tracking UI | **Nam** Orders/Customer; **Hoàng** Station; cả hai xác nhận | **Đã PASS 27/11** ở SOURCE/TEST; **30/11** reverify trên develop/Compose sau khi baseline sẵn sàng | Evidence S1 hiện hữu được reuse nếu fingerprint không đổi; clean-clone/baseline E2E vẫn phải kiểm chứng riêng, không suy diễn đã merged |
+| **S2 — Inventory/Sorting/Manifest** | Operations Web Inventory→Sort→Manifest Draft/Seal và scoped API/PG18/negative tests | **Hoàng** | **03/12** | Spec012 bounded policy/API/ACL approved, canonical custody, UI thao tác thật; không coi Seal là Transfer |
+| **S3 — Transfer/Hub Receiving** | Sender Web handover → Hub transfer → receiver Web scan/reconcile/discrepancy | **Hoàng** | **04/12** | Spec013 approved, real sealed Manifest, 1 holder, E2E custody/negative/rollback |
+| **S4 — Dispatch/Delivery/POD** | Dispatcher Web assign DeliveryRun, Courier Mobile accept/scan/attempt/POD, Delivered + tracking | **Triết** (Courier/Dispatch); **Hoàng** Hub release | **05/12** | Approved Spec014/015/029 & proof policy; genuine Hub→Courier custody, proof; no fabricated Delivered |
+| **S5 — First-mile Pickup** | Customer Personal/Business Pickup UI→Courier Mobile collection→Station Web receive→shared S2–S4 | **Triết** Slice lead; **Nam** Request; **Hoàng** Station | **06/12** | Approved request+handover, genuine sender→Courier→Station custody, end-to-end both owner types |
+| **S6 — Failure/Retry/Return** | Courier failed pickup/delivery + retry/return; Network reverse handover; Customer/CSKH states | **Triết** lead; **Hoàng** Network; **Nam** Claims | **06/12** | Authorized policy, operational UI/Mobile, negative/replay tests, reverse custody consistency |
+| **S7 — Excel/Finance/Claims** | Business Excel/CSV Draft→Quote→Booking, supported verified settlement/reconciliation and CSKH/Claims Web UI | **Nam**, Hoàng/Triết provide actual facts | **06/12** | Explicit finance/payment authority, non-fake PAID/COD, actual provenance and UI/PG18 evidence |
+| **S8 — 4 E2E journeys** | P/B × Drop-off/Pickup, auth/security/finance/exception and responsive UI/Backend/Mobile/PG18 | **Nam + Hoàng + Triết** ký chung | **07/12** GO/NO-GO | All required gates on **same integrated source revision**, signed evidence; any blocker → PARTIAL/NO-GO |
 
-**Chỉ một timeline có hiệu lực:** D0 **27/11/2026** đến D8 **05/12/2026**. Đây là **mốc mục tiêu có điều kiện**, không phải bằng chứng chức năng đã PASS, không phải quyền tự code hoặc cam kết hoàn thành. Handoff chi tiết và ngày mục tiêu tại **VI.1**; checkpoints tại **VII.2**; lịch theo tên tại **VII.A (Nam), VII.B (Hoàng), VII.C (Triết)**. Cả ba phải sử dụng cùng ngày mục tiêu và mốc nghiệm thu trong những mục đó, không tạo roadmap cạnh tranh.
-
-**Hard dependencies, không buộc ngừng mọi công việc:** Chưa PASS S1 thì không claim S2 integrated; Hoàng vẫn có thể implement/test inventory domain độc lập theo contract được duyệt. S2 chưa có Manifest hợp lệ thì không claim S3; S3 chưa có Hub-received + physical custody evidence thì Triết không claim S4 E2E, nhưng được làm mobile/assignment độc lập. Pickup S5 phải hội tụ về Station Intake hiện hữu, không sinh engine thứ hai. S6 và Finance invariants phải được bổ sung đúng lúc phát sinh nghiệp vụ, không chờ đến mốc tổng hợp S6/S7. **Trễ handoff thì chuyển `WAITING_FOR_HANDOFF`, thực hiện task độc lập và báo Owner, tuyệt đối không tạo evidence giả.**
+**Không có câu trả lời “chắc chắn sẽ xong” theo ngày:** Spec012 là proposal ở thời điểm lập lịch; Spec013/014/015/029, payment authority và Git/Compose baseline phải kiểm chứng thực trạng. Mốc trên là forecast để ưu tiên; nếu contract không được duyệt hoặc E2E FAIL, Codex phải ghi `AT_RISK`/`PARTIAL`, không tự động dời thành PASS. S1 historical acceptance vẫn giữ nguyên, không lặp lại implementation.
 
 ### III.1. V1 Final Acceptance (4 hành trình bắt buộc)
 
@@ -420,29 +418,26 @@ RESPONSE_REQUIRED: <contract/version, current evidence, exact blocker and ETA if
 **Thông báo ngược cho consumer (provider-side):** Khi code của chính mình sẽ thay đổi public port/DTO/event mà người khác dùng, gửi `CHANGE_IMPACT_NOTICE` *trước* patch hoặc tối thiểu trước khi khóa contract: schema/version, backwards compatibility, affected consumer, expected tests, cần approval hay không. Điều này áp dụng kể cả task không cần upstream handoff.
 
 
-### VI.1. Daily Cross-Member Handoff Targets — sổ bàn giao duy nhất
+### VI.1. Daily Cross-Member Handoff Targets — duy nhất 29/11–07/12
 
-**Các mốc dưới đây chỉ quy định ngày theo lịch Việt Nam, không ấn định giờ; một mốc dự kiến không mặc định là PASS.** Mỗi dòng thể hiện một deliverable được duyệt theo owner domain; nếu source/evidence đã có đúng phiên bản, **reuse** và ký nhận trước mốc, không build lại. Hai mức bắt buộc phân biệt: `CONTRACT_READY` (signature/authorization đã phê duyệt, chỉ cho tích hợp độc lập) và `EVIDENCE_READY` (genuine run + actual data/event chứng minh bàn giao thực tế). **CONTRACT_READY không đủ cho E2E PASS.**
+**Mốc theo ngày, không ép giờ.** `CONTRACT_READY` cho phép consumer code theo API/DTO đã approved, `INTEGRATION_READY` cần source cùng revision và smoke test, `EVIDENCE_READY` cần sự kiện thật + security tests. Không chờ cả Slice để giao contract. **29/11** rà soát/nhận lại S1 packet đã có, không yêu cầu tạo lại sự kiện hoặc sửa migration.
 
-| Ngày bàn giao mục tiêu | Handoff ID | Bên gửi → bên nhận | Gate / bằng chứng bắt buộc trước consumer ACK |
+| Ngày mục tiêu | Handoff ID / level | Provider → Consumer | Bằng chứng/đầu ra tối thiểu |
 |---|---|---|---|
-| **D0 27/11** | `TEAM-D0-BASELINE` | **Nam, Hoàng, Triết → shared team evidence register (3 Co-Owners)** | Ba source/evidence audits, gap registry, HEAD/worktree, role+writer lock matrix, review/decision queue; chưa coi đây là runtime PASS |
-| **D1 28/11** | `A2B-S1-BOOKED-CARGO` | **Nam → Hoàng** | Approved Orders carrier contract, ownerType/Org/facility, immutable Booking/Parcel IDs, genuine createdAt, fee/UNPAID binding; test hoặc exact blocker |
-| **D2 29/11** | `B2A-S1-ACCEPTED-EVENT` | **Hoàng → Nam** | BOTH Personal+Business valid Station acceptance, atomic custody/tracking/receipt/audit + PG18/HTTPS/negative/completeness gates; thiếu thì BLOCKED, không giả PASS |
-| **D2 29/11** | `A2C-S5-PICKUP-REQUEST` — **CONTRACT** | **Nam → Triết** | Owner-scoped Pickup Request/Booking mode, admission, price/coverage, cancellation/idempotency; approved contract/version + targeted tests nếu có |
-| **D3 30/11** | `B2C-S4-DISPATCH-READY` — **CONTRACT** | **Hoàng → Triết** | Approved readiness/eligibility DTO, current holder/version, exact Parcel set, handover command/error contract; **chưa** nhận là Hub physical PASS |
-| **D3 30/11** | `A2C-S5-PICKUP-REQUEST` — **EVIDENCE** | **Nam → Triết** | Genuine authorized Pickup Request happy-path + wrong owner/cancel/duplicate tests; không dùng UI-only fixture làm booking thực |
-| **D4 01/12** | `B2A-S2/S3-EVENTS` + `B2C-S4-DISPATCH-READY` — **EVIDENCE** | **Hoàng → Nam, Triết** | Real Station→Manifest→Transfer→Hub receive/holder, eligibility and event version; current PG18 tests + negative evidence; thiếu Hub gate → Triết chờ E2E |
-| **D4 01/12** | `C2A-S4-POD-FACTS` | **Triết → Nam** | Genuine Courier delivery attempt/POD/Delivered proof với provenance + scoped read/PII denial; không gán Delivered từ UI |
-| **D5 02/12** | `C2B-S5-PICKUP-HANDOVER` | **Triết → Hoàng** | Genuine assigned Courier pickup scan/physical custody, actor/site, exact Parcel set, proof/handover transaction; Hoàng phải ACK after real Station receive |
-| **D5 02/12** | `B2A-S7-NETWORK-FACTS` + `C2A-S7-FINANCE-EVIDENCE` | **Hoàng, Triết → Nam** | Canonical transfer/custody/return and delivery/collection evidence refs, fee-relevant facts; **không** tự tạo PAID/COD/ledger |
-| **D6 03/12** | `C2B-S6-RETURN-HANDOVER` | **Triết → Hoàng** | Failure/retry/return approved policy; correct actor, Parcel set and physical custody handover + negative tests |
-| **D6 03/12** | `TEAM-S8-REHEARSAL` | **Nam + Hoàng + Triết → Nam** | Cả 4 E2E scenarios, S6/S7 security/finance/replay/rollback, source fingerprint; mọi unmet gate ghi FAIL/PARTIAL |
-| **D7 04/12** | `TEAM-S8-REVALIDATION` | **Nam + Hoàng + Triết → shared team evidence register (3 Co-Owners)** | Chạy lại bốn hành trình Web/Mobile→HTTPS→PG18 trên integrated revision; khóa baseline review, triage P0/P1, chuẩn bị signed evidence; **chưa GO/NO-GO** |
-| **D8 05/12** | `TEAM-S8-SIGNOFF` | **Nam + Hoàng + Triết → shared team evidence register (3 Co-Owners)** | Signed role-specific test/evidence matrix S1–S8, blockers, missing tests và source revisions sau D7 revalidation |
-| **D8 05/12** | `TEAM-V1-GO-NOGO` | **Owner (Nam)** | GO chỉ nếu toàn bộ release gates PASS; nếu thiếu bất kỳ hard gate nào là **PARTIAL / NO-GO**, cùng recovery plan |
+| **29/11** | `TEAM-D0-BASELINE` → `TEAM-BASELINE-29NOV` (registry alias, không viết lại history) | Nam, Hoàng, Triết → shared register | Source lock, actual develop/Compose state, task audit; `DEVELOP_BASELINE_READY` chỉ khi clean clone thật PASS; S1 evidence fingerprint, Spec012 = PROPOSED nếu chưa review |
+| **29/11** | `A2B-S1-BOOKED-CARGO` và `B2A-S1-ACCEPTED-EVENT` — verified reuse | Nam ↔ Hoàng | Existing canonical 2-Parcel Booking + Station events/receipt, V48/V49 facts, exact accessible source/ACK; không build lại S1 |
+| **30/11** | `A2C-S5-PICKUP-REQUEST` — **CONTRACT** | Nam → Triết | Approved Pickup DTO, owner/Org, site/address/window, coverage, cancel/replay/error and policy |
+| **30/11** | `B2C-S4-DISPATCH-READY` — **CONTRACT** | Hoàng → Triết | Approved read/handback DTO, holder/site/Parcel IDs, eligibility/version; no physical Hub E2E implied |
+| **01/12** | `SPM-S2-CONTRACT` — review gate | Hoàng → affected Co-Owners/reviewer | Bounded Spec012 policy/permissions/API/DB/ACL review disposition; source/tests may start only if approval passed |
+| **02/12** | `A2C-S5-PICKUP-REQUEST` — **INTEGRATION_READY** | Nam → Triết | Pickup Request source+UI/HTTPS/PG18 targeted test and owner-scoped response, or explicit blocker |
+| **03/12** | `B2A-S2/S3-EVENTS` — **S2 contract/event subset** | Hoàng → Nam | Manifest/Sort read contract, real S2 events; S3 Transfer/Hub component remains pending |
+| **04/12** | `B2A-S2/S3-EVENTS` — **S3 EVIDENCE**; `B2C-S4-DISPATCH-READY` — **EVIDENCE** | Hoàng → Nam/Triết | Real Manifest→Transfer→Hub Receiving, exactly one holder + eligible dispatch Parcel set; HTTPS/PG18/UI evidence |
+| **05/12** | `C2A-S4-POD-FACTS`; `B2A-S7-NETWORK-FACTS`; `C2A-S7-FINANCE-EVIDENCE` | Triết/Hoàng → Nam | Genuine Attempt/POD/Delivery, immutable custody/fee-relevant facts; no fake payment/claims |
+| **05–06/12** | `C2B-S5-PICKUP-HANDOVER` | Triết → Hoàng | Sender→Courier collection; Station receiving ACK + exact Parcel set; both Personal/Business |
+| **06/12** | `C2B-S6-RETURN-HANDOVER`; `TEAM-S8-REHEARSAL` | Triết → Hoàng; all three | Failed/return policy, actual reverse custody; four-journey rehearsal + S6/S7 evidence on integrated revision |
+| **07/12** | `TEAM-S8-REVALIDATION` → `TEAM-S8-SIGNOFF` → `TEAM-V1-GO-NOGO` | Nam + Hoàng + Triết | Same-revision final UI/Web/Mobile→HTTPS→PG18 tests, evidence and all three ACKs; GO only if mandatory gates PASS |
 
-**Quy tắc bàn giao theo ngày:** khi nhận thấy mốc bất khả thi, gửi `RISK_NOTICE` ngay, không chờ hết ngày mục tiêu. Sau ngày mục tiêu, ghi `DEADLINE_MISSED` flag và escalate Co-Owners liên quan **ngay khi phát hiện**; không kéo mốc hoặc giả ACK. Nếu task đã được chứng minh PASS sớm, có thể bàn giao sớm với fingerprint; các mốc là *latest targets*, không cản trở tiến độ.
+**Chậm input:** gửi `DEPENDENCY_NOTICE` ngay khi biết sẽ cần trong 1–2 ngày, chuyển `WAITING_FOR_HANDOFF` + `NEXT_INDEPENDENT_TASK` nếu input thiếu. Mốc bàn giao mới là target, không cấp authority, không cho phép một người tự sửa source của người kia. Tất cả handoff đã PASS sớm phải được ghi `REUSE_CURRENT_PASS` thay vì thực hiện lại.
 
 ### VI.2. Dependency/Handoff Status Protocol — bắt buộc cho mọi Codex
 
@@ -522,36 +517,34 @@ Consumer **chỉ ACK `ACCEPTED`** khi đúng approved contract/version, có sour
 
 **BIA-V1/V48 temporary lock:** Cho đến khi Nam bàn giao xong active BIA-DB-GUARD-01 code writer assignment, Hoàng chỉ *audit/contract/test-plan* trên đúng V48/shared guards; Triết không sửa BIA/Orders Tracking. Sau đó hai Co-Owners domain liên quan bàn giao lock từng path, không chuyển quyền bằng lời hứa chung, và cả ba đối chiếu fingerprint trước khi sửa.
 
-## VII. FAST-TRACK V1 — D0–D8 & quy trình GO/NO-GO
+## VII. FAST-TRACK V1 — T1–T9 và quy trình GO/NO-GO
 
-**Timebox:** bắt đầu kiểm kê **Thứ Sáu 27/11/2026 (D0)**; mục tiêu báo cáo nghiệm thu V1 **trong ngày Thứ Bảy 05/12/2026 (D8)**. Đây là **deadline mục tiêu rất tham vọng**, không bảo đảm có thể hoàn thiện 8 Slice từ baseline hiện tại. Đây là **single active execution timeline D0–D8**; mọi mốc lịch sử không còn hiệu lực cho đợt này. Không tự giảm phạm vi V1 hoặc chuyển tính năng bắt buộc thành tùy chọn. Nếu còn blocked/FAIL tại deadline, phải báo `PARTIAL/NO-GO`, không tuyên bố V1 PASS.
+**Timebox mới duy nhất:** từ **Chủ Nhật 29/11/2026 (T1)** đến **Thứ Hai 07/12/2026 (T9)**, deadline mục tiêu GO/NO-GO **trong ngày 07/12** (không có giờ cứng). S1 đã có SOURCE/TEST PASS 27/11; task S1 trong kế hoạch mới chỉ là **handoff, reuse, baseline/regression**, không tái triển khai. Deadline mới là target có điều kiện và cần ACK của ba Co-Owners theo L2/L3 release governance; nếu chưa đủ acceptance thì báo PARTIAL/NO-GO.
 
 ### VII.1. Quy tắc tăng tốc không đánh đổi chất lượng
 
 - **Không rebuild** Identity/Booking/labels/NWS intake, Business management, Excel Draft importer, Finance obligation/CSKH nếu source+evidence xác minh có thể reuse. Thứ tự ưu tiên: `reuse → integrate → smallest missing behavior → test`.
 - **Ba worktree/branch riêng**, không song song sửa cùng file, SQL migration, shared HTTP bootstrap, auth/security/config hoặc file mô tả chung. Các Co-Owners domain liên quan khóa shared paths/migration cho **một writer một thời điểm**; người khác triển khai phần độc lập trên interface đã được chốt.
-- **D0 lập gap+contract review đồng thời**: Hoàng trình Spec012/013, Triết trình Spec014/015/029 và pickup/return, Nam trình Pickup booking/request và exact supported Finance method, chỉ cho phần thật sự thiếu sau audit. Gom quyết định cần đồng thuận Co-Owners theo đúng affected domains vào một checkpoint tổng hợp nhưng giữ từng domain đúng authority; không gộp tất cả thành giấy phép chung.
+- **T1 (29/11) gap+contract review đồng thời**: Hoàng trình Spec012/013, Triết trình Spec014/015/029 và pickup/return, Nam trình Pickup booking/request và exact supported Finance method, chỉ cho phần thật sự thiếu sau audit. Gom quyết định cần đồng thuận Co-Owners theo đúng affected domains vào một checkpoint tổng hợp nhưng giữ từng domain đúng authority; không gộp tất cả thành giấy phép chung.
 - **Hard dependencies:** Hoàng không Manifest movement trước valid acceptance; Triết không DeliveryRun từ manifest chưa Hub received/custody-handover; Pickup từ Triết chỉ vào Station khi Hoàng xác nhận; Nam không đánh `PAID` hoặc `DELIVERED` từ UI hay Booking. Real login/session, canonical Shipment/Parcel/custody/tracking, idempotency, auth/scope và rollback không được cắt bỏ.
 - **Bằng chứng**: PG18/test backend thật, HTTPS Browser tích hợp và Courier app chạy với backend thật (thiết bị/emulator nếu có), catalog/ACL và negative tests liên quan. Unit/fixture/demo/UI screenshot **không** thay thế E2E. Đợt test dùng mạng tuyến mô phỏng SOURCE/TEST; không phải UAT/Production.
-- **Triage hàng ngày:** đầu ngày trao đổi ngắn thống nhất blockers/lock/contracts, cuối ngày mỗi role gửi status + evidence + handoff; Owner xử lý decision queue trong ngày. Đổi timeline nếu critical path bị chặn; không giả làm đã approved bằng cách sửa nhãn tài liệu.
+- **Triage hàng ngày:** đầu ngày trao đổi ngắn thống nhất blockers/lock/contracts, cuối ngày mỗi role gửi status + evidence + handoff; các Co-Owners của domain liên quan xử lý decision queue trong ngày. Đổi timeline nếu critical path bị chặn; không giả làm đã approved bằng cách sửa nhãn tài liệu.
 
-### VII.2. Checkpoints toàn đội — đồng bộ với handoff deadlines VI.1
+### VII.2. Checkpoints toàn đội — lịch mới 29/11–07/12
 
-**Ngày D0–D8 và ngày mục tiêu bàn giao của VI.1 là các mốc duy nhất có hiệu lực.** Checkpoint tổng quan dưới đây không tạo deadline khác hoặc thay thế `HANDOFF_PACKET`/consumer ACK.
-
-| Ngày | Team gate (đều dựa trên source/evidence thật) | Quy tắc xử lý nếu không đạt |
+| Ngày | Outcome ưu tiên và Slice liên quan | Nếu thiếu approval/evidence |
 |---|---|---|
-| **D0 — 27/11** | 3 source audits; gap/task register; lock matrix; current S1 blocker status; các minimal review checkpoint cho phần thật sự thiếu | Không code unapproved; domain Co-Owners liên quan chốt writer/priority |
-| **D1 — 28/11** | Ưu tiên đóng BIA-V1 Business intake + database security; đồng thời hoàn thành contract readiness cho S2–S7 | Nếu còn approval blocker, triển khai workstream độc lập; nêu critical-path risk |
-| **D2 — 29/11** | Mục tiêu S1 dual-audience PASS; S2 Inventory/Sorting/Manifest và S4 foundation bắt đầu nếu authority hợp lệ | Nếu S1 chưa PASS, Hoàng không invent accepted custody; Nam/Triết tập trung phần độc lập |
-| **D3 — 30/11** | Mục tiêu S2 PASS; khởi S3 Transfer/Hub, S4 DeliveryRun/Courier; Nam hoàn thiện Pickup Request/Excel path | Handoff chỉ theo test/contract đã duyệt, không dùng fixture làm physical event |
-| **D4 — 01/12** | Mục tiêu S3 Hub receiving + S4 Drop-off→POD tích hợp; Nam Finance/Tracking consume actual events | Không ghi `DELIVERED` thiếu POD hoặc tồn kiện chuyển sai custody |
-| **D5 — 02/12** | Mục tiêu S5 Personal/Business Pickup→Station→downstream; xử lý S6 failed/return chính, S7 payments/bulk/claims | Pickup không hội tụ về Station thật → S5 chưa PASS |
-| **D6 — 03/12** | 4 happy-path E2E integration rehearsal; S6/S7 targeted negatives, replay/race, finance & claims; consolidate regressions | Missing mandatory flow/approved finance evidence = NO-GO candidate |
-| **D7 — 04/12** | Tập trung khép các regression/integration blockers còn tồn, retest 4 journeys trên cùng integrated revision; cuối ngày `TEAM-S8-REVALIDATION`, chuẩn bị role evidence drafts | Không xem 04/12 là GO/NO-GO; chỉ thay đổi code theo approved authority, không thêm speculative scope |
-| **D8 — 05/12** | Hoàng và Triết công bố `TEAM-S8-SIGNOFF` cho cả ba Co-Owners trước khi cả ba đánh giá; Nam xác minh Customer/Commercial, Hoàng xác minh Network, Triết xác minh Courier; cả ba quyết định `TEAM-V1-GO-NOGO` trong ngày 05/12 | Chỉ `V1_OPERATIONAL_E2E_ACCEPTED — SOURCE/TEST` nếu mọi hard gate PASS; ngược lại PARTIAL/NO-GO + blockers |
+| **T1 — 29/11** | `DEVELOP_BASELINE_READY` audit/clean clone path; S1 existing acceptance verified and handed off; Hoàng Spec012 review, Triết Mobile audit, Nam Bulk/Pickup contract | Không claim Docker/develop READY khi chưa xác minh; làm independent tasks, giữ locks |
+| **T2 — 30/11** | S1 baseline regression target; Pickup Request + Dispatch Eligibility contract handoffs; Spec012/013/014/015/029 review queue | Contract pending → proposal/tests/UI skeleton không viết runtime chưa approved |
+| **T3 — 01/12** | S2 Inventory/Sorting/Manifest implementation và Operations UI; Nam Pickup/Excel; Triết DeliveryRun/Mobile Foundation | Integration smoke hợp lệ; không claim full S2 trước real scan/PG18 |
+| **T4 — 02/12** | S2 full-stack hardening, A→Triết Pickup Request source; S3 Hub and S4 Courier development song song | Dùng P2 approved tasks nếu blocked; alert S2 target risk |
+| **T5 — 03/12** | **S2 target FULL-STACK PASS**; S3 real Transfer/Hub underway; Triết Dispatch Web+Courier Mobile/Attempt, Nam tracking + Finance | Nếu Spec012/PG18/UI FAIL → S2 PARTIAL; S3/S4 E2E không tự nhận PASS |
+| **T6 — 04/12** | **S3 target FULL-STACK PASS** + `B2C` actual eligibility; S4 integrated courier handover, S5 Station Pickup contract | Hub E2E mất gate → Triết tập trung UI/contract tests; no fake Delivered |
+| **T7 — 05/12** | **S4 target FULL-STACK PASS** Personal/Business Drop-off Delivery/POD; Nam Finance/Claim consume events; Triết Pickup collection | No POD/privacy/proof → S4 PARTIAL; S5 still can complete preparatory work |
+| **T8 — 06/12** | **S5/S6/S7 target FULL-STACK PASS**; 4 E2E rehearsal (both Pickup/Drop-off); return and payment/claims negative gates | Any missing event/approved settlement → PARTIAL; create minimal critical fixes |
+| **T9 — 07/12** | **S8 target FULL-STACK PASS / joint GO-NO-GO**; same-revision final regression, all three signoff | If any mandatory gate FAIL → PARTIAL/NO-GO, no retroactive PASS |
 
-**Các checkpoint D2–D6 là *mục tiêu*, không phải trạng thái đã đạt hoặc phê duyệt kỹ thuật.** Nếu nguồn code thiếu nhiều hơn audit dự kiến, cả ba Co-Owners phải ghi nhận nguy cơ trễ deadline hoặc cùng quyết định thay đổi phạm vi; không được tự ý bỏ Pickup, Business, payment/claims theo đã thống nhất để hợp thức hóa nhãn V1.
+**Ưu tiên trong ngày:** `P0 (unblock someone) → P1 (own full-stack task) → P2 (independent fallback)`. Không ấn định giờ; gửi packet khi đạt đúng level. Các target đã hoàn thành sớm phải đóng status bằng evidence, không phải chờ đến đúng ngày mới làm task tiếp.
 
 ### VII.3. Definition of Done cấp release (không giảm chuẩn vì gấp)
 
@@ -580,51 +573,43 @@ DEADLINE_RISK: GREEN | AMBER | RED with explanation
 DO_NOT_CLAIM: undone slices/untested flows/production status
 ```
 
-**PROMPT khởi động mỗi Codex:** `Tôi giao ROLE_ID=V1-... đúng file này. Bắt đầu D0 bằng read-only source/evidence audit, lập reuse/gap register cho task IDs của mình và kế hoạch tới ngày mục tiêu 05/12/2026. KHÔNG build lại code đã có, không edit chưa đủ approval. Sau đó triển khai smallest approved critical-path task, bắt buộc tuân thủ V.2 + VI.0–VI.4 (DEPENDENCY_NOTICE trước code phụ thuộc, handoff deadline + ACK), report theo VII.4.`
+**PROMPT khởi động mỗi Codex:** `Tôi giao ROLE_ID=V1-... đúng file này. Bắt đầu T1 bằng read-only source/evidence audit, lập reuse/gap register cho task IDs của mình và kế hoạch tới ngày mục tiêu 07/12/2026. KHÔNG build lại code đã có, không edit chưa đủ approval. Sau đó triển khai smallest approved critical-path task, bắt buộc tuân thủ V.2 + VI.0–VI.4 (DEPENDENCY_NOTICE trước code phụ thuộc, handoff deadline + ACK), report theo VII.4.`
 
 
-### VII.5. TEAM EXECUTION STRATEGY — D0–D8, giảm chờ/giảm conflict
+### VII.5. TEAM EXECUTION STRATEGY — T1–T9, giảm chờ và conflict
 
-**Chiến thuật:** *contract-first + early handoff + vertical full-stack slice + single-writer + continuous integration*. Không làm hết backend độc lập rồi đến D6 mới bắt đầu Frontend hay integration. Mục tiêu thực dụng: làm **đường thao tác người dùng thật** sớm nhất có thể trên mỗi bounded workflow, test mỗi ngày; bảo toàn 8 Slice và bốn V1 E2E target, báo NO-GO nếu quá scope.
+**Contract-first → smallest unblocker → parallel domain work → daily vertical integration → 4-journey proof.** Giữ một writer cho mỗi change-set, 1 runtime WIP + 1 independent contract/audit WIP cho mỗi Codex. Không chờ hoàn thành hết S2 mới code Courier UI theo approved contract; không dùng mock event để claim E2E. Mọi CODE_WRITER/ACL/migration/shared DTO phải theo Co-Owner affected-domain agreement và technical/security review.
 
-**Operating cadence (ICT, không tạo timeline mới):** đầu ngày kiểm tra critical blockers/approval/owner lock của ngày, handoff cần dùng trong 1–2 ngày tới; trong ngày đối chiếu các milestone VI.1 đến hạn; khi có source sẵn sàng thử integration/smoke với packet **đã đủ mức** (không đợi đủ toàn Slice); cuối ngày báo cáo tests + status + next independent task. Có blocker hard gate: notice/escalation ngay khi phát hiện theo VI.2. Người dùng Codex chuyển các notice qua kênh có thực; không giả lập thông báo tự động.
-
-**WIP policy:** tối đa **1 task runtime đang edit + 1 task contract/audit độc lập** cho mỗi Codex tại cùng thời điểm. Khi task runtime blocked: đóng gói partial diff/evidence, ghi trạng thái `WAITING_FOR_HANDOFF/BLOCKED_APPROVAL`, chuyển sang một task độc lập trong V.1; không tự chuyển source writer. Ưu tiên finish nhỏ, test được, bàn giao sớm. Không biến 3 người thành 3 backend teams không có UI.
-
-**Source/change locks:** Integration steward do cả ba chỉ định là **điều phối viên tích hợp (không phải người phê duyệt đơn phương)**, không mặc nhiên là writer mọi file. Trước patch: `LOCK_REQUEST(path/module, purpose, ROLE_ID, approval, planned consumer, expiry/handback)`. Shared source (`Workflow`, common config, migration registry, app shell, DTO clients, permission/ACL) chỉ có một CODE_WRITER tại một thời điểm. Nếu một integration phải sửa file người khác, tạo `CHANGE_REQUEST` → owner-domain review → hai/bên Co-Owners có liên quan thống nhất writer; người còn lại viết contract/consumer test. Worktrees/clones tách riêng giảm ghi đè **nhưng không tự giải quyết merge conflicts**. Branch integration/commit/push/merge vẫn cần quyền thực tế và quy định AGENTS/CI/branch protection; Co-Owner không được tự vượt kiểm soát.
-
-**Daily evidence-first vertical gates:**
-
-| Ngày (timeline VII.2 hiện hành) | Điểm giao sớm, nhóm nên kết nối ngay | Full-stack thử càng sớm càng tốt | Nếu chưa đủ gate |
+| Ngày | Ưu tiên bàn giao mở khóa | Full-Stack integration cần thử | Fallback nếu blocked |
 |---|---|---|---|
-| **D0 27/11** | Nam/Hoàng/Triết trao source inventory, CODE_WRITER locks, UI gap matrix, review/decision queue, BIA/V48 source lock | Khởi động UI/Backend test harness theo actor, giữ state historical/PARTIAL | Freeze shared writer; task audit/contract độc lập |
-| **D1 28/11** | Nam→Hoàng BookedCargo; Nam↔Triết Pickup Request shape; Hoàng↔Triết Dispatch Eligibility/error shape | S1 Personal regression UI + Business customer/admin path, Triết mobile auth/build | Hoàng không tự sửa Orders; Triết chuẩn bị Courier auth/UI/test |
-| **D2 29/11** | Hoàng→Nam Station proof; Nam→Triết Pickup contract; Spec012/014 approvals nếu thiếu | S1 Business OPS browser→PG18; S7 Bulk valid row→Booked UI | Nhận `BLOCKED_APPROVAL`; Hoàng prep Spec013, Triết Mobile tasks |
-| **D3 30/11** | Hoàng→Triết readiness contract, Nam→Triết Pickup API evidence; share tested source ngay | S2 Operations Inventory/Sort/Manifest UI→PG18, Triết Dispatch UI foundation | Triết làm mobile task UI/contract tests, không giả Hub custody |
-| **D4 01/12** | Hoàng Hub real events→Nam/Triết, Triết POD facts→Nam ngay khi có | S3 Hub receiving browser + S4 Dispatcher Web/Courier Mobile/POD first integrated Drop-off | Nếu S3 blocked, Triết chỉ feature-ready, Nam UI adapter tests |
-| **D5 02/12** | Triết Pickup→Hoàng Station ACK, Hoàng/Triết actual finance-relevant facts→Nam | S5 Personal/Business Pickup→Station + S6 failure UI; S7 Finance/Claims web integration | Hoàng/Triết không viết phantom collection; Nam chỉ show UNPAID nếu chưa payment |
-| **D6 03/12** | Combined source revision + packets + 4 actor journeys, fix gaps not new speculative scope | Four Web+Mobile+PG18 E2E rehearsals, negative/rollback and UI error states | Mark PARTIAL, prioritize critical gap and test evidence |
-| **D7 04/12** | Final full-stack regression, triage chính xác blocker còn tồn; cuối ngày team revalidation packet | Repeat all four journeys on the same accessible integrated revision, draft Nam/Hoàng/Triết signoff | Không coi 04/12 là GO/NO-GO; chỉ thay đổi theo approved CODE_WRITER |
-| **D8 05/12** | Nam/Hoàng/Triết cùng ký trên integrated revision; cả ba đồng thuận GO/NO-GO trong ngày | S8 GO only with every full-stack hard gate PASS; otherwise PARTIAL/NO-GO with recovery | Không xóa test failure, giảm scope hay tuyên bố Production Ready |
+| **29/11** | Nam S1 handoff và baseline; Hoàng Spec012 review; Nam/Triết Pickup/Delivery DTO proposal | Clean clone `develop`+Compose **chỉ khi thực sự published**; reuse S1 evidence | Audits, UI gap, migration/schema read-only, Mobile foundation |
+| **30/11** | Nam→Triết Pickup CONTRACT, Hoàng→Triết Dispatch CONTRACT | S1 baseline regression, Courier mobile auth harness, S2 contract tests | Bulk import, Manifest UI contract, POD proof policy |
+| **01/12** | Spec012 approval disposition/lock; shared UI/API wiring for S2 | Inventory→Sort→Draft real UI/HTTPS/PG18 smallest vertical | Hub contract, DeliveryRun, Customer Pickup UI tests |
+| **02/12** | Nam→Triết Pickup SOURCE, Hoàng→Triết station/Hub readiness API | Manifest Seal/negatives and Pickup Request/DeliveryRun smoke | CSKH, mobile screens, Transfer test design |
+| **03/12** | Hoàng S2 Event reader/manifest packet to Nam; Hoàng Spec013 handover | S2 complete UI+Backend+PG18; S3 Transfer vertical preview | Courier consumer contract tests, Finance method proposal |
+| **04/12** | Hoàng actual Hub→Triết, Hub events→Nam | S3 Hub Receiving E2E; Courier accept from real holder | S5 Station Receiving, POD UI tests |
+| **05/12** | Triết POD facts→Nam; Network/Courier fee facts→Nam | S4 Dispatch Web→Courier Mobile→POD→Delivered on real holder | Return/pickup tests, Claims/Finance integration |
+| **06/12** | Triết Pickup handover→Hoàng; Return→Hoàng; S7 facts→Nam | S5 Pickup/Station→downstream, S6 failure/return, S7 payment/claims UI; 4 scenarios rehearsal | Hard blockers only + regression evidence |
+| **07/12** | Same revision signed by Nam/Hoàng/Triết | Four journeys + negative/security/finance/UX final tests; team GO/NO-GO | No-GO with exact blockers, recovery ownership |
 
-**No-silent-wait rule:** provider không thể bàn giao đúng hạn → phải gửi `BLOCKER_NOTICE` (exact field/owner/reason), consumer chuyển ngay sang `NEXT_INDEPENDENT_TASK` và Co-Owners của domain bị ảnh hưởng chọn một trong: re-sequence allowed task, assign temporary sole writer, approve minimal delta, hoặc declare schedule risk. **Không có quyền mở rộng contract mặc định chỉ vì deadline D8 (05/12).**
+**Baseline limitation:** `S1 SOURCE/TEST PASS` trong báo cáo 27/11 **không tự chứng minh `develop` đã merge hay Docker Compose clean clone PASS**. Đây là prerequisite cho distributed development; không cản mọi task độc lập. Spec012 station preparation proposal chưa là approval. Shared files hoặc migration numbering chỉ có một CODE_WRITER per revision; một Co-Owner không thể tự bypass automatic review. Không tự push/merge/deploy nếu thiếu quyền Git/CI, dù release intent đã được bàn giao.
 
-**Daily release dashboard:** Nam cập nhật một hàng cho mỗi Slice: `S# | UI_GATE | BACKEND_GATE | PG18_GATE | INTEGRATION_GATE | SECURITY_GATE | ROLE_EVIDENCE | BLOCKER | NEXT_OWNER | TARGET_DAY | GO/NO-GO`. Nếu UI đã có nhưng chưa Backend real: `UI_PROTOTYPE_READY`; nếu Backend có mà chưa UI: `BACKEND_READY`; nếu source có ở worktree riêng nhưng chưa ghép: `INTEGRATION_PENDING`. Không đánh dấu `PASS` chỉ vì tất cả task independent đã xong.
+**Single source of truth:** dùng lịch mới `ArgoPost_V1_Team_Execution_Calendar_2026-11-29_to_2026-12-07.md`; lịch 28/11–05/12 không còn active. Báo cáo cuối ngày gồm `TASK_ID | REAL_STATUS | UI | API | PG18 | SECURITY | SOURCE_REVISION | HANDOFF_LEVEL/ACK | NEXT_INDEPENDENT_TASK | RISK_TO_TARGET`.
 
-**Reality check:** deadline D8 (05/12) là aggressive checkpoint, không cam kết chắc chắn 8 Slice hoàn chỉnh. Nếu audit D0 cho thấy Spec012–015/029, Pickup hoặc Finance payment authority chưa sẵn sàng, cả ba Co-Owners phải được báo RED ngay; ưu tiên cả bốn hành trình và controls đã duyệt, không tự đánh tráo V1 bằng Drop-off-only hoặc Backend-only.
+### VII.B — Kế hoạch 9 ngày của Hoàng (Carrier Network & Custody)
 
-### VII.B — Lịch của Hoàng: hành động V1-B — Carrier Network & Custody
+**Cách dùng:** đọc đúng hàng ngày khi bắt đầu; ưu tiên **P0 mở khóa thành viên khác**, sau đó **P1 Full-Stack own domain**; nếu bị chặn thì **P2 độc lập**. Task IDs là tập nhiệm vụ cần đối chiếu source, không bắt buộc viết lại mọi task. Giữ đơn một writer cho mỗi migration/shared path. Mọi target dưới đây là forecast, không phải số giờ cố định.
 
-| Ngày | Ưu tiên thực thi trong authority | Output/handoff đo được |
-|---|---|---|
-| D0 (27/11) | Audit Dispatch Intake/NWS, Parcel ownership V48, guards, real scan/custody/tracking, Station/Hub inventory, sorting, manifest, transfer, receiving, DB migration state; rà true latest S1 evidence | `B-D0-GAP`, exact overlapping source/guard with Nam, Spec012/013 minimal contracts nếu thiếu, gửi Triết custody eligibility schema |
-| D1 (28/11) | BIA-V1 Business Intake Ops V2 + atomic guards và BIA-DB-GUARD only if exact authority/review; lock/rollback/replay, wrong site/owner/Org | S1 Hoàng Business/Personal intake PG18 evidence + exact 2 Parcel audits/receipts; no private cross-read beyond approval |
-| D2 (29/11) | Cùng Nam nghiệm thu S1 real HTTPS; triển khai S2 canonical Inventory read/movement eligibility, versioned Sorting, Manifest Draft/Seal theo Spec012 approved | S1 signoff hoặc blocker; S2 event/custody contracts, Hoàng Manifest draft tests |
-| D3 (30/11) | S2 finish exact Parcel-set Manifest, per-site status, seal no movement; start S3 handover/transfer under approved Spec013 | S2 PG18+site/duplicate/partial tests, B2C readiness draft (không pretend delivered) |
-| D4 (01/12) | S3 physical handover→transfer→Hub receiving/reconciliation, custody current-holder and tracking; Triết dùng read-only eligibility | S3 valid arrived Parcels and exactly-one holder; `B2C-S4-DISPATCH-READY` |
-| D5 (02/12) | S5 Courier pickup handover to Station, same canonical acceptance into Inventory; S6 reverse receive/return routing with Triết | `C2B-S5-PICKUP-HANDOVER` exact Parcel/owner/actor/site tests; network failed/return handling |
-| D6 (03/12) | Regression các luồng Hoàng, inventory/missing Parcel, partial Hub receive, duplicate manifest/transfer, concurrency/replay/rollback; 4 E2E rehearsal | S2/S3/S5/S6 evidence per four journey and Hoàng security/catalog signoff draft |
-| D7 (04/12) | Tập trung regression S2/S3/S5/S6, Ops Web → HTTPS → PG18, Hub/custody, ACL/migration, ACK các handoff còn thiếu; phối hợp full team revalidation cuối ngày | Network evidence draft + updated source fingerprint và issue list cho Nam, chưa final sign-off |
-| D8 (05/12 — trước khi ba Co-Owners chốt quyết định chung) | Chạy final targeted tests trên integrated revision, công bố `TEAM-S8-SIGNOFF` cho cả ba Co-Owners trước quyết định GO/NO-GO chung, nêu đúng hard gate PASS/PARTIAL | `B-S8` signed Network report + PG18/HTTPS/UI/security evidence hoặc exact missing blockers |
+| Ngày | P0 mở khóa + P1 Full-Stack chính (`TASK_ID`) | P2 nếu thiếu handoff/approval | Output kiểm chứng |
+|---|---|---|---|
+| **29/11/2026** | `B-S1-01/05/06/07, B-S2-01` — Receive S1 source/handback and writer lock; verify Spec012 proposal vs current schema, send consolidated policy/ACL review; baseline/Compose audit | B-S2-02/03/06 sort+manifest test design, B-S3-01/02 Spec013 contract | S1 Network handoff ACK + Spec012 decision queue; no duplicate S1 runtime |
+| **30/11/2026** | `B-S2-01/02/05, B-S4-01` — Finalize Spec012 minimum approved bounded scope; send Triết B2C Dispatch contract draft for review; build allowed Inventory read and Operations UI | B-S3-01/03 Transfer/Hub contract, B-S5-01 Station Receiving contract | Approved/nonapproved contract disposition, first Inventory UI smoke |
+| **01/12/2026** | `B-S2-02/03/04/05/06` — Implement Sorting→Manifest Draft/Seal with canonical accepted Parcels, scoped Ops Web, PG18 negative/idempotency if Spec012 approved | B-S3-02/04/05 Spec013 and Hub UI/test harness; B-S4-01 eligibility reader | Sorting/Manifest draft source and test evidence; no fake movement |
+| **02/12/2026** | `B-S2-01/02/03/04/05/06, B-S3-01` — Complete Manifest exact-set, Seal/immutability, roles/ACL/negative and Ops Web; start Transfer implementation after approved Spec013 | B-S5-01/02 Pickup Station Receiving contract + UI skeleton | S2 near-pass report, spec013 approval risk and handoff |
+| **03/12/2026** | `B-S2-01/06, B-S3-01/02/03` — S2 FULL-STACK PASS target; deliver inventory/manifest events Nam; build signed Transfer/Handover, Hub reception first vertical | B-S4-01 DispatchEligibility, B-S6-01 inventory holds test design | S2 PASS only when UI/PG18/negative PASS; S3 integration progress |
+| **04/12/2026** | `B-S3-01/02/03/04/05/06, B-S4-01/02/03` — S3 sender handover→transfer→Hub receipt/reconcile full-stack; emit B2A/B2C Hub evidence and dispatch eligibility | B-S5-01/02/03 Pickup Station Receiving runtime if ready | S3 target PASS and B2C actual-eligible Parcel set + ACK |
+| **05/12/2026** | `B-S4-02/03, B-S5-01/02, B-S7-01/02` — Hub→Courier release with Triết, Pickup Station Receiving real UI/PG18, network facts to Nam; return contract | B-S6-01/04 network exception/privacy tests | S4 upstream ACK, Station Pickup ready, network facts |
+| **06/12/2026** | `B-S5-02/03, B-S6-01/02/03/04, B-S8-01/02` — Pickup→Station actual acceptance for Personal/Business; return custody/Inventory Hold/exception UI; four journey rehearsal | B-S3-04 negative hub reconciliation, B-S7-02 reports | S5/S6 target network PASS and signed rehearsal facts |
+| **07/12/2026** | `B-S8-01/02/03/04` — Run final Station/Inventory/Manifest/Hub/Return and security/ACL regression on joint revision; co-owner signoff | Targeted fixes only, no unapproved source/migration rewrite | Hoàng Network signed evidence, joint GO/NO-GO |
 
-**Hoàng là source writer Station Intake và Station/Hub operations, Triết là writer DeliveryRun/Courier**, dù hai nhóm có thể cùng nằm trong `Dispatch` module. Shared config/migrations/HTTP cần Owner lock. Nếu nguồn hiện tại đã có Sorting/Manifest/Transfer, Hoàng phải reuse và sửa gap, **không tạo engine thứ hai**.
+**Role scope:** Hoàng chỉ sửa source trong domain Carrier Network & Custody hoặc exact approved shared change-set có CODE_WRITER. Nam, Hoàng, Triết cùng quyết định S8 trên một source revision; không một người tự GO thay cả nhóm.
