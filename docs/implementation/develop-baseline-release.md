@@ -301,3 +301,38 @@ Final focused72dbebd4e9964fceb8e360f39d097e57 Core **1/1 PASS**, Maven0,
 sourceUnchanged=true, snapshot31d16574eaa0bf2294b15850ab5773ec662d17c6b05744a268dfc2881ec275cb.
 Combine only with unchanged Merchant approval/BIA PASS in focused61ad48; no
 full Backend or GitHub CI PASS is claimed. Exact-head CI/merge remain pending.
+
+### CI c0fe0ca / reproducible duplicate heading, 2026-11-28
+
+Run46029129596:1347 executed,1345 PASS,2 FAIL,5 allowed skips (1352 discovered).
+Personal browser S1 and Business BIA PASS on CI; the two failures are independent
+Merchant approval and Admin Core (last stage AUDIT_AND_NOTICES). Architecture,
+H2 and portable Compose PASS. This is not full-suite or merge acceptance.
+
+Real HTTPS/PG18 focused d9f1a3d14a054ba9a08abaa8c2f2d407 restricted its child
+process tree to two logical CPUs, matching the CI resource class. Core PASS;
+Merchant approval reproduced STRICT_SELECTOR at admin-governance.spec.ts:52.
+The wrapper and Merchant Directory each rendered the same H1; fast runs could
+assert before the second one appeared. A deterministic UI test waited for the
+canonical list to finish, then failed with two primary headings. The wrapper
+now lets approved Menu2 screens own their heading after current module admission;
+loading/denial still has its existing wrapper. No navigation, API, grants or
+Backend authority changed. All six relevant UI regressions PASS; lint/typecheck
+and actionlint PASS.
+
+For any remaining CI-only failure, the fail-only diagnostic reducer reads bounded
+owned browser reports and emits only fixed source/status/kind, a bounded source
+line and optional HTTP status comparison. It never emits private messages, DOM,
+paths, proof, credentials or fixture data and cannot change acceptance status.
+Nine classifier/privacy/CLI tests PASS. No timeout/retry/assertion relaxation.
+
+Independent clean remote clone c0fe0ca: cold build/health/catalog PASS, same-volume
+restart preserved all48 migration checksums and ENV_BIND receipts/audit, actual
+HTTPS registration/local SMTP/Business Contact/security/logout smoke PASS.
+This remains pre-merge evidence; exact merged develop still requires verification.
+
+Focused25f93b1b4817482cbfa72874f90c0ec2 after the heading fix: **2/2 PASS**
+under two logical CPUs, Maven0, sourceUnchanged=true, snapshot
+b9537cf1fcb03eeeaa0970c55ab1e1fd05dd84cfc56ed82a25740f26ba5f5517.
+No full-suite PASS is inferred. Core CI-only AUDIT_AND_NOTICES failure has not
+been independently reproduced; the next exact-head CI remains mandatory.

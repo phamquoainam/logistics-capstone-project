@@ -82,5 +82,52 @@ class SafeFailureClassificationTests(unittest.TestCase):
         self.assertEqual('BIA_CHECK_SMTP_MESSAGES', module.bounded_browser_kind(name, method, 'BIA_SAFE_CHECK_SMTP_MESSAGES', 'ASSERTION'))
 
 
+class PrivateBrowserDiagnosticTests(unittest.TestCase):
+    def test_cli_emits_each_safe_record_once_without_private_fields(self):
+        import subprocess
+        import sys
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary);self.fixture(root)
+            run = subprocess.run([sys.executable, module.__file__, '--source', str(root), '--browser-private', str(root)], capture_output=True, text=True, check=False)
+            self.assertEqual(0, run.returncode, run.stderr)
+            self.assertEqual(1, run.stdout.count('SAFE_FAILURE_KINDS '))
+            self.assertEqual(1, run.stdout.count('SAFE_BROWSER_FAILURES '))
+            for secret in ('private-token', 'password', 'proof', 'example.invalid'):
+                self.assertNotIn(secret, run.stdout)
+
+    def fixture(self, root, status='failed', message='strict mode violation Bearer private-token', stack='at /owned/runtime-tests/admin-governance.spec.ts:52:138'):
+        directory = root / 'admin-browser-owned';directory.mkdir()
+        name = next(iter(module._BROWSER_SOURCES))
+        (directory / 'safe-browser-results.json').write_text(json.dumps({'cases': [{'name': name, 'status': status}]}), encoding='utf-8')
+        (directory / 'browser-private-diagnostics.json').write_text(json.dumps([{'name': name, 'errors': [{'message': message, 'stack': stack, 'snippet': 'password proof email@example.invalid', 'location': {'file': '/private/account-identifier'}}]}]), encoding='utf-8')
+        return directory
+
+    def test_fixed_labels_source_line_and_status_never_publish_private_fields(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary);self.fixture(root)
+            result = module.browser_failures(root)
+            self.assertEqual({'source': 'GOVERNANCE', 'status': 'failed', 'kind': 'STRICT_SELECTOR', 'line': 52}, result['cases'][0])
+            for secret in ('Bearer', 'private-token', 'password', 'proof', 'email', 'account-identifier', '/owned', 'snippet'):
+                self.assertNotIn(secret, json.dumps(result))
+
+    def test_timeout_and_http_status_are_bounded_and_foreign_source_is_not_trusted(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary);self.fixture(root, 'timedOut', 'Test timeout of 60000ms\nExpected: 200\nReceived: 503\nsecret: 123456', 'other.spec.ts:99:1')
+            case = module.browser_failures(root)['cases'][0]
+            self.assertEqual('TEST_TIMEOUT', case['kind']);self.assertIsNone(case['line'])
+            self.assertEqual({'expected': 200, 'received': 503}, case['httpComparison'])
+            self.assertNotIn('123456', json.dumps(case))
+
+    def test_unknown_names_malformed_and_oversize_reports_fail_closed(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary);directory = self.fixture(root)
+            p = directory / 'safe-browser-results.json'
+            p.write_text(json.dumps({'cases': [{'name': 'secret@example.invalid', 'status': 'failed'}]}), encoding='utf-8')
+            self.assertEqual([], module.browser_failures(root)['cases'])
+            p.write_text('[]', encoding='utf-8');self.assertEqual(1, module.browser_failures(root)['unavailable'])
+            p.write_bytes(b'x' * (512 * 1024 + 1));self.assertEqual(1, module.browser_failures(root)['unavailable'])
+            self.assertEqual(1, module.browser_failures(root / 'missing')['unavailable'])
+
+
 if __name__ == '__main__':
     unittest.main()

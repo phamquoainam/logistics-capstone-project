@@ -61,6 +61,74 @@ def kind(text):
     return next((code for code, markers in KINDS if any(marker in lowered for marker in markers)), 'UNCLASSIFIED')
 
 
+_BROWSER_SOURCES = {
+    'genuine HTTPS SYSTEM reviewer uses scoped queue, immutable facts and current PG18 checklist': ('GOVERNANCE', 'admin-governance.spec.ts'),
+    'Customer submission through independent review activates real Organization and reconciles Dashboard Work and Audit': ('CORE', 'admin-core.spec.ts'),
+}
+
+
+def browser_failures(directory):
+    """Reduce private diagnostics to fixed labels, bounded source lines and HTTP codes.
+
+    Never publish names, paths, messages, snippets, stacks, DOM, request or fixture
+    values. This diagnostic cannot modify the acceptance result.
+    """
+    result = {'cases': [], 'unavailable': 0}
+    if not directory.is_dir() or directory.is_symlink():
+        result['unavailable'] = 1
+        return result
+    directories = sorted(set(directory.glob('admin-browser-*')) | set(directory.glob('admin-core-browser-*')))
+    budget = 16 * 1024 * 1024
+    def read(path, limit=512 * 1024):
+        nonlocal budget
+        if path.is_symlink() or not path.is_file() or path.stat().st_size > min(limit, budget):
+            raise ValueError('UNAVAILABLE')
+        with path.open('rb') as stream:
+            data = stream.read(min(limit, budget) + 1)
+        if len(data) > min(limit, budget):
+            raise ValueError('UNAVAILABLE')
+        budget -= len(data)
+        return json.loads(data)
+    for child in directories[:64]:
+        try:
+            if child.is_symlink() or not child.is_dir():
+                raise ValueError('UNAVAILABLE')
+            report = read(child / 'safe-browser-results.json')
+            if not isinstance(report, dict) or not isinstance(report.get('cases'), list) or len(report['cases']) > 100:
+                raise ValueError('UNAVAILABLE')
+            failed = [c for c in report['cases'] if isinstance(c, dict) and isinstance(c.get('name'), str) and c['name'] in _BROWSER_SOURCES and c.get('status') in ('failed', 'timedOut', 'interrupted')]
+            if not failed:
+                continue
+            diagnostics = read(child / 'browser-private-diagnostics.json')
+            if not isinstance(diagnostics, list) or len(diagnostics) > 20:
+                raise ValueError('UNAVAILABLE')
+            if any(not isinstance(d, dict) or not isinstance(d.get('errors'), list) or len(d['errors']) > 20 for d in diagnostics):
+                raise ValueError('UNAVAILABLE')
+            for case in failed[:20]:
+                source, filename = _BROWSER_SOURCES[case['name']]
+                errors = [e for d in diagnostics if isinstance(d, dict) and d.get('name') == case['name'] for e in d.get('errors', []) if isinstance(e, dict)]
+                text = '\n'.join(str(e.get('message', '')) + '\n' + str(e.get('stack', '')) for e in errors)
+                text = re.sub(r'\x1b\[[0-9;]*m', '', text)
+                category = next((label for label, needle in (
+                    ('STRICT_SELECTOR', 'strict mode violation'), ('TEST_TIMEOUT', 'Test timeout of'),
+                    ('ACTION_TIMEOUT', 'TimeoutError'), ('SECURITY_ORIGIN', 'SecurityError')) if needle in text), 'ASSERTION_OR_OTHER')
+                lines = {int(v) for v in re.findall(re.escape(filename) + r':([0-9]{1,4}):[0-9]{1,4}\b', text) if 0 < int(v) <= 2000}
+                entry = {'source': source, 'status': case['status'], 'kind': category, 'line': next(iter(lines)) if len(lines) == 1 else None}
+                codes = {}
+                for label in ('Expected', 'Received'):
+                    values = {int(v) for v in re.findall(r'^\s*' + label + r':\s*([1-5][0-9]{2})\s*$', text, re.M)}
+                    if len(values) == 1:
+                        codes[label.lower()] = next(iter(values))
+                if len(codes) == 2:
+                    entry['httpComparison'] = codes
+                if len(result['cases']) < 20:
+                    result['cases'].append(entry)
+        except (OSError, ValueError, KeyError, TypeError):
+            result['unavailable'] += 1
+    result['unavailable'] += max(0, len(directories) - 64)
+    return result
+
+
 def classify(source, inventory, max_file_bytes=32 * 1024 * 1024):
     result = {'cases': [], 'unknown_cases': 0, 'unavailable_reports': 0}
     if not source.is_dir() or source.is_symlink():
@@ -104,8 +172,11 @@ def classify(source, inventory, max_file_bytes=32 * 1024 * 1024):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--source', type=Path, required=True)
+    parser.add_argument('--browser-private', type=Path)
     args = parser.parse_args()
     spec = importlib.util.spec_from_file_location('report_inventory', Path(__file__).with_name('verify-reports.py'))
     reports = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(reports)
     print('SAFE_FAILURE_KINDS ' + json.dumps(classify(args.source, reports.REQUIRED), sort_keys=True))
+    if args.browser_private is not None:
+        print('SAFE_BROWSER_FAILURES ' + json.dumps(browser_failures(args.browser_private), sort_keys=True))

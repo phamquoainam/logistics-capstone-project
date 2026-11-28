@@ -2502,3 +2502,9 @@ review/disclosure/replay UI regressions PASS; genuine Merchant approval/Business
 S1 PASS in focused61ad48 and Core PASS in focused72dbeb. Background actor
 contention is removed from fixture sequencing, not from Backend security; explicit
 503/replay remains. Exact-head CI and merge required; see baseline execution.
+
+CI46029129596:1345 PASS,2 FAIL,5 allowed skips; Business BIA and Personal
+browser PASS. Merchant Directory duplicate H1 reproduced in genuine two-CPU
+HTTPS/PG18 and deterministic UI; wrapper heading ownership fixed. Six UI and
+two genuine resource-bounded scenarios PASS. Core CI acceptance remains pending
+exact-head rerun; fixed-label/source-line diagnostics retain private data locally.

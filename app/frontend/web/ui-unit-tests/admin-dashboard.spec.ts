@@ -214,6 +214,15 @@ test('organization lifecycle keeps exact key on lost response and refreshes curr
   expect(await page.evaluate(() => [localStorage.length, sessionStorage.length])).toEqual([0, 0]);
 });
 
+test('Merchant directory owns exactly one primary heading after its canonical list loads', async ({ page, context }) => {
+  await fixture(context);
+  await context.route(origin + '/api/v1/admin/merchant-organizations**', route => route.fulfill({ contentType: 'application/json', body: JSON.stringify({ items: [], page: 0, size: 20, hasNext: false }) }));
+  await page.goto(origin + '/admin/merchants/organizations');
+  await expect(page.getByText('Chưa có tổ chức thuộc bộ lọc và phạm vi hiện tại.', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
+  await expect(page.getByRole('heading', { name: 'Tổ chức Merchant', exact: true })).toBeVisible();
+});
+
 test('Organization activation deep link binds exact target and handles denied access without exposing prior details', async ({ page, context }) => {
   await fixture(context);
   const id = '60000000-0000-4000-8000-000000000001', owner = '60000000-0000-4000-8000-000000000002';

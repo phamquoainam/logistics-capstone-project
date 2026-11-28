@@ -519,5 +519,38 @@
     },
     "assertions": "held503 and exact-key/ETag/body replay retained; reviewer storage checked before logout",
     "status": "LOCAL_TARGETED_PASS_EXACT_HEAD_CI_REQUIRED"
+  },
+  "ciC0Result": {
+    "head": "c0fe0ca55ee056c98516211ead86326c90051e3f",
+    "run": 46029129596,
+    "discovered": 1352,
+    "executed": 1347,
+    "passed": 1345,
+    "failed": 2,
+    "allowedSkips": 5,
+    "bia": "PASS",
+    "personalBrowser": "PASS",
+    "architecture": "PASS",
+    "h2": "PASS",
+    "compose": "PASS",
+    "status": "MERGE_BLOCKED"
+  },
+  "headingCorrection": {
+    "redFocusedId": "d9f1a3d14a054ba9a08abaa8c2f2d407",
+    "redFailure": "Merchant governance STRICT_SELECTOR at line52; two duplicate Directory H1s",
+    "redUi": "one primary heading expected, two observed after canonical list load",
+    "uiPassed": 6,
+    "greenFocusedId": "25f93b1b4817482cbfa72874f90c0ec2",
+    "logicalCpuLimit": 2,
+    "greenPassed": 2,
+    "greenFailed": 0,
+    "sourceUnchanged": true,
+    "sourceSnapshotSha256": "b9537cf1fcb03eeeaa0970c55ab1e1fd05dd84cfc56ed82a25740f26ba5f5517",
+    "lint": "PASS",
+    "typecheck": "PASS",
+    "actionlint": "PASS",
+    "classifierPrivacyTestsPassed": 9,
+    "coreCiResidual": "requires exact-head CI; not independently reproduced",
+    "acceptance": "CI_REQUIRED"
   }
 }
